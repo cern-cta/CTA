@@ -7,6 +7,9 @@ set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
+# Match CI runtime behaviour for tests executed during packaging; allow explicit overrides.
+export UBSAN_OPTIONS="${UBSAN_OPTIONS:-print_stacktrace=1}"
+
 usage() {
   echo
   echo "Usage: $0 <source|binary|all> [options]"
@@ -36,7 +39,7 @@ usage() {
   echo "      --skip-dependency-install           With all, do not install source-package dependencies."
   echo "      --enable-internal-repos             Enable internal package repositories."
   echo "      --enable-sccache                    Enable sccache."
-  echo "      --enable-address-sanitizer          Enable AddressSanitizer."
+  echo "      --sanitizers <mode>                 none, address, undefined, address,undefined, or thread."
   echo "      --skip-debug-packages               Do not build native debug packages."
   echo "      --skip-test-packages                Compile tests but do not package them."
   echo "      --skip-unit-tests                   Do not run unit tests while building packages."
@@ -81,7 +84,7 @@ install_source_packages=false
 skip_dependency_install=false
 use_internal_repos=false
 enable_sccache=false
-enable_address_sanitizer=false
+sanitizers="none"
 skip_test_packages=false
 skip_debug_packages=false
 skip_unit_tests=false
@@ -92,7 +95,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --build-dir | --build-generator | --scheduler-type | --cta-version | \
       --cmake-build-type | --xrootd-ssi-version | --source-package-dir | -j | --jobs | --oracle-support |\
-      --sbom-path)
+      --sanitizers | --sbom-path)
       [[ $# -gt 1 ]] || error_usage "$1 requires an argument"
       option="$1"
       value="$2"
@@ -115,6 +118,7 @@ while [[ $# -gt 0 ]]; do
             *) die_usage "--oracle-support must be ON or OFF" ;;
           esac
           ;;
+        --sanitizers) sanitizers="$value" ;;
         --sbom-path) sbom_path=$(realpath -m "$value") ;;
       esac
       ;;
@@ -125,7 +129,6 @@ while [[ $# -gt 0 ]]; do
     --skip-dependency-install) skip_dependency_install=true; shift ;;
     --enable-internal-repos) use_internal_repos=true; shift ;;
     --enable-sccache) enable_sccache=true; shift ;;
-    --enable-address-sanitizer) enable_address_sanitizer=true; shift ;;
     --skip-test-packages) skip_test_packages=true; shift ;;
     --skip-debug-packages) skip_debug_packages=true; shift ;;
     --skip-unit-tests) skip_unit_tests=true; shift ;;
@@ -134,6 +137,11 @@ while [[ $# -gt 0 ]]; do
     *) die_usage "Invalid argument: $1" ;;
   esac
 done
+
+case "$sanitizers" in
+  none|address|undefined|address,undefined|thread) ;;
+  *) die_usage "--sanitizers must be none, address, undefined, address,undefined, or thread" ;;
+esac
 
 [[ -n "$build_root" ]] || die_usage "Missing mandatory argument --build-dir"
 [[ -n "$build_generator" ]] || die_usage "Missing mandatory argument --build-generator"
@@ -235,6 +243,7 @@ configure_build() {
 
   local cmake_options=(
     -D "CTA_BUILD_MODE:STRING=${package_mode}-package"
+    -D "CTA_SANITIZERS:STRING=${sanitizers}"
     -D "CTA_BUILD_TEST_PACKAGES:BOOL=$(cmake_bool "$build_test_packages")"
     -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
     -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
@@ -253,7 +262,6 @@ configure_build() {
     cmake_options+=(
       -D "CTA_SHOW_CONFIGURATION_SUMMARY:BOOL=OFF"
       -D "ENABLE_SCCACHE:BOOL=$(cmake_bool "$enable_sccache")"
-      -D "ENABLE_ADDRESS_SANITIZER:BOOL=$(cmake_bool "$enable_address_sanitizer")"
     )
   fi
 

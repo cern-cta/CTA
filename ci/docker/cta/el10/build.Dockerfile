@@ -11,7 +11,7 @@ ARG SCCACHE_VERSION="=0.18.0"
 RUN dnf install -y epel-release dnf-plugins-core git python3-dnf-plugin-versionlock && \
     dnf config-manager --set-enabled crb && \
     dnf install -y gcc gcc-c++ cmake rpm-build make ninja-build \
-        systemd-devel clang-tools-extra libasan corrosion && \
+        systemd-devel clang-tools-extra corrosion && \
     dnf clean all --enablerepo=\*
 
 # Install rustup and nightly toolchain

@@ -33,7 +33,7 @@ _ctadev() {
         --disable-sccache
         --enable-unit-tests
         --force-install
-        --enable-address-sanitizer
+        --sanitizers
         --extra-telemetry
         --build-generator
         --cmake-build-type
@@ -66,6 +66,10 @@ _ctadev() {
     # Complete values for options that expect one.
     #
     case "$prev" in
+        --sanitizers)
+            COMPREPLY=( $(compgen -W "none address undefined address,undefined thread" -- "$cur") )
+            return
+            ;;
         --scheduler-type)
             COMPREPLY=( $(compgen -W "objectstore pgsched" -- "$cur") )
             return

@@ -85,10 +85,11 @@ spec:
       type: boolean
       default: true
 
-    enable-address-sanitizer:
-      description: "Compile with Address Sanitizer."
-      type: boolean
-      default: false
+    analysis:
+      description: "C/C++ analysis mode: Valgrind or compiler sanitizers."
+      type: string
+      options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
+      default: "none"
 
     cmake-build-type:
       description: "CMake build type for pipelines that compile CTA packages."
@@ -138,11 +139,6 @@ spec:
     # =========================================================================
     # Testing
     # =========================================================================
-    enable-valgrind:
-      description: "Run unit tests with Valgrind."
-      type: boolean
-      default: false
-
     enable-dcache-tests:
       description: "Run dCache regression tests automatically."
       type: boolean
@@ -244,6 +240,8 @@ variables:
   # Runner and test reports
   FF_TIMESTAMPS: "true"
   TERM: "xterm-color"
+  # Include stack traces in UBSan diagnostics; compiler flags make findings fatal.
+  UBSAN_OPTIONS: "print_stacktrace=1"
   GTEST_COLOR: "yes"
   GTEST_REPORT_FILE: "$CI_PROJECT_DIR/test_report.xml"
   GTEST_OUTPUT: ""
@@ -365,14 +363,13 @@ include:
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       build-generator: $[[ inputs.build-generator ]]
       cmake-build-type: $[[ inputs.cmake-build-type ]]
-      enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+      analysis: $[[ inputs.analysis ]]
       enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
       scheduler-type: $[[ inputs.scheduler-type ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
       compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
       admin-api-authentication: $[[ inputs.admin-api-authentication ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
-      enable-valgrind: $[[ inputs.enable-valgrind ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
@@ -394,7 +391,7 @@ include:
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       build-generator: $[[ inputs.build-generator ]]
       cmake-build-type: $[[ inputs.cmake-build-type ]]
-      enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+      analysis: $[[ inputs.analysis ]]
       compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
     rules:
@@ -411,7 +408,7 @@ include:
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
-      enable-valgrind: $[[ inputs.enable-valgrind ]]
+      analysis: $[[ inputs.analysis ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.platform ]]" == "debian13"'
