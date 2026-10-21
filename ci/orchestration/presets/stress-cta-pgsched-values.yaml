@@ -63,11 +63,10 @@
 #   drive at a time; stress-stressdrives-pgsched-values.yaml overrides to 500
 #   (128 MB/drive, 3.8 GB for 30 drives).
 #
-# taped archiveFetchBytesFiles = 40 000 files
-#   Each drive fetches up to 40 k files per pgsched poll.  At 43 files/s/drive
-#   one batch lasts ~930 s (~15 min), so DB poll frequency is very low.
-#   Tape capacity is ~320 k files (150 MB / 470 B), so a batch covers about
-#   1/8 of a tape session — minimal requeue churn at ENOSPC boundaries.
+# taped archiveFetchBytesFiles = 20 000 files (StressDrive; see stress-stressdrives-pgsched-values.yaml)
+#   Capacity 49 600 080 bytes = 80 + 5 × 20 000 × 496 → exactly 5 batches/tape.
+#   ENOSPC fires on HDR1 of batch 6 file 1 → zero partial-batch requeue at tape boundaries.
+#   At 100 files/s/drive one batch lasts ~200 s; DB poll frequency is low.
 #
 # taped schedulerNumberOfConnections = 3 per drive (mhvtl/real-hardware, set below);
 #   overridden to 2 by stress-stressdrives-pgsched-values.yaml for StressDrives
