@@ -17,7 +17,7 @@ spec:
       type: boolean
 ---
 
-build-cta-rpms:
+build-cta:
   stage: build
   needs:
     - job: prepare-cta-version
@@ -45,7 +45,6 @@ build-cta-rpms:
     # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
     COMPILE_WITH_EXTRA_TELEMETRY: "$[[ inputs.compile-with-extra-telemetry ]]"
-    BUILD_PATH: "build/$[[ inputs.platform ]]/RPM/RPMS"
     XRD_SSI_PATH: "lib/protobuf/external/xrootd-ssi-protobuf-interface"
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
     # Keep downloaded Rust dependencies inside the cacheable project directory.
@@ -78,7 +77,7 @@ build-cta-rpms:
       if [[ "$ENABLE_SCCACHE" == "true" ]]; then
         BUILD_OPTIONS+=" --enable-sccache"
       fi
-    - if $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
+    - if [[ "$[[ inputs.platform ]]" == "el9" ]] && $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
     - if $[[ inputs.enable-address-sanitizer ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
     - |
       if $[[ inputs.compile-with-extra-telemetry ]]; then
@@ -104,7 +103,14 @@ build-cta-rpms:
   artifacts:
     expire_in: 30 days
     paths:
-      - ${BUILD_PATH}
+      # Collect native packages without the Debian unpacked source tree.
+      - build/$[[ inputs.platform ]]/RPM/RPMS
+      - build/$[[ inputs.platform ]]/DEB/*.deb
+      - build/$[[ inputs.platform ]]/DEB/*.ddeb
+      - build/$[[ inputs.platform ]]/DEB/*.dsc
+      - build/$[[ inputs.platform ]]/DEB/*.tar.*
+      - build/$[[ inputs.platform ]]/DEB/*.changes
+      - build/$[[ inputs.platform ]]/DEB/*.buildinfo
       - sboms
     reports:
       cyclonedx:
@@ -140,15 +146,15 @@ build-cta-rpms:
 # They continue to use the DNF cache.
 
 # Specifically build CTA without sccache and with debug packages enabled
-build-cta-rpms-no-sccache:
+build-cta-no-sccache:
   extends:
-    - build-cta-rpms
+    - build-cta
   rules:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       when: never
-    - !reference [build-cta-rpms, rules]
+    - !reference [build-cta, rules]
   variables:
     ENABLE_SCCACHE: "false"
     ENABLE_DEBUG_INFO: "FALSE"
@@ -156,17 +162,19 @@ build-cta-rpms-no-sccache:
     - *dnf-cache
 
 
-build-cta-rpms-pgsched:
+build-cta-pgsched:
   extends:
-    - build-cta-rpms
+    - build-cta
   rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"' # Debian is pgsched by default
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     # Prevent too many duplicate pipelines. Only in merge requests do we want to double check that what we do doesn't break
     # For the main branch, we'll rely on the nightly pipelines
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       when: never
-    - !reference [build-cta-rpms, rules]
+    - !reference [build-cta, rules]
   variables:
     # We don't have a way of separating what the user entered and what the actual value is,
     # so this will always run, even if the pipeline type was already postgres
@@ -178,7 +186,7 @@ build-cta-rpms-pgsched:
     - source ci/utils/cta_version.sh
     - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
     - export CTA_VERSION
-    - !reference [build-cta-rpms, before_script]
+    - !reference [build-cta, before_script]
   # Disable artifacts
   artifacts:
     paths: []
@@ -235,46 +243,3 @@ build-docs:
     paths:
       - build/docs/site/
     expire_in: 7 days
-
-# Package-only coverage until Debian runtime images and publication are available.
-build-cta-debs:
-  stage: build
-  needs:
-    - job: prepare-cta-version
-      artifacts: true
-    - job: check-merge-train-duplicate
-      optional: true
-  rules:
-    - if: '$PIPELINE_TYPE != "DEFAULT" || $CUSTOM_CTA_IMAGE_TAG != ""'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE != "parent_pipeline"'
-  image: "${DOCKER_IMAGE_REGISTRY}/${DOCKER_PUBLIC_REGISTRY_PREFIX}/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.debian13"
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    # Resolve independently of the EL9 scheduler/Oracle variant selected for the pipeline.
-    - source ci/utils/cta_version.sh
-    - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" debian13 pgsched false)
-    - export CTA_VERSION
-    - git -C lib/protobuf/external/xrootd-ssi-protobuf-interface fetch --tags
-    - XRD_SSI_VERSION=$(git -C lib/protobuf/external/xrootd-ssi-protobuf-interface describe --tags --abbrev=0)
-  script:
-    - ./ci/build/build_packages.sh all --build-dir build
-                                      --build-generator "$[[ inputs.build-generator ]]"
-                                      --create-build-dir
-                                      --cta-version "${CTA_VERSION}"
-                                      --xrootd-ssi-version "${XRD_SSI_VERSION}"
-                                      --scheduler-type pgsched
-                                      --oracle-support false
-                                      --cmake-build-type "$[[ inputs.cmake-build-type ]]"
-                                      --jobs "$(nproc)"
-                                      --skip-unit-tests
-  artifacts:
-    expire_in: 30 days
-    paths:
-      - build/debian13/DEB/*.deb
-      - build/debian13/DEB/*.ddeb
-      - build/debian13/DEB/*.dsc
-      - build/debian13/DEB/*.tar.*
-      - build/debian13/DEB/*.changes
-      - build/debian13/DEB/*.buildinfo

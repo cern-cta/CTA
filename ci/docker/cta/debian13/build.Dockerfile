@@ -19,10 +19,10 @@ RUN printf 'deb [arch=amd64 trusted=yes] %s trixie main\n' "$CTA_DEPENDENCY_REPO
 COPY project.json /opt/cta/project.json
 COPY ci/project-json/generate_build_requires.py /opt/cta/ci/project-json/generate_build_requires.py
 RUN apt-get update && apt-get satisfy -y --no-install-recommends \
-      "$(python3 /opt/cta/ci/project-json/generate_build_requires.py --platform debian13 --format deb)" && \
+      "$(python3 /opt/cta/ci/project-json/generate_build_requires.py --platform debian13)" && \
     rm -rf /var/lib/apt/lists/*
 
-# Match the EL9 Rust toolchain and optional build accelerators.
+# Use the same nightly Rust channel and pinned cargo-cyclonedx/sccache versions as EL9.
 RUN curl --fail --location https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init \
       -o /tmp/rustup-init && chmod +x /tmp/rustup-init && \
     /tmp/rustup-init -y --no-modify-path --default-toolchain nightly && rm /tmp/rustup-init

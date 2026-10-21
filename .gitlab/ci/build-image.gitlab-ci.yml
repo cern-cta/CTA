@@ -97,7 +97,7 @@ spec:
       artifacts: true
     - job: check-merge-train-duplicate
       optional: true
-    - job: build-cta-rpms
+    - job: build-cta
       optional: true  # The job is not included in UPDATE_PIPELINE_IMAGES pipelines.
     - job: modify-project-json
       optional: true

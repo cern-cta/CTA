@@ -14,7 +14,6 @@ with project_json_path.open() as f:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--platform", default=project_json["dev"]["defaultPlatform"])
-parser.add_argument("--format", choices=("rpm", "deb"), default="rpm")
 args = parser.parse_args()
 
 platform = args.platform
@@ -24,14 +23,17 @@ if platform not in project_json["platforms"]:
     print(f"Error: invalid platform '{platform}'. Supported options are: {valid_platforms}", file=sys.stderr)
     sys.exit(1)
 
+# The target platform determines the native dependency syntax.
+package_format = "deb" if platform.startswith(("debian", "ubuntu")) else "rpm"
+
 packages = project_json["platforms"][platform]["buildRequires"]
 
 requirements = []
 for package, version in packages.items():
     for name in project_json["packageGroups"].get(package, [package]):
-        if args.format == "deb":
+        if package_format == "deb":
             requirements.append(f"{name} ({version})" if version else name)
         else:
             requirements.append(f"BuildRequires: {name} {version}".rstrip())
 
-print((",\n " if args.format == "deb" else "\n").join(requirements))
+print((",\n " if package_format == "deb" else "\n").join(requirements))

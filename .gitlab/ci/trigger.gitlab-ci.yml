@@ -108,6 +108,22 @@ trigger-oracle-disabled-pipeline:
           enable-oracle-support: false
     strategy: mirror
 
+# Reuse the platform-selected package build; runtime images and tests come later.
+trigger-debian-pipeline:
+  extends:
+    - .trigger-child-pipeline
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "debian13"
+          scheduler-type: "pgsched"
+          enable-oracle-support: false
+          enable-internal-repos: false
+          enable-sbom-generation: false
+    strategy: mirror
+
 trigger-sonarcloud-pipeline:
   allow_failure: true
   stage: trigger

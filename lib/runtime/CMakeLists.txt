@@ -17,7 +17,7 @@ if(CTA_PACKAGE_FORMAT STREQUAL "deb")
   # Debian ships cpp-httplib as a shared library rather than a header-only library.
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(HTTPLIB REQUIRED IMPORTED_TARGET cpp-httplib)
-  target_link_libraries(ctaruntime PUBLIC PkgConfig::HTTPLIB)
+  target_link_libraries(ctaruntime PRIVATE PkgConfig::HTTPLIB)
 endif()
 target_include_directories(ctaruntime
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include

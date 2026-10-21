@@ -966,11 +966,6 @@ build_cta() {
   if [[ $clean_build_dirs == true ]]; then
     rebuild_source_packages=true
     reinstall_source_packages=true
-    log_task "Removing build directories..."
-    rm -rf -- "${project_root}/build/${platform}"
-    if [[ $platform == debian13 && -f "${project_root}/debian/.cta-generated" && ! -L "${project_root}/debian" ]]; then
-      rm -rf -- "${project_root}/debian"
-    fi
   fi
 
   # Remove the project-specific container if reset is requested.
@@ -1049,6 +1044,8 @@ build_cta() {
       --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
     )
   fi
+  # Let the package builder clean both build output and generated packaging state inside the container.
+  [[ $clean_build_dirs == true ]] && build_package_flags+=(--clean-build-dir)
   [[ $enable_debug_image == false ]] && build_package_flags+=(--skip-test-packages)
   [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
   [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)

@@ -4,7 +4,7 @@
 
 add_subdirectory(cta-catalogue-schema)
 
-include_directories (${POSTGRES_INCLUDE_DIRS})
+include_directories (${PostgreSQL_INCLUDE_DIRS})
 
 if(CTA_WITH_ORACLE)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})

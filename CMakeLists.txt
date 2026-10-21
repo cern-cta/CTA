@@ -181,7 +181,7 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   find_package(opentelemetry-cpp CONFIG REQUIRED)
   find_package(GRPC REQUIRED)
   find_package(xrootdclient REQUIRED)
-  find_package(postgres REQUIRED)
+  find_package(PostgreSQL REQUIRED)
   if(CTA_PACKAGE_FORMAT STREQUAL "deb")
     # Debian's Corrosion 0.5 cannot parse recent rustup toolchain-list output.
     # Let rustup's proxies select the toolchain from rust-toolchain.toml instead.
@@ -246,11 +246,11 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   # Rust-based tools
   set(CTA_RUST_TOOLS cta-eos-restore-files)
 
+  include(cmake/RustToolArtifacts.cmake)
   foreach(tool IN LISTS CTA_RUST_TOOLS)
     install(PROGRAMS $<TARGET_FILE:${tool}> DESTINATION ${CMAKE_INSTALL_BINDIR})
+    cta_add_rust_tool_artifacts(${tool})
   endforeach()
-
-  include(cmake/RustToolArtifacts.cmake)
 
   # Corrosion can't handle tests
   add_custom_target(cta-rust-tests

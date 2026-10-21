@@ -748,18 +748,11 @@ void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMse
 
 std::string generate256BitHex() {
   std::array<uint8_t, 32> bytes = {0};
-  // Do not return a partially initialized token if the entropy read fails.
-  size_t filled = 0;
-  while (filled < bytes.size()) {
-    const auto count = getrandom(bytes.data() + filled, bytes.size() - filled, 0);
-    if (count < 0 && errno == EINTR) {
-      continue;
-    }
-    exception::Errnum::throwOnMinusOne(count, "generate256BitHex: getrandom failed");
-    if (count == 0) {
-      throw exception::Exception("generate256BitHex: getrandom returned no data");
-    }
-    filled += static_cast<size_t>(count);
+  // Reject failed or incomplete entropy reads rather than returning a partially initialized token.
+  const auto count = getrandom(bytes.data(), bytes.size(), 0);
+  exception::Errnum::throwOnMinusOne(count, "generate256BitHex: getrandom failed");
+  if (static_cast<size_t>(count) != bytes.size()) {
+    throw exception::Exception("generate256BitHex: getrandom returned incomplete data");
   }
 
   std::ostringstream oss;

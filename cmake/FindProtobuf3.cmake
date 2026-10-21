@@ -21,27 +21,16 @@
 # (To distribute this file outside of CMake, substitute the full
 #  License text for the above reference.)
 
-set(PROTOBUF3_ROOT /usr)
-#set(PROTOBUF3_ROOT /opt/eos)
-
-
-set(PROTOBUF3_RPATH ${PROTOBUF3_ROOT}/lib64)
-
 set(PROTOBUF3_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Use the same prefix search policy for the compiler, headers, and library.
 find_program(PROTOBUF3_PROTOC3_EXECUTABLE
-    NAMES ${PROTOBUF3_ROOT}/bin/protoc
-    DOC "Version 3 of The Google Protocol Buffers Compiler"
-)
-
+  NAMES protoc
+  DOC "The Google Protocol Buffers Compiler")
 find_path(PROTOBUF3_INCLUDE_DIRS
-  google/protobuf/message.h
-  PATHS ${PROTOBUF3_ROOT}/include)
-
-
+  NAMES google/protobuf/message.h)
 find_library(PROTOBUF3_LIBRARIES
-  NAME protobuf
-  PATHS ${PROTOBUF3_RPATH})
+  NAMES protobuf)
 
 get_filename_component(PROTOBUF3_RPATH "${PROTOBUF3_LIBRARIES}" DIRECTORY)
 
