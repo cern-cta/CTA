@@ -147,7 +147,7 @@ Provides the daemon that manages tape drives and tape I/O for CTA.
 %{_libdir}/libctatapedrao.so.*
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
 %{_bindir}/cta-taped
-%doc %{_docdir}/cta/examples/cta-taped.example.conf
+%doc %{_docdir}/cta-taped/examples/cta-taped.example.conf
 %{_mandir}/man1/cta-taped.1*
 %config(noreplace) %{_sysconfdir}/sysconfig/cta-taped
 %{_unitdir}/cta-taped.service
@@ -181,7 +181,7 @@ Provides the daemon that performs background maintenance tasks for CTA.
 %endif
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-maintd
 %{_bindir}/cta-maintd
-%doc %{_docdir}/cta/examples/cta-maintd.example.toml
+%doc %{_docdir}/cta-maintd/examples/cta-maintd.example.toml
 %{_mandir}/man1/cta-maintd.1*
 %{_unitdir}/cta-maintd.service
 
@@ -213,9 +213,9 @@ Provides the gRPC frontend for admin and workflow commands to CTA.
 %{_bindir}/cta-frontend-grpc
 %{_unitdir}/cta-frontend-grpc.service
 %config(noreplace) %{_sysconfdir}/sysconfig/cta-frontend-grpc
-%doc %{_docdir}/cta/examples/cta-frontend.example.conf
-%doc %{_docdir}/cta/examples/cta-frontend-grpc.example.toml
-%doc %{_docdir}/cta/examples/jwt-revoke-list.example.toml
+%doc %{_docdir}/cta-frontend-grpc/examples/cta-frontend.example.conf
+%doc %{_docdir}/cta-frontend-grpc/examples/cta-frontend-grpc.example.toml
+%doc %{_docdir}/cta-frontend-grpc/examples/jwt-revoke-list.example.toml
 %{_mandir}/man1/cta-frontend-grpc.1*
 
 %post -n cta-frontend-grpc
@@ -242,7 +242,7 @@ Provides the Remote Media Changer daemon used by CTA to control tape libraries.
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
 %{_mandir}/man1/cta-rmcd.1*
 %{_bindir}/cta-rmcd
-%doc %{_docdir}/cta/examples/cta-rmcd.example.toml
+%doc %{_docdir}/cta-rmcd/examples/cta-rmcd.example.toml
 %{_unitdir}/cta-rmcd.service
 
 %post -n cta-rmcd
@@ -284,7 +284,7 @@ Provides shared libraries and instrumentation for CTA telemetry.
 %{_libdir}/libctatelemetryrmcd.so.*
 %{_libdir}/libctatelemetryscheduler.so.*
 %{_libdir}/libctatelemetrytaped.so.*
-%doc %{_docdir}/cta/examples/cta-otel.example.yaml
+%doc %{_docdir}/cta-lib-telemetry/examples/cta-otel.example.yaml
 
 %package -n cta-lib-runtime
 Summary: CERN Tape Archive application runtime library
@@ -355,7 +355,7 @@ Provides shared libraries for accessing the CTA catalogue.
 %{_libdir}/libctardbmswrapper.so.*
 %{_libdir}/libctaschemachecker.so.*
 %{_libdir}/libctastatistics.so.*
-%doc %{_docdir}/cta/examples/cta-catalogue.example.conf
+%doc %{_docdir}/cta-lib-catalogue/examples/cta-catalogue.example.conf
 
 %package -n cta-lib-scheduler
 Summary: CERN Tape Archive scheduler libraries
@@ -378,7 +378,7 @@ Provides shared libraries for CTA scheduling and disk access.
 %{_libdir}/libctaobjectstore.so.*
 %endif
 %{_libdir}/libctadisk.so.*
-%doc %{_docdir}/cta/examples/cta-scheduler.example.conf
+%doc %{_docdir}/cta-lib-scheduler/examples/cta-scheduler.example.conf
 
 # =========================================================================
 #  Tools
@@ -395,7 +395,7 @@ Provides command-line tools for administering CTA.
 %license COPYING
 %{_bindir}/cta-admin
 %{_mandir}/man1/cta-admin.1*
-%doc %{_docdir}/cta/examples/cta-admin.example.conf
+%doc %{_docdir}/cta-admin/examples/cta-admin.example.conf
 
 %if "%{usePgsched}" == "0"
 %package -n cta-scheduler-utils

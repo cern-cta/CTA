@@ -138,7 +138,7 @@ XRD\_CONNECTIONRETRY *1*
 
 */etc/cta/cta-cli.conf*
 
-:   See **CONFIGURATION** above, and */usr/share/doc/cta/examples/cta-admin.example.conf*.
+:   See **CONFIGURATION** above, and *cta-admin.example.conf (in the owning package’s documentation)*.
 
 # BUGS
 

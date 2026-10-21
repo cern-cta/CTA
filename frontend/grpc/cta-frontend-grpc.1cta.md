@@ -74,7 +74,7 @@ cta-frontend-grpc --- gRPC-based Frontend for CTA
 
 */etc/cta/cta-catalogue.conf*
 
-:   The CTA catalog configuration file. See */usr/share/doc/cta/examples/cta-catalogue.example.conf*.
+:   The CTA catalog configuration file. See *cta-catalogue.example.conf (in the owning package’s documentation)*.
 
 # SEE ALSO
 

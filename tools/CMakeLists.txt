@@ -71,4 +71,4 @@ add_custom_command(
 add_manpage(cta-admin SOURCE "${CTA_ADMIN_MANPAGE_MARKDOWN}")
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-install(FILES cta-admin.example.conf DESTINATION ${CMAKE_INSTALL_DOCDIR}/examples)
+install(FILES cta-admin.example.conf DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/${CTA_ADMIN_DOC_PACKAGE}/examples)
