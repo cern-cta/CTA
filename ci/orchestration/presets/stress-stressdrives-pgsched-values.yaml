@@ -56,16 +56,16 @@ taped:
       # reads complete in 1-3 ms each, so 5–15 buffers are in flight at any time.
       bufferCount: 500
       # DiskReadThreadPool is created per drive session (not shared across drives).
-      # With 30 drives × 40 threads = 1200 concurrent XRootD open/read/close ops,
-      # the EOS FSTs (5 × 256 = 1280 max threads) are saturated by disk reads alone,
-      # causing each read to stall for seconds.  The adaptive mirror in StressDrive
-      # measures idle time between files (time the tape thread waits for the next
-      # pre-fetched file) and sleeps for that duration, so saturating EOS would make
-      # the drive also slow down.  5 threads keep reads completing in 1–3 ms so
-      # the tape thread is never idle: while it writes file N, threads pre-read
-      # N+1..N+4.  30 drives × 5 = 150 total XRootD connections, well within
-      # EOS capacity (5 FSTs × 256 threads = 1280).
-      nbDiskThreads: 5
+      # 1 thread per drive keeps EOS load minimal: 30 drives × 1 = 30 concurrent
+      # XRootD connections, well within EOS capacity.  The tape thread blocks until
+      # the single disk thread delivers each file, so the effective per-drive rate
+      # is bounded by EOS read latency (~1–5 ms/file → ~200–1000 files/sec/drive).
+      # The adaptive mirror in StressDrive mirrors this arrival gap, so the drive
+      # never appears idle in monitoring.
+      # A higher value (e.g. 5) would allow pre-fetching N+1..N+4 while writing N,
+      # but at the cost of 30 × 5 = 150 concurrent EOS connections that saturate
+      # the MGM and cause maintd archive-report queries to time out (code 206).
+      nbDiskThreads: 1
       logMask: "WARNING"
       # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
       # with this many connections.  With N drives: N × 2 connections consumed.
