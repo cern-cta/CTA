@@ -5,7 +5,7 @@
 #pragma once
 
 //! maximum length for a robot name
-constexpr int CA_MAXRBTNAMELEN = 17;
+constexpr int CA_MAXRBTNAMELEN = 64;
 
 struct robot_info {
   char inquiry[32];
