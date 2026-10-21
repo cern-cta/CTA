@@ -126,14 +126,14 @@ int rmc_main(const std::string& robot,
     return 1;
   }
 
-  g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
-
+  int pathLength;
   if (robot.starts_with('/')) {
-    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot.c_str());
+    pathLength = snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot.c_str());
   } else {
-    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot.c_str());
+    pathLength =
+      snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot.c_str());
   }
-  if (g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
+  if (pathLength < 0 || static_cast<size_t>(pathLength) >= sizeof(g_extended_robot_info.smc_ldr)) {
     lc.log(cta::log::CRIT, "Invalid media changer path: " + robot);
     return 1;
   }
