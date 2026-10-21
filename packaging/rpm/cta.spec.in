@@ -434,7 +434,9 @@ Provides scripts and command-line utilities for administering the CTA catalogue.
 %{_bindir}/cta-catalogue-schema-verify
 %{_bindir}/cta-database-poll
 %{_bindir}/cta-statistics-save
+%{_mandir}/man1/cta-statistics-save.1*
 %{_bindir}/cta-statistics-update
+%{_mandir}/man1/cta-statistics-update.1*
 %{_mandir}/man1/cta-catalogue-admin-user-create.1*
 %{_mandir}/man1/cta-catalogue-schema-create.1*
 %{_mandir}/man1/cta-catalogue-schema-drop.1*
@@ -451,7 +453,9 @@ Provides scripts and command-line utilities for administering the CTA scheduler 
 %files -n cta-scheduler-utils
 %license COPYING
 %{_bindir}/cta-scheduler-schema-create
+%{_mandir}/man1/cta-scheduler-schema-create.1*
 %{_bindir}/cta-scheduler-schema-drop
+%{_mandir}/man1/cta-scheduler-schema-drop.1*
 %endif
 
 %package -n cta-smc
@@ -497,6 +501,7 @@ namespace used for CTA disk buffers.
 %files -n cta-eosdf
 %license COPYING
 %{_bindir}/cta-eosdf.sh
+%{_mandir}/man1/cta-eosdf.sh.1*
 
 %package -n cta-tools-rs
 Summary: Rust CLI tools for CTA
@@ -505,7 +510,6 @@ Provides CTA's Rust-based CLI tools
 %files -n cta-tools-rs
 %license COPYING
 %{_bindir}/cta-eos-restore-files
-%{_bindir}/cta-eos-restore-files-env
 %{_datadir}/bash-completion/completions/cta-eos-restore-files
 %{_datadir}/zsh/site-functions/_cta-eos-restore-files
 %{_datadir}/fish/vendor_completions.d/cta-eos-restore-files.fish
@@ -603,7 +607,9 @@ Provides command-line tools for testing tapes written in external formats.
 %files -n cta-test-external-tape-formats
 %license COPYING
 %{_bindir}/cta-test-osm-reader
+%{_mandir}/man1/cta-test-osm-reader.1*
 %{_bindir}/cta-test-enstore-large-reader
+%{_mandir}/man1/cta-test-enstore-large-reader.1*
 
 # =========================================================================
 #  Development

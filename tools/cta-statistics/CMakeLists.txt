@@ -51,3 +51,9 @@ add_executable(cta-statistics-update
 target_link_libraries (cta-statistics-update ctastatistics)
 
 install (TARGETS cta-statistics-update DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+add_manpage(cta-statistics-save)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-statistics-save.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+
+add_manpage(cta-statistics-update)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-statistics-update.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

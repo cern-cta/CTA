@@ -89,3 +89,9 @@ target_link_libraries(cta-test-enstore-large-reader
 )
 
 install(TARGETS cta-test-enstore-large-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+add_manpage(cta-test-osm-reader)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-test-osm-reader.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+
+add_manpage(cta-test-enstore-large-reader)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-test-enstore-large-reader.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

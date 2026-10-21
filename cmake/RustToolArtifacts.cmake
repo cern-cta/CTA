@@ -1,13 +1,10 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Tools expose gen-completion and gen-man-pages through their <tool>-env applet.
+# Build-time helpers expose gen-completion and gen-man-pages through the <tool>-env applet.
 function(cta_add_rust_tool_artifacts tool)
   set(artifact_dir "${CMAKE_CURRENT_BINARY_DIR}/${tool}-artifacts")
   file(MAKE_DIRECTORY "${artifact_dir}")
-
-  # Keep the installed multicall entry point relative to the installed executable.
-  file(CREATE_LINK "${tool}" "${CMAKE_CURRENT_BINARY_DIR}/${tool}-env" SYMBOLIC)
 
   set(artifacts
     "${artifact_dir}/${tool}.bash"
@@ -30,7 +27,6 @@ function(cta_add_rust_tool_artifacts tool)
     VERBATIM)
   add_custom_target(${tool}-artifacts ALL DEPENDS ${artifacts})
 
-  install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/${tool}-env" DESTINATION ${CMAKE_INSTALL_BINDIR})
   install(FILES "${artifact_dir}/${tool}.bash"
     DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions RENAME ${tool})
   install(FILES "${artifact_dir}/${tool}.zsh"

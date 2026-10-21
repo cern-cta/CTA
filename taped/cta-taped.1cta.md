@@ -1,6 +1,6 @@
 ---
 date: 2025-08-12
-section: 1cta
+section: 1
 title: CTA-TAPED
 header: The CERN Tape Archive (CTA)
 ---
@@ -337,7 +337,7 @@ XrdSecSSSKT
 
 # SEE ALSO
 
-**cta-rmcd**(1cta)
+**cta-rmcd**(1)
 
 CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 

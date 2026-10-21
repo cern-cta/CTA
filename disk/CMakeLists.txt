@@ -34,4 +34,6 @@ if(CTA_BUILD_TEST_PACKAGES)
   install(TARGETS ctadiskunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
+add_manpage(cta-eosdf.sh)
 install(PROGRAMS scripts/cta-eosdf.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-eosdf.sh.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
