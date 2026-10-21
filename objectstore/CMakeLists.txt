@@ -10,6 +10,11 @@ set (CTAProtoFiles
 set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # Generated protobuf copies span adjacent fields, triggering GCC's object-size warning.
+  set_property(SOURCE ${CTAProtoSources} APPEND PROPERTY COMPILE_OPTIONS -Wno-error=stringop-overflow)
+endif()
+
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED
   ${CTAProtoSources}

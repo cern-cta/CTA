@@ -26,13 +26,13 @@ struct PhysicalLibrary {
   std::optional<std::string> guiUrl;
   std::optional<std::string> webcamUrl;
   std::optional<std::string> location;
-  uint64_t nbPhysicalCartridgeSlots;
+  uint64_t nbPhysicalCartridgeSlots = 0;
   std::optional<uint64_t> nbAvailableCartridgeSlots;
-  uint64_t nbPhysicalDriveSlots;
+  uint64_t nbPhysicalDriveSlots = 0;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::optional<std::string> comment;
-  bool isDisabled;
+  bool isDisabled = false;
   std::optional<std::string> disabledReason;
 };  // struct PhysicalLibrary
 

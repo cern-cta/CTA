@@ -6,6 +6,8 @@ usr/lib/*/libctacatalogueinmemory.so
 usr/lib/*/libctacataloguepostgres.so
 usr/lib/*/libctacataloguesqlite.so
 usr/lib/*/libctacommon.so
+usr/lib/*/libctaprotobuf.so
+usr/lib/*/libctascsi.so
 usr/lib/*/libctadisk.so
 usr/lib/*/libctadropschemacmd.so
 usr/lib/*/libctamediachanger.so

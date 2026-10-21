@@ -22,6 +22,7 @@
 #include "taped/drive/FakeDrive.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/system/Wrapper.hpp"
+#include "tests/TestingArchiveJob.hpp"
 
 #include <cstdio>
 #include <gtest/gtest.h>
@@ -37,16 +38,6 @@ public:
                          cta::common::dataStructures::ArchiveFile(),
                          1,
                          cta::PositioningMethod::ByBlock) {}
-};
-
-class TestingArchiveJob : public cta::ArchiveJob {
-public:
-  TestingArchiveJob()
-      : cta::ArchiveJob(nullptr,
-                        *(static_cast<cta::catalogue::Catalogue*>(nullptr)),
-                        cta::common::dataStructures::ArchiveFile(),
-                        "",
-                        cta::common::dataStructures::TapeFile()) {}
 };
 
 class OSMTapeFileTest : public ::testing::TestWithParam<cta::common::dataStructures::Label::Format> {

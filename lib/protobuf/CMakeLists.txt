@@ -22,10 +22,18 @@ set_source_files_properties(
   PROPERTIES GENERATED TRUE)
 
 # Generated CTA protobuf message types shared by clients and servers
-add_library(ctaprotobuf ${ProtoSourcesCtaFrontend})
+add_library(ctaprotobuf SHARED ${ProtoSourcesCtaFrontend})
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # Generated protobuf copies span adjacent fields, triggering GCC's object-size warning.
+  target_compile_options(ctaprotobuf PRIVATE -Wno-error=stringop-overflow)
+endif()
+
 set_target_properties(ctaprotobuf PROPERTIES
   LINKER_LANGUAGE CXX
-  POSITION_INDEPENDENT_CODE TRUE)
+  POSITION_INDEPENDENT_CODE TRUE
+  SOVERSION "${CTA_SOVERSION}"
+  VERSION "${CTA_LIBVERSION}")
+install(TARGETS ctaprotobuf DESTINATION ${CMAKE_INSTALL_LIBDIR})
 target_include_directories(ctaprotobuf PUBLIC
   ${PROJECT_SOURCE_DIR}/lib
   ${CMAKE_CURRENT_BINARY_DIR}

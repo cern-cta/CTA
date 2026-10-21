@@ -20,6 +20,17 @@ function(cta_enable_sanitizers)
   add_compile_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
   add_link_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
 
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC reports optional/variant cleanup as possibly uninitialized with sanitizer instrumentation.
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=maybe-uninitialized>)
+  endif()
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
+    # GCC LTO makes inline standard-library globals trigger false ASan ODR violations across shared libraries.
+    add_compile_options(-fno-lto)
+    add_link_options(-fno-lto)
+  endif()
+
   if(CTA_SANITIZERS MATCHES "(^|,)undefined(,|$)")
     # Make UBSan findings fatal regardless of the runtime environment.
     add_compile_options(-fno-sanitize-recover=undefined)

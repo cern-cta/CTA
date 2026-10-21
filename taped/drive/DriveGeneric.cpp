@@ -880,7 +880,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
     // udsName and fseq are both 10 characters including terminating NULL
     strncpy(reinterpret_cast<char*>(ud.get()[i].udsName),
             reinterpret_cast<char*>(it->fseq),
-            sizeof(SCSI::Structures::RAO::udsDescriptor_t::udsName));
+            sizeof(SCSI::Structures::RAO::udsDescriptor_t::udsName) - 1);
     SCSI::Structures::setU64(ud.get()[i].beginLogicalObjID, it->begin);
     SCSI::Structures::setU64(ud.get()[i].endLogicalObjID, it->end);
     ++it;

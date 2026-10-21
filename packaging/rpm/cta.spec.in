@@ -275,6 +275,8 @@ Provides common shared libraries used by CTA components.
 %files -n cta-lib-common
 %license COPYING
 %{_libdir}/libctacommon.so.*
+%{_libdir}/libctaprotobuf.so.*
+%{_libdir}/libctascsi.so.*
 %{_libdir}/libctatapedaemoncommon.so.*
 
 %package -n cta-lib-telemetry
@@ -642,6 +644,8 @@ Provides unversioned linker names for developing applications with CTA shared li
 %files -n cta-devel
 %license COPYING
 %{_libdir}/libctacommon.so
+%{_libdir}/libctaprotobuf.so
+%{_libdir}/libctascsi.so
 %{_libdir}/libctatapedaemoncommon.so
 %{_libdir}/libctatelemetry.so
 %{_libdir}/libctatelemetryfrontend.so
