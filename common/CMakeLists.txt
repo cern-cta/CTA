@@ -183,6 +183,8 @@ target_include_directories(ctaauth PUBLIC ${CMAKE_SOURCE_DIR}/common/jwt-cpp/inc
 target_link_libraries(ctaauth PRIVATE curl OpenSSL::Crypto)
 target_link_libraries(ctacommonunittests ctaauth)
 
-install(TARGETS ctacommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctacommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 add_executable(mutexLtrace process/threading/MutexLtrace.cpp)
 target_link_libraries(mutexLtrace ctacommon)

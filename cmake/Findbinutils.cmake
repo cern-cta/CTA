@@ -7,12 +7,10 @@
 #     BINUTILS_LIBRARIES
 
 find_path(BINUTILS_INCLUDE_DIRS
-  bfd.h
-  PATHS /usr/include)
+  bfd.h)
 
 find_library(BINUTILS_LIBRARIES
-  NAME bfd
-  PATHS /usr/lib64)
+  NAMES bfd)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(binutils DEFAULT_MSG

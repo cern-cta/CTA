@@ -30,6 +30,8 @@ set_property(TARGET ctadiskunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadiskunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctadisk DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS ctadiskunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctadiskunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 install(PROGRAMS scripts/cta-eosdf.sh DESTINATION ${CMAKE_INSTALL_BINDIR})

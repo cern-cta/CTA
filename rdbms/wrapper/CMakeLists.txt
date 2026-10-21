@@ -4,7 +4,6 @@
 add_compile_options(-Wshadow)
 
 find_package (sqlite REQUIRED)
-include_directories (${POSTGRES_INCLUDE_DIRS})
 
 if(CTA_WITH_ORACLE)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
@@ -73,7 +72,7 @@ set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctardbmspostgres ctardbms ctacommon ctapluginmanager
-  ${POSTGRES_LIBRARIES})
+  PostgreSQL::PostgreSQL)
 
 install(TARGETS ctardbmspostgres DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
@@ -135,4 +134,6 @@ if(CTA_WITH_ORACLE)
   target_link_libraries (ctardbmswrapperunittests ctardbmsocci)
 endif()
 
-install(TARGETS ctardbmswrapperunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctardbmswrapperunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

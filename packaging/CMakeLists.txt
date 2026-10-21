@@ -10,7 +10,10 @@ install(FILES ../lib/runtime/cta-logging.schema.json
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 foreach(service cta-frontend-grpc cta-maintd cta-rmcd cta-taped)
-  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/systemd/${service}.service" unit)
+  set(unit_source "${CMAKE_CURRENT_SOURCE_DIR}/systemd/${service}.service")
+  # Regenerate the installed unit when its source changes.
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${unit_source}")
+  file(READ "${unit_source}" unit)
   string(REPLACE "/etc/sysconfig" "${CTA_SERVICE_ENV_DIR}" unit "${unit}")
   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${service}.service" "${unit}")
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${service}.service" DESTINATION ${CTA_SYSTEMD_UNIT_DIR})

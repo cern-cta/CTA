@@ -38,4 +38,6 @@ add_library(ctatapedraounittests SHARED
 set_property(TARGET ctatapedraounittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedraounittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctatapedraounittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctatapedraounittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

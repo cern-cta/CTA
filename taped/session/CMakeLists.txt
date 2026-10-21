@@ -58,4 +58,7 @@ target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession)
 if (NOT CTA_USE_PGSCHED)
   target_link_libraries(ctatapedsessionunittests PRIVATE ctaobjectstore)
 endif()
-install(TARGETS ctatapedsessionunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctatapedsessionunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

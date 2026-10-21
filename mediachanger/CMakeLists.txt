@@ -47,4 +47,6 @@ set_property(TARGET ctamediachangerunittests PROPERTY   VERSION "${CTA_LIBVERSIO
 target_link_libraries (ctamediachangerunittests
   ctamediachanger)
 
-install (TARGETS ctamediachangerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install (TARGETS ctamediachangerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

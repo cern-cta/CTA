@@ -62,8 +62,7 @@ if(NOT CTA_USE_PGSCHED)
     target_link_libraries (ctascheduler ctacommon ctaprotobufconversions ctaobjectstore ctadisk ctatelemetryscheduler)
 else()
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
-    target_include_directories(ctascheduler PRIVATE ${POSTGRES_INCLUDE_DIRS})
-    target_link_libraries (ctascheduler ctaschedulerschema ctacommon ctaprotobufconversions ctadisk cryptopp
+    target_link_libraries (ctascheduler ctaschedulerschema ctardbmspostgres ctacommon ctaprotobufconversions ctadisk cryptopp
       ctatelemetryscheduler)
 endif()
 
@@ -102,4 +101,6 @@ target_link_libraries (ctaschedulerunittests ctascheduler)
 set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctaschedulerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctaschedulerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

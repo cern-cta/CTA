@@ -28,4 +28,6 @@ target_link_libraries(cta-taped-integration-tests
   cta-unit-test-helper
   ctacommon)
 
-install(TARGETS cta-taped-integration-tests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS cta-taped-integration-tests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
