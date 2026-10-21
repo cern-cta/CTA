@@ -76,8 +76,6 @@ target_link_libraries(cta-test-osm-reader
   gtest
 )
 
-install(TARGETS cta-test-osm-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
-
 add_executable(cta-test-enstore-large-reader
   EnstoreLargeReaderTest.cpp)
 
@@ -88,10 +86,7 @@ target_link_libraries(cta-test-enstore-large-reader
   gtest
 )
 
-install(TARGETS cta-test-enstore-large-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-add_manpage(cta-test-osm-reader)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-test-osm-reader.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-
-add_manpage(cta-test-enstore-large-reader)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-test-enstore-large-reader.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+# RPMs retain a separate reader package; Debian includes these in the optional tests package.
+if(CTA_BUILD_TEST_PACKAGES OR CTA_PACKAGE_FORMAT STREQUAL "rpm")
+  install(TARGETS cta-test-osm-reader cta-test-enstore-large-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

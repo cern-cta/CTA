@@ -24,37 +24,6 @@ spec:
     fi
   - dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo
 
-lintian:
-  stage: test
-  needs:
-    - job: build-cta
-      artifacts: true
-    - job: check-merge-train-duplicate
-      optional: true
-  rules:
-    - if: '"$[[ inputs.platform ]]" != "debian13" || $CUSTOM_CTA_IMAGE_TAG != ""'
-      when: never
-    - when: on_success
-  image: $IMAGE_LINTIAN
-  variables:
-    GIT_SUBMODULE_STRATEGY: "none"
-  script:
-    - |
-      set -o pipefail
-      shopt -s nullglob
-      packages=(build/$[[ inputs.platform ]]/DEB/*.deb build/$[[ inputs.platform ]]/DEB/*.ddeb)
-      if (( ${#packages[@]} == 0 )); then
-        echo "No Debian binary packages found in build/$[[ inputs.platform ]]/DEB" >&2
-        exit 1
-      fi
-      # Report warnings without failing while packaging improvements are in progress.
-      lintian --allow-root --fail-on error --color never "${packages[@]}" 2>&1 | tee lintian.log
-  artifacts:
-    when: always
-    expire_in: 30 days
-    paths:
-      - lintian.log
-
 unit-test-python:
   stage: test
   needs:
@@ -375,3 +344,36 @@ test-cta-debian-install:
         version=$(dpkg-deb --field "$package" Version)
         test "$(dpkg-query --show --showformat='${Status} ${Version}' "$name")" = "install ok installed $version"
       done
+
+
+# Uses lintian to test Debian package compliance
+test-cta-debian-compliance:
+  stage: test
+  needs:
+    - job: build-cta
+      artifacts: true
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '"$[[ inputs.platform ]]" != "debian13" || $CUSTOM_CTA_IMAGE_TAG != ""'
+      when: never
+    - when: on_success
+  image: $IMAGE_LINTIAN
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  script:
+    - |
+      set -o pipefail
+      shopt -s nullglob
+      packages=(build/$[[ inputs.platform ]]/DEB/*.deb build/$[[ inputs.platform ]]/DEB/*.ddeb)
+      if (( ${#packages[@]} == 0 )); then
+        echo "No Debian binary packages found in build/$[[ inputs.platform ]]/DEB" >&2
+        exit 1
+      fi
+      # Report warnings without failing while packaging improvements are in progress.
+      lintian --allow-root --fail-on error --color never "${packages[@]}" 2>&1 | tee lintian.log
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - lintian.log

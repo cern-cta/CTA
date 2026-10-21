@@ -70,15 +70,10 @@ Description: CERN Tape Archive administrative tools
  Provides administration, database schema, tape and EOS tools
  with their manuals.
 
-Package: cta-test-external-tape-formats
-Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version})
-Description: CERN Tape Archive external tape format tests
- Provides tools for reading test tapes written in OSM and Enstore formats.
-
 Package: cta-tests
 Build-Profiles: <!pkg.cta.notests>
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, cta-taped (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), valgrind, postgresql, moreutils, make, libgtest-dev, libtirpc-dev
 Description: CERN Tape Archive unit and integration tests
- Provides test runners, test libraries and dynamic-analysis support files.
+ Provides test runners, test libraries, dynamic-analysis support files
+ and tools for reading test tapes written in OSM and Enstore formats.

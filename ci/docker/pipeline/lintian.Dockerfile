@@ -3,7 +3,6 @@
 
 FROM debian:13-slim
 
-# Tool updates are adopted through the versioned pipeline-image refresh.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends lintian && \
     rm -rf /var/lib/apt/lists/*

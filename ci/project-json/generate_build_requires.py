@@ -23,7 +23,6 @@ if platform not in project_json["platforms"]:
     print(f"Error: invalid platform '{platform}'. Supported options are: {valid_platforms}", file=sys.stderr)
     sys.exit(1)
 
-# The target platform determines the native dependency syntax.
 package_format = "deb" if platform.startswith(("debian", "ubuntu")) else "rpm"
 
 packages = project_json["platforms"][platform]["buildRequires"]

@@ -108,7 +108,7 @@ trigger-oracle-disabled-pipeline:
           enable-oracle-support: false
     strategy: mirror
 
-# Reuse the platform-selected package build; runtime images and tests come later.
+# May need more inputs once we run more jobs in the Debian pipeline
 trigger-debian-pipeline:
   extends:
     - .trigger-child-pipeline

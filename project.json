@@ -201,6 +201,7 @@
         "opentelemetry-cpp": "= 1:1.26.0-1.debian13"
       },
       "buildRequires": {
+        "debhelper": ">= 13.25",
         "debhelper-compat": "= 13",
         "cmake": "",
         "ninja-build": "",

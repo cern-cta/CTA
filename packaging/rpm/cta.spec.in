@@ -607,9 +607,7 @@ Provides command-line tools for testing tapes written in external formats.
 %files -n cta-test-external-tape-formats
 %license COPYING
 %{_bindir}/cta-test-osm-reader
-%{_mandir}/man1/cta-test-osm-reader.1*
 %{_bindir}/cta-test-enstore-large-reader
-%{_mandir}/man1/cta-test-enstore-large-reader.1*
 
 # =========================================================================
 #  Development

@@ -18,6 +18,12 @@ RUN test "$(dpkg --print-architecture)" = amd64 && \
 RUN printf 'deb [arch=amd64 trusted=yes] %s trixie main\n' "$CTA_DEPENDENCY_REPOSITORY" \
     > /etc/apt/sources.list.d/cta-dependencies.list
 
+# Backported debhelper restores stop-on-removal handling when --no-start is used.
+RUN printf 'deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] http://deb.debian.org/debian trixie-backports main\n' \
+      > /etc/apt/sources.list.d/debian-backports.list && \
+    apt-get update && apt-get install -y --no-install-recommends -t trixie-backports debhelper && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY project.json /opt/cta/project.json
 COPY ci/project-json/generate_build_requires.py /opt/cta/ci/project-json/generate_build_requires.py
 RUN apt-get update && apt-get satisfy -y --no-install-recommends \
