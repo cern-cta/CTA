@@ -91,6 +91,7 @@ public:
   void setSTBufferWrite(bool bufWrite) override;
   drive::LBPInfo getLBPInfo() override;
   std::string getSerialNumber() override;
+  deviceInfo getDeviceInfo() override;
 
   /**
    * Adaptive-mirror write: the drive always appears busy, mirroring the

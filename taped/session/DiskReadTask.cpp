@@ -60,9 +60,15 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
     cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL).add("actualURL", sourceFile->URL());
     currentErrorToCount = "Error_diskFileToReadSizeMismatch";
-    if (migratingFileSize != sourceFile->size()) {
-      throw cta::exception::Exception("Mismatch between size given by the client "
-                                      "and the real one");
+    {
+      const size_t actualSize = sourceFile->size();
+      if (migratingFileSize != actualSize) {
+        cta::log::ScopedParamContainer spc(lc);
+        spc.add("expectedSize", migratingFileSize).add("actualSize", actualSize);
+        lc.log(cta::log::ERR, "Disk file size mismatch before read");
+        throw cta::exception::Exception("Mismatch between size given by the client "
+                                        "and the real one");
+      }
     }
     currentErrorToCount = "";
 
