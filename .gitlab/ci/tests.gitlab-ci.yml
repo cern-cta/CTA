@@ -285,7 +285,7 @@ unit-test-oracle:
     reports:
       junit: $GTEST_REPORT_FILE
 
-test-cta-release:
+test-cta-rpm-install:
   stage: test
   needs:
     - job: check-merge-train-duplicate
