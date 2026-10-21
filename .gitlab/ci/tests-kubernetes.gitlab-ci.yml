@@ -260,10 +260,10 @@ test-dcache:
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
-    - when: manual
-      allow_failure: true
     - if: '"$[[ inputs.enable-dcache-tests ]]" == "true"'
       when: on_success
+    - when: manual
+      allow_failure: true
   variables:
     PYTESTS: "tests/dcache_test.py"
     EXTRA_SPAWN_ARGS: "--dcache-enabled true --eos-enabled false"
