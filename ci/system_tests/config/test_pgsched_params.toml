@@ -76,9 +76,9 @@
     [tests.stress.drives]
 
       # Number of virtual tapes to register in the CTA catalogue.
-      # Should be >= the number of drives so the scheduler can keep all drives busy.
-      # Must be consistent with mediaTypes[].count in fake-tape-library/values.yaml.
-      num_tapes = 30
+      # Must match mediaTypes[].count in fake-tape-library/values.yaml.
+      # With 50 MB tapes and 10 M files: ~94 tapes needed; 120 gives ample headroom.
+      num_tapes = 120
 
       # VID prefix: tapes are named <vid_prefix><4-digit index>, e.g. ST0001..ST0020.
       # Must be at most 2 characters so that the full VID fits in the 6-character
@@ -96,5 +96,7 @@
       base_dir = "/dev/shm/cta-stress"
 
       # Simulated tape capacity in bytes reported to the CTA catalogue.
-      # With 16-byte files this is never actually approached.
-      tape_capacity_bytes = 1099511627776  # 1 TB
+      # Must match capacityBytes in fake-tape-library/values.yaml.
+      # Exact value: 80 (VOL1) + 5 × 20000 × 496 (bytes/file) = 49 600 080.
+      # See capacityBytes in fake-tape-library/values.yaml for the derivation.
+      tape_capacity_bytes = 49600080  # ≈49.6 MB, exact 5-batch boundary
