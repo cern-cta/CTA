@@ -4,8 +4,8 @@
 # --- Title checks ---
 
 ALLOWED_PREFIXES = %w[
-  [CI] [Misc] [Tools] [catalogue]
-  [frontend] [scheduler] [taped] [rmcd] [maintd] 
+  [ci] [misc] [tools] [catalogue]
+  [frontend] [scheduler] [taped] [rmcd] [maintd]
   [libs] [packaging] [runtime]
 ]
 
