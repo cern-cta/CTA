@@ -122,8 +122,10 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacommon DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
+# Keep version globals in this shared library; propagating the static archive duplicates their destructors.
 target_link_libraries (ctacommon
-  ctaversioninfo
+  PRIVATE ctaversioninfo
+  PUBLIC
   uuid
   cap
   json-c
