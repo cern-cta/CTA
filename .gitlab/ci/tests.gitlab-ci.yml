@@ -33,6 +33,11 @@ spec:
     - *setup-cta-install
     - mkdir -p test-results test-logs
     - |
+      # Include both lock acquisition stacks when TSan reports a potential deadlock.
+      if [[ "$[[ inputs.analysis ]]" == "thread" ]]; then
+        export TSAN_OPTIONS="${TSAN_OPTIONS:+${TSAN_OPTIONS}:}second_deadlock_stack=1"
+      fi
+    - |
       set -o pipefail
       test_status=0
       # Record failures without skipping later tests or database cleanup.
