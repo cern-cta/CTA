@@ -472,6 +472,19 @@ TEST_F(ValidateJwtTestFixture, TokenWithRevokedJtiIsRejected) {
   EXPECT_EQ(result.errorMessage.value(), "Token has been revoked");
 }
 
+TEST_F(ValidateJwtTestFixture, RevokedJtisPreserveEnvironmentSyntaxLiterally) {
+  const std::string jti = "${1INVALID}$$";
+  TempFile revokeList(makeRevokeListToml({revokedAnHourAgo(jti)}), ".toml");
+  auto authMgr = createAuthMgrWithRevokeListFile(revokeList.path());
+  authMgr->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+  EXPECT_TRUE(authMgr->isRevoked(jti));
+  auto result = authMgr->validateJwt(createTestJwt(false, "test-kid", jti), log);
+  ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token has been revoked");
+}
+
 TEST_F(ValidateJwtTestFixture, TokenWithNonRevokedJtiIsValid) {
   // Same revoke list as above, but the token carries a JTI which is not on it.
   TempFile revokeList(makeRevokeListToml({revokedAnHourAgo("revoked-001")}), ".toml");

@@ -151,7 +151,8 @@ TokenValidationResult JwtAuthManager::validateJwt(const std::string& encodedJwt,
 }
 
 std::set<std::string, std::less<>> JwtAuthManager::loadRevokedJtis(const std::string& filePath) {
-  const auto revokeFile = cta::runtime::loadFromToml<RevokeListFile>(filePath, false);
+  // Revocation entries are literal data, not configuration templates.
+  const auto revokeFile = cta::runtime::loadFromToml<RevokeListFile>(filePath, false, false);
 
   // 'revoked_at' dates are interpreted as UTC
   std::set<std::string, std::less<>> revokedJtis;

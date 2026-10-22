@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_library(ctaruntime SHARED
+  src/config/ConfigLoader.cpp
   src/config/EnvironmentSubstitution.cpp
   src/config/ValidationResult.cpp
   src/config/parsing/ParseResult.cpp

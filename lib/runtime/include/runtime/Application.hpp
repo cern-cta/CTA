@@ -209,15 +209,17 @@ public:
       return EXIT_SUCCESS;
     }
 
-    std::string configFilePath = cliOptions.configFilePath;
+    const auto document = runtime::readTomlFile(cliOptions.configFilePath);
     if (!cliOptions.runtimeDir.empty()) {
-      configFilePath = utils::copyFile(cliOptions.configFilePath, cliOptions.runtimeDir + "/config.toml", true);
+      // Publish the same buffers used for loading, without rereading or expanding the config again.
+      utils::createFileWithContents(document.original, cliOptions.runtimeDir + "/config.toml", true);
+      utils::createFileWithContents(document.resolved, cliOptions.runtimeDir + "/config.resolved.toml", true);
       utils::createFileWithContents("{\"service\": \"" + m_appName + "\", \"version\": \"" + CTA_VERSION + "\"}",
                                     cliOptions.runtimeDir + "/version.json",
                                     true);
     }
 
-    auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
+    auto config = runtime::loadFromTomlString<TConfig>(document.resolved, document.sourcePath, cliOptions.configStrict);
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;
