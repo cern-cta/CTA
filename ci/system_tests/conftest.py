@@ -81,6 +81,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=None,
         help="Override prequeue.prequeue_fraction in the stress test config (e.g. 0.9)",
     )
+    parser.addoption(
+        "--stress-retrieve-prequeue-fraction",
+        type=float,
+        default=None,
+        help="Override prequeue.retrieve_prequeue_fraction in the stress test config (e.g. 0.1)",
+    )
 
 
 # =========================================================================
