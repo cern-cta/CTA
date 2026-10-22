@@ -109,8 +109,10 @@ class ApplicationRuntimeDirectory : public ::testing::Test {
 protected:
   void SetUp() override { RuntimeDirectoryApp::wasRun = false; }
 
-  int checkConfig() {
-    Argv args {"cta-test", "--config", config.path(), "--runtime-dir", directory.path(), "--config-check"};
+  int checkConfig(bool withRuntimeDirectory = true) {
+    Argv args = withRuntimeDirectory ?
+                  Argv {"cta-test", "--config", config.path(), "--runtime-dir", directory.path(), "--config-check"} :
+                  Argv {"cta-test", "--config", config.path(), "--config-check"};
     cta::runtime::Application<RuntimeDirectoryApp, RuntimeDirectoryConfig, cta::runtime::CommonCliOptions> app(
       "cta-test",
       "");
@@ -123,53 +125,41 @@ protected:
     return std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
   }
 
-  void expectVersion() {
-    EXPECT_EQ(readSnapshot("version.json"),
-              "{\"service\": \"cta-test\", \"version\": \"" + std::string(CTA_VERSION) + "\"}");
-  }
-
   const std::string original = "value = '$${1INVALID}'\r\n[logging]\r\nlevel = 'WARNING'\r\nformat = 'json'\r\n";
-  const std::string resolved = "value = '${1INVALID}'\r\n[logging]\r\nlevel = 'WARNING'\r\nformat = 'json'\r\n";
   TempDirectory directory;
   TempFile config {original, ".toml"};
 };
 
-TEST_F(ApplicationRuntimeDirectory, ConfigWithoutReferencesHasIdenticalSnapshots) {
-  const std::string plain = "# preserved comment\nvalue = 'plain'\n[logging]\nlevel = 'WARNING'\nformat = 'json'\n";
-  config.stringFill(plain);
-  ASSERT_EQ(checkConfig(), EXIT_SUCCESS);
-  EXPECT_EQ(readSnapshot("config.toml"), plain);
-  EXPECT_EQ(readSnapshot("config.resolved.toml"), plain);
-}
-
-TEST_F(ApplicationRuntimeDirectory, ConfigCheckOverwritesStaleFiles) {
-  for (const auto* name : {"config.toml", "config.resolved.toml", "version.json"}) {
-    cta::utils::createFileWithContents(std::string(4096, 'x'), directory.path() + "/" + name);
+TEST_F(ApplicationRuntimeDirectory, ConfigCheckRejectsRuntimeDirectoryBeforeReadingConfig) {
+  ASSERT_TRUE(std::filesystem::remove(config.path()));
+  try {
+    checkConfig();
+    FAIL() << "Expected incompatible options to be rejected";
+  } catch (const cta::exception::UserError& error) {
+    EXPECT_EQ(error.getMessageValue(), "--config-check cannot be combined with --runtime-dir.");
   }
-  ASSERT_EQ(checkConfig(), EXIT_SUCCESS);
-  EXPECT_EQ(readSnapshot("config.toml"), original);
-  EXPECT_EQ(readSnapshot("config.resolved.toml"), resolved);
-  expectVersion();
+  EXPECT_TRUE(std::filesystem::is_empty(directory.path()));
+  EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
 }
 
-TEST_F(ApplicationRuntimeDirectory, ConfigCheckPublishesSnapshotsWithoutStartingApp) {
-  // Config checking does not depend on the logging schema or other auxiliary files.
-  ASSERT_EQ(checkConfig(), EXIT_SUCCESS);
+TEST_F(ApplicationRuntimeDirectory, ConfigCheckLeavesExistingSnapshotsUntouched) {
+  for (const auto* name : {"config.toml", "config.resolved.toml", "version.json"}) {
+    cta::utils::createFileWithContents("existing snapshot", directory.path() + "/" + name);
+  }
+  EXPECT_THROW(checkConfig(), cta::exception::UserError);
+  for (const auto* name : {"config.toml", "config.resolved.toml", "version.json"}) {
+    EXPECT_EQ(readSnapshot(name), "existing snapshot");
+  }
   EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
-  EXPECT_EQ(readSnapshot("config.toml"), original);
-  EXPECT_EQ(readSnapshot("config.resolved.toml"), resolved);
-  expectVersion();
-  EXPECT_FALSE(std::filesystem::exists(directory.path() + "/cta-logging.schema.json"));
+}
+
+TEST_F(ApplicationRuntimeDirectory, ConfigCheckWithoutRuntimeDirectoryValidatesWithoutStartingApp) {
+  ASSERT_EQ(checkConfig(false), EXIT_SUCCESS);
+  EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
+  EXPECT_TRUE(std::filesystem::is_empty(directory.path()));
 
   config.stringFill("[logging]\nlevel = 'INVALID'\n");
-  EXPECT_THROW(checkConfig(), cta::exception::UserError);
-  EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
-}
-
-TEST_F(ApplicationRuntimeDirectory, SnapshotWriteFailureFailsConfigCheck) {
-  // A directory at the destination reliably fails even when tests run as root.
-  ASSERT_TRUE(std::filesystem::create_directory(directory.path() + "/config.resolved.toml"));
-  EXPECT_THROW(checkConfig(), std::ios_base::failure);
+  EXPECT_THROW(checkConfig(false), cta::exception::UserError);
   EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
 }
 

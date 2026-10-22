@@ -209,6 +209,10 @@ public:
       return EXIT_SUCCESS;
     }
 
+    if (cliOptions.configCheck && !cliOptions.runtimeDir.empty()) {
+      throw exception::UserError("--config-check cannot be combined with --runtime-dir.", false);
+    }
+
     const auto document = runtime::readTomlFile(cliOptions.configFilePath);
     if (!cliOptions.runtimeDir.empty()) {
       // Publish the same buffers used for loading, without rereading or expanding the config again.

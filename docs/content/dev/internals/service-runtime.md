@@ -49,6 +49,11 @@ end
 
 Config loading is done using a combination of [tomlplusplus](https://github.com/marzer/tomlplusplus) to read TOML files and a custom parser to populate the struct.
 
+Environment expansion is a separate text-processing step before TOML parsing, shared by the runtime library rather than implemented in `Application`.
+Parsing remains available without expansion, including for already-resolved text and literal data such as JWT revocation files.
+Strict parsing and errors for missing environment variables are independent choices.
+See `lib/runtime/include/runtime/config/ConfigLoader.hpp` for the API and the [operator guide](../../ops/deploy-and-configure/configuration/service-runtime.md#environment-variables) for substitution behavior.
+
 The only thing the developer needs to take care of is that the structure of the config struct matches the structure of TOML files. Both in terms of types and in terms of hierarchy and names. See e.g. `maintd/` for an example of what this looks like.
 
 Configuration checking is split into three layers with distinct responsibilities:
@@ -194,7 +199,11 @@ int main(const int argc, char** const argv) {
 
 The signal reactor invokes `stop()` on `SIGTERM`; the application must arrange for its work to finish and `run()` to return. `SIGHUP` refreshes the log file descriptor without reloading configuration. Register additional application signal handlers with `Application::addSignalFunction()`.
 
-When `--runtime-dir` is supplied, the runtime records configuration and process metadata there. It copies referenced configuration files before consuming those copies, so the snapshot reflects what was loaded. The deployment creates and owns this directory; the application does not remove it. Use a separate directory for each process because filenames are deterministic. See [runtime-directory configuration](../../ops/deploy-and-configure/configuration/service-runtime.md#runtime-directory).
+When `--runtime-dir` is supplied, the runtime records configuration and process metadata there.
+`Application` reads and expands the main configuration once, saves the original and resolved text, and parses the same resolved buffer.
+This keeps the snapshots consistent with what was loaded and avoids repeated expansion.
+`--config-check` rejects `--runtime-dir` before loading configuration, so validation cannot overwrite runtime snapshots.
+During normal startup, it copies referenced configuration files before consuming those copies, so the snapshot reflects what was loaded. The deployment creates and owns this directory; the application does not remove it. Use a separate directory for each process because filenames are deterministic. See [runtime-directory configuration](../../ops/deploy-and-configure/configuration/service-runtime.md#runtime-directory).
 
 The runtime keeps the health server and telemetry alive during application execution, including fatal-error reporting. Adding `health_server` to the configuration requires `isLive()` and `isReady()` methods. See [Readiness and Liveness](health-checks.md), [Telemetry Internals](telemetry.md), and the [C++ instrumentation guide](../guides/instrumentation/cpp.md).
 
