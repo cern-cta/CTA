@@ -295,10 +295,10 @@ void cta::tape::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterf
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::CleanerSession::createDrive() {
   if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
-    auto drive = std::make_unique<cta::tape::drive::StressDrive>(
-      m_driveInfo.driveName,
-      m_driveInfo.logicalLibrary,
-      DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
+    auto drive =
+      std::make_unique<cta::tape::drive::StressDrive>(m_driveInfo.driveName,
+                                                      m_driveInfo.logicalLibrary,
+                                                      DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
     drive->info = m_driveInfo;
     return drive;
   }

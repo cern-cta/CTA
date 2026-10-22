@@ -627,9 +627,10 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
   // backed by files under the base dir encoded in the "virtual://<base_dir>" URI.
   if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
     try {
-      auto drive = std::make_unique<cta::tape::drive::StressDrive>(m_driveInfo.driveName,
-                                                                   m_driveInfo.logicalLibrary,
-                                                                   DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
+      auto drive = std::make_unique<cta::tape::drive::StressDrive>(
+        m_driveInfo.driveName,
+        m_driveInfo.logicalLibrary,
+        DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
       drive->info = m_driveInfo;
       return drive.release();
     } catch (cta::exception::Exception& ex) {
