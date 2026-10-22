@@ -10,6 +10,7 @@
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/utils/utils.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/rdbms/RelationalDBTest.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 
@@ -253,6 +254,42 @@ TEST_P(RelationalDBTest, queueAndGetRetrieveJobs) {
   ASSERT_EQ(1u, job.tapeCopies.size());
   ASSERT_TRUE(job.tapeCopies.find("vidA") != job.tapeCopies.end());
   ASSERT_EQ(1u, job.tapeCopies.at("vidA").first);
+}
+
+TEST_P(RelationalDBTest, retrieveCreationTimeStaysUnchangedAfterPopAndRequeue) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  constexpr time_t creationTime = 3000;
+  queueRetrieveJob(db, lc, 333, "vidA", "A", creationTime);
+  db.waitSubthreadsComplete();
+
+  auto checkActiveCreationTime = [&]() {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT CREATION_TIME FROM RETRIEVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(static_cast<uint64_t>(creationTime), rset.columnUint64("CREATION_TIME"));
+    ASSERT_FALSE(rset.next());
+  };
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  auto mount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
+
+  auto jobs = mount->getNextJobBatch(1, 10000, lc);
+  ASSERT_EQ(1u, jobs.size());
+  ASSERT_NO_FATAL_FAILURE(checkActiveCreationTime());
+
+  mount->requeueJobBatch(jobs, lc);
+
+  jobs = mount->getNextJobBatch(1, 10000, lc);
+  ASSERT_EQ(1u, jobs.size());
+  ASSERT_NO_FATAL_FAILURE(checkActiveCreationTime());
 }
 
 TEST_P(RelationalDBTest, queueArchiveAndCheckTapePool) {
