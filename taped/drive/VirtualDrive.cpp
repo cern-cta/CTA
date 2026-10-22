@@ -230,11 +230,10 @@ void VirtualDrive::writeImmediateFileMarks(size_t count) {
 }
 
 void VirtualDrive::writeBlock(const void* data, size_t count) {
-  uint64_t remainingSpaceAfterBlock;
   if (count > getRemainingSpace(m_currentPosition)) {
     throw cta::exception::Errnum(ENOSPC, "Error in cta::tape::drive::VirtualDrive::writeBlock");
   }
-  remainingSpaceAfterBlock = getRemainingSpace(m_currentPosition) - count;
+  const uint64_t remainingSpaceAfterBlock = getRemainingSpace(m_currentPosition) - count;
   m_tape.resize(m_currentPosition + 1);
   m_tape.at(m_currentPosition).data.assign(static_cast<const char*>(data), count);
   m_tape.at(m_currentPosition).remainingSpaceAfter = remainingSpaceAfterBlock;

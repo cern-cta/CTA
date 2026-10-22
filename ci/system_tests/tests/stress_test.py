@@ -312,6 +312,7 @@ async def test_request_files_for_retrieve(
         dest_dir=archive_directory,
         num_dirs=stress_params.num_dirs,
         num_procs=stress_params.io_threads,
+        batch_size=stress_params.batch_size,
     )
     print("Retrieve process started")
 

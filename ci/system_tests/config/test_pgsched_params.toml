@@ -22,9 +22,9 @@
     # Total number of files to archive.  num_dirs is derived automatically as
     # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
     # files/dir limit.  Override at CI trigger time via the num-stress-files input.
-    # File size is kept at 16 bytes; the effective tape footprint is ~470 bytes/file
-    # (data block + per-file tape header overhead), giving ~4.7 GB total on tape for the
-    # full 10 M run — trivially small on the fast-ssd PVC backing the fake tape library.
+    # File size is kept at 16 bytes; the effective tape footprint is 496 bytes/file
+    # (6 ANSI label blocks × 80 bytes + 16-byte data payload), giving ~4.7 GB total on
+    # tape for the full 10 M run — trivially small on the fast-ssd PVC.
     total_files       = 10000000
     num_files_per_dir = 50000
     # file size in bytes
@@ -38,8 +38,11 @@
     check_copy_interval_sec    = 20
     check_archive_interval_sec = 10
     # Stop waiting after this many consecutive 10-second intervals without progress.
-    # 6 intervals (60 s) gives the retrieve pipeline enough startup time (queue
-    # cache TTL 5 s + mount delay 5 s + first-file pipeline latency).
+    # At each tape-cycle boundary all drives hit ENOSPC, save to PVC, dismount, and mount
+    # a new tape — a dead zone of ~10 s: saveTape (~2 s) + dismount/assign (~3 s) +
+    # mountDelayMs (5 s).  After mounting, diskReportArchive catches up within ~1 s.
+    # 6 intervals (60 s) gives ample headroom over the dead zone.
+    # (For retrieve: retrieveQueueCacheMaxAgeSecs 5 s + mountDelayMs 5 s + reporting ~1 s = 11 s → covered.)
     max_no_progress_intervals = 6
     # Maximum acceptable file loss percentage before proceeding to retrieval
     max_acceptable_loss_percent = 5.0
@@ -77,7 +80,7 @@
 
       # Number of virtual tapes to register in the CTA catalogue.
       # Must match mediaTypes[].count in fake-tape-library/values.yaml.
-      # With 50 MB tapes and 10 M files: ~94 tapes needed; 120 gives ample headroom.
+      # With ~47 MB tapes and 10 M files: 100 tapes needed; 120 gives ample headroom.
       num_tapes = 120
 
       # VID prefix: tapes are named <vid_prefix><4-digit index>, e.g. ST0001..ST0020.
@@ -97,6 +100,6 @@
 
       # Simulated tape capacity in bytes reported to the CTA catalogue.
       # Must match capacityBytes in fake-tape-library/values.yaml.
-      # Exact value: 80 (VOL1) + 5 × 20000 × 496 (bytes/file) = 49 600 080.
+      # Logical capacity: 80 (VOL1) + 5 × 20000 × 496 (logical bytes/file) = 49 600 080.
       # See capacityBytes in fake-tape-library/values.yaml for the derivation.
-      tape_capacity_bytes = 49600080  # ≈49.6 MB, exact 5-batch boundary
+      tape_capacity_bytes = 49600080  # ≈47.3 MB, exact 5-batch boundary
