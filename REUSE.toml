@@ -3,25 +3,25 @@ version = 1
 # Project branding assets
 [[annotations]]
 path = ["docs/content/assets/images/cta-logo.png", "docs/content/assets/images/cern-logo.png", "docs/content/assets/images/cern-logo.png.license"]
-SPDX-FileCopyrightText = "2025 CERN"
+SPDX-FileCopyrightText = "2026 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # All json files
 [[annotations]]
 path = "**/*.json"
-SPDX-FileCopyrightText = "2025 CERN"
+SPDX-FileCopyrightText = "2026 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # All markdown files
 [[annotations]]
 path = "**/*.md"
-SPDX-FileCopyrightText = "2025 CERN"
+SPDX-FileCopyrightText = "2026 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Python requirements files
 [[annotations]]
 path = "**/requirements.txt"
-SPDX-FileCopyrightText = "2025 CERN"
+SPDX-FileCopyrightText = "2026 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Misc files that are tedious to attach copyright to
@@ -43,7 +43,7 @@ path = [
     "tests/parallelTestsMakefile.local.in",
     "Cargo.lock"
 ]
-SPDX-FileCopyrightText = "2025 CERN"
+SPDX-FileCopyrightText = "2026 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Imported documentation snapshot; preserve any embedded attribution.
