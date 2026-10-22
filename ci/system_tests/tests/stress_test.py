@@ -72,7 +72,12 @@ def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> St
     num_files_to_put_drives_up = int(total_files * prequeue_fraction)
     timeout_to_put_drives_up_sec = int(num_files_to_put_drives_up / eos_queue_rate_hz * timeout_margin_factor)
 
-    retrieve_prequeue_fraction = prequeue_config["retrieve_prequeue_fraction"]
+    cli_retrieve_prequeue_fraction = request.config.getoption("--stress-retrieve-prequeue-fraction")
+    retrieve_prequeue_fraction = (
+        cli_retrieve_prequeue_fraction
+        if cli_retrieve_prequeue_fraction is not None
+        else prequeue_config["retrieve_prequeue_fraction"]
+    )
     retrieve_num_files_to_put_drives_up = int(total_files * retrieve_prequeue_fraction)
     retrieve_timeout_to_put_drives_up_sec = int(
         retrieve_num_files_to_put_drives_up / eos_queue_rate_hz * timeout_margin_factor
