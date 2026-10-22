@@ -100,10 +100,10 @@ taped:
     telemetry:
       metrics:
         # With 30 drives each OTLP export collects metrics from all drive sessions
-        # before flushing to the collector.  5 s interval / 4 s timeout gives the
+        # before flushing to the collector.  10 s interval / 8 s timeout gives the
         # collector enough time to gather all drive metrics without racing itself.
-        exportInterval: 5000
-        exportTimeout: 4000
+        exportInterval: 10000
+        exportTimeout: 8000
 
 global:
   # Keep crash evidence in a pod volume for stress-run investigation
