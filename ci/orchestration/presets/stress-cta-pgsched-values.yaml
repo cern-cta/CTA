@@ -104,6 +104,13 @@ taped:
         # collector enough time to gather all drive metrics without racing itself.
         exportInterval: 10000
         exportTimeout: 8000
+    taped:
+      # Per-session buffer pool (MigrationMemoryManager): 10 000 × 256 KB = 2.56 GB/drive.
+      # Overridden to 500 by stress-stressdrives-pgsched-values.yaml for StressDrives.
+      bufferCount: 10000
+      # Avoid verbose tape-operation logs dominating the small-file workload.
+      logMask: "WARNING"
+      schedulerNumberOfConnections: 3
 
 global:
   # Keep crash evidence in a pod volume for stress-run investigation
@@ -188,16 +195,6 @@ frontend-wfe:
 # Total (30 drives):                                      99   (budget: 150)
 # max drives at budget: (150 - 39 fixed) / 2 = 55
 # ---------------------------------------------------------------------------
-
-taped:
-  conf:
-    taped:
-      # Per-session buffer pool (MigrationMemoryManager): 10 000 × 256 KB = 2.56 GB/drive.
-      # Overridden to 500 by stress-stressdrives-pgsched-values.yaml for StressDrives.
-      bufferCount: 10000
-      # Avoid verbose tape-operation logs dominating the small-file workload.
-      logMask: "WARNING"
-      schedulerNumberOfConnections: 3
 
 maintd:
   logging:
