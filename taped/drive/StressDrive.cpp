@@ -148,23 +148,57 @@ void StressDrive::unloadTape() {
 }
 
 void StressDrive::writeBlock(const void* data, size_t count) {
-  // Sleep once per file, not once per block.  HDR1 is the first block of every
-  // ANSI tape file, so detecting it here gives one sleep at the inter-file
-  // boundary and none between the blocks that belong to the same file.
+  // Adaptive-mirror throttle — why it exists and how it works.
+  //
+  // WITHOUT throttling, StressDrive writes to its in-memory tape at RAM speed
+  // (~GB/s).  At that rate one drive drains a 100 k-file scheduler batch in
+  // milliseconds and immediately idles, waiting for the next pgsched fetch.
+  // All 30 drives thundering-herd on the scheduler simultaneously, then all
+  // going idle simultaneously, then repeating — this produces bursty metrics
+  // with no useful signal on queue depth, drive utilisation or diskReport lag.
+  // The scheduler is hammered with large fetch requests spaced by long idle
+  // gaps instead of a steady trickle, which is also unrepresentative of real
+  // tape throughput.
+  //
+  // WITH throttling (maxWriteRateHz > 0), each drive sleeps for
+  //   max(minInterval, elapsed)
+  // once at the HDR1 block of each file (the first block of every ANSI tape
+  // file, so exactly one sleep per file, none between blocks of the same file).
+  //
+  //   minInterval = 1 s / maxWriteRateHz   (natural drive speed ceiling)
+  //   elapsed     = wall time since the previous file's HDR1
+  //
+  // Queue-limited regime (elapsed > minInterval):
+  //   The disk-read pipeline was slower than the drive — the tape thread spent
+  //   most of elapsed waiting for the next EOS read to complete.  Sleep equals
+  //   elapsed, so the drive's inter-file gap exactly mirrors the queue's
+  //   inter-file arrival gap.  From monitoring the drive appears to be writing
+  //   continuously at the queue drain rate — never idle, never ahead of supply.
+  //   This is the normal operating regime during the 10 M-file stress run.
+  //
+  // Drive-limited regime (elapsed < minInterval):
+  //   The pipeline delivered the file faster than the drive's natural speed.
+  //   Sleep equals minInterval, capping throughput at maxWriteRateHz files/sec.
+  //   This models the hard mechanical ceiling of a real tape drive.
+  //
+  // Note on file-size independence:
+  //   maxWriteRateHz is intentionally in files/sec, not bytes/sec.  For the
+  //   stress test (16-byte files, ~100 files/s/drive target) the file rate is
+  //   the meaningful unit — bytes/sec would be ~1.6 kB/s and tells nothing
+  //   useful.  For a future variant with large files a maxWriteRateBytesPerSec
+  //   field could be added to library.toml with a proportional sleep
+  //   (sleep_ns = file_size_bytes * 1e9 / maxWriteRateBytesPerSec) so both
+  //   throughput models coexist; until then, files/sec is sufficient.
   //
   // The timestamp is captured AFTER the sleep so that elapsed on the next file
-  // measures only the idle time between writes (i.e. how long the tape thread
-  // waited for the disk-read pipeline to deliver the next file).  Capturing it
-  // before the sleep would feed the sleep duration back into elapsed, causing
-  // the per-file sleep to grow monotonically and the archive rate to collapse.
+  // measures only how long the tape thread waited for the disk-read pipeline
+  // (i.e. the true inter-file idle time).  Capturing it before the sleep would
+  // fold the sleep itself into elapsed, causing the per-file sleep to grow
+  // monotonically and the archive rate to collapse to zero.
   if (m_maxWriteRateHz > 0 && count >= 4 && std::memcmp(data, "HDR1", 4) == 0) {
     if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point {}) {
       const auto elapsed = std::chrono::steady_clock::now() - m_lastWriteBlockTime;
       const std::chrono::nanoseconds minInterval {1'000'000'000LL / m_maxWriteRateHz};
-      // Queue-limited: elapsed > minInterval — sleep mirrors inter-file arrival gap
-      // so the drive never appears idle on monitoring.
-      // Drive-limited: elapsed < minInterval — sleep equals minInterval, capping
-      // throughput at maxWriteRateHz files/sec.
       std::this_thread::sleep_for(std::max(minInterval, elapsed));
     }
     m_lastWriteBlockTime = std::chrono::steady_clock::now();
