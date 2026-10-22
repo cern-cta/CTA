@@ -164,14 +164,16 @@ done
 
 log_task "Checking copyright and license files ($package_format)..."
 
-# Every installed CTA package ships its copyright/license file.
+# Every installed CTA package provides its copyright/license file.
 # Debian: https://www.debian.org/doc/debian-policy/ch-docs.html#copyright-information
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/#_license_text
+# Follow documentation symlinks, including Debian debug packages sharing their parent's files.
 for package in "${packages[@]}"; do
   case "$package_format" in
-    rpm) require_file "/usr/share/licenses/$package/COPYING" "$package" ;;
-    deb) require_file "/usr/share/doc/$package/copyright" "$package" ;;
+    rpm) license_file="/usr/share/licenses/$package/COPYING" ;;
+    deb) license_file="/usr/share/doc/$package/copyright" ;;
   esac
+  [[ -f "$license_file" && -r "$license_file" ]] || fail "missing or unreadable license file: $license_file"
 done
 
 log_task "Checking runtime data and shell completions ($package_format)..."
