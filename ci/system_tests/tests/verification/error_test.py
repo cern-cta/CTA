@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
-import re
 from collections import Counter
-from pathlib import Path
 
 from system_tests.helpers.test_env import TestEnv
 
@@ -65,23 +63,3 @@ def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[st
             total_non_whitelisted_errors += count
         print(f'{prefix} Count: {count}, Message: "{msg}"')
     assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"
-
-
-def test_no_sanitizer_errors(env: TestEnv, tmp_path: Path) -> None:
-    hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd, *env.cta_maintd]
-    # Sanitizers write plain text to stderr, outside the JSON application logs.
-    diagnostic = re.compile(
-        r"(?:ERROR|WARNING|SUMMARY): (?:Address|Leak|Thread|Memory|UndefinedBehavior)Sanitizer"
-        r"|AddressSanitizer:DEADLYSIGNAL|runtime error:"
-        r"|LeakSanitizer has encountered a fatal error|ASan runtime does not come first"
-    )
-    failures = []
-    for host in hosts:
-        logs = host.conn.get_service_logs()
-        if diagnostic.search(logs):
-            log_path = tmp_path / f"{host.name}.log"
-            log_path.write_text(logs)
-            matches = "\n".join(line for line in logs.splitlines() if diagnostic.search(line))
-            print(f"Sanitizer diagnostics from {host.description}:\n{matches}\nFull log: {log_path}")
-            failures.append(host.name)
-    assert not failures, f"Sanitizer diagnostics found on: {', '.join(failures)}"

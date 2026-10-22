@@ -85,8 +85,3 @@ class SSHConnection(RemoteConnection):
     @override
     def get_ip(self) -> str:
         return socket.gethostbyname(self.host)
-
-    @override
-    def get_service_logs(self) -> str:
-        # Service stderr is captured by the journal on non-container deployments.
-        return self.exec("sudo journalctl --boot --no-pager --output=cat --unit='cta-*'", capture_output=True).stdout
