@@ -1482,9 +1482,8 @@ class TestRuntimeDeployment:
         #   - *BytesFiles keys (FetchReportOrFlushLimits): DriveConfig splits each
         #     composite "XBytesFiles" key into two separate catalogue entries
         #     "XBytes" and "XFiles" — the original combined key never appears.
-        #     This is the same strategy used for ArchiveDismountPolicy (split into
-        #     WatchPeriodSecs/MinSamples/etc.); that key is not seen here only
-        #     because ArchiveDismountPolicy is not explicitly set in cta-taped.conf.
+        #   - ArchiveDismountPolicy: split into four separate catalogue entries
+        #     (WatchPeriodSecs, MinSamples, StartThreshold, RecoveryThreshold).
         #     Note: taped reads all config directly from cta-taped.conf at startup;
         #     catalogue entries are audit-only and skipping them here does not
         #     affect runtime behaviour.
@@ -1493,6 +1492,7 @@ class TestRuntimeDeployment:
             "ArchiveFetchBytesFiles",
             "ArchiveFlushBytesFiles",
             "RetrieveFetchBytesFiles",
+            "ArchiveDismountPolicy",
         ]
 
         # Every relevant configuration entry must be reflected in the registered drive
