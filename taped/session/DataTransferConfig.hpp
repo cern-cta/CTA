@@ -140,9 +140,7 @@ struct DataTransferConfig {
   //----------------------------------------------------------------------------
 
   /** True when devFilename uses the "virtual://" URI scheme. */
-  static bool isVirtualDrive(const std::string& devFilename) {
-    return devFilename.rfind("virtual://", 0) == 0;
-  }
+  static bool isVirtualDrive(const std::string& devFilename) { return devFilename.rfind("virtual://", 0) == 0; }
 
   /** Extracts the base dir from a "virtual://<base_dir>" device URI. */
   static std::string virtualDriveBaseDir(const std::string& devFilename) {
