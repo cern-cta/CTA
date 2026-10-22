@@ -10,7 +10,7 @@ ARG SCCACHE_VERSION="=0.18.0"
 
 RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock && \
     dnf install -y gcc-toolset-14-gcc-c++ cmake3 rpm-build dnf-utils make ninja-build \
-        systemd-devel clang-tools-extra corrosion && \
+        systemd-devel clang-tools-extra corrosion nodejs && \
     dnf clean all --enablerepo=\*
 
 # Select GCC 14 for CMake and tools that invoke the compiler directly.

@@ -1,0 +1,17 @@
+// Basic VS Code settings
+{
+  "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "cmake.configureOnOpen": true,
+  "cmake.configureSettings": {
+    "CTA_VERSION": "6-dev"
+  },
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.files.exclude": {
+    "**/build": true
+  },
+  "files.exclude": {
+    "build": true
+  },
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.targetDir": true
+}

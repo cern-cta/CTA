@@ -12,9 +12,10 @@ export UBSAN_OPTIONS="${UBSAN_OPTIONS:-print_stacktrace=1}"
 
 usage() {
   echo
-  echo "Usage: $0 <source|binary|all> [options]"
+  echo "Usage: $0 <source|binary|all|deps> [options]"
   echo
   echo "Builds CTA source packages, binary packages, or both in one build directory."
+  echo "deps builds the source packages and installs their build dependencies, without building binaries."
   echo
   echo "Required options:"
   echo "  --build-dir <directory>                 Build root. The detected platform is appended to it."
@@ -32,12 +33,12 @@ usage() {
   echo "      --create-build-dir                  Create the build directory if it does not exist."
   echo "      --oracle-support <ON|OFF>           Oracle support; default: ON for RPM, OFF for Debian."
   echo "      --extra-telemetry                   Enable performance telemetry instrumentation."
+  echo "      --enable-internal-repos             Enable internal package repositories when installing dependencies."
   echo
   echo "Binary package options:"
   echo "      --source-package-dir <directory>    Source packages used to install build dependencies."
   echo "      --install-source-packages           Install dependencies from --source-package-dir."
   echo "      --skip-dependency-install           With all, do not install source-package dependencies."
-  echo "      --enable-internal-repos             Enable internal package repositories."
   echo "      --enable-sccache                    Enable sccache."
   echo "      --sanitizers <mode>                 none, address, undefined, address,undefined, or thread."
   echo "      --skip-debug-packages               Do not build native debug packages."
@@ -62,7 +63,7 @@ fi
 shift
 
 case "$command" in
-  source | binary | all) ;;
+  source | binary | all | deps) ;;
   *) die_usage "Unknown package command: $command" ;;
 esac
 
@@ -161,16 +162,16 @@ if [[ "$build_generator" != "Ninja" && "$build_generator" != "Unix Makefiles" ]]
   log_warn "Build generator $build_generator is not officially supported. Compilation might not succeed."
 fi
 
-if [[ "$command" != "source" && -z "$xrootd_ssi_version" ]]; then
+if [[ "$command" != "source" && "$command" != "deps" && -z "$xrootd_ssi_version" ]]; then
   die_usage "Missing mandatory argument --xrootd-ssi-version"
 fi
-if [[ "$command" == "source" && "$skip_cmake" == true ]]; then
+if [[ ( "$command" == "source" || "$command" == "deps" ) && "$skip_cmake" == true ]]; then
   die_usage "--skip-cmake is only valid with binary"
 fi
 if [[ "$command" == "all" && "$skip_cmake" == true ]]; then
   die_usage "--skip-cmake cannot be used with all"
 fi
-if [[ "$command" == "source" && "$install_source_packages" == true ]]; then
+if [[ ( "$command" == "source" || "$command" == "deps" ) && "$install_source_packages" == true ]]; then
   die_usage "--install-source-packages is only valid with binary"
 fi
 if [[ "$command" == "binary" && "$install_source_packages" == true && -z "$source_package_dir" ]]; then
@@ -408,6 +409,11 @@ case "$command" in
     if [[ -n "$sbom_path" ]]; then
       build_rust_sbom "$sbom_path"
     fi
+    ;;
+  deps)
+    configure_build source
+    build_source_packages
+    install_build_dependencies "$(generated_source_package_dir)"
     ;;
   all)
     configure_build source

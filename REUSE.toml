@@ -28,6 +28,7 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 [[annotations]]
 path = [
     "**/.gitkeep",
+    "**/.clang-format-ignore",
     ".gitattributes",
     ".gitmodules",
     ".git-blame-ignore-revs",

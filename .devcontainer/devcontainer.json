@@ -1,0 +1,40 @@
+// Development container for CTA on EL10, built from the same image as the ci/cta-dev.sh build container.
+{
+  "name": "CTA (el10)",
+  "build": {
+    "dockerfile": "../ci/docker/cta/el10/build.Dockerfile",
+    "context": ".."
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/shared/CTA,type=bind,z",
+  "workspaceFolder": "/shared/CTA",
+  // CTA build dependencies are installed from the source package, built in a scratch directory inside the container.
+  "postCreateCommand": "./ci/build/build_packages.sh deps --build-dir /tmp/cta-deps --create-build-dir --build-generator Ninja --scheduler-type objectstore --cta-version 6-dev --cmake-build-type RelWithDebInfo",
+  // Extensions (CMake Tools, rust-analyzer) need the dependencies above, so do not start them before they are installed.
+  "waitFor": "postCreateCommand",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // CMake/C++
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "xaver.clang-format",
+        // Python (tests, tooling)
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        // Rust
+        "rust-lang.rust-analyzer",
+        // Sonar
+        "SonarSource.sonarlint-vscode",
+        // Protobuf
+        "drblury.protobuf-vsc",
+        // TOML (config files)
+        "tamasfe.even-better-toml",
+        // YAML (CI)
+        "redhat.vscode-yaml",
+        // Dependi (dependency management)
+        "fill-labs.dependi"
+      ]
+    }
+  }
+}
