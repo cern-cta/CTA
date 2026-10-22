@@ -181,20 +181,45 @@ void StressDrive::writeBlock(const void* data, size_t count) {
   //   Sleep equals minInterval, capping throughput at maxWriteRateHz files/sec.
   //   This models the hard mechanical ceiling of a real tape drive.
   //
-  // Note on file-size independence:
-  //   maxWriteRateHz is intentionally in files/sec, not bytes/sec.  For the
-  //   stress test (16-byte files, ~100 files/s/drive target) the file rate is
-  //   the meaningful unit — bytes/sec would be ~1.6 kB/s and tells nothing
-  //   useful.  For a future variant with large files a maxWriteRateBytesPerSec
-  //   field could be added to library.toml with a proportional sleep
-  //   (sleep_ns = file_size_bytes * 1e9 / maxWriteRateBytesPerSec) so both
-  //   throughput models coexist; until then, files/sec is sufficient.
+  // Natural throughput unit — files/sec:
+  //   The stress test uses tiny fixed-size files (16 bytes payload).  The
+  //   meaningful throughput unit here is files/sec, not bytes/sec — at 16 bytes
+  //   per file a bytes/sec ceiling of 300 MB/s would give a per-file sleep of
+  //   ~53 ns, which is below the OS timer granularity (~50–100 µs on Linux) and
+  //   produces completely unpredictable rates.  Files/sec sidesteps this: a
+  //   target of 100 files/s/drive gives a 10 ms minInterval, well within OS
+  //   scheduling accuracy.
   //
-  // The timestamp is captured AFTER the sleep so that elapsed on the next file
-  // measures only how long the tape thread waited for the disk-read pipeline
-  // (i.e. the true inter-file idle time).  Capturing it before the sleep would
-  // fold the sleep itself into elapsed, causing the per-file sleep to grow
-  // monotonically and the archive rate to collapse to zero.
+  // Alternative: two-parameter throughput model (future extension):
+  //   To simulate a realistic hardware ceiling in bytes/sec while keeping tiny
+  //   payloads, two config fields could replace maxWriteRateHz:
+  //
+  //     maxWriteRateBytesPerSec  — drive ceiling (e.g. 314572800 = 300 MB/s)
+  //     simulatedBlockSizeBytes  — effective tape block per file (e.g. 524288 = 512 KB)
+  //
+  //   The derived file rate is:
+  //     maxWriteRateHz = maxWriteRateBytesPerSec / simulatedBlockSizeBytes
+  //     → 300 MB/s / 512 KB ≈ 572 files/s, minInterval ≈ 1.75 ms — OS-accurate
+  //
+  //   simulatedBlockSizeBytes models the fact that on a real tape drive each
+  //   file occupies at least one full block regardless of payload size.  The
+  //   minimum block size for OS-accurate sleep is roughly:
+  //     simulatedBlockSizeBytes_min = maxWriteRateBytesPerSec × 1 ms
+  //     → 300 MB/s × 1 ms = 300 KB;  1 GB/s × 1 ms = 1 MB
+  //   Below that floor the timer error dominates.  Until a use-case with
+  //   meaningful bytes/sec semantics arises, files/sec is sufficient.
+  //
+  // Recovery when the queue transitions from slow to fast:
+  //   In the queue-limited regime elapsed can grow large (e.g. 500 ms) if the
+  //   disk-read pipeline stalls.  When the queue fills up and files start
+  //   arriving fast again, recovery is immediate: elapsed on the very next file
+  //   is tiny (pipeline delivered quickly) so sleep snaps back to minInterval.
+  //   This works because the timestamp is captured AFTER the sleep — elapsed
+  //   measures only the idle wait for the next file, not the sleep itself.
+  //   If the timestamp were captured before the sleep, elapsed on the next
+  //   iteration would include the previous sleep, causing the sleep to grow
+  //   monotonically even after the queue recovers — the drive would never
+  //   catch up.  Timestamp-after-sleep is what makes recovery self-correcting.
   if (m_maxWriteRateHz > 0 && count >= 4 && std::memcmp(data, "HDR1", 4) == 0) {
     if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point {}) {
       const auto elapsed = std::chrono::steady_clock::now() - m_lastWriteBlockTime;

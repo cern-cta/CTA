@@ -70,8 +70,8 @@ conf:
     retainInstanceIdOnRestart: false
     metrics:
       backend: "NOOP"
-      exportInterval: 1000
-      exportTimeout: 500
+      exportInterval: 10000
+      exportTimeout: 8000
       otlp:
         endpoint: ""
         auth:
