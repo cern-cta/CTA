@@ -283,12 +283,14 @@ TEST_P(RelationalDBTest, retrieveCreationTimeStaysUnchangedAfterPopAndRequeue) {
 
   auto jobs = mount->getNextJobBatch(1, 10000, lc);
   ASSERT_EQ(1u, jobs.size());
+  ASSERT_EQ(creationTime, jobs.front()->retrieveRequest.creationLog.time);
   ASSERT_NO_FATAL_FAILURE(checkActiveCreationTime());
 
   mount->requeueJobBatch(jobs, lc);
 
   jobs = mount->getNextJobBatch(1, 10000, lc);
   ASSERT_EQ(1u, jobs.size());
+  ASSERT_EQ(creationTime, jobs.front()->retrieveRequest.creationLog.time);
   ASSERT_NO_FATAL_FAILURE(checkActiveCreationTime());
 }
 

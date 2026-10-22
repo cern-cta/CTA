@@ -27,7 +27,6 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   rjr->isVerifyOnly = m_isVerifyOnly;
   rjr->srrUsername = m_schedRetrieveReq.creationLog.username;
   rjr->srrHost = m_schedRetrieveReq.creationLog.host;
-  rjr->srrTime = m_schedRetrieveReq.creationLog.time;
   rjr->creationTime = m_schedRetrieveReq.creationLog.time;
   rjr->activity = m_activity;
 

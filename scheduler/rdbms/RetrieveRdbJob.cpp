@@ -41,7 +41,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
   retrieveRequest.creationLog.username = std::move(m_jobRow.srrUsername);  // EntryLog
   retrieveRequest.creationLog.host = std::move(m_jobRow.srrHost);
-  retrieveRequest.creationLog.time = m_jobRow.srrTime;
+  retrieveRequest.creationLog.time = m_jobRow.creationTime;  // EntryLog
   retrieveRequest.isVerifyOnly =
     m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
   retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
