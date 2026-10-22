@@ -30,7 +30,9 @@ override_dh_auto_configure:
 		-DCTA_BUILD_TEST_PACKAGES=$(if $(filter pkg.cta.notests,$(DEB_BUILD_PROFILES)),OFF,ON)
 
 override_dh_auto_test:
-	cmake --build $(CTA_DEB_BUILD_DIR) --target cta-example-config-checks --parallel @JOBS_COUNT@
+	# Shared CI runners deny LeakSanitizer thread attachment (EPERM).
+	# Disable leak scanning only for config checks; ASan/UBSan and unit-test leak checks remain enabled.
+	ASAN_OPTIONS="$${ASAN_OPTIONS:+$${ASAN_OPTIONS}:}detect_leaks=0" cmake --build $(CTA_DEB_BUILD_DIR) --target cta-example-config-checks --parallel @JOBS_COUNT@
 ifeq (@PACKAGE_RUN_UNIT_TESTS@,1)
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	cmake --build $(CTA_DEB_BUILD_DIR) --target cta-unit-tests-short --parallel @JOBS_COUNT@

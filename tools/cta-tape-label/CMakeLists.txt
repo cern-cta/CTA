@@ -6,6 +6,10 @@ add_executable(cta-tape-label
   TapeLabelCmdLineArgs.cpp
   TapeLabelCmdMain.cpp)
 
+if(CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
+  target_compile_definitions(cta-tape-label PRIVATE CTA_TAPE_LABEL_ASAN)
+endif()
+
 target_link_libraries (cta-tape-label
   ctacommon
   ctatapeddrive

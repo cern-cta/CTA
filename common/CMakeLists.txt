@@ -120,6 +120,10 @@ add_library (ctacommon SHARED
 set_property(TARGET ctacommon PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+if(CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
+  target_sources(ctacommon PRIVATE SanitizerSuppressions.cpp)
+endif()
+
 install (TARGETS ctacommon DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Keep version globals in this shared library; propagating the static archive duplicates their destructors.

@@ -24,16 +24,16 @@ struct VirtualOrganization {
   /**
    * Maximum number of drives allocated for reading per VO
    */
-  uint64_t readMaxDrives;
+  uint64_t readMaxDrives = 0;
   /**
    * Max number of drives allocated for writing per VO
    */
-  uint64_t writeMaxDrives;
+  uint64_t writeMaxDrives = 0;
 
   /**
    * Max size of files belonging to VO
    */
-  uint64_t maxFileSize;
+  uint64_t maxFileSize = 0;
 
   /**
    * The creation log.
@@ -53,7 +53,7 @@ struct VirtualOrganization {
   /**
    * True if this is the default repack VO
    */
-  bool isRepackVo;
+  bool isRepackVo = false;
 
   bool operator==(const VirtualOrganization& other) const {
     return (name == other.name && comment == other.comment && readMaxDrives == other.readMaxDrives

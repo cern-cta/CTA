@@ -11,6 +11,7 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/Constants.hpp"
 #include "common/process/ProcessCap.hpp"
+#include "common/utils/utils.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "taped/file/Exceptions.hpp"
@@ -24,6 +25,11 @@ namespace cta::tape::tapelabel {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int TapeLabelCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
+#ifdef CTA_TAPE_LABEL_ASAN
+  // File capabilities clear dumpability; LSan needs it to inspect this process at exit.
+  cta::utils::setDumpableProcessAttribute(true);
+#endif
+
   const TapeLabelCmdLineArgs cmdLineArgs(argc, argv);
 
   if (cmdLineArgs.help) {

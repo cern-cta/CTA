@@ -22,6 +22,7 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/system/Wrapper.hpp"
 #include "tests/TempFile.hpp"
+#include "tests/TestingArchiveJob.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -37,16 +38,6 @@ public:
                          cta::common::dataStructures::ArchiveFile(),
                          1,
                          cta::PositioningMethod::ByBlock) {}
-};
-
-class TestingArchiveJob : public cta::ArchiveJob {
-public:
-  TestingArchiveJob()
-      : cta::ArchiveJob(nullptr,
-                        *(static_cast<cta::catalogue::Catalogue*>(nullptr)),
-                        cta::common::dataStructures::ArchiveFile(),
-                        "",
-                        cta::common::dataStructures::TapeFile()) {}
 };
 
 class ctaTapeFileTest : public ::testing::TestWithParam<cta::common::dataStructures::Label::Format> {

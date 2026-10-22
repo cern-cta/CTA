@@ -20,6 +20,19 @@ function(cta_enable_sanitizers)
   add_compile_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
   add_link_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
 
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC 14 reports optional/variant and regex internals as possibly uninitialized with sanitizers.
+    # Keep diagnostics visible; only sanitizer builds relax -Werror for this warning.
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=maybe-uninitialized>)
+  endif()
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
+    # GCC 14 + LTO produces false ASan ODR reports for std::in_place_type across shared libraries.
+    # Disable LTO rather than ODR detection; normal builds retain their optimization flags.
+    add_compile_options(-fno-lto)
+    add_link_options(-fno-lto)
+  endif()
+
   if(CTA_SANITIZERS MATCHES "(^|,)undefined(,|$)")
     # Make UBSan findings fatal regardless of the runtime environment.
     add_compile_options(-fno-sanitize-recover=undefined)

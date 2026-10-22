@@ -112,7 +112,9 @@ DESTDIR=%{buildroot} \
 
 %check
 cd build
-cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
+# Shared CI runners deny LeakSanitizer thread attachment (EPERM).
+# Disable leak scanning only for config checks; ASan/UBSan and unit-test leak checks remain enabled.
+ASAN_OPTIONS="${ASAN_OPTIONS:+${ASAN_OPTIONS}:}detect_leaks=0" cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
 %if @PACKAGE_RUN_UNIT_TESTS@
 cmake --build . --target cta-unit-tests-short --parallel @JOBS_COUNT@
 %endif
@@ -275,6 +277,8 @@ Provides common shared libraries used by CTA components.
 %files -n cta-lib-common
 %license COPYING
 %{_libdir}/libctacommon.so.*
+%{_libdir}/libctaprotobuf.so.*
+%{_libdir}/libctascsi.so.*
 %{_libdir}/libctatapedaemoncommon.so.*
 
 %package -n cta-lib-telemetry
@@ -642,6 +646,8 @@ Provides unversioned linker names for developing applications with CTA shared li
 %files -n cta-devel
 %license COPYING
 %{_libdir}/libctacommon.so
+%{_libdir}/libctaprotobuf.so
+%{_libdir}/libctascsi.so
 %{_libdir}/libctatapedaemoncommon.so
 %{_libdir}/libctatelemetry.so
 %{_libdir}/libctatelemetryfrontend.so

@@ -262,7 +262,7 @@ default:
     - !reference [.merge-train-guard, before_script]
 
 workflow:
-  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$ENABLE_ORACLE_SUPPORT'
+  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$ENABLE_ORACLE_SUPPORT - Analysis:$[[ inputs.analysis ]]'
   auto_cancel:
     on_new_commit: interruptible
   rules:

@@ -33,6 +33,11 @@ spec:
     - *setup-cta-install
     - mkdir -p test-results test-logs
     - |
+      # Load targeted suppressions and include both stacks for potential deadlocks.
+      if [[ "$[[ inputs.analysis ]]" == "thread" ]]; then
+        export TSAN_OPTIONS="${TSAN_OPTIONS:+${TSAN_OPTIONS}:}second_deadlock_stack=1:suppressions=${CI_PROJECT_DIR}/tests/tsan.suppr"
+      fi
+    - |
       set -o pipefail
       test_status=0
       # Record failures without skipping later tests or database cleanup.
@@ -154,6 +159,9 @@ integration-test-cta:
     - job: build-cta
   rules:
     - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
+    # CLI invocation checks assert exact stderr and exit codes; run them without compiler sanitizers.
+    - if: '"$[[ inputs.analysis ]]" != "none" && "$[[ inputs.analysis ]]" != "valgrind"'
       when: never
     - when: on_success
   image: $IMAGE_TEST

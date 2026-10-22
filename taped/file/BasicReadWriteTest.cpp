@@ -21,6 +21,7 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
+#include "tests/TestingArchiveJob.hpp"
 
 #include <assert.h>
 #include <iostream>
@@ -50,15 +51,7 @@ public:
                          cta::PositioningMethod::ByBlock) {}
 };
 
-class BasicArchiveJob : public cta::ArchiveJob {
-public:
-  BasicArchiveJob()
-      : cta::ArchiveJob(nullptr,
-                        *(static_cast<cta::catalogue::Catalogue*>(nullptr)),
-                        cta::common::dataStructures::ArchiveFile(),
-                        "",
-                        cta::common::dataStructures::TapeFile()) {}
-};
+using BasicArchiveJob = unitTests::TestingArchiveJob;
 
 std::vector<std::string> split(std::string& to_split, const std::string& delimiter) {
   std::vector<std::string> toBeReturned;

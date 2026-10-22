@@ -92,9 +92,9 @@ private:
   void run() override;
 
   /**
-   * m_fifo is holding all the report waiting to be processed
+   * Own queued reports so aborted startup also releases reports that were never processed.
    */
-  cta::threading::BlockingQueue<Report*> m_fifo;
+  cta::threading::BlockingQueue<std::unique_ptr<Report>> m_fifo;
 
   /**
    A bunch of references to proxies to send messages to the

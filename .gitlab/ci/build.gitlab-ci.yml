@@ -80,6 +80,7 @@ build-cta:
       sanitizers="$[[ inputs.analysis ]]"
       if [[ "$sanitizers" == "valgrind" ]]; then sanitizers=none; fi
       BUILD_OPTIONS=" --sanitizers ${sanitizers}"
+
     - |
       if [[ "$ENABLE_SCCACHE" == "true" ]]; then
         BUILD_OPTIONS+=" --enable-sccache"

@@ -861,8 +861,8 @@ TEST(cta_tape_SCSI_Structures, logSenseParameter_t) {
   memcpy(dataBuff, test4, sizeof(test4));
   ASSERT_EQ(0xA0FU, cta::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
   ASSERT_EQ(0x09U, logParam.header.parameterLength);
-  ASSERT_NE(0x1122334455667788ULL, logParam.getU64Value());
-  ASSERT_NE(0x1122334455667788LL, logParam.getS64Value());
+  ASSERT_THROW(logParam.getU64Value(), cta::exception::Exception);
+  ASSERT_THROW(logParam.getS64Value(), cta::exception::Exception);
 
   unsigned char test5[] = {0xBB, 0xEE, 0x43, 0x00, 0x11, 0x22};
   memcpy(dataBuff, test5, sizeof(test5));
@@ -877,6 +877,15 @@ TEST(cta_tape_SCSI_Structures, logSenseParameter_t) {
   ASSERT_EQ(0x04U, logParam.header.parameterLength);
   ASSERT_EQ(4280431428ULL, logParam.getU64Value());
   ASSERT_EQ(-14535868LL, logParam.getS64Value());
+
+  // Exercise sign extension and the most negative representable 64-bit value.
+  memset(logParam.parameterValue, 0, sizeof(logParam.parameterValue));
+  logParam.parameterValue[0] = 0x80;
+  logParam.header.parameterLength = 1;
+  ASSERT_EQ(-128, logParam.getS64Value());
+  logParam.header.parameterLength = 8;
+  ASSERT_EQ(INT64_MIN, logParam.getS64Value());
+  ASSERT_EQ(uint64_t {1} << 63, logParam.getU64Value());
 }
 
 TEST(cta_tape_SCSI_Structures, testUnitReadyCDB_t) {
