@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_library(ctaruntime SHARED
+  src/config/EnvironmentSubstitution.cpp
   src/config/ValidationResult.cpp
   src/config/parsing/ParseResult.cpp
   src/config/parsing/TomlParser.cpp
@@ -31,6 +32,7 @@ add_library(ctaruntimeunittests SHARED
   test/cli/ArgParserTest.cpp
   test/config/CommonConfigTest.cpp
   test/config/ConfigLoaderTest.cpp
+  test/config/EnvironmentSubstitutionTest.cpp
   test/config/ValidationResultTest.cpp
   test/config/parsing/ReflectionTest.cpp
   test/health/HealthServerTest.cpp
