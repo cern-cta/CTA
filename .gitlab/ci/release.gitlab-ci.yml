@@ -301,6 +301,8 @@ deploy-mr-review-app:
 
 stop-mr-review-app:
   stage: release
+  # Cleanup must remain runnable after artifacts from earlier jobs expire.
+  dependencies: []
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual

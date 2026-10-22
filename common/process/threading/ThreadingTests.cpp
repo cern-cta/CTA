@@ -16,14 +16,13 @@
 
 namespace unitTests {
 TEST(cta_threading, Mutex_properly_throws_exceptions) {
-  /* Check that we properly get exception when doing wrong semaphore
-     operations */
+  // Verify that invalid operations on an error-checking mutex throw exceptions.
   cta::threading::Mutex m;
   ASSERT_NO_THROW(m.lock());
   /* Duplicate lock */
   ASSERT_THROW(m.lock(), cta::exception::Errnum);
   ASSERT_NO_THROW(m.unlock());
-  /* Duplicate release */
+  // Intentional duplicate release; tests/tsan.suppr suppresses this test's expected mutex report.
   ASSERT_THROW(m.unlock(), cta::exception::Errnum);
 }
 

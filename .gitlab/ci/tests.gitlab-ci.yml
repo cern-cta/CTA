@@ -33,9 +33,9 @@ spec:
     - *setup-cta-install
     - mkdir -p test-results test-logs
     - |
-      # Include both lock acquisition stacks when TSan reports a potential deadlock.
+      # Load targeted suppressions and include both stacks for potential deadlocks.
       if [[ "$[[ inputs.analysis ]]" == "thread" ]]; then
-        export TSAN_OPTIONS="${TSAN_OPTIONS:+${TSAN_OPTIONS}:}second_deadlock_stack=1"
+        export TSAN_OPTIONS="${TSAN_OPTIONS:+${TSAN_OPTIONS}:}second_deadlock_stack=1:suppressions=${CI_PROJECT_DIR}/tests/tsan.suppr"
       fi
     - |
       set -o pipefail
