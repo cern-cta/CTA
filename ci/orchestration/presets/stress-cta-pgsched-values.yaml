@@ -100,10 +100,11 @@ taped:
     telemetry:
       metrics:
         # With 30 drives each OTLP export collects metrics from all drive sessions
-        # before flushing to the collector.  10 s interval / 8 s timeout gives the
-        # collector enough time to gather all drive metrics without racing itself.
-        exportInterval: 10000
-        exportTimeout: 8000
+        # before flushing to the collector.  15 s interval / 12 s timeout aligns
+        # exactly with the Prometheus scrape_interval (15 s), giving one fresh
+        # data point per scrape and 3 s of recovery margin before the next cycle.
+        exportInterval: 15000
+        exportTimeout: 12000
     taped:
       # Per-session buffer pool (MigrationMemoryManager): 10 000 × 256 KB = 2.56 GB/drive.
       # Overridden to 500 by stress-stressdrives-pgsched-values.yaml for StressDrives.
