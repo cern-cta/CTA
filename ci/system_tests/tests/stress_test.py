@@ -37,8 +37,8 @@ class StressParams:
     check_archive_interval_sec: int
     max_no_progress_intervals: int
     max_acceptable_loss_percent: float
-    prequeue: PrequeueParams           # archive pre-queue threshold
-    retrieve_prequeue: PrequeueParams  # retrieve pre-queue threshold (separate fraction; see retrieve_prequeue_fraction)
+    prequeue: PrequeueParams  # archive pre-queue threshold
+    retrieve_prequeue: PrequeueParams  # retrieve pre-queue threshold (see retrieve_prequeue_fraction)
     # Derived — set in __post_init__
     num_dirs: int = field(init=False)
 

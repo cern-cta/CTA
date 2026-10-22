@@ -101,7 +101,7 @@ class CtaTapedHost(RemoteHost):
     def stress_base_dir(self) -> Path:
         """Library root extracted from the DriveDevice URI ("virtual://<base_dir>")."""
         device = self.exec_with_output("printenv DRIVE_DEVICE")
-        return Path(device[len(self._VIRTUAL_DRIVE_SCHEME):])
+        return Path(device[len(self._VIRTUAL_DRIVE_SCHEME) :])
 
     def read_stress_library_conf(self) -> StressLibraryConf:
         """Read and parse the library.toml from the shared volume mounted in this pod."""
