@@ -562,6 +562,8 @@ class EosClientHost(DiskClientHost):
         num_dirs: int,
         num_procs: int,
         *,
+        batch_size: int = 500,
+        discovery_procs: int = 5,
         krb5_cache: str = "/tmp/poweruser1/krb5cc_0",
         activity: str = "T0Reprocess",
     ) -> asyncio.Future[ExecResult]:
@@ -572,6 +574,8 @@ class EosClientHost(DiskClientHost):
             f"--dest-dir {dest_dir} "
             f"--num-dirs {num_dirs} "
             f"--num-procs {num_procs} "
+            f"--batch-size {batch_size} "
+            f"--discovery-procs {discovery_procs} "
             f"--krb5-cache {krb5_cache} "
             f"--activity {activity}"
         )

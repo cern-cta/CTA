@@ -64,6 +64,7 @@
 #   (128 MB/drive, 3.8 GB for 30 drives).
 #
 # taped archiveFetchBytesFiles = 20 000 files (StressDrive; see stress-stressdrives-pgsched-values.yaml)
+#   logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
 #   Capacity 49 600 080 bytes = 80 + 5 × 20 000 × 496 → exactly 5 batches/tape.
 #   ENOSPC fires on HDR1 of batch 6 file 1 → zero partial-batch requeue at tape boundaries.
 #   At 100 files/s/drive one batch lasts ~200 s; DB poll frequency is low.
@@ -93,6 +94,16 @@
 # PostgreSQL scheduler DB connection budget (max 150 connections)
 # (repeated in table form below for quick reference)
 # ---------------------------------------------------------------------------
+
+taped:
+  conf:
+    telemetry:
+      metrics:
+        # With 30 drives each OTLP export collects metrics from all drive sessions
+        # before flushing to the collector.  5 s interval / 4 s timeout gives the
+        # collector enough time to gather all drive metrics without racing itself.
+        exportInterval: 5000
+        exportTimeout: 4000
 
 global:
   # Keep crash evidence in a pod volume for stress-run investigation
