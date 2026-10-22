@@ -11,7 +11,7 @@ ARG SCCACHE_VERSION="=0.18.0"
 # GCC Toolset ships the TSan linker library separately from the compiler.
 RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock && \
     dnf install -y gcc-toolset-14-gcc-c++ gcc-toolset-14-libtsan-devel cmake3 rpm-build dnf-utils make ninja-build \
-        systemd-devel clang-tools-extra corrosion && \
+        systemd-devel clang-tools-extra corrosion nodejs && \
     dnf clean all --enablerepo=\*
 
 # Select GCC 14 for CMake and tools that invoke the compiler directly.

@@ -39,6 +39,7 @@ version = 1
     path = [
         ".python-version",
         "**/.gitkeep",
+        "**/.clang-format-ignore",
         ".gitattributes",
         ".gitmodules",
         ".git-blame-ignore-revs",
