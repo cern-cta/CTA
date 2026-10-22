@@ -1475,9 +1475,24 @@ class TestRuntimeDeployment:
         assert config_json, "driveconfig missing"
         indexed = {(e["category"], e["key"], e["value"]) for e in config_json}
 
-        # Because our config files are badly structured, some options end up differently in the catalogue
-        # For now just skip them
-        key_skip_list = ["MountCriteria"]
+        # Some config keys are stored differently in the catalogue and cannot be
+        # compared directly to the config file line:
+        #   - MountCriteria: badly structured multi-value field
+        #   - *BytesFiles keys (FetchReportOrFlushLimits): DriveConfig splits each
+        #     composite "XBytesFiles" key into two separate catalogue entries
+        #     "XBytes" and "XFiles" — the original combined key never appears.
+        #     This is the same strategy used for ArchiveDismountPolicy (split into
+        #     WatchPeriodSecs/MinSamples/etc.); that key is not seen here only
+        #     because ArchiveDismountPolicy is not explicitly set in cta-taped.conf.
+        #     Note: taped reads all config directly from cta-taped.conf at startup;
+        #     catalogue entries are audit-only and skipping them here does not
+        #     affect runtime behaviour.
+        key_skip_list = [
+            "MountCriteria",
+            "ArchiveFetchBytesFiles",
+            "ArchiveFlushBytesFiles",
+            "RetrieveFetchBytesFiles",
+        ]
 
         # Every relevant configuration entry must be reflected in the registered drive
         for line in taped_config.splitlines():
