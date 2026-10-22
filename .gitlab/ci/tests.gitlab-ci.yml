@@ -160,6 +160,9 @@ integration-test-cta:
   rules:
     - if: '"$[[ inputs.platform ]]" == "debian13"'
       when: never
+    # CLI invocation checks assert exact stderr and exit codes; run them without compiler sanitizers.
+    - if: '"$[[ inputs.analysis ]]" != "none" && "$[[ inputs.analysis ]]" != "valgrind"'
+      when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
