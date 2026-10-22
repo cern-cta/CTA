@@ -211,6 +211,22 @@ class K8sConnection(RemoteConnection):
 
         return ip
 
+    @override
+    def get_service_logs(self) -> str:
+        # Refresh status so crashes since the connection was created are not missed.
+        pod = self.core.read_namespaced_pod(name=self._pod_name, namespace=self.namespace)
+        logs = [
+            self.core.read_namespaced_pod_log(name=self._pod_name, namespace=self.namespace, container=self.container)
+        ]
+        statuses = (pod.status.container_statuses or []) if pod.status is not None else []
+        if any(status.name == self.container and status.restart_count > 0 for status in statuses):
+            logs.append(
+                self.core.read_namespaced_pod_log(
+                    name=self._pod_name, namespace=self.namespace, container=self.container, previous=True
+                )
+            )
+        return "\n".join(logs)
+
     def _resolve_pod(self) -> V1Pod:
         pods: list[V1Pod] = self.core.list_namespaced_pod(
             namespace=self.namespace,

@@ -1189,7 +1189,9 @@ cleanup_background_namespace_deletion() {
   if [[ -n $namespace_deletion_pid ]]; then
     wait "$namespace_deletion_pid" >/dev/null 2>&1 || true
   fi
-  [[ -n $namespace_deletion_log ]] && rm -f -- "$namespace_deletion_log"
+  if [[ -n $namespace_deletion_log ]]; then
+    rm -f -- "$namespace_deletion_log"
+  fi
 }
 
 # Start deleting the previous deployment in the background while the build runs.

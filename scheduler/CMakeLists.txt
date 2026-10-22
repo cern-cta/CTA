@@ -90,7 +90,8 @@ if(NOT CTA_USE_PGSCHED)
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     SchedulerTest.cpp
-    OStoreDB/OStoreDBTest.cpp)
+    OStoreDB/OStoreDBTest.cpp
+    OStoreDB/OStoreDBInitTest.cpp)
 else()
   add_library (ctaschedulerunittests SHARED
     SchedulerDatabaseFactory.cpp
