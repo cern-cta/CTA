@@ -193,11 +193,20 @@ spec:
 
     stress-prequeue-fraction:
       description: |-
-        Fraction of total files that must be queued before drives come up (e.g. 0.9).
+        Fraction of total files that must be archive-queued before drives come up (e.g. 0.9).
         Overrides the prequeue.prequeue_fraction key in the test config TOML.
         Can also be overridden per job run via the STRESS_PREQUEUE_FRACTION CI variable.
       type: number
       default: 0.9
+
+    stress-retrieve-prequeue-fraction:
+      description: |-
+        Fraction of total files that must be retrieve-queued before drives come up (e.g. 0.1).
+        Keep low to bound the EOS WFE leaf directory and avoid scanner throughput collapse.
+        Overrides the prequeue.retrieve_prequeue_fraction key in the test config TOML.
+        Can also be overridden per job run via the STRESS_RETRIEVE_PREQUEUE_FRACTION CI variable.
+      type: number
+      default: 0.1
 ---
 
 stages:
@@ -473,6 +482,7 @@ include:
       num-stress-files: $[[ inputs.num-stress-files ]]
       stress-prequeue-enabled: $[[ inputs.stress-prequeue-enabled ]]
       stress-prequeue-fraction: $[[ inputs.stress-prequeue-fraction ]]
+      stress-retrieve-prequeue-fraction: $[[ inputs.stress-retrieve-prequeue-fraction ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.platform ]]" == "debian13"'
