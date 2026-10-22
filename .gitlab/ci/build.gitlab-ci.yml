@@ -80,6 +80,19 @@ build-cta:
       sanitizers="$[[ inputs.analysis ]]"
       if [[ "$sanitizers" == "valgrind" ]]; then sanitizers=none; fi
       BUILD_OPTIONS=" --sanitizers ${sanitizers}"
+
+      # Keep leak detection enabled and diagnose failures during package config checks.
+      if [[ ",${sanitizers}," == *",address,"* ]]; then
+        export ASAN_OPTIONS="${ASAN_OPTIONS:+${ASAN_OPTIONS}:}detect_leaks=1"
+        export LSAN_OPTIONS="${LSAN_OPTIONS:+${LSAN_OPTIONS}:}verbosity=1:log_threads=1"
+
+        # Record runner security settings without making diagnostics a build requirement.
+        id
+        grep -E '^(TracerPid|Uid|Gid|CapInh|CapPrm|CapEff|CapBnd|CapAmb|NoNewPrivs|Seccomp|Seccomp_filters):' /proc/self/status || true
+        if [[ -r /proc/sys/kernel/yama/ptrace_scope ]]; then
+          echo "Yama ptrace_scope: $(cat /proc/sys/kernel/yama/ptrace_scope)"
+        fi
+      fi
     - |
       if [[ "$ENABLE_SCCACHE" == "true" ]]; then
         BUILD_OPTIONS+=" --enable-sccache"
