@@ -51,8 +51,6 @@ Config loading is done using a combination of [tomlplusplus](https://github.com/
 
 Environment expansion is a separate text-processing step before TOML parsing, shared by the runtime library rather than implemented in `Application`.
 Parsing remains available without expansion, including for already-resolved text and literal data such as JWT revocation files.
-Strict parsing and errors for missing environment variables are independent choices.
-See `lib/runtime/include/runtime/config/ConfigLoader.hpp` for the API and the [operator guide](../../ops/deploy-and-configure/configuration/service-runtime.md#environment-variables) for substitution behavior.
 
 The only thing the developer needs to take care of is that the structure of the config struct matches the structure of TOML files. Both in terms of types and in terms of hierarchy and names. See e.g. `maintd/` for an example of what this looks like.
 
