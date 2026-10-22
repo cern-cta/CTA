@@ -55,14 +55,34 @@
       # stay busy from the start.
       enabled = true
 
-      # Fraction of total_files that must be queued before drives come up.
-      # 0.9 → 9 M of 10 M files queued before drives start, last 1 M queued
-      # while drives are already transferring.
+      # Fraction of total_files that must be archive-queued before drives come
+      # up for the archive phase.  0.9 → 9 M of 10 M files queued first, then
+      # drives start and the last 1 M are queued while drives are already
+      # transferring.  Archive WFE events complete quickly (CTA queues the job
+      # → EOS marks done), so the /eos/proc/workflow/<date>/q/default/ leaf
+      # directory stays bounded and no scanner degradation occurs.
       prequeue_fraction = 0.9
 
-      # Expected EOS archive-queue throughput used to derive the drive-up
-      # timeout: timeout = (prequeue_fraction × total_files / eos_queue_rate_hz)
-      #                    × timeout_margin_factor
+      # Fraction of total_files that must be retrieve-queued before drives come
+      # up for the retrieve phase.
+      #
+      # EOS WFE scanner bottleneck — keep this very low:
+      #   Each fs.prepare(STAGE) call places one event into the leaf directory
+      #   /eos/<instance>/proc/workflow/<YYYYMMDD>/q/<workflow>/
+      #   A retrieve/STAGE event is only removed from that directory when the
+      #   file is staged back to disk — NOT when CTA queues the retrieve job.
+      #   With drives DOWN the directory only grows; at ~9 M entries the EOS
+      #   WFE scheduler's directory scan dominates and observed retrieve-queue
+      #   throughput falls from ~1.5 kHz to ~90 Hz.  Increasing wfe.ntx does
+      #   NOT fix this — the bottleneck is the scanner, not thread availability.
+      #   0.1 → drives come up after 1 M files are queued, keeping the WFE
+      #   leaf directory small and throughput near the 1.5 kHz ceiling for the
+      #   remaining 9 M files queued while drives are already draining.
+      retrieve_prequeue_fraction = 0.1
+
+      # Expected EOS queue throughput used to derive the drive-up timeout for
+      # both archive and retrieve phases:
+      #   timeout = (fraction × total_files / eos_queue_rate_hz) × timeout_margin_factor
       eos_queue_rate_hz    = 1000
       timeout_margin_factor = 1.2
 

@@ -37,7 +37,8 @@ class StressParams:
     check_archive_interval_sec: int
     max_no_progress_intervals: int
     max_acceptable_loss_percent: float
-    prequeue: PrequeueParams
+    prequeue: PrequeueParams           # archive pre-queue threshold
+    retrieve_prequeue: PrequeueParams  # retrieve pre-queue threshold (separate fraction; see retrieve_prequeue_fraction)
     # Derived — set in __post_init__
     num_dirs: int = field(init=False)
 
@@ -71,6 +72,12 @@ def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> St
     num_files_to_put_drives_up = int(total_files * prequeue_fraction)
     timeout_to_put_drives_up_sec = int(num_files_to_put_drives_up / eos_queue_rate_hz * timeout_margin_factor)
 
+    retrieve_prequeue_fraction = prequeue_config["retrieve_prequeue_fraction"]
+    retrieve_num_files_to_put_drives_up = int(total_files * retrieve_prequeue_fraction)
+    retrieve_timeout_to_put_drives_up_sec = int(
+        retrieve_num_files_to_put_drives_up / eos_queue_rate_hz * timeout_margin_factor
+    )
+
     return StressParams(
         total_files=total_files,
         num_files_per_dir=stress_config["num_files_per_dir"],
@@ -86,6 +93,12 @@ def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> St
             enabled=prequeue_enabled,
             num_files_to_put_drives_up=num_files_to_put_drives_up,
             timeout_to_put_drives_up_sec=timeout_to_put_drives_up_sec,
+            check_interval_sec=prequeue_config["check_interval_sec"],
+        ),
+        retrieve_prequeue=PrequeueParams(
+            enabled=prequeue_enabled,
+            num_files_to_put_drives_up=retrieve_num_files_to_put_drives_up,
+            timeout_to_put_drives_up_sec=retrieve_timeout_to_put_drives_up_sec,
             check_interval_sec=prequeue_config["check_interval_sec"],
         ),
     )
@@ -105,8 +118,38 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     )
     # Decrease the logging level
     eos_mgm.exec('eos debug warning "*"')
-    # Increase the number of EOS WFE  to 1500 and frequency to 1 sec (1.5 kHz)
-    eos_mgm.exec("eos space config default space.wfe.ntx=1500")
+
+    # EOS WFE thread-pool and interval tuning.
+    #
+    # wfe.ntx controls a SINGLE shared thread pool for ALL workflow event types
+    # (archive PrepareToArchive, retrieve PrepareToGet/STAGE, disk-report
+    # mgm.event=migrated, etc.) — EOS has no per-event-type pool separation.
+    # With interval=1 s the scheduler dispatches at most wfe.ntx events per
+    # second, so the hard throughput ceiling is wfe.ntx events/s.
+    #
+    # Why ntx=3000 (not 1500):
+    #   During concurrent archive pre-queuing AND drives running, the pool
+    #   must serve two simultaneous streams:
+    #     - archive WFE events (xrootd_archive.py → EOS → CTA WFE): ~1.5 kHz
+    #     - disk-report callbacks (maintd mgm.event=migrated → EOS MGM): ~1 kHz
+    #   With ntx=1500 the archive stream saturates the entire pool; disk-report
+    #   callbacks get leftover slots and are throttled to ~300 Hz.  Setting
+    #   ntx=3000 gives each stream its own headroom and lets both run at full
+    #   speed simultaneously.
+    #
+    # RETRIEVE RATE DEGRADATION — NOT fixable by increasing ntx:
+    #   During retrieve pre-queuing (drives DOWN), each fs.prepare(STAGE) call
+    #   creates a WFE event that EOS queues under /eos/proc/workflow/q/.  The
+    #   WFE scheduler scans that directory every wfe.interval seconds to find
+    #   the next batch of events to dispatch.  With drives DOWN nothing
+    #   completes, so the directory only grows.  At 9 M pending entries the
+    #   scan dominates and observed throughput falls from 1.5 kHz to ~90 Hz —
+    #   a scanner bottleneck, not thread starvation.  More ntx threads cannot
+    #   help: the scheduler cannot dispatch events faster than it can find them.
+    #   Fix: keep the WFE queue directory bounded by starting drives before the
+    #   pending-event count becomes large (lower retrieve_prequeue_fraction so
+    #   drives come up and complete events before the directory balloons).
+    eos_mgm.exec("eos space config default space.wfe.ntx=3000")
     eos_mgm.exec("eos space config default space.wfe.interval=1")
     # Get number of "booted" filesystems
     result = eos_mgm.exec_with_output("eos fs ls | grep -c 'booted'")
@@ -139,8 +182,10 @@ async def test_generate_and_copy_files(
     print(f"\tBatch size: {stress_params.batch_size}")
     print(f"\tWrite files in chunks: {stress_params.write_files_in_chunks}")
     print(f"\tPrequeueing: {stress_params.prequeue.enabled}")
-    print(f"\tNumber of files to put drives up: {stress_params.prequeue.num_files_to_put_drives_up}")
-    print(f"\tTimeout to put drives up: {stress_params.prequeue.timeout_to_put_drives_up_sec}")
+    print(f"\tArchive: files to put drives up: {stress_params.prequeue.num_files_to_put_drives_up}")
+    print(f"\tArchive: timeout to put drives up: {stress_params.prequeue.timeout_to_put_drives_up_sec}")
+    print(f"\tRetrieve: files to put drives up: {stress_params.retrieve_prequeue.num_files_to_put_drives_up}")
+    print(f"\tRetrieve: timeout to put drives up: {stress_params.retrieve_prequeue.timeout_to_put_drives_up_sec}")
 
     if stress_params.prequeue.enabled:
         # Put drives down first — we queue archive jobs and only put drives up
@@ -299,7 +344,7 @@ async def test_request_files_for_retrieve(
     print("Sleeping 60 seconds to allow MGM-FST communication to settle after disk copy deletion", flush=True)
     await asyncio.sleep(60)
 
-    if stress_params.prequeue.enabled:
+    if stress_params.retrieve_prequeue.enabled:
         cta_cli.set_all_drives_down()
     else:
         cta_cli.set_all_drives_up()
@@ -316,7 +361,7 @@ async def test_request_files_for_retrieve(
     )
     print("Retrieve process started")
 
-    drives_up = not stress_params.prequeue.enabled
+    drives_up = not stress_params.retrieve_prequeue.enabled
     stop_monitoring = asyncio.Event()
 
     async def monitor_retrieve_and_put_drives_up() -> None:
@@ -328,23 +373,25 @@ async def test_request_files_for_retrieve(
             print(f"\t[retrieve monitor] {queued}/{total_file_count} retrieve requests queued in CTA", flush=True)
 
             if not drives_up:
-                if queued >= stress_params.prequeue.num_files_to_put_drives_up:
+                if queued >= stress_params.retrieve_prequeue.num_files_to_put_drives_up:
                     print(
                         (
-                            f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting "
-                            f"drives UP"
+                            f"\tThreshold ({stress_params.retrieve_prequeue.num_files_to_put_drives_up}) reached"
+                            f" — putting drives UP"
                         ),
                         flush=True,
                     )
                     cta_cli.set_all_drives_up(wait=False)
                     drives_up = True
-                elif time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
+                elif time.time() - timer_start > stress_params.retrieve_prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
                     cta_cli.set_all_drives_up(wait=False)
                     drives_up = True
 
             sleep_time = (
-                stress_params.prequeue.check_interval_sec if not drives_up else stress_params.check_copy_interval_sec
+                stress_params.retrieve_prequeue.check_interval_sec
+                if not drives_up
+                else stress_params.check_copy_interval_sec
             )
             with contextlib.suppress(asyncio.TimeoutError):
                 await asyncio.wait_for(stop_monitoring.wait(), sleep_time)
@@ -354,7 +401,7 @@ async def test_request_files_for_retrieve(
     stop_monitoring.set()
     await monitor_task
 
-    if stress_params.prequeue.enabled and not drives_up:
+    if stress_params.retrieve_prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold — putting drives UP now")
         cta_cli.set_all_drives_up(wait=False)
 
