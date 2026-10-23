@@ -63,11 +63,6 @@ struct RetrieveJobQueueRow {
   std::string host = "";
   std::string logical_library = "";
   std::optional<std::string> activity = std::nullopt;
-  std::string srrUsername = "";
-  std::string srrHost = "";
-  uint64_t srrTime = 0;
-  std::string srrMountPolicy = "";
-  std::string srrActivity = "";
   uint64_t archiveFileID = 0;
   std::string diskFileId = "";
   std::string diskInstance = "";
@@ -79,9 +74,6 @@ struct RetrieveJobQueueRow {
 
   checksum::ChecksumBlob checksumBlob;
 
-  time_t lifecycleTimings_creation_time = 0;
-  time_t lifecycleTimings_first_selected_time = 0;
-  time_t lifecycleTimings_completed_time = 0;
   std::optional<std::string> diskSystemName = std::nullopt;
 
 private:
@@ -101,10 +93,6 @@ private:
     drive.reserve(128);
     logical_library.reserve(128);
     host.reserve(64);
-    srrUsername.reserve(128);
-    srrHost.reserve(64);
-    srrMountPolicy.reserve(64);
-    srrActivity.reserve(64);
     alternateVids.reserve(128);
     alternateCopyNbs.reserve(20);
     alternateFSeq.reserve(256);
@@ -165,11 +153,6 @@ public:
     drive.clear();
     host.clear();
     logical_library.clear();
-    srrUsername.clear();
-    srrHost.clear();
-    srrTime = 0;
-    srrMountPolicy.clear();
-    srrActivity.clear();
     diskSystemName = std::nullopt;
     activity = std::nullopt;
     archiveFileID = 0;
@@ -180,9 +163,6 @@ public:
     diskFileInfoPath = "";
     diskFileInfoOwnerUid = 0;
     diskFileInfoGid = 0;
-    lifecycleTimings_creation_time = 0;
-    lifecycleTimings_first_selected_time = 0;
-    lifecycleTimings_completed_time = 0;
     checksumBlob.clear();
   }
 
@@ -247,15 +227,6 @@ public:
     host = rset.columnStringNoOpt("HOST");
     logical_library = rset.columnStringNoOpt("LOGICAL_LIBRARY");
     activity = rset.columnOptionalString("ACTIVITY");
-    srrUsername = rset.columnStringNoOpt("SRR_USERNAME");
-    srrHost = rset.columnStringNoOpt("SRR_HOST");
-    srrTime = rset.columnUint64NoOpt("SRR_TIME");
-    srrMountPolicy = rset.columnStringNoOpt("SRR_MOUNT_POLICY");
-    srrActivity = rset.columnStringNoOpt("SRR_ACTIVITY");
-
-    lifecycleTimings_creation_time = rset.columnUint64NoOpt("LIFECYCLE_CREATION_TIME");
-    lifecycleTimings_first_selected_time = rset.columnUint64NoOpt("LIFECYCLE_FIRST_SELECTED_TIME");
-    lifecycleTimings_completed_time = rset.columnUint64NoOpt("LIFECYCLE_COMPLETED_TIME");
 
     diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
 
@@ -322,13 +293,6 @@ public:
            TOTAL_REPORT_RETRIES,
            IS_VERIFY_ONLY,
            IS_REPORTING,
-           SRR_USERNAME,
-           SRR_HOST,
-           SRR_TIME,
-           SRR_MOUNT_POLICY,
-           LIFECYCLE_CREATION_TIME,
-           LIFECYCLE_FIRST_SELECTED_TIME,
-           LIFECYCLE_COMPLETED_TIME,
            RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -336,9 +300,6 @@ public:
     }
     if (activity.has_value()) {
       sql += R"(,ACTIVITY )";
-    }
-    if (!srrActivity.empty()) {
-      sql += R"(,SRR_ACTIVITY )";
     }
     sql += R"(
        ) VALUES (
@@ -381,13 +342,6 @@ public:
            :TOTAL_REPORT_RETRIES,
            :IS_VERIFY_ONLY,
            :IS_REPORTING,
-           :SRR_USERNAME,
-           :SRR_HOST,
-           :SRR_TIME,
-           :SRR_MOUNT_POLICY,
-           :LIFECYCLE_CREATION_TIME,
-           :LIFECYCLE_FIRST_SELECTED_TIME,
-           :LIFECYCLE_COMPLETED_TIME,
            :RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -395,9 +349,6 @@ public:
     }
     if (activity.has_value()) {
       sql += R"(,:ACTIVITY )";
-    }
-    if (!srrActivity.empty()) {
-      sql += R"(,:SRR_ACTIVITY )";
     }
     sql += R"(    ) )";
 
@@ -439,13 +390,6 @@ public:
     stmt.bindBool(":IS_REPORTING", isReporting);
     stmt.bindString(":VID", vid);
     stmt.bindString(":ALTERNATE_VIDS", alternateVids);
-    stmt.bindString(":SRR_USERNAME", srrUsername);
-    stmt.bindString(":SRR_HOST", srrHost);
-    stmt.bindUint64(":SRR_TIME", static_cast<uint64_t>(srrTime));
-    stmt.bindString(":SRR_MOUNT_POLICY", srrMountPolicy);
-    stmt.bindUint64(":LIFECYCLE_CREATION_TIME", static_cast<uint64_t>(lifecycleTimings_creation_time));
-    stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME", static_cast<uint64_t>(lifecycleTimings_first_selected_time));
-    stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", static_cast<uint64_t>(lifecycleTimings_completed_time));
     if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
@@ -464,9 +408,6 @@ public:
     }
     if (activity.has_value()) {
       stmt.bindString(":ACTIVITY", activity.value());
-    }
-    if (!srrActivity.empty()) {
-      stmt.bindString(":SRR_ACTIVITY", srrActivity);
     }
     conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbInsertRetrieve);
     stmt.executeNonQuery();
@@ -495,14 +436,10 @@ public:
     params.add("requester.name", requesterName);
     params.add("requester.group", requesterGroup);
     params.add("dstURL", dstURL);
-    params.add("creationlog.ssername", srrUsername);
-    params.add("creationlog.host", srrHost);
-    params.add("creationlog.time", srrTime);
+    params.add("creationlog.time", creationTime);
     params.add("retrieveReportURL", retrieveReportURL);
     params.add("retrieveErrorReportURL", retrieveErrorReportURL);
     params.add("isVerifyOnly", isVerifyOnly);
-    params.add("retrieveRequest.mountPolicy", srrMountPolicy);
-    params.add("retrieveRequest.activity", srrActivity);
     // archiveFile fields
     params.add("archiveFileID", archiveFileID);
     params.add("diskFileInfoOwnerUid", diskFileInfoOwnerUid);
@@ -522,9 +459,6 @@ public:
      * params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
      * params.add("repackInfoProtoBuf", repackInfoProtoBuf);
      */
-    params.add("lifecycleTimings.creation_time", lifecycleTimings_creation_time);
-    params.add("lifecycleTimings.first_selected_time", lifecycleTimings_first_selected_time);
-    params.add("lifecycleTimings.completed_time", lifecycleTimings_completed_time);
     params.add("diskSystemName", diskSystemName.value_or(""));
   }
 
@@ -537,7 +471,6 @@ public:
     // detect optional columns
     bool hasDiskSystemName = false;
     bool hasActivity = false;
-    bool hasSrrActivity = false;
     bool isNoRecallRepack = false;
     for (const auto& row : rows) {
       if (row->diskSystemName.has_value()) {
@@ -545,9 +478,6 @@ public:
       }
       if (row->activity.has_value()) {
         hasActivity = true;
-      }
-      if (!row->srrActivity.empty()) {
-        hasSrrActivity = true;
       }
       if (row->status == RetrieveJobStatus::RJS_ToReportToRepackForSuccess) {
         isNoRecallRepack = true;
@@ -583,10 +513,6 @@ public:
       RETRIEVE_ERROR_REPORT_URL,
       REQUESTER_NAME,
       REQUESTER_GROUP,
-      SRR_USERNAME,
-      SRR_HOST,
-      SRR_TIME,
-      SRR_MOUNT_POLICY,
       DISK_FILE_ID,
       DISK_FILE_GID,
       DISK_FILE_OWNER_UID,
@@ -611,9 +537,6 @@ public:
       TOTAL_REPORT_RETRIES,
       IS_VERIFY_ONLY,
       IS_REPORTING,
-      LIFECYCLE_CREATION_TIME,
-      LIFECYCLE_FIRST_SELECTED_TIME,
-      LIFECYCLE_COMPLETED_TIME,
       RETRIEVE_REPORT_URL)SQL";
 
     if (hasDiskSystemName) {
@@ -621,9 +544,6 @@ public:
     }
     if (hasActivity) {
       sql += ",ACTIVITY";
-    }
-    if (hasSrrActivity) {
-      sql += ",SRR_ACTIVITY";
     }
 
     sql += ") VALUES ";
@@ -651,10 +571,6 @@ public:
       sql += ":RETRIEVE_ERROR_REPORT_URL" + std::to_string(i) + ",";
       sql += ":REQUESTER_NAME" + std::to_string(i) + ",";
       sql += ":REQUESTER_GROUP" + std::to_string(i) + ",";
-      sql += ":SRR_USERNAME" + std::to_string(i) + ",";
-      sql += ":SRR_HOST" + std::to_string(i) + ",";
-      sql += ":SRR_TIME" + std::to_string(i) + ",";
-      sql += ":SRR_MOUNT_POLICY" + std::to_string(i) + ",";
       sql += ":DISK_FILE_ID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_GID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_OWNER_UID" + std::to_string(i) + ",";
@@ -679,18 +595,12 @@ public:
       sql += ":TOTAL_REPORT_RETRIES" + std::to_string(i) + ",";
       sql += ":IS_VERIFY_ONLY" + std::to_string(i) + ",";
       sql += ":IS_REPORTING" + std::to_string(i) + ",";
-      sql += ":LIFECYCLE_CREATION_TIME" + std::to_string(i) + ",";
-      sql += ":LIFECYCLE_FIRST_SELECTED_TIME" + std::to_string(i) + ",";
-      sql += ":LIFECYCLE_COMPLETED_TIME" + std::to_string(i) + ",";
       sql += ":RETRIEVE_REPORT_URL" + std::to_string(i);
       if (hasDiskSystemName) {
         sql += ",:DISK_SYSTEM_NAME" + std::to_string(i);
       }
       if (hasActivity) {
         sql += ",:ACTIVITY" + std::to_string(i);
-      }
-      if (hasSrrActivity) {
-        sql += ",:SRR_ACTIVITY" + std::to_string(i);
       }
       sql += ")";
       if (i < rows.size() - 1) {
@@ -727,13 +637,6 @@ public:
                       !row.requesterName.empty() ? row.requesterName : "NOT_PROVIDED");
       stmt.bindString(":REQUESTER_GROUP" + std::to_string(i),
                       !row.requesterGroup.empty() ? row.requesterGroup : "NOT_PROVIDED");
-      stmt.bindString(":SRR_USERNAME" + std::to_string(i), !row.srrUsername.empty() ? row.srrUsername : "NOT_PROVIDED");
-      stmt.bindString(":SRR_HOST" + std::to_string(i), !row.srrHost.empty() ? row.srrHost : "NOT_PROVIDED");
-      stmt.bindUint64(":SRR_TIME" + std::to_string(i),
-                      row.srrTime != 0 ? static_cast<uint64_t>(row.srrTime) :
-                                         0);  // keep 0 as sentinel for "NOT_PROVIDED"
-      stmt.bindString(":SRR_MOUNT_POLICY" + std::to_string(i),
-                      !row.srrMountPolicy.empty() ? row.srrMountPolicy : "NOT_PROVIDED");
       stmt.bindString(":RETRIEVE_REPORT_URL" + std::to_string(i),
                       !row.retrieveReportURL.empty() ? row.retrieveReportURL : "NOT_PROVIDED");
       stmt.bindString(":DISK_FILE_ID" + std::to_string(i), row.diskFileId);
@@ -760,21 +663,12 @@ public:
       stmt.bindUint32(":TOTAL_REPORT_RETRIES" + std::to_string(i), row.totalReportRetries);
       stmt.bindBool(":IS_VERIFY_ONLY" + std::to_string(i), row.isVerifyOnly);
       stmt.bindBool(":IS_REPORTING" + std::to_string(i), row.isReporting);
-      stmt.bindUint64(":LIFECYCLE_CREATION_TIME" + std::to_string(i),
-                      static_cast<uint64_t>(row.lifecycleTimings_creation_time));
-      stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME" + std::to_string(i),
-                      static_cast<uint64_t>(row.lifecycleTimings_first_selected_time));
-      stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME" + std::to_string(i),
-                      static_cast<uint64_t>(row.lifecycleTimings_completed_time));
 
       if (hasDiskSystemName) {
         stmt.bindString(":DISK_SYSTEM_NAME" + std::to_string(i), row.diskSystemName);
       }
       if (hasActivity) {
         stmt.bindString(":ACTIVITY" + std::to_string(i), row.activity);
-      }
-      if (hasSrrActivity) {
-        stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
       }
     }
     conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbInsertRetrieve);

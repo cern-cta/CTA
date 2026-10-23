@@ -25,13 +25,7 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   rjr->retrieveReportURL = m_schedRetrieveReq.retrieveReportURL;
   rjr->retrieveErrorReportURL = m_schedRetrieveReq.errorReportURL;
   rjr->isVerifyOnly = m_isVerifyOnly;
-  rjr->srrUsername = m_schedRetrieveReq.creationLog.username;
-  rjr->srrHost = m_schedRetrieveReq.creationLog.host;
-  rjr->srrTime = m_schedRetrieveReq.creationLog.time;
   rjr->creationTime = m_schedRetrieveReq.creationLog.time;
-  rjr->lifecycleTimings_creation_time = m_schedRetrieveReq.lifecycleTimings.creation_time;
-  rjr->lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
-  rjr->lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;
   rjr->activity = m_activity;
 
   rjr->copyNb = m_actCopyNb;
@@ -119,9 +113,6 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   if (!tapePoolsForReparchiveCopyNbsString.empty()) {
     rjr->rearchiveTapePools = tapePoolsForReparchiveCopyNbsString;
   }
-  rjr->srrMountPolicy = "?";
-  rjr->srrActivity = m_schedRetrieveReq.activity.value_or("?");
-
   return rjr;
 }
 
@@ -209,10 +200,6 @@ void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::Ret
 
 void RetrieveRequest::setDiskSystemName(std::optional<std::string> diskSystemName) {
   m_diskSystemName = diskSystemName;
-}
-
-void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
-  m_schedRetrieveReq.lifecycleTimings.creation_time = creationTime;
 }
 
 void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) const {

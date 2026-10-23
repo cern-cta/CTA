@@ -39,17 +39,12 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   retrieveRequest.retrieveReportURL = std::move(m_jobRow.retrieveReportURL);
   retrieveRequest.errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
   retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
-  retrieveRequest.creationLog.username = std::move(m_jobRow.srrUsername);  // EntryLog
-  retrieveRequest.creationLog.host = std::move(m_jobRow.srrHost);
-  retrieveRequest.creationLog.time = m_jobRow.srrTime;
+  retrieveRequest.creationLog.time = m_jobRow.creationTime;  // EntryLog
   retrieveRequest.isVerifyOnly =
     m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
   retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
   retrieveRequest.mountPolicy =
     m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
-  retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
-  retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
-  retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
 
   archiveFile.archiveFileID = m_jobRow.archiveFileID;
   archiveFile.diskFileId = std::move(m_jobRow.diskFileId);
@@ -132,9 +127,6 @@ void RetrieveRdbJob::reset() {
   retrieveRequest.isVerifyOnly = false;
   retrieveRequest.vid = std::nullopt;
   retrieveRequest.mountPolicy = std::nullopt;
-  retrieveRequest.lifecycleTimings.creation_time = 0;
-  retrieveRequest.lifecycleTimings.first_selected_time = 0;
-  retrieveRequest.lifecycleTimings.completed_time = 0;
 
   retrieveRequest.activity.reset();
   diskSystemName.reset();
