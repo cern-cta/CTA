@@ -77,9 +77,18 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   const MediaTypeInfo info = infoForVid(vid);
 
   // Simulate mechanical tape-load latency with per-drive jitter.
-  // Uniform random in [mountDelayMs, 2×mountDelayMs] guarantees every drive
-  // waits at least mountDelayMs ms while spreading concurrent mounts across a
-  // window of the same width, preventing synchronised PVC I/O storms.
+  // Per-drive unavailability: saveTape() [burst] → dismount/mount renames →
+  //   waitUntilReady: sleep [mountDelayMs, 2×mountDelayMs] → loadTape() [spread].
+  // Saves are a concurrent burst (N_drives × tape_on_disk bytes) before any jitter.
+  // The jitter window spreads the subsequent loads across drives.
+  // Total downtime per drive = save_time + jitter + load_time must stay below the
+  // no-progress detector (6 × 10 s = 60 s).
+  // Current (30 drives, ~39 MB on-disk, fast-ssd): ~2 s save + 15–30 s jitter
+  //   + ~0.5 s load ≈ 17–33 s — well within the 60 s limit.
+  // Multiple PVCs (one per tape pool) become necessary when save and load times
+  // grow too large, e.g. ~66 MB tapes (k=5, 100 k files) on a network-SSD at
+  // 200 MB/s: ~10 s save + 15–30 s jitter + ~10 s load ≈ 35–50 s — close to
+  // the limit.  P PVCs reduce save+load times by factor P.
   if (info.mountDelayMs > 0) {
     std::uniform_int_distribution<uint64_t> dist(info.mountDelayMs, 2u * info.mountDelayMs);
     std::this_thread::sleep_for(std::chrono::milliseconds(dist(m_rng)));
