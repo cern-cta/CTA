@@ -268,6 +268,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     .add("diskFileGid", request.diskFileInfo.gid)
     .add("dstURL", request.dstURL)
     .add("errorReportURL", request.errorReportURL)
+    // Creation host and usernname are logged only, not used for scheduling.
     .add("creationHost", request.creationLog.host)
     .add("creationTime", request.creationLog.time)
     .add("creationUser", request.creationLog.username)
