@@ -363,19 +363,19 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   //
   // The EOS WFE scheduler wakes every wfe.interval seconds and scans that
   // leaf directory to find the next batch of events to dispatch.  The hard
-  // throughput ceiling is wfe.ntx events per wfe.interval (typically
-  // 3000 events/s = 3 kHz with the stress-test tuning).
+  // throughput ceiling is wfe.ntx / wfe.interval events/s (stress-test
+  // tuning: ntx=20000, interval=10 → ~2 kHz).  ntx also caps the batch size,
+  // so the scanner stops after finding ntx candidates rather than walking the
+  // entire directory — keeping per-cycle scan cost O(ntx).
   //
   // A prepare/STAGE WFE event is only completed (and thus removed from the
   // leaf directory) after the file has been staged back to disk — NOT when
   // CTA queues the retrieve job.  With drives DOWN nothing is ever staged,
   // so the leaf directory only grows.  At ~9 M pending entries the directory
-  // scan cost dominates and observed throughput falls from ~1.5 kHz to ~90 Hz
-  // over ~2 h, even though this queueRetrieve() call and the
-  // RETRIEVE_PENDING_QUEUE INSERT remain fast throughout.
-  // The bottleneck is the EOS WFE leaf-directory scanner — not CTA, not
-  // thread starvation.  Increasing wfe.ntx does NOT help once the scan itself
-  // is the limiting factor.
+  // scan cost dominates and observed throughput collapses over ~1–2 h, even
+  // though this queueRetrieve() call and the RETRIEVE_PENDING_QUEUE INSERT
+  // remain fast throughout.  The bottleneck is the EOS WFE leaf-directory
+  // scanner — not CTA, not thread starvation.
   //
   // Mitigation: keep the leaf directory bounded by starting drives early
   // enough that events complete (file staged → event removed) before the

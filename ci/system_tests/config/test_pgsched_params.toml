@@ -66,19 +66,19 @@
       # Fraction of total_files that must be retrieve-queued before drives come
       # up for the retrieve phase.
       #
-      # EOS WFE scanner bottleneck — keep this very low:
+      # EOS WFE scanner bottleneck:
       #   Each fs.prepare(STAGE) call places one event into the leaf directory
       #   /eos/<instance>/proc/workflow/<YYYYMMDD>/q/<workflow>/
       #   A retrieve/STAGE event is only removed from that directory when the
       #   file is staged back to disk — NOT when CTA queues the retrieve job.
-      #   With drives DOWN the directory only grows; at ~9 M entries the EOS
-      #   WFE scheduler's directory scan dominates and observed retrieve-queue
-      #   throughput falls from ~1.5 kHz to ~90 Hz.  Increasing wfe.ntx does
-      #   NOT fix this — the bottleneck is the scanner, not thread availability.
-      #   0.1 → drives come up after 1 M files are queued, keeping the WFE
-      #   leaf directory small and throughput near the 1.5 kHz ceiling for the
-      #   remaining 9 M files queued while drives are already draining.
-      retrieve_prequeue_fraction = 0.1
+      #   With drives DOWN the directory only grows.  wfe.ntx=20000 caps the
+      #   per-cycle batch so the scanner stops after 20000 entries, bounding
+      #   scan cost regardless of queue depth.  With drives coming up at 0.5
+      #   the directory is drained concurrently from the start of the second
+      #   half, so the peak depth stays well below the level where even an
+      #   early-stop scan would become slow (~1–2 M entries at ~2 kHz for
+      #   ~15–25 min of pre-queuing, vs 9 M with the old 0.1 fraction).
+      retrieve_prequeue_fraction = 0.5
 
       # Expected EOS queue throughput used to derive the drive-up timeout for
       # both archive and retrieve phases:

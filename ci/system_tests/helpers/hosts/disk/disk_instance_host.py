@@ -145,11 +145,23 @@ class DiskInstanceHost(RemoteHost):
             if num_tape_only[full_path] > 0:
                 dirs_left_queue.append(full_path)
 
-        total_files_to_retrieve = sum(num_tape_only.values())
+        total_files = sum(num_files_total.values())
+        initial_tape_only = sum(num_tape_only.values())
 
-        print(f"Waiting for retrieval in {len(directories)} directories ({total_files_to_retrieve} files on tape)")
+        print(
+            f"Waiting for retrieval in {len(directories)} directories "
+            f"({initial_tape_only} files on tape, {total_files} total)"
+        )
+
+        if initial_tape_only == 0:
+            # Drives completed all retrievals while xrootd_retrieve was still submitting
+            # (drain rate exceeded submission rate).  All files now have disk copies.
+            print("All files already retrieved before wait started — drives were faster than submission")
+            print(f"{total_files}/{total_files} files have disk copies")
+            return 0, 0.0
+
         consecutive_no_progress_intervals = 0
-        previous_remaining_files = total_files_to_retrieve
+        previous_remaining_files = initial_tape_only
 
         while dirs_left_queue and consecutive_no_progress_intervals < max_no_progress_intervals:
             next_queue = deque()
@@ -180,8 +192,8 @@ class DiskInstanceHost(RemoteHost):
         if consecutive_no_progress_intervals >= max_no_progress_intervals:
             print(f"No progress for {max_no_progress_intervals} consecutive intervals, waiting for retrieval stopped")
 
-        loss_percent = (missing_retrievals / total_files_to_retrieve) * 100 if total_files_to_retrieve > 0 else 0.0
+        loss_percent = (missing_retrievals / initial_tape_only) * 100
 
-        print(f"{total_files_to_retrieve - missing_retrievals}/{total_files_to_retrieve} files retrieved from tape")
+        print(f"{initial_tape_only - missing_retrievals}/{initial_tape_only} files retrieved from tape")
 
         return missing_retrievals, loss_percent
