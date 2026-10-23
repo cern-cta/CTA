@@ -5,10 +5,13 @@
 
 """Download SonarCloud issues using only the Python standard library."""
 
+from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path, PurePosixPath
 import sys
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -21,15 +24,13 @@ PAGE_SIZE = 500
 SEARCH_LIMIT = 10000
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Download CTA SonarCloud issues as JSON (unresolved issues on the main branch by default).",
         epilog="Uses anonymous access to public SonarCloud projects.",
     )
     parser.add_argument("--project", default="cern-cta_CTA", help="SonarCloud project key (default: cern-cta_CTA)")
-    selection = parser.add_mutually_exclusive_group()
-    selection.add_argument("--branch", help="Analyzed branch name (default: SonarCloud main branch)")
-    selection.add_argument("--pull-request", help="Analyzed pull request ID")
+    parser.add_argument("--branch", help="Analyzed branch name (default: SonarCloud main branch)")
     parser.add_argument("--dir", help="Repository-relative directory, including descendants (filtered locally)")
     parser.add_argument("--language", help="Comma-separated Sonar language keys, e.g. cpp,c,py (API filter)")
     parser.add_argument("--file-type", help="Comma-separated file extensions, e.g. hpp,cpp or .py (filtered locally)")
@@ -67,7 +68,7 @@ def parse_arguments():
     return args
 
 
-def request_page(params, url=API_URL):
+def request_page(params: dict[str, str | int], url: str = API_URL) -> dict[str, Any]:
     # Only the fixed HTTPS API endpoints are supported.
     if url not in (API_URL, QUALITY_GATE_URL):
         raise ValueError("Unsupported SonarCloud API endpoint")
@@ -87,7 +88,7 @@ def request_page(params, url=API_URL):
         ) from error
 
 
-def download_issues(params):
+def download_issues(params: dict[str, str | int]):
     issues = []
     components = {}
     rules = {}
@@ -115,7 +116,7 @@ def download_issues(params):
     return issues, components, rules
 
 
-def quality_gate_query(condition, pull_request):
+def quality_gate_query(condition: dict[str, Any]) -> dict[str, str] | None:
     """Map supported aggregate metrics to contributing issue categories, not individual blame."""
     metric = condition["metricKey"]
     new_code = metric.startswith("new_")
@@ -145,17 +146,15 @@ def quality_gate_query(condition, pull_request):
     else:
         return None
 
-    # Pull request searches already select changes relative to the target branch.
-    if new_code and not pull_request:
+    if new_code:
         query["sinceLeakPeriod"] = "true"
     return query
 
 
-def download_gate_issues(args, params):
+def download_gate_issues(args: argparse.Namespace, params: dict[str, str | int]):
     gate_params = {"projectKey": args.project}
-    for key in ("branch", "pullRequest"):
-        if key in params:
-            gate_params[key] = params[key]
+    if "branch" in params:
+        gate_params["branch"] = params["branch"]
     gate = request_page(gate_params, QUALITY_GATE_URL)["projectStatus"]
     if gate["status"] not in ("OK", "ERROR"):
         raise RuntimeError("Quality gate has not been computed for this selection.")
@@ -166,7 +165,7 @@ def download_gate_issues(args, params):
     for condition in gate.get("conditions", []):
         if condition["status"] != "ERROR":
             continue
-        query = quality_gate_query(condition, args.pull_request)
+        query = quality_gate_query(condition)
         if query is None:
             unsupported.append(condition["metricKey"])
             continue
@@ -190,13 +189,13 @@ def download_gate_issues(args, params):
     return list(issues.values()), components, rules, metadata
 
 
-def matches_path(path, directory, extensions):
+def matches_path(path: str | None, directory: str | None, extensions: set[str]) -> bool:
     if directory and directory != "." and (not path or not path.startswith(directory + "/")):
         return False
     return not extensions or bool(path and any(path.endswith(extension) for extension in extensions))
 
 
-def confirm_replacement(existing):
+def confirm_replacement(existing: Path) -> bool:
     """Ask before replacing an existing file, keeping cancellation as the default."""
     if existing.is_dir():
         raise RuntimeError(f"Expected a file, but found a directory: {existing}")
@@ -207,7 +206,7 @@ def confirm_replacement(existing):
     return answer.strip().lower() in ("y", "yes")
 
 
-def main():
+def main() -> None:
     args = parse_arguments()
     destination = args.output / "issues.json"
     existing = destination if args.output.is_dir() else args.output
@@ -219,8 +218,6 @@ def main():
     params = {"componentKeys": args.project}
     if args.branch:
         params["branch"] = args.branch
-    if args.pull_request:
-        params["pullRequest"] = args.pull_request
     if args.language:
         params["languages"] = args.language
     if not args.include_resolved:
@@ -243,7 +240,6 @@ def main():
     payload = {
         "project": args.project,
         "branch": args.branch,
-        "pullRequest": args.pull_request,
         "filters": {
             "directory": args.dir,
             "language": args.language,
