@@ -204,10 +204,6 @@ void RetrieveRequest::setDiskSystemName(std::optional<std::string> diskSystemNam
   m_diskSystemName = diskSystemName;
 }
 
-void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
-  m_schedRetrieveReq.lifecycleTimings.creation_time = creationTime;
-}
-
 void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) const {
   throw exception::NotImplementedException();
 }
