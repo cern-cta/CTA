@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# CI installs the packages under test and configures PostgreSQL as root.
 FROM debian:13
 
 ARG CTA_DEPENDENCY_REPOSITORY=https://cta-public-repo.web.cern.ch/testing/cta-6/debian

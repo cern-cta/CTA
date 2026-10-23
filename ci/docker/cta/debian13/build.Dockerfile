@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Build from the repository root: podman build -f ci/docker/cta/debian13/build.Dockerfile .
+# CI installs source-package build dependencies at runtime, which requires root.
 FROM debian:13
 
 ARG CTA_DEPENDENCY_REPOSITORY=https://cta-public-repo.web.cern.ch/testing/cta-6/debian
@@ -19,7 +20,7 @@ RUN printf 'deb [arch=amd64 trusted=yes] %s trixie main\n' "$CTA_DEPENDENCY_REPO
     > /etc/apt/sources.list.d/cta-dependencies.list
 
 # Backported debhelper restores stop-on-removal handling when --no-start is used.
-RUN printf 'deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] http://deb.debian.org/debian trixie-backports main\n' \
+RUN printf 'deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] https://deb.debian.org/debian trixie-backports main\n' \
       > /etc/apt/sources.list.d/debian-backports.list && \
     apt-get update && apt-get install -y --no-install-recommends -t trixie-backports debhelper && \
     rm -rf /var/lib/apt/lists/*
@@ -31,7 +32,8 @@ RUN apt-get update && apt-get satisfy -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # Use the same nightly Rust channel and pinned cargo-cyclonedx/sccache versions as EL9.
-RUN curl --fail --location https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init \
+RUN curl --fail --location --proto '=https' --proto-redir '=https' \
+      https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init \
       -o /tmp/rustup-init && chmod +x /tmp/rustup-init && \
     /tmp/rustup-init -y --no-modify-path --default-toolchain nightly && rm /tmp/rustup-init
 ENV PATH="/root/.cargo/bin:${PATH}"
