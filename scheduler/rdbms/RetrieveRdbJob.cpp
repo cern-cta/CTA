@@ -39,8 +39,6 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   retrieveRequest.retrieveReportURL = std::move(m_jobRow.retrieveReportURL);
   retrieveRequest.errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
   retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
-  retrieveRequest.creationLog.username = std::move(m_jobRow.srrUsername);  // EntryLog
-  retrieveRequest.creationLog.host = std::move(m_jobRow.srrHost);
   retrieveRequest.creationLog.time = m_jobRow.creationTime;  // EntryLog
   retrieveRequest.isVerifyOnly =
     m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy

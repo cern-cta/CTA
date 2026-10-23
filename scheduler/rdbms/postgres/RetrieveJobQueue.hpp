@@ -63,8 +63,6 @@ struct RetrieveJobQueueRow {
   std::string host = "";
   std::string logical_library = "";
   std::optional<std::string> activity = std::nullopt;
-  std::string srrUsername = "";
-  std::string srrHost = "";
   uint64_t archiveFileID = 0;
   std::string diskFileId = "";
   std::string diskInstance = "";
@@ -95,8 +93,6 @@ private:
     drive.reserve(128);
     logical_library.reserve(128);
     host.reserve(64);
-    srrUsername.reserve(128);
-    srrHost.reserve(64);
     alternateVids.reserve(128);
     alternateCopyNbs.reserve(20);
     alternateFSeq.reserve(256);
@@ -157,8 +153,6 @@ public:
     drive.clear();
     host.clear();
     logical_library.clear();
-    srrUsername.clear();
-    srrHost.clear();
     diskSystemName = std::nullopt;
     activity = std::nullopt;
     archiveFileID = 0;
@@ -233,8 +227,6 @@ public:
     host = rset.columnStringNoOpt("HOST");
     logical_library = rset.columnStringNoOpt("LOGICAL_LIBRARY");
     activity = rset.columnOptionalString("ACTIVITY");
-    srrUsername = rset.columnStringNoOpt("SRR_USERNAME");
-    srrHost = rset.columnStringNoOpt("SRR_HOST");
 
     diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
 
@@ -301,8 +293,6 @@ public:
            TOTAL_REPORT_RETRIES,
            IS_VERIFY_ONLY,
            IS_REPORTING,
-           SRR_USERNAME,
-           SRR_HOST,
            RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -352,8 +342,6 @@ public:
            :TOTAL_REPORT_RETRIES,
            :IS_VERIFY_ONLY,
            :IS_REPORTING,
-           :SRR_USERNAME,
-           :SRR_HOST,
            :RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -402,8 +390,6 @@ public:
     stmt.bindBool(":IS_REPORTING", isReporting);
     stmt.bindString(":VID", vid);
     stmt.bindString(":ALTERNATE_VIDS", alternateVids);
-    stmt.bindString(":SRR_USERNAME", srrUsername);
-    stmt.bindString(":SRR_HOST", srrHost);
     if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
@@ -450,8 +436,6 @@ public:
     params.add("requester.name", requesterName);
     params.add("requester.group", requesterGroup);
     params.add("dstURL", dstURL);
-    params.add("creationlog.ssername", srrUsername);
-    params.add("creationlog.host", srrHost);
     params.add("creationlog.time", creationTime);
     params.add("retrieveReportURL", retrieveReportURL);
     params.add("retrieveErrorReportURL", retrieveErrorReportURL);
@@ -529,8 +513,6 @@ public:
       RETRIEVE_ERROR_REPORT_URL,
       REQUESTER_NAME,
       REQUESTER_GROUP,
-      SRR_USERNAME,
-      SRR_HOST,
       DISK_FILE_ID,
       DISK_FILE_GID,
       DISK_FILE_OWNER_UID,
@@ -589,8 +571,6 @@ public:
       sql += ":RETRIEVE_ERROR_REPORT_URL" + std::to_string(i) + ",";
       sql += ":REQUESTER_NAME" + std::to_string(i) + ",";
       sql += ":REQUESTER_GROUP" + std::to_string(i) + ",";
-      sql += ":SRR_USERNAME" + std::to_string(i) + ",";
-      sql += ":SRR_HOST" + std::to_string(i) + ",";
       sql += ":DISK_FILE_ID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_GID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_OWNER_UID" + std::to_string(i) + ",";
@@ -657,8 +637,6 @@ public:
                       !row.requesterName.empty() ? row.requesterName : "NOT_PROVIDED");
       stmt.bindString(":REQUESTER_GROUP" + std::to_string(i),
                       !row.requesterGroup.empty() ? row.requesterGroup : "NOT_PROVIDED");
-      stmt.bindString(":SRR_USERNAME" + std::to_string(i), !row.srrUsername.empty() ? row.srrUsername : "NOT_PROVIDED");
-      stmt.bindString(":SRR_HOST" + std::to_string(i), !row.srrHost.empty() ? row.srrHost : "NOT_PROVIDED");
       stmt.bindString(":RETRIEVE_REPORT_URL" + std::to_string(i),
                       !row.retrieveReportURL.empty() ? row.retrieveReportURL : "NOT_PROVIDED");
       stmt.bindString(":DISK_FILE_ID" + std::to_string(i), row.diskFileId);
