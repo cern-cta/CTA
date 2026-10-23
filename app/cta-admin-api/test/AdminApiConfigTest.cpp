@@ -55,7 +55,7 @@ TEST(AdminApiConfig, ZeroCatalogueConnectionsIsRejected) {
 }
 
 TEST(AdminApiConfig, AdminModeDefaultsToAll) {
-  EXPECT_EQ(cta::admin_api::AdminApiConfig {}.admin_mode, cta::admin_api::AdminCmdMode::ALL);
+  EXPECT_EQ(cta::admin_api::AdminApiConfig {}.policies.admin_mode, cta::admin_api::AdminCmdMode::ALL);
 }
 
 TEST(AdminApiConfig, AdminModeParsesKnownValues) {
@@ -66,21 +66,21 @@ TEST(AdminApiConfig, AdminModeParsesKnownValues) {
          std::pair {"no_repack", AdminCmdMode::NO_REPACK}
   }) {
     cta::admin_api::AdminApiConfig config;
-    const auto tbl = toml::parse(std::string("admin_mode = \"") + text + "\"");
+    const auto tbl = toml::parse(std::string("[policies]\nadmin_mode = \"") + text + "\"");
     EXPECT_TRUE(cta::runtime::parsing::parseTable(config, tbl, false).ok()) << text;
-    EXPECT_EQ(config.admin_mode, expected) << text;
+    EXPECT_EQ(config.policies.admin_mode, expected) << text;
   }
 }
 
 TEST(AdminApiConfig, AdminModeRejectsUnknownValue) {
   cta::admin_api::AdminApiConfig config;
-  const auto tbl = toml::parse("admin_mode = \"everything\"");
+  const auto tbl = toml::parse("[policies]\nadmin_mode = \"everything\"");
   EXPECT_FALSE(cta::runtime::parsing::parseTable(config, tbl, false).ok());
 }
 
 TEST(AdminApiConfig, AdminModeRejectsNonString) {
   cta::admin_api::AdminApiConfig config;
-  const auto tbl = toml::parse("admin_mode = 1");
+  const auto tbl = toml::parse("[policies]\nadmin_mode = 1");
   EXPECT_FALSE(cta::runtime::parsing::parseTable(config, tbl, false).ok());
 }
 

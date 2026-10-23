@@ -12,8 +12,11 @@
 
 namespace unitTests {
 
-TEST(MaintdConfig, DefaultValuesAreValid) {
-  EXPECT_TRUE(cta::maintd::MaintdConfig {}.validate().ok());
+TEST(MaintdConfig, DefaultValuesAreValidOnceBackendNameIsSet) {
+  cta::maintd::MaintdConfig config;
+  config.scheduler.backend_name = "vfsTest";
+
+  EXPECT_TRUE(config.validate().ok());
 }
 
 TEST(MaintdConfig, ValidatesCommonConfigChildren) {
@@ -73,6 +76,7 @@ TEST(MaintdConfig, ReportsErrorsFromAllInvalidChildren) {
     "routines.disk_report_retrieve.soft_timeout_secs",
     "routines.repack_expand.max_to_expand",
     "routines.repack_report.soft_timeout_secs",
+    "scheduler.backend_name",
     "scheduler.config_file",
     "telemetry.on_init_failure",
     "xrootd.security_protocol",

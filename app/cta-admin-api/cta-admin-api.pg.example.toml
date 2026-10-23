@@ -10,17 +10,6 @@
 # This is an example, not a ready-to-run configuration. Copy it to your config dir, replace all
 # deployment-specific values, and validate it before starting the service.
 
-# Role of this server with respect to repacks. It is meant to match the scheduler DB it is connected to,
-# when the user and repack requests are served from separate scheduler DBs:
-#   "all"        - no restriction (default)
-#   "no_repack"  - for the user scheduler DB: all the repack commands ("repack add", "repack rm",
-#                  "repack err" and "repack ls") are rejected, and tape state changes ("tape ch --state")
-#                  follow the rules of a user-only scheduler DB.
-#   "repack"     - for the repack scheduler DB: all commands available, and tape state changes follow the
-#                  rules of a repack-only scheduler DB.
-# (string, optional)
-admin_mode = "all"
-
 # Name of the CTA instance. Used to validate the authentication tokens. It also gets sent with gRPC responses.
 # (string, REQUIRED)
 instance_name = "CI_local"
@@ -44,23 +33,10 @@ instance_name = "CI_local"
   number_of_connections = 10
 
 
-[files]
-  # Minimum age of missing tape file copies in order to be listed. Set it to prevent
-  # false flagging of multi-copy files which are still in the process of being archived.
-  # If omitted, 0 is used. A typical value is 86400 (24 hours).
-  # (time in seconds, optional)
-  missing_file_copies_min_age_secs = 86400
-
-  # Minimum quarantine period, in seconds, that a tape must spend in the recycle log before it can be
-  # reclaimed. Default: 2678400 (31 days)
-  # (time in seconds, optional)
-  recycle_log_quarantine_secs = 2678400
-
-
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:
   # `[ceph|postgres][User|Repack]:`
-  # (string, optional)
+  # (string, REQUIRED)
   backend_name = "postgresUser"
 
   # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
@@ -89,14 +65,40 @@ instance_name = "CI_local"
   retrieve_queue_cache_max_age_secs = 10
 
 
-[archive]
+# Fixed rules enforced by the admin API. Unlike [defaults], they cannot be overridden by command options.
+[policies]
+  # Role of this server with respect to repacks. It is meant to match the scheduler DB it is connected to,
+  # when the user and repack requests are served from separate scheduler DBs:
+  #   "all"        - no restriction (default)
+  #   "no_repack"  - for the user scheduler DB: all the repack commands ("repack add", "repack rm",
+  #                  "repack err" and "repack ls") are rejected, and tape state changes ("tape ch --state")
+  #                  follow the rules of a user-only scheduler DB.
+  #   "repack"     - for the repack scheduler DB: all commands available, and tape state changes follow the
+  #                  rules of a repack-only scheduler DB.
+  # (string, optional)
+  admin_mode = "all"
+
+[policies.tapes]
+  # Minimum age of missing tape file copies in order to be listed. Set it to prevent
+  # false flagging of multi-copy files which are still in the process of being archived.
+  # If omitted, 0 is used. A typical value is 86400 (24 hours).
+  # (time in seconds, optional)
+  missing_file_copies_min_age_secs = 86400
+
+  # Minimum quarantine period, in seconds, that a tape must spend in the recycle log before it can be
+  # reclaimed. Default: 2678400 (31 days)
+  # (time in seconds, optional)
+  recycle_log_quarantine_secs = 2678400
+
+
+[defaults.archive]
   # Default maximum size (in GB) of an archived file for a virtual organization. This is applied when a virtual
   # organisation is first added and an explicit maximum hasn't been set. 0 means no limit.
   # (integer, optional)
   max_file_size_gb = 0
 
 
-[repack]
+[defaults.repack]
   # URL of the buffer used by repack requests. Cannot be empty when provided.
   # If omitted, repack requests which require a buffer cannot be created.
   # (uri, optional)

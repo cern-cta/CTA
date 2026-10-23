@@ -16,7 +16,6 @@ metadata:
 data:
   cta-admin-api.toml: |-
     instance_name = {{ .Release.Namespace | quote }}
-    admin_mode = "all"
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
@@ -24,12 +23,6 @@ data:
     [catalogue.client]
       number_of_connections = {{ .Values.conf.catalogue.numberOfConnections | int }}
 
-    [files]
-      # Minimum age of missing tape file copies before they are reported (prevents false flagging of
-      # multi-copy files still being archived)
-      missing_file_copies_min_age_secs = {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs | int }}
-      # Recycle-log quarantine period before a tape can be reclaimed
-      recycle_log_quarantine_secs = {{ .Values.conf.catalogue.recycleLogQuarantineSecs | int }}
 
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}
@@ -46,20 +39,36 @@ data:
       thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
       {{- end }}
 
-    [archive]
+
+    [policies]
+      admin_mode = "all"
+
+    [policies.tapes]
+      # Minimum age of missing tape file copies before they are reported (prevents false flagging of
+      # multi-copy files still being archived)
+      missing_file_copies_min_age_secs = {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs | int }}
+      # Recycle-log quarantine period before a tape can be reclaimed
+      recycle_log_quarantine_secs = {{ .Values.conf.catalogue.recycleLogQuarantineSecs | int }}
+
+
+    [defaults.archive]
       # Default maximum size (GB) of an archived file when adding a virtual organisation
       max_file_size_gb = {{ .Values.conf.frontend.archiveFileMaxSizeGb | int }}
+
 
     [logging]
       level = {{ .Values.conf.logger.logLevel | quote }}
       format = {{ .Values.conf.logger.logFormat | quote }}
 
+
     [experimental]
       telemetry_enabled = {{ .Values.conf.telemetry.enabled }}
+
 
     [telemetry]
       config_file = "/etc/cta/cta-otel.yaml"
       on_init_failure = "fatal"
+
 
     [grpc]
       port = {{ .Values.port | int }}
@@ -71,6 +80,7 @@ data:
       {{- if .Values.conf.tls.caCert }}
       chain_cert_path = {{ .Values.conf.tls.caCert | quote }}
       {{- end }}
+
 
     {{- if has "jwt" .Values.conf.auth.methods }}
     [auth.jwt]

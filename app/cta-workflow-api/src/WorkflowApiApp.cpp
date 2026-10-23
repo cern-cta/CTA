@@ -38,13 +38,14 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
 #ifdef CTA_PGSCHED
   // Opportunistic batching of archive/retrieve queueing, in front of the Scheduler
   const auto& batching = config.opportunistic_batching;
+  const bool batchingEnabled = config.experimental.opportunistic_batching_enabled;
   FrontendBatchingLayer batchingLayer(serviceResources.getScheduler(),
-                                      batching.enabled,
+                                      batchingEnabled,
                                       batching.window_ms,
                                       batching.max_batch_size);
   {
     cta::log::ScopedParamContainer params(lc);
-    params.add("enabled", batching.enabled)
+    params.add("enabled", batchingEnabled)
       .add("windowMs", batching.window_ms)
       .add("maxBatchSize", batching.max_batch_size);
     lc.log(cta::log::INFO, "Opportunistic batching configured");

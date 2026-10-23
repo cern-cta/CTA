@@ -107,10 +107,10 @@ void changeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Res
     auto operatingMode = Scheduler::OperatingMode::ALL;
 
     // The tape state changes allowed depend on the scheduler DB this admin API is meant for
-    if (ctx.adminCommandMode == AdminCmdMode::REPACK) {
+    if (ctx.policies.admin_mode == AdminCmdMode::REPACK) {
       operatingMode = Scheduler::OperatingMode::REPACK;
     }
-    if (ctx.adminCommandMode == AdminCmdMode::NO_REPACK) {
+    if (ctx.policies.admin_mode == AdminCmdMode::NO_REPACK) {
       operatingMode = Scheduler::OperatingMode::USER;
     }
 
@@ -136,7 +136,7 @@ void removeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Res
 void reclaimTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
   auto& vid = opts.getRequired(OptionString::VID);
 
-  ctx.catalogue.Tape()->reclaimTape(ctx.identity, vid, ctx.recycleLogQuarantineSecs, ctx.lc);
+  ctx.catalogue.Tape()->reclaimTape(ctx.identity, vid, ctx.policies.tapes.recycle_log_quarantine_secs, ctx.lc);
 }
 
 void changeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {

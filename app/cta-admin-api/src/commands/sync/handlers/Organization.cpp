@@ -49,7 +49,7 @@ void addVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& op
   vo.comment = comment;
   vo.diskInstanceName = diskInstanceName;
 
-  vo.maxFileSize = maxFileSizeOpt.value_or(ctx.archiveFileMaxSize);
+  vo.maxFileSize = maxFileSizeOpt.value_or(ctx.defaults.archive.maxFileSizeBytes());
   vo.isRepackVo = isRepackVo.value_or(false);
 
   ctx.catalogue.VO()->createVirtualOrganization(ctx.identity, vo);

@@ -107,10 +107,10 @@ WorkflowEvent::WorkflowEvent(const service_resources::ServiceResources& serviceR
       m_batchingLayer(&batchingLayer),
 #endif
       m_lc(serviceResources.getLogContext()),
-      m_verificationMountPolicy(config.verification.mount_policy),
-      m_zeroLengthFilesDisallowed(config.archive.zero_length_files_forbidden),
-      m_zeroLengthFilesDisallowedExceptions {config.archive.zero_length_vo_exceptions.begin(),
-                                             config.archive.zero_length_vo_exceptions.end()} {
+      m_verificationMountPolicy(config.requests.prepare.verification_mount_policy),
+      m_zeroLengthFilesDisallowed(config.requests.archive.zero_length_files_forbidden),
+      m_zeroLengthFilesDisallowedExceptions {config.requests.archive.zero_length_vo_exceptions.begin(),
+                                             config.requests.archive.zero_length_vo_exceptions.end()} {
   m_lc.push({"user", m_cliIdentity.username});
 
   // Log event before processing. This corresponds to the entry in WFE.log in EOS.

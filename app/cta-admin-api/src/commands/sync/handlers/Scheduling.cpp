@@ -35,13 +35,8 @@ std::string setDriveState(const SyncCmdContext& ctx,
   std::stringstream cmdlineOutput;
   utils::Regex driveNameRegex(regex);
 
-  if (!ctx.schedulerBackendName.has_value()) {
-    throw exception::UserError(
-      "You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
-  }
-
   const auto tapeDriveNames =
-    ctx.catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(ctx.schedulerBackendName.value());
+    ctx.catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(ctx.scheduler.getSchedulerBackendName());
   bool is_found = false;
 
   for (const auto& tapeDriveName : tapeDriveNames) {
@@ -121,12 +116,8 @@ void removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Re
   regex = '^' + regex + '$';
   utils::Regex driveNameRegex(regex);
 
-  if (!ctx.schedulerBackendName.has_value()) {
-    throw exception::UserError(
-      "You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
-  }
   const auto tapeDriveNames =
-    ctx.catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(ctx.schedulerBackendName.value());
+    ctx.catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(ctx.scheduler.getSchedulerBackendName());
   bool drivesFound = false;
 
   for (const auto& tapeDriveName : tapeDriveNames) {
@@ -212,8 +203,8 @@ void addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Resp
     bufferURL = buff.value();
   } else {
     //Buffer is not provided by the user, try to get the one from the configuration file
-    if (ctx.repackBufferURL.has_value()) {
-      bufferURL = ctx.repackBufferURL.value();
+    if (ctx.defaults.repack.buffer_url.has_value()) {
+      bufferURL = ctx.defaults.repack.buffer_url.value();
     } else {
       //Buffer is neither provided by the user, neither provided by the frontend configuration file, exception
       throw exception::UserError(
@@ -237,10 +228,10 @@ void addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Resp
   bool noRecall = opts.hasFlag(OptionBoolean::NO_RECALL);
   const auto maxFilesToSelectOpt = opts.getOptional(OptionUInt64::MAX_FILES_TO_EXPAND);
   // 1. If the 'MAX_FILES_TO_EXPAND' parameter was received, use its value.
-  // 2. Else, if 'ctx.repackMaxFilesToSelect' configuration is defined, use its value.
+  // 2. Else, if the 'defaults.repack.max_files_to_select' configuration option is defined, use its value.
   // 3. Else, use 0 as a default. Zero means that all files will be expanded.
   uint64_t maxFilesToSelect =
-    maxFilesToSelectOpt ? maxFilesToSelectOpt.value() : ctx.repackMaxFilesToSelect.value_or(0);
+    maxFilesToSelectOpt ? maxFilesToSelectOpt.value() : ctx.defaults.repack.max_files_to_select.value_or(0);
 
   // Process each item in the list
   for (auto it = vid_list.begin(); it != vid_list.end(); ++it) {

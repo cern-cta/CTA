@@ -36,7 +36,7 @@ instance_name = "CI_local"
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:
   # `[ceph|postgres][User|Repack]:`
-  # (string, optional)
+  # (string, REQUIRED)
   backend_name = "cephUser"
 
   # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
@@ -73,13 +73,7 @@ instance_name = "CI_local"
   thread_stack_size_mb = 1
 
 
-[verification]
-  # Name of the mount policy used for verification requests.
-  # (string, optional)
-  mount_policy = ""
-
-
-[archive]
+[requests.archive]
   # Whether 0-length files are rejected. Default: true
   # (boolean, optional)
   zero_length_files_forbidden = true
@@ -87,6 +81,12 @@ instance_name = "CI_local"
   # VOs which are exempt from the 0-length file restriction.
   # (list of strings, optional)
   zero_length_vo_exceptions = []
+
+
+[requests.prepare]
+  # Name of the mount policy used for verification requests.
+  # (string, optional)
+  verification_mount_policy = ""
 
 
 [logging]

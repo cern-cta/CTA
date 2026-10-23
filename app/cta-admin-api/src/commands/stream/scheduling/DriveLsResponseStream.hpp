@@ -38,7 +38,7 @@ private:
   std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>>
     m_tapeDriveNameConfigMap;
   bool m_listAllDrives = false;
-  std::optional<std::string> m_schedulerBackendName;
+  std::string m_schedulerBackendName;
 };
 
 }  // namespace cta::admin_api::commands::stream

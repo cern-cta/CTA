@@ -18,11 +18,6 @@ ShowQueuesResponseStream::ShowQueuesResponseStream(cta::Scheduler& scheduler,
       m_scheduler(scheduler),
       m_lc(lc),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()) {
-  if (!m_schedulerBackendName) {
-    m_lc.log(cta::log::ERR,
-             "ShowQueuesStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
-  }
-
   m_queuesAndMounts = m_scheduler.getQueuesAndMountSummaries(m_lc);
 }
 
@@ -56,7 +51,7 @@ cta::xrd::Data ShowQueuesResponseStream::next() {
 
   sq_item->set_mount_type(cta::admin::MountTypeToProtobuf(sq.mountType));
   sq_item->set_instance_name(m_instanceName);
-  sq_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  sq_item->set_scheduler_backend_name(m_schedulerBackendName);
   sq_item->set_tapepool(sq.tapePool);
   sq_item->set_logical_library(sq.logicalLibrary);
   sq_item->set_vid(sq.vid);

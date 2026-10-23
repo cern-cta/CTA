@@ -37,8 +37,8 @@ CtaRpcStreamImpl::CtaRpcStreamImpl(const cta::service_resources::ServiceResource
       m_instanceName(config.instance_name),
       m_schedDb(serviceResources.getSchedDb()),
       m_catalogueConnString(serviceResources.getCatalogueConnString()),
-      m_missingFileCopiesMinAgeSecs(config.files.missing_file_copies_min_age_secs),
-      m_adminCommandMode(config.admin_mode),
+      m_missingFileCopiesMinAgeSecs(config.policies.tapes.missing_file_copies_min_age_secs),
+      m_adminCommandMode(config.policies.admin_mode),
       m_authenticator(std::move(authenticator)) {}
 
 ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>*

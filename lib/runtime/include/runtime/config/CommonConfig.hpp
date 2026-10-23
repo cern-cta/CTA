@@ -95,6 +95,9 @@ struct BasicSchedulerConfig final {
 
   ValidationResult validate() const {
     ValidationResult result;
+    if (backend_name.empty()) {
+      result.addError("backend_name", "cannot be empty");
+    }
     if (config_file.empty()) {
       result.addError("config_file", "cannot be empty");
     }

@@ -79,7 +79,7 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
                    + drive.driveName);
       }
 
-      return m_schedulerBackendName.value_or("") != driveSchedulerBackendName;
+      return m_schedulerBackendName != driveSchedulerBackendName;
     });
   }
 

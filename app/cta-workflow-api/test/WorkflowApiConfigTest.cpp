@@ -60,4 +60,16 @@ TEST(WorkflowApiConfig, ZeroCatalogueConnectionsIsRejected) {
   EXPECT_FALSE(config.validate().ok());
 }
 
+#ifdef CTA_PGSCHED
+TEST(WorkflowApiConfig, OpportunisticBatchingIsDisabledByDefault) {
+  EXPECT_FALSE(makeValidConfig().experimental.opportunistic_batching_enabled);
+}
+
+TEST(WorkflowApiConfig, ZeroOpportunisticBatchingMaxBatchSizeIsRejected) {
+  auto config = makeValidConfig();
+  config.opportunistic_batching.max_batch_size = 0;
+  EXPECT_FALSE(config.validate().ok());
+}
+#endif
+
 }  // namespace unitTests
