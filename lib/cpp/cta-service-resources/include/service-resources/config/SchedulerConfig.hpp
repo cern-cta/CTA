@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "runtime/config/CommonConfig.hpp"
 #include "runtime/config/ValidationResult.hpp"
 
 #include <cstddef>
@@ -15,8 +16,8 @@ namespace cta::service_resources {
 
 #ifndef CTA_PGSCHED
 
-/// @brief Service-specific scheduler options (objectstore scheduler only).
-struct SchedulerConfig final {
+/// @brief Service-specific scheduler options (objectstore scheduler only), read from `[scheduler.client]`.
+struct SchedulerClientConfig final {
   uint32_t number_of_threads = 0;                //!< Scheduler DB thread pool size (REQUIRED, must be > 0)
   std::optional<uint32_t> thread_stack_size_mb;  //!< Scheduler DB thread stack size (MB)
 
@@ -33,6 +34,14 @@ struct SchedulerConfig final {
     return result;
   }
 };
+
+/// @brief Full `[scheduler]` section of the services: scheduler DB location plus client options.
+using ServiceSchedulerConfig = cta::runtime::BasicSchedulerConfig<SchedulerClientConfig>;
+
+#else
+
+/// @brief Full `[scheduler]` section of the services (no client options for the PostgreSQL scheduler).
+using ServiceSchedulerConfig = cta::runtime::BasicSchedulerConfig<>;
 
 #endif
 

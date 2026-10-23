@@ -21,7 +21,7 @@ data:
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
 
-    [frontend_catalogue]
+    [catalogue.client]
       number_of_connections = {{ .Values.conf.catalogue.numberOfConnections | int }}
 
     [files]
@@ -41,7 +41,7 @@ data:
       {{- else }}
 
     # Only used by the objectstore scheduler backend
-    [frontend_scheduler]
+    [scheduler.client]
       number_of_threads = {{ .Values.conf.schedulerdb.numberOfThreads | int }}
       thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
       {{- end }}

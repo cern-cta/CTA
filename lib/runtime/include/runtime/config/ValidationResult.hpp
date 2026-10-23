@@ -14,11 +14,16 @@ namespace cta::runtime {
 /**
  * @brief Collects semantic errors found while validating an initialized config struct.
  *
- * A default-constructed result represents successful validation. Errors can be added locally or merged from child
- * configs with a field-path prefix. ConfigLoader converts a non-successful root result into a UserError.
+ * ValidationResult::OK represents successful validation. Errors can be added locally or merged from child configs
+ * with a field-path prefix. ConfigLoader converts a non-successful root result into a UserError.
  */
 class ValidationResult {
 public:
+  /**
+   * @brief A result without errors, i.e. successful validation.
+   */
+  static const ValidationResult OK;
+
   /**
    * @brief Add an error for a field relative to the config currently being validated.
    *
@@ -55,5 +60,8 @@ private:
 
   std::vector<Error> m_errors;
 };
+
+// Defined out of class because the type is incomplete inside its own definition.
+inline const ValidationResult ValidationResult::OK {};
 
 }  // namespace cta::runtime

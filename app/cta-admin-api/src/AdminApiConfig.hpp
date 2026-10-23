@@ -77,17 +77,13 @@ struct AdminApiConfig final {
    */
   AdminCmdMode admin_mode = AdminCmdMode::ALL;
 
-  cta::runtime::CatalogueConfig catalogue;
-  cta::runtime::SchedulerConfig scheduler;
+  cta::service_resources::ServiceCatalogueConfig catalogue;
+  cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
   cta::runtime::TelemetryConfig telemetry;
   cta::runtime::ExperimentalConfig experimental;
 
-  cta::service_resources::CatalogueConfig frontend_catalogue;
   FilesConfig files;
-#ifndef CTA_PGSCHED
-  cta::service_resources::SchedulerConfig frontend_scheduler;
-#endif
 
   cta::grpc_server::ListenerConfig grpc;
   cta::grpc_server::AdminAuthConfig auth;
@@ -95,11 +91,7 @@ struct AdminApiConfig final {
 
   RepackConfig repack;
 
-#ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 14; }
-#else
-  static constexpr std::size_t memberCount() { return 13; }
-#endif
+  static constexpr std::size_t memberCount() { return 12; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -113,11 +105,7 @@ struct AdminApiConfig final {
     result.merge("logging", logging.validate());
     result.merge("telemetry", telemetry.validate());
     result.merge("experimental", experimental.validate());
-    result.merge("frontend_catalogue", frontend_catalogue.validate());
     result.merge("files", files.validate());
-#ifndef CTA_PGSCHED
-    result.merge("frontend_scheduler", frontend_scheduler.validate());
-#endif
     result.merge("archive", archive.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());

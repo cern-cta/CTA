@@ -27,7 +27,7 @@ instance_name = "CI_local"
   config_file = "/etc/cta/cta-catalogue.conf"
 
 
-[frontend_catalogue]
+[catalogue.client]
   # Number of connections in the catalogue connection pool. Must be greater than zero.
   # Default: 10
   # (integer, optional)

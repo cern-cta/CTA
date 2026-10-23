@@ -77,6 +77,12 @@ concept TomlValueConvertible =
 template<class T>
 concept FromStringParsable = cta::common::HasFromString<std::remove_cvref_t<T>>;
 
+/**
+ * Empty configs, such as NoClientConfig, have special handling
+ */
+template<class T>
+concept EmptyConfig = reflection::Reflectable<T> && (T::memberCount() == 0);
+
 template<class T>
 concept ScalarLike = TomlValueConvertible<T> && !StdOptional<T> && !reflection::Reflectable<T> && !StdVector<T>
                      && !MapStringKey<T> && !StdChronoTimePoint<T> && !FromStringParsable<T>;
@@ -252,24 +258,32 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 
 template<reflection::Reflectable T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict) {
-  std::unordered_set<std::string_view> seenFields;
+  // Fields we know about (exist in the declared config struct)
+  std::unordered_set<std::string_view> knownFields;
 
   std::vector<ParseResult> errs;
 
-  auto assignField = [&tbl, &errs, &seenFields, strict](std::string_view tableFieldName, auto& field) {
-    const auto node = tbl[tableFieldName];
+  auto assignField = [&tbl, &errs, &knownFields, strict](std::string_view tableFieldName, auto& field) {
+    if constexpr (EmptyConfig<std::remove_cvref_t<decltype(field)>>) {
+      // Empty configs have no members and the parser should fail when
+      // presented with a value for one, in strict mode. Hence, let's
+      // not mark it as "known".
+      return;
+    } else {
+      const auto node = tbl[tableFieldName];
 
-    if (!node) {
-      if (strict) {
-        errs.push_back(ParseResult::error("Expected field '" + std::string(tableFieldName) + "' is missing."));
+      if (!node) {
+        if (strict) {
+          errs.push_back(ParseResult::error("Expected field '" + std::string(tableFieldName) + "' is missing."));
+        }
+        return;
       }
-      return;
-    }
-    seenFields.insert(tableFieldName);
-    auto res = parseNode(field, tableFieldName, node, strict);
-    if (!res.ok()) {
-      errs.push_back(res);
-      return;
+      knownFields.insert(tableFieldName);
+      auto res = parseNode(field, tableFieldName, node, strict);
+      if (!res.ok()) {
+        errs.push_back(res);
+        return;
+      }
     }
   };
 
@@ -279,7 +293,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
   if (strict) {
     // In strict mode, we need to do a second pass to spot keys in the TOML but not in T
     for (const auto& [key, value] : tbl) {
-      if (!seenFields.contains(key)) {
+      if (!knownFields.contains(key)) {
         errs.push_back(ParseResult::error("Unknown field '" + std::string(key) + "'."));
       }
     }

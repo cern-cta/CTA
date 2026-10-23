@@ -5,6 +5,7 @@
 
 #include "runtime/config/ConfigLoader.hpp"
 
+#include "runtime/config/CommonConfig.hpp"
 #include "tests/TempFile.hpp"
 
 #include <chrono>
@@ -154,6 +155,19 @@ struct ValidatedConfig {
 
 static_assert(!cta::runtime::HasValidateMethod<MyConfig>);
 static_assert(cta::runtime::HasValidateMethod<ValidatedConfig>);
+
+struct ClientOptions {
+  int number_of_connections = 1;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
+
+template<typename ClientConfig>
+struct SectionWithClient {
+  cta::runtime::BasicCatalogueConfig<ClientConfig> catalogue;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
 
 //------------------------------------------------------------------------------
 // Tests
@@ -1402,6 +1416,47 @@ TEST(ConfigLoader, TextLoaderHonorsStringViewBounds) {
     cta::runtime::loadFromTomlString<MyConfig>(std::string_view(input).substr(1, input.size() - 2), "memory.toml")
       .mandatory,
     7);
+}
+
+TEST(ConfigLoader, StrictParsesClientSubTable) {
+  TempFile f(R"toml(
+[catalogue]
+config_file = "/etc/cta/cta-catalogue.conf"
+
+[catalogue.client]
+number_of_connections = 5
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<SectionWithClient<ClientOptions>>(f.path(), true);
+
+  EXPECT_EQ(config.catalogue.client.number_of_connections, 5);
+}
+
+TEST(ConfigLoader, StrictDoesNotRequireNoClientSubTable) {
+  TempFile f(R"toml(
+[catalogue]
+config_file = "/etc/cta/cta-catalogue.conf"
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<SectionWithClient<cta::runtime::NoClientConfig>>(f.path(), true);
+
+  EXPECT_EQ(config.catalogue.config_file, "/etc/cta/cta-catalogue.conf");
+}
+
+TEST(ConfigLoader, StrictRejectsNoClientSubTable) {
+  TempFile f(R"toml(
+[catalogue]
+config_file = "/etc/cta/cta-catalogue.conf"
+
+[catalogue.client]
+number_of_connections = 5
+)toml",
+             ".toml");
+
+  EXPECT_THROW((cta::runtime::loadFromToml<SectionWithClient<cta::runtime::NoClientConfig>>(f.path(), true)),
+               cta::exception::UserError);
 }
 
 }  // namespace unitTests

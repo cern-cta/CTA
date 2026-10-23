@@ -61,16 +61,13 @@ struct OpportunisticBatchingConfig final {
 struct WorkflowApiConfig final {
   std::string instance_name;  //!< Name of the instance, used by auth verification and gRPC messages
 
-  cta::runtime::CatalogueConfig catalogue;
-  cta::runtime::SchedulerConfig scheduler;
+  cta::service_resources::ServiceCatalogueConfig catalogue;
+  cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
   cta::runtime::TelemetryConfig telemetry;
   cta::runtime::ExperimentalConfig experimental;
 
-  cta::service_resources::CatalogueConfig frontend_catalogue;
-#ifndef CTA_PGSCHED
-  cta::service_resources::SchedulerConfig frontend_scheduler;
-#else
+#ifdef CTA_PGSCHED
   OpportunisticBatchingConfig opportunistic_batching;
 #endif
 
@@ -80,7 +77,11 @@ struct WorkflowApiConfig final {
   ArchiveConfig archive;
   cta::grpc_server::VerificationConfig verification;
 
-  static constexpr std::size_t memberCount() { return 12; }
+#ifndef CTA_PGSCHED
+  static constexpr std::size_t memberCount() { return 10; }
+#else
+  static constexpr std::size_t memberCount() { return 11; }
+#endif
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -94,10 +95,7 @@ struct WorkflowApiConfig final {
     result.merge("logging", logging.validate());
     result.merge("telemetry", telemetry.validate());
     result.merge("experimental", experimental.validate());
-    result.merge("frontend_catalogue", frontend_catalogue.validate());
-#ifndef CTA_PGSCHED
-    result.merge("frontend_scheduler", frontend_scheduler.validate());
-#else
+#ifdef CTA_PGSCHED
     result.merge("opportunistic_batching", opportunistic_batching.validate());
 #endif
     result.merge("verification", verification.validate());
