@@ -69,23 +69,25 @@ library:
       #   For file_size=16 (see test_pgsched_params.toml tests.stress.file_size):
       #                          = 480 + 16 = 496 bytes/file
       #   C = 80 (VOL1) + k × batch_size × logical_bytes_per_file
-      #   k=5, batch_size=20000 (see archiveFetchBytesFiles in stress-stressdrives-pgsched-values.yaml):
-      #   C = 80 + 5 × 20000 × 496 = 49 600 080 bytes ≈ 47.3 MB
-      #   → 100 000 files/tape, exactly 5 full batches, ENOSPC on HDR1 of batch 6 file 1.
-      # At 100 files/sec/drive → ~17 min/tape.  10 M files: 100 tapes out of 120 available.
-      # A 500 k-file CI run fills ~5 tapes, exercising mount/dismount cycles visibly.
-      capacityBytes: 49600080
+      #   k=3, batch_size=20000 (see archiveFetchBytesFiles in stress-stressdrives-pgsched-values.yaml):
+      #   C = 80 + 3 × 20000 × 496 = 29 760 080 bytes ≈ 28.4 MB
+      #   → 60 000 files/tape, exactly 3 full batches, ENOSPC on HDR1 of batch 4 file 1.
+      # Reduced from k=5 (47.3 MB) to k=3 (28.4 MB) to cut per-drive save/load I/O
+      # on the shared PVC by ~40%, shortening the synchronized remount storm.
+      # At 100 files/sec/drive → ~10 min/tape.  10 M files: 167 tapes out of 180 available.
+      # A 500 k-file CI run fills ~9 tapes, exercising mount/dismount cycles visibly.
+      capacityBytes: 29760080
       # VID prefix used to derive the media type from a VID at mount time
       # (longest-prefix match).  Keep <= 2 chars so VIDs fit the 6-char ANSI
       # tape label VSN field (e.g. ST + 4-digit index = ST0001..ST0120).
       vidPrefix: ST
-      # Milliseconds to sleep in StressDrive::waitUntilReady() after the
-      # changer delivers the tape, simulating mechanical tape-load latency.
-      # 5 s gives a visible throughput dip at each tape boundary on monitoring
-      # graphs while keeping the dead zone short enough that the Python test's
-      # no-progress detector (6 × 10 s = 60 s window) does not fire during a
-      # normal remount cycle (~20 s total: save + dismount + 5 s mount + reporting).
-      mountDelayMs: 5000
+      # Mount-delay base in milliseconds.  StressDrive::waitUntilReady() sleeps a
+      # uniformly random duration in [mountDelayMs, 2×mountDelayMs] = [15 s, 30 s],
+      # guaranteeing every drive waits at least 15 s while spreading 30 concurrent
+      # mounts across a 15 s window (~0.5 s apart on average).  This breaks the
+      # synchronised PVC I/O storm without making any drive's dead zone excessive
+      # (~30 s max, well under the 60 s no-progress detector threshold).
+      mountDelayMs: 15000
       # Adaptive-mirror mode: natural drive speed in files/sec.
       # The sleep fires once per file (at the HDR1 label block), so this value
       # is the direct file-rate ceiling — no block-count divisor needed.
@@ -99,10 +101,10 @@ library:
       # Set to 0 to disable adaptive mode and write at RAM speed.
       maxWriteRateHz: 1000
       # Number of virtual tapes pre-created in slots/ by the Job.
-      # 120 tapes × 47.3 MB ≈ 5.6 GB on the fast-ssd PVC.
-      # 10 M-file run needs 100 tapes (10 M / 100 k files/tape); 120 gives ample headroom.
+      # 180 tapes × 28.4 MB ≈ 5.1 GB on the fast-ssd PVC.
+      # 10 M-file run needs 167 tapes (10 M / 60 k files/tape); 180 gives ample headroom.
       # Must be >= the number of drives (--max-drives).
-      count: 120
+      count: 180
 
 # ---------------------------------------------------------------------------
 # PersistentVolumeClaim

@@ -31,7 +31,9 @@ StressDrive::StressDrive(std::string driveName, std::string logicalLibraryName, 
     : VirtualDrive(std::numeric_limits<uint64_t>::max()),
       m_driveName(std::move(driveName)),
       m_logicalLibrary(std::move(logicalLibraryName)),
-      m_baseDir(std::move(baseDir)) {
+      m_baseDir(std::move(baseDir)),
+      m_rng(std::hash<std::string>{}(m_driveName)
+            ^ static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())) {
   // VirtualDrive defaults m_tapeInPlace to true (for convenience), but a
   // StressDrive starts with an empty slot: no tape is loaded until the media
   // changer mounts one and waitUntilReady() is called.
@@ -74,9 +76,13 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   // Look up per-media-type properties from the VID prefix.
   const MediaTypeInfo info = infoForVid(vid);
 
-  // Simulate mechanical tape-load latency (configurable per media type).
+  // Simulate mechanical tape-load latency with per-drive jitter.
+  // Uniform random in [mountDelayMs, 2×mountDelayMs] guarantees every drive
+  // waits at least mountDelayMs ms while spreading concurrent mounts across a
+  // window of the same width, preventing synchronised PVC I/O storms.
   if (info.mountDelayMs > 0) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(info.mountDelayMs));
+    std::uniform_int_distribution<uint64_t> dist(info.mountDelayMs, 2u * info.mountDelayMs);
+    std::this_thread::sleep_for(std::chrono::milliseconds(dist(m_rng)));
   }
 
   m_tapeCapacity = info.capacityBytes;
