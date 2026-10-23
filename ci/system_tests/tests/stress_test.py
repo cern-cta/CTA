@@ -129,33 +129,30 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     # wfe.ntx controls a SINGLE shared thread pool for ALL workflow event types
     # (archive PrepareToArchive, retrieve PrepareToGet/STAGE, disk-report
     # mgm.event=migrated, etc.) — EOS has no per-event-type pool separation.
-    # With interval=1 s the scheduler dispatches at most wfe.ntx events per
-    # second, so the hard throughput ceiling is wfe.ntx events/s.
+    # Throughput ceiling = wfe.ntx / wfe.interval events/s.
     #
-    # Why ntx=3000 (not 1500):
-    #   During concurrent archive pre-queuing AND drives running, the pool
-    #   must serve two simultaneous streams:
-    #     - archive WFE events (xrootd_archive.py → EOS → CTA WFE): ~1.5 kHz
-    #     - disk-report callbacks (maintd mgm.event=migrated → EOS MGM): ~1 kHz
-    #   With ntx=1500 the archive stream saturates the entire pool; disk-report
-    #   callbacks get leftover slots and are throttled to ~300 Hz.  Setting
-    #   ntx=3000 gives each stream its own headroom and lets both run at full
-    #   speed simultaneously.
+    # interval=10 s, ntx=20000 → ~2 kHz:
+    #   The WFE scheduler scans /eos/proc/workflow/q/ each interval to find the
+    #   next batch.  ntx caps the batch size, so the scanner stops after finding
+    #   20000 candidates instead of walking the entire directory — keeping per-
+    #   cycle scan cost O(ntx) regardless of total queue depth.  The 10 s window
+    #   gives the scan ample time to find those 20000 entries even when the
+    #   directory is large.  The resulting ~2 kHz serves both concurrent
+    #   streams comfortably:
+    #     - archive WFE events (xrootd_archive.py → EOS → CTA): ~0.7 kHz peak
+    #     - disk-report callbacks (maintd mgm.event=migrated → EOS MGM): ~0.4 kHz
+    #   ntx threads are I/O-bound (waiting on XRootD/CTA responses), so a
+    #   larger pool does not proportionally increase CPU usage.
     #
-    # RETRIEVE RATE DEGRADATION — NOT fixable by increasing ntx:
-    #   During retrieve pre-queuing (drives DOWN), each fs.prepare(STAGE) call
-    #   creates a WFE event that EOS queues under /eos/proc/workflow/q/.  The
-    #   WFE scheduler scans that directory every wfe.interval seconds to find
-    #   the next batch of events to dispatch.  With drives DOWN nothing
-    #   completes, so the directory only grows.  At 9 M pending entries the
-    #   scan dominates and observed throughput falls from 1.5 kHz to ~90 Hz —
-    #   a scanner bottleneck, not thread starvation.  More ntx threads cannot
-    #   help: the scheduler cannot dispatch events faster than it can find them.
-    #   Fix: keep the WFE queue directory bounded by starting drives before the
-    #   pending-event count becomes large (lower retrieve_prequeue_fraction so
-    #   drives come up and complete events before the directory balloons).
-    eos_mgm.exec("eos space config default space.wfe.ntx=3000")
-    eos_mgm.exec("eos space config default space.wfe.interval=1")
+    # RETRIEVE RATE DEGRADATION at large queue depths:
+    #   If drives are held down long enough for the q/ directory to grow to
+    #   millions of entries, the ntx early-stop only helps if EOS honours it
+    #   before completing the full directory scan.  The primary mitigation is
+    #   retrieve_prequeue_fraction (see test_pgsched_params.toml): drives come
+    #   up at 50 % queued so the directory is drained concurrently and never
+    #   balloons to the depth where even an early-stop scan becomes slow.
+    eos_mgm.exec("eos space config default space.wfe.ntx=20000")
+    eos_mgm.exec("eos space config default space.wfe.interval=10")
     # Get number of "booted" filesystems
     result = eos_mgm.exec_with_output("eos fs ls | grep -c 'booted'")
     count_fs = int(result.strip())
@@ -369,11 +366,17 @@ async def test_request_files_for_retrieve(
     drives_up = not stress_params.retrieve_prequeue.enabled
     stop_monitoring = asyncio.Event()
 
+    # (timestamp, queue_depth) samples collected by the monitor coroutine.
+    # Used after xrootd_retrieve exits to compute the CTA-side retrieve rate,
+    # which is distinct from the EOS WFE submission rate reported by xrootd_retrieve.
+    queue_samples: list[tuple[float, int]] = []
+
     async def monitor_retrieve_and_put_drives_up() -> None:
         """Monitor CTA retrieve queue depth and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
         while not stop_monitoring.is_set():
             queued = cta_cli.retrieve_queue_file_count()
+            queue_samples.append((time.time(), queued))
 
             print(f"\t[retrieve monitor] {queued}/{total_file_count} retrieve requests queued in CTA", flush=True)
 
@@ -418,9 +421,39 @@ async def test_request_files_for_retrieve(
         print("Retrieve process failed")
         print(exec_result.stderr)
 
+    # EOS WFE submission rate: how fast xrootd_retrieve issued prepare(STAGE) requests.
+    # This is limited by the EOS WFE scanner: each prepare(STAGE) adds an entry to the
+    # global /eos/proc/workflow/q/ directory; the scanner iterates that directory every
+    # wfe.interval seconds, so throughput degrades as the global queue grows.
+    # Not a measure of CTA scheduler throughput.
     duration_seconds = timer_end - timer_start
-    avg_fps = total_file_count / duration_seconds
-    print(f"Retrieve request queueing completed in {duration_seconds:.1f}s, files/s: {avg_fps:.2f}")
+    # xrootd_retrieve prints "Retrieve done: N files" — parse actual submitted count
+    # from its output rather than using total_file_count (which includes archive losses).
+    actual_submitted = total_file_count  # fallback
+    for line in (exec_result.stdout or "").splitlines():
+        if line.startswith("Retrieve done:"):
+            try:
+                actual_submitted = int(line.split()[2])
+            except (IndexError, ValueError):
+                pass
+    eos_submission_rate = actual_submitted / duration_seconds if duration_seconds > 0 else 0.0
+    print(
+        f"EOS WFE submission rate: {actual_submitted} files in {duration_seconds:.1f}s"
+        f" ({eos_submission_rate:.1f} files/s) — EOS-side bottleneck, not CTA throughput"
+    )
+
+    # CTA retrieve scheduling rate: measured from the fastest queue-drain interval
+    # observed in the monitor samples.  During the declining phase (drives consuming
+    # faster than EOS submits), each inter-sample drop estimates CTA's actual
+    # file-processing rate independently of the EOS WFE bottleneck.
+    if len(queue_samples) >= 2:
+        peak_drain_rate = 0.0
+        for (t1, q1), (t2, q2) in zip(queue_samples, queue_samples[1:]):
+            dt = t2 - t1
+            if dt > 0 and q2 < q1:
+                peak_drain_rate = max(peak_drain_rate, (q1 - q2) / dt)
+        if peak_drain_rate > 0:
+            print(f"CTA retrieve scheduling rate (peak queue drain): {peak_drain_rate:.0f} files/s")
 
 
 def test_wait_for_retrieval(eos_mgm: EosMgmHost, stress_params: StressParams, test_dir: Path) -> None:
