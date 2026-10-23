@@ -3,6 +3,5 @@
 
 add_library(ctapluginmanager INTERFACE)
 
-target_include_directories(ctapluginmanager INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_public_headers(ctapluginmanager)
 target_link_libraries(ctapluginmanager INTERFACE ${CMAKE_DL_LIBS})
