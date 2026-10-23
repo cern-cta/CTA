@@ -8,6 +8,9 @@
 #include "MaintdConfig.hpp"
 #include "RoutineRunner.hpp"
 #include "common/log/LogContext.hpp"
+#include "service-resources/ServiceResources.hpp"
+
+#include <memory>
 
 namespace cta::maintd {
 
@@ -26,6 +29,8 @@ public:
   bool isReady() const;
 
 private:
+  // Declared before m_routineRunner: the routines hold references to the resources
+  std::unique_ptr<service_resources::ServiceResources> m_resources;
   std::unique_ptr<RoutineRunner> m_routineRunner;
 };
 

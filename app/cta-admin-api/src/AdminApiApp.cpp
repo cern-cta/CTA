@@ -33,8 +33,13 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
   lc.log(cta::log::INFO, "Starting cta-admin-api");
 
-  // Catalogue, Scheduler DB and Scheduler
-  service_resources::ServiceResources serviceResources(config.catalogue, config.scheduler, log);
+  // Catalogue, Scheduler DB
+  service_resources::ServiceResources serviceResources(
+    "Frontend",
+    config.catalogue,
+    config.scheduler,
+    service_resources::makeConnectionOptions(config.catalogue, config.scheduler),
+    log);
 
   // JWT authentication: the JWKS cache is refreshed in the background by the manager itself
   auto jwtAuthManager = grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log);
