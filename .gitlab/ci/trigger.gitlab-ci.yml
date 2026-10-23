@@ -164,6 +164,11 @@ spec:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+      variables:
+        # Branch pipelines do not have a merge-request source branch.
+        BRANCH_NAME: $CI_COMMIT_BRANCH
   image: $IMAGE_LINT
   variables:
     GIT_STRATEGY: "none" # Don't need anything from the repo for this job
