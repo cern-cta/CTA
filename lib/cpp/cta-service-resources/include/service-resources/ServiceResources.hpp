@@ -33,19 +33,14 @@ namespace cta::service_resources {
 class ServiceResources final {
 public:
   /**
-   * @param catalogueConfig     Catalogue location (runtime)
-   * @param schedulerConfig     Scheduler DB location and cache settings (runtime)
-   * @param catalogueOptions    Catalogue connection pool size (service-specific)
-   * @param schedulerOptions    Scheduler DB thread pool options (service-specific, objectstore only)
+   * @param catalogueConfig     Catalogue location and connection pool size (`[catalogue.client]`)
+   * @param schedulerConfig     Scheduler DB location, cache settings and, for the objectstore scheduler,
+   *                            thread pool options (`[scheduler.client]`)
    * @param log                 Logger provided by the outer scope
    * @throws cta::exception::UserError / cta::exception::Exception on invalid configuration or connection failure
    */
-  ServiceResources(const runtime::CatalogueConfig& catalogueConfig,
-                   const runtime::SchedulerConfig& schedulerConfig,
-                   const CatalogueConfig& catalogueOptions,
-#ifndef CTA_PGSCHED
-                   const SchedulerConfig& schedulerOptions,
-#endif
+  ServiceResources(const ServiceCatalogueConfig& catalogueConfig,
+                   const ServiceSchedulerConfig& schedulerConfig,
                    log::Logger& log);
 
   ServiceResources(const ServiceResources&) = delete;

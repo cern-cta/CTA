@@ -19,12 +19,8 @@ namespace {
 constexpr uint64_t NB_ARCHIVE_FILE_LISTING_CONNS = 2;
 }  // namespace
 
-ServiceResources::ServiceResources(const runtime::CatalogueConfig& catalogueConfig,
-                                   const runtime::SchedulerConfig& schedulerConfig,
-                                   const CatalogueConfig& catalogueOptions,
-#ifndef CTA_PGSCHED
-                                   const SchedulerConfig& schedulerOptions,
-#endif
+ServiceResources::ServiceResources(const ServiceCatalogueConfig& catalogueConfig,
+                                   const ServiceSchedulerConfig& schedulerConfig,
                                    log::Logger& log)
     : m_log(log) {
   log::LogContext lc(m_log);
@@ -34,7 +30,7 @@ ServiceResources::ServiceResources(const runtime::CatalogueConfig& catalogueConf
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile(catalogueConfig.config_file);
   auto catalogueFactory = catalogue::CatalogueFactoryFactory::create(m_log,
                                                                      catalogueLogin,
-                                                                     catalogueOptions.number_of_connections,
+                                                                     catalogueConfig.client.number_of_connections,
                                                                      NB_ARCHIVE_FILE_LISTING_CONNS);
   m_catalogue = catalogueFactory->create();
   m_catalogueConnString = catalogueLogin.connectionString;
@@ -69,10 +65,10 @@ ServiceResources::ServiceResources(const runtime::CatalogueConfig& catalogueConf
 #ifndef CTA_PGSCHED
   // [[OStoreDB specific]] thread pool settings, to be removed together with OStoreDB
   std::optional<int> threadStackSize;
-  if (schedulerOptions.thread_stack_size_mb.has_value()) {
-    threadStackSize = static_cast<int>(*schedulerOptions.thread_stack_size_mb);
+  if (schedulerConfig.client.thread_stack_size_mb.has_value()) {
+    threadStackSize = static_cast<int>(*schedulerConfig.client.thread_stack_size_mb);
   }
-  m_schedDb->initConfig(static_cast<int>(schedulerOptions.number_of_threads), threadStackSize);
+  m_schedDb->initConfig(static_cast<int>(schedulerConfig.client.number_of_threads), threadStackSize);
 #endif
 
   // Initialise the Scheduler

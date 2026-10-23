@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "runtime/config/CommonConfig.hpp"
 #include "runtime/config/ValidationResult.hpp"
 
 #include <cstddef>
@@ -15,9 +16,9 @@ namespace cta::service_resources {
 /**
  * @brief Service-specific catalogue options.
  *
- * Complements cta::runtime::CatalogueConfig (runtime/config/CommonConfig.hpp), which holds the catalogue location.
+ * Read from `[catalogue.client]`, next to the catalogue location (see cta::runtime::BasicCatalogueConfig).
  */
-struct CatalogueConfig final {
+struct CatalogueClientConfig final {
   uint32_t number_of_connections = 10;  //!< Number of connections to the catalogue database (default: 10)
 
   static constexpr std::size_t memberCount() { return 1; }
@@ -30,5 +31,8 @@ struct CatalogueConfig final {
     return result;
   }
 };
+
+/// @brief Full `[catalogue]` section of the services: catalogue location plus client options.
+using ServiceCatalogueConfig = cta::runtime::BasicCatalogueConfig<CatalogueClientConfig>;
 
 }  // namespace cta::service_resources

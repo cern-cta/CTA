@@ -30,6 +30,7 @@
 #include <set>
 #include <signal.h>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 namespace cta::runtime {
@@ -99,16 +100,26 @@ concept HasStaticTelemetryAttributes = requires(const TApp& app, const TConfig& 
                         std::map<std::string, std::string>>;
 };
 
-template<class TConfig>
-concept HasSchedulerConfig = requires(const TConfig& cfg) {
-  requires std::same_as<std::remove_cvref_t<decltype(cfg.scheduler)>, SchedulerConfig>;
-};
+template<class T>
+struct IsSchedulerConfig : std::false_type {};
 
-// Unused for now, maybe something interesting for the future...
+template<class ClientConfig>
+struct IsSchedulerConfig<BasicSchedulerConfig<ClientConfig>> : std::true_type {};
+
+template<class T>
+struct IsCatalogueConfig : std::false_type {};
+
+template<class ClientConfig>
+struct IsCatalogueConfig<BasicCatalogueConfig<ClientConfig>> : std::true_type {};
+
+// Any client options are accepted, see BasicSchedulerConfig and BasicCatalogueConfig
 template<class TConfig>
-concept HasCatalogueConfig = requires(const TConfig& cfg) {
-  requires std::same_as<std::remove_cvref_t<decltype(cfg.catalogue)>, CatalogueConfig>;
-};
+concept HasSchedulerConfig =
+  requires(const TConfig& cfg) { requires IsSchedulerConfig<std::remove_cvref_t<decltype(cfg.scheduler)>>::value; };
+
+template<class TConfig>
+concept HasCatalogueConfig =
+  requires(const TConfig& cfg) { requires IsCatalogueConfig<std::remove_cvref_t<decltype(cfg.catalogue)>>::value; };
 
 //------------------------------------------------------------------------------
 // Application

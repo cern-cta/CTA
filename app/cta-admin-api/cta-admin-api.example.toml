@@ -37,7 +37,7 @@ instance_name = "CI_local"
   # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
 
-[frontend_catalogue]
+[catalogue.client]
   # Number of connections in the catalogue connection pool. Must be greater than zero.
   # Default: 10
   # (integer, optional)
@@ -86,7 +86,7 @@ instance_name = "CI_local"
 
 
 # Object store-specific scheduler options
-[frontend_scheduler]
+[scheduler.client]
 
   # These will be removed once the objectstore scheduler is decommissioned.
 

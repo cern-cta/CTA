@@ -16,8 +16,8 @@ namespace {
 
 // Full initialisation needs a real Catalogue and Scheduler DB, which are covered by the system tests.
 // Here we check that the context refuses to start with an unusable configuration.
-cta::runtime::CatalogueConfig makeMissingCatalogueConfig() {
-  cta::runtime::CatalogueConfig config;
+cta::service_resources::ServiceCatalogueConfig makeMissingCatalogueConfig() {
+  cta::service_resources::ServiceCatalogueConfig config;
   config.config_file = "/nonexistent/cta-service-resources-test/cta-catalogue.conf";
   return config;
 }
@@ -26,24 +26,13 @@ cta::runtime::CatalogueConfig makeMissingCatalogueConfig() {
 
 TEST(ServiceResourcesTest, throwsWhenCatalogueConfigFileIsMissing) {
   cta::log::DummyLogger log("dummyHost", "ServiceResourcesTest");
-  const cta::runtime::SchedulerConfig schedulerConfig;
-  const cta::service_resources::CatalogueConfig catalogueOptions;
+  cta::service_resources::ServiceSchedulerConfig schedulerConfig;
+#ifndef CTA_PGSCHED
+  schedulerConfig.client.number_of_threads = 1;
+#endif
 
   const auto create = [&] {
-#ifndef CTA_PGSCHED
-    cta::service_resources::SchedulerConfig schedulerOptions;
-    schedulerOptions.number_of_threads = 1;
-    return cta::service_resources::ServiceResources(makeMissingCatalogueConfig(),
-                                                    schedulerConfig,
-                                                    catalogueOptions,
-                                                    schedulerOptions,
-                                                    log);
-#else
-    return cta::service_resources::ServiceResources(makeMissingCatalogueConfig(),
-                                                    schedulerConfig,
-                                                    catalogueOptions,
-                                                    log);
-#endif
+    return cta::service_resources::ServiceResources(makeMissingCatalogueConfig(), schedulerConfig, log);
   };
   EXPECT_THROW(create(), cta::exception::Exception);
 }

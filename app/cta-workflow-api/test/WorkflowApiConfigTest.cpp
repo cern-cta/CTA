@@ -18,7 +18,7 @@ cta::workflow_api::WorkflowApiConfig makeValidConfig() {
   config.scheduler.backend_name = "vfsTest";
   config.instance_name = "unitTestInstance";
 #ifndef CTA_PGSCHED
-  config.frontend_scheduler.number_of_threads = 500;
+  config.scheduler.client.number_of_threads = 500;
 #endif
   config.grpc.tls.server_key_path = "/key.pem";
   config.grpc.tls.server_cert_path = "/cert.pem";
@@ -56,7 +56,7 @@ TEST(WorkflowApiConfig, JwtAndMtlsTogetherAreRejected) {
 
 TEST(WorkflowApiConfig, ZeroCatalogueConnectionsIsRejected) {
   auto config = makeValidConfig();
-  config.frontend_catalogue.number_of_connections = 0;
+  config.catalogue.client.number_of_connections = 0;
   EXPECT_FALSE(config.validate().ok());
 }
 
