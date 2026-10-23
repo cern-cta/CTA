@@ -3,10 +3,12 @@
 
 # --- Title checks ---
 
+# Group related prefixes so they appear together in the title-check message.
 ALLOWED_PREFIXES = %w[
-  [ci] [misc] [tools] [catalogue]
   [frontend] [scheduler] [taped] [rmcd] [maintd]
-  [libs] [packaging] [runtime]
+  [catalogue] [libs] [runtime]
+  [build] [packaging] [ci]
+  [tools] [misc]
 ]
 
 normalized_title = gitlab.mr_title.sub(/\ADraft: /, '')

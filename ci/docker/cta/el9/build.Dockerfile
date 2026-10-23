@@ -9,9 +9,14 @@ ARG CARGO_CYCLONEDX_VERSION="=0.5.9"
 ARG SCCACHE_VERSION="=0.18.0"
 
 RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock && \
-    dnf install -y gcc gcc-c++ cmake3 rpm-build dnf-utils make ninja-build \
+    dnf install -y gcc-toolset-14-gcc-c++ cmake3 rpm-build dnf-utils make ninja-build \
         systemd-devel clang-tools-extra corrosion && \
     dnf clean all --enablerepo=\*
+
+# Select GCC 14 for CMake and tools that invoke the compiler directly.
+ENV PATH="/opt/rh/gcc-toolset-14/root/usr/bin:${PATH}"
+ENV CC="/opt/rh/gcc-toolset-14/root/usr/bin/gcc"
+ENV CXX="/opt/rh/gcc-toolset-14/root/usr/bin/g++"
 
 # Install rustup and nightly toolchain
 RUN curl -O https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init && \

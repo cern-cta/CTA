@@ -9,6 +9,23 @@ add_subdirectory (session)
 add_subdirectory (rao)
 add_subdirectory (daemon)
 
+# EL9's packaged GoogleTest 1.11 leaves matcher buffer storage uninitialized, triggering GCC 14 warnings.
+# Suppress them only in affected mock users; other warnings remain errors.
+# Remove when EL9 provides a fixed GoogleTest package and these files build without the suppression (or when we remove EL9).
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
+  foreach(mock_source IN ITEMS
+      scsi/DeviceTest.cpp
+      drive/DriveTest.cpp
+      system/Wrapper.cpp
+      session/TaskWatchDogTest.cpp
+      daemon/DriveHandlerTests.cpp)
+    get_filename_component(mock_directory "${mock_source}" DIRECTORY)
+    set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${mock_source}"
+      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${mock_directory}"
+      APPEND PROPERTY COMPILE_OPTIONS -Wno-uninitialized -Wno-maybe-uninitialized)
+  endforeach()
+endif()
+
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctatapedaemon ctacommon ctatelemetry)
 
