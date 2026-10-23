@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Resources shared by the admin and workflow APIs: Catalogue, Scheduler DB and Scheduler built from the typed configuration
+# Resources shared by the CTA services
 add_library(cta-service-resources STATIC src/ServiceResources.cpp)
 target_include_directories(cta-service-resources PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(CTA_USE_PGSCHED)

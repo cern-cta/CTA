@@ -17,7 +17,14 @@ void MaintdApp::stop() {
 
 int MaintdApp::run(const MaintdConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-  maintd::RoutineRunnerFactory rrFactory(config, lc);
+  // one connection per pool. no objectstore thread pool is needed
+  service_resources::ConnectionOptions connections {1, 1};
+  m_resources = std::make_unique<service_resources::ServiceResources>("Maintd",
+                                                                      config.catalogue,
+                                                                      config.scheduler,
+                                                                      connections,
+                                                                      log);
+  maintd::RoutineRunnerFactory rrFactory(config, *m_resources, lc);
   m_routineRunner = rrFactory.create();
   m_routineRunner->run(lc);
   return 0;

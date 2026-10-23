@@ -6,16 +6,8 @@
 #pragma once
 
 #include "RoutineRunner.hpp"
-#include "catalogue/Catalogue.hpp"
-#include "common/config/Config.hpp"
 #include "common/log/LogContext.hpp"
-#include "scheduler/Scheduler.hpp"
-
-#ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBInit.hpp"
-#else
-#include "scheduler/OStoreDB/OStoreDBInit.hpp"
-#endif
+#include "service-resources/ServiceResources.hpp"
 
 namespace cta::maintd {
 
@@ -24,17 +16,16 @@ namespace cta::maintd {
  */
 class RoutineRunnerFactory final {
 public:
-  RoutineRunnerFactory(const MaintdConfig& config, cta::log::LogContext& lc);
+  RoutineRunnerFactory(const MaintdConfig& config,
+                       service_resources::ServiceResources& resources,
+                       cta::log::LogContext& lc);
   std::unique_ptr<RoutineRunner> create();
 
 private:
   const MaintdConfig& m_config;
   cta::log::LogContext& m_lc;
 
-  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  std::unique_ptr<cta::SchedulerDBInit_t> m_schedDbInit;
-  std::unique_ptr<cta::SchedulerDB_t> m_schedDb;
-  std::unique_ptr<cta::Scheduler> m_scheduler;
+  service_resources::ServiceResources& m_resources;
 };
 
 }  // namespace cta::maintd

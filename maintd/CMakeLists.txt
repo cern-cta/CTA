@@ -25,6 +25,7 @@ target_link_libraries(ctamaintd
 	ctatelemetrymaintd
 	ctacatalogue
 	ctascheduler
+	cta-service-resources
 	${SCHEDROUTINES}
 	ctadiskroutines
 	ctarepackroutines

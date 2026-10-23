@@ -30,9 +30,15 @@ TEST(ServiceResourcesTest, throwsWhenCatalogueConfigFileIsMissing) {
 #ifndef CTA_PGSCHED
   schedulerConfig.client.number_of_threads = 1;
 #endif
+  const auto catalogueConfig = makeMissingCatalogueConfig();
 
   const auto create = [&] {
-    return cta::service_resources::ServiceResources(makeMissingCatalogueConfig(), schedulerConfig, log);
+    return cta::service_resources::ServiceResources(
+      "ServiceResourcesTest",
+      catalogueConfig,
+      schedulerConfig,
+      cta::service_resources::makeConnectionOptions(catalogueConfig, schedulerConfig),
+      log);
   };
   EXPECT_THROW(create(), cta::exception::Exception);
 }

@@ -27,8 +27,13 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   cta::log::LogContext lc(log);
   lc.log(cta::log::INFO, "Starting cta-workflow-api");
 
-  // Catalogue, Scheduler DB and Scheduler
-  service_resources::ServiceResources serviceResources(config.catalogue, config.scheduler, log);
+  // Catalogue, Scheduler DB
+  service_resources::ServiceResources serviceResources(
+    "Frontend",
+    config.catalogue,
+    config.scheduler,
+    service_resources::makeConnectionOptions(config.catalogue, config.scheduler),
+    log);
 
 #ifdef CTA_PGSCHED
   // Opportunistic batching of archive/retrieve queueing, in front of the Scheduler
