@@ -151,7 +151,7 @@ void FailedRequestLsResponseStream::fillCommonFields(cta::admin::FailedRequestLs
     fr_item.add_failurelogs(item.columnOptionalString("FAILURE_LOG").value_or(""));
   }
 
-  fr_item.set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  fr_item.set_scheduler_backend_name(m_schedulerBackendName);
   fr_item.set_instance_name(m_instanceName);
 }
 
@@ -229,7 +229,7 @@ cta::xrd::Data FailedRequestLsResponseStream::getNextArchiveJobsData() {
     *fr_item->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
     *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
   }
-  fr_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  fr_item->set_scheduler_backend_name(m_schedulerBackendName);
   fr_item->set_instance_name(m_instanceName);
 
   ++*m_archiveJobQueueItorPtr;
@@ -271,7 +271,7 @@ cta::xrd::Data FailedRequestLsResponseStream::getNextRetrieveJobsData() {
     *fr_item->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
     *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
   }
-  fr_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  fr_item->set_scheduler_backend_name(m_schedulerBackendName);
   fr_item->set_instance_name(m_instanceName);
 
   ++*m_retrieveJobQueueItorPtr;
@@ -291,7 +291,7 @@ void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool has
     data.mutable_frls_summary()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
     data.mutable_frls_summary()->set_total_files(archive_summary.totalFiles);
     data.mutable_frls_summary()->set_total_size(archive_summary.totalBytes);
-    data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+    data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName);
     data.mutable_frls_summary()->set_instance_name(m_instanceName);
 
     m_summaryData.emplace_back(std::move(data));
@@ -304,7 +304,7 @@ void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool has
     data.mutable_frls_summary()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
     data.mutable_frls_summary()->set_total_files(retrieve_summary.totalFiles);
     data.mutable_frls_summary()->set_total_size(retrieve_summary.totalBytes);
-    data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+    data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName);
     data.mutable_frls_summary()->set_instance_name(m_instanceName);
 
     m_summaryData.emplace_back(std::move(data));
@@ -315,7 +315,7 @@ void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool has
     data.mutable_frls_summary()->set_request_type(admin::RequestType::TOTAL);
     data.mutable_frls_summary()->set_total_files(archive_summary.totalFiles + retrieve_summary.totalFiles);
     data.mutable_frls_summary()->set_total_size(archive_summary.totalBytes + retrieve_summary.totalBytes);
-    data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+    data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName);
     data.mutable_frls_summary()->set_instance_name(m_instanceName);
 
     m_summaryData.emplace_back(std::move(data));

@@ -37,7 +37,7 @@ instance_name = "CI_local"
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:
   # `[ceph|postgres][User|Repack]:`
-  # (string, optional)
+  # (string, REQUIRED)
   backend_name = "postgresUser"
 
   # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
@@ -68,11 +68,9 @@ instance_name = "CI_local"
 
 # PostgreSQL scheduler-specific options: opportunistically batch concurrent archive/retrieve queueing
 # requests into a single bulk scheduler DB insert instead of queueing them one at a time.
+# Note that opportunistic batching is experimental and disabled by default.
+# To make use of this experimental feature, set `opportunistic_batching_enabled = true` under `[experimental]`.
 [opportunistic_batching]
-  # Enables batching for archive and retrieve queueing. Disabled by default.
-  # (boolean, optional)
-  enabled = false
-
   # The leader waits for concurrent requests to join its batch until either the window elapses or the
   # batch reaches max_batch_size, whichever comes first. Larger values mean fewer, bigger DB round trips
   # at the cost of more added latency per request; smaller values mean less added latency but less
@@ -80,19 +78,13 @@ instance_name = "CI_local"
   # (time in milliseconds, optional)
   window_ms = 10
 
-  # Maximum number of requests in a batch. Must be greater than zero when batching is enabled.
+  # Maximum number of requests in a batch. Must be greater than zero.
   # Default: 1000
   # (integer, optional)
   max_batch_size = 1000
 
 
-[verification]
-  # Name of the mount policy used for verification requests.
-  # (string, optional)
-  mount_policy = ""
-
-
-[archive]
+[requests.archive]
   # Whether 0-length files are rejected. Default: true
   # (boolean, optional)
   zero_length_files_forbidden = true
@@ -100,6 +92,11 @@ instance_name = "CI_local"
   # VOs which are exempt from the 0-length file restriction.
   # (list of strings, optional)
   zero_length_vo_exceptions = []
+
+[requests.prepare]
+  # Name of the mount policy used for verification requests.
+  # (string, optional)
+  verification_mount_policy = ""
 
 
 [logging]
@@ -127,6 +124,11 @@ instance_name = "CI_local"
   # change incompatibly and should be evaluated before production use. Disabled by default.
   # (boolean, optional)
   telemetry_enabled = false
+
+  # Enables experimental opportunistic batching of archive and retrieve queueing, configured by
+  # [opportunistic_batching]. Disabled by default.
+  # (boolean, optional)
+  opportunistic_batching_enabled = false
 
 
 # Note that telemetry is experimental and disabled by default.

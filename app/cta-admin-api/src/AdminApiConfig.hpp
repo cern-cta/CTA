@@ -40,8 +40,8 @@ struct RepackConfig final {
   }
 };
 
-/// @brief Options related to how the admin API handles tape file copies and the recycle log.
-struct FilesConfig final {
+/// @brief Fixed rules applied by the admin API to tape commands (tape ls, tape reclaim).
+struct TapePoliciesConfig final {
   /// Minimum age of missing tape file copies before they are reported
   uint64_t missing_file_copies_min_age_secs = 0;
   /// Minimum quarantine period before a tape can be reclaimed (default: 31 days).
@@ -59,13 +59,29 @@ struct AdminArchiveConfig final {
 
   static constexpr std::size_t memberCount() { return 1; }
 
+  /// @brief Default maximum size of an archived file, in bytes (0 = no limit)
+  uint64_t maxFileSizeBytes() const { return max_file_size_gb * 1000 * 1000 * 1000; }
+
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-struct AdminApiConfig final {
-  /// Name of the instance, used by auth verification and gRPC messages
-  std::string instance_name;
+/// @brief Default values applied by the admin API when a command does not set them explicitly.
+struct DefaultsConfig final {
+  AdminArchiveConfig archive;
+  RepackConfig repack;
 
+  static constexpr std::size_t memberCount() { return 2; }
+
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("archive", archive.validate());
+    result.merge("repack", repack.validate());
+    return result;
+  }
+};
+
+/// @brief Fixed rules enforced by the admin API, which cannot be overridden by command options.
+struct PoliciesConfig final {
   /// Role of the admin API with respect to the repacks, meant to match the scheduler DB it is connected to when the
   /// user and the repack requests are served from separate ones (see AdminCmdMode):
   /// - `all`: no restriction
@@ -74,21 +90,35 @@ struct AdminApiConfig final {
   /// - `repack`: no command is rejected, and the tape state changes follow the rules of a repack-only scheduler DB.
   AdminCmdMode admin_mode = AdminCmdMode::ALL;
 
+  TapePoliciesConfig tapes;
+
+  static constexpr std::size_t memberCount() { return 2; }
+
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("tapes", tapes.validate());
+    return result;
+  }
+};
+
+struct AdminApiConfig final {
+  /// Name of the instance, used by auth verification and gRPC messages
+  std::string instance_name;
+
   cta::service_resources::ServiceCatalogueConfig catalogue;
   cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
   cta::runtime::TelemetryConfig telemetry;
   cta::runtime::ExperimentalConfig experimental;
 
-  FilesConfig files;
+  PoliciesConfig policies;
 
   cta::grpc_server::ListenerConfig grpc;
   cta::grpc_server::AdminAuthConfig auth;
-  AdminArchiveConfig archive;
 
-  RepackConfig repack;
+  DefaultsConfig defaults;
 
-  static constexpr std::size_t memberCount() { return 12; }
+  static constexpr std::size_t memberCount() { return 10; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -102,11 +132,10 @@ struct AdminApiConfig final {
     result.merge("logging", logging.validate());
     result.merge("telemetry", telemetry.validate());
     result.merge("experimental", experimental.validate());
-    result.merge("files", files.validate());
-    result.merge("archive", archive.validate());
+    result.merge("policies", policies.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());
-    result.merge("repack", repack.validate());
+    result.merge("defaults", defaults.validate());
     return result;
   }
 };

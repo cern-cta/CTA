@@ -52,7 +52,7 @@ private:
   cta::SchedulerDB_t& m_schedDb;
   /// Provided by the server context
   std::string m_catalogueConnString;
-  /// From the [files] configuration
+  /// From the [policies.tapes] configuration
   uint64_t m_missingFileCopiesMinAgeSecs;
   /// Which commands this admin API serves
   AdminCmdMode m_adminCommandMode;

@@ -37,7 +37,7 @@ private:
   // Configuration options
   bool m_isSummary = false;
   bool m_isLogEntries = false;
-  std::optional<std::string> m_schedulerBackendName;
+  std::string m_schedulerBackendName;
 
   // Data storage
   std::list<cta::xrd::Data> m_summaryData;  // Only 3 items max

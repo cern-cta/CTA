@@ -17,11 +17,13 @@ data:
   cta-workflow-api.toml: |-
     instance_name = {{ .Release.Namespace | quote }}
 
+
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
 
     [catalogue.client]
       number_of_connections = {{ .Values.conf.catalogue.numberOfConnections | int }}
+
 
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}
@@ -31,11 +33,12 @@ data:
       {{- if eq $schedulerConfig.backend "postgres" }}
       number_of_connections = {{ .Values.conf.schedulerdb.numberOfConnections | int }}
 
+
     [opportunistic_batching]
-      enabled = {{ .Values.conf.schedulerdb.opportunisticBatching.enabled }}
       window_ms = {{ .Values.conf.schedulerdb.opportunisticBatching.windowMs | int }}
       max_batch_size = {{ .Values.conf.schedulerdb.opportunisticBatching.maxBatchSize | int }}
       {{- else }}
+
 
     # Only used by the objectstore scheduler backend
     [scheduler.client]
@@ -43,7 +46,8 @@ data:
       thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
       {{- end }}
 
-    [archive]
+
+    [requests.archive]
       zero_length_files_forbidden = {{ .Values.conf.frontend.zeroLengthFilesForbidden }}
       {{- $exceptions := list }}
       {{- range (splitList "," (toString .Values.conf.frontend.zeroLengthFilesForbiddenVoExceptionList)) }}
@@ -51,21 +55,28 @@ data:
       {{- end }}
       zero_length_vo_exceptions = {{ $exceptions | toJson }}
 
-    [verification]
-      mount_policy = "verification"
+    [requests.prepare]
+      verification_mount_policy = "verification"
+
 
     [logging]
       level = {{ .Values.conf.logger.logLevel | quote }}
       format = {{ .Values.conf.logger.logFormat | quote }}
 
+
     [experimental]
       telemetry_enabled = {{ .Values.conf.telemetry.enabled }}
+      {{- if eq $schedulerConfig.backend "postgres" }}
+      opportunistic_batching_enabled = {{ .Values.conf.schedulerdb.opportunisticBatching.enabled }}
+      {{- end }}
     {{- if .Values.conf.telemetry.enabled }}
+
 
     [telemetry]
       config_file = "/etc/cta/cta-otel.yaml"
       on_init_failure = "fatal"
     {{- end }}
+
 
     [grpc]
       port = {{ .Values.port | int }}
@@ -77,6 +88,7 @@ data:
       {{- if .Values.conf.tls.caCert }}
       chain_cert_path = {{ .Values.conf.tls.caCert | quote }}
       {{- end }}
+
 
     {{ if eq .Values.conf.auth.method "jwt" -}}
     [auth.jwt]

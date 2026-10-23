@@ -28,7 +28,7 @@ public:
 private:
   cta::Scheduler& m_scheduler;
   cta::log::LogContext& m_lc;
-  std::optional<std::string> m_schedulerBackendName;
+  std::string m_schedulerBackendName;
   std::vector<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMounts;
   std::size_t m_queuesAndMountsIdx = 0;
 };

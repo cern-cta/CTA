@@ -26,12 +26,8 @@ SyncCmd::SyncCmd(const service_resources::ServiceResources& serviceResources,
                  serviceResources.getScheduler(),
                  m_lc,
                  m_cliIdentity,
-                 serviceResources.getScheduler().getSchedulerBackendName(),
-                 config.admin_mode,
-                 config.archive.max_file_size_gb * 1000 * 1000 * 1000,
-                 config.repack.buffer_url,
-                 config.repack.max_files_to_select,
-                 config.files.recycle_log_quarantine_secs} {
+                 config.policies,
+                 config.defaults} {
   m_lc.push({"user", m_cliIdentity.username});
 
   m_context.scheduler.authorizeAdmin(m_cliIdentity, m_lc);
@@ -44,7 +40,7 @@ xrd::Response SyncCmd::process() {
 
   try {
     // Check if admin command is explicitly disabled
-    if (isCommandDisabled(m_context.adminCommandMode, m_adminCmd)) {
+    if (isCommandDisabled(m_context.policies.admin_mode, m_adminCmd)) {
       throw cta::exception::UserError(DISABLED_ADMIN_CMD_MSG);
     }
 

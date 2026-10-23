@@ -25,8 +25,8 @@ You must configure a specific mount policy for verification jobs to ensure they 
 *   **In Workflow Frontend Configuration:**
     Edit `/etc/cta/cta-workflow-api.toml` to map the verification system to this policy. **If this is missing, verification requests will fail or be rejected**.
     ```toml
-    [verification]
-      mount_policy = "verification"
+    [requests.prepare]
+      verification_mount_policy = "verification"
     ```
 
 ### 2. Authentication and Security

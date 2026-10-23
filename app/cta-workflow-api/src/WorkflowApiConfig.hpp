@@ -7,7 +7,6 @@
 
 #include "grpc-server/config/AuthConfig.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
-#include "grpc-server/config/VerificationConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "service-resources/config/CatalogueConfig.hpp"
 #include "service-resources/config/SchedulerConfig.hpp"
@@ -31,6 +30,48 @@ struct ArchiveConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
+/// @brief Prepare (retrieve) request options of the workflow API.
+struct PrepareConfig final {
+  /// Mount policy used for verification requests
+  std::string verification_mount_policy = "";
+
+  static constexpr std::size_t memberCount() { return 1; }
+
+  cta::runtime::ValidationResult validate() const { return {}; }
+};
+
+/// @brief Request-related options of the workflow API.
+struct RequestsConfig final {
+  ArchiveConfig archive;
+  PrepareConfig prepare;
+
+  static constexpr std::size_t memberCount() { return 2; }
+
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("archive", archive.validate());
+    result.merge("prepare", prepare.validate());
+    return result;
+  }
+};
+
+/// @brief Experimental options of the workflow API: the common ones plus the workflow-specific ones.
+struct WorkflowApiExperimentalConfig final {
+  /// Whether OpenTelemetry, configured by `[telemetry]`, is enabled
+  bool telemetry_enabled = false;
+
+#ifndef CTA_PGSCHED
+  static constexpr std::size_t memberCount() { return 1; }
+#else
+  /// Whether opportunistic batching, configured by `[opportunistic_batching]`, is enabled
+  bool opportunistic_batching_enabled = false;
+
+  static constexpr std::size_t memberCount() { return 2; }
+#endif
+
+  cta::runtime::ValidationResult validate() const { return {}; }
+};
+
 #ifdef CTA_PGSCHED
 
 /// @brief Opportunistic batching of archive/retrieve queueing (PostgreSQL scheduler only).
@@ -39,18 +80,16 @@ struct ArchiveConfig final {
 /// concurrent requests to join its batch until either the window elapses or the batch reaches max_batch_size,
 /// whichever comes first.
 struct OpportunisticBatchingConfig final {
-  /// Whether concurrent queueing requests are batched
-  bool enabled = false;
   /// Maximum time (ms) the leader waits for requests to join its batch
   uint64_t window_ms = 10;
   /// Maximum number of requests in a batch
   uint64_t max_batch_size = 1000;
 
-  static constexpr std::size_t memberCount() { return 3; }
+  static constexpr std::size_t memberCount() { return 2; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
-    if (enabled && max_batch_size == 0) {
+    if (max_batch_size == 0) {
       result.addError("max_batch_size", "must be greater than zero");
     }
     return result;
@@ -67,7 +106,7 @@ struct WorkflowApiConfig final {
   cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
   cta::runtime::TelemetryConfig telemetry;
-  cta::runtime::ExperimentalConfig experimental;
+  WorkflowApiExperimentalConfig experimental;
 
 #ifdef CTA_PGSCHED
   OpportunisticBatchingConfig opportunistic_batching;
@@ -76,13 +115,12 @@ struct WorkflowApiConfig final {
   cta::grpc_server::ListenerConfig grpc;
   cta::grpc_server::WfeAuthConfig auth;
 
-  ArchiveConfig archive;
-  cta::grpc_server::VerificationConfig verification;
+  RequestsConfig requests;
 
 #ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 10; }
+  static constexpr std::size_t memberCount() { return 9; }
 #else
-  static constexpr std::size_t memberCount() { return 11; }
+  static constexpr std::size_t memberCount() { return 10; }
 #endif
 
   cta::runtime::ValidationResult validate() const {
@@ -100,11 +138,10 @@ struct WorkflowApiConfig final {
 #ifdef CTA_PGSCHED
     result.merge("opportunistic_batching", opportunistic_batching.validate());
 #endif
-    result.merge("verification", verification.validate());
+    result.merge("requests", requests.validate());
     result.merge("grpc", grpc.validate());
     // Workflow API: exactly one of JWT or mTLS (Kerberos is not representable in WfeAuthConfig)
     result.merge("auth", auth.validate());
-    result.merge("archive", archive.validate());
     return result;
   }
 };
