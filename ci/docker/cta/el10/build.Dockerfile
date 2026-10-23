@@ -3,6 +3,7 @@
 
 # Dockerfile used for building CTA rpms
 
+# CI installs source-package build dependencies at runtime, which requires root.
 FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest
 
 ARG CARGO_CYCLONEDX_VERSION="=0.5.9"

@@ -5,8 +5,10 @@ name: Sonar Source Analysis
 
 on:
   schedule:
-    # Every day at 3 am
-    - cron: '0 3 * * *'
+    # It seems that GitHub attributes the scheduled runs to whoever changed this
+    # So if someone needs to take ownership of the schedule (e.g. due to staff rotation), just update this
+    # Every day at 4 am
+    - cron: '0 4 * * *'
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
