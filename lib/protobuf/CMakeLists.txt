@@ -47,8 +47,7 @@ add_library(ctaprotobufconversions
 set_target_properties(ctaprotobufconversions PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_include_directories(ctaprotobufconversions PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_public_headers(ctaprotobufconversions)
 target_link_libraries(ctaprotobufconversions
   ctaprotobuf
   ctacommon)

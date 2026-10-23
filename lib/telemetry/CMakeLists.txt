@@ -12,9 +12,8 @@ add_library(ctatelemetry SHARED
 set_property(TARGET ctatelemetry PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatelemetry PROPERTY VERSION "${CTA_LIBVERSION}")
 
-target_include_directories(ctatelemetry PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
+add_public_headers(ctatelemetry)
+target_include_directories(ctatelemetry PUBLIC ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
 target_include_directories(ctatelemetry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(ctatelemetry
   PUBLIC ctacommon opentelemetry-cpp::api
