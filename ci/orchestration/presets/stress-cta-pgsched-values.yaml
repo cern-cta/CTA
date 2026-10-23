@@ -65,8 +65,8 @@
 #
 # taped archiveFetchBytesFiles = 20 000 files (StressDrive; see stress-stressdrives-pgsched-values.yaml)
 #   logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
-#   Capacity 49 600 080 bytes = 80 + 5 × 20 000 × 496 → exactly 5 batches/tape.
-#   ENOSPC fires on HDR1 of batch 6 file 1 → zero partial-batch requeue at tape boundaries.
+#   Capacity 29 760 080 bytes = 80 + 3 × 20 000 × 496 → exactly 3 batches/tape.
+#   ENOSPC fires on HDR1 of batch 4 file 1 → zero partial-batch requeue at tape boundaries.
 #   At 100 files/s/drive one batch lasts ~200 s; DB poll frequency is low.
 #
 # taped schedulerNumberOfConnections = 3 per drive (mhvtl/real-hardware, set below);

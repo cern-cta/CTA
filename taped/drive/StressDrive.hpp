@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <limits>
 #include <map>
+#include <random>
 #include <string>
 
 namespace cta::tape::drive {
@@ -67,7 +68,9 @@ public:
 
   /**
    * Simulates tape loading:
-   *   1. Sleeps m_mountDelayMs (read from library.toml at construction).
+   *   1. Sleeps a uniformly random duration in [mountDelayMs, 2×mountDelayMs]
+   *      so every drive has a guaranteed minimum delay while concurrent mounts
+   *      are spread across a window, preventing synchronised PVC I/O storms.
    *   2. Scans contents/<lib>/drives/<driveName>/ for a *.tape file.
    *   3. Derives VID from filename stem; looks up tape capacity from library.toml.
    *   4. Loads the binary block stream from the file into m_tape.  An empty
@@ -145,6 +148,11 @@ private:
   uint32_t m_maxWriteRateHz = 0;
   // Default-constructed time_point (epoch) signals "no write yet this session".
   std::chrono::steady_clock::time_point m_lastWriteBlockTime;
+
+  // Per-drive RNG for jittering the mount delay in waitUntilReady().
+  // Seeded in the constructor from m_driveName XOR current time so every drive
+  // instance gets a distinct, non-repeating sequence even within the same process.
+  std::mt19937 m_rng;
 
   // Magic word and format version written at the beginning of each .tape file.
   static constexpr uint32_t k_magic = 0x43544150;  // 'CTAP'
