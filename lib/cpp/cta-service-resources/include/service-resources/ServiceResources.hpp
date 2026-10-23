@@ -47,23 +47,19 @@ struct ConnectionOptions final {
 ConnectionOptions makeConnectionOptions(const ServiceCatalogueConfig& catalogueConfig,
                                         const ServiceSchedulerConfig& schedulerConfig);
 
-/**
- * @brief Resources shared by the CTA services: owns the Catalogue, the Scheduler DB and the Scheduler.
- * Built once at start-up from the typed configuration.
- *
- * The logger is not owned here: it is provided by the runtime and passed in.
- */
+/// @brief Resources shared by the CTA services: owns the Catalogue, the Scheduler DB and the Scheduler.
+/// Built once at start-up from the typed configuration.
+///
+/// The logger is not owned here: it is provided by the runtime and passed in.
 class ServiceResources final {
 public:
-  /**
-   * @param processName         Name of the process, used by the Scheduler DB (e.g. objectstore agent name)
-   * @param catalogueConfig     Catalogue location (`[catalogue]`); application-specific client options are ignored
-   * @param schedulerConfig     Scheduler DB location and cache settings (`[scheduler]`); application-specific client
-   *                            options are ignored
-   * @param connections         Application-specific connection settings
-   * @param log                 Logger provided by the outer scope
-   * @throws cta::exception::UserError / cta::exception::Exception on invalid configuration or connection failure
-   */
+  /// @param processName         Name of the process, used by the Scheduler DB (e.g. objectstore agent name)
+  /// @param catalogueConfig     Catalogue location (`[catalogue]`); application-specific client options are ignored
+  /// @param schedulerConfig     Scheduler DB location and cache settings (`[scheduler]`); application-specific client
+  ///                            options are ignored
+  /// @param connections         Application-specific connection settings
+  /// @param log                 Logger provided by the outer scope
+  /// @throws cta::exception::UserError / cta::exception::Exception on invalid configuration or connection failure
   template<typename CatalogueClientConfig, typename SchedulerClientConfig>
   ServiceResources(std::string_view processName,
                    const runtime::BasicCatalogueConfig<CatalogueClientConfig>& catalogueConfig,
@@ -90,27 +86,27 @@ public:
   ServiceResources(const ServiceResources&) = delete;
   ServiceResources& operator=(const ServiceResources&) = delete;
 
-  /** @brief Logger provided by the outer scope */
+  /// @brief Logger provided by the outer scope
   log::Logger& getLogger() const { return m_log; }
 
-  /** @brief Log context bound to the logger */
+  /// @brief Log context bound to the logger
   log::LogContext getLogContext() const { return log::LogContext(m_log); }
 
-  /** @brief Connection string of the Catalogue */
+  /// @brief Connection string of the Catalogue
   const std::string& getCatalogueConnString() const { return m_catalogueConnString; }
 
-  /** @brief Catalogue shared by the services */
+  /// @brief Catalogue shared by the services
   catalogue::Catalogue& getCatalogue() const { return *m_catalogue; }
 
 #ifndef CTA_PGSCHED
-  /** @brief [[OStoreDB specific]] Scheduler DB initialiser, giving access to the objectstore backend and agent */
+  /// @brief [[OStoreDB specific]] Scheduler DB initialiser, giving access to the objectstore backend and agent
   SchedulerDBInit_t& getSchedDbInit() const { return *m_schedDbInit; }
 #endif
 
-  /** @brief Scheduler DB shared by the services */
+  /// @brief Scheduler DB shared by the services
   SchedulerDB_t& getSchedDb() const { return *m_schedDb; }
 
-  /** @brief Scheduler shared by the services */
+  /// @brief Scheduler shared by the services
   Scheduler& getScheduler() const { return *m_scheduler; }
 
 private:
@@ -129,12 +125,18 @@ private:
 
   ServiceResources(const Params& params, log::Logger& log);
 
-  log::Logger& m_log;                                 //!< Logger provided by the outer scope (not owned)
-  std::string m_catalogueConnString;                  //!< Connection string of the Catalogue
-  std::unique_ptr<catalogue::Catalogue> m_catalogue;  //!< Catalogue, created through the catalogue factory
-  std::unique_ptr<SchedulerDBInit_t> m_schedDbInit;   //!< Scheduler DB initialiser; must outlive m_schedDb
-  std::unique_ptr<SchedulerDB_t> m_schedDb;           //!< Scheduler DB, obtained from m_schedDbInit
-  std::unique_ptr<Scheduler> m_scheduler;             //!< Scheduler on top of m_catalogue and m_schedDb
+  /// Logger provided by the outer scope (not owned)
+  log::Logger& m_log;
+  /// Connection string of the Catalogue
+  std::string m_catalogueConnString;
+  /// Catalogue, created through the catalogue factory
+  std::unique_ptr<catalogue::Catalogue> m_catalogue;
+  /// Scheduler DB initialiser; must outlive m_schedDb
+  std::unique_ptr<SchedulerDBInit_t> m_schedDbInit;
+  /// Scheduler DB, obtained from m_schedDbInit
+  std::unique_ptr<SchedulerDB_t> m_schedDb;
+  /// Scheduler on top of m_catalogue and m_schedDb
+  std::unique_ptr<Scheduler> m_scheduler;
 };
 
 }  // namespace cta::service_resources

@@ -112,7 +112,7 @@ struct IsCatalogueConfig : std::false_type {};
 template<class ClientConfig>
 struct IsCatalogueConfig<BasicCatalogueConfig<ClientConfig>> : std::true_type {};
 
-// Any client options are accepted, see BasicSchedulerConfig and BasicCatalogueConfig
+/// Any client options are accepted, see BasicSchedulerConfig and BasicCatalogueConfig
 template<class TConfig>
 concept HasSchedulerConfig =
   requires(const TConfig& cfg) { requires IsSchedulerConfig<std::remove_cvref_t<decltype(cfg.scheduler)>>::value; };

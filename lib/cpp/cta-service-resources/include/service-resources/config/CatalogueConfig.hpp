@@ -13,13 +13,12 @@
 
 namespace cta::service_resources {
 
-/**
- * @brief Service-specific catalogue options.
- *
- * Read from `[catalogue.client]`, next to the catalogue location (see cta::runtime::BasicCatalogueConfig).
- */
+/// @brief Service-specific catalogue options.
+///
+/// Read from `[catalogue.client]`, next to the catalogue location (see cta::runtime::BasicCatalogueConfig).
 struct CatalogueClientConfig final {
-  uint32_t number_of_connections = 10;  //!< Number of connections to the catalogue database (default: 10)
+  /// Number of connections to the catalogue database (default: 10)
+  uint32_t number_of_connections = 10;
 
   static constexpr std::size_t memberCount() { return 1; }
 

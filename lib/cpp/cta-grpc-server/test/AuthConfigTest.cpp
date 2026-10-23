@@ -106,7 +106,7 @@ MtlsAuthConfig makeEnabledMtlsConfig() {
   return config;
 }
 
-// Temporary TOML file, removed on destruction
+/// Temporary TOML file, removed on destruction
 class TomlFile {
 public:
   explicit TomlFile(const std::string& content)
@@ -123,7 +123,7 @@ private:
   static inline int s_counter = 0;
 };
 
-// A complete (strict-loadable) AdminAuthConfig document
+/// A complete (strict-loadable) AdminAuthConfig document
 const std::string ADMIN_AUTH_TOML = R"toml(
 [jwt]
 enabled = false

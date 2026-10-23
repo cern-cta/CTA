@@ -78,45 +78,37 @@ struct KerberosAuthConfig final {
   static constexpr std::size_t memberCount() { return 3; }
 };
 
-/**
- * @brief Authentication config of the admin API
- */
+/// @brief Authentication config of the admin API
 struct AdminAuthConfig final {
-  std::optional<JwtAuthConfig> jwt;            //!< JWT auth config (optional)
-  std::optional<KerberosAuthConfig> kerberos;  //!< Kerberos auth config (optional)
+  /// JWT auth config (optional)
+  std::optional<JwtAuthConfig> jwt;
+  /// Kerberos auth config (optional)
+  std::optional<KerberosAuthConfig> kerberos;
 
-  /**
-   * @brief Validate the authentication configuration for consistency
-   * @throws cta::exception::UserError if neither JWT nor Kerberos is enabled
-   * @return The validation result (will contain the errors if present)
-   */
+  /// @brief Validate the authentication configuration for consistency
+  /// @throws cta::exception::UserError if neither JWT nor Kerberos is enabled
+  /// @return The validation result (will contain the errors if present)
   cta::runtime::ValidationResult validate() const;
 
-  /**
-   * @brief Get all enabled authentication methods
-   */
+  /// @brief Get all enabled authentication methods
   std::set<AuthMethod, std::less<>> getEnabledMethods() const;
 
   static constexpr std::size_t memberCount() { return 2; }
 };
 
-/**
- * @brief Authentication config of the WFE API
- */
+/// @brief Authentication config of the WFE API
 struct WfeAuthConfig final {
-  std::optional<JwtAuthConfig> jwt;    //!< JWT auth config (optional)
-  std::optional<MtlsAuthConfig> mtls;  //!< mTLS auth config (optional)
+  /// JWT auth config (optional)
+  std::optional<JwtAuthConfig> jwt;
+  /// mTLS auth config (optional)
+  std::optional<MtlsAuthConfig> mtls;
 
-  /**
-   * @brief Validate the authentication configuration for consistency
-   * @throws cta::exception::UserError unless exactly one of JWT or mTLS is enabled
-   * @return The validation result (will contain the errors if present)
-   */
+  /// @brief Validate the authentication configuration for consistency
+  /// @throws cta::exception::UserError unless exactly one of JWT or mTLS is enabled
+  /// @return The validation result (will contain the errors if present)
   cta::runtime::ValidationResult validate() const;
 
-  /**
-   * @brief Get all enabled authentication methods
-   */
+  /// @brief Get all enabled authentication methods
   std::set<AuthMethod, std::less<>> getEnabledMethods() const;
 
   static constexpr std::size_t memberCount() { return 2; }

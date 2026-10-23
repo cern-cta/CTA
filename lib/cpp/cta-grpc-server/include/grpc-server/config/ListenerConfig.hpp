@@ -14,18 +14,17 @@
 
 namespace cta::grpc_server {
 
-/**
- * @brief How the gRPC server listens for connections: port, request processing threads and TLS
- */
+/// @brief How the gRPC server listens for connections: port, request processing threads and TLS
 struct ListenerConfig final {
-  uint16_t port = 50051;                 //!< Port to listen on for gRPC connections
-  std::optional<int> number_of_threads;  //!< Maximum number of threads for the gRPC server
-  TlsConfig tls;                         //!< TLS config (mandatory)
+  /// Port to listen on for gRPC connections
+  uint16_t port = 50051;
+  /// Maximum number of threads for the gRPC server
+  std::optional<int> number_of_threads;
+  /// TLS config (mandatory)
+  TlsConfig tls;
 
-  /**
-   * @brief Validate the listener configuration parameters
-   * @return The validation result (will contain the errors if present)
-   */
+  /// @brief Validate the listener configuration parameters
+  /// @return The validation result (will contain the errors if present)
   cta::runtime::ValidationResult validate() const;
 
   static constexpr std::size_t memberCount() { return 3; }

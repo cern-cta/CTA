@@ -17,12 +17,10 @@
 
 namespace cta::admin_api::rpc {
 
-/**
- * @brief Implements the non-streaming Admin RPC of the admin API.
- *
- * The other methods of the CtaRpc service (the workflow archive/retrieve/delete ones) are not served by the admin API,
- * so they keep the default UNIMPLEMENTED behaviour of the generated service.
- */
+/// @brief Implements the non-streaming Admin RPC of the admin API.
+///
+/// The other methods of the CtaRpc service (the workflow archive/retrieve/delete ones) are not served by the admin API,
+/// so they keep the default UNIMPLEMENTED behaviour of the generated service.
 class CtaRpcSyncImpl final : public cta::xrd::CtaRpc::Service {
 public:
   CtaRpcSyncImpl(service_resources::ServiceResources& serviceResources,
