@@ -21,20 +21,16 @@
 
 namespace cta::admin_api::rpc::kerberos {
 
-/**
- * Lightweight service for handling Kerberos authentication negotiation.
- * This service is responsible for providing the client with a token it
- * can use to authenticate.
- *
- * It runs asynchronously on its own completion queue but shares
- * the main server's ServerBuilder and listening port.
- */
+/// Lightweight service for handling Kerberos authentication negotiation.
+/// This service is responsible for providing the client with a token it
+/// can use to authenticate.
+///
+/// It runs asynchronously on its own completion queue but shares
+/// the main server's ServerBuilder and listening port.
 class NegotiationService {
 public:
-  /**
-   * Thread-safe wrapper around the handler map.
-   * Encapsulates synchronization so callers don't need to manage mutexes.
-   */
+  /// Thread-safe wrapper around the handler map.
+  /// Encapsulates synchronization so callers don't need to manage mutexes.
   class ThreadSafeHandlerMap {
   public:
     NegotiationRequestHandler& insert(std::unique_ptr<NegotiationRequestHandler> handler);
@@ -59,7 +55,7 @@ public:
 
   ~NegotiationService();
 
-  // Non-copyable, non-movable
+  /// Non-copyable, non-movable
   NegotiationService(const NegotiationService&) = delete;
   NegotiationService& operator=(const NegotiationService&) = delete;
   NegotiationService(NegotiationService&&) = delete;
@@ -69,14 +65,10 @@ public:
 
   ::grpc::ServerCompletionQueue& completionQueue() { return *m_upCompletionQueue; }
 
-  /**
-   * Get token store (for handler access)
-   */
+  /// Get token store (for handler access)
   TokenStore& krbTokenStore() { return m_krbTokenStore; }
 
-  /**
-   * Get the underlying gRPC async service for registration with ServerBuilder
-   */
+  /// Get the underlying gRPC async service for registration with ServerBuilder
   cta::xrd::Negotiation::AsyncService& getService() { return m_service; }
 
   void startProcessing();
@@ -84,14 +76,15 @@ public:
   static std::string generate256BitHex();
 
 private:
-  // Static to force explicit dependency passing for thread safety.
-  // Each thread creates its own LogContext from the shared Logger.
+  /// Static to force explicit dependency passing for thread safety.
+  /// Each thread creates its own LogContext from the shared Logger.
   static void process(unsigned int threadId,
                       ::grpc::ServerCompletionQueue& cq,
                       cta::log::Logger& log,
                       ThreadSafeHandlerMap& handlers);
 
-  cta::log::Logger& m_log;  // Logger is thread-safe; each thread creates its own LogContext from it
+  /// Logger is thread-safe; each thread creates its own LogContext from it
+  cta::log::Logger& m_log;
   TokenStore& m_krbTokenStore;
   std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue = nullptr;
   std::string m_keytab;

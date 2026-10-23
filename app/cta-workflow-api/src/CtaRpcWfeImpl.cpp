@@ -89,7 +89,7 @@ Status CtaRpcWfeImpl::processGrpcRequest(const cta::xrd::Request* request,
 
 namespace {
 
-/** @brief Rejects the request if the archive file id is not set */
+/// @brief Rejects the request if the archive file id is not set
 Status checkArchiveFileId(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext& lc) {
   if (request->notification().file().archive_file_id() == 0) {
     lc.log(cta::log::WARNING, "Invalid archive file id");

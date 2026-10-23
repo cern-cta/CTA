@@ -13,10 +13,8 @@ const std::string DESCRIPTION = R"""(
 Admin API - a gRPC service providing the admin commands of the CTA frontend
 )""";
 
-/**
- * main() function, which calls the actual application code,
- * handled by the runtime
- */
+/// main() function, which calls the actual application code,
+/// handled by the runtime
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {

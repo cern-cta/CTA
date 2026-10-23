@@ -20,9 +20,7 @@ namespace cta::frontend {
 
 namespace {
 
-/*!
- * Throw an exception for empty protocol buffer strings
- */
+/// Throw an exception for empty protocol buffer strings
 void checkIsNotEmptyString(const std::string& value, const std::string& name) {
   if (value.empty()) {
     throw exception::PbException("Protocol buffer field " + name + " is an empty string.");
@@ -33,9 +31,7 @@ void checkIsNotEmptyString(const std::string& value, const std::string& name) {
 
 namespace proto_notifications {
 
-/*!
- * Validate and extract the identity of the user who triggered the event
- */
+/// Validate and extract the identity of the user who triggered the event
 common::dataStructures::RequesterIdentity getRequester(const eos::Notification& event) {
   checkIsNotEmptyString(event.cli().user().username(), "m_event.cli.user.username");
   checkIsNotEmptyString(event.cli().user().groupname(), "m_event.cli.user.groupname");
@@ -46,10 +42,8 @@ common::dataStructures::RequesterIdentity getRequester(const eos::Notification& 
   return requester;
 }
 
-/*!
- * Extract the archive file ID. Legacy disk systems may be sending it as an extended attribute
- * instead of explicitly. Older files may still use the legacy `CTA_ArchiveFileId`
- */
+/// Extract the archive file ID. Legacy disk systems may be sending it as an extended attribute
+/// instead of explicitly. Older files may still use the legacy `CTA_ArchiveFileId`
 uint64_t getArchiveFileId(const eos::Notification& event) {
   // try the first-class attribute which comes in the Notification
   if (const uint64_t archiveFileId = event.file().archive_file_id(); archiveFileId != 0) {
@@ -78,12 +72,10 @@ uint64_t getArchiveFileId(const eos::Notification& event) {
   return archiveFileId.value();
 }
 
-/*!
- * Extract the scheduler request ID. The first-class attribute takes priority; if it is empty, fall back to the given
- * extended attribute
- *
- * @return std::nullopt if neither is present
- */
+/// Extract the scheduler request ID. The first-class attribute takes priority; if it is empty, fall back to the given
+/// extended attribute
+///
+/// @return std::nullopt if neither is present
 std::optional<std::string> getRequestId(const eos::Notification& event, const std::string& xattrKey) {
   if (const std::string& requestId = event.file().request_objectstore_id(); !requestId.empty()) {
     return requestId;

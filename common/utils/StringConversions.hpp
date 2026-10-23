@@ -28,50 +28,38 @@ std::string toString(const T& value) {
   return oss.str();
 }
 
-/**
- * Converts the specified string to an unsigned integer.
- *
- * @param str The string.
- * @return The unisgned integer.
- */
+/// Converts the specified string to an unsigned integer.
+///
+/// @param str The string.
+/// @return The unisgned integer.
 uint8_t toUint8(std::string_view str);
 
-/**
- * Converts the specified string to an unsigned integer.
- *
- * @param str The string.
- * @return The unisgned integer.
- */
+/// Converts the specified string to an unsigned integer.
+///
+/// @param str The string.
+/// @return The unisgned integer.
 uint16_t toUint16(std::string_view str);
 
-/**
- * Converts the specified string to an unsigned integer.
- *
- * @param str The string.
- * @return The unsigned integer.
- */
+/// Converts the specified string to an unsigned integer.
+///
+/// @param str The string.
+/// @return The unsigned integer.
 uint32_t toUint32(std::string_view str);
 
-/**
- * Parses the specified string representation of an unsigned 64-bit integer.
- *
- * @return The parsed unsigned 64-bit integer.
- */
+/// Parses the specified string representation of an unsigned 64-bit integer.
+///
+/// @return The parsed unsigned 64-bit integer.
 uint64_t toUint64(std::string_view str);
 
-/**
- * Try to convert @p str to a `uint64_t`, returning a `std::optional`
- *
- * @param str the string to convert
- * @result the actual integer, wrapped in an optional, or `std::nullopt` if conversion fails
- */
+/// Try to convert @p str to a `uint64_t`, returning a `std::optional`
+///
+/// @param str the string to convert
+/// @result the actual integer, wrapped in an optional, or `std::nullopt` if conversion fails
 std::optional<uint64_t> tryToUint64(std::string_view str);
 
-/**
- * Parses the specified string representation of a double.
- *
- * @return The parsed double.
- */
+/// Parses the specified string representation of a double.
+///
+/// @return The parsed double.
 double toDouble(std::string_view str);
 
 /**

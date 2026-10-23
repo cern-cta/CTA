@@ -15,7 +15,7 @@
 namespace cta::service_resources {
 
 namespace {
-// Number of connections dedicated to archive file listing by the admin and workflow APIs
+/// Number of connections dedicated to archive file listing by the admin and workflow APIs
 constexpr uint64_t NB_ARCHIVE_FILE_LISTING_CONNS = 2;
 }  // namespace
 

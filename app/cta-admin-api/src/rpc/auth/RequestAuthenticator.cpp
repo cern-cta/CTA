@@ -20,11 +20,9 @@ namespace {
 
 using AuthResult = std::pair<Status, std::optional<SecurityIdentity>>;
 
-/**
- * @brief Validates a Kerberos token against the token store. The token is removed from the store once looked up.
- *
- * @return Pair of gRPC Status and the client principal (empty unless validation succeeds)
- */
+/// @brief Validates a Kerberos token against the token store. The token is removed from the store once looked up.
+///
+/// @return Pair of gRPC Status and the client principal (empty unless validation succeeds)
 std::pair<Status, std::string>
 validateKrb5Token(const std::string& token, kerberos::TokenStore& krbTokenStore, cta::log::LogContext& lc) {
   // Validate the Kerberos token from storage
@@ -48,11 +46,9 @@ validateKrb5Token(const std::string& token, kerberos::TokenStore& krbTokenStore,
   return {Status(StatusCode::UNAUTHENTICATED, "KRB5 authorization process error. Invalid principal."), ""};
 }
 
-/**
- * @brief Validates the Kerberos token of an "authorization" header known to use the Negotiate scheme
- *
- * @return OK with a KRB5 SecurityIdentity, or UNAUTHENTICATED if the token is missing or fails validation
- */
+/// @brief Validates the Kerberos token of an "authorization" header known to use the Negotiate scheme
+///
+/// @return OK with a KRB5 SecurityIdentity, or UNAUTHENTICATED if the token is missing or fails validation
 AuthResult validateNegotiateHeader(const std::string& authHeader,
                                    kerberos::TokenStore& krbTokenStore,
                                    const std::string& ourInstance,

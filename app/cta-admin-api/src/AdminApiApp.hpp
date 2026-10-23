@@ -13,27 +13,22 @@
 
 namespace cta::admin_api {
 
-/**
- * @brief The Admin API application: serves the admin gRPC services until stop() is called.
- */
+/// @brief The Admin API application: serves the admin gRPC services until stop() is called.
 class AdminApiApp final {
 public:
   AdminApiApp() = default;
 
   ~AdminApiApp() = default;
 
-  /**
-   * @brief Requests the server to shut down. Safe to call from a signal handler thread.
-   */
+  /// @brief Requests the server to shut down. Safe to call from a signal handler thread.
   void stop();
 
-  /**
-   * @brief Main application loop
-   */
+  /// @brief Main application loop
   int run(const AdminApiConfig& config, cta::log::Logger& log);
 
 private:
-  bool m_stopRequested = false;  //!< Guarded by m_mutex
+  /// Guarded by m_mutex
+  bool m_stopRequested = false;
   std::mutex m_mutex;
   std::condition_variable m_stopCv;
 };

@@ -19,12 +19,12 @@
 
 namespace cta::workflow_api {
 
-/**
- * @brief Archive-related options of the workflow API.
- */
+/// @brief Archive-related options of the workflow API.
 struct ArchiveConfig final {
-  bool zero_length_files_forbidden = true;             //!< Whether 0-length files are rejected
-  std::vector<std::string> zero_length_vo_exceptions;  //!< VOs exempt from the 0-length file restriction
+  /// Whether 0-length files are rejected
+  bool zero_length_files_forbidden = true;
+  /// VOs exempt from the 0-length file restriction
+  std::vector<std::string> zero_length_vo_exceptions;
 
   static constexpr std::size_t memberCount() { return 2; }
 
@@ -33,17 +33,18 @@ struct ArchiveConfig final {
 
 #ifdef CTA_PGSCHED
 
-/**
- * @brief Opportunistic batching of archive/retrieve queueing (PostgreSQL scheduler only).
- *
- * Concurrent queueing requests are coalesced into a single bulk scheduler DB insert. The leader waits for
- * concurrent requests to join its batch until either the window elapses or the batch reaches max_batch_size,
- * whichever comes first.
- */
+/// @brief Opportunistic batching of archive/retrieve queueing (PostgreSQL scheduler only).
+///
+/// Concurrent queueing requests are coalesced into a single bulk scheduler DB insert. The leader waits for
+/// concurrent requests to join its batch until either the window elapses or the batch reaches max_batch_size,
+/// whichever comes first.
 struct OpportunisticBatchingConfig final {
-  bool enabled = false;            //!< Whether concurrent queueing requests are batched
-  uint64_t window_ms = 10;         //!< Maximum time (ms) the leader waits for requests to join its batch
-  uint64_t max_batch_size = 1000;  //!< Maximum number of requests in a batch
+  /// Whether concurrent queueing requests are batched
+  bool enabled = false;
+  /// Maximum time (ms) the leader waits for requests to join its batch
+  uint64_t window_ms = 10;
+  /// Maximum number of requests in a batch
+  uint64_t max_batch_size = 1000;
 
   static constexpr std::size_t memberCount() { return 3; }
 
@@ -59,7 +60,8 @@ struct OpportunisticBatchingConfig final {
 #endif
 
 struct WorkflowApiConfig final {
-  std::string instance_name;  //!< Name of the instance, used by auth verification and gRPC messages
+  /// Name of the instance, used by auth verification and gRPC messages
+  std::string instance_name;
 
   cta::service_resources::ServiceCatalogueConfig catalogue;
   cta::service_resources::ServiceSchedulerConfig scheduler;

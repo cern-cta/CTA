@@ -16,7 +16,7 @@ namespace {
 
 using admin::AdminCmd;
 
-/** An admin command: the <Cmd, SubCmd> pair, as in the tables of the cta-admin parser */
+/// An admin command: the <Cmd, SubCmd> pair, as in the tables of the cta-admin parser
 using CmdKey = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
 
 const std::map<CmdKey, SyncCmdHandler> SYNC_CMD_TABLE = {

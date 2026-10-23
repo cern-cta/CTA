@@ -25,9 +25,7 @@ namespace {
 
 using AuthResult = std::pair<Status, std::optional<SecurityIdentity>>;
 
-/**
- * @brief Finds the "authorization" header, or logs and returns the error to send back to the client
- */
+/// @brief Finds the "authorization" header, or logs and returns the error to send back to the client
 std::variant<std::string, AuthResult> findAuthHeader(const GrpcMetadata& clientMetadata, cta::log::LogContext& lc) {
   if (auto it = clientMetadata.find("authorization"); it != clientMetadata.end()) {
     // convert from grpc structure to string: "Bearer <token>"
@@ -37,18 +35,14 @@ std::variant<std::string, AuthResult> findAuthHeader(const GrpcMetadata& clientM
   return AuthResult {Status(StatusCode::UNAUTHENTICATED, "Missing Authorization header"), std::nullopt};
 }
 
-/**
- * @brief Extracts the token following the scheme, which is "prefixLength" characters including the space
- */
+/// @brief Extracts the token following the scheme, which is "prefixLength" characters including the space
 std::string extractToken(const std::string& authHeader, size_t prefixLength) {
   return authHeader.size() > prefixLength ? authHeader.substr(prefixLength) : std::string();
 }
 
-/**
- * @brief Validates the JWT of an "authorization" header known to use the Bearer scheme
- *
- * @return OK with a JWT SecurityIdentity, or UNAUTHENTICATED if the token is missing or fails validation
- */
+/// @brief Validates the JWT of an "authorization" header known to use the Bearer scheme
+///
+/// @return OK with a JWT SecurityIdentity, or UNAUTHENTICATED if the token is missing or fails validation
 AuthResult validateBearerHeader(const std::string& authHeader,
                                 JwtAuthManager& jwtAuthManager,
                                 const std::string& ourInstance,
@@ -81,9 +75,7 @@ AuthResult validateBearerHeader(const std::string& authHeader,
   return {Status(StatusCode::UNAUTHENTICATED, errorMsg), std::nullopt};
 }
 
-/**
- * @brief Logs the unsupported scheme and builds the UNAUTHENTICATED result; "expected" names the accepted scheme
- */
+/// @brief Logs the unsupported scheme and builds the UNAUTHENTICATED result; "expected" names the accepted scheme
 AuthResult unexpectedScheme(const char* expected, cta::log::LogContext& lc) {
   lc.log(cta::log::ERR, std::string("Unexpected authorization scheme (expected ") + expected + ")");
   return {Status(StatusCode::UNAUTHENTICATED, "Unexpected authorization scheme"), std::nullopt};

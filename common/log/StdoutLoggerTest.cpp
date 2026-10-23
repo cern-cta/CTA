@@ -17,9 +17,7 @@ using namespace cta::log;
 
 namespace unitTests {
 
-/**
- * Redirects std::cout to a string buffer for the lifetime of the object
- */
+/// Redirects std::cout to a string buffer for the lifetime of the object
 class CoutCapture {
 public:
   CoutCapture() : m_oldBuf(std::cout.rdbuf(m_buffer.rdbuf())) {}

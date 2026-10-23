@@ -13,16 +13,12 @@
 
 namespace cta::admin_api::commands::sync {
 
-/**
- * @brief Handler of a non-streamed admin command, see handlers/Handlers.hpp
- */
+/// @brief Handler of a non-streamed admin command, see handlers/Handlers.hpp
 using SyncCmdHandler = void (*)(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
 
-/**
- * @brief Finds the handler of an admin command
- *
- * @return The handler of the <Cmd, SubCmd> pair of the command, or nullptr if it is not a (non-streamed) admin command
- */
+/// @brief Finds the handler of an admin command
+///
+/// @return The handler of the <Cmd, SubCmd> pair of the command, or nullptr if it is not a (non-streamed) admin command
 SyncCmdHandler findHandler(const admin::AdminCmd& adminCmd);
 
 }  // namespace cta::admin_api::commands::sync

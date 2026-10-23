@@ -18,12 +18,10 @@
 
 namespace cta::admin_api::commands::stream {
 
-/**
- * @brief Streams the items of a vector already loaded from the catalogue/scheduler, one cta::xrd::Data each
- *
- * @tparam Item  Type of the items, converted to their protobuf representation by the matching toProto() overload
- * (see `converters/StreamConverters.hpp`)
- */
+/// @brief Streams the items of a vector already loaded from the catalogue/scheduler, one cta::xrd::Data each
+///
+/// @tparam Item  Type of the items, converted to their protobuf representation by the matching toProto() overload
+/// (see `converters/StreamConverters.hpp`)
 template<class Item>
 class VectorResponseStream final : public CtaAdminResponseStream {
 public:
@@ -43,8 +41,10 @@ public:
   }
 
 private:
-  std::vector<Item> m_items;  //<! The items which will be part of the response's body
-  std::size_t m_idx = 0;      //<! Current index (items streamed so far)
+  /// The items which will be part of the response's body
+  std::vector<Item> m_items;
+  /// Current index (items streamed so far)
+  std::size_t m_idx = 0;
 };
 
 }  // namespace cta::admin_api::commands::stream

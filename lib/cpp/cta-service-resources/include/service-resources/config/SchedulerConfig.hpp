@@ -18,8 +18,10 @@ namespace cta::service_resources {
 
 /// @brief Service-specific scheduler options (objectstore scheduler only), read from `[scheduler.client]`.
 struct SchedulerClientConfig final {
-  uint32_t number_of_threads = 0;                //!< Scheduler DB thread pool size (REQUIRED, must be > 0)
-  std::optional<uint32_t> thread_stack_size_mb;  //!< Scheduler DB thread stack size (MB)
+  /// Scheduler DB thread pool size (REQUIRED, must be > 0)
+  uint32_t number_of_threads = 0;
+  /// Scheduler DB thread stack size (MB)
+  std::optional<uint32_t> thread_stack_size_mb;
 
   static constexpr std::size_t memberCount() { return 2; }
 

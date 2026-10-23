@@ -13,18 +13,17 @@
 
 namespace cta::grpc_server {
 
-/**
- * @brief TLS Config
- */
+/// @brief TLS Config
 struct TlsConfig final {
-  std::string server_key_path;                                //!< The path to the private key file (REQUIRED)
-  std::string server_cert_path;                               //!< The path to the certificate file (REQUIRED)
-  std::optional<std::string> chain_cert_path = std::nullopt;  //!< The path to the CA chain file (optional)
+  /// The path to the private key file (REQUIRED)
+  std::string server_key_path;
+  /// The path to the certificate file (REQUIRED)
+  std::string server_cert_path;
+  /// The path to the CA chain file (optional)
+  std::optional<std::string> chain_cert_path = std::nullopt;
 
-  /**
-   * @brief Validate the TLS configuration parameters
-   * @return The validation result (will contain the errors if present)
-   */
+  /// @brief Validate the TLS configuration parameters
+  /// @return The validation result (will contain the errors if present)
   cta::runtime::ValidationResult validate() const;
 
   static constexpr std::size_t memberCount() { return 3; }

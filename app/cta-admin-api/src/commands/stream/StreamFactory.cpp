@@ -29,25 +29,21 @@ namespace {
 using cta::admin::AdminCmd;
 using cta::admin::HeaderType;
 
-/** An admin command: the <Cmd, SubCmd> pair, as in the tables of the cta-admin parser */
+/// An admin command: the <Cmd, SubCmd> pair, as in the tables of the cta-admin parser
 using CmdKey = std::pair<AdminCmd::Cmd, AdminCmd::SubCmd>;
 
 using Creator = std::function<std::unique_ptr<CtaAdminResponseStream>(const StreamContext&, const admin::AdminCmd&)>;
 
-/**
- * Builds a stream of already loaded items, which are converted to their protobuf representation by toProto()
- */
+/// Builds a stream of already loaded items, which are converted to their protobuf representation by toProto()
 template<class Item>
 std::unique_ptr<CtaAdminResponseStream>
 vectorStream(HeaderType headerType, const std::vector<Item>&& items, const std::string& instanceName) {
   return std::make_unique<VectorResponseStream<Item>>(headerType, instanceName, std::move(items));
 }
 
-/**
- * The streamed admin commands and their corresponding request handlers
- *
- * `vectorStream(...)` handles most of them, with others providing their custom handling code
- */
+/// The streamed admin commands and their corresponding request handlers
+///
+/// `vectorStream(...)` handles most of them, with others providing their custom handling code
 const std::map<CmdKey, Creator> STREAM_CMD_TABLE = {
   {{AdminCmd::CMD_VERSION, AdminCmd::SUBCMD_NONE},
    [](const StreamContext& ctx, const admin::AdminCmd& cmd) {

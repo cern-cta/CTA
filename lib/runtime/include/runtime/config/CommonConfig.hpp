@@ -41,19 +41,15 @@ struct ExperimentalConfig final {
   ValidationResult validate() const { return ValidationResult::OK; }
 };
 
-/**
- * @brief Marker for a config section without a `client` sub-table.
- */
+/// @brief Marker for a config section without a `client` sub-table.
 struct NoClientConfig final {
   static constexpr std::size_t memberCount() { return 0; }
 
   ValidationResult validate() const { return ValidationResult::OK; }
 };
 
-/**
- * @brief Catalogue config.
- * @tparam ClientConfig Application-specific options of the catalogue client, read from `[catalogue.client]`.
- */
+/// @brief Catalogue config.
+/// @tparam ClientConfig Application-specific options of the catalogue client, read from `[catalogue.client]`.
 template<typename ClientConfig = NoClientConfig>
 struct BasicCatalogueConfig final {
   std::string config_file = "/etc/cta/cta-catalogue.conf";
@@ -72,16 +68,14 @@ struct BasicCatalogueConfig final {
   }
 };
 
-// By default, no client config required
+/// By default, no client config required
 using CatalogueConfig = BasicCatalogueConfig<>;
 
-/**
- * @brief Scheduler config.
- * @tparam ClientConfig Application-specific options of the scheduler client, read from `[scheduler.client]`.
- */
+/// @brief Scheduler config.
+/// @tparam ClientConfig Application-specific options of the scheduler client, read from `[scheduler.client]`.
 template<typename ClientConfig = NoClientConfig>
 struct BasicSchedulerConfig final {
-  // This value should eventually be handled by auto-discovery and not be provided by users
+  /// This value should eventually be handled by auto-discovery and not be provided by users
   std::string backend_name = "";
 
   std::string config_file = "/etc/cta/cta-scheduler.conf";
@@ -120,7 +114,7 @@ struct BasicSchedulerConfig final {
   }
 };
 
-// By default, no client config required
+/// By default, no client config required
 using SchedulerConfig = BasicSchedulerConfig<>;
 
 /**

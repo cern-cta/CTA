@@ -22,15 +22,13 @@ using admin::OptionUInt64;
 
 namespace {
 
-/**
- * Changes the desired state of the drives whose name matches a regex
- *
- * @param ctx                What the handlers need from the server
- * @param regex              The regex to match the drive name(s) to change
- * @param desiredDriveState  Desired drive state (up, forceDown, reason, comment)
- *
- * @return The outcome for each matching drive, to return to the client
- */
+/// Changes the desired state of the drives whose name matches a regex
+///
+/// @param ctx                What the handlers need from the server
+/// @param regex              The regex to match the drive name(s) to change
+/// @param desiredDriveState  Desired drive state (up, forceDown, reason, comment)
+///
+/// @return The outcome for each matching drive, to return to the client
 std::string setDriveState(const SyncCmdContext& ctx,
                           const std::string& regex,
                           const common::dataStructures::DesiredDriveState& desiredDriveState) {

@@ -71,15 +71,11 @@ template<class T>
 concept TomlValueConvertible =
   requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
 
-/**
- * Types parsed from a TOML string through a cta::common::FromString specialization (typically enums)
- */
+/// Types parsed from a TOML string through a cta::common::FromString specialization (typically enums)
 template<class T>
 concept FromStringParsable = cta::common::HasFromString<std::remove_cvref_t<T>>;
 
-/**
- * Empty configs, such as NoClientConfig, have special handling
- */
+/// Empty configs, such as NoClientConfig, have special handling
 template<class T>
 concept EmptyConfig = reflection::Reflectable<T> && (T::memberCount() == 0);
 
@@ -227,9 +223,7 @@ ParseResult parseNode(T& out,
   return ParseResult::success();
 }
 
-/**
- * Parse a TOML string into a type providing a cta::common::FromString specialization.
- */
+/// Parse a TOML string into a type providing a cta::common::FromString specialization.
 template<FromStringParsable T>
 ParseResult parseNode(T& out,
                       std::string_view fieldName,

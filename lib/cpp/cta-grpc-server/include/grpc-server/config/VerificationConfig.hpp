@@ -12,11 +12,10 @@
 
 namespace cta::grpc_server {
 
-/**
- * @brief Verification-related options of the gRPC servers (admin and workflow APIs).
- */
+/// @brief Verification-related options of the gRPC servers (admin and workflow APIs).
 struct VerificationConfig final {
-  std::string mount_policy = "";  //!< Mount policy used for verification requests
+  /// Mount policy used for verification requests
+  std::string mount_policy = "";
 
   static constexpr std::size_t memberCount() { return 1; }
 
