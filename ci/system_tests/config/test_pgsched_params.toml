@@ -71,13 +71,13 @@
       #   /eos/<instance>/proc/workflow/<YYYYMMDD>/q/<workflow>/
       #   A retrieve/STAGE event is only removed from that directory when the
       #   file is staged back to disk — NOT when CTA queues the retrieve job.
-      #   With drives DOWN the directory only grows.  wfe.ntx=20000 caps the
-      #   per-cycle batch so the scanner stops after 20000 entries, bounding
+      #   With drives DOWN the directory only grows.  wfe.ntx=60000 caps the
+      #   per-cycle batch so the scanner stops after 60000 entries, bounding
       #   scan cost regardless of queue depth.  With drives coming up at 0.5
       #   the directory is drained concurrently from the start of the second
       #   half, so the peak depth stays well below the level where even an
-      #   early-stop scan would become slow (~1–2 M entries at ~2 kHz for
-      #   ~15–25 min of pre-queuing, vs 9 M with the old 0.1 fraction).
+      #   early-stop scan would become slow (~1–2 M entries at ~3 kHz for
+      #   ~10–15 min of pre-queuing, vs 9 M with the old 0.1 fraction).
       retrieve_prequeue_fraction = 0.5
 
       # Expected EOS queue throughput used to derive the drive-up timeout for
