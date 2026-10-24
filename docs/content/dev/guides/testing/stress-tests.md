@@ -43,7 +43,7 @@ The standard stress test requires `mhvtl` virtual tape hardware and a dedicated 
 
 `StressDrive` is a subclass of `FakeDrive` that persists tape content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
 
-The shared directory layout under `stressBaseDir` (default `/cta-stress-lib`, mounted from the `cta-fake-tape-library` PVC):
+Each library has its own PVC mounted at `/cta-stress-lib-{i}` (library index `i`). `stressBaseDir` for a drive is derived automatically from its `DriveDevice` URI (`virtual:///cta-stress-lib-{i}`), so no manual config key is needed. The shared directory layout under each `stressBaseDir`:
 
 ```
 config/<lib>/library.toml              — library and media-type configuration
@@ -76,20 +76,21 @@ All virtual-library parameters live in a single TOML file that is the **single s
 
 ```toml
 [library]
-name             = "stress-lib"
+name             = "stress-lib-0"    # auto-derived: stress-lib-{i}
 changerTimeoutMs = 30000
 
 [[library.mediaTypes]]
-name          = "STRESS30M"
-capacityBytes = 31457280   # 30 MiB per tape
-vidPrefix     = "ST"
-mountDelayMs  = 2000       # simulated mechanical load latency
-count         = 100        # 100 virtual tapes: ST0001..ST0100
+name           = "STRESS28MB"
+capacityBytes  = 29760080   # ≈ 28.4 MB — exactly 3 × 20 000-file batches
+vidPrefix      = "S0"       # auto-derived: S{i}  (2 chars + 4-digit index = 6-char VID)
+mountDelayMs   = 15000      # base mount latency; actual delay uniformly random in [base, 2×base]
+maxWriteRateHz = 1000       # file-rate ceiling per drive; 0 = write at RAM speed
+count          = 180        # virtual tapes: S00001..S00180
 ```
 
-The file is written by the `fake-tape-library` Helm chart (rendered from `values.yaml` into a ConfigMap, then copied to the PVC by a pre-populate Job). `StressDrive` reads it at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
+The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `StressDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
 
-The `setup_stress_drives_test.py` Python test reads the file from the mounted PVC via `CtaTapedHost.read_stress_library_conf()` (which parses it with `tomllib`) to obtain the media type names, capacities, VID prefixes, and tape counts. No separate `test_params.toml` entries are needed.
+`setup_stress_drives_test.py` reads each library's `library.toml` from the pod (via `CtaTapedHost.read_stress_library_conf()`, which parses it with `tomllib`) to obtain media type names, capacities, VID prefixes, and tape counts. No separate `test_params.toml` entries are needed.
 
 !!! warning "VID length limit"
     `vidPrefix` must be at most 2 characters so that the full VID fits in the 6-character ANSI tape label VSN field. `HeaderChecker::checkVOL1()` compares the label VSN to the catalogue VID; a longer prefix causes every archive and retrieve session to fail.
@@ -113,7 +114,7 @@ cd ci/orchestration/
   --max-drives 20
 ```
 
-`--max-drives N` controls how many virtual drives are created (`STRESS0000`…`STRESS{N-1}`); each drive produces one `taped` StatefulSet pod. The CI default is 20.
+`--max-drives N` controls how many virtual drives are created (`STRESS0000`…`STRESS{N-1}`); each drive produces one `taped` StatefulSet pod. The CI default is 20. Use `--num-stress-libraries M` to split drives across M independent logical libraries (default 1); see [Multi-library deployment](#multi-library-deployment) below.
 
 ??? note "Manual helm commands (for reference)"
     If you need to deploy the two steps separately:
@@ -131,9 +132,10 @@ cd ci/orchestration/
 
 The `stress-stressdrives-pgsched-values.yaml` overlay:
 
-- Sets `StressMode = yes` in every `taped` pod's configuration, bypassing SCSI device scanning and `rmcd` calls.
-- Mounts the `cta-fake-tape-library` PVC into every `taped` pod at `/cta-stress-lib`, so all pods share one tape library regardless of which node they run on.
+- Tunes `taped` buffer counts, disk threads, and cache TTLs for the stress workload.
 - Disables `rmcd` entirely (`rmcd.enabled: false`) — `taped` in stress mode never contacts it.
+
+The PVC mounts (`extraVolumes`) are **not** in the preset — they are generated dynamically by `create_instance.sh --no-hardware-drives` and merged after the preset, one mount per library (`cta-fake-tape-library-{i}` at `/cta-stress-lib-{i}`).
 
 For multi-node clusters, use a `ReadWriteMany` storage class in the `fake-tape-library` chart values (default is `ReadWriteOnce`, suitable for single-node clusters such as `kind` or `k3s`).
 
@@ -146,25 +148,60 @@ cta-dev test setup                            # standard catalogue setup
 cta-dev test --setup stress-drives setup      # virtual tape library setup
 ```
 
-`setup_stress_drives_test.py` reads `library.toml` from the pod, then registers every declared media type, the stress logical library, and all virtual tape VIDs (`ST0001`…`ST0100` by default). It is automatically skipped when no stress-mode pods are present, so it is safe to include in a general setup run.
+`setup_stress_drives_test.py` reads `library.toml` from one pod per logical library, then registers every declared media type (once, shared across all libraries), each logical library, and all virtual tape VIDs for each library (e.g. `S00001`…`S00180` for library 0, `S10001`…`S10180` for library 1). It is automatically skipped when no stress-mode pods are present, so it is safe to include in a general setup run.
 
 ### Configuration reference
 
-All stress-drive parameters are set in one place — `library.toml` in the `fake-tape-library` chart values — with one exception (`stressMode`/`stressBaseDir` which activates the code path in `taped`):
+All stress-drive parameters are set in the `fake-tape-library` chart `values.yaml`. Library name and VID prefix are auto-derived from the library index and must not be overridden.
 
 | Parameter | Where to set it | Default |
 | --- | --- | --- |
-| Activate stress mode | `taped.conf.taped.stressMode` (Helm overlay) | `false` |
-| Shared PVC mount path | `taped.conf.taped.stressBaseDir` (Helm overlay) | `/cta-stress-lib` |
-| Logical library name | `library.name` in `library.toml` | `stress-lib` |
-| Changer lock timeout | `library.changerTimeoutMs` in `library.toml` | `30000` ms |
-| Media type name | `[[library.mediaTypes]].name` | `STRESS30M` |
-| Tape capacity | `[[library.mediaTypes]].capacityBytes` | `31457280` (30 MiB) |
-| VID prefix | `[[library.mediaTypes]].vidPrefix` | `ST` |
-| Simulated mount latency | `[[library.mediaTypes]].mountDelayMs` | `2000` ms |
-| Number of virtual tapes | `[[library.mediaTypes]].count` | `100` |
+| Number of libraries | `libraryCount` in `values.yaml` | `1` |
+| Logical library name | **auto-derived**: `stress-lib-{i}` | — |
+| Changer lock timeout | `library.changerTimeoutMs` in `values.yaml` | `30000` ms |
+| Media type name | `library.mediaTypes[].name` | `STRESS28MB` |
+| Tape capacity | `library.mediaTypes[].capacityBytes` | `29760080` (≈28.4 MB) |
+| VID prefix | **auto-derived**: `S{i}` (library index) | — |
+| Simulated mount latency base | `library.mediaTypes[].mountDelayMs` | `15000` ms |
+| Max write rate | `library.mediaTypes[].maxWriteRateHz` | `1000` files/s |
+| Tapes per library | `library.mediaTypes[].count` | `180` |
+| PVC name prefix | `pvc.namePrefix` | `cta-fake-tape-library` |
+| PVC size | `pvc.size` | `50Gi` |
 
-Multiple media types in the same library are supported by adding more `[[library.mediaTypes]]` blocks.
+Multiple media types in the same library are supported by adding more entries to `library.mediaTypes`.
+
+### Multi-library deployment
+
+By default, all drives share a single logical library (`stress-lib-0`). Pass `--num-stress-libraries M` to `create_instance.sh` to split drives across M independent libraries, each with its own PVC and tape pool. This exercises concurrent mount/dismount across independent robot changers and allows more drives without hitting the single-changer serialisation bottleneck.
+
+```bash
+./create_instance.sh \
+  --namespace stress-<id> \
+  --no-hardware-drives \
+  --max-drives 30 \
+  --num-stress-libraries 3   # 10 drives per library: stress-lib-0, -1, -2
+```
+
+Drive-to-library mapping uses ceiling division; the last library may have fewer drives if `max_drives` is not a multiple of `num_stress_libraries`:
+
+| Library | Drives | VIDs |
+| --- | --- | --- |
+| `stress-lib-0` | STRESS0000…STRESS0009 | S00001…S00180 |
+| `stress-lib-1` | STRESS0010…STRESS0019 | S10001…S10180 |
+| `stress-lib-2` | STRESS0020…STRESS0029 | S20001…S20180 |
+
+The chart `libraryCount` value must match `--num-stress-libraries`. `create_instance.sh` passes `--set libraryCount=M` automatically. To deploy the chart manually for M libraries:
+
+```bash
+helm upgrade --install fake-tape-library ci/orchestration/helm/fake-tape-library/ \
+  --namespace <ns> --wait --wait-for-jobs \
+  --set libraryCount=3
+```
+
+All M PVCs are mounted into **every** taped pod, so any pod can read any library's `library.toml`. `setup_stress_drives_test.py` detects the number of libraries automatically from the pods' `LOGICAL_LIBRARY_NAME` environment variable — no manual configuration is needed.
+
+!!! note "VID prefix limit"
+    Auto-derived prefixes `S0`…`S9` support up to 10 libraries. The 2-char prefix plus 4-digit tape index equals 6 characters, the ANSI tape label VSN field maximum. `HeaderChecker::checkVOL1()` enforces this limit; exceeding it causes every archive and retrieve session to fail.
 
 ## Monitor and evaluate
 
