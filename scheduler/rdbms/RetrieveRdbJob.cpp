@@ -194,6 +194,28 @@ void RetrieveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
   }
 }
 
+#ifdef CTA_PGSCHED
+void RetrieveRdbJob::prepareFailTransfer(const std::string& failureReason) {
+  m_jobRow.updateJobRowFailureLog(failureReason);
+  m_jobRow.updateRetryCounts(m_mountId);
+  // If not terminal and within-mount limit exceeded, rotate to alternate VID.
+  // Reset retriesWithinMount to 0 to signal keepMountId=false to the batch SQL
+  // (retriesWithinMount > 0 means keep same mount, 0 means requeue to new mount).
+  if (m_jobRow.totalRetries < m_jobRow.maxTotalRetries
+      && m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
+    m_jobRow.retriesWithinMount = 0;
+    auto [newVid, index] = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
+    std::vector<std::string> alternateCopyNbsVec = cta::utils::splitStringToVector(m_jobRow.alternateCopyNbs);
+    std::vector<std::string> alternateFSeqVec = cta::utils::splitStringToVector(m_jobRow.alternateFSeq);
+    std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
+    m_jobRow.copyNb = static_cast<uint8_t>(std::stoi(alternateCopyNbsVec[index]));
+    m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
+    m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
+    m_jobRow.vid = newVid;
+  }
+}
+#endif
+
 void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
   log::ScopedParamContainer(lc)
     .add("jobID", jobID)

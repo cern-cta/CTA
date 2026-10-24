@@ -1442,4 +1442,176 @@ uint64_t RetrieveJobQueueRow::deleteFailedRetrieveJob(Transaction& txn, uint64_t
   txn.setRowCountForTelemetry(nrows);
   return nrows;
 }
+
+#ifdef CTA_PGSCHED
+uint64_t RetrieveJobQueueRow::failTransferBatchExceedRetries(
+    Transaction& txn,
+    const std::vector<RetrieveJobQueueRow*>& jobs,
+    bool isRepack) {
+  if (jobs.empty()) return 0;
+  const std::string repack_prefix = isRepack ? "REPACK_" : "";
+  const RetrieveJobStatus newStatus = isRepack ? RetrieveJobStatus::RJS_ToReportToRepackForFailure
+                                               : RetrieveJobStatus::RJS_ToReportToUserForFailure;
+
+  std::string values_rows;
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    if (i > 0) values_rows += ",\n    ";
+    const std::string s = std::to_string(i);
+    values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::INTEGER, :RWM" + s
+                 + "::INTEGER, :LMWF" + s + "::BIGINT, :FL" + s + "::TEXT)";
+  }
+
+  std::string sql = R"SQL(
+  WITH per_job(job_id, total_retries, retries_within_mount, last_mount_with_failure, failure_log) AS (
+    VALUES )SQL";
+  sql += values_rows;
+  sql += R"SQL(
+  )
+  UPDATE )SQL";
+  sql += repack_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE a
+  SET
+    STATUS = :STATUS,
+    TOTAL_RETRIES = d.total_retries,
+    RETRIES_WITHIN_MOUNT = d.retries_within_mount,
+    LAST_MOUNT_WITH_FAILURE = d.last_mount_with_failure,
+    FAILURE_LOG = COALESCE(a.FAILURE_LOG, '') || d.failure_log,
+    LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+  FROM per_job d
+  WHERE a.JOB_ID = d.job_id
+  )SQL";
+
+  auto stmt1 = txn.getConn().createStmt(sql);
+  stmt1.bindString(":STATUS", to_string(newStatus));
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    const auto* row = jobs[i];
+    const std::string s = std::to_string(i);
+    stmt1.bindUint64(":JID" + s, row->jobId);
+    stmt1.bindUint32(":TR" + s, row->totalRetries);
+    stmt1.bindUint32(":RWM" + s, row->retriesWithinMount);
+    stmt1.bindUint64(":LMWF" + s, row->lastMountWithFailure);
+    stmt1.bindString(":FL" + s, row->failureLogs.value_or(""));
+  }
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
+  stmt1.executeNonQuery();
+  auto nrows1 = stmt1.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows1);
+  return nrows1;
+}
+
+uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
+    Transaction& txn,
+    const std::vector<RetrieveJobQueueRow*>& jobs,
+    bool isRepack) {
+  if (jobs.empty()) return 0;
+  const std::string repack_prefix = isRepack ? "REPACK_" : "";
+  const std::string queue_type = isRepack ? "REPACK_RETRIEVE_PENDING" : "RETRIEVE_PENDING";
+
+  std::string values_rows;
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    if (i > 0) values_rows += ",\n    ";
+    const std::string s = std::to_string(i);
+    values_rows += "(:JID" + s + "::BIGINT"
+                 + ", :TR" + s + "::INTEGER"
+                 + ", :RWM" + s + "::INTEGER"
+                 + ", :LMWF" + s + "::BIGINT"
+                 + ", :FL" + s + "::TEXT"
+                 + ", :VID" + s + "::TEXT"
+                 + ", :FSEQ" + s + "::BIGINT"
+                 + ", :CNB" + s + "::SMALLINT"
+                 + ", :BID" + s + "::BIGINT)";
+  }
+
+  // keep_mount is true when retries_within_mount > 0:
+  // prepareFailTransfer() sets retriesWithinMount=0 when rotating to a new mount,
+  // and leaves it >0 when staying on the same mount.
+  std::string sql2 = R"SQL(
+  WITH per_job(job_id, total_retries, retries_within_mount, last_mount_with_failure,
+               failure_log, vid, fseq, copy_nb, block_id) AS (
+    VALUES )SQL";
+  sql2 += values_rows;
+  sql2 += R"SQL(
+  ),
+  MOVED_ROWS AS (
+    DELETE FROM )SQL";
+  sql2 += repack_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE a
+    WHERE a.JOB_ID IN (SELECT d.job_id FROM per_job d)
+    RETURNING a.*
+  ),
+  updated_last_fetch AS (
+    INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
+      SELECT DISTINCT m.MOUNT_ID,
+                      EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT,
+                      :QUEUE_TYPE
+      FROM per_job d
+      JOIN MOVED_ROWS m ON m.JOB_ID = d.job_id
+      WHERE d.retries_within_mount > 0 AND m.MOUNT_ID IS NOT NULL
+    ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
+      DO UPDATE SET
+        LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
+        QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
+          WHERE MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME
+            < EXCLUDED.LAST_UPDATE_TIME - 5
+  )
+  INSERT INTO )SQL";
+  sql2 += repack_prefix + "RETRIEVE_PENDING_QUEUE (";
+  if (isRepack) {
+    sql2 += " REPACK_REQUEST_ID, REPACK_REARCHIVE_COPY_NBS, REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql2 += R"SQL(
+    JOB_ID, RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, TAPE_POOL, MOUNT_POLICY, PRIORITY,
+    MIN_RETRIEVE_REQUEST_AGE, ARCHIVE_FILE_ID, SIZE_IN_BYTES, COPY_NB, START_TIME, CHECKSUMBLOB,
+    FSEQ, BLOCK_ID, CREATION_TIME, DISK_INSTANCE, DISK_FILE_ID, DISK_FILE_OWNER_UID, DISK_FILE_GID,
+    DISK_FILE_PATH, RETRIEVE_REPORT_URL, RETRIEVE_ERROR_REPORT_URL, REQUESTER_NAME, REQUESTER_GROUP,
+    DST_URL, STORAGE_CLASS, MAX_TOTAL_RETRIES, MAX_RETRIES_WITHIN_MOUNT, TOTAL_REPORT_RETRIES,
+    MAX_REPORT_RETRIES, VID, ALTERNATE_FSEQS, ALTERNATE_BLOCK_IDS, ALTERNATE_VIDS, ALTERNATE_COPY_NBS,
+    DRIVE, HOST, LOGICAL_LIBRARY, ACTIVITY, DISK_SYSTEM_NAME, FAILURE_LOG,
+    RETRIES_WITHIN_MOUNT, TOTAL_RETRIES, LAST_MOUNT_WITH_FAILURE, STATUS, MOUNT_ID
+  )
+  SELECT )SQL";
+  if (isRepack) {
+    sql2 += " m.REPACK_REQUEST_ID, m.REPACK_REARCHIVE_COPY_NBS, m.REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql2 += R"SQL(
+    m.JOB_ID, m.RETRIEVE_REQUEST_ID, m.REQUEST_JOB_COUNT, m.TAPE_POOL, m.MOUNT_POLICY, m.PRIORITY,
+    m.MIN_RETRIEVE_REQUEST_AGE, m.ARCHIVE_FILE_ID, m.SIZE_IN_BYTES,
+    d.copy_nb, m.START_TIME, m.CHECKSUMBLOB,
+    d.fseq, d.block_id,
+    m.CREATION_TIME, m.DISK_INSTANCE, m.DISK_FILE_ID, m.DISK_FILE_OWNER_UID, m.DISK_FILE_GID,
+    m.DISK_FILE_PATH, m.RETRIEVE_REPORT_URL, m.RETRIEVE_ERROR_REPORT_URL,
+    m.REQUESTER_NAME, m.REQUESTER_GROUP, m.DST_URL, m.STORAGE_CLASS,
+    m.MAX_TOTAL_RETRIES, m.MAX_RETRIES_WITHIN_MOUNT, m.TOTAL_REPORT_RETRIES, m.MAX_REPORT_RETRIES,
+    d.vid, m.ALTERNATE_FSEQS, m.ALTERNATE_BLOCK_IDS, m.ALTERNATE_VIDS, m.ALTERNATE_COPY_NBS,
+    m.DRIVE, m.HOST, m.LOGICAL_LIBRARY, m.ACTIVITY, m.DISK_SYSTEM_NAME,
+    COALESCE(m.FAILURE_LOG, '') || d.failure_log,
+    d.retries_within_mount, d.total_retries, d.last_mount_with_failure,
+    :STATUS,
+    CASE WHEN d.retries_within_mount > 0 THEN m.MOUNT_ID ELSE NULL END
+  FROM MOVED_ROWS m
+  JOIN per_job d ON d.job_id = m.JOB_ID
+  )SQL";
+
+  auto stmt2 = txn.getConn().createStmt(sql2);
+  stmt2.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToTransfer));
+  stmt2.bindString(":QUEUE_TYPE", queue_type);
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    const auto* row = jobs[i];
+    const std::string s = std::to_string(i);
+    stmt2.bindUint64(":JID" + s, row->jobId);
+    stmt2.bindUint32(":TR" + s, row->totalRetries);
+    stmt2.bindUint32(":RWM" + s, row->retriesWithinMount);
+    stmt2.bindUint64(":LMWF" + s, row->lastMountWithFailure);
+    stmt2.bindString(":FL" + s, row->failureLogs.value_or(""));
+    stmt2.bindString(":VID" + s, row->vid);
+    stmt2.bindUint64(":FSEQ" + s, row->fSeq);
+    stmt2.bindUint8(":CNB" + s, row->copyNb);
+    stmt2.bindUint64(":BID" + s, row->blockId);
+  }
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToPending);
+  stmt2.executeNonQuery();
+  auto nrows2 = stmt2.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows2);
+  return nrows2;
+}
+#endif
+
 }  // namespace cta::schedulerdb::postgres

@@ -41,6 +41,17 @@ public:
    */
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
+#ifdef CTA_PGSCHED
+  /**
+   * Prepares the in-memory job state for batch failure reporting.
+   * Updates failure log and retry counts without touching the DB.
+   * Also rotates the VID to an alternate copy if within-mount retries are exhausted.
+   *
+   * @param failureReason  The reason of the failure as string
+   */
+  void prepareFailTransfer(const std::string& failureReason) override;
+#endif
+
   /*
    * Sets the status of the report of the retrieve job to failed in Scheduler DB
    *

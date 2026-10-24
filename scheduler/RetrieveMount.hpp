@@ -203,6 +203,17 @@ public:
     * @param logContext
     */
   virtual void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, log::LogContext& logContext);
+
+#ifdef CTA_PGSCHED
+  /**
+    * Batch-fails a set of retrieve jobs by delegating to the DB mount's failTransferBatch().
+    * Each job must have had prepareFailTransfer() called first to update its in-memory state.
+    * @param failedJobs The jobs to fail
+    * @param lc log context
+    */
+  virtual void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& failedJobs,
+                                 cta::log::LogContext& lc);
+#endif
   /**
   * Re-queues batch of jobs
   * Serves PGSCHED purpose only

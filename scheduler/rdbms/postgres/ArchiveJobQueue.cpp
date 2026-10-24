@@ -1088,17 +1088,22 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   const ArchiveJobStatus newStatus = isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForFailure
                                               : ArchiveJobStatus::AJS_ToReportToUserForFailure;
 
-  // Build per-row VALUES CTE with numbered bind params
+  // Build per-row VALUES CTE with numbered bind params.
+  // For non-repack multi-copy requests (req_job_count > 1) we must fail ALL copies of the
+  // same archive request atomically (matching the WHERE ARCHIVE_REQUEST_ID semantics of the
+  // single-job path).  Repack always uses per-JOB_ID semantics (copies are independent).
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
     if (i > 0) values_rows += ",\n    ";
     const std::string s = std::to_string(i);
     values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::SMALLINT, :RWM" + s
-                 + "::SMALLINT, :LMF" + s + "::BIGINT, :FL" + s + "::TEXT)";
+                 + "::SMALLINT, :LMF" + s + "::BIGINT, :FL" + s + "::TEXT"
+                 + ", :REQID" + s + "::BIGINT, :RJC" + s + "::SMALLINT)";
   }
 
   std::string sql = R"SQL(
-  WITH per_job(job_id, total_retries, retries_within_mount, last_mount, failure_log) AS (
+  WITH per_job(job_id, total_retries, retries_within_mount, last_mount, failure_log,
+               archive_request_id, req_job_count) AS (
     VALUES )SQL";
   sql += values_rows;
   sql += R"SQL(
@@ -1113,7 +1118,8 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
     FAILURE_LOG = COALESCE(a.FAILURE_LOG, '') || d.failure_log,
     LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   FROM per_job d
-  WHERE a.JOB_ID = d.job_id
+  WHERE (d.req_job_count = 1 AND a.JOB_ID = d.job_id)
+     OR (d.req_job_count > 1 AND a.ARCHIVE_REQUEST_ID = d.archive_request_id)
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -1127,6 +1133,8 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
     stmt.bindUint32(":RWM" + s, row->retriesWithinMount);
     stmt.bindUint64(":LMF" + s, row->lastMountWithFailure);
     stmt.bindString(":FL" + s, row->failureLogs.value_or(""));
+    stmt.bindUint64(":REQID" + s, row->reqId);
+    stmt.bindUint32(":RJC" + s, row->reqJobCount);
   }
 
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);

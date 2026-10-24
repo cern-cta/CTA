@@ -602,3 +602,18 @@ void cta::RetrieveMount::addDiskSystemToSkip(
   const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystem) {
   m_dbMount->addDiskSystemToSkip(diskSystem);
 }
+
+#ifdef CTA_PGSCHED
+//------------------------------------------------------------------------------
+// failTransferBatch()
+//------------------------------------------------------------------------------
+void cta::RetrieveMount::failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& failedJobs,
+                                           cta::log::LogContext& lc) {
+  std::vector<cta::SchedulerDatabase::RetrieveJob*> dbJobs;
+  dbJobs.reserve(failedJobs.size());
+  for (auto& job : failedJobs) {
+    dbJobs.push_back(job->m_dbJob.get());
+  }
+  m_dbMount->failTransferBatch(dbJobs, lc);
+}
+#endif

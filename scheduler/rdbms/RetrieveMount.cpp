@@ -335,6 +335,39 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
   }
 }
 
+#ifdef CTA_PGSCHED
+void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
+                                      log::LogContext& lc) {
+  if (batch.empty()) return;
+  std::vector<postgres::RetrieveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
+  for (auto* dbJob : batch) {
+    auto* rdbJob = dynamic_cast<RetrieveRdbJob*>(dbJob);
+    auto* row = &rdbJob->m_jobRow;
+    const bool exceed = row->totalRetries >= row->maxTotalRetries;
+    if (exceed) {
+      (rdbJob->isRepack ? exceedRepack : exceedUser).push_back(row);
+    } else {
+      (rdbJob->isRepack ? requeueRepack : requeueUser).push_back(row);
+    }
+  }
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    if (!exceedUser.empty())
+      postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
+    if (!exceedRepack.empty())
+      postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
+    if (!requeueUser.empty())
+      postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
+    if (!requeueRepack.empty())
+      postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+    txn.commit();
+  } catch (...) {
+    txn.abort();
+    throw;
+  }
+}
+#endif
+
 void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                            log::LogContext& lc) {
   try {

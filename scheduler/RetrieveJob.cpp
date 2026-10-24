@@ -80,6 +80,15 @@ void cta::RetrieveJob::transferFailed(const std::string& failureReason, log::Log
   m_dbJob->failTransfer(failureReason, lc);
 }
 
+#ifdef CTA_PGSCHED
+//------------------------------------------------------------------------------
+// prepareFailTransfer
+//------------------------------------------------------------------------------
+void cta::RetrieveJob::prepareFailTransfer(const std::string& failureReason) {
+  m_dbJob->prepareFailTransfer(failureReason);
+}
+#endif
+
 //------------------------------------------------------------------------------
 // selectedTapeFile
 //------------------------------------------------------------------------------
