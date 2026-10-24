@@ -98,10 +98,14 @@ generate_stress_drive_values() {
   {
     echo "taped:"
     echo "  drives:"
+    # Drive naming: S{lib}D{index_within_lib} — mirrors the tape VID prefix S{lib},
+    # so everything in library N is immediately identifiable in logs and monitoring.
+    # Example: 10 drives across 3 libraries → S0D0000..S0D0009, S1D0000..S1D0009, S2D0000..S2D0004
     for i in $(seq 0 $((max_drives - 1))); do
       lib_index=$(( i / drives_per_lib ))
       (( lib_index >= num_libs )) && lib_index=$(( num_libs - 1 ))
-      printf "    - name: \"STRESS%04d\"\n" "$i"
+      drive_in_lib=$(( i % drives_per_lib ))
+      printf "    - name: \"S%dD%04d\"\n" "$lib_index" "$drive_in_lib"
       printf "      device: \"virtual:///cta-stress-lib-%d\"\n" "$lib_index"
       printf "      logicalLibraryName: \"stress-lib-%d\"\n" "$lib_index"
       printf "      controlPath: \"smc0\"\n"
