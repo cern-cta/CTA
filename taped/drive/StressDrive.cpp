@@ -32,7 +32,7 @@ StressDrive::StressDrive(std::string driveName, std::string logicalLibraryName, 
       m_driveName(std::move(driveName)),
       m_logicalLibrary(std::move(logicalLibraryName)),
       m_baseDir(std::move(baseDir)),
-      m_rng(std::hash<std::string>{}(m_driveName)
+      m_rng(std::hash<std::string> {}(m_driveName)
             ^ static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())) {
   // VirtualDrive defaults m_tapeInPlace to true (for convenience), but a
   // StressDrive starts with an empty slot: no tape is loaded until the media
