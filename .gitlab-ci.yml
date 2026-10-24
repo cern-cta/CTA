@@ -175,6 +175,14 @@ spec:
       type: number
       default: 20
 
+    num-stress-libraries:
+      description: |-
+        Number of independent logical libraries for stress drives.
+        Drives are split evenly across libraries; each library gets its own PVC.
+        Has no effect when use-stress-drives is false.
+      type: number
+      default: 1
+
     num-stress-files:
       description: |-
         Total number of files to archive in the stress test.
@@ -487,6 +495,7 @@ include:
       enable-opportunistic-batching: $[[ inputs.enable-opportunistic-batching ]]
       use-stress-drives: $[[ inputs.use-stress-drives ]]
       num-stress-drives: $[[ inputs.num-stress-drives ]]
+      num-stress-libraries: $[[ inputs.num-stress-libraries ]]
       num-stress-files: $[[ inputs.num-stress-files ]]
       stress-prequeue-enabled: $[[ inputs.stress-prequeue-enabled ]]
       stress-prequeue-fraction: $[[ inputs.stress-prequeue-fraction ]]

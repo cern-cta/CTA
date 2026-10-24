@@ -20,6 +20,9 @@ spec:
       type: boolean
     num-stress-drives:
       type: number
+    num-stress-libraries:
+      type: number
+      default: 1
     num-stress-files:
       type: number
       default: 10000000
@@ -368,7 +371,7 @@ stress-test:
       if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
         STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-stressdrives-pgsched-values.yaml"
         # Skip mhvtl hardware detection; generate drives STRESS0000..STRESS{N-1}.
-        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-stress-drives ]]}"
+        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-stress-drives ]]} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-$[[ inputs.num-stress-libraries ]]}"
       fi
     # Set up stress test
     - cd ci/orchestration/
