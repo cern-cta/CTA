@@ -44,6 +44,7 @@ spec:
       type: number
     use-pgbouncer:
       type: boolean
+      default: false
 ---
 
 .trigger-child-pipeline:
