@@ -435,10 +435,8 @@ async def test_request_files_for_retrieve(
     actual_submitted = total_file_count  # fallback
     for line in (exec_result.stdout or "").splitlines():
         if line.startswith("Retrieve done:"):
-            try:
+            with contextlib.suppress(IndexError, ValueError):
                 actual_submitted = int(line.split()[2])
-            except (IndexError, ValueError):
-                pass
     eos_submission_rate = actual_submitted / duration_seconds if duration_seconds > 0 else 0.0
     print(
         f"EOS WFE submission rate: {actual_submitted} files in {duration_seconds:.1f}s"
