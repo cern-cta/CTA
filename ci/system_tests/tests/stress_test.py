@@ -131,13 +131,13 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     # mgm.event=migrated, etc.) — EOS has no per-event-type pool separation.
     # Throughput ceiling = wfe.ntx / wfe.interval events/s.
     #
-    # interval=10 s, ntx=20000 → ~2 kHz:
+    # interval=20 s, ntx=60000 → ~3 kHz:
     #   The WFE scheduler scans /eos/proc/workflow/q/ each interval to find the
     #   next batch.  ntx caps the batch size, so the scanner stops after finding
-    #   20000 candidates instead of walking the entire directory — keeping per-
-    #   cycle scan cost O(ntx) regardless of total queue depth.  The 10 s window
-    #   gives the scan ample time to find those 20000 entries even when the
-    #   directory is large.  The resulting ~2 kHz serves both concurrent
+    #   60000 candidates instead of walking the entire directory — keeping per-
+    #   cycle scan cost O(ntx) regardless of total queue depth.  The 20 s window
+    #   gives the scan ample time to find those 60000 entries even when the
+    #   directory is large.  The resulting ~3 kHz serves both concurrent
     #   streams comfortably:
     #     - archive WFE events (xrootd_archive.py → EOS → CTA): ~0.7 kHz peak
     #     - disk-report callbacks (maintd mgm.event=migrated → EOS MGM): ~0.4 kHz
@@ -151,8 +151,8 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     #   retrieve_prequeue_fraction (see test_pgsched_params.toml): drives come
     #   up at 50 % queued so the directory is drained concurrently and never
     #   balloons to the depth where even an early-stop scan becomes slow.
-    eos_mgm.exec("eos space config default space.wfe.ntx=20000")
-    eos_mgm.exec("eos space config default space.wfe.interval=10")
+    eos_mgm.exec("eos space config default space.wfe.ntx=60000")
+    eos_mgm.exec("eos space config default space.wfe.interval=20")
     # Get number of "booted" filesystems
     result = eos_mgm.exec_with_output("eos fs ls | grep -c 'booted'")
     count_fs = int(result.strip())
