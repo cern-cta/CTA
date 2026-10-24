@@ -7,17 +7,19 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-library-conf
 data:
-  library.toml: |
+{{- range $i := until (int .Values.libraryCount) }}
+  library-{{ $i }}.toml: |
     [library]
-    name             = {{ .Values.library.name | quote }}
-    changerTimeoutMs = {{ .Values.library.changerTimeoutMs }}
-    {{- range .Values.library.mediaTypes }}
+    name             = "stress-lib-{{ $i }}"
+    changerTimeoutMs = {{ $.Values.library.changerTimeoutMs }}
+    {{- range $.Values.library.mediaTypes }}
 
     [[library.mediaTypes]]
-    name          = {{ .name | quote }}
-    capacityBytes = {{ .capacityBytes }}
-    vidPrefix     = {{ .vidPrefix | quote }}
-    mountDelayMs  = {{ .mountDelayMs }}
+    name           = {{ .name | quote }}
+    capacityBytes  = {{ .capacityBytes }}
+    vidPrefix      = "S{{ $i }}"
+    mountDelayMs   = {{ .mountDelayMs }}
     maxWriteRateHz = {{ .maxWriteRateHz }}
-    count         = {{ .count }}
+    count          = {{ .count }}
     {{- end }}
+{{- end }}

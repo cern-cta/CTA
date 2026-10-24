@@ -2,23 +2,28 @@
 SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
+{{- range $i := until (int .Values.libraryCount) }}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .Values.pvc.name }}
+  name: {{ $.Values.pvc.namePrefix }}-{{ $i }}
 spec:
   accessModes:
-    {{- range .Values.pvc.accessModes }}
+    {{- range $.Values.pvc.accessModes }}
     - {{ . | quote }}
     {{- end }}
   resources:
     requests:
-      storage: {{ .Values.pvc.size | quote }}
-  {{- if eq "-" .Values.pvc.storageClass }}
+      storage: {{ $.Values.pvc.size | quote }}
+  {{- if eq "-" $.Values.pvc.storageClass }}
   storageClassName: ""
-  {{- else if .Values.pvc.storageClass }}
-  storageClassName: {{ .Values.pvc.storageClass | quote }}
+  {{- else if $.Values.pvc.storageClass }}
+  storageClassName: {{ $.Values.pvc.storageClass | quote }}
   {{- end }}
-  {{- if .Values.pvc.volumeName }}
-  volumeName: {{ .Values.pvc.volumeName | quote }}
+  {{- if gt (len $.Values.pvc.volumeNames) $i }}
+  {{- with index $.Values.pvc.volumeNames $i }}
+  volumeName: {{ . | quote }}
   {{- end }}
+  {{- end }}
+{{- end }}

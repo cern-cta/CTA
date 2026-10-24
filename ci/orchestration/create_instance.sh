@@ -35,6 +35,7 @@ usage() {
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
   echo "      --extra-cta-values:             Extra verbatim values for the CTA chart. These will override any previous values from files."
   echo "      --no-hardware-drives:           Use virtual stress drives instead of mhvtl/SCSI hardware.  Deploys the fake-tape-library chart and generates a drive list from --max-drives."
+  echo "      --num-stress-libraries <n>:     Number of independent logical libraries for stress drives (default: 1). Requires --no-hardware-drives."
   exit 1
 }
 
@@ -51,25 +52,32 @@ check_deploy_commands() {
 
 deploy_fake_tape_library() {
   log_task "Deploying fake-tape-library chart (PVC + directory layout + library.toml)..."
+  local num_libs="${num_stress_libraries:-1}"
   local -a extra_flags=()
   if kubectl get sc fast-ssd >/dev/null 2>&1; then
     # fast-ssd uses WaitForFirstConsumer with static (no-provisioner) PVs.
-    # Specifying volumeName bypasses WaitForFirstConsumer and binds the PVC
-    # immediately on creation, so the prepopulate Job pod can start without delay.
-    # On teardown, reclaim_released_pvs in delete_instance.sh catches the PV
-    # (Released, claimRef.namespace matches, not local-path) and reclaims it.
-    local pv_name
-    pv_name=$(kubectl get pv -o json \
-      | jq -r '[.items[] | select(.spec.storageClassName=="fast-ssd" and .status.phase=="Available")] | first | .metadata.name // empty')
-    if [[ -n "${pv_name}" ]]; then
-      echo "  fast-ssd StorageClass found — binding PVC directly to ${pv_name} (bypasses WaitForFirstConsumer)."
-      extra_flags=("--set" "pvc.storageClass=fast-ssd" "--set" "pvc.volumeName=${pv_name}")
+    # Collect all available fast-ssd PVs; if there are enough, bind each
+    # library PVC directly to its own PV (bypasses WaitForFirstConsumer so
+    # the prepopulate Job starts immediately).
+    # On teardown, reclaim_released_pvs in delete_instance.sh catches the PVs
+    # (Released, claimRef.namespace matches, not local-path) and reclaims them.
+    readarray -t fast_ssd_pvs < <(kubectl get pv -o json | jq -r \
+      '[.items[] | select(.spec.storageClassName=="fast-ssd" and .status.phase=="Available") | .metadata.name] | .[]')
+    if [[ ${#fast_ssd_pvs[@]} -ge "${num_libs}" ]]; then
+      echo "  fast-ssd StorageClass found — binding ${num_libs} PVC(s) to: ${fast_ssd_pvs[*]:0:${num_libs}}"
+      extra_flags+=("--set" "pvc.storageClass=fast-ssd")
+      for i in $(seq 0 $((num_libs - 1))); do
+        extra_flags+=("--set" "pvc.volumeNames[${i}]=${fast_ssd_pvs[$i]}")
+      done
+    elif [[ ${#fast_ssd_pvs[@]} -gt 0 ]]; then
+      log_warn "Found ${#fast_ssd_pvs[@]} fast-ssd PV(s) but need ${num_libs}; using cluster default StorageClass."
     else
       echo "  fast-ssd StorageClass found but no Available PVs — using cluster default StorageClass."
     fi
   else
     echo "  fast-ssd StorageClass not found — using cluster default StorageClass."
   fi
+  extra_flags+=("--set" "libraryCount=${num_libs}")
   helm upgrade --install fake-tape-library helm/fake-tape-library \
     --namespace "${namespace}" \
     --wait --wait-for-jobs --timeout 5m \
@@ -78,18 +86,40 @@ deploy_fake_tape_library() {
 }
 
 generate_stress_drive_values() {
-  log_task "Generating stress drive configuration (${max_drives} drives)..."
+  local num_libs="${num_stress_libraries:-1}"
+  local drives_per_lib=$(( (max_drives + num_libs - 1) / num_libs ))
+  log_task "Generating stress drive configuration (${max_drives} drives across ${num_libs} librar$([ "$num_libs" -eq 1 ] && echo y || echo ies))..."
+
+  # Per-drive taped values.  Drives are split across libraries by ceiling division;
+  # the last library may have fewer drives if max_drives is not a multiple of num_libs.
+  # All library PVCs are mounted into every taped pod so that library.toml is always
+  # readable from any pod, regardless of which library the drive belongs to.
   taped_config=$(mktemp "/tmp/${namespace}-taped-stress-XXXXXX-values.yaml")
   {
     echo "taped:"
     echo "  drives:"
     for i in $(seq 0 $((max_drives - 1))); do
+      lib_index=$(( i / drives_per_lib ))
+      (( lib_index >= num_libs )) && lib_index=$(( num_libs - 1 ))
       printf "    - name: \"STRESS%04d\"\n" "$i"
-      printf "      device: \"virtual:///cta-stress-lib\"\n"
-      printf "      logicalLibraryName: \"stress-lib\"\n"
+      printf "      device: \"virtual:///cta-stress-lib-%d\"\n" "$lib_index"
+      printf "      logicalLibraryName: \"stress-lib-%d\"\n" "$lib_index"
       printf "      controlPath: \"smc0\"\n"
     done
+    echo "  extraVolumes:"
+    echo "    volumes:"
+    for l in $(seq 0 $((num_libs - 1))); do
+      printf "      - name: \"stress-lib-%d\"\n" "$l"
+      printf "        persistentVolumeClaim:\n"
+      printf "          claimName: \"cta-fake-tape-library-%d\"\n" "$l"
+    done
+    echo "    volumeMounts:"
+    for l in $(seq 0 $((num_libs - 1))); do
+      printf "      - name: \"stress-lib-%d\"\n" "$l"
+      printf "        mountPath: \"/cta-stress-lib-%d\"\n" "$l"
+    done
   } > "$taped_config"
+
   echo "Content of stress drive values file $taped_config:"
   echo
   cat "$taped_config"
@@ -201,6 +231,7 @@ create_instance() {
   publish_telemetry=false
   one_logical_library=false
   no_hardware_drives=false
+  num_stress_libraries=1
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -270,6 +301,9 @@ create_instance() {
       --publish-telemetry) publish_telemetry=true ;;
       --one-logical-library) one_logical_library=true ;;
       --no-hardware-drives) no_hardware_drives=true ;;
+      --num-stress-libraries)
+        num_stress_libraries="$2"
+        shift ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;

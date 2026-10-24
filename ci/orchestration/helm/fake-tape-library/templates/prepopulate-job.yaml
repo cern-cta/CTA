@@ -2,21 +2,23 @@
 SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
-# Pre-populates the PVC with the directory layout, library.toml, and blank
-# tape files required by StressDrive.  The Job is idempotent: mkdir -p, cp,
-# and "touch if absent" are all safe to re-run on an already-populated volume.
+# One pre-population Job per library.  Each Job:
+#   - Mounts its own PVC at /data
+#   - Reads library-{i}.toml from the shared ConfigMap
+#   - Creates the directory layout and blank tape files under /data
 #
-# Layout created under the PVC root:
-#   config/<library.name>/library.toml      — StressDrive configuration
-#   contents/<library.name>/slots/          — VID.tape files (blank = never written)
-#   contents/<library.name>/changer/        — tape in transit; .lock = robot busy
-#   contents/<library.name>/drives/         — per-drive subdirs created by taped
+# Layout created under each PVC root:
+#   config/stress-lib-{i}/library.toml      — StressDrive configuration
+#   contents/stress-lib-{i}/slots/          — VID.tape files (blank = never written)
+#   contents/stress-lib-{i}/changer/        — tape in transit; .lock = robot busy
+#   contents/stress-lib-{i}/drives/         — per-drive subdirs created by taped
+{{- range $i := until (int .Values.libraryCount) }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-prepopulate
+  name: {{ $.Release.Name }}-prepopulate-{{ $i }}
   annotations:
-    # Re-run this Job whenever the chart is upgraded (values may have changed).
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "0"
     "helm.sh/hook-delete-policy": before-hook-creation
@@ -26,28 +28,20 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: prepopulate
-          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
           command:
             - sh
             - -c
             - |
               set -e
-              LIB={{ .Values.library.name | quote }}
+              LIB="stress-lib-{{ $i }}"
               mkdir -p /data/config/${LIB}
               mkdir -p /data/contents/${LIB}/slots
               mkdir -p /data/contents/${LIB}/changer
               mkdir -p /data/contents/${LIB}/drives
-              cp /config/library.toml /data/config/${LIB}/library.toml
+              cp /config/library-{{ $i }}.toml /data/config/${LIB}/library.toml
 
-              # Create blank (empty) tape files in slots/ for every VID defined
-              # in library.toml.  An empty .tape file means "never written"; the
-              # StressDrive synthesises a VOL1 label on first archive.
-              # awk parses the TOML array-of-tables format:
-              #   [[library.mediaTypes]] ... vidPrefix = "ST" ... count = 100
-              # It collects prefix and count per section, prints one VID per
-              # line.  The loop creates the file only if absent, so re-runs on
-              # an upgraded chart never truncate already-written tapes.
               awk '
                 /\[\[library\.mediaTypes\]\]/ {
                   if (prefix != "" && n > 0)
@@ -84,7 +78,8 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: {{ .Values.pvc.name }}
+            claimName: {{ $.Values.pvc.namePrefix }}-{{ $i }}
         - name: library-conf
           configMap:
-            name: {{ .Release.Name }}-library-conf
+            name: {{ $.Release.Name }}-library-conf
+{{- end }}

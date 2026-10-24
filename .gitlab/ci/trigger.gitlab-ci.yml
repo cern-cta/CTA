@@ -45,6 +45,9 @@ spec:
     use-pgbouncer:
       type: boolean
       default: false
+    num-stress-libraries:
+      type: number
+      default: 1
 ---
 
 .trigger-child-pipeline:
@@ -84,6 +87,7 @@ spec:
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
           use-stress-drives: $[[ inputs.use-stress-drives ]]
           num-stress-drives: $[[ inputs.num-stress-drives ]]
+          num-stress-libraries: $[[ inputs.num-stress-libraries ]]
           use-pgbouncer: $[[ inputs.use-pgbouncer ]]
     strategy: mirror
 

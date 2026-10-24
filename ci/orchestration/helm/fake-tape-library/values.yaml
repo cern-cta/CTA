@@ -1,136 +1,74 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Configuration for a single fake (in-memory/on-disk) tape library used by
+# Configuration for one or more fake (in-memory/on-disk) tape libraries used by
 # StressDrive scale tests.
 #
 # This chart creates:
-#   1. A PersistentVolumeClaim to hold the virtual tape library on disk.
-#   2. A library.toml file (via ConfigMap) that StressDrive reads at runtime.
-#   3. A pre-population Job that writes library.toml and creates the required
-#      directory layout inside the PVC.
+#   1. libraryCount PersistentVolumeClaims (one per library).
+#   2. A ConfigMap with one library.toml per library.
+#   3. libraryCount pre-population Jobs that write directory layouts into each PVC.
 #
-# After this chart is deployed, mount the PVC in every taped pod via the
-# taped chart's extraVolumes / extraVolumeMounts values, and register each
-# drive in the CTA catalogue with DriveDevice = "virtual://<mountPath>",
-# e.g. "virtual:///cta-stress-lib".  No extra config keys are required.
+# Library names and VID prefixes are auto-derived from the library index:
+#   name      = "stress-lib-{i}"   (matches logicalLibraryName in create_instance.sh)
+#   vidPrefix = "S{i}"             (e.g. S0 → S00001..S00180, S1 → S10001..S10180)
+# VIDs are 6 chars: 2-char prefix + 4-digit index fits the ANSI tape label VSN field.
+#
+# After this chart is deployed, create_instance.sh --no-hardware-drives mounts
+# each library PVC into every taped pod via generated extraVolumes, with
+# mountPath = "/cta-stress-lib-{i}".
 #
 # Consistency requirements
 # ------------------------
-# This file is the single source of truth for the virtual library.
-# setup_stress_drives_test.py reads library.toml directly from the taped pod
-# and derives all catalogue registration parameters from it — no manual sync
-# with test_params.toml is required.  The only manual consistency constraint is:
-#   library.name  ↔  logicalLibraryName in the generated taped drive list
-#   (create_instance.sh --no-hardware-drives uses "stress-lib" by default).
-# mediaTypes[].count must be >= the number of drives (--max-drives) so every
-# drive can be kept busy simultaneously.
-#
-# Extendability: multiple libraries
-# ----------------------------------
-# This chart currently supports a single logical library (one library: block).
-# To add a second library with a different drive set:
-#   - Change library: to libraries: [...] (array of library objects)
-#   - Update the ConfigMap and Job templates to iterate over the array
-#   - Each taped pod in a different library would still share the same PVC
-#     because each library lives under a separate contents/<lib>/ subtree;
-#     changer/ directories are per-library so there is no cross-library
-#     lock contention.
-#   - Register each library's drives and tapes in the CTA catalogue with the
-#     corresponding logicalLibraryName.
+# setup_stress_drives_test.py reads each library.toml directly from the taped pod
+# and derives all catalogue registration parameters from it.
+# The only manual constraint is libraryCount here must match --num-stress-libraries
+# passed to create_instance.sh (or both default to 1).
 
 # ---------------------------------------------------------------------------
-# Library configuration
+# Number of independent logical libraries to create.
+# Each library gets its own PVC, library.toml, and pre-population Job.
+# Drives are split across libraries by create_instance.sh --num-stress-libraries.
+# ---------------------------------------------------------------------------
+libraryCount: 1
+
+# ---------------------------------------------------------------------------
+# Shared library configuration (applied to every library).
+# Library name and vidPrefix are auto-derived from the index; do not set them here.
 # ---------------------------------------------------------------------------
 library:
-  # Name of the logical library — must match the logicalLibraryName used when
-  # registering drives and tapes in the CTA catalogue, and the hardcoded value
-  # in generate_stress_drive_values() in create_instance.sh.
-  name: stress-lib
-
   # Maximum milliseconds to wait for the single changer robot to become free.
-  # If another mount/dismount holds the robot lock longer than this, the
-  # waiting drive throws.  Increase for very slow storage backends.
   changerTimeoutMs: 30000
 
-  # Media type definitions.  Each entry maps to a block of mediatype lines in
-  # library.toml.  Multiple entries are supported (one per media type).
-  # setup_stress_drives_test.py reads all entries and registers them in the
-  # CTA catalogue automatically — no manual updates needed.
+  # Media type definitions — shared across all libraries.
+  # setup_stress_drives_test.py reads these and registers them in the CTA catalogue.
   mediaTypes:
-    - name: STRESS50MB
-      # Logical capacity: VirtualDrive::writeBlock() deducts the payload size of each
-      # block; file marks and binary-format framing are not counted.  This keeps the
-      # formula dependent only on the ANSI tape structure, not on serialisation details.
-      #
-      # Exact sizing so ENOSPC fires at a batch boundary (zero partial-batch requeue):
-      #   logical_bytes_per_file = (HDR1+HDR2+UHL1+EOF1+EOF2+UTL1)×80 + file_size
-      #                          = 6×80 + file_size
-      #   For file_size=16 (see test_pgsched_params.toml tests.stress.file_size):
-      #                          = 480 + 16 = 496 bytes/file
-      #   C = 80 (VOL1) + k × batch_size × logical_bytes_per_file
-      #   k=3, batch_size=20000 (see archiveFetchBytesFiles in stress-stressdrives-pgsched-values.yaml):
-      #   C = 80 + 3 × 20000 × 496 = 29 760 080 bytes ≈ 28.4 MB
-      #   → 60 000 files/tape, exactly 3 full batches, ENOSPC on HDR1 of batch 4 file 1.
-      # Reduced from k=5 (47.3 MB) to k=3 (28.4 MB) to cut per-drive save/load I/O
-      # on the shared PVC by ~40%, shortening the synchronized remount storm.
-      # At 100 files/sec/drive → ~10 min/tape.  10 M files: 167 tapes out of 180 available.
-      # A 500 k-file CI run fills ~9 tapes, exercising mount/dismount cycles visibly.
+    - name: STRESS28MB
+      # Logical capacity sized so ENOSPC fires at a batch boundary:
+      #   logical_bytes_per_file = 6×80 + file_size = 480 + 16 = 496 bytes/file
+      #   C = 80 (VOL1) + 3 × 20000 × 496 = 29 760 080 bytes ≈ 28.4 MB
+      #   → 60 000 files/tape, exactly 3 full batches.
       capacityBytes: 29760080
-      # VID prefix used to derive the media type from a VID at mount time
-      # (longest-prefix match).  Keep <= 2 chars so VIDs fit the 6-char ANSI
-      # tape label VSN field (e.g. ST + 4-digit index = ST0001..ST0120).
-      vidPrefix: ST
-      # Mount-delay base in milliseconds.  StressDrive::waitUntilReady() sleeps a
-      # uniformly random duration in [mountDelayMs, 2×mountDelayMs] = [15 s, 30 s],
-      # guaranteeing every drive waits at least 15 s while spreading 30 concurrent
-      # mounts across a 15 s window (~0.5 s apart on average).  This breaks the
-      # synchronised PVC I/O storm without making any drive's dead zone excessive
-      # (~30 s max, well under the 60 s no-progress detector threshold).
       mountDelayMs: 15000
-      # Adaptive-mirror mode: natural drive speed in files/sec.
-      # The sleep fires once per file (at the HDR1 label block), so this value
-      # is the direct file-rate ceiling — no block-count divisor needed.
-      # 1 000 files/sec per drive × 30 drives = 30 000 files/sec total, well
-      # above the observed frontend ceiling of ~1.3 kHz, so drives are always
-      # in the queue-limited regime.
-      # In queue-limited regime the drive mirrors the arrival rate: it sleeps
-      # for the inter-file arrival interval so it appears continuously writing
-      # and never shows as idle/starving on monitoring.  When the queue feeds
-      # faster than maxWriteRateHz, the drive caps at its natural speed.
-      # Set to 0 to disable adaptive mode and write at RAM speed.
       maxWriteRateHz: 1000
-      # Number of virtual tapes pre-created in slots/ by the Job.
-      # 180 tapes × 28.4 MB ≈ 5.1 GB on the fast-ssd PVC.
-      # 10 M-file run needs 167 tapes (10 M / 60 k files/tape); 180 gives ample headroom.
-      # Must be >= the number of drives (--max-drives).
+      # Tapes per library. 180 × 28.4 MB ≈ 5.1 GB per PVC.
+      # 10 M-file run needs 167 tapes (10 M / 60 k files/tape); 180 gives headroom.
       count: 180
 
 # ---------------------------------------------------------------------------
-# PersistentVolumeClaim
+# PersistentVolumeClaim (one created per library, named <namePrefix>-{i})
 # ---------------------------------------------------------------------------
 pvc:
-  # Name referenced by taped extraVolumes and the pre-population Job.
-  name: cta-fake-tape-library
+  # Prefix for PVC names: cta-fake-tape-library-0, cta-fake-tape-library-1, ...
+  namePrefix: cta-fake-tape-library
 
-  # Storage class for the PVC.
-  #   ""   — use the cluster's default storage class (works with rancher
-  #           local-path-provisioner, kind, k3s, etc. on a single node)
-  #   "-"  — disable storageClassName (bind to a manually created PV)
-  #   any  — explicit storage class name
-  #
-  # Note: ReadWriteOnce is sufficient for single-node clusters (all pods on
-  # the same node share the volume).  For multi-node clusters, use a
-  # ReadWriteMany storage class (NFS, CephFS, …) and update accessModes.
+  # Storage class. "" = cluster default, "-" = no storageClassName, any string = explicit.
   storageClass: ""
 
-  # Optional: bind directly to a named PV, bypassing WaitForFirstConsumer.
-  # Set by create_instance.sh when fast-ssd is available to avoid the
-  # scheduler delay that causes the prepopulate Job to time out.
-  volumeName: ""
+  # Optional: bind each PVC to a named PV. Set by create_instance.sh when fast-ssd
+  # PVs are available. volumeNames[i] binds PVC i to that PV.
+  volumeNames: []
 
-  # Worst-case disk usage: 120 tapes × 47.3 MB ≈ 5.6 GB.  50 Gi gives generous
-  # headroom for the tmp files written during atomic tape saves.
   size: 50Gi
 
   accessModes:
