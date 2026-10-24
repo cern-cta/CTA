@@ -76,7 +76,7 @@ def stress_library_confs(env: TestEnv) -> list[StressLibraryConf]:
         lib = t.logical_library_name
         if lib not in seen:
             seen[lib] = t
-    return [seen[lib].read_stress_library_conf() for lib in sorted(seen)]
+    return [seen[lib].read_stress_library_conf() for lib in sorted(seen, key=lambda n: int(n.rsplit("-", 1)[1]))]
 
 
 # =========================================================================
