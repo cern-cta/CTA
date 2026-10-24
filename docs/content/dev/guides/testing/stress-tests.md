@@ -114,7 +114,7 @@ cd ci/orchestration/
   --max-drives 20
 ```
 
-`--max-drives N` controls how many virtual drives are created (`STRESS0000`…`STRESS{N-1}`); each drive produces one `taped` StatefulSet pod. The CI default is 20. Use `--num-stress-libraries M` to split drives across M independent logical libraries (default 1); see [Multi-library deployment](#multi-library-deployment) below.
+`--max-drives N` controls how many virtual drives are created; each drive produces one `taped` StatefulSet pod. Drives are named `S{lib}D{index}` (e.g. `S0D0000`…`S0D0019` for 20 drives in a single library). The CI default is 20. Use `--num-stress-libraries M` to split drives across M independent logical libraries (default 1); see [Multi-library deployment](#multi-library-deployment) below.
 
 ??? note "Manual helm commands (for reference)"
     If you need to deploy the two steps separately:
@@ -186,9 +186,11 @@ Drive-to-library mapping uses ceiling division; the last library may have fewer 
 
 | Library | Drives | VIDs |
 | --- | --- | --- |
-| `stress-lib-0` | STRESS0000…STRESS0009 | S00001…S00180 |
-| `stress-lib-1` | STRESS0010…STRESS0019 | S10001…S10180 |
-| `stress-lib-2` | STRESS0020…STRESS0029 | S20001…S20180 |
+| `stress-lib-0` | S0D0000…S0D0009 | S00001…S00180 |
+| `stress-lib-1` | S1D0000…S1D0009 | S10001…S10180 |
+| `stress-lib-2` | S2D0000…S2D0009 | S20001…S20180 |
+
+Drive names use the pattern `S{lib}D{index}`, mirroring the `S{lib}` tape VID prefix so every resource belonging to library N is identifiable at a glance in monitoring and logs.
 
 The chart `libraryCount` value must match `--num-stress-libraries`. `create_instance.sh` passes `--set libraryCount=M` automatically. To deploy the chart manually for M libraries:
 
