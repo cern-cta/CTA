@@ -364,7 +364,7 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   // The EOS WFE scheduler wakes every wfe.interval seconds and scans that
   // leaf directory to find the next batch of events to dispatch.  The hard
   // throughput ceiling is wfe.ntx / wfe.interval events/s (stress-test
-  // tuning: ntx=60000, interval=20 → ~3 kHz).  ntx also caps the batch size,
+  // tuning: ntx=100000, interval=15 → ~6.7 kHz).  ntx also caps the batch size,
   // so the scanner stops after finding ntx candidates rather than walking the
   // entire directory — keeping per-cycle scan cost O(ntx).
   //

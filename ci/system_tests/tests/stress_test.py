@@ -131,18 +131,21 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     # mgm.event=migrated, etc.) — EOS has no per-event-type pool separation.
     # Throughput ceiling = wfe.ntx / wfe.interval events/s.
     #
-    # interval=20 s, ntx=60000 → ~3 kHz:
+    # interval=15 s, ntx=100000 → ~6.7 kHz:
     #   The WFE scheduler scans /eos/proc/workflow/q/ each interval to find the
     #   next batch.  ntx caps the batch size, so the scanner stops after finding
-    #   60000 candidates instead of walking the entire directory — keeping per-
-    #   cycle scan cost O(ntx) regardless of total queue depth.  The 20 s window
-    #   gives the scan ample time to find those 60000 entries even when the
-    #   directory is large.  The resulting ~3 kHz serves both concurrent
-    #   streams comfortably:
-    #     - archive WFE events (xrootd_archive.py → EOS → CTA): ~0.7 kHz peak
-    #     - disk-report callbacks (maintd mgm.event=migrated → EOS MGM): ~0.4 kHz
+    #   100000 candidates instead of walking the entire directory — keeping per-
+    #   cycle scan cost O(ntx) regardless of total queue depth.  The 15 s window
+    #   gives the scan ample time to find those 100000 entries even when the
+    #   directory is large.  The resulting ~6.7 kHz headroom serves all concurrent
+    #   streams simultaneously:
+    #     - archive WFE events (xrootd_archive.py → EOS → CTA): ~1 kHz peak
+    #     - disk-report callbacks (maintd mgm.event=migrated → EOS MGM): ~1.4 kHz
     #   ntx threads are I/O-bound (waiting on XRootD/CTA responses), so a
     #   larger pool does not proportionally increase CPU usage.
+    #   Note: observed monitoring rates (Hz) understate actual throughput because
+    #   dispatch is bursty — 100000 events fire within the 15 s window then idle;
+    #   the true average is ntx/interval regardless of the windowed sample shown.
     #
     # RETRIEVE RATE DEGRADATION at large queue depths:
     #   If drives are held down long enough for the q/ directory to grow to
@@ -151,8 +154,8 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     #   retrieve_prequeue_fraction (see test_pgsched_params.toml): drives come
     #   up at 50 % queued so the directory is drained concurrently and never
     #   balloons to the depth where even an early-stop scan becomes slow.
-    eos_mgm.exec("eos space config default space.wfe.ntx=60000")
-    eos_mgm.exec("eos space config default space.wfe.interval=20")
+    eos_mgm.exec("eos space config default space.wfe.ntx=100000")
+    eos_mgm.exec("eos space config default space.wfe.interval=15")
     # Get number of "booted" filesystems
     result = eos_mgm.exec_with_output("eos fs ls | grep -c 'booted'")
     count_fs = int(result.strip())
