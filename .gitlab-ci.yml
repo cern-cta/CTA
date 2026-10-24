@@ -207,6 +207,14 @@ spec:
         Can also be overridden per job run via the STRESS_RETRIEVE_PREQUEUE_FRACTION CI variable.
       type: number
       default: 0.1
+
+    use-pgbouncer:
+      description: |-
+        Route catalogue and scheduler DB connections through PgBouncer.
+        Uses the pgbouncer-specific config files for both catalogue and scheduler.
+        Has no effect when scheduler-type is not pgsched.
+      type: boolean
+      default: false
 ---
 
 stages:
@@ -468,6 +476,7 @@ include:
       stress-prequeue-enabled: $[[ inputs.stress-prequeue-enabled ]]
       stress-prequeue-fraction: $[[ inputs.stress-prequeue-fraction ]]
       stress-retrieve-prequeue-fraction: $[[ inputs.stress-retrieve-prequeue-fraction ]]
+      use-pgbouncer: $[[ inputs.use-pgbouncer ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.platform ]]" == "debian13"'
