@@ -222,6 +222,11 @@ public:
       throw cta::exception::NotImplementedException();
     }
 
+    void failTransferBatch(std::vector<SchedulerDatabase::ArchiveJob*>&, log::LogContext&) override {
+      // This implementation, serves only PGSCHED implementation
+      throw cta::exception::NotImplementedException();
+    }
+
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -236,6 +241,7 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(JobNotOwned);
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
+    void prepareFailTransfer(const std::string&) override { throw exception::NotImplementedException(); }
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) override {};

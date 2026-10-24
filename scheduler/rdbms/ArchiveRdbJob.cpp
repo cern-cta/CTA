@@ -154,6 +154,11 @@ void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
   }
 }
 
+void ArchiveRdbJob::prepareFailTransfer(const std::string& failureReason) {
+  m_jobRow.updateJobRowFailureLog(failureReason);
+  m_jobRow.updateRetryCounts(m_mountId);
+}
+
 void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
   log::ScopedParamContainer(lc)
     .add("jobID", jobID)

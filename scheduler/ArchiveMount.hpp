@@ -17,6 +17,7 @@
 #include <queue>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -152,6 +153,14 @@ public:
   * @return number of jobs re-queued in the DB
   */
   virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const;
+
+  /**
+   * Flush a batch of failed archive jobs to the scheduler DB in a single transaction.
+   * prepareFailTransfer() must have been called on each job before this call.
+   * Serves PGSCHED purpose only.
+   */
+  virtual void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs,
+                                 cta::log::LogContext& lc);
   /**
    * Returns the tape pool of the tape to be mounted.
    *

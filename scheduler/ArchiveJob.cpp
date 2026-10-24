@@ -161,6 +161,13 @@ void cta::ArchiveJob::transferFailed(const std::string& failureReason, log::LogC
 }
 
 //------------------------------------------------------------------------------
+// ArchiveJob::prepareFailTransfer
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::prepareFailTransfer(const std::string& failureReason) {
+  m_dbJob->prepareFailTransfer(failureReason);
+}
+
+//------------------------------------------------------------------------------
 // waitForReporting
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::waitForReporting() {

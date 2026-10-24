@@ -229,6 +229,7 @@ public:
      * @return number of jobs re-queued in the DB
      */
     virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const = 0;
+    virtual void failTransferBatch(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };
@@ -258,6 +259,7 @@ public:
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
+    virtual void prepareFailTransfer(const std::string& failureReason) = 0;
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) = 0;

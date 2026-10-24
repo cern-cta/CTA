@@ -42,6 +42,11 @@ MigrationReportPacker::~MigrationReportPacker() {
     if (m_skippedFiles.size() > 0) {
       params.add("skippedFilesLostInQueue", m_successfulArchiveJobs.size());
     }
+#ifdef CTA_PGSCHED
+    if (m_failedArchiveJobs.size() > 0) {
+      params.add("failedJobsLostInQueue", m_failedArchiveJobs.size());
+    }
+#endif
     if (m_successfulArchiveJobs.size() > 0 || m_skippedFiles.size() > 0) {
       m_lc.log(cta::log::WARNING, "In MigrationReportPacker::~MigrationReportPacker(), still pending jobs to report.");
     }
@@ -298,6 +303,9 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
       "In MigrationReportPacker::ReportLastBatchError::execute(): call to requeueJobBatch threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
+#ifdef CTA_PGSCHED
+  reportPacker.flushFailedJobs(reportPacker.m_lc);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -383,6 +391,9 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     // This is an abnormal situation: we should never flush after an error!
     reportPacker.m_lc.log(cta::log::ALERT, "Received a flush after an error: sending file errors to client");
   }
+#ifdef CTA_PGSCHED
+  reportPacker.flushFailedJobs(reportPacker.m_lc);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -399,6 +410,9 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   reportPacker.m_continue = false;
   reportPacker.m_lc.log(cta::log::DEBUG,
                         "In MigrationReportPacker::ReportEndofSession::execute(): reporting session complete.");
+#ifdef CTA_PGSCHED
+  reportPacker.flushFailedJobs(reportPacker.m_lc);
+#endif
   reportPacker.m_archiveMount->complete();
   if (!reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
@@ -433,6 +447,9 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   reportPacker.m_lc.log(
     cta::log::DEBUG,
     "In MigrationReportPacker::ReportEndofSessionWithErrors::execute(): reporting session complete.");
+#ifdef CTA_PGSCHED
+  reportPacker.flushFailedJobs(reportPacker.m_lc);
+#endif
   reportPacker.m_archiveMount->complete();
   if (reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
@@ -459,8 +476,15 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog).add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::ERR,
-                          "In MigrationReportPacker::ReportError::execute(): failing archive job after exception.");
+                          "In MigrationReportPacker::ReportError::execute(): accumulating failed archive job.");
   }
+#ifdef CTA_PGSCHED
+  m_failedArchiveJob->prepareFailTransfer(m_failureLog);
+  reportPacker.m_failedArchiveJobs.push_back(std::move(m_failedArchiveJob));
+  if (reportPacker.m_failedArchiveJobs.size() >= MigrationReportPacker::c_failedJobsBatchMax) {
+    reportPacker.flushFailedJobs(reportPacker.m_lc);
+  }
+#else
   try {
     m_failedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::NoSuchObject& ex) {
@@ -479,7 +503,32 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
       "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
+#endif
 }
+
+#ifdef CTA_PGSCHED
+//------------------------------------------------------------------------------
+// flushFailedJobs
+//------------------------------------------------------------------------------
+void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
+  if (m_failedArchiveJobs.empty()) return;
+  cta::log::ScopedParamContainer params(lc);
+  params.add("failedBatchSize", m_failedArchiveJobs.size());
+  lc.log(cta::log::INFO,
+         "In MigrationReportPacker::flushFailedJobs(): flushing batch of failed archive jobs.");
+  try {
+    m_archiveMount->failTransferBatch(m_failedArchiveJobs, lc);
+  } catch (const cta::exception::Exception& ex) {
+    cta::log::ScopedParamContainer p(lc);
+    p.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::ERR,
+           "In MigrationReportPacker::flushFailedJobs(): failTransferBatch threw; jobs will be rescued by GC.");
+    lc.logBacktrace(cta::log::INFO, ex.backtrace());
+  }
+  m_failedArchiveJobs.clear();
+  m_failedJobsLastFlushTime = std::chrono::steady_clock::now();
+}
+#endif
 
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread
@@ -495,7 +544,27 @@ void MigrationReportPacker::WorkerThread::run() {
   lc.push(cta::log::Param("thread", "ReportPacker"));
   try {
     while (m_parent.m_continue) {
+#ifdef CTA_PGSCHED
+      // timedPop wakes the thread every 1 s when the queue is idle so we can
+      // check whether the 60 s force-flush interval has elapsed for accumulated
+      // failed jobs.  Batch-size flushes happen inside ReportError::execute()
+      // independently of this timeout.
+      constexpr uint64_t tickUs = 1'000'000;  // 1 s in microseconds
+      auto optRep = m_parent.m_fifo.timedPop(tickUs);
+      if (!optRep.has_value()) {
+        if (!m_parent.m_failedArchiveJobs.empty()) {
+          const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - m_parent.m_failedJobsLastFlushTime).count();
+          if (static_cast<uint64_t>(elapsed) >= MigrationReportPacker::c_failedJobsFlushIntervalSecs) {
+            m_parent.flushFailedJobs(lc);
+          }
+        }
+        continue;
+      }
+      std::unique_ptr<Report> rep = std::move(*optRep);
+#else
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
+#endif
       {
         cta::log::ScopedParamContainer params(lc);
         int demangleStatus;

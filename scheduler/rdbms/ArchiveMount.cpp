@@ -330,6 +330,39 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
   }
 }
 
+void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch,
+                                     log::LogContext& lc) {
+  if (batch.empty()) return;
+
+  std::vector<postgres::ArchiveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
+  for (auto* dbJob : batch) {
+    auto* rdbJob = dynamic_cast<ArchiveRdbJob*>(dbJob);
+    auto* row = &rdbJob->m_jobRow;
+    const bool exceed = row->totalRetries >= row->maxTotalRetries;
+    if (exceed) {
+      (rdbJob->isRepack ? exceedRepack : exceedUser).push_back(row);
+    } else {
+      (rdbJob->isRepack ? requeueRepack : requeueUser).push_back(row);
+    }
+  }
+
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    if (!exceedUser.empty())
+      postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
+    if (!exceedRepack.empty())
+      postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
+    if (!requeueUser.empty())
+      postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
+    if (!requeueRepack.empty())
+      postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+    txn.commit();
+  } catch (...) {
+    txn.abort();
+    throw;
+  }
+}
+
 void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                           log::LogContext& lc) {
   try {

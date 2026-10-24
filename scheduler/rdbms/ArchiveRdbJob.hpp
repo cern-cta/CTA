@@ -42,6 +42,7 @@ public:
   * @return void
   */
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
+  void prepareFailTransfer(const std::string& failureReason) override;
 
   /**
   * Sets the status of the report of the archive job to failed in Scheduler DB

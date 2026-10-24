@@ -198,6 +198,19 @@ uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDs
 }
 
 //------------------------------------------------------------------------------
+// failTransferBatch
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs,
+                                          cta::log::LogContext& lc) {
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> dbJobs;
+  dbJobs.reserve(failedJobs.size());
+  for (auto& job : failedJobs) {
+    dbJobs.push_back(job->m_dbJob.get());
+  }
+  m_dbMount->failTransferBatch(dbJobs, lc);
+}
+
+//------------------------------------------------------------------------------
 // reportJobsBatchTransferred
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::reportJobsBatchTransferred(

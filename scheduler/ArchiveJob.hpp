@@ -104,6 +104,13 @@ public:
   virtual void transferFailed(const std::string& failureReason, log::LogContext& lc);
 
   /**
+   * Updates retry counters and failure log in-memory without touching the DB.
+   * Called at accumulate time when batching failures; the DB write happens later
+   * via ArchiveMount::failTransferBatch().
+   */
+  virtual void prepareFailTransfer(const std::string& failureReason);
+
+  /**
    * Get the URL used for reporting
    * @return The URL used to report to the disk system.
    */

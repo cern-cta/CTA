@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <vector>
 #include <optional>
 #include <time.h>
 
@@ -97,6 +98,7 @@ public:
    * @return number of jobs re-queued in the DB
    */
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
+  void failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) override;
   void setIsRepack(log::LogContext& logContext);
 
 private:

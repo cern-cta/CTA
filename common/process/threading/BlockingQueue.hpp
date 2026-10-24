@@ -10,6 +10,7 @@
 #include "common/process/threading/Thread.hpp"
 
 #include <exception>
+#include <optional>
 #include <queue>
 
 namespace cta::threading {
@@ -62,6 +63,22 @@ public:
    */
   C pop() {
     m_sem.acquire();
+    return popCriticalSection();
+  }
+
+  /**
+   * Like pop() but returns nullopt after timeout_us microseconds without an element.
+   * Used as a heartbeat tick so the consumer thread can periodically check elapsed
+   * wall-clock time and force-flush items accumulated in a side buffer (e.g. failed
+   * archive jobs that must be sent to the DB within a bounded interval regardless of
+   * whether the main queue is busy or idle).
+   */
+  std::optional<C> timedPop(uint64_t timeout_us) {
+    try {
+      m_sem.acquireWithTimeout(timeout_us);
+    } catch (const PosixSemaphore::Timeout&) {
+      return std::nullopt;
+    }
     return popCriticalSection();
   }
 
