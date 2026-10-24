@@ -235,7 +235,7 @@ create_instance() {
   publish_telemetry=false
   one_logical_library=false
   no_hardware_drives=false
-  num_stress_libraries=1
+  num_stress_libraries=2
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do

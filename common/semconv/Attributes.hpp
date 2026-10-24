@@ -156,6 +156,7 @@ static constexpr const char* kDbUpdateRepackProgress = "update repack progress";
 static constexpr const char* kDbInsertArchive = "insert archive";
 static constexpr const char* kDbDeleteArchive = "delete archive";
 static constexpr const char* kDbUpdateArchive = "update archive";
+static constexpr const char* kDbFlagReportingArchive = "flag reporting archive";
 static constexpr const char* kDbUpdateArchiveMulticopy = "update archive multicopy";
 static constexpr const char* kDbMoveRepackArchiveToFailed = "move repack archive to failed";
 static constexpr const char* kDbMoveArchiveToFailed = "move repack archive to failed";

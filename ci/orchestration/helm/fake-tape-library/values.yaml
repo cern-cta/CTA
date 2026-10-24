@@ -23,14 +23,14 @@
 # setup_stress_drives_test.py reads each library.toml directly from the taped pod
 # and derives all catalogue registration parameters from it.
 # The only manual constraint is libraryCount here must match --num-stress-libraries
-# passed to create_instance.sh (or both default to 1).
+# passed to create_instance.sh (or both default to 2).
 
 # ---------------------------------------------------------------------------
 # Number of independent logical libraries to create.
 # Each library gets its own PVC, library.toml, and pre-population Job.
 # Drives are split across libraries by create_instance.sh --num-stress-libraries.
 # ---------------------------------------------------------------------------
-libraryCount: 1
+libraryCount: 2
 
 # ---------------------------------------------------------------------------
 # Shared library configuration (applied to every library).
@@ -51,9 +51,10 @@ library:
       capacityBytes: 29760080
       mountDelayMs: 15000
       maxWriteRateHz: 1000
-      # Tapes per library. 180 × 28.4 MB ≈ 5.1 GB per PVC.
-      # 10 M-file run needs 167 tapes (10 M / 60 k files/tape); 180 gives headroom.
-      count: 180
+      # Tapes per library. 100 × 28.4 MB ≈ 2.84 GB per PVC.
+      # 10 M-file run needs 167 tapes total (10 M / 60 k files/tape); with 2 libraries
+      # each handles half the files: 84 tapes needed per library; 100 gives headroom.
+      count: 100
 
 # ---------------------------------------------------------------------------
 # PersistentVolumeClaim (one created per library, named <namePrefix>-{i})
