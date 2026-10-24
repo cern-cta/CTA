@@ -209,13 +209,15 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
       FROM target_success_multicopy tsm
           LEFT JOIN ready_for_reporting_to_disk rfr
               ON rfr.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
-      WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID;
+      WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
+        AND aj2.STATUS <> :STATUS_FAILED::ARCHIVE_JOB_STATUS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
   stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
   stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT",
                   to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
+  stmt.bindString(":STATUS_FAILED", to_string(ArchiveJobStatus::AJS_ToReportToUserForFailure));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchiveMulticopy);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -407,11 +409,11 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepa
         FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG,
         LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   )SQL";
-  // For multi copy requests what we do is that we update all copies irrespectively of their state
-  // if the second job is still in processing on the drive (in ToTransfer state in the DB),
-  // it means that when it will get to reporting from the Mount, it will be refused
-  // because it will either not be found or it will not be found in the ToTransfer state
-  // (which is a condition on the state for successful report)
+  // For multi-copy user archive requests, failing one copy terminally means the
+  // whole request cannot meet its redundancy goal — mark all copies as failed so
+  // the archive request is retried from scratch.  The drive thread for the
+  // sibling copy may still be writing; updateMultiCopyJobSuccess guards against
+  // overwriting this terminal status (see AND aj2.STATUS <> STATUS_FAILED there).
   if (reqJobCount > 1 && !isRepack) {
     sql += R"SQL(
         WHERE ARCHIVE_REQUEST_ID = :ARCHIVE_REQUEST_ID
@@ -427,7 +429,7 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepa
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
-  if (reqJobCount > 1) {
+  if (reqJobCount > 1 && !isRepack) {
     stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
   } else {
     stmt.bindUint64(":JOB_ID", jobId);
