@@ -32,6 +32,9 @@ spec:
     stress-retrieve-prequeue-fraction:
       type: number
       default: 0.1
+    use-pgbouncer:
+      type: boolean
+      default: false
 ---
 
 # All of the below tests use only the docker image generated in the build:image stage.
@@ -342,6 +345,10 @@ stress-test:
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
+        if ${USE_PGBOUNCER:-$[[ inputs.use-pgbouncer ]]}; then
+          CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-pgbouncer-values.yaml
+          SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-pgbouncer-values.yaml
+        fi
       else
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
