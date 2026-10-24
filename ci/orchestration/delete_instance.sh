@@ -144,9 +144,10 @@ wipe_fast_ssd_pvs() {
     (
       shopt -s dotglob
       sudo rm -rf "${path:?}/"*
-    )
-    log_success "Wiped ${pv} at ${path}."
+      log_success "Wiped ${pv} at ${path}."
+    ) &
   done
+  wait
 }
 
 reclaim_released_pvs() {
