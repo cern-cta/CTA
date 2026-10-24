@@ -102,7 +102,7 @@ CREATE INDEX IDX_REPACK_ARCHIVE_ACTIVE_QUEUE_FILTER_SORT ON REPACK_ARCHIVE_ACTIV
 
 /* unnecessary index CREATE INDEX IDX_REPACK_ARCHIVE_ACTIVE_QUEUE_SINGLE_COPY ON REPACK_ARCHIVE_ACTIVE_QUEUE (JOB_ID) WHERE REQUEST_JOB_COUNT = 1 */
 /* unnecessary index CREATE INDEX IDX_REPACK_ARCHIVE_ACTIVE_QUEUE_MULTI_COPY ON REPACK_ARCHIVE_ACTIVE_QUEUE (JOB_ID) WHERE REQUEST_JOB_COUNT > 1 */
-/* Partial index: excludes terminal/reporting statuses; keeps index bounded to in-flight transfer rows only */
+/* Partial index excludes terminal/reporting statuses keeps index bounded to in-flight transfer rows only */
 CREATE INDEX IDX_ARCHIVE_ACTIVE_QUEUE_REQUEST_ID_MULTI_COPY ON ARCHIVE_ACTIVE_QUEUE (ARCHIVE_REQUEST_ID, STATUS, JOB_ID)
   WHERE STATUS NOT IN (
     'AJS_ToReportToUserForSuccess',
