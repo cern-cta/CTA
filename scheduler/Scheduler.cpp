@@ -2251,16 +2251,16 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       {
         {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
         {cta::semconv::attr::kSchedulerOperationWorkflow,
-         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount}
-      },
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount                                                    }
+    },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
       totalJobCount,
       {
         {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
         {cta::semconv::attr::kSchedulerOperationWorkflow,
-         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount}
-      },
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount                                                    }
+    },
       opentelemetry::context::RuntimeContext::GetCurrent());
   };
   double getMountInfoTime = 0;
