@@ -129,6 +129,11 @@ generate_stress_drive_values() {
   echo
   cat "$taped_config"
   echo
+
+  # Disable rmcd: no tape library hardware is present; taped never contacts rmcd
+  # for virtual drives, and /dev/smc does not exist on a node without mhvtl.
+  rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
+  printf "rmcd:\n  enabled: false\n" > "$rmcd_config"
 }
 
 # This should all go once we have auto-discovery and auto-scaling of hardware resources

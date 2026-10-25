@@ -87,6 +87,14 @@ spec:
     else
       IMAGE_TAG="${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}"
     fi
+  - | # Virtual stress-drive mode: deploy fake tape library PVCs instead of mhvtl/SCSI hardware.
+    # USE_STRESS_DRIVES CI variable overrides the pipeline input when replaying via GitLab "Play with variables".
+    # create_instance.sh automatically disables rmcd when --no-hardware-drives is set.
+    # setup_stress_drives_test.py is auto-collected by conftest.py (tests/setup/ scan) and auto-skips
+    # when no stress-mode taped pods are found, so this is a no-op when use-stress-drives=false.
+    if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
+      EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --no-hardware-drives --max-drives $[[ inputs.num-stress-drives ]] --num-stress-libraries $[[ inputs.num-stress-libraries ]]"
+    fi
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
 
