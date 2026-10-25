@@ -29,11 +29,12 @@ taped:
       retainInstanceIdOnRestart: true
       metrics:
         backend: "OTLP_HTTP"
-        # exportInterval gives 1 s granularity for short CI runs.  exportTimeout is
-        # intentionally omitted: stress-cta-pgsched-values.yaml overrides interval
-        # to 15 s anyway, and the stress preset's 12 s timeout must not be capped
-        # here — 500 ms caused the exporter to time out with 50+ drive sessions.
+        # 1 s granularity for short CI runs; exportTimeout must accompany
+        # exportInterval — omitting it leaves the stress preset's 14 s timeout in
+        # place, which violates timeout < interval and causes the OTel SDK to reject
+        # the config and fall back to 60 s/30 s defaults.
         exportInterval: 1000
+        exportTimeout: 500
         otlp:
           endpoint: "https://monit-otlp.cern.ch:4319"
           auth:

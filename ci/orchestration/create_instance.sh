@@ -485,16 +485,20 @@ create_instance() {
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
 
+  # Flags applied BEFORE the cta_config chain so that user-supplied presets
+  # (e.g. stress-cta-pgsched-values.yaml) can override telemetry defaults.
+  pre_cta_chart_flags=""
+  if [[ "$local_telemetry" == "true" ]]; then
+    pre_cta_chart_flags+=" --values presets/dev-cta-telemetry-values.yaml"
+  fi
+  if [[ "$publish_telemetry" == "true" ]]; then
+    pre_cta_chart_flags+=" --values presets/ci-cta-telemetry-values.yaml"
+  fi
+
   extra_cta_chart_flags=""
   if [[ "$dcache_enabled" == "true" ]]; then
     # The dCache CTA nearline-storage driver only supports mTLS.
     extra_cta_chart_flags+=" --values presets/frontend-wfe/auth-mtls.yaml"
-  fi
-  if [[ "$local_telemetry" == "true" ]]; then
-    extra_cta_chart_flags+=" --values presets/dev-cta-telemetry-values.yaml"
-  fi
-  if [[ "$publish_telemetry" == "true" ]]; then
-    extra_cta_chart_flags+=" --values presets/ci-cta-telemetry-values.yaml"
   fi
   # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
   if grep -q "postgres" "$scheduler_config"; then
@@ -515,6 +519,7 @@ create_instance() {
 
   log_run helm upgrade --install cta helm/cta \
                                 --namespace "${namespace}" \
+                                ${pre_cta_chart_flags} \
                                 ${cta_config} \
                                 --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
