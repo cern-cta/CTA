@@ -150,6 +150,23 @@ wipe_fast_ssd_pvs() {
   wait
 }
 
+cleanup_hostpath_pvs() {
+  local wipe_namespace="$1"
+  # Delete manually-created hostPath PVs (created by create_instance.sh when no
+  # fast-ssd or local-path StorageClass is available).  Identified by label.
+  local hostpath_pvs
+  hostpath_pvs=$(kubectl get pv -l "cta-hostpath-ns=${wipe_namespace}" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)
+  for pv in $hostpath_pvs; do
+    local path
+    path=$(kubectl get pv "$pv" -o jsonpath='{.spec.hostPath.path}' 2>/dev/null || true)
+    if [[ -n "$path" && -d "$path" ]]; then
+      log_task "Removing hostPath PV data at ${path} (${pv})..."
+      rm -rf "${path:?}"
+    fi
+    kubectl delete pv "$pv" --ignore-not-found >/dev/null
+  done
+}
+
 reclaim_released_pvs() {
   wipe_namespace="$1"
   released_pvs=$(kubectl get pv -o json | jq -r \
@@ -287,6 +304,7 @@ delete_instance() {
   # Reclaim fast-ssd PVs: remove claimRef so they become Available again.
   if [[ "$wipe_pvs" = true ]]; then
     reclaim_released_pvs $namespace
+    cleanup_hostpath_pvs $namespace
   else
     log_warn "Skipping reclamation of released persistent volumes."
   fi

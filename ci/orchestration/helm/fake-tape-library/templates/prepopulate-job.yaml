@@ -23,6 +23,10 @@ metadata:
     "helm.sh/hook-weight": "0"
     "helm.sh/hook-delete-policy": before-hook-creation
 spec:
+  # Fail immediately on error rather than retrying — a failed prepopulate means
+  # the PVC is unavailable or the script is broken; retrying just delays the
+  # error message.  Helm --wait-for-jobs will report the failure quickly.
+  backoffLimit: 0
   template:
     spec:
       restartPolicy: OnFailure

@@ -75,8 +75,43 @@ deploy_fake_tape_library() {
     else
       echo "  fast-ssd StorageClass found but no Available PVs — using cluster default StorageClass."
     fi
+  elif kubectl get sc local-path >/dev/null 2>&1; then
+    # local-path is the default dynamic provisioner on k3s / k3d clusters.
+    # It creates a directory under /var/lib/rancher/k3s/storage/ on the node.
+    echo "  local-path StorageClass found — using it for library PVCs."
+    extra_flags+=("--set" "pvc.storageClass=local-path")
   else
-    echo "  fast-ssd StorageClass not found — using cluster default StorageClass."
+    # No suitable StorageClass found.  Create one hostPath PV per library
+    # under /tmp so the prepopulate Job and taped pods can bind immediately.
+    # This covers single-node clusters (CI workers, local kind/minikube)
+    # where the node filesystem is directly accessible from kubectl.
+    # Cleanup: delete_instance.sh removes these PVs and dirs (pass --keep-pvs to skip).
+    echo "  No fast-ssd or local-path StorageClass — creating hostPath PVs under /tmp."
+    for i in $(seq 0 $((num_libs - 1))); do
+      local dir="/tmp/cta-tape-lib-${namespace}-${i}"
+      local pv_name="cta-tape-lib-${namespace}-${i}"
+      mkdir -p "${dir}"
+      kubectl apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ${pv_name}
+  labels:
+    cta-hostpath-ns: "${namespace}"
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: "${dir}"
+EOF
+      extra_flags+=("--set" "pvc.volumeNames[${i}]=${pv_name}")
+    done
+    # storageClassName: "" in the PVC matches the PVs above (no StorageClass).
+    extra_flags+=("--set" "pvc.storageClass=-")
   fi
   extra_flags+=("--set" "libraryCount=${num_libs}")
   helm upgrade --install fake-tape-library helm/fake-tape-library \
