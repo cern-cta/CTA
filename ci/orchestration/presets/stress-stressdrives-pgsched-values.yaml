@@ -47,13 +47,13 @@ taped:
       #
       # bufferCount is per drive session (MigrationMemoryManager is instantiated
       # inside DataTransferSession, not shared across drives).  With bufferSizeBytes=262144
-      # (256 KB helm default): 300 × 256 KB = 76.8 MB per drive, 3.84 GB for 50 drives.
-      # The 10000 inherited from stress-cta-pgsched-values.yaml would cost 128 GB.
-      # 300 gives ample pipeline depth: at 1000 files/sec per drive, nbDiskThreads=1
+      # (256 KB helm default): 200 × 256 KB = 51.2 MB per drive, 5.1 GB for 100 drives.
+      # The 10000 inherited from stress-cta-pgsched-values.yaml would cost 256 GB.
+      # 200 gives ample pipeline depth: at 1000 files/sec per drive, nbDiskThreads=1
       # reads complete in 1-3 ms each, so 5–15 buffers are in flight at any time.
-      bufferCount: 300
+      bufferCount: 200
       # DiskReadThreadPool is created per drive session (not shared across drives).
-      # 1 thread per drive gives 30 concurrent XRootD connections across all drives,
+      # 1 thread per drive gives 100 concurrent XRootD connections across all drives,
       # keeping EOS lightly loaded (T_query ≈ 1 ms/file → ~1000 files/sec/drive).
       # The adaptive mirror in StressDrive mirrors the inter-file arrival gap, so
       # drives appear continuously writing on monitoring dashboards.
@@ -61,7 +61,7 @@ taped:
       logMask: "WARNING"
       # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
       # with this many connections.  With N drives: N × 2 connections consumed.
-      # 25 drives/library × 2 libraries → 50 × 2 = 100; see connection budget in stress-cta-pgsched-values.yaml.
+      # 50 drives/library × 2 libraries → 100 × 2 = 200; see connection budget in stress-cta-pgsched-values.yaml.
       schedulerNumberOfConnections: 2
 
       # Batch sized so that the tape capacity is an exact integer multiple of one batch.
@@ -119,7 +119,7 @@ taped:
       archiveDismountPolicy: "300, 3, 0, 1"
 
 # Drive list and extraVolumes are generated dynamically by create_instance.sh --no-hardware-drives
-# based on the --max-drives argument (default 50, named S0D0000..S1D0024 across 2 libraries).
+# based on the --max-drives argument (default 100, named S0D0000..S1D0049 across 2 libraries).
 # Do not define drives here; the generated values file is merged after this preset.
 
 # No tape library hardware present: disable rmcd entirely.

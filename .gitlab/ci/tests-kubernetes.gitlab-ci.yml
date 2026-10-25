@@ -20,9 +20,10 @@ spec:
       type: boolean
     num-stress-drives:
       type: number
+      default: 100
     num-stress-libraries:
       type: number
-      default: 1
+      default: 2
     num-stress-files:
       type: number
       default: 10000000

@@ -53,7 +53,8 @@ library:
       maxWriteRateHz: 1000
       # Tapes per library. 100 × 28.4 MB ≈ 2.84 GB per PVC.
       # 10 M-file run needs 167 tapes total (10 M / 60 k files/tape); with 2 libraries
-      # each handles half the files: 84 tapes needed per library; 100 gives headroom.
+      # each handles half: ~84 tapes needed per library; 100 gives headroom
+      # and ensures all 50 drives in a library can always find a free tape slot.
       count: 100
 
 # ---------------------------------------------------------------------------

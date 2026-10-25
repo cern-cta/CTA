@@ -39,11 +39,10 @@
     check_archive_interval_sec = 10
     # Stop waiting after this many consecutive 10-second intervals without progress.
     # At each tape-cycle boundary all drives hit ENOSPC, save to PVC, dismount, and mount
-    # a new tape — a dead zone of ~10 s: saveTape (~2 s) + dismount/assign (~3 s) +
-    # mountDelayMs (5 s).  After mounting, diskReportArchive catches up within ~1 s.
-    # 6 intervals (60 s) gives ample headroom over the dead zone.
-    # (For retrieve: retrieveQueueCacheMaxAgeSecs 5 s + mountDelayMs 5 s + reporting ~1 s = 11 s → covered.)
-    max_no_progress_intervals = 6
+    # a new tape — dead zone at 100 drives: saveTape (~6 s) + dismount (~5 s) +
+    # mountDelayMs (~15 s minimum) ≈ 26 s.  8 intervals (80 s) gives ~3× headroom.
+    # (For retrieve: retrieveQueueCacheMaxAgeSecs 5 s + mountDelayMs 15 s + reporting ~1 s = 21 s → covered.)
+    max_no_progress_intervals = 8
     # Maximum acceptable file loss percentage before proceeding to retrieval
     max_acceptable_loss_percent = 5.0
 
