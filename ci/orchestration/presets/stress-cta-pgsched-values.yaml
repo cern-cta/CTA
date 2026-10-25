@@ -212,13 +212,13 @@ maintd:
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
-      iterSleepMs: 75
+      iterSleepMs: 500
     diskReportRetrieve:
       replicas: 1
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
-      iterSleepMs: 75
+      iterSleepMs: 500
     # Repack is not used in archive-only stress tests: zero replicas avoids
     # unnecessary DB polls and frees scheduler connections for the active workload.
     repackExpand:
