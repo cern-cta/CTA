@@ -217,8 +217,8 @@ maintd:
       batchSize: 20000
       softTimeoutSecs: 30
       iterSleepMs: 2000
-    # Repack is not used in archive-only stress tests: zero replicas avoids
-    # unnecessary DB polls and frees scheduler connections for the active workload.
+    # Repack is not used in stress tests: zero replicas avoids unnecessary DB
+    # polls and frees scheduler connections for the active archive/retrieve workload.
     repackExpand:
       replicas: 0
       sleepIntervalSecs: 10
@@ -227,3 +227,7 @@ maintd:
       replicas: 0
       sleepIntervalSecs: 10
       softTimeoutSecs: 30
+    repackActiveQueueCleanup:
+      replicas: 0
+    repackPendingQueueCleanup:
+      replicas: 0
