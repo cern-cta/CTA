@@ -900,7 +900,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn, uint
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":LIMIT", limit);
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFlagReportingArchive);
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   return stmt.executeQuery();
 }
 

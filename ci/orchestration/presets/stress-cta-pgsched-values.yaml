@@ -208,15 +208,17 @@ maintd:
     # To disable a routine, set replicas to 0
     # Sizing: see rationale comment at top of file.
     diskReportArchive:
-      replicas: 2
+      replicas: 1
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
+      iterSleepMs: 75
     diskReportRetrieve:
-      replicas: 2
+      replicas: 1
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
+      iterSleepMs: 75
     # Repack is not used in archive-only stress tests: zero replicas avoids
     # unnecessary DB polls and frees scheduler connections for the active workload.
     repackExpand:
