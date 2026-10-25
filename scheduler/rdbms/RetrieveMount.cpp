@@ -339,9 +339,13 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
 void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
                                       log::LogContext& lc) {
   if (batch.empty()) return;
+
   std::vector<postgres::RetrieveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
   for (auto* dbJob : batch) {
     auto* rdbJob = dynamic_cast<RetrieveRdbJob*>(dbJob);
+    if (!rdbJob) {
+      throw exception::Exception("In RetrieveMount::failTransferBatch(): unexpected job type (not RetrieveRdbJob)");
+    }
     auto* row = &rdbJob->m_jobRow;
     const bool exceed = row->totalRetries >= row->maxTotalRetries;
     if (exceed) {
@@ -350,16 +354,28 @@ void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Retrie
       (rdbJob->isRepack ? requeueRepack : requeueUser).push_back(row);
     }
   }
+
+  {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("batchSize", batch.size())
+          .add("nExceededRetries", exceedUser.size() + exceedRepack.size())
+          .add("nRequeued", requeueUser.size() + requeueRepack.size());
+    lc.log(log::INFO, "In RetrieveMount::failTransferBatch(): processing failed retrieve job batch.");
+  }
+
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
+    uint64_t totalRows = 0;
     if (!exceedUser.empty())
-      postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
+      totalRows += postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
     if (!exceedRepack.empty())
-      postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
+      totalRows += postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
     if (!requeueUser.empty())
-      postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
+      totalRows += postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
     if (!requeueRepack.empty())
-      postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+      totalRows += postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailTransferBatchRetrieve);
+    txn.setRowCountForTelemetry(totalRows);
     txn.commit();
   } catch (...) {
     txn.abort();

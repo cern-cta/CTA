@@ -349,16 +349,27 @@ void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Archive
     }
   }
 
+  {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("batchSize", batch.size())
+          .add("nExceededRetries", exceedUser.size() + exceedRepack.size())
+          .add("nRequeued", requeueUser.size() + requeueRepack.size());
+    lc.log(log::INFO, "In ArchiveMount::failTransferBatch(): processing failed archive job batch.");
+  }
+
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
+    uint64_t totalRows = 0;
     if (!exceedUser.empty())
-      postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
+      totalRows += postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
     if (!exceedRepack.empty())
-      postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
+      totalRows += postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
     if (!requeueUser.empty())
-      postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
+      totalRows += postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
     if (!requeueRepack.empty())
-      postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+      totalRows += postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailTransferBatchArchive);
+    txn.setRowCountForTelemetry(totalRows);
     txn.commit();
   } catch (...) {
     txn.abort();
