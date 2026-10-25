@@ -136,8 +136,96 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   ASSERT_NE(std::string::npos, temp.find(error_msg));
   ASSERT_EQ(1, job1completes);
   ASSERT_EQ(1, job2completes);
+#ifndef CTA_PGSCHED
+  // In pgsched mode, transferFailed() is never called — the packer
+  // accumulates jobs and delegates to failTransferBatch() instead.
   ASSERT_EQ(1, job3failures);
+#endif
   ASSERT_EQ(1, retrieveMount.completes);
 }
+
+#ifdef CTA_PGSCHED
+
+class MockRetrieveJobWithPrepare : public cta::MockRetrieveJob {
+public:
+  int prepareCount = 0;
+
+  explicit MockRetrieveJobWithPrepare(cta::RetrieveMount& rm) : cta::MockRetrieveJob(rm) {}
+
+  void prepareFailTransfer(const std::string&) override { prepareCount++; }
+};
+
+class MockRetrieveMountWithBatch : public cta::MockRetrieveMount {
+public:
+  int flushCount = 0;
+  size_t lastBatchSize = 0;
+
+  explicit MockRetrieveMountWithBatch(cta::catalogue::Catalogue& catalogue)
+      : cta::MockRetrieveMount(catalogue) {}
+
+  void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs,
+                         cta::log::LogContext&) override {
+    flushCount++;
+    lastBatchSize = jobs.size();
+  }
+};
+
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedAccumulateSmallBatch) {
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  MockRetrieveMountWithBatch retrieveMount(catalogue);
+
+  cta::log::StringLogger log("dummy", "RecallReportPackerPgschedAccumulateSmallBatch", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+  rrp.startThreads();
+
+  // 3 failed jobs — well below c_failedJobsBatchMax, so no mid-session flush
+  for (int i = 0; i < 3; i++) {
+    std::unique_ptr<cta::RetrieveJob> job(new MockRetrieveJobWithPrepare(retrieveMount));
+    const cta::exception::Exception ex("failure " + std::to_string(i));
+    rrp.reportFailedJob(std::move(job), ex, lc);
+  }
+
+  rrp.setTapeDone();
+  rrp.setDiskDone();
+  rrp.reportEndOfSession(lc);
+  rrp.waitThread();
+
+  // End-of-session triggers exactly one failTransferBatch call with all 3 jobs
+  ASSERT_EQ(1, retrieveMount.flushCount);
+  ASSERT_EQ(3u, retrieveMount.lastBatchSize);
+  ASSERT_EQ(1, retrieveMount.completes);
+}
+
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedBatchSizeFlush) {
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  MockRetrieveMountWithBatch retrieveMount(catalogue);
+
+  cta::log::StringLogger log("dummy", "RecallReportPackerPgschedBatchSizeFlush", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+  rrp.startThreads();
+
+  // Send 601 failed jobs: the 600th triggers an immediate mid-session flush,
+  // leaving 1 job accumulated for the end-of-session flush.
+  // 600 matches c_failedJobsBatchMax in RecallReportPacker.
+  for (int i = 0; i < 601; i++) {
+    std::unique_ptr<cta::RetrieveJob> job(new MockRetrieveJobWithPrepare(retrieveMount));
+    const cta::exception::Exception ex("failure " + std::to_string(i));
+    rrp.reportFailedJob(std::move(job), ex, lc);
+  }
+
+  rrp.setTapeDone();
+  rrp.setDiskDone();
+  rrp.reportEndOfSession(lc);
+  rrp.waitThread();
+
+  // Two flushes: one mid-session at batch size 600, one at end-of-session with remaining 1
+  ASSERT_EQ(2, retrieveMount.flushCount);
+  ASSERT_EQ(1u, retrieveMount.lastBatchSize);
+  ASSERT_EQ(1, retrieveMount.completes);
+}
+
+#endif  // CTA_PGSCHED
 
 }  // namespace unitTests

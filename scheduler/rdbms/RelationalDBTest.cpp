@@ -5,6 +5,7 @@
 
 #include "scheduler/rdbms/RelationalDB.hpp"
 
+#include "catalogue/TapeForWriting.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
@@ -109,6 +110,36 @@ void queueRetrieveJob(cta::SchedulerDatabase& db,
   rr.errorReportURL = "test://retrieve-error-report-url";
 
   db.queueRetrieve(rr, rfqc, "ds-A", lc);
+}
+
+void queueMultiCopyArchiveJob(cta::SchedulerDatabase& db,
+                              cta::log::LogContext& lc,
+                              uint64_t fileId,
+                              const std::string& tapePool,
+                              const std::string& suffix,
+                              time_t creationTime) {
+  cta::common::dataStructures::ArchiveRequest ar;
+  cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+
+  // Two copies to the same tape pool so both land in the same pending queue
+  afqc.copyToPoolMap.insert({1, tapePool});
+  afqc.copyToPoolMap.insert({2, tapePool});
+  afqc.fileId = fileId;
+  afqc.mountPolicy = makeMountPolicy(creationTime);
+
+  ar.archiveReportURL = "test://archive-report-url";
+  ar.archiveErrorReportURL = "test://error-report-url";
+  ar.creationLog = {"user", "host", creationTime};
+  ar.diskFileID = "diskFile-" + suffix;
+  ar.diskFileInfo.path = "/path/" + suffix;
+  ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+  ar.diskFileInfo.gid = DISK_FILE_GID;
+  ar.fileSize = 1000 + fileId;
+  ar.requester = {"user", "group"};
+  ar.srcURL = "root:/path/" + suffix;
+  ar.storageClass = "storageClass";
+
+  db.queueArchive("eosInstance", ar, afqc, lc);
 }
 
 /**
@@ -481,6 +512,340 @@ TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
 
   // A second run finds nothing left to remove
   ASSERT_EQ(0u, relationalDb.deleteExpiredDiskSystemSleepEntries(lc));
+}
+
+TEST_P(RelationalDBTest, archiveFailTransferBatchRequeue) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueArchiveJob(db, lc, 111, "tapePoolA", "A1", 1000);
+  queueArchiveJob(db, lc, 222, "tapePoolA", "A2", 2000);
+  db.waitSubthreadsComplete();
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "TAPE001";
+  tape.tapePool = "tapePoolA";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // First failure: totalRetries becomes 1, maxTotalRetries=2 → requeue path
+  std::vector<SchedulerDatabase::ArchiveJob*> batch;
+  for (auto& job : jobs) {
+    job->prepareFailTransfer("test failure");
+    batch.push_back(job.get());
+  }
+
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM ARCHIVE_PENDING_QUEUE"
+      " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+    ASSERT_EQ(1u, rset.columnUint64("MAX_RETRIES"));
+  }
+}
+
+TEST_P(RelationalDBTest, archiveFailTransferBatchExceedRetries) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueArchiveJob(db, lc, 111, "tapePoolA", "A1", 1000);
+  queueArchiveJob(db, lc, 222, "tapePoolA", "A2", 2000);
+  db.waitSubthreadsComplete();
+
+  // Force maxTotalRetries=1 so first failure immediately exceeds the limit
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "TAPE001";
+  tape.tapePool = "tapePoolA";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // First failure: totalRetries becomes 1 = maxTotalRetries=1 → exceed path
+  std::vector<SchedulerDatabase::ArchiveJob*> batch;
+  for (auto& job : jobs) {
+    job->prepareFailTransfer("test failure");
+    batch.push_back(job.get());
+  }
+
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+      " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueRetrieveJob(db, lc, 333, "vidA", "A1", 3000);
+  queueRetrieveJob(db, lc, 444, "vidA", "A2", 4000);
+  db.waitSubthreadsComplete();
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  auto mount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // First failure: totalRetries becomes 1 < maxTotalRetries=6 → requeue path
+  std::vector<SchedulerDatabase::RetrieveJob*> batch;
+  for (auto& job : jobs) {
+    job->prepareFailTransfer("test failure");
+    batch.push_back(job.get());
+  }
+
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM RETRIEVE_PENDING_QUEUE"
+      " WHERE STATUS = 'RJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+    ASSERT_EQ(1u, rset.columnUint64("MAX_RETRIES"));
+  }
+}
+
+TEST_P(RelationalDBTest, retrieveFailTransferBatchExceedRetries) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueRetrieveJob(db, lc, 333, "vidA", "A1", 3000);
+  queueRetrieveJob(db, lc, 444, "vidA", "A2", 4000);
+  db.waitSubthreadsComplete();
+
+  // Force maxTotalRetries=1 so first failure immediately exceeds the limit
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE RETRIEVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  auto mount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // First failure: totalRetries becomes 1 = maxTotalRetries=1 → exceed path
+  std::vector<SchedulerDatabase::RetrieveJob*> batch;
+  for (auto& job : jobs) {
+    job->prepareFailTransfer("test failure");
+    batch.push_back(job.get());
+  }
+
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE"
+      " WHERE STATUS = 'RJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_PENDING_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+TEST_P(RelationalDBTest, archiveFailTransferBatchRequeue_multiCopy) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // One 2-copy request: both copies land in tapePoolA
+  queueMultiCopyArchiveJob(db, lc, 111, "tapePoolA", "A1", 1000);
+  db.waitSubthreadsComplete();
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "TAPE001";
+  tape.tapePool = "tapePoolA";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // Fail only the first copy (totalRetries=1 < maxTotalRetries=2 → requeue path)
+  // The second copy stays untouched in ARCHIVE_ACTIVE_QUEUE
+  auto& failedJob = jobs.front();
+  failedJob->prepareFailTransfer("test failure");
+  std::vector<SchedulerDatabase::ArchiveJob*> batch = {failedJob.get()};
+
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  // Failed copy is requeued; the other copy stays in the active queue untouched
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+      " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM ARCHIVE_PENDING_QUEUE"
+      " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+    ASSERT_EQ(1u, rset.columnUint64("MAX_RETRIES"));
+  }
+}
+
+TEST_P(RelationalDBTest, archiveFailTransferBatchExceedRetries_multiCopy) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // One 2-copy request: both copies land in tapePoolA
+  queueMultiCopyArchiveJob(db, lc, 111, "tapePoolA", "A1", 1000);
+  db.waitSubthreadsComplete();
+
+  // Force maxTotalRetries=1 so the first failure immediately exceeds the limit
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "TAPE001";
+  tape.tapePool = "tapePoolA";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // Fail only the first copy (totalRetries=1 = maxTotalRetries=1 → exceed path)
+  // Because req_job_count=2, failTransferBatchExceedRetries matches by ARCHIVE_REQUEST_ID
+  // and marks BOTH copies as AJS_ToReportToUserForFailure
+  auto& failedJob = jobs.front();
+  failedJob->prepareFailTransfer("test failure");
+  std::vector<SchedulerDatabase::ArchiveJob*> batch = {failedJob.get()};
+
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  // Both copies must be flagged for failure — the untouched copy is collaterally failed via
+  // the ARCHIVE_REQUEST_ID match in failTransferBatchExceedRetries
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+      " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
 }
 
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;

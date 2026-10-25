@@ -297,7 +297,11 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));
   ASSERT_EQ(1, tam.completes);
+#ifndef CTA_PGSCHED
+  // In pgsched mode, transferFailed() is never called — the packer
+  // accumulates jobs and delegates to failTransferBatch() instead.
   ASSERT_EQ(1, job3failures);
+#endif
 }
 
 TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerBadFile) {
@@ -461,4 +465,89 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerBadFile) 
   ASSERT_EQ(0, migratedFileSmallCompletes);
   ASSERT_EQ(0, migratedNullFileCompletes);
 }
+
+#ifdef CTA_PGSCHED
+
+class MockArchiveJobWithPrepare : public cta::MockArchiveJob {
+public:
+  int prepareCount = 0;
+
+  MockArchiveJobWithPrepare(cta::ArchiveMount* am, cta::catalogue::Catalogue& catalogue)
+      : cta::MockArchiveJob(am, catalogue) {}
+
+  void prepareFailTransfer(const std::string&) override { prepareCount++; }
+};
+
+class MockArchiveMountWithBatch : public cta::MockArchiveMount {
+public:
+  int flushCount = 0;
+  size_t lastBatchSize = 0;
+
+  explicit MockArchiveMountWithBatch(cta::catalogue::Catalogue& catalogue)
+      : cta::MockArchiveMount(catalogue) {}
+
+  void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& jobs,
+                         cta::log::LogContext&) override {
+    flushCount++;
+    lastBatchSize = jobs.size();
+  }
+};
+
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedAccumulateSmallBatch) {
+  MockArchiveMountWithBatch tam(*m_catalogue);
+
+  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedAccumulateSmallBatch", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  daemon::MigrationReportPacker mrp(&tam, lc);
+  mrp.startThreads();
+
+  // 3 failed jobs — well below c_failedJobsBatchMax, so no mid-session flush
+  for (int i = 0; i < 3; i++) {
+    std::unique_ptr<cta::ArchiveJob> job(new MockArchiveJobWithPrepare(&tam, *m_catalogue));
+    const cta::exception::Exception ex("failure " + std::to_string(i));
+    mrp.reportFailedJob(std::move(job), ex, lc);
+  }
+
+  const drive::compressionStats stats;
+  mrp.reportFlush(stats, lc);
+  mrp.reportEndOfSession(lc);
+  mrp.reportTestGoingToEnd(lc);
+  mrp.waitThread();
+
+  // reportFlush triggers flushFailedJobs → one failTransferBatch call with all 3 jobs
+  ASSERT_EQ(1, tam.flushCount);
+  ASSERT_EQ(3u, tam.lastBatchSize);
+  ASSERT_EQ(1, tam.completes);
+}
+
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedBatchSizeFlush) {
+  MockArchiveMountWithBatch tam(*m_catalogue);
+
+  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedBatchSizeFlush", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  daemon::MigrationReportPacker mrp(&tam, lc);
+  mrp.startThreads();
+
+  // Send 601 failed jobs: the 600th triggers an immediate mid-session flush,
+  // leaving 1 job accumulated. 600 matches c_failedJobsBatchMax in MigrationReportPacker.
+  for (int i = 0; i < 601; i++) {
+    std::unique_ptr<cta::ArchiveJob> job(new MockArchiveJobWithPrepare(&tam, *m_catalogue));
+    const cta::exception::Exception ex("failure " + std::to_string(i));
+    mrp.reportFailedJob(std::move(job), ex, lc);
+  }
+
+  const drive::compressionStats stats;
+  mrp.reportFlush(stats, lc);  // flushes remaining 1 job
+  mrp.reportEndOfSession(lc);  // flushFailedJobs called again but empty → no-op
+  mrp.reportTestGoingToEnd(lc);
+  mrp.waitThread();
+
+  // Two flushes: mid-session at batch size 600, then at reportFlush with remaining 1
+  ASSERT_EQ(2, tam.flushCount);
+  ASSERT_EQ(1u, tam.lastBatchSize);
+  ASSERT_EQ(1, tam.completes);
+}
+
+#endif  // CTA_PGSCHED
+
 }  // namespace unitTests
