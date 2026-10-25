@@ -390,10 +390,6 @@ stress-test:
       if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
         # stress-scale-values.yaml works for all scheduler backends.
         STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-scale-values.yaml"
-        if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
-          # pgsched overlay: reduces schedulerNumberOfConnections to 2/drive.
-          STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-scale-pgsched-values.yaml"
-        fi
         EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-stress-drives ]]} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-$[[ inputs.num-stress-libraries ]]}"
       fi
     # Set up stress test
@@ -494,7 +490,7 @@ stress-scale-test:
       [[ "$CATALOGUE_CONFIG" == "presets/dev-catalogue-postgres-values.yaml" ]] && \
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-repack-values.yaml
       EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
-      STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml,presets/stress-scale-values.yaml,presets/stress-scale-pgsched-values.yaml"
+      STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml,presets/stress-scale-values.yaml"
       if ${USE_PGBOUNCER:-$[[ inputs.use-pgbouncer ]]}; then
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-pgbouncer-values.yaml
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-pgbouncer-values.yaml

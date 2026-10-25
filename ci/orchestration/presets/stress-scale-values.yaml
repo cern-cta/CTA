@@ -3,7 +3,7 @@
 #
 # Overlay for stress tests using virtual StressDrives instead of mhvtl/real hardware.
 # Works with any scheduler backend (objectstore or pgsched).
-# For pgsched, also apply stress-scale-pgsched-values.yaml on top.
+# For pgsched, also apply stress-scale-values.yaml on top.
 #
 # Prerequisites
 # -------------

@@ -45,7 +45,7 @@
 #   latency for fewer INSERTs; 10 ms is a good balance.
 #
 # taped nbDiskThreads — not set here (helm default 4 applies for mhvtl/real-hardware);
-#   overridden to 5 by stress-scale-pgsched-values.yaml for StressDrives.
+#   overridden to 5 by stress-scale-values.yaml for StressDrives.
 #   DiskReadThreadPool is instantiated per drive session (not shared).  For
 #   mhvtl tests with few drives, the helm default of 4 threads/drive is adequate.
 #   For StressDrive tests with 30 drives a naive high value (e.g. 40) would give
@@ -60,18 +60,18 @@
 #   With bufferSizeBytes = 256 KB (helm default): 10 000 × 256 KB = 2.56 GB/drive,
 #   suitable for mhvtl tests (1–5 drives, large files, deep pipeline needed).
 #   For 30 StressDrives with 16-byte files only 5–15 buffers are in flight per
-#   drive at a time; stress-scale-pgsched-values.yaml overrides to 500
+#   drive at a time; stress-scale-values.yaml overrides to 500
 #   (128 MB/drive, 3.8 GB for 30 drives).
 #
-# taped archiveFetchBytesFiles = 20 000 files (StressDrive; see stress-scale-pgsched-values.yaml)
+# taped archiveFetchBytesFiles = 20 000 files (StressDrive; see stress-scale-values.yaml)
 #   logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
 #   Capacity 29 760 080 bytes = 80 + 3 × 20 000 × 496 → exactly 3 batches/tape.
 #   ENOSPC fires on HDR1 of batch 4 file 1 → zero partial-batch requeue at tape boundaries.
 #   At 100 files/s/drive one batch lasts ~200 s; DB poll frequency is low.
 #
-# taped schedulerNumberOfConnections = 3 per drive (mhvtl/real-hardware, set below);
-#   overridden to 2 by stress-scale-pgsched-values.yaml for StressDrives
-#   (60 total for 30 drives).  See scheduler DB connection budget below.
+# taped schedulerNumberOfConnections = 2 per drive (set below).
+#   With 2 mhvtl drives: 4 total — well within budget.
+#   With 100 StressDrives: 200 total — pgbouncer required (see budget below).
 #
 # taped archiveDismountPolicy = "300, 3, 0, 1"
 #   startThreshold = 0 disables underfill-driven dismounts.  In stress tests
@@ -107,11 +107,11 @@ taped:
         exportTimeout: 14000
     taped:
       # Per-session buffer pool (MigrationMemoryManager): 10 000 × 256 KB = 2.56 GB/drive.
-      # Overridden to 500 by stress-scale-pgsched-values.yaml for StressDrives.
+      # Overridden to 200 by stress-scale-values.yaml for StressDrives.
       bufferCount: 10000
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
-      schedulerNumberOfConnections: 3
+      schedulerNumberOfConnections: 2
 
 global:
   # Keep crash evidence in a pod volume for stress-run investigation
@@ -179,8 +179,7 @@ frontend-wfe:
 # ---------------------------------------------------------------------------
 # schedulerNumberOfConnections in taped is a PER-DRIVE pool: each DriveHandler
 # creates its own SchedulerDBInit.  Budget for taped = drives × conn/drive.
-# stress-scale-pgsched-values.yaml overrides schedulerNumberOfConnections
-# to 2/drive; stress-cta-pgsched-values.yaml sets 3/drive for mhvtl tests.
+# Both mhvtl and StressDrive tests use 2 conn/drive (set in this file).
 # ---------------------------------------------------------------------------
 # Pod                              replicas  conn/pod  subtotal
 # frontend-wfe (schedulerdb)            1       15        15
