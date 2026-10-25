@@ -18,11 +18,13 @@ routines:
     sleepIntervalSecs: 1
     batchSize: 500
     softTimeoutSecs: 30
+    iterSleepMs: 0
   diskReportRetrieve:
     replicas: 2
     sleepIntervalSecs: 1
     batchSize: 500
     softTimeoutSecs: 30
+    iterSleepMs: 0
   repackExpand:
     replicas: 1
     sleepIntervalSecs: 1
