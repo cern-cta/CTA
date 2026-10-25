@@ -1,129 +1,21 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Overlay for stress tests using virtual StressDrives instead of mhvtl/real hardware.
+# pgsched-specific overlay for StressDrive stress tests.
+# Apply after stress-stressdrives-values.yaml (which covers all scheduler backends).
 #
-# Prerequisites
-# -------------
-# Deploy the fake-tape-library chart first to create the PVC and populate it:
-#
-#   helm upgrade --install fake-tape-library \
-#     ci/orchestration/helm/fake-tape-library/ \
-#     -f <your-library-values.yaml>
-#
-# Usage (combine with the base stress preset and a scheduler preset):
+# Usage:
 #
 #   helm upgrade --install cta ci/orchestration/helm/cta/ \
 #     -f presets/stress-cta-pgsched-values.yaml \
+#     -f presets/stress-stressdrives-values.yaml \
 #     -f presets/stress-stressdrives-pgsched-values.yaml
-#
-# What this preset does
-# ---------------------
-#   - Mounts the fake-tape-library PVC into every taped pod so all pods share
-#     a single on-disk tape library regardless of which node they run on.
-#   - Defines N virtual drives (STRESS0000..STRESSnnnn) with DriveDevice =
-#     "virtual:///cta-stress-lib-{i}"; the URI prefix activates StressDrive +
-#     NullMediaChangerFacade, and the path is the shared library root.
-#   - No StressMode/StressBaseDir config keys are needed — both are derived
-#     from the device URI set by create_instance.sh --no-hardware-drives.
-#   - Disables rmcd (no StatefulSet deployed; taped never contacts it for virtual drives).
-#
-# No node affinity or hostPath volume is required: the PVC is managed by the
-# cluster's storage class and can be accessed from any node.  On single-node
-# clusters (laptop, kind, k3s) the default ReadWriteOnce access mode is fine.
-# For multi-node clusters use a ReadWriteMany storage class in the
-# fake-tape-library chart values.
-#
-# The matching number of tapes must be registered in the CTA catalogue by
-# setup_stress_drives_test.py (see ci/system_tests/tests/setup/).
-# VIDs must be <= 6 characters; the default prefix "ST" + 4-digit index gives
-# ST0001..ST0100.  Count and prefix come from library.toml in the fake-tape-library chart.
 
 taped:
   conf:
     taped:
-      # Performance tuning inherited from the standard stress preset; override
-      # here if the stress-drive workload needs different values.
-      #
-      # bufferCount is per drive session (MigrationMemoryManager is instantiated
-      # inside DataTransferSession, not shared across drives).  With bufferSizeBytes=262144
-      # (256 KB helm default): 200 × 256 KB = 51.2 MB per drive, 5.1 GB for 100 drives.
-      # The 10000 inherited from stress-cta-pgsched-values.yaml would cost 256 GB.
-      # 200 gives ample pipeline depth: at 1000 files/sec per drive, nbDiskThreads=1
-      # reads complete in 1-3 ms each, so 5–15 buffers are in flight at any time.
-      bufferCount: 200
-      # DiskReadThreadPool is created per drive session (not shared across drives).
-      # 1 thread per drive gives 100 concurrent XRootD connections across all drives,
-      # keeping EOS lightly loaded (T_query ≈ 1 ms/file → ~1000 files/sec/drive).
-      # The adaptive mirror in StressDrive mirrors the inter-file arrival gap, so
-      # drives appear continuously writing on monitoring dashboards.
-      nbDiskThreads: 1
-      logMask: "WARNING"
-      # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
-      # with this many connections.  With N drives: N × 2 connections consumed.
-      # 50 drives/library × 2 libraries → 100 × 2 = 200; see connection budget in stress-cta-pgsched-values.yaml.
+      # Per-drive scheduler DB connection pool.  Each DriveHandler creates its own
+      # SchedulerDBInit with this many connections.  With N drives: N × 2 consumed.
+      # 50 drives/library × 2 libraries -> 100 × 2 = 200; see connection budget in
+      # stress-cta-pgsched-values.yaml.
       schedulerNumberOfConnections: 2
-
-      # Batch sized so that the tape capacity is an exact integer multiple of one batch.
-      # logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
-      # capacityBytes = 80 (VOL1) + 5 × 20000 × 496 = 49 600 080 → exactly 5 batches/tape.
-      # ENOSPC fires on HDR1 of the first file of batch 6 → zero partial-batch requeue.
-      archiveFetchBytesFiles: "80000000000, 20000"
-      retrieveFetchBytesFiles: "80000000000, 20000"
-      # Align flush granularity with the fetch batch so exactly one "update archive"
-      # DB query fires per 20 000-file fetch batch instead of one per 200 files
-      # (the compile-time default).  At 30 drives × 1000 files/s the default fires
-      # ~150 queries/s; aligning to 20 000 files reduces this to ~1.5 queries/s.
-      archiveFlushBytesFiles: "80000000000, 20000"
-
-      # Tape-status and retrieve-queue cache TTLs.
-      #
-      # The helm default is 1 s for both, which causes taped to re-query the
-      # catalogue once per second per drive for tape status (mount decisions) and
-      # retrieve-queue statistics.  With 30 drives that is 30 catalogue queries/sec
-      # just for background polling — pointless overhead in an archive-only stress
-      # test where tapes change status rarely and retrieves never happen.
-      #
-      # tapeCacheMaxAgeSecs: drives refresh tape status at most once per 60 s
-      # instead of once per second.  A tape switch (ENOSPC → new tape) clears the
-      # cache explicitly via clearStatisticsCache(), so mount latency after a tape
-      # boundary is unaffected by a longer TTL.
-      #
-      # retrieveQueueCacheMaxAgeSecs: set to 5 s (vs helm default 1 s).
-      # During the archive phase (30 drives, archive-only) this contributes
-      # 30 × (1/5 s) = 6 queries/sec — acceptable overhead.
-      # The short TTL is critical for the retrieve phase that follows: the
-      # test's wait_for_retrieval_in_directory gives up after 3 consecutive
-      # 10-second intervals with no progress (30 s total).  With a 30 s TTL
-      # a drive that just finished archiving might not poll the retrieve queue
-      # until AFTER the test has already timed out.  A 5 s TTL guarantees
-      # drives discover the retrieve queue within 5 s of it becoming non-empty.
-      tapeCacheMaxAgeSecs: 60
-      retrieveQueueCacheMaxAgeSecs: 5
-
-      # Disable underfill-driven dismounting for stress tests.
-      #
-      # In production, ArchiveDismountPolicy frees a drive whose queue is
-      # persistently below the fill threshold — a sign the tape pool is
-      # over-provisioned for the current load.  In stress tests the bottleneck
-      # is the frontend queueing rate (~200 Hz), not the drive (8 kHz), so
-      # drives will always appear "underfilled" once the initial burst drains.
-      # Setting startThreshold=0 keeps drives mounted and processing the
-      # continuous trickle without cycling through unnecessary dismounts.
-      # Normal end-of-session (empty queue + lastCall) is unaffected.
-      #
-      # Format: "watchPeriodSecs, minSamples, startThreshold%, recoveryThreshold%"
-      # startThreshold=0 → effectiveFillRatio >= 0.0 is always true → underfill period
-      # never starts → dismounting disabled.  recoveryThreshold=1 satisfies the
-      # validator constraint (startThreshold < recoveryThreshold).
-      archiveDismountPolicy: "300, 3, 0, 1"
-
-# Drive list and extraVolumes are generated dynamically by create_instance.sh --no-hardware-drives
-# based on the --max-drives argument (default 100, named S0D0000..S1D0049 across 2 libraries).
-# Do not define drives here; the generated values file is merged after this preset.
-
-# No tape library hardware present: disable rmcd entirely.
-# taped in stress mode never contacts rmcd; deploying it would fail because
-# /dev/smc does not exist on a node without mhvtl.
-rmcd:
-  enabled: false
