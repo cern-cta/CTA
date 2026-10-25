@@ -29,7 +29,8 @@ usage() {
   echo "      --dcache-image-repository <repo>: Docker image repository for the dCache chart."
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <files>:           Values file(s) to use for the CTA chart. Comma-separated for composition."
-  echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes."
+  echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes.
+      --eos-deploy-timeout <min>:    EOS Helm chart installation timeout in minutes (default: 5)."
   echo "      --one-logical-library           Will use only one logical library name for all drives except the default creating one library name for each drive."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
@@ -230,6 +231,8 @@ create_instance() {
   dcache_enabled=false
   # CTA chart timeout
   chart_install_timeout=5
+  # EOS chart timeout
+  eos_deploy_timeout=5
   # Telemetry
   local_telemetry=false
   publish_telemetry=false
@@ -301,6 +304,9 @@ create_instance() {
         shift ;;
       --chart-install-timeout)
         chart_install_timeout="$2"
+        shift ;;
+      --eos-deploy-timeout)
+        eos_deploy_timeout="$2"
         shift ;;
       --publish-telemetry) publish_telemetry=true ;;
       --one-logical-library) one_logical_library=true ;;
@@ -462,7 +468,8 @@ create_instance() {
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
                     --eos-image-repository "${eos_image_repository}" \
-                    --eos-image-tag "${eos_image_tag}" &
+                    --eos-image-tag "${eos_image_tag}" \
+                    --eos-deploy-timeout "${eos_deploy_timeout}" &
     eos_pid=$!
   fi
 

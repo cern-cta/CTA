@@ -397,6 +397,7 @@ stress-test:
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --chart-install-timeout 15
+                           --eos-deploy-timeout 10
                            ${EXTRA_SPAWN_ARGS}
     # Run the actual stress test
     - cd ../system_tests

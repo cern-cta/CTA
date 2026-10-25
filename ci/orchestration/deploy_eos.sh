@@ -28,6 +28,7 @@ usage() {
   echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
   echo "      --eos-config <file>:            Values file to use for the EOS chart."
+  echo "      --eos-deploy-timeout <min>:     Helm --timeout for the EOS chart in minutes (default: 5)."
   echo
   exit 1
 }
@@ -41,6 +42,7 @@ check_helm_installed() {
 
 deploy() {
   eos_config="presets/eos/auth-jwt.yaml"
+  eos_deploy_timeout=5
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -57,6 +59,9 @@ deploy() {
         shift ;;
       --eos-config)
         eos_config="$2"
+        shift ;;
+      --eos-deploy-timeout)
+        eos_deploy_timeout="$2"
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
@@ -88,7 +93,7 @@ deploy() {
   fi
   log_run helm upgrade --install eos helm/eos \
                       --namespace "$namespace" \
-                      --wait --timeout 5m \
+                      --wait --timeout "${eos_deploy_timeout}m" \
                       "${helm_flags[@]}"
 }
 
