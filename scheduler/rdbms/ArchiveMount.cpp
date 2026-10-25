@@ -337,6 +337,9 @@ void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Archive
   std::vector<postgres::ArchiveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
   for (auto* dbJob : batch) {
     auto* rdbJob = dynamic_cast<ArchiveRdbJob*>(dbJob);
+    if (!rdbJob) {
+      throw exception::Exception("In ArchiveMount::failTransferBatch(): unexpected job type (not ArchiveRdbJob)");
+    }
     auto* row = &rdbJob->m_jobRow;
     const bool exceed = row->totalRetries >= row->maxTotalRetries;
     if (exceed) {

@@ -222,6 +222,12 @@ public:
       throw cta::exception::NotImplementedException();
     }
 
+#ifdef CTA_PGSCHED
+    void failTransferBatch(std::vector<SchedulerDatabase::ArchiveJob*>&, log::LogContext&) override {
+      throw cta::exception::NotImplementedException();
+    }
+#endif
+
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -241,6 +247,10 @@ public:
     void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) override {};
 
     bool releaseToPool() override { throw exception::NotImplementedException(); };
+
+#ifdef CTA_PGSCHED
+    void prepareFailTransfer(const std::string&) override { throw cta::exception::NotImplementedException(); }
+#endif
 
   private:
     void asyncSucceedTransfer();

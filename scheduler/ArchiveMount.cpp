@@ -197,6 +197,7 @@ uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDs
   return njobs;
 }
 
+#ifdef CTA_PGSCHED
 //------------------------------------------------------------------------------
 // failTransferBatch
 //------------------------------------------------------------------------------
@@ -209,6 +210,7 @@ void cta::ArchiveMount::failTransferBatch(std::vector<std::unique_ptr<cta::Archi
   }
   m_dbMount->failTransferBatch(dbJobs, lc);
 }
+#endif  // CTA_PGSCHED
 
 //------------------------------------------------------------------------------
 // reportJobsBatchTransferred

@@ -154,13 +154,14 @@ public:
   */
   virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const;
 
+#ifdef CTA_PGSCHED
   /**
    * Flush a batch of failed archive jobs to the scheduler DB in a single transaction.
    * prepareFailTransfer() must have been called on each job before this call.
-   * Serves PGSCHED purpose only.
    */
   virtual void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs,
                                  cta::log::LogContext& lc);
+#endif
   /**
    * Returns the tape pool of the tape to be mounted.
    *

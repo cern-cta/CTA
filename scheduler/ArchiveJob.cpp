@@ -160,12 +160,14 @@ void cta::ArchiveJob::transferFailed(const std::string& failureReason, log::LogC
   m_dbJob->failTransfer(failureReason, lc);
 }
 
+#ifdef CTA_PGSCHED
 //------------------------------------------------------------------------------
 // ArchiveJob::prepareFailTransfer
 //------------------------------------------------------------------------------
 void cta::ArchiveJob::prepareFailTransfer(const std::string& failureReason) {
   m_dbJob->prepareFailTransfer(failureReason);
 }
+#endif  // CTA_PGSCHED
 
 //------------------------------------------------------------------------------
 // waitForReporting
