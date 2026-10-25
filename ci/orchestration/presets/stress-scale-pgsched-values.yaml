@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # pgsched-specific overlay for StressDrive stress tests.
-# Apply after stress-stressdrives-values.yaml (which covers all scheduler backends).
+# Apply after stress-scale-values.yaml (which covers all scheduler backends).
 #
 # Usage:
 #
 #   helm upgrade --install cta ci/orchestration/helm/cta/ \
 #     -f presets/stress-cta-pgsched-values.yaml \
-#     -f presets/stress-stressdrives-values.yaml \
-#     -f presets/stress-stressdrives-pgsched-values.yaml
+#     -f presets/stress-scale-values.yaml \
+#     -f presets/stress-scale-pgsched-values.yaml
 
 taped:
   conf:

@@ -3,7 +3,7 @@
 #
 # Overlay for stress tests using virtual StressDrives instead of mhvtl/real hardware.
 # Works with any scheduler backend (objectstore or pgsched).
-# For pgsched, also apply stress-stressdrives-pgsched-values.yaml on top.
+# For pgsched, also apply stress-scale-pgsched-values.yaml on top.
 #
 # Prerequisites
 # -------------
@@ -17,7 +17,7 @@
 #
 #   helm upgrade --install cta ci/orchestration/helm/cta/ \
 #     -f presets/stress-cta-values.yaml \
-#     -f presets/stress-stressdrives-values.yaml
+#     -f presets/stress-scale-values.yaml
 #
 # What this preset does
 # ---------------------

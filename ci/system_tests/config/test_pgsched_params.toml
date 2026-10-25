@@ -93,7 +93,7 @@
     # These settings are used by setup_stress_drives_test.py to prepare the
     # CTA catalogue and the shared tmpfs tape library.
     # They must be consistent with the drive list in the Helm preset
-    # stress-stressdrives-pgsched-values.yaml.
+    # stress-scale-pgsched-values.yaml.
     # -----------------------------------------------------------------------
     [tests.stress.drives]
 

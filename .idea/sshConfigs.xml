@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" connectionConfig="{&quot;proxyParams&quot;:{&quot;proxyHost&quot;:&quot;aiadm.cern.ch&quot;,&quot;proxyPort&quot;:8080,&quot;proxyType&quot;:&quot;SOCKS&quot;,&quot;authData&quot;:{&quot;proxyAuthType&quot;:&quot;NO_AUTHORIZATION&quot;}}}" host="ctadevguenther.cern.ch" id="6bb0f298-80b9-495b-b485-07722ef72017" port="22" nameFormat="DESCRIPTIVE" username="cirunner" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
