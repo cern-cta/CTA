@@ -83,3 +83,12 @@ taped:
 # /dev/smc does not exist on a node without mhvtl; deploying rmcd would fail.
 rmcd:
   enabled: false
+
+maintd:
+  routines:
+    # Repack is not used in scale tests; disable to avoid unnecessary DB polls
+    # and free scheduler connections for the active archive/retrieve workload.
+    repackExpand:
+      replicas: 0
+    repackReport:
+      replicas: 0

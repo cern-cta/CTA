@@ -79,14 +79,12 @@
 #   always appear "underfilled" between file batches.  Keeping drives mounted
 #   avoids unnecessary 5 s remount delays during queue draining.
 #
-# maintd diskReportArchive/Retrieve replicas = 2, batchSize = 20 000, sleep = 1 s
-#   Sizing: replicas = ceil(P / (batchSize / (sleep + T_query)))
-#   nbDiskThreads=1 → 30 XRootD connections → EOS MGM lightly loaded →
-#   T_query ≈ 1 s → rate/replica = 20 000 / 2 = 10 000 files/s.
-#   Archive and retrieve: P ≈ 30 drives × ~100 files/s = ~3 kHz →
-#   ceil(3k/10k) = 1 → 2 for margin (symmetric for both workflows).
-#   (With nbDiskThreads=5, 150 connections saturated the MGM: T_query → 30 s,
-#   4 replicas only managed ~300 Hz total despite 30 k files/s production.)
+# maintd diskReportArchive/Retrieve replicas = 1, batchSize = 20 000, iterSleepMs = 2 s
+#   The end-to-end archive rate is bottlenecked by the frontend at ~1.3 kHz.
+#   Within the 30 s burst: 30 s / (T_query + 2 s sleep) ≈ 12-15 iterations →
+#   12 × 20 000 = 240 000 files/burst → ~240 000 / 40 s = 6 kHz — well above 1.3 kHz.
+#   The 2 s sleep between report batches limits the XRootD request rate to EOS MGM,
+#   which is already under heavy load from 100 concurrent drive read sessions.
 #   Retrieve reporting is required: without it EOS never clears the tape-only
 #   flag and the Python retrieval test always sees 0 files retrieved.
 #
@@ -99,12 +97,13 @@ taped:
   conf:
     telemetry:
       metrics:
-        # With 100 drives each OTLP export collects metrics from all drive sessions
-        # before flushing to the collector.  15 s interval / 14 s timeout aligns
-        # with the Prometheus scrape_interval (15 s); the longer timeout gives
-        # extra headroom for the larger number of concurrent drive session metrics.
-        exportInterval: 15000
-        exportTimeout: 14000
+        # 60 s interval / 50 s timeout: each taped pod is a separate OTel exporter,
+        # so with 100 drives there are 100 concurrent DNS lookups + HTTPS connections
+        # every export cycle.  Under the high load of the scale test, DNS resolution
+        # can take >10 s; 60 s interval keeps the export rate low enough to avoid
+        # timeouts while still giving useful metric granularity.
+        exportInterval: 60000
+        exportTimeout: 50000
     taped:
       # Per-session buffer pool (MigrationMemoryManager): 10 000 × 256 KB = 2.56 GB/drive.
       # Overridden to 200 by stress-scale-values.yaml for StressDrives.
@@ -211,13 +210,13 @@ maintd:
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
-      iterSleepMs: 500
+      iterSleepMs: 2000
     diskReportRetrieve:
       replicas: 1
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
-      iterSleepMs: 500
+      iterSleepMs: 2000
     # Repack is not used in archive-only stress tests: zero replicas avoids
     # unnecessary DB polls and frees scheduler connections for the active workload.
     repackExpand:
