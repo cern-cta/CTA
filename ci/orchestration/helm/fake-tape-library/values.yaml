@@ -44,10 +44,14 @@ library:
   # setup_stress_drives_test.py reads these and registers them in the CTA catalogue.
   mediaTypes:
     - name: STRESS28MB
-      # Logical capacity sized so ENOSPC fires at a batch boundary:
-      #   logical_bytes_per_file = 6×80 + file_size = 480 + 16 = 496 bytes/file
-      #   C = 80 (VOL1) + 3 × 20000 × 496 = 29 760 080 bytes ≈ 28.4 MB
-      #   → 60 000 files/tape, exactly 3 full batches.
+      # Capacity co-designed with archiveFetchBytesFiles in stress-scale-values.yaml
+      # to avoid partial-batch requeues at tape boundaries.
+      # With file_size=16: logical_bytes_per_file = 6×80 + 16 = 496 bytes/file.
+      # C = 80 (VOL1) + 3 × 20000 × 496 = 29 760 080 bytes ≈ 28.4 MB
+      # → 60 000 files/tape, exactly 3 full batches; ENOSPC fires at a batch boundary
+      # so no files are unnecessarily re-queued to the scheduler.
+      # If you change capacityBytes or the batch size in stress-scale-values.yaml,
+      # keep C - 80 an exact multiple of (batch_files × 496) to preserve this property.
       capacityBytes: 29760080
       mountDelayMs: 15000
       maxWriteRateHz: 1000

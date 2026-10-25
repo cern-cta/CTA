@@ -51,10 +51,14 @@ taped:
       nbDiskThreads: 1
       logMask: "WARNING"
 
-      # Batch sized so that the tape capacity is an exact integer multiple of one batch.
+      # Batch size and tape capacity are co-designed to avoid partial-batch requeues.
       # logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
-      # capacityBytes = 80 (VOL1) + 5 × 20000 × 496 = 49 600 080 -> exactly 5 batches/tape.
-      # ENOSPC fires on HDR1 of the first file of batch 6 -> zero partial-batch requeue.
+      # capacityBytes (fake-tape-library/values.yaml) = 80 (VOL1) + 3 × 20000 × 496
+      #   = 29 760 080 bytes -> exactly 3 full batches/tape.
+      # ENOSPC fires on HDR1 of the first file of batch 4 -> zero partial-batch requeue
+      # at tape boundaries, so no files are unnecessarily re-queued to the scheduler.
+      # If you change this batch size you MUST update capacityBytes in
+      # fake-tape-library/values.yaml to keep it an exact multiple of the new batch.
       archiveFetchBytesFiles: "80000000000, 20000"
       retrieveFetchBytesFiles: "80000000000, 20000"
       # Align flush granularity with the fetch batch so exactly one "update archive"

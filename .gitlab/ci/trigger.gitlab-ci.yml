@@ -42,12 +42,22 @@ spec:
       type: boolean
     num-stress-drives:
       type: number
-    use-pgbouncer:
-      type: boolean
-      default: false
+      default: 2
     num-stress-libraries:
       type: number
       default: 1
+    num-scale-drives:
+      type: number
+      default: 100
+    num-scale-libraries:
+      type: number
+      default: 4
+    num-scale-files:
+      type: number
+      default: 10000000
+    use-pgbouncer:
+      type: boolean
+      default: false
 ---
 
 .trigger-child-pipeline:
@@ -88,6 +98,9 @@ spec:
           use-stress-drives: $[[ inputs.use-stress-drives ]]
           num-stress-drives: $[[ inputs.num-stress-drives ]]
           num-stress-libraries: $[[ inputs.num-stress-libraries ]]
+          num-scale-drives: $[[ inputs.num-scale-drives ]]
+          num-scale-libraries: $[[ inputs.num-scale-libraries ]]
+          num-scale-files: $[[ inputs.num-scale-files ]]
           use-pgbouncer: $[[ inputs.use-pgbouncer ]]
     strategy: mirror
 

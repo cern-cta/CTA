@@ -157,27 +157,21 @@ spec:
     use-stress-drives:
       description: |-
         Run the stress test with virtual StressDrives instead of mhvtl tape hardware.
-
-        Deploys the stress-stressdrives-pgsched-values.yaml overlay: drives are
-        pure in-process software objects backed by a shared tmpfs directory, so
+        Drives are pure in-process software objects backed by a shared PVC directory;
         no SCSI devices, kernel modules, or rmcd are needed.
-
-        Requires the stress node to be labelled beforehand:
-          kubectl label node <name> cta-stress-node=true
       type: boolean
       default: false
 
     num-stress-drives:
       description: |-
-        Number of virtual stress drives to deploy when use-stress-drives is true.
-        Drives are named STRESS0000…STRESS{N-1}; each produces one taped pod.
+        Number of virtual drives for the stress-test job (use-stress-drives=true).
         Has no effect when use-stress-drives is false.
       type: number
-      default: 20
+      default: 2
 
     num-stress-libraries:
       description: |-
-        Number of independent logical libraries for stress drives.
+        Number of independent logical libraries for the stress-test job.
         Drives are split evenly across libraries; each library gets its own PVC.
         Has no effect when use-stress-drives is false.
       type: number
@@ -185,9 +179,32 @@ spec:
 
     num-stress-files:
       description: |-
-        Total number of files to archive in the stress test.
-        num_dirs is derived automatically as ceil(total_files / num_files_per_dir).
+        Total number of files to archive in the stress-test job.
         Can also be overridden per job run via the STRESS_TOTAL_FILES CI variable.
+      type: number
+      default: 2000000
+
+    num-scale-drives:
+      description: |-
+        Number of virtual drives for the stress-scale-test job (always uses StressDrives).
+        Can also be overridden per job run via the NUM_STRESS_DRIVES CI variable.
+      type: number
+      default: 100
+
+    num-scale-libraries:
+      description: |-
+        Number of independent logical libraries for the stress-scale-test job.
+        Can also be overridden per job run via the NUM_STRESS_LIBRARIES CI variable.
+      type: number
+      default: 4
+
+    num-scale-files:
+      description: |-
+        Total number of files to archive in the stress-scale-test job.
+        Can also be overridden per job run via the STRESS_TOTAL_FILES CI variable.
+        If you substantially increase this value, verify the tape count
+        (library.mediaTypes[0].count in fake-tape-library/values.yaml) is sufficient
+        to hold all files (60 000 files/tape with the default capacity).
       type: number
       default: 10000000
 
@@ -425,6 +442,10 @@ include:
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
       use-stress-drives: $[[ inputs.use-stress-drives ]]
       num-stress-drives: $[[ inputs.num-stress-drives ]]
+      num-stress-libraries: $[[ inputs.num-stress-libraries ]]
+      num-scale-drives: $[[ inputs.num-scale-drives ]]
+      num-scale-libraries: $[[ inputs.num-scale-libraries ]]
+      num-scale-files: $[[ inputs.num-scale-files ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
@@ -482,6 +503,9 @@ include:
       num-stress-drives: $[[ inputs.num-stress-drives ]]
       num-stress-libraries: $[[ inputs.num-stress-libraries ]]
       num-stress-files: $[[ inputs.num-stress-files ]]
+      num-scale-drives: $[[ inputs.num-scale-drives ]]
+      num-scale-libraries: $[[ inputs.num-scale-libraries ]]
+      num-scale-files: $[[ inputs.num-scale-files ]]
       stress-prequeue-enabled: $[[ inputs.stress-prequeue-enabled ]]
       stress-prequeue-fraction: $[[ inputs.stress-prequeue-fraction ]]
       stress-retrieve-prequeue-fraction: $[[ inputs.stress-retrieve-prequeue-fraction ]]
