@@ -106,9 +106,7 @@ def test_register_stress_logical_libraries(
     """Register all logical libraries that stress drives and tapes belong to."""
     for conf in stress_library_confs:
         cta_cli.exec(
-            f"cta-admin logicallibrary add"
-            f" --name {conf.name}"
-            f" --comment 'Virtual logical library for stress drives'"
+            f"cta-admin logicallibrary add --name {conf.name} --comment 'Virtual logical library for stress drives'"
         )
 
 
