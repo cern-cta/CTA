@@ -14,7 +14,11 @@ namespace cta::maintd {
 
 class DiskReportArchiveRoutine final : public IRoutine {
 public:
-  DiskReportArchiveRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int batchSize, int softTimeout, int iterSleepMs = 0);
+  DiskReportArchiveRoutine(cta::log::LogContext& lc,
+                           cta::Scheduler& scheduler,
+                           int batchSize,
+                           int softTimeout,
+                           int iterSleepMs = 0);
   void execute() final;
   std::string getName() const final;
 
