@@ -1,57 +1,20 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Overlay for stress and scale tests using virtual StressDrives instead of
-# mhvtl/real hardware.  Works with any scheduler backend (objectstore or pgsched).
-#
-# Why StressDrive instead of mhVTL
-# ---------------------------------
-#
-#   Property             mhVTL                  StressDrive / VirtualDrive
-#   Backend              SCSI target (kernel)   Filesystem directory (PVC)
-#   Tiny-file latency    High (SCSI + driver)   Minimal (direct file I/O)
-#   Drive count          Limited by SCSI tgts   Unlimited (in-process)
-#   CI node setup        Kernel module needed   Zero (any k8s node)
-#   Mount delay          Fixed, hardware-speed  Configurable / jittered
-#   Suitable for         Hardware-fidelity       Metadata & scale tests
-#
-# Architecture
-# ------------
-# Virtual tapes are binary files (*.tape) on a PVC shared by all taped pods.
-# The virtual-tape-library Helm chart pre-populates the PVC with the directory
-# layout and library.toml configuration before taped starts.
-#
-# PVC layout (one PVC per logical library, mounted at /cta-stress-lib-{i}):
-#
-#   config/<lib>/library.toml             — library name, changer timeout, and
-#                                           per-media-type properties
-#   contents/<lib>/slots/VID.tape         — tape at rest (empty file = blank)
-#   contents/<lib>/changer/VID.tape       — tape in transit (robot holds it)
-#   contents/<lib>/changer/.lock          — robot-busy flag (O_CREAT|O_EXCL)
-#   contents/<lib>/drives/<drv>/          — empty = no tape loaded
-#   contents/<lib>/drives/<drv>/VID.tape  — tape mounted in this drive
-#
-# Mount sequence:
-#   1. MediaChangerFacade renames VID.tape: slots/ → changer/ → drives/<drv>/
-#      (serialised through .lock so only one tape moves at a time).
-#   2. StressDrive::waitUntilReady() finds the *.tape file, reads the
-#      per-media-type capacity and mountDelayMs from library.toml, sleeps a
-#      jittered delay, then deserialises the binary block stream into RAM.
-#   3. Transfers run entirely in-memory via VirtualDrive block I/O.
-#   4. StressDrive::unloadTape() serialises the in-memory tape back to the
-#      *.tape file (atomic tmp+rename), then marks the drive empty.
-#   5. MediaChangerFacade renames VID.tape: drives/<drv>/ → changer/ → slots/.
+# Overlay for stress tests using virtual StressDrives instead of mhvtl/real hardware.
+# Works with any scheduler backend (objectstore or pgsched).
+# For pgsched, also apply stress-scale-values.yaml on top.
 #
 # Prerequisites
 # -------------
-# Deploy the virtual-tape-library chart first to create and populate the PVC:
+# Deploy the virtual-tape-library chart first to create the PVC and populate it:
 #
 #   helm upgrade --install virtual-tape-library \
 #     ci/orchestration/helm/virtual-tape-library/ \
 #     -f <your-library-values.yaml>
 #
-# Usage
-# -----
+# Usage:
+#
 #   helm upgrade --install cta ci/orchestration/helm/cta/ \
 #     -f presets/stress-cta-values.yaml \
 #     -f presets/stress-scale-values.yaml
@@ -59,16 +22,19 @@
 # What this preset does
 # ---------------------
 #   - Tunes taped for virtual drives: small buffer pool, single disk thread,
-#     fetch batches co-designed with tape capacity to avoid partial-batch
-#     requeues, relaxed cache TTLs, and disabled underfill-driven dismounting.
-#   - Disables rmcd (/dev/smc does not exist without mhvtl).
+#     large fetch batches aligned to tape capacity, relaxed cache TTLs, and
+#     disabled underfill-driven dismounting.
+#   - Disables rmcd (no StatefulSet deployed; taped never contacts it for
+#     virtual drives, and /dev/smc does not exist on a node without mhvtl).
 #
 # Drive list and extraVolumes are generated dynamically by
 # create_instance.sh --no-hardware-drives; do not define drives here.
 #
-# No node affinity is required: the PVC is managed by the cluster storage class
-# and accessible from any node.  On single-node clusters (laptop, kind, k3s)
-# ReadWriteOnce is sufficient; multi-node clusters need a ReadWriteMany class.
+# No node affinity or hostPath volume is required: the PVC is managed by the
+# cluster storage class and can be accessed from any node.  On single-node
+# clusters (laptop, kind, k3s) the default ReadWriteOnce access mode is fine.
+# For multi-node clusters use a ReadWriteMany storage class in the
+# virtual-tape-library chart values.
 
 taped:
   conf:
