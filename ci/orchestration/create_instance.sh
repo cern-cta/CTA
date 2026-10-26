@@ -35,7 +35,7 @@ usage() {
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
   echo "      --extra-cta-values:             Extra verbatim values for the CTA chart. These will override any previous values from files."
-  echo "      --no-hardware-drives:           Use virtual stress drives instead of mhvtl/SCSI hardware.  Deploys the fake-tape-library chart and generates a drive list from --max-drives."
+  echo "      --no-hardware-drives:           Use virtual stress drives instead of mhvtl/SCSI hardware.  Deploys the virtual-tape-library chart and generates a drive list from --max-drives."
   echo "      --num-stress-libraries <n>:     Number of independent logical libraries for stress drives (default: 1). Requires --no-hardware-drives."
   exit 1
 }
@@ -51,8 +51,8 @@ check_deploy_commands() {
   (( errors == 0 )) || die "Deployment requirements are not satisfied."
 }
 
-deploy_fake_tape_library() {
-  log_task "Deploying fake-tape-library chart (PVC + directory layout + library.toml)..."
+deploy_virtual_tape_library() {
+  log_task "Deploying virtual-tape-library chart (PVC + directory layout + library.toml)..."
   local num_libs="${num_stress_libraries:-1}"
   local -a extra_flags=()
   if kubectl get sc fast-ssd >/dev/null 2>&1; then
@@ -114,11 +114,11 @@ EOF
     extra_flags+=("--set" "pvc.storageClass=-")
   fi
   extra_flags+=("--set" "libraryCount=${num_libs}")
-  helm upgrade --install fake-tape-library helm/fake-tape-library \
+  helm upgrade --install virtual-tape-library helm/virtual-tape-library \
     --namespace "${namespace}" \
     --wait --wait-for-jobs --timeout 5m \
     "${extra_flags[@]}"
-  log_success "fake-tape-library chart deployed."
+  log_success "virtual-tape-library chart deployed."
 }
 
 generate_stress_drive_values() {
@@ -151,7 +151,7 @@ generate_stress_drive_values() {
     for l in $(seq 0 $((num_libs - 1))); do
       printf "      - name: \"stress-lib-%d\"\n" "$l"
       printf "        persistentVolumeClaim:\n"
-      printf "          claimName: \"cta-fake-tape-library-%d\"\n" "$l"
+      printf "          claimName: \"cta-virtual-tape-library-%d\"\n" "$l"
     done
     echo "    volumeMounts:"
     for l in $(seq 0 $((num_libs - 1))); do
@@ -398,7 +398,7 @@ create_instance() {
     die "Another CTA release was found. Currently, installing multiple CTA releases on the same machine is not supported."
   fi
 
-  # Determine the library config to use (drive values only; the fake-tape-library
+  # Determine the library config to use (drive values only; the virtual-tape-library
   # chart itself is deployed after the namespace is created, see below).
   taped_config=""
   rmcd_config=""
@@ -443,9 +443,9 @@ create_instance() {
   kubectl create namespace "${namespace}"
   kubectl label namespace "$namespace" "app.kubernetes.io/managed-by=cta-create-instance"
 
-  # Deploy the fake-tape-library chart now that the namespace exists.
+  # Deploy the virtual-tape-library chart now that the namespace exists.
   if [[ "${no_hardware_drives}" == "true" ]]; then
-    deploy_fake_tape_library
+    deploy_virtual_tape_library
   fi
   log_task "Copying secrets into namespace ${namespace}..."
   for secret_name in ${secrets}; do

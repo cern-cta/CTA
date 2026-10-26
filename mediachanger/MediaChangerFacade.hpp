@@ -46,14 +46,6 @@ namespace cta::mediachanger {
  *
  * Only one tape is ever in changer/ at a time; concurrent calls spin-wait on
  * .lock with a 30 s timeout before throwing.
- *
- * Extendability: this implementation supports a single logical library per
- * MediaChangerFacade instance (one stressBaseDir / logicalLibraryName pair).
- * To support multiple libraries with independent drive sets, instantiate one
- * MediaChangerFacade per library — each points to the same stressBaseDir but
- * a different logicalLibraryName, so their changer/ directories are independent
- * (no cross-library lock contention).  The fake-tape-library Helm chart would
- * need a libraries: [...] array instead of the current single library: block.
  */
 class MediaChangerFacade {
 public:
@@ -85,10 +77,6 @@ public:
    * Requests the media changer to mount the specified tape for read-only
    * access into the drive in the specified library slot.
    *
-   * In stress mode: atomically renames contents/<lib>/slots/VID.tape into
-   * contents/<lib>/drives/<driveName>/VID.tape.  Throws if the slot file is
-   * absent (tape has never been archived).
-   *
    * Please note that this method provides a best-effort service because not all
    * media changers support read-only mounts.
    *
@@ -101,10 +89,6 @@ public:
    * Requests the media changer to mount the specified tape for read/write
    * access into the drive in the specified library slot.
    *
-   * In stress mode: creates an empty contents/<lib>/slots/VID.tape if it does
-   * not yet exist (first archive on this VID), then atomically renames it into
-   * contents/<lib>/drives/<driveName>/VID.tape.
-   *
    * @param vid  The volume identifier of the tape.
    * @param slot The library slot containing the tape drive.
    */
@@ -113,9 +97,6 @@ public:
   /**
    * Requests the media changer to dismount the specified tape from the
    * drive in the specified library slot.
-   *
-   * In stress mode: atomically renames contents/<lib>/drives/<driveName>/VID.tape
-   * back to contents/<lib>/slots/VID.tape.
    *
    * @param vid  The volume identifier of the tape.
    * @param slot The library slot containing the tape drive.

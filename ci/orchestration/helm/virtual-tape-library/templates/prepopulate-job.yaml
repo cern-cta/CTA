@@ -67,7 +67,7 @@ spec:
                 [ -f "${slot}" ] || touch "${slot}"
               done
 
-              echo "Fake tape library pre-population complete."
+              echo "Virtual tape library pre-population complete."
               echo "  config/${LIB}/library.toml"
               echo "  contents/${LIB}/slots/  ($(ls /data/contents/${LIB}/slots/ | wc -l) tape files)"
               echo "  contents/${LIB}/changer/"

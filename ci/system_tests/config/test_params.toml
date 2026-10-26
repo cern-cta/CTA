@@ -74,6 +74,6 @@
 
     # Virtual stress-drive mode configuration (media types, VID prefixes,
     # tape counts, capacities, logical library name) lives in library.toml
-    # on the shared fake-tape-library PVC and is read at runtime by
+    # on the shared virtual-tape-library PVC and is read at runtime by
     # setup_stress_drives_test.py via CtaTapedHost.read_stress_library_conf().
     # No manual duplication here is required or expected.

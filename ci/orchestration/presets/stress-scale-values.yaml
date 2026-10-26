@@ -7,10 +7,10 @@
 #
 # Prerequisites
 # -------------
-# Deploy the fake-tape-library chart first to create the PVC and populate it:
+# Deploy the virtual-tape-library chart first to create the PVC and populate it:
 #
-#   helm upgrade --install fake-tape-library \
-#     ci/orchestration/helm/fake-tape-library/ \
+#   helm upgrade --install virtual-tape-library \
+#     ci/orchestration/helm/virtual-tape-library/ \
 #     -f <your-library-values.yaml>
 #
 # Usage:
@@ -34,7 +34,7 @@
 # cluster storage class and can be accessed from any node.  On single-node
 # clusters (laptop, kind, k3s) the default ReadWriteOnce access mode is fine.
 # For multi-node clusters use a ReadWriteMany storage class in the
-# fake-tape-library chart values.
+# virtual-tape-library chart values.
 
 taped:
   conf:
@@ -53,12 +53,12 @@ taped:
 
       # Batch size and tape capacity are co-designed to avoid partial-batch requeues.
       # logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
-      # capacityBytes (fake-tape-library/values.yaml) = 80 (VOL1) + 3 × 20000 × 496
+      # capacityBytes (virtual-tape-library/values.yaml) = 80 (VOL1) + 3 × 20000 × 496
       #   = 29 760 080 bytes -> exactly 3 full batches/tape.
       # ENOSPC fires on HDR1 of the first file of batch 4 -> zero partial-batch requeue
       # at tape boundaries, so no files are unnecessarily re-queued to the scheduler.
       # If you change this batch size you MUST update capacityBytes in
-      # fake-tape-library/values.yaml to keep it an exact multiple of the new batch.
+      # virtual-tape-library/values.yaml to keep it an exact multiple of the new batch.
       archiveFetchBytesFiles: "80000000000, 20000"
       retrieveFetchBytesFiles: "80000000000, 20000"
       # Align flush granularity with the fetch batch so exactly one "update archive"

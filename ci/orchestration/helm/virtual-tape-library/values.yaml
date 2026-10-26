@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Configuration for one or more fake (in-memory/on-disk) tape libraries used by
+# Configuration for one or more virtual (in-memory/on-disk) tape libraries used by
 # StressDrive scale tests.
 #
 # This chart creates:
@@ -65,8 +65,8 @@ library:
 # PersistentVolumeClaim (one created per library, named <namePrefix>-{i})
 # ---------------------------------------------------------------------------
 pvc:
-  # Prefix for PVC names: cta-fake-tape-library-0, cta-fake-tape-library-1, ...
-  namePrefix: cta-fake-tape-library
+  # Prefix for PVC names: cta-virtual-tape-library-0, cta-virtual-tape-library-1, ...
+  namePrefix: cta-virtual-tape-library
 
   # Storage class. "" = cluster default, "-" = no storageClassName, any string = explicit.
   storageClass: ""

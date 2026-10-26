@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 apiVersion: v2
-name: fake-tape-library
+name: virtual-tape-library
 version: 0.1.0
 description: >
   Pre-populates a PersistentVolume with the directory layout and library.toml
