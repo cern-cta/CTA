@@ -138,7 +138,19 @@ rdbms::Rset RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         M.RETRIEVE_REQUEST_ID,
         M.REQUEST_JOB_COUNT,
         M.STATUS,
-        :TAPE_POOL AS TAPE_POOL,
+  )SQL";
+  // For repack jobs, TAPE_POOL carries the archive destination pool (set by makeJobRow at expand
+  // time). Retrieve jobs do not use TAPE_POOL to locate a tape — repack retrieves already have a
+  // VID assigned — so nothing changes for the retrieve workflow. Preserving M.TAPE_POOL is
+  // required for correct archive routing: transformJobBatchToArchive copies this column straight
+  // to the archive queue. Overwriting with mountInfo.tapePool (the retrieve source pool) would
+  // route completed repack files to the wrong (DEFAULT) tape pool instead of the REPACK pool.
+  if (isRepack) {
+    sql += "      M.TAPE_POOL AS TAPE_POOL,\n";
+  } else {
+    sql += "      :TAPE_POOL AS TAPE_POOL,\n";
+  }
+  sql += R"SQL(
         M.MOUNT_POLICY,
         M.PRIORITY,
         M.MIN_RETRIEVE_REQUEST_AGE,
@@ -198,7 +210,9 @@ rdbms::Rset RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
-  stmt.bindString(":TAPE_POOL", mountInfo.tapePool.empty() ? "NOT_PROVIDED" : mountInfo.tapePool);
+  if (!isRepack) {
+    stmt.bindString(":TAPE_POOL", mountInfo.tapePool.empty() ? "NOT_PROVIDED" : mountInfo.tapePool);
+  }
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToActive);
   auto result = stmt.executeQuery();
