@@ -2,6 +2,9 @@
 SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 
+Auth supplies the shared test CA; dCache signs host certificates here because their DNS names depend on its release and pools.
+This keeps dCache topology out of the auth chart.
+
 The pinned upstream chart calls this helper in both door and pool pods, passing the certificate hostname.
 Extend its init sequence because it has no extraInitContainers setting.
 Keep init-host-certs last: the caller appends its certificate volume mount to the last container.
@@ -49,38 +52,29 @@ Keep init-host-certs last: the caller appends its certificate volume mount to th
               printf '%s\n' "$TEST_CA_KEY" > "$work_dir/ca.key"
               unset TEST_CA_CERT TEST_CA_KEY
 
+              # Sign directly with the auth chart's CA and its fixed test-only passphrase.
               short_host=${HOST_NAME%%.*}
-              openssl req -new -newkey rsa:2048 -nodes \
-                -keyout "$work_dir/hostkey.pem" -out "$work_dir/host.csr" \
-                -subj "/CN=$short_host"
-              cat > "$work_dir/extensions" <<EOF
-              basicConstraints=critical,CA:FALSE
-              keyUsage=critical,digitalSignature,keyEncipherment
-              extendedKeyUsage=serverAuth,clientAuth
-              subjectAltName=DNS:$HOST_NAME,DNS:$short_host
-              EOF
-              # The auth chart encrypts its test CA key with this fixed test-only passphrase.
-              openssl x509 -req -in "$work_dir/host.csr" -days 365 \
+              openssl req -new -x509 -newkey rsa:2048 -nodes -days 365 \
+                -keyout "$work_dir/hostkey.pem" -out "$work_dir/hostcert.pem" \
+                -subj "/CN=$short_host" -set_serial "0x$(openssl rand -hex 16)" \
                 -CA "$work_dir/ca.pem" -CAkey "$work_dir/ca.key" -passin pass:1234 \
-                -set_serial "0x$(openssl rand -hex 16)" -extfile "$work_dir/extensions" \
-                -out "$work_dir/hostcert.pem"
+                -addext "basicConstraints=critical,CA:FALSE" \
+                -addext "keyUsage=critical,digitalSignature,keyEncipherment" \
+                -addext "extendedKeyUsage=serverAuth,clientAuth" \
+                -addext "subjectAltName=DNS:$HOST_NAME,DNS:$short_host"
 
-              # dCache loads a hashed CA directory and host credentials owned by its service user.
+              # dCache needs hashed CA trust; XRootD also requires an empty VOMS trust directory.
               cert_dir=/etc/grid-security
-              # XRootD requires the VOMS trust directory even when tests use no VOMS credentials.
-              mkdir -p "$cert_dir/certificates" "$cert_dir/vomsdir"
+              install -d -m 0755 "$cert_dir" "$cert_dir/certificates" "$cert_dir/vomsdir"
               ca_hash=$(openssl x509 -in "$work_dir/ca.pem" -noout -subject_hash)
               ca_subject=$(openssl x509 -in "$work_dir/ca.pem" -noout -subject -nameopt compat)
-              cp "$work_dir/ca.pem" "$cert_dir/certificates/$ca_hash.0"
-              cat > "$cert_dir/certificates/$ca_hash.signing_policy" <<EOF
+              install -m 0644 "$work_dir/ca.pem" "$cert_dir/certificates/$ca_hash.0"
+              cat > "$work_dir/signing_policy" <<EOF
               access_id_CA X509 '${ca_subject#subject=}'
               pos_rights globus CA:sign
               cond_subjects globus '"*"'
               EOF
-              cp "$work_dir/hostcert.pem" "$cert_dir/hostcert.pem"
-              cp "$work_dir/hostkey.pem" "$cert_dir/hostkey.pem"
-              chmod 0755 "$cert_dir" "$cert_dir/certificates" "$cert_dir/vomsdir"
-              chmod 0644 "$cert_dir/hostcert.pem" "$cert_dir/certificates/$ca_hash."*
-              chmod 0600 "$cert_dir/hostkey.pem"
-              chown 994:1000 "$cert_dir/hostcert.pem" "$cert_dir/hostkey.pem"
+              install -m 0644 "$work_dir/signing_policy" "$cert_dir/certificates/$ca_hash.signing_policy"
+              install -o 994 -g 1000 -m 0644 "$work_dir/hostcert.pem" "$cert_dir/hostcert.pem"
+              install -o 994 -g 1000 -m 0600 "$work_dir/hostkey.pem" "$cert_dir/hostkey.pem"
 {{- end }}
