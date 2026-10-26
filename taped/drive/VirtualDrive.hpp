@@ -16,20 +16,30 @@ namespace cta::tape::drive {
 
 /**
  * In-memory tape drive implementation.  Simulates a tape as a vector of
- * logical blocks in RAM.  All positioning, read, and write operations are
- * performed against this in-memory vector without any SCSI I/O.
+ * logical blocks in RAM; all positioning, read, and write operations run
+ * against this vector without any SCSI I/O or kernel involvement.
  *
- * This class provides the complete concrete implementation for the virtual
- * tape.  Subclasses add specialised behaviour on top:
+ * Subclasses add specialised behaviour:
  *
- *   FakeDrive   — adds configurable failure injection for unit tests.
- *   StressDrive — adds on-disk persistence so tapes survive mount/dismount
- *                 cycles and can be shared between drive instances.
+ *   FakeDrive   — configurable failure injection for unit tests only.
+ *   StressDrive — on-disk persistence (PVC-backed *.tape files) so tapes
+ *                 survive mount/dismount cycles and are shared across
+ *                 drives, enabling full-scale CI testing without mhVTL.
  *
- * Methods that have no meaningful implementation at this level
+ * Comparison with mhVTL:
+ *
+ *   Property             mhVTL                  VirtualDrive / StressDrive
+ *   Backend              SCSI target (kernel)   Filesystem directory (PVC)
+ *   Tiny-file latency    High (SCSI + driver)   Minimal (direct file I/O)
+ *   Drive count          Limited by SCSI tgts   Unlimited (in-process)
+ *   CI node setup        Kernel module needed   Zero (any k8s node)
+ *   Mount delay          Fixed, hardware-speed  Configurable / jittered
+ *   Suitable for         Hardware-fidelity       Metadata & scale tests
+ *
+ * Methods without a meaningful virtual-tape implementation
  * (getSerialNumber, getDriveStatus, setDensityAndCompression, getLBPInfo,
  * setSTBufferWrite) throw NotImplementedException and must be overridden by
- * concrete subclasses that need them.
+ * subclasses that need them.
  */
 class VirtualDrive : public DriveInterface {
 protected:

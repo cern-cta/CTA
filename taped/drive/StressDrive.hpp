@@ -16,38 +16,48 @@
 namespace cta::tape::drive {
 
 /**
- * Stress-test tape drive: a FakeDrive whose tape content is persisted to a
- * file on a shared volume between mount/dismount cycles.  This allows multiple
+ * Stress-test tape drive: a VirtualDrive whose tape content is persisted to a
+ * file on a shared PVC between mount/dismount cycles.  This allows multiple
  * drives — in the same taped process or in different taped processes on the
- * same host — to share virtual tapes by VID, exactly as a physical tape library
+ * same node — to share virtual tapes by VID, exactly as a physical tape library
  * makes one tape accessible from any drive slot.
  *
- * Directory layout (all under baseDir, e.g. /cta-stress-lib):
+ * Unlike mhVTL (which requires a kernel module and SCSI target infrastructure),
+ * StressDrive is entirely in-process: no kernel modules, no SCSI I/O, no node
+ * configuration beyond mounting the shared PVC.  Any number of drives can run
+ * on any Kubernetes node.
  *
- *   config/<lib>/library.toml          — per-library configuration
- *   contents/<lib>/slots/VID.tape      — tape at rest
- *   contents/<lib>/changer/VID.tape    — tape in transit (robot holds it)
- *   contents/<lib>/changer/.lock       — robot-busy flag (O_CREAT|O_EXCL)
- *   contents/<lib>/drives/<drv>/       — empty = no tape loaded
- *   contents/<lib>/drives/<drv>/VID.tape — tape mounted in this drive
+ * Directory layout (all under baseDir, e.g. /cta-stress-lib-0):
  *
- * Lifecycle:
+ *   config/<lib>/library.toml             — library name, changer timeout,
+ *                                           and per-media-type properties
+ *                                           (vidPrefix, capacityBytes,
+ *                                            mountDelayMs, maxWriteRateHz)
+ *   contents/<lib>/slots/VID.tape         — tape at rest (empty file = blank)
+ *   contents/<lib>/changer/VID.tape       — tape in transit (robot holds it)
+ *   contents/<lib>/changer/.lock          — robot-busy flag (O_CREAT|O_EXCL)
+ *   contents/<lib>/drives/<drv>/          — empty directory = no tape loaded
+ *   contents/<lib>/drives/<drv>/VID.tape  — tape mounted in this drive
+ *
+ * Mount/dismount lifecycle (one tape at a time enforced by .lock):
  *   1. MediaChangerFacade::mountTapeReadWrite(vid) acquires the changer lock
  *      and renames VID.tape: slots/ → changer/ → drives/<driveName>/.
  *   2. DataTransferSession calls waitUntilReady(): StressDrive scans
  *      drives/<driveName>/ for a *.tape file, derives the VID from its stem,
- *      reads the tape capacity from library.toml, then loads the binary
- *      block stream from the file into m_tape (the inherited FakeDrive
- *      in-memory block vector).  An empty file means a blank tape.
- *   3. The full transfer runs via FakeDrive's in-memory block I/O.
+ *      looks up capacityBytes and mountDelayMs from library.toml, sleeps a
+ *      jittered delay, then deserialises the binary block stream from the file
+ *      into m_tape (VirtualDrive's in-memory block vector).
+ *      An empty file (blank tape) triggers synthesis of a VOL1 label.
+ *   3. The full transfer runs in-memory via VirtualDrive's block I/O.
  *   4. DataTransferSession calls unloadTape(): StressDrive serialises m_tape
- *      back to the same file, then delegates to FakeDrive::unloadTape().
+ *      back to the *.tape file (atomic tmp+rename), then marks tape absent.
  *   5. MediaChangerFacade::dismountTape(vid) acquires the changer lock and
  *      renames VID.tape: drives/<driveName>/ → changer/ → slots/.
  *
- * The drive is registered in the CTA catalogue with DriveDevice = "virtual://<base_dir>",
- * e.g. "virtual:///cta-stress-lib".  DataTransferSession::findDrive() detects the
- * "virtual://" prefix and creates a StressDrive; the path component is the library root.
+ * The drive is registered in the CTA catalogue with
+ * DriveDevice = "virtual://<base_dir>" (e.g. "virtual:///cta-stress-lib-0").
+ * DataTransferSession::findDrive() detects the "virtual://" prefix and
+ * constructs a StressDrive; the path component is the library root.
  */
 class StressDrive : public VirtualDrive {
 public:
