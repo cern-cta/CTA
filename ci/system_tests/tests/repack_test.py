@@ -819,6 +819,7 @@ def test_repack_pool_routing_no_repack_route_uses_default(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             move_only=True,
+            max_files_to_select=5,
         )
 
         dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
@@ -881,6 +882,7 @@ def test_repack_pool_routing_single_copy_repack_route_overrides_default(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             move_only=True,
+            max_files_to_select=5,
         )
 
         dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
@@ -954,6 +956,7 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             move_only=True,
+            max_files_to_select=5,
         )
 
         dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
@@ -1046,6 +1049,7 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
             disk_instance_name=disk_instance_name,
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
+            max_files_to_select=5,
         )
 
         repack_ls = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {source_vid}"))
