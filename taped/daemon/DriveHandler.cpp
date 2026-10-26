@@ -966,7 +966,6 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
 }
 
 cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
-  // Mounting management: mirror the same virtual/real branch as executeDataTransferSession().
   std::optional<cta::mediachanger::MediaChangerFacade> mediaChangerOpt;
   if (cta::tape::daemon::DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
     mediaChangerOpt.emplace(m_driveInfo.driveName,
@@ -1097,14 +1096,10 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
   dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.wdGetNextMountMaxSecs.value();
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
-  // Mounting management: use a no-op, symlink-based facade for virtual drives
-  // (devFilename starts with "virtual://"); real drives use rmcd.
   cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
                                        m_tapedConfig.rmcPort.value(),
                                        m_tapedConfig.rmcNetTimeout.value(),
                                        m_tapedConfig.rmcRequestAttempts.value());
-  // std::optional::emplace constructs in place, avoiding any copy or move of
-  // MediaChangerFacade (which may not be movable due to RmcProxy internals).
   std::optional<cta::mediachanger::MediaChangerFacade> mediaChangerOpt;
   if (cta::tape::daemon::DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
     mediaChangerOpt.emplace(m_driveInfo.driveName,

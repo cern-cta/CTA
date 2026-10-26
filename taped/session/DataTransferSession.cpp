@@ -129,8 +129,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
                                     lc);
       lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
       if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
-        // Virtual drives have no SCSI device; the slot is always empty at startup.
-        // Skip the hardware probe entirely — production behaviour is unchanged.
+        // No SCSI device to probe; slot is always empty at startup.
         lc.log(cta::log::INFO, "Virtual-drive mode: skipping hardware empty-drive probe.");
       } else {
         cta::tape::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveInfo, m_sysWrapper);
@@ -623,8 +622,7 @@ cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::
  */
 cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
                                                                                     cta::TapeMount* mount) {
-  // Virtual-drive mode: bypass SCSI device scanning and return a StressDrive
-  // backed by files under the base dir encoded in the "virtual://<base_dir>" URI.
+  // Virtual drive: bypass SCSI scanning; base dir is the path in the "virtual://" URI.
   if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
     try {
       auto drive = std::make_unique<cta::tape::drive::StressDrive>(

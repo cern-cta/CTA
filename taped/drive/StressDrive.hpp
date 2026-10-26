@@ -97,25 +97,9 @@ public:
   deviceInfo getDeviceInfo() override;
 
   /**
-   * Adaptive-mirror write: the drive always appears busy, mirroring the
-   * archive queue arrival rate.
-   *
-   * Sleeps once per file, at the HDR1 block (the first block of every ANSI
-   * tape file), for max(minInterval, elapsed) where:
-   *   minInterval = 1 / maxWriteRateHz  (natural drive speed, in files/sec)
-   *   elapsed     = time since the HDR1 of the previous file
-   *
-   * All other blocks within the same file are written without any sleep.
-   *
-   * Queue-limited regime (elapsed > minInterval): sleep equals the inter-file
-   * arrival gap so the drive processes at exactly the queue rate and never
-   * appears idle on monitoring.
-   *
-   * Drive-limited regime (elapsed < minInterval): sleep equals minInterval,
-   * capping throughput at maxWriteRateHz files/sec.
-   *
-   * Enabled only when MediaTypeInfo::maxWriteRateHz > 0 (set via library.toml
-   * maxWriteRateHz field).  Disabled (write at RAM speed) when 0.
+   * Adaptive-mirror throttle: sleeps once per file at HDR1 for
+   * max(minInterval, elapsed), where minInterval = 1s/maxWriteRateHz.
+   * No sleep when maxWriteRateHz == 0.
    */
   void writeBlock(const void* data, size_t count) override;
 
@@ -123,11 +107,8 @@ public:
   struct MediaTypeInfo {
     uint64_t capacityBytes = std::numeric_limits<uint64_t>::max();
     uint32_t mountDelayMs = 0;
-    // Natural drive speed for adaptive-mirror mode, in files/sec.
-    // The sleep fires once per file (at HDR1), so maxWriteRateHz is the
-    // direct file-rate ceiling — no block-count divisor needed.
-    // When the queue is slow, the drive mirrors that rate; when fast, the
-    // drive caps at this value.  0 = disabled (write at RAM speed).
+    // Adaptive-throttle ceiling in files/sec (HDR1 blocks per second).
+    // 0 = disabled (write at RAM speed).
     uint32_t maxWriteRateHz = 0;
   };
 
@@ -149,9 +130,7 @@ private:
   // Default-constructed time_point (epoch) signals "no write yet this session".
   std::chrono::steady_clock::time_point m_lastWriteBlockTime;
 
-  // Per-drive RNG for jittering the mount delay in waitUntilReady().
-  // Seeded in the constructor from m_driveName XOR current time so every drive
-  // instance gets a distinct, non-repeating sequence even within the same process.
+  // Per-drive RNG for jittering mount delay; seeded from drive name XOR current time.
   std::mt19937 m_rng;
 
   // Magic word and format version written at the beginning of each .tape file.

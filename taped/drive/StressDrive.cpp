@@ -76,19 +76,9 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   // Look up per-media-type properties from the VID prefix.
   const MediaTypeInfo info = infoForVid(vid);
 
-  // Simulate mechanical tape-load latency with per-drive jitter.
-  // Per-drive unavailability: saveTape() [burst] → dismount/mount renames →
-  //   waitUntilReady: sleep [mountDelayMs, 2×mountDelayMs] → loadTape() [spread].
-  // Saves are a concurrent burst (N_drives × tape_on_disk bytes) before any jitter.
-  // The jitter window spreads the subsequent loads across drives.
-  // Total downtime per drive = save_time + jitter + load_time must stay below the
-  // no-progress detector (6 × 10 s = 60 s).
-  // Current (30 drives, ~39 MB on-disk, fast-ssd): ~2 s save + 15–30 s jitter
-  //   + ~0.5 s load ≈ 17–33 s — well within the 60 s limit.
-  // Multiple PVCs (one per tape pool) become necessary when save and load times
-  // grow too large, e.g. ~66 MB tapes (k=5, 100 k files) on a network-SSD at
-  // 200 MB/s: ~10 s save + 15–30 s jitter + ~10 s load ≈ 35–50 s — close to
-  // the limit.  P PVCs reduce save+load times by factor P.
+  // Jitter sleep in [mountDelayMs, 2×mountDelayMs] spreads concurrent remounts
+  // across drives, preventing synchronised PVC I/O bursts.  Total downtime per
+  // drive (save + jitter + load) must stay below the no-progress detector (60 s).
   if (info.mountDelayMs > 0) {
     std::uniform_int_distribution<uint64_t> dist(info.mountDelayMs, 2u * info.mountDelayMs);
     std::this_thread::sleep_for(std::chrono::milliseconds(dist(m_rng)));
@@ -102,13 +92,8 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   m_currentTapePath = tapeFile;
   m_currentPosition = 0;
 
-  // Synthesize a VOL1 label on first use of a blank tape so that
-  // WriteSession does not reject it as blank.  The VID is derived from the
-  // .tape filename stem (e.g. /…/drives/STRESS0000/ST0001.tape → "ST0001").
-  //
-  // We reproduce the 80-byte ANSI label inline rather than including
-  // taped/file/Structures.hpp, which would add a ctatapedfile link
-  // dependency to ctatapeddrive for this stress-only code path.
+  // Synthesize a VOL1 label on a blank tape so WriteSession does not reject it.
+  // Inlined to avoid a ctatapedfile link dependency on ctatapeddrive.
   //
   // VOL1 layout (80 bytes, space-initialised):
   //   [0..3]   label id    "VOL1"
@@ -163,78 +148,14 @@ void StressDrive::unloadTape() {
 }
 
 void StressDrive::writeBlock(const void* data, size_t count) {
-  // Adaptive-mirror throttle — why it exists and how it works.
-  //
-  // WITHOUT throttling, StressDrive writes to its in-memory tape at RAM speed
-  // (~GB/s).  At that rate one drive drains a 100 k-file scheduler batch in
-  // milliseconds and immediately idles, waiting for the next pgsched fetch.
-  // All 30 drives thundering-herd on the scheduler simultaneously, then all
-  // going idle simultaneously, then repeating — this produces bursty metrics
-  // with no useful signal on queue depth, drive utilisation or diskReport lag.
-  // The scheduler is hammered with large fetch requests spaced by long idle
-  // gaps instead of a steady trickle, which is also unrepresentative of real
-  // tape throughput.
-  //
-  // WITH throttling (maxWriteRateHz > 0), each drive sleeps for
+  // Adaptive-mirror throttle: sleeps once per file at HDR1 for
   //   max(minInterval, elapsed)
-  // once at the HDR1 block of each file (the first block of every ANSI tape
-  // file, so exactly one sleep per file, none between blocks of the same file).
-  //
-  //   minInterval = 1 s / maxWriteRateHz   (natural drive speed ceiling)
-  //   elapsed     = wall time since the previous file's HDR1
-  //
-  // Queue-limited regime (elapsed > minInterval):
-  //   The disk-read pipeline was slower than the drive — the tape thread spent
-  //   most of elapsed waiting for the next EOS read to complete.  Sleep equals
-  //   elapsed, so the drive's inter-file gap exactly mirrors the queue's
-  //   inter-file arrival gap.  From monitoring the drive appears to be writing
-  //   continuously at the queue drain rate — never idle, never ahead of supply.
-  //   This is the normal operating regime during the 10 M-file stress run.
-  //
-  // Drive-limited regime (elapsed < minInterval):
-  //   The pipeline delivered the file faster than the drive's natural speed.
-  //   Sleep equals minInterval, capping throughput at maxWriteRateHz files/sec.
-  //   This models the hard mechanical ceiling of a real tape drive.
-  //
-  // Natural throughput unit — files/sec:
-  //   The stress test uses tiny fixed-size files (16 bytes payload).  The
-  //   meaningful throughput unit here is files/sec, not bytes/sec — at 16 bytes
-  //   per file a bytes/sec ceiling of 300 MB/s would give a per-file sleep of
-  //   ~53 ns, which is below the OS timer granularity (~50–100 µs on Linux) and
-  //   produces completely unpredictable rates.  Files/sec sidesteps this: a
-  //   target of 100 files/s/drive gives a 10 ms minInterval, well within OS
-  //   scheduling accuracy.
-  //
-  // Alternative: two-parameter throughput model (future extension):
-  //   To simulate a realistic hardware ceiling in bytes/sec while keeping tiny
-  //   payloads, two config fields could replace maxWriteRateHz:
-  //
-  //     maxWriteRateBytesPerSec  — drive ceiling (e.g. 314572800 = 300 MB/s)
-  //     simulatedBlockSizeBytes  — effective tape block per file (e.g. 524288 = 512 KB)
-  //
-  //   The derived file rate is:
-  //     maxWriteRateHz = maxWriteRateBytesPerSec / simulatedBlockSizeBytes
-  //     → 300 MB/s / 512 KB ≈ 572 files/s, minInterval ≈ 1.75 ms — OS-accurate
-  //
-  //   simulatedBlockSizeBytes models the fact that on a real tape drive each
-  //   file occupies at least one full block regardless of payload size.  The
-  //   minimum block size for OS-accurate sleep is roughly:
-  //     simulatedBlockSizeBytes_min = maxWriteRateBytesPerSec × 1 ms
-  //     → 300 MB/s × 1 ms = 300 KB;  1 GB/s × 1 ms = 1 MB
-  //   Below that floor the timer error dominates.  Until a use-case with
-  //   meaningful bytes/sec semantics arises, files/sec is sufficient.
-  //
-  // Recovery when the queue transitions from slow to fast:
-  //   In the queue-limited regime elapsed can grow large (e.g. 500 ms) if the
-  //   disk-read pipeline stalls.  When the queue fills up and files start
-  //   arriving fast again, recovery is immediate: elapsed on the very next file
-  //   is tiny (pipeline delivered quickly) so sleep snaps back to minInterval.
-  //   This works because the timestamp is captured AFTER the sleep — elapsed
-  //   measures only the idle wait for the next file, not the sleep itself.
-  //   If the timestamp were captured before the sleep, elapsed on the next
-  //   iteration would include the previous sleep, causing the sleep to grow
-  //   monotonically even after the queue recovers — the drive would never
-  //   catch up.  Timestamp-after-sleep is what makes recovery self-correcting.
+  // where minInterval = 1s/maxWriteRateHz and elapsed = wall time since the
+  // previous HDR1.  Queue-limited (elapsed > minInterval): mirrors arrival rate.
+  // Drive-limited (elapsed < minInterval): caps at maxWriteRateHz files/sec.
+  // Timestamp is captured after the sleep so elapsed measures only idle wait,
+  // not the sleep itself; this makes recovery from stalls self-correcting.
+  // Disabled (0) when maxWriteRateHz == 0.
   if (m_maxWriteRateHz > 0 && count >= 4 && std::memcmp(data, "HDR1", 4) == 0) {
     if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point {}) {
       const auto elapsed = std::chrono::steady_clock::now() - m_lastWriteBlockTime;
@@ -409,19 +330,13 @@ cta::tape::drive::LBPInfo StressDrive::getLBPInfo() {
 }
 
 std::string StressDrive::getSerialNumber() {
-  // Return a deterministic serial number derived from the drive name so that
-  // each stress drive appears unique in logs and catalogue entries.
   return "STRESS-" + m_driveName;
 }
 
 cta::tape::drive::deviceInfo StressDrive::getDeviceInfo() {
-  // VirtualDrive::getDeviceInfo() leaves serialNumber empty, which causes
-  // UTL1::verifyCommon() to throw "Failed verify for serialNumber" during
-  // retrieve (the UTL1 trailer is written with the empty value at archive
-  // time and then read back and verified at retrieve time).
-  // m_serialNumber in UHL1UTL1 is 12 chars; use the drive name directly
-  // (up to 12 chars) rather than the "STRESS-" + name form to stay within
-  // the field width without silent truncation.
+  // VirtualDrive leaves serialNumber empty; UTL1::verifyCommon() verifies it
+  // matches the value written at archive time, so it must be non-empty.
+  // Capped at 12 chars to fit UHL1/UTL1 field width without silent truncation.
   deviceInfo devInfo = VirtualDrive::getDeviceInfo();
   devInfo.serialNumber = m_driveName.substr(0, 12);
   return devInfo;

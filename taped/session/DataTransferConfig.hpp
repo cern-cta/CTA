@@ -129,17 +129,7 @@ struct DataTransferConfig {
    */
   time_t wdGetNextMountMaxSecs = 900;
 
-  //----------------------------------------------------------------------------
-  // Virtual-drive mode (scale testing without real SCSI hardware or mhvtl)
-  //
-  // Mode is derived entirely from the drive's devFilename: register the drive
-  // in the CTA catalogue with DriveDevice = "virtual://<base_dir>", e.g.
-  // "virtual:///cta-stress-lib".  No separate config keys are required.
-  //
-  // Helper: virtualDriveBaseDir(devFilename) returns the base dir path.
-  //----------------------------------------------------------------------------
-
-  /** True when devFilename uses the "virtual://" URI scheme. */
+  /** True when devFilename uses the "virtual://<base_dir>" URI scheme. */
   static bool isVirtualDrive(const std::string& devFilename) { return devFilename.rfind("virtual://", 0) == 0; }
 
   /** Extracts the base dir from a "virtual://<base_dir>" device URI. */

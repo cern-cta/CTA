@@ -21,11 +21,9 @@ namespace cta::mediachanger {
 
 namespace {
 
-// RAII guard that acquires the single-changer robot lock on construction and
-// releases it on destruction.  The lock is a file created with O_CREAT|O_EXCL;
-// only one caller holds it at a time.  Callers spin-wait with 50 ms backoff.
-// timeoutMs is read from library.conf (library changerTimeoutMs) and defaults
-// to 30 s if not present.
+// RAII guard for the single-changer robot lock (changer/.lock).
+// Lock file is created with O_CREAT|O_EXCL (atomic on POSIX).
+// Callers spin-wait with 50 ms backoff up to timeoutMs (default 30 s).
 struct ChangerGuard {
   const std::filesystem::path lockPath;
 
@@ -203,13 +201,11 @@ void MediaChangerFacade::stressDismountTape(const std::string& vid) {
   const auto changerTape = changerDir / (vid + ".tape");
   const auto slotPath = contentsBase / "slots" / (vid + ".tape");
 
-  // Best-effort: if the tape has already disappeared from the drive directory
-  // (e.g. process crashed after StressDrive::unloadTape was called), skip.
+  // If the tape file is gone (e.g. process crashed after unloadTape), skip.
   if (!std::filesystem::exists(drivePath)) {
     return;
   }
 
-  // Route the tape back through the changer robot.
   {
     const ChangerGuard guard(changerDir, m_changerTimeoutMs);
     std::filesystem::rename(drivePath, changerTape);  // drives/<drv>/ → changer/
