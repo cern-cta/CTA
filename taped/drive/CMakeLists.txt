@@ -24,7 +24,9 @@ target_link_libraries(cta-test-tape-drive-read-write
   pthread)
 
 add_library(ctatapeddriveunittests SHARED
-  DriveTest.cpp)
+  DriveTest.cpp
+  VirtualDriveTest.cpp
+  StressDriveTest.cpp)
 set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
