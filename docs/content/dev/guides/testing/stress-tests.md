@@ -39,9 +39,20 @@ Use the configuration and `ci/system_tests/tests/stress_test.py` from the tested
 
 The standard stress test requires `mhvtl` virtual tape hardware and a dedicated CI runner with the matching kernel modules and library setup. Virtual stress-drive mode removes that dependency: drives are pure in-process software objects backed by a shared PersistentVolumeClaim (PVC), so the full stress workload — archive, retrieve, tape mount and dismount — runs on any Kubernetes cluster without any tape hardware or kernel modules.
 
+### Why VirtualDrive instead of mhVTL
+
+| Property | mhVTL | VirtualDrive / StressDrive |
+| --- | --- | --- |
+| Backend | SCSI target (kernel) | Filesystem directory (PVC) |
+| Tiny-file latency | High (SCSI + driver) | Minimal (direct file I/O) |
+| Drive count per node | Limited by SCSI targets | Unlimited (in-process) |
+| CI node setup | Kernel module required | Zero (any k8s node) |
+| Mount delay | Fixed, hardware-speed | Configurable / jittered |
+| Suitable for | Hardware-fidelity tests | Metadata & scale tests |
+
 ### How it works
 
-`StressDrive` is a subclass of `FakeDrive` that persists tape content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
+`StressDrive` is a subclass of `VirtualDrive` that persists tape content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
 
 Each library has its own PVC mounted at `/cta-stress-lib-{i}` (library index `i`). `stressBaseDir` for a drive is derived automatically from its `DriveDevice` URI (`virtual:///cta-stress-lib-{i}`), so no manual config key is needed. The shared directory layout under each `stressBaseDir`:
 
@@ -57,9 +68,9 @@ contents/<lib>/drives/<drv>/VID.tape   — tape mounted in this drive
 The full lifecycle per archive or retrieve session:
 
 1. `MediaChangerFacade::mountTapeReadWrite(vid)` acquires the single changer lock (`changer/.lock` via `O_CREAT|O_EXCL`) and atomically renames `slots/VID.tape → changer/VID.tape → drives/<drv>/VID.tape`, then releases the lock.
-2. `DataTransferSession::findDrive()` detects `DriveDevice = stress://` and instantiates a `StressDrive`.
+2. `DataTransferSession::findDrive()` detects `DriveDevice = virtual://` and instantiates a `StressDrive`.
 3. `StressDrive::waitUntilReady()` scans `drives/<drv>/` for the mounted `*.tape` file, derives the VID from its filename stem, looks up the tape capacity from `library.toml`, then loads the binary block stream into the in-memory block vector (`m_tape`). An empty file (blank tape) synthesises an ANSI VOL1 label.
-4. The transfer session runs entirely in memory via the inherited `FakeDrive` block I/O — no filesystem I/O during the data transfer itself.
+4. The transfer session runs entirely in memory via `VirtualDrive`'s block I/O — no filesystem I/O during the data transfer itself.
 5. `StressDrive::unloadTape()` serialises `m_tape` back to the `*.tape` file via an atomic tmp-rename, then clears the in-memory state.
 6. `MediaChangerFacade::dismountTape(vid)` acquires the changer lock and atomically renames `drives/<drv>/VID.tape → changer/VID.tape → slots/VID.tape`.
 
@@ -68,7 +79,7 @@ The changer lock ensures that only one tape is ever in transit at a time across 
 !!! note "Why `drives/<drv>/VID.tape` is empty during active archiving"
     While a tape is actively mounted, the `*.tape` file in the drive directory exists but its on-disk content may lag behind the in-memory state: `saveTape()` only runs inside `unloadTape()` at the **end** of the session. The CTA catalogue marks files as "archived" during the write session — before `unloadTape()` is called — so the catalogue can report successful archiving while the on-disk file still shows its pre-session size. Both are correct and reflect different stages of the same session.
 
-    `VID.tape` is updated atomically (write to `VID.tape.tmp`, then rename) at dismount. If it is absent from `slots/` after all drives have gone idle for several minutes, `unloadTape()` was not called (session aborted) or `saveTape()` threw — check the `taped` pod logs.
+    `VID.tape` is updated atomically (written to `VID.tape.tmp`, then renamed) at dismount. If it is absent from `slots/` after all drives have gone idle for several minutes, `unloadTape()` was not called (session aborted) or `saveTape()` threw — check the `taped` pod logs.
 
 ### Library configuration (`library.toml`)
 
@@ -97,7 +108,7 @@ The chart renders one `library-{i}.toml` key per library into a single ConfigMap
 
 ### Deployment
 
-Use `create_instance.sh --no-hardware-drives` — it deploys the `fake-tape-library` chart (PVC + prepopulate Job) and then the CTA chart in one step. No node labelling, `hostPath` volumes, or tmpfs pre-mounting is required.
+Use `create_instance.sh --no-hardware-drives` — it deploys the `virtual-tape-library` chart (PVC + prepopulate Job) and then the CTA chart in one step. No node labelling, `hostPath` volumes, or tmpfs pre-mounting is required.
 
 Full example with the PostgreSQL scheduler (the combination used by the CI `stress-test` job):
 
@@ -106,7 +117,7 @@ cd ci/orchestration/
 ./create_instance.sh \
   --namespace stress-<id> \
   --cta-image-tag <image-tag> \
-  --cta-config presets/stress-cta-pgsched-values.yaml,presets/stress-stressdrives-pgsched-values.yaml \
+  --cta-config presets/stress-cta-pgsched-values.yaml,presets/stress-scale-values.yaml \
   --eos-config presets/stress-eos-values.yaml \
   --catalogue-config presets/dev-catalogue-postgres-values.yaml \
   --scheduler-config /opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml \
@@ -121,23 +132,23 @@ cd ci/orchestration/
 
     ```bash
     # Step 1 — create PVC and pre-populate tape files
-    helm upgrade --install fake-tape-library ci/orchestration/helm/fake-tape-library/ \
+    helm upgrade --install virtual-tape-library ci/orchestration/helm/virtual-tape-library/ \
       --namespace <your-namespace> --wait --wait-for-jobs
 
     # Step 2 — deploy CTA with the stress-drive overlay
     helm upgrade --install cta ci/orchestration/helm/cta/ \
       -f presets/stress-cta-pgsched-values.yaml \
-      -f presets/stress-stressdrives-pgsched-values.yaml
+      -f presets/stress-scale-values.yaml
     ```
 
-The `stress-stressdrives-pgsched-values.yaml` overlay:
+The `stress-scale-values.yaml` overlay:
 
 - Tunes `taped` buffer counts, disk threads, and cache TTLs for the stress workload.
 - Disables `rmcd` entirely (`rmcd.enabled: false`) — `taped` in stress mode never contacts it.
 
-The PVC mounts (`extraVolumes`) are **not** in the preset — they are generated dynamically by `create_instance.sh --no-hardware-drives` and merged after the preset, one mount per library (`cta-fake-tape-library-{i}` at `/cta-stress-lib-{i}`).
+The PVC mounts (`extraVolumes`) are **not** in the preset — they are generated dynamically by `create_instance.sh --no-hardware-drives` and merged after the preset, one mount per library (`cta-virtual-tape-library-{i}` at `/cta-stress-lib-{i}`).
 
-For multi-node clusters, use a `ReadWriteMany` storage class in the `fake-tape-library` chart values (default is `ReadWriteOnce`, suitable for single-node clusters such as `kind` or `k3s`).
+For multi-node clusters, use a `ReadWriteMany` storage class in the `virtual-tape-library` chart values (default is `ReadWriteOnce`, suitable for single-node clusters such as `kind` or `k3s`).
 
 ### Catalogue setup
 
@@ -152,7 +163,7 @@ cta-dev test --setup stress-drives setup      # virtual tape library setup
 
 ### Configuration reference
 
-All stress-drive parameters are set in the `fake-tape-library` chart `values.yaml`. Library name and VID prefix are auto-derived from the library index and must not be overridden.
+All stress-drive parameters are set in the `virtual-tape-library` chart `values.yaml`. Library name and VID prefix are auto-derived from the library index and must not be overridden.
 
 | Parameter | Where to set it | Default |
 | --- | --- | --- |
@@ -165,7 +176,7 @@ All stress-drive parameters are set in the `fake-tape-library` chart `values.yam
 | Simulated mount latency base | `library.mediaTypes[].mountDelayMs` | `15000` ms |
 | Max write rate | `library.mediaTypes[].maxWriteRateHz` | `1000` files/s |
 | Tapes per library | `library.mediaTypes[].count` | `180` |
-| PVC name prefix | `pvc.namePrefix` | `cta-fake-tape-library` |
+| PVC name prefix | `pvc.namePrefix` | `cta-virtual-tape-library` |
 | PVC size | `pvc.size` | `50Gi` |
 
 Multiple media types in the same library are supported by adding more entries to `library.mediaTypes`.
@@ -195,7 +206,7 @@ Drive names use the pattern `S{lib}D{index}`, mirroring the `S{lib}` tape VID pr
 The chart `libraryCount` value must match `--num-stress-libraries`. `create_instance.sh` passes `--set libraryCount=M` automatically. To deploy the chart manually for M libraries:
 
 ```bash
-helm upgrade --install fake-tape-library ci/orchestration/helm/fake-tape-library/ \
+helm upgrade --install virtual-tape-library ci/orchestration/helm/virtual-tape-library/ \
   --namespace <ns> --wait --wait-for-jobs \
   --set libraryCount=3
 ```
