@@ -861,9 +861,7 @@ def test_repack_pool_routing_single_copy_repack_route_overrides_default(
 
     all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
     source_vid = cta_cli.get_first_vid_containing_files()
-    dest_tape = next(
-        t for t in all_tapes if t["vid"] != source_vid and not t.get("full", False)
-    )
+    dest_tape = next(t for t in all_tapes if t["vid"] != source_vid and not t.get("full", False))
     dest_vid, original_dest_pool = dest_tape["vid"], dest_tape["tapepool"]
 
     print(f"Moving {dest_vid} -> {tp_repack}; source: {source_vid}")
