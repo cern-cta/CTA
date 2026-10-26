@@ -774,54 +774,43 @@ def test_repack_with_user_provided_files_no_recall(
 
 # =========================================================================
 #  Archive-route routing tests (must run before test_repack_move_and_add_copies
-#  which leaves the catalogue in a modified state)
+#  which leaves the catalogue in a modified state).
+#
+#  These tests run on both pgsched and objectstore: the route-selection logic
+#  (REPACK wins over DEFAULT) lives in Scheduler::expandRepackRequest() which
+#  is backend-agnostic.  pgsched had an additional bug (fixed in
+#  moveJobsToDbActiveQueue) that caused the selected pool to be overwritten at
+#  mount time; the tests below catch regressions in both the selection logic
+#  and the pgsched propagation.
 # =========================================================================
 
 
-def test_repack_pool_routing_single_copy_move_only(
+def _get_dest_tape_pools(cta_cli: CtaCliHost, source_vid: str) -> list[str]:
+    """Return the tape-pool name of every destination tape reported by repack ls."""
+    repack_ls = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {source_vid}"))
+    pools: list[str] = []
+    for dest in repack_ls[0].get("destinationInfos", []):
+        tape_info = json.loads(cta_cli.exec_with_output(f"cta-admin --json tape ls --vid {dest['vid']}"))
+        pools.extend(t["tapepool"] for t in tape_info)
+    return pools
+
+
+def test_repack_pool_routing_no_repack_route_uses_default(
     cta_cli: CtaCliHost,
     disk_instance_name: str,
     repack_buffer_dir: Path,
     repack_mp_name: str,
-    postgres_scheduler_enabled: bool,
     cta_storage_class: str,
     cta_default_tape_pool: str,
 ) -> None:
-    """REPACK archive route must be used instead of DEFAULT for the primary copy (MoveOnly).
+    """When no REPACK archive route exists, MoveOnly repack must fall back to the DEFAULT route.
 
-    Regression test for the pgsched bug where moveJobsToDbActiveQueue() overwrote TAPE_POOL
-    in REPACK_RETRIEVE_ACTIVE_QUEUE with the retrieve mount's source pool, causing
-    transformJobBatchToArchive() to route the archived file to the DEFAULT tape pool instead
-    of the configured REPACK pool.
+    Regression guard: verifies that the routing fix does not break the common case where only
+    a DEFAULT archive route is configured.  The destination tape must belong to the DEFAULT
+    tape pool and must not be any other pool.
     """
-    if not postgres_scheduler_enabled:
-        pytest.skip("Archive-route routing for repack is only tested with the pgsched backend")
-
-    tp_repack = "tp_repack_routing_1copy"
-
-    print(f"Creating REPACK tape pool: {tp_repack}")
-    cta_cli.exec(
-        f"cta-admin tapepool add --name {tp_repack} --vo vo_repack --partialtapesnumber 1 "
-        f"--comment 'Temp pool: repack routing single-copy test'"
-    )
-
-    all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
     source_vid = cta_cli.get_first_vid_containing_files()
-    dest_vid = next(t["vid"] for t in all_tapes if t["vid"] != source_vid)
-    original_dest_pool = next(t["tapepool"] for t in all_tapes if t["vid"] == dest_vid)
-
-    print(f"Moving destination tape {dest_vid} to pool {tp_repack} (source tape: {source_vid})")
-    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid} --tapepool {tp_repack}")
-
-    print(f"Adding REPACK archive route: {cta_storage_class} copy 1 -> {tp_repack}")
-    cta_cli.exec(
-        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 1 "
-        f"--tapepool {tp_repack} --archiveroutetype REPACK "
-        f"--comment 'REPACK route copy 1 routing test'"
-    )
-
     cta_cli.modify_tape_state(source_vid, "REPACKING")
-    print(f"Running MoveOnly repack on VID {source_vid}")
     try:
         _submit_repack_request(
             cta_cli,
@@ -832,23 +821,77 @@ def test_repack_pool_routing_single_copy_move_only(
             move_only=True,
         )
 
-        repack_ls = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {source_vid}"))
-        dest_infos = repack_ls[0]["destinationInfos"]
-        assert len(dest_infos) > 0, "Repack produced no destination tapes"
+        dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
+        print(f"Destination tape pools (no-REPACK-route case): {dest_pools}")
+        assert len(dest_pools) > 0, "Repack produced no destination tapes"
+        assert cta_default_tape_pool in dest_pools, (
+            f"DEFAULT pool {cta_default_tape_pool!r} must be used when no REPACK route is configured; "
+            f"got {dest_pools!r}."
+        )
+    finally:
+        cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
+        cta_cli.modify_tape_state(source_vid, "ACTIVE")
 
-        dest_pools = []
-        for dest in dest_infos:
-            tape_info = json.loads(cta_cli.exec_with_output(f"cta-admin --json tape ls --vid {dest['vid']}"))
-            dest_pools.extend(t["tapepool"] for t in tape_info)
 
-        print(f"Destination tape pools: {dest_pools}")
+def test_repack_pool_routing_single_copy_repack_route_overrides_default(
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    repack_buffer_dir: Path,
+    repack_mp_name: str,
+    cta_storage_class: str,
+    cta_default_tape_pool: str,
+) -> None:
+    """A REPACK archive route must override the DEFAULT route for the primary copy (MoveOnly).
+
+    When a storage class has both a DEFAULT and a REPACK archive route for the same copy
+    number, a repack must use the REPACK route and must not archive to the DEFAULT pool.
+
+    Regression test for the pgsched bug where moveJobsToDbActiveQueue() overwrote the
+    archive-destination pool stored in TAPE_POOL with the retrieve mount's source pool,
+    causing transformJobBatchToArchive() to route files to the DEFAULT pool instead of the
+    REPACK pool.
+    """
+    tp_repack = "tp_repack_routing_1copy"
+
+    cta_cli.exec(
+        f"cta-admin tapepool add --name {tp_repack} --vo vo_repack --partialtapesnumber 1 "
+        f"--comment 'Temp pool: single-copy REPACK override test'"
+    )
+
+    all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
+    source_vid = cta_cli.get_first_vid_containing_files()
+    dest_tape = next(t for t in all_tapes if t["vid"] != source_vid)
+    dest_vid, original_dest_pool = dest_tape["vid"], dest_tape["tapepool"]
+
+    print(f"Moving {dest_vid} -> {tp_repack}; source: {source_vid}")
+    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid} --tapepool {tp_repack}")
+    cta_cli.exec(
+        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 1 "
+        f"--tapepool {tp_repack} --archiveroutetype REPACK "
+        f"--comment 'REPACK route copy 1: single-copy override test'"
+    )
+
+    cta_cli.modify_tape_state(source_vid, "REPACKING")
+    try:
+        _submit_repack_request(
+            cta_cli,
+            vid_to_repack=source_vid,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
+            move_only=True,
+        )
+
+        dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
+        print(f"Destination tape pools (single-copy REPACK override): {dest_pools}")
+        assert len(dest_pools) > 0, "Repack produced no destination tapes"
         assert tp_repack in dest_pools, (
-            f"Expected REPACK pool {tp_repack!r} in destination pools {dest_pools!r}. "
-            "MoveOnly repack must use the REPACK archive route for copy 1, not the DEFAULT route."
+            f"Expected REPACK pool {tp_repack!r} in {dest_pools!r}. "
+            "The REPACK archive route must be used for copy 1, not the DEFAULT route."
         )
         assert cta_default_tape_pool not in dest_pools, (
-            f"DEFAULT pool {cta_default_tape_pool!r} must not appear in destination pools {dest_pools!r}. "
-            "The REPACK archive route for copy 1 must take priority over the DEFAULT route."
+            f"DEFAULT pool {cta_default_tape_pool!r} must not appear in {dest_pools!r}: "
+            "the REPACK route is defined and must take priority over DEFAULT."
         )
     finally:
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
@@ -861,82 +904,61 @@ def test_repack_pool_routing_single_copy_move_only(
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_repack}")
 
 
-def test_repack_pool_routing_multi_copy_each_copy_correct_pool(
+def test_repack_pool_routing_mixed_repack_and_default_routes(
     cta_cli: CtaCliHost,
     disk_instance_name: str,
     repack_buffer_dir: Path,
     repack_mp_name: str,
-    postgres_scheduler_enabled: bool,
     cta_storage_class: str,
     cta_default_tape_pool: str,
 ) -> None:
-    """Each copy of a multi-copy repack must go to its designated pool (DEFAULT or REPACK).
+    """When copies have different route combinations, each copy must land in the correct pool.
 
-    Copy 1 uses the BASE_INSERT path (TAPE_POOL column), additional copies use the
-    ALTERNATE_INSERT path (REPACK_REARCHIVE_TAPE_POOLS column). Tests both paths:
-    - copy 1 with a REPACK route overriding the DEFAULT route
-    - copy 2 with both a DEFAULT route and a REPACK route (REPACK must win)
-    Also verifies that user DEFAULT routes still work: a copy with only a DEFAULT route
-    and no REPACK override must land in the DEFAULT pool.
+    Copy 1: has both DEFAULT and REPACK routes — REPACK must win.
+    Copy 2: has ONLY a DEFAULT (user) route, no REPACK route — DEFAULT must be used.
+
+    This is the critical mixed scenario: the two copies exercise opposite route-selection
+    outcomes in the same repack, verifying that REPACK overrides DEFAULT only where a REPACK
+    route is defined, and that copies without a REPACK route are not misrouted.
     """
-    if not postgres_scheduler_enabled:
-        pytest.skip("Archive-route routing for repack is only tested with the pgsched backend")
+    tp_repack_copy1 = "tp_repack_routing_mixed_c1"
+    tp_default_copy2 = "tp_default_routing_mixed_c2"
 
-    tp_repack_copy1 = "tp_repack_routing_copy1"
-    tp_default_copy2 = "tp_default_routing_copy2"
-    tp_repack_copy2 = "tp_repack_routing_copy2"
-
-    print(f"Creating tape pools: {tp_repack_copy1}, {tp_default_copy2}, {tp_repack_copy2}")
-    for tp, vo in [
-        (tp_repack_copy1, "vo_repack"),
-        (tp_default_copy2, "vo"),
-        (tp_repack_copy2, "vo_repack"),
-    ]:
+    for tp, vo in [(tp_repack_copy1, "vo_repack"), (tp_default_copy2, "vo")]:
         cta_cli.exec(
             f"cta-admin tapepool add --name {tp} --vo {vo} --partialtapesnumber 1 "
-            f"--comment 'Temp pool: repack routing multi-copy test'"
+            f"--comment 'Temp pool: mixed REPACK/DEFAULT routing test'"
         )
 
     all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
     source_vid = cta_cli.get_first_vid_containing_files()
     other_vids = [t for t in all_tapes if t["vid"] != source_vid]
     assert len(other_vids) >= 2, "Need at least 2 non-source tapes for the 2 destination pools"
-    dest_vid_copy1 = other_vids[0]["vid"]
-    dest_vid_copy2 = other_vids[1]["vid"]
-    original_pool_copy1 = other_vids[0]["tapepool"]
-    original_pool_copy2 = other_vids[1]["tapepool"]
+    dest_vid_c1, orig_pool_c1 = other_vids[0]["vid"], other_vids[0]["tapepool"]
+    dest_vid_c2, orig_pool_c2 = other_vids[1]["vid"], other_vids[1]["tapepool"]
 
     print(
-        f"Moving {dest_vid_copy1} -> {tp_repack_copy1} and "
-        f"{dest_vid_copy2} -> {tp_repack_copy2} (source: {source_vid})"
+        f"Moving {dest_vid_c1} -> {tp_repack_copy1}, {dest_vid_c2} -> {tp_default_copy2}; "
+        f"source: {source_vid}"
     )
-    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_copy1} --tapepool {tp_repack_copy1}")
-    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_copy2} --tapepool {tp_repack_copy2}")
-
-    print(f"Changing {cta_storage_class} to 2 copies")
+    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {tp_repack_copy1}")
+    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c2} --tapepool {tp_default_copy2}")
     cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
 
-    print("Adding archive routes for multi-copy routing test")
-    # copy 1: REPACK route overrides the existing DEFAULT route
+    # copy 1: both DEFAULT (existing) and REPACK routes — REPACK must win
     cta_cli.exec(
         f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 1 "
         f"--tapepool {tp_repack_copy1} --archiveroutetype REPACK "
-        f"--comment 'REPACK route copy 1 multi-copy test'"
+        f"--comment 'REPACK route copy 1: mixed routing test'"
     )
-    # copy 2: both DEFAULT and REPACK routes — REPACK must win for repacks
+    # copy 2: DEFAULT route only — no REPACK route — DEFAULT must be used
     cta_cli.exec(
         f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 "
         f"--tapepool {tp_default_copy2} --archiveroutetype DEFAULT "
-        f"--comment 'DEFAULT route copy 2 multi-copy test'"
-    )
-    cta_cli.exec(
-        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 "
-        f"--tapepool {tp_repack_copy2} --archiveroutetype REPACK "
-        f"--comment 'REPACK route copy 2 multi-copy test'"
+        f"--comment 'DEFAULT-only route copy 2: mixed routing test'"
     )
 
     cta_cli.modify_tape_state(source_vid, "REPACKING")
-    print(f"Running MoveAndAddCopies repack on VID {source_vid}")
     try:
         _submit_repack_request(
             cta_cli,
@@ -952,35 +974,140 @@ def test_repack_pool_routing_multi_copy_each_copy_correct_pool(
             "Not all files were archived"
         )
 
-        dest_infos = repack_req["destinationInfos"]
-        assert len(dest_infos) > 0, "Repack produced no destination tapes"
-
-        dest_vid_to_pool = {}
-        for dest in dest_infos:
-            tape_info = json.loads(cta_cli.exec_with_output(f"cta-admin --json tape ls --vid {dest['vid']}"))
-            for t in tape_info:
-                dest_vid_to_pool[t["vid"]] = t["tapepool"]
-
-        dest_pools = list(dest_vid_to_pool.values())
-        print(f"Destination VID -> pool mapping: {dest_vid_to_pool}")
+        dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
+        print(f"Destination tape pools (mixed REPACK/DEFAULT): {dest_pools}")
 
         # copy 1: REPACK route must override DEFAULT
         assert tp_repack_copy1 in dest_pools, (
             f"Expected REPACK pool {tp_repack_copy1!r} for copy 1 in {dest_pools!r}. "
-            "The REPACK archive route must take priority over the DEFAULT route for copy 1."
+            "The REPACK archive route must take priority over DEFAULT for copy 1."
         )
         assert cta_default_tape_pool not in dest_pools, (
-            f"DEFAULT pool {cta_default_tape_pool!r} must not appear in {dest_pools!r} — "
+            f"DEFAULT pool {cta_default_tape_pool!r} must not appear in {dest_pools!r}: "
             "copy 1 has a REPACK route that must override DEFAULT."
         )
 
-        # copy 2: REPACK route must override DEFAULT
+        # copy 2: no REPACK route — DEFAULT pool must be used, not REPACK pool
+        assert tp_default_copy2 in dest_pools, (
+            f"Expected DEFAULT pool {tp_default_copy2!r} for copy 2 in {dest_pools!r}. "
+            "With no REPACK route, copy 2 must use the DEFAULT archive route."
+        )
+        assert tp_repack_copy1 not in [p for p in dest_pools if p == tp_repack_copy1 and dest_pools.count(p) > 1], (
+            "Copy 2 must not be misrouted to the REPACK pool that belongs to copy 1."
+        )
+    finally:
+        cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
+        cta_cli.modify_tape_state(source_vid, "ACTIVE")
+        cta_cli.exec(
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 "
+            f"--archiveroutetype REPACK"
+        )
+        cta_cli.exec(
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 "
+            f"--archiveroutetype DEFAULT"
+        )
+        cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
+        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {orig_pool_c1}")
+        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c2} --tapepool {orig_pool_c2}")
+        cta_cli.exec(f"cta-admin tapepool rm --name {tp_repack_copy1}")
+        cta_cli.exec(f"cta-admin tapepool rm --name {tp_default_copy2}")
+
+
+def test_repack_pool_routing_multi_copy_all_repack_routes(
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    repack_buffer_dir: Path,
+    repack_mp_name: str,
+    cta_storage_class: str,
+    cta_default_tape_pool: str,
+) -> None:
+    """All copies must go to their respective REPACK pools when every copy has a REPACK route.
+
+    Copy 1 uses the BASE_INSERT path (TAPE_POOL column in REPACK_RETRIEVE_ACTIVE_QUEUE).
+    Copy 2 uses the ALTERNATE_INSERT path (REPACK_REARCHIVE_TAPE_POOLS column).
+    Both paths must independently resolve to the correct REPACK pool and must not fall
+    back to either DEFAULT pool.
+    """
+    tp_repack_copy1 = "tp_repack_routing_allrepack_c1"
+    tp_default_copy2 = "tp_default_routing_allrepack_c2"
+    tp_repack_copy2 = "tp_repack_routing_allrepack_c2"
+
+    for tp, vo in [
+        (tp_repack_copy1, "vo_repack"),
+        (tp_default_copy2, "vo"),
+        (tp_repack_copy2, "vo_repack"),
+    ]:
+        cta_cli.exec(
+            f"cta-admin tapepool add --name {tp} --vo {vo} --partialtapesnumber 1 "
+            f"--comment 'Temp pool: all-REPACK routing test'"
+        )
+
+    all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
+    source_vid = cta_cli.get_first_vid_containing_files()
+    other_vids = [t for t in all_tapes if t["vid"] != source_vid]
+    assert len(other_vids) >= 2, "Need at least 2 non-source tapes for the 2 destination pools"
+    dest_vid_c1, orig_pool_c1 = other_vids[0]["vid"], other_vids[0]["tapepool"]
+    dest_vid_c2, orig_pool_c2 = other_vids[1]["vid"], other_vids[1]["tapepool"]
+
+    print(
+        f"Moving {dest_vid_c1} -> {tp_repack_copy1}, {dest_vid_c2} -> {tp_repack_copy2}; "
+        f"source: {source_vid}"
+    )
+    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {tp_repack_copy1}")
+    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c2} --tapepool {tp_repack_copy2}")
+    cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
+
+    # copy 1: REPACK overrides existing DEFAULT
+    cta_cli.exec(
+        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 1 "
+        f"--tapepool {tp_repack_copy1} --archiveroutetype REPACK "
+        f"--comment 'REPACK route copy 1: all-REPACK test'"
+    )
+    # copy 2: both DEFAULT and REPACK — REPACK must win
+    cta_cli.exec(
+        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 "
+        f"--tapepool {tp_default_copy2} --archiveroutetype DEFAULT "
+        f"--comment 'DEFAULT route copy 2: all-REPACK test'"
+    )
+    cta_cli.exec(
+        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 "
+        f"--tapepool {tp_repack_copy2} --archiveroutetype REPACK "
+        f"--comment 'REPACK route copy 2: all-REPACK test'"
+    )
+
+    cta_cli.modify_tape_state(source_vid, "REPACKING")
+    try:
+        _submit_repack_request(
+            cta_cli,
+            vid_to_repack=source_vid,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
+        )
+
+        repack_ls = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {source_vid}"))
+        repack_req = repack_ls[0]
+        assert int(repack_req["archivedFiles"]) == int(repack_req["totalFilesToArchive"]), (
+            "Not all files were archived"
+        )
+
+        dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
+        print(f"Destination tape pools (all-REPACK routes): {dest_pools}")
+
+        assert tp_repack_copy1 in dest_pools, (
+            f"Expected REPACK pool {tp_repack_copy1!r} for copy 1 in {dest_pools!r}. "
+            "BASE_INSERT path: TAPE_POOL must carry the REPACK pool to the archive queue."
+        )
+        assert cta_default_tape_pool not in dest_pools, (
+            f"DEFAULT pool {cta_default_tape_pool!r} must not appear in {dest_pools!r}: "
+            "copy 1 has a REPACK route that must override DEFAULT."
+        )
         assert tp_repack_copy2 in dest_pools, (
             f"Expected REPACK pool {tp_repack_copy2!r} for copy 2 in {dest_pools!r}. "
-            "The REPACK archive route must take priority over the DEFAULT route for copy 2."
+            "ALTERNATE_INSERT path: REPACK_REARCHIVE_TAPE_POOLS must carry the REPACK pool."
         )
         assert tp_default_copy2 not in dest_pools, (
-            f"DEFAULT pool {tp_default_copy2!r} must not appear for copy 2 in {dest_pools!r} — "
+            f"DEFAULT pool {tp_default_copy2!r} must not appear for copy 2 in {dest_pools!r}: "
             "a REPACK route is defined for copy 2 and must take priority."
         )
     finally:
@@ -999,8 +1126,8 @@ def test_repack_pool_routing_multi_copy_each_copy_correct_pool(
             f"--archiveroutetype REPACK"
         )
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
-        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_copy1} --tapepool {original_pool_copy1}")
-        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_copy2} --tapepool {original_pool_copy2}")
+        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {orig_pool_c1}")
+        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c2} --tapepool {orig_pool_c2}")
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_repack_copy1}")
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_default_copy2}")
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_repack_copy2}")
