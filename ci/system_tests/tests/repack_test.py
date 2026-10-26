@@ -897,8 +897,7 @@ def test_repack_pool_routing_single_copy_repack_route_overrides_default(
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
         cta_cli.exec(
-            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 "
-            f"--archiveroutetype REPACK"
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 --archiveroutetype REPACK"
         )
         cta_cli.exec(f"cta-admin tape ch --vid {dest_vid} --tapepool {original_dest_pool}")
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_repack}")
@@ -937,10 +936,7 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
     dest_vid_c1, orig_pool_c1 = other_vids[0]["vid"], other_vids[0]["tapepool"]
     dest_vid_c2, orig_pool_c2 = other_vids[1]["vid"], other_vids[1]["tapepool"]
 
-    print(
-        f"Moving {dest_vid_c1} -> {tp_repack_copy1}, {dest_vid_c2} -> {tp_default_copy2}; "
-        f"source: {source_vid}"
-    )
+    print(f"Moving {dest_vid_c1} -> {tp_repack_copy1}, {dest_vid_c2} -> {tp_default_copy2}; source: {source_vid}")
     cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {tp_repack_copy1}")
     cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c2} --tapepool {tp_default_copy2}")
     cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
@@ -970,9 +966,7 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
 
         repack_ls = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {source_vid}"))
         repack_req = repack_ls[0]
-        assert int(repack_req["archivedFiles"]) == int(repack_req["totalFilesToArchive"]), (
-            "Not all files were archived"
-        )
+        assert int(repack_req["archivedFiles"]) == int(repack_req["totalFilesToArchive"]), "Not all files were archived"
 
         dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
         print(f"Destination tape pools (mixed REPACK/DEFAULT): {dest_pools}")
@@ -998,12 +992,10 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
         cta_cli.exec(
-            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 "
-            f"--archiveroutetype REPACK"
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 --archiveroutetype REPACK"
         )
         cta_cli.exec(
-            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 "
-            f"--archiveroutetype DEFAULT"
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
         )
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
         cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {orig_pool_c1}")
@@ -1048,10 +1040,7 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
     dest_vid_c1, orig_pool_c1 = other_vids[0]["vid"], other_vids[0]["tapepool"]
     dest_vid_c2, orig_pool_c2 = other_vids[1]["vid"], other_vids[1]["tapepool"]
 
-    print(
-        f"Moving {dest_vid_c1} -> {tp_repack_copy1}, {dest_vid_c2} -> {tp_repack_copy2}; "
-        f"source: {source_vid}"
-    )
+    print(f"Moving {dest_vid_c1} -> {tp_repack_copy1}, {dest_vid_c2} -> {tp_repack_copy2}; source: {source_vid}")
     cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {tp_repack_copy1}")
     cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c2} --tapepool {tp_repack_copy2}")
     cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
@@ -1086,9 +1075,7 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
 
         repack_ls = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {source_vid}"))
         repack_req = repack_ls[0]
-        assert int(repack_req["archivedFiles"]) == int(repack_req["totalFilesToArchive"]), (
-            "Not all files were archived"
-        )
+        assert int(repack_req["archivedFiles"]) == int(repack_req["totalFilesToArchive"]), "Not all files were archived"
 
         dest_pools = _get_dest_tape_pools(cta_cli, source_vid)
         print(f"Destination tape pools (all-REPACK routes): {dest_pools}")
@@ -1113,16 +1100,13 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
         cta_cli.exec(
-            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 "
-            f"--archiveroutetype REPACK"
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 --archiveroutetype REPACK"
         )
         cta_cli.exec(
-            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 "
-            f"--archiveroutetype DEFAULT"
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
         )
         cta_cli.exec(
-            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 "
-            f"--archiveroutetype REPACK"
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype REPACK"
         )
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
         cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {orig_pool_c1}")
