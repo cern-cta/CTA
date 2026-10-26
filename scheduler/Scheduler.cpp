@@ -1316,16 +1316,14 @@ void Scheduler::sortAndGetTapesForMountInfo(
     // manages it: it must not be selected for a new mount by this scheduler.
     auto schedulerBackendName = getSchedulerBackendName();
     for (const auto& mount : mountInfo->existingOrNextMounts) {
-      if (mount.schedulerBackendName.has_value() &&
-          mount.schedulerBackendName != schedulerBackendName &&
-          !mount.vid.empty()) {
+      if (mount.schedulerBackendName.has_value() && mount.schedulerBackendName != schedulerBackendName
+          && !mount.vid.empty()) {
         tapesInUse.insert(mount.vid);
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", mount.vid)
-              .add("drive", mount.driveName)
-              .add("schedulerBackend", mount.schedulerBackendName.value());
-        lc.log(log::DEBUG,
-               "In Scheduler::sortAndGetTapesForMountInfo(): cross-scheduler tapeAlreadyInUse found.");
+          .add("drive", mount.driveName)
+          .add("schedulerBackend", mount.schedulerBackendName.value());
+        lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): cross-scheduler tapeAlreadyInUse found.");
       }
     }
     std::list<std::string> ignoredDrives;
