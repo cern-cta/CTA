@@ -1308,8 +1308,26 @@ void Scheduler::sortAndGetTapesForMountInfo(
       }
     }
 
-    // Remove existing mounts not on the current scheduler DB
+    // Remove existing mounts not on the current scheduler DB.
+    // Before erasing them, record their tape VIDs in tapesInUse.
+    // These drives belong to a different scheduler backend and are excluded from the
+    // mount-scheduling loop below, so their VIDs would otherwise never reach tapesInUse.
+    // But the tape is physically loaded in the drive regardless of which scheduler
+    // manages it: it must not be selected for a new mount by this scheduler.
     auto schedulerBackendName = getSchedulerBackendName();
+    for (const auto& mount : mountInfo->existingOrNextMounts) {
+      if (mount.schedulerBackendName.has_value() &&
+          mount.schedulerBackendName != schedulerBackendName &&
+          !mount.vid.empty()) {
+        tapesInUse.insert(mount.vid);
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", mount.vid)
+              .add("drive", mount.driveName)
+              .add("schedulerBackend", mount.schedulerBackendName.value());
+        lc.log(log::DEBUG,
+               "In Scheduler::sortAndGetTapesForMountInfo(): cross-scheduler tapeAlreadyInUse found.");
+      }
+    }
     std::list<std::string> ignoredDrives;
     mountInfo->existingOrNextMounts.erase(
       std::remove_if(mountInfo->existingOrNextMounts.begin(),
@@ -1940,7 +1958,10 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
                                        (int) cta::common::dataStructures::DriveStatus::Transferring,
                                        (int) cta::common::dataStructures::DriveStatus::Unloading,
                                        (int) cta::common::dataStructures::DriveStatus::Unmounting,
-                                       (int) cta::common::dataStructures::DriveStatus::DrainingToDisk};
+                                       (int) cta::common::dataStructures::DriveStatus::DrainingToDisk,
+                                       // CleaningUp must be included: the drive still holds the tape loaded,
+                                       // so the VID must appear in tapesInUse to prevent a second mount.
+                                       (int) cta::common::dataStructures::DriveStatus::CleaningUp};
   std::set<int> activeMountTypes = {(int) cta::common::dataStructures::MountType::ArchiveForUser,
                                     (int) cta::common::dataStructures::MountType::ArchiveForRepack,
                                     (int) cta::common::dataStructures::MountType::Retrieve,

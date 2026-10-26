@@ -8425,6 +8425,176 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
   ASSERT_EQ(rq.getQueueCleanupDoCleanup(), triggerTapeStateChangeBehaviour.cleanupFlagActivated);
 }
 
+// Tests for the double-mount bug: a tape already loaded in one drive must not
+// be selected for a new mount, regardless of which scheduler owns the first drive
+// or what drive status it is in.
+
+TEST_P(SchedulerTest, tapesInUsePreventsDoubleMountWhenDriveIsCleaningUp) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  // Allow 2 concurrent write drives on the VO so the VO limit does not mask
+  // the tapesInUse check that is actually under test here.
+  catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(s_adminOnAdminHost, s_vo, 2);
+
+  // Queue an archive request large enough to trigger a mount.
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID";
+    request.fileSize = 100 * 1000 * 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL";
+    request.storageClass = s_storageClassName;
+    const auto archiveFileId =
+      scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // Create the library and one tape.
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, false, std::nullopt, "comment");
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+  catalogue.Tape()->tapeLabelled(s_vid, "tape_drive");
+
+  // Set drive0 into CleaningUp state with s_vid loaded — simulates the end of
+  // a session where the tape is still physically in the drive.
+  {
+    auto tapeDrive = catalogue.DriveState()->getTapeDrive("drive0");
+    ASSERT_TRUE(tapeDrive.has_value());
+    tapeDrive->driveStatus = common::dataStructures::DriveStatus::CleaningUp;
+    tapeDrive->mountType = common::dataStructures::MountType::ArchiveForUser;
+    tapeDrive->currentVid = s_vid;
+    tapeDrive->currentTapePool = s_tapePoolName_default;
+    catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
+  }
+
+  // Register tape_drive (the candidate drive) as Up.
+  {
+    cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
+    scheduler.reportDriveStatus(driveInfo,
+                                common::dataStructures::MountType::NoMount,
+                                common::dataStructures::DriveStatus::Down,
+                                lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                common::dataStructures::MountType::NoMount,
+                                common::dataStructures::DriveStatus::Up,
+                                lc);
+  }
+
+  // The tape (s_vid) is in a CleaningUp drive: getNextMount must not select it.
+  auto mount = scheduler.getNextMount(s_libraryName, "tape_drive", lc);
+  ASSERT_EQ(nullptr, mount.get());
+}
+
+TEST_P(SchedulerTest, tapesInUsePreventsDoubleMountFromCrossSchedulerDrive) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  // Queue an archive request large enough to trigger a mount.
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID";
+    request.fileSize = 100 * 1000 * 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL";
+    request.storageClass = s_storageClassName;
+    const auto archiveFileId =
+      scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // Create the library and one tape.
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost, s_libraryName, false, std::nullopt, "comment");
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+  catalogue.Tape()->tapeLabelled(s_vid, "cross_sched_drive");
+
+  // Create a drive belonging to a different scheduler backend, currently
+  // transferring with s_vid loaded.  Cross-scheduler drives are filtered out of
+  // the mount-scheduling loop, so without the fix the tape's VID would never
+  // reach tapesInUse — allowing a second mount of the same tape.
+  {
+    auto tapeDrive = getDefaultTapeDrive("cross_sched_drive");
+    tapeDrive.driveStatus = common::dataStructures::DriveStatus::Transferring;
+    tapeDrive.mountType = common::dataStructures::MountType::ArchiveForUser;
+    tapeDrive.currentVid = s_vid;
+    tapeDrive.currentTapePool = s_tapePoolName_default;
+    createTapeDriveWithSchedulerBackendConfig(catalogue, tapeDrive, "otherSchedulerBackendName");
+  }
+
+  // Register tape_drive (our scheduler) as Up.
+  {
+    cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
+    scheduler.reportDriveStatus(driveInfo,
+                                common::dataStructures::MountType::NoMount,
+                                common::dataStructures::DriveStatus::Down,
+                                lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                common::dataStructures::MountType::NoMount,
+                                common::dataStructures::DriveStatus::Up,
+                                lc);
+  }
+
+  // The only tape (s_vid) is mounted on a cross-scheduler drive: getNextMount
+  // must not select it again.
+  auto mount = scheduler.getNextMount(s_libraryName, "tape_drive", lc);
+  ASSERT_EQ(nullptr, mount.get());
+}
+
 #undef TEST_MOCK_DB
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
