@@ -145,6 +145,16 @@ class CtaCliHost(RemoteHost):
         print(f"Reclaiming tape {vid}")
         self.exec(f"cta-admin tape reclaim --vid {vid}")
 
+    def remove_all_tape_files_from_vid(self, vid: str, disk_instance: str) -> None:
+        """Remove every TAPE_FILE entry on a VID. Skips files where this is the last copy (tf rm safety guard)."""
+        tapefile_list = json.loads(self.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
+        for tf_entry in tapefile_list:
+            archive_id = tf_entry["af"]["archiveId"]
+            self.exec(
+                f"cta-admin tf rm -v {vid} -i {disk_instance} -I {archive_id} -r 'Test cleanup'",
+                throw_on_failure=False,
+            )
+
     def has_repack_request(self, vid: str) -> bool:
         try:
             re_ls_json = json.loads(self.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
