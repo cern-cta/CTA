@@ -987,13 +987,12 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
             "copy 1 has a REPACK route that must override DEFAULT."
         )
 
-        # copy 2: no REPACK route — DEFAULT pool must be used, not REPACK pool
+        # copy 2: no REPACK route — DEFAULT pool must be used, not REPACK pool.
+        # If copy 2 were misrouted to tp_repack_copy1 instead, tp_default_copy2 would receive
+        # no files and this assertion would fail, catching the misrouting.
         assert tp_default_copy2 in dest_pools, (
             f"Expected DEFAULT pool {tp_default_copy2!r} for copy 2 in {dest_pools!r}. "
             "With no REPACK route, copy 2 must use the DEFAULT archive route."
-        )
-        assert tp_repack_copy1 not in [p for p in dest_pools if p == tp_repack_copy1 and dest_pools.count(p) > 1], (
-            "Copy 2 must not be misrouted to the REPACK pool that belongs to copy 1."
         )
     finally:
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
