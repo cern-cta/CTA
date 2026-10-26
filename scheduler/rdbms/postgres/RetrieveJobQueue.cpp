@@ -685,6 +685,21 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   // MIN_ARCHIVE_REQUEST_AGE ? - to be checked if could be used same as for the
   // BASE_INSERT - the original copy NB from the retrieve
   // ALTERNATE_INSERT - the alternative COPY_NB to re-archive if any
+  //
+  // Archive-route resolution for repack:
+  // TAPE_POOL in REPACK_RETRIEVE_ACTIVE_QUEUE carries the archive destination pool set at
+  // expand time (makeJobRow). BASE_INSERT copies it directly to REPACK_ARCHIVE_PENDING_QUEUE
+  // for the primary copy (copy_nb == M.COPY_NB). ALTERNATE_INSERT handles additional copies
+  // using the REPACK_REARCHIVE_TAPE_POOLS / REPACK_REARCHIVE_COPY_NBS columns, which are
+  // never overwritten by moveJobsToDbActiveQueue.
+  //
+  // If archive-route resolution were moved here instead of being fixed in
+  // moveJobsToDbActiveQueue, both paths would need independent handling: BASE_INSERT covers
+  // only the copy whose COPY_NB matches the retrieved copy, while ALTERNATE_INSERT covers
+  // copies where REARCHIVE_COPY_VAL != M.COPY_NB. A file without a REPACK route for its
+  // primary copy number goes through BASE_INSERT only; if that case were resolved here via
+  // a catalogue lookup, the lookup would need to be per (STORAGE_CLASS, COPY_NB) and would
+  // not see the ALTERNATE_INSERT entries, which already have their pools set.
   std::string sql = R"SQL(
   WITH MOVED_ROWS AS (
     DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE rraq

@@ -93,10 +93,12 @@ class CtaCliHost(RemoteHost):
         return [tape for tape in tape_ls_json if not tape.get("full", False)]
 
     def get_first_vid_containing_files(self) -> str:
+        # TAPE.NB_MASTER_FILES and TAPE.DATA_IN_BYTES are cumulative write counters that are
+        # never decremented when files are moved off a tape (e.g. via repack). The only
+        # authoritative source for current file count is the TAPE_FILE table.
         tapes = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
         for tape in tapes:
-            nb_master_files = tape.get("nbMasterFiles", 0)
-            if nb_master_files not in (None, "0", 0):
+            if self.get_number_of_files_on_tape(tape["vid"]) > 0:
                 return tape["vid"]
         raise RuntimeError("Failed to find a VID to repack")
 
