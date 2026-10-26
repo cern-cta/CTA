@@ -831,6 +831,7 @@ def test_repack_pool_routing_no_repack_route_uses_default(
     finally:
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
+        cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
 
 
 def test_repack_pool_routing_single_copy_repack_route_overrides_default(
@@ -860,7 +861,9 @@ def test_repack_pool_routing_single_copy_repack_route_overrides_default(
 
     all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
     source_vid = cta_cli.get_first_vid_containing_files()
-    dest_tape = next(t for t in all_tapes if t["vid"] != source_vid)
+    dest_tape = next(
+        t for t in all_tapes if t["vid"] != source_vid and not t.get("full", False)
+    )
     dest_vid, original_dest_pool = dest_tape["vid"], dest_tape["tapepool"]
 
     print(f"Moving {dest_vid} -> {tp_repack}; source: {source_vid}")
@@ -896,6 +899,7 @@ def test_repack_pool_routing_single_copy_repack_route_overrides_default(
     finally:
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
+        cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
         cta_cli.exec(
             f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 --archiveroutetype REPACK"
         )
@@ -931,8 +935,8 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
 
     all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
     source_vid = cta_cli.get_first_vid_containing_files()
-    other_vids = [t for t in all_tapes if t["vid"] != source_vid]
-    assert len(other_vids) >= 2, "Need at least 2 non-source tapes for the 2 destination pools"
+    other_vids = [t for t in all_tapes if t["vid"] != source_vid and not t.get("full", False)]
+    assert len(other_vids) >= 2, "Need at least 2 non-source, non-full tapes for the 2 destination pools"
     dest_vid_c1, orig_pool_c1 = other_vids[0]["vid"], other_vids[0]["tapepool"]
     dest_vid_c2, orig_pool_c2 = other_vids[1]["vid"], other_vids[1]["tapepool"]
 
@@ -991,6 +995,7 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
     finally:
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
+        cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
         cta_cli.exec(
             f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 --archiveroutetype REPACK"
         )
@@ -1035,8 +1040,8 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
 
     all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
     source_vid = cta_cli.get_first_vid_containing_files()
-    other_vids = [t for t in all_tapes if t["vid"] != source_vid]
-    assert len(other_vids) >= 2, "Need at least 2 non-source tapes for the 2 destination pools"
+    other_vids = [t for t in all_tapes if t["vid"] != source_vid and not t.get("full", False)]
+    assert len(other_vids) >= 2, "Need at least 2 non-source, non-full tapes for the 2 destination pools"
     dest_vid_c1, orig_pool_c1 = other_vids[0]["vid"], other_vids[0]["tapepool"]
     dest_vid_c2, orig_pool_c2 = other_vids[1]["vid"], other_vids[1]["tapepool"]
 
@@ -1099,6 +1104,7 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
     finally:
         cta_cli.exec(f"cta-admin repack rm --vid {source_vid}", throw_on_failure=False)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
+        cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
         cta_cli.exec(
             f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 1 --archiveroutetype REPACK"
         )

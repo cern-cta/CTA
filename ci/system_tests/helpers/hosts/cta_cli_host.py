@@ -95,9 +95,8 @@ class CtaCliHost(RemoteHost):
     def get_first_vid_containing_files(self) -> str:
         tapes = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
         for tape in tapes:
-            occupancy = tape.get("occupancy", 0)
-            last_fseq = tape.get("lastFseq", 0)
-            if occupancy not in (None, "0", 0) and last_fseq not in (None, "0", 0):
+            nb_master_files = tape.get("nbMasterFiles", 0)
+            if nb_master_files not in (None, "0", 0):
                 return tape["vid"]
         raise RuntimeError("Failed to find a VID to repack")
 
