@@ -48,4 +48,4 @@ validate-python-lock:
   before_script:
     - !reference [.python-version, before_script]
   script:
-    - uv lock --check
+    - uv lock --check --verbose

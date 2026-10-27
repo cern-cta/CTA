@@ -5,6 +5,7 @@ Dependencies and tool configuration are managed in the root [pyproject.toml](../
 
 ## Setup
 
+Use the uv version specified by `dev.uvVersion` in [project.json](../../project.json).
 Run from the repository root:
 
 ```sh

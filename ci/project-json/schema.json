@@ -51,6 +51,7 @@
       "required": [
         "cppVersion",
         "pythonVersion",
+        "uvVersion",
         "defaultBuildType",
         "eosImageTag",
         "eosImageRepository",
@@ -60,6 +61,11 @@
         "defaultPlatform"
       ],
       "properties": {
+        "uvVersion": {
+          "description": "Pinned uv version used to resolve and install the Python workspace in CI.",
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
         "pythonVersion": {
           "description": "Python major.minor version used by workspace CI jobs.",
           "type": "string",

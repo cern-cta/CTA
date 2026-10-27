@@ -281,6 +281,7 @@ test-cta-rpm-install:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/cta-release/**/*
+        - tools/ctaops-udev/**/*
         - project.json
         - packaging/**/*
         - "**/CMakeLists.txt"
@@ -312,6 +313,7 @@ test-cta-rpm-install:
                                   cta-rmcd
                                   cta-smc
                                   cta-tools-rs
+                                  ctaops-udev
                                   eos-server
                                   eos-client
     - |

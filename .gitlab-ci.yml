@@ -258,6 +258,10 @@ variables:
     # Use the bootstrap interpreter only to read the configured workspace version.
     - UV_PYTHON=$(python3 -c 'import json; print(json.load(open("project.json"))["dev"]["pythonVersion"])')
     - export UV_PYTHON
+    # Pipeline images may contain a different resolver than the one used for the lockfile.
+    - UV_VERSION=$(python3 -c 'import json; print(json.load(open("project.json"))["dev"]["uvVersion"])')
+    - python3 -m pip install --disable-pip-version-check "uv==$UV_VERSION"
+    - uv --version
 
 .python-workspace:
   rules:
