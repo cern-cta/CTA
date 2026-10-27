@@ -43,10 +43,9 @@ Reference parseReference(std::string_view reference, std::size_t offset) {
   const bool hasFallback = suffix.starts_with(":-");
   if (nameEnd == 0 || (!suffix.empty() && !hasFallback)) {
     // Avoid including scalar contents or defaults, which may contain credentials, in diagnostics.
-    throw cta::exception::UserError(
-      "Invalid environment substitution at byte " + std::to_string(offset)
-        + "; expected ${NAME}, optionally with :-fallback.",
-      false);
+    throw cta::exception::UserError("Invalid environment substitution at byte " + std::to_string(offset)
+                                    + "; expected ${NAME}, optionally with :-fallback.",
+                                  false);
   }
   return {reference.substr(0, nameEnd), hasFallback ? std::optional {suffix.substr(2)} : std::nullopt};
 }

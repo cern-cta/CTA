@@ -57,9 +57,7 @@ TEST_F(cta_UtilsTest, readFileAsString_rejectsReadErrors) {
 TEST_F(cta_UtilsTest, readStreamAsString_rejectsErrorsAfterPartialProgress) {
   class FailingBuffer : public std::streambuf {
   public:
-    FailingBuffer() {
-      setg(m_contents.data(), m_contents.data(), m_contents.data() + m_contents.size());
-    }
+    FailingBuffer() { setg(m_contents.data(), m_contents.data(), m_contents.data() + m_contents.size()); }
 
     std::size_t bytesRead() const { return static_cast<std::size_t>(gptr() - eback()); }
 
@@ -70,6 +68,7 @@ TEST_F(cta_UtilsTest, readStreamAsString_rejectsErrorsAfterPartialProgress) {
     // Deliver complete chunks and part of the next chunk before failing.
     std::string m_contents = std::string(20000, 'x');
   } buffer;
+
   std::istream input(&buffer);
   std::string result = "unchanged";
 
