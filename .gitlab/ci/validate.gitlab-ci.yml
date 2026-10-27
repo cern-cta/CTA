@@ -32,3 +32,20 @@ validate-project-json:
     - when: on_success
   script:
     - python3 ./ci/project-json/validate_project_json.py
+
+validate-python-lock:
+  stage: validate
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - !reference [.python-workspace, rules]
+  image: $IMAGE_DEFAULT
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  before_script:
+    - !reference [.python-version, before_script]
+  script:
+    - uv lock --check

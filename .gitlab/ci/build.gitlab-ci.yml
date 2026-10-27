@@ -252,3 +252,28 @@ build-docs:
     paths:
       - build/docs/site/
     expire_in: 7 days
+
+build-python:
+  extends: .python-workspace
+  stage: build
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13" || $PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - !reference [.python-workspace, rules]
+  script:
+    # uv builds each wheel from its source archive, checking generated-file inclusion.
+    - uv build --all-packages --out-dir build/python
+    - uv venv build/python-smoke
+    - uv pip install --python build/python-smoke/bin/python build/python/*.whl
+    # Run outside the source tree so imports must come from the installed wheels.
+    - |
+      cd /tmp
+      "$CI_PROJECT_DIR/build/python-smoke/bin/ctaops" --help
+      "$CI_PROJECT_DIR/build/python-smoke/bin/python" -c 'import cta.sdk.client.grpc.protobuf_api; import ctaops.sdk; import ctaops.utils'
+  artifacts:
+    expire_in: 7 days
+    paths:
+      - build/python/

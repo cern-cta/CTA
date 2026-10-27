@@ -252,6 +252,49 @@ variables:
         exit 0
       fi
 
+.python-version:
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    # Use the bootstrap interpreter only to read the configured workspace version.
+    - UV_PYTHON=$(python3 -c 'import json; print(json.load(open("project.json"))["dev"]["pythonVersion"])')
+    - export UV_PYTHON
+
+.python-workspace:
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+    - changes:
+        - "**/*.py"
+        - "**/pyproject.toml"
+        - "project.json"
+        - "ci/project-json/schema.json"
+        - "pyproject.toml"
+        - "uv.lock"
+        - "**/ruff.toml"
+        - "**/.ruff.toml"
+        - "lib/python/**/*"
+        - "tools/ctaops-cli/**/*"
+        - "tools/ctaops-udev/**/*"
+        - "lib/protobuf/external/xrootd-ssi-protobuf-interface"
+        - ".gitmodules"
+        - "LICENSES/GPL-3.0-or-later.txt"
+        - "**/requirements.txt"
+        - "ci/docs/**/*"
+        - "ci/docker/pipeline/**/*"
+        - ".pre-commit-config.yaml"
+        - ".gitlab-ci.yml"
+        - ".gitlab/ci/*.gitlab-ci.yml"
+      when: on_success
+  image:
+    name: $IMAGE_DEFAULT
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_DEPTH: "0"  # hatch-vcs needs the CTA tags and history.
+    GIT_SUBMODULE_STRATEGY: "none"
+  before_script:
+    - !reference [.python-version, before_script]
+    - git submodule update --init lib/protobuf/external/xrootd-ssi-protobuf-interface
+
 default:
   image: $IMAGE_DEFAULT
   interruptible: true

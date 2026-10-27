@@ -50,6 +50,7 @@
       "type": "object",
       "required": [
         "cppVersion",
+        "pythonVersion",
         "defaultBuildType",
         "eosImageTag",
         "eosImageRepository",
@@ -59,6 +60,11 @@
         "defaultPlatform"
       ],
       "properties": {
+        "pythonVersion": {
+          "description": "Python major.minor version used by workspace CI jobs.",
+          "type": "string",
+          "pattern": "^3\\.[0-9]+$"
+        },
         "cppVersion": {
           "description": "C++ version to use for building the project.",
           "type": "string",

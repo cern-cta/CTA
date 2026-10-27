@@ -542,6 +542,23 @@ Configures package repositories, signing keys and version locks for CTA and its 
 %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
 %{_bindir}/cta-versionlock
 
+%package -n ctaops-udev
+Summary: CTA tape device udev rules and helper
+BuildArch: noarch
+Requires: python3
+Requires: systemd-udev
+%description -n ctaops-udev
+Provides udev rules and a helper for stable CTA tape device names.
+%files -n ctaops-udev
+%license COPYING
+%{_prefix}/lib/udev/rules.d/62-ctaops.rules
+%{_prefix}/lib/udev/ctaops-udev
+%config(noreplace) %{_prefix}/lib/udev/ctaops-udev.ini
+%{_mandir}/man8/ctaops-udev.8ctaops*
+
+%post -n ctaops-udev
+/usr/sbin/udevadm control --reload-rules && /usr/sbin/udevadm trigger
+
 # =========================================================================
 #  Tests
 # =========================================================================

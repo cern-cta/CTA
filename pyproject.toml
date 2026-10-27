@@ -8,9 +8,17 @@ members = ["lib/python/*", "tools/ctaops-cli"]
 [dependency-groups]
 dev = [{include-group = "lint"}, {include-group = "unit-tests"}]
 lint = ["ruff==0.14.9", "pyright[nodejs]", "pre-commit>=4.3.0", "hatchling>=1.27.0"]
-unit-tests = ["pytest>=8", "cattrs", "grpcio-tools", "PyYAML", "jsonschema", "typing-extensions>=4.4.0", {include-group = "docs"}]
+unit-tests = ["pytest>=8", "pytest-cov", "cattrs", "grpcio-tools", "PyYAML", "jsonschema", "typing-extensions>=4.4.0", {include-group = "docs"}]
 # These scripts also run independently in existing pipeline environments.
 scripts = ["PyYAML", "jsonschema", "packaging>=24", "typing-extensions>=4.4.0", "pyjwt", "cryptography"]
+# Imports needed for static analysis; pytest-asyncio is only needed to run system tests.
+type-check = [
+    {include-group = "dev"},
+    {include-group = "scripts"},
+    "kubernetes>=35.0.0,<36",
+    "oauthlib>=3.2.2",
+    "fastjsonschema>=2.21.2",
+]
 system-tests = [
     "kubernetes>=35.0.0,<36",
     "pytest>=8.0.0",
@@ -65,6 +73,33 @@ system-tests = {requires-python = ">=3.10"}
 [tool.pytest.ini_options]
 addopts = "-ra --ignore=ci/system_tests"
 testpaths = ["ci", "lib/python", "tools/ctaops-cli/tests", "tools/ctaops-udev/tests"]
+
+# Keep XML filenames relative to the repository root for GitLab diff annotations.
+[tool.coverage.run]
+source = ["."]
+relative_files = true
+omit = [
+    "ci/system_tests/*",
+    "*/tests/*",
+    "*/test_*.py",
+    "*/*_test.py",
+    "*/conftest.py",
+    "*/protobuf_generated/*",
+    "build/*",
+    "tmp/*",
+    ".venv/*",
+    "**/venv/*",
+    "lib/protobuf/external/*",
+]
+
+[tool.coverage.report]
+include_namespace_packages = true
+include = [
+    "ci/*",
+    "lib/python/*/src/*",
+    "tools/ctaops-cli/src/*",
+    "tools/ctaops-udev/src/*",
+]
 
 [tool.ruff]
 line-length = 120
