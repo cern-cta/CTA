@@ -13,8 +13,9 @@ namespace cta::catalogue {
 bool TapeFileWritten::operator==(const TapeFileWritten& rhs) const {
   return TapeItemWritten::operator==(rhs) && archiveFileId == rhs.archiveFileId && diskInstance == rhs.diskInstance
          && diskFileId == rhs.diskFileId && diskFileOwnerUid == rhs.diskFileOwnerUid && diskFileGid == rhs.diskFileGid
-         && size == rhs.size && checksumBlob == rhs.checksumBlob && storageClassName == rhs.storageClassName
-         && blockId == rhs.blockId && copyNb == rhs.copyNb && tapeDrive == rhs.tapeDrive;
+         && size == rhs.size && checksumBlob.hasSameChecksums(rhs.checksumBlob)
+         && storageClassName == rhs.storageClassName && blockId == rhs.blockId && copyNb == rhs.copyNb
+         && tapeDrive == rhs.tapeDrive;
 }
 
 //------------------------------------------------------------------------------

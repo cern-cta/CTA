@@ -138,7 +138,7 @@ TEST_F(ObjectStore, SorterInsertArchiveRequest) {
       ASSERT_EQ(archiveFile.archiveFileID, aFile.archiveFileID);
 
       ASSERT_EQ(archiveFile.diskFileId, aFile.diskFileId);
-      ASSERT_EQ(archiveFile.checksumBlob, aFile.checksumBlob);
+      ASSERT_TRUE(archiveFile.checksumBlob.hasSameChecksums(aFile.checksumBlob));
       ASSERT_EQ(archiveFile.creationTime, aFile.creationTime);
       ASSERT_EQ(archiveFile.reconciliationTime, aFile.reconciliationTime);
       ASSERT_EQ(archiveFile.diskFileInfo, aFile.diskFileInfo);
@@ -167,7 +167,7 @@ TEST_F(ObjectStore, SorterInsertArchiveRequest) {
       ASSERT_EQ(archiveFile.archiveFileID, aFile.archiveFileID);
 
       ASSERT_EQ(archiveFile.diskFileId, aFile.diskFileId);
-      ASSERT_EQ(archiveFile.checksumBlob, aFile.checksumBlob);
+      ASSERT_TRUE(archiveFile.checksumBlob.hasSameChecksums(aFile.checksumBlob));
       ASSERT_EQ(archiveFile.creationTime, aFile.creationTime);
       ASSERT_EQ(archiveFile.reconciliationTime, aFile.reconciliationTime);
       ASSERT_EQ(archiveFile.diskFileInfo, aFile.diskFileInfo);
@@ -308,7 +308,7 @@ TEST_F(ObjectStore, SorterInsertRetrieveRequest) {
     cta::common::dataStructures::ArchiveFile aFile = elt.archiveFile;
     ASSERT_EQ(aFile.archiveFileID, rqc.archiveFile.archiveFileID);
     ASSERT_EQ(aFile.diskFileId, rqc.archiveFile.diskFileId);
-    ASSERT_EQ(aFile.checksumBlob, rqc.archiveFile.checksumBlob);
+    ASSERT_TRUE(aFile.checksumBlob.hasSameChecksums(rqc.archiveFile.checksumBlob));
     ASSERT_EQ(aFile.creationTime, rqc.archiveFile.creationTime);
     ASSERT_EQ(aFile.reconciliationTime, rqc.archiveFile.reconciliationTime);
     ASSERT_EQ(aFile.diskFileInfo, rqc.archiveFile.diskFileInfo);
@@ -358,7 +358,7 @@ TEST_F(ObjectStore, SorterInsertRetrieveRequest) {
     cta::common::dataStructures::ArchiveFile aFile = elt.archiveFile;
     ASSERT_EQ(aFile.archiveFileID, rqc.archiveFile.archiveFileID);
     ASSERT_EQ(aFile.diskFileId, rqc.archiveFile.diskFileId);
-    ASSERT_EQ(aFile.checksumBlob, rqc.archiveFile.checksumBlob);
+    ASSERT_TRUE(aFile.checksumBlob.hasSameChecksums(rqc.archiveFile.checksumBlob));
     ASSERT_EQ(aFile.creationTime, rqc.archiveFile.creationTime);
     ASSERT_EQ(aFile.reconciliationTime, rqc.archiveFile.reconciliationTime);
     ASSERT_EQ(aFile.diskFileInfo, rqc.archiveFile.diskFileInfo);
@@ -837,7 +837,8 @@ TEST_F(ObjectStore, SorterInsertArchiveRequestNotFetched) {
 
     ASSERT_EQ(elt.copyNb, 1);
     ASSERT_EQ(elt.archiveFile.archiveFileID, 3L);
-    ASSERT_EQ(elt.archiveFile.checksumBlob, cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
+    ASSERT_TRUE(
+      elt.archiveFile.checksumBlob.hasSameChecksums(cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234")));
     ASSERT_EQ(elt.archiveFile.diskInstance, "eoseos");
     ASSERT_EQ(elt.archiveFile.diskFileId, "eos://diskFile");
 
@@ -845,7 +846,8 @@ TEST_F(ObjectStore, SorterInsertArchiveRequestNotFetched) {
 
     ASSERT_EQ(elt2.copyNb, 2);
     ASSERT_EQ(elt2.archiveFile.archiveFileID, 3L);
-    ASSERT_EQ(elt2.archiveFile.checksumBlob, cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
+    ASSERT_TRUE(
+      elt2.archiveFile.checksumBlob.hasSameChecksums(cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234")));
     ASSERT_EQ(elt.archiveFile.diskInstance, "eoseos");
     ASSERT_EQ(elt.archiveFile.diskFileId, "eos://diskFile");
   }
@@ -981,7 +983,8 @@ TEST_F(ObjectStore, SorterInsertRetrieveRequestNotFetched) {
     ASSERT_EQ(elt.copyNb, 1);
     ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).vid, "Tape0");
     ASSERT_EQ(elt.archiveFile.tapeFiles.at(1).fSeq, 1);
-    ASSERT_EQ(elt.archiveFile.checksumBlob, cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234"));
+    ASSERT_TRUE(
+      elt.archiveFile.checksumBlob.hasSameChecksums(cta::checksum::ChecksumBlob(cta::checksum::ADLER32, "1234")));
     ASSERT_EQ(elt.archiveFile.diskInstance, "eoseos");
     ASSERT_EQ(elt.archiveFile.fileSize, 1000);
     ASSERT_EQ(elt.archiveFile.storageClass, "sc");

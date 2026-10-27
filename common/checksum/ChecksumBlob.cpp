@@ -94,7 +94,7 @@ void ChecksumBlob::validate(const ChecksumBlob& blob) const {
   }
 
   if (!foundCommonType) {
-    throw exception::ChecksumTypeMismatch("No common checksum type found between archive and tape files");
+    throw exception::ChecksumTypeMismatch("No common checksum type found between checksum blobs");
   }
 }
 

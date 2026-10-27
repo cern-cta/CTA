@@ -13,7 +13,7 @@ namespace cta::catalogue {
 bool ArchiveFileRowWithoutTimestamps::operator==(const ArchiveFileRowWithoutTimestamps& rhs) const {
   return archiveFileId == rhs.archiveFileId && diskInstance == rhs.diskInstance && diskFileId == rhs.diskFileId
          && diskFileOwnerUid == rhs.diskFileOwnerUid && diskFileGid == rhs.diskFileGid && size == rhs.size
-         && checksumBlob == rhs.checksumBlob && storageClassName == rhs.storageClassName;
+         && checksumBlob.hasSameChecksums(rhs.checksumBlob) && storageClassName == rhs.storageClassName;
 }
 
 //------------------------------------------------------------------------------

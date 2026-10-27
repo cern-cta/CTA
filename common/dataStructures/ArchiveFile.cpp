@@ -17,8 +17,8 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 bool ArchiveFile::operator==(const ArchiveFile& rhs) const {
   return archiveFileID == rhs.archiveFileID && diskFileId == rhs.diskFileId && diskInstance == rhs.diskInstance
-         && fileSize == rhs.fileSize && checksumBlob == rhs.checksumBlob && storageClass == rhs.storageClass
-         && diskFileInfo == rhs.diskFileInfo && tapeFiles == rhs.tapeFiles;
+         && fileSize == rhs.fileSize && checksumBlob.hasSameChecksums(rhs.checksumBlob)
+         && storageClass == rhs.storageClass && diskFileInfo == rhs.diskFileInfo && tapeFiles == rhs.tapeFiles;
 }
 
 //------------------------------------------------------------------------------
