@@ -8512,10 +8512,12 @@ TEST_P(SchedulerTest, tapesInUsePreventsDoubleMountWhenDriveIsCleaningUp) {
   auto mount = scheduler.getNextMount(s_libraryName, "tape_drive", lc);
   ASSERT_EQ(nullptr, mount.get());
 
-  // Simulate crash recovery: DriveHandler::runChild() detects Crashed+Cleanup and calls
-  // puttingDriveDown(), setting drive0 to Down and clearing its VID.  tape_drive remains Up.
-  // Down is not in activeDriveStatuses, so drive0 leaves existingOrNextMounts, s_vid is no
-  // longer in tapesInUse, and tape_drive must now receive a mount for it.
+  // Simulate crash recovery of drive0 (the drive that was cleaning up with s_vid loaded).
+  // DriveHandler::runChild() detects Crashed+Cleanup and calls puttingDriveDown(), which
+  // sets drive0 to DriveStatus::Down. DriveStatus::Down is not in activeDriveStatuses, so
+  // drive0 is excluded from existingOrNextMounts and s_vid is freed from tapesInUse.
+  // tape_drive (the drive requesting the next mount, a separate drive) was never touched
+  // and remains DriveStatus::Up — it must now be granted the mount for s_vid.
   {
     auto tapeDrive = catalogue.DriveState()->getTapeDrive("drive0");
     ASSERT_TRUE(tapeDrive.has_value());
