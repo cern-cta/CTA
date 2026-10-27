@@ -167,6 +167,7 @@ static constexpr const char* kDbMoveArchiveToActive = "move archive to active";
 static constexpr const char* kDbUpdateMountLastFetch = "update mount_last_fetch";
 static constexpr const char* kDbFailTransferBatchArchive = "fail transfer batch archive";
 static constexpr const char* kDbFailTransferBatchRetrieve = "fail transfer batch retrieve";
+static constexpr const char* kDbFailReportBatchArchive = "fail report batch archive";
 static constexpr const char* kDbDeleteMountLastFetchTimes = "delete mount_last_fetch_times";
 static constexpr const char* kDbUpdateInactiveReport = "update inactive report";
 static constexpr const char* kDbDeleteFailedQueues = "delete failed";

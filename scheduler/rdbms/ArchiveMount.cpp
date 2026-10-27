@@ -377,6 +377,61 @@ void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Archive
   }
 }
 
+void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch,
+                                   log::LogContext& lc) {
+  // Called after FailedReportMoveToQueue: the tape write and catalogue update succeeded,
+  // but setJobBatchTransferred() failed.  prepareFailReport() has already incremented
+  // each job's totalReportRetries and updated reportFailureLogs in memory.
+  //
+  // Jobs that have exhausted their report-retry budget (or need no report) are moved
+  // to ARCHIVE_FAILED_QUEUE.  Jobs that still have retries remaining have IS_REPORTING
+  // reset to FALSE so the flagging loop picks them up for another attempt.
+  if (batch.empty()) return;
+
+  std::vector<postgres::ArchiveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
+  for (auto* dbJob : batch) {
+    auto* rdbJob = dynamic_cast<ArchiveRdbJob*>(dbJob);
+    if (!rdbJob) {
+      throw exception::Exception("In ArchiveMount::failReportBatch(): unexpected job type (not ArchiveRdbJob)");
+    }
+    auto* row = &rdbJob->m_jobRow;
+    const bool exceed = (rdbJob->reportType == SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired)
+                     || (row->totalReportRetries >= row->maxReportRetries);
+    if (exceed) {
+      (rdbJob->isRepack ? exceedRepack : exceedUser).push_back(row);
+    } else {
+      (rdbJob->isRepack ? requeueRepack : requeueUser).push_back(row);
+    }
+  }
+
+  {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("batchSize", batch.size())
+          .add("nTerminalFailures", exceedUser.size() + exceedRepack.size())
+          .add("nRetryReport", requeueUser.size() + requeueRepack.size());
+    lc.log(log::INFO, "In ArchiveMount::failReportBatch(): processing failed report batch.");
+  }
+
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    uint64_t totalRows = 0;
+    if (!exceedUser.empty())
+      totalRows += postgres::ArchiveJobQueueRow::failReportBatchExceedRetries(txn, exceedUser, false);
+    if (!exceedRepack.empty())
+      totalRows += postgres::ArchiveJobQueueRow::failReportBatchExceedRetries(txn, exceedRepack, true);
+    if (!requeueUser.empty())
+      totalRows += postgres::ArchiveJobQueueRow::failReportBatchRequeue(txn, requeueUser, false);
+    if (!requeueRepack.empty())
+      totalRows += postgres::ArchiveJobQueueRow::failReportBatchRequeue(txn, requeueRepack, true);
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailReportBatchArchive);
+    txn.setRowCountForTelemetry(totalRows);
+    txn.commit();
+  } catch (...) {
+    txn.abort();
+    throw;
+  }
+}
+
 void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                           log::LogContext& lc) {
   try {

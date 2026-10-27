@@ -157,10 +157,36 @@ public:
 #ifdef CTA_PGSCHED
   /**
    * Flush a batch of failed archive jobs to the scheduler DB in a single transaction.
+   * Used by MigrationReportPacker::flushFailedJobs() for jobs accumulated after tape
+   * write failures (ReportError path) and skipped-file failures (ReportSkipped path).
    * prepareFailTransfer() must have been called on each job before this call.
    */
   virtual void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs,
                                  cta::log::LogContext& lc);
+
+  /**
+   * Batch-fail the unwrapped DB-level jobs returned in failedToReportArchiveJobs when
+   * reportJobsBatchTransferred() throws FailedReportCatalogueUpdate.
+   * These jobs never reached the catalogue so they are treated as transfer failures:
+   * prepareFailTransfer() is called here on each job before delegating to the DB-level
+   * failTransferBatch().  The queue is drained; ownership is released after the call.
+   */
+  void failTransferBatch(std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
+                         const std::string& failureReason,
+                         cta::log::LogContext& lc);
+
+  /**
+   * Batch-fail reporting for the unwrapped DB-level jobs returned in
+   * failedToReportArchiveJobs when reportJobsBatchTransferred() throws
+   * FailedReportMoveToQueue.  The tape write and catalogue update succeeded for these
+   * jobs, but the scheduler-DB state update failed.  prepareFailReport() is called here
+   * on each job before delegating to the DB-level failReportBatch(), which either moves
+   * the job to ARCHIVE_FAILED_QUEUE (retries exhausted) or resets IS_REPORTING (retry).
+   * The queue is drained; ownership is released after the call.
+   */
+  void failReportBatch(std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
+                       const std::string& failureReason,
+                       cta::log::LogContext& lc);
 #endif
   /**
    * Returns the tape pool of the tape to be mounted.

@@ -226,6 +226,10 @@ public:
       throw cta::exception::NotImplementedException();
     }
 
+    void failReportBatch(std::vector<SchedulerDatabase::ArchiveJob*>&, log::LogContext&) override {
+      throw cta::exception::NotImplementedException();
+    }
+
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -248,6 +252,7 @@ public:
 
 #ifdef CTA_PGSCHED
     void prepareFailTransfer(const std::string&) override { throw cta::exception::NotImplementedException(); }
+    void prepareFailReport(const std::string&) override { throw cta::exception::NotImplementedException(); }
 #endif
 
   private:

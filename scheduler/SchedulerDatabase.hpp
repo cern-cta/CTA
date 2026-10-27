@@ -230,6 +230,16 @@ public:
      */
     virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const = 0;
     virtual void failTransferBatch(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
+
+    /**
+     * Batch-fail reporting for a set of jobs whose catalogue write succeeded but whose
+     * scheduler-DB state update failed (FailedReportMoveToQueue path).
+     * prepareFailReport() must have been called on each job before this call to update
+     * in-memory retry counters and failure logs.
+     * pgsched only — objectstore handles this job by job via failReport().
+     */
+    virtual void failReportBatch(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
+
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };
@@ -262,6 +272,14 @@ public:
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
 #ifdef CTA_PGSCHED
     virtual void prepareFailTransfer(const std::string& failureReason) = 0;
+
+    /**
+     * Update in-memory report-retry counters and failure log ready for a subsequent
+     * failReportBatch() call.  Called when reportJobsBatchTransferred() throws
+     * FailedReportMoveToQueue: the tape write and catalogue update succeeded, but
+     * the scheduler-DB state update failed.
+     */
+    virtual void prepareFailReport(const std::string& failureReason) = 0;
 #endif
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
     virtual void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) = 0;

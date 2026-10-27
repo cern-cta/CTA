@@ -1144,4 +1144,114 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   return nrows;
 }
 
+uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
+                                                          const std::vector<ArchiveJobQueueRow*>& jobs,
+                                                          bool isRepack) {
+  if (jobs.empty()) return 0;
+  const std::string repack_prefix = isRepack ? "REPACK_" : "";
+
+  // Build per-row VALUES CTE: (job_id, total_report_retries, report_failure_log,
+  //                             archive_request_id, req_job_count)
+  // For non-repack multi-copy requests (req_job_count > 1) we must move ALL copies
+  // of the same archive request atomically, matching the individual failReport()
+  // → moveJobToFailedQueueTable() semantics. Repack always has req_job_count = 1.
+  std::string values_rows;
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    if (i > 0) values_rows += ",\n    ";
+    const std::string s = std::to_string(i);
+    values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s
+                 + "::TEXT, :REQID" + s + "::BIGINT, :RJC" + s + "::SMALLINT)";
+  }
+
+  // Atomically update STATUS to ReadyForDeletion and move to failed queue in one CTE.
+  // For multi-copy requests the WHERE clause matches all sibling copies by
+  // ARCHIVE_REQUEST_ID so the entire request is moved atomically.
+  std::string sql = R"SQL(
+  WITH per_job(job_id, total_report_retries, report_failure_log,
+               archive_request_id, req_job_count) AS (
+    VALUES )SQL";
+  sql += values_rows;
+  sql += R"SQL(
+  ),
+  updated AS (
+    UPDATE )SQL";
+  sql += repack_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE a SET
+      STATUS = 'ReadyForDeletion'::ARCHIVE_JOB_STATUS,
+      TOTAL_REPORT_RETRIES = d.total_report_retries,
+      IS_REPORTING = FALSE,
+      REPORT_FAILURE_LOG = d.report_failure_log,
+      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+    FROM per_job d
+    WHERE (d.req_job_count = 1 AND a.JOB_ID = d.job_id)
+       OR (d.req_job_count > 1 AND a.ARCHIVE_REQUEST_ID = d.archive_request_id)
+    RETURNING a.*
+  )
+  INSERT INTO )SQL";
+  sql += repack_prefix + "ARCHIVE_FAILED_QUEUE SELECT * FROM updated";
+
+  auto stmt = txn.getConn().createStmt(sql);
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    const auto* row = jobs[i];
+    const std::string s = std::to_string(i);
+    stmt.bindUint64(":JID" + s, row->jobId);
+    stmt.bindUint32(":TRR" + s, row->totalReportRetries);
+    stmt.bindString(":RFL" + s, row->reportFailureLogs.value_or(""));
+    stmt.bindUint64(":REQID" + s, row->reqId);
+    stmt.bindUint32(":RJC" + s, row->reqJobCount);
+  }
+
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailReportBatchArchive);
+  stmt.executeNonQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
+}
+
+uint64_t ArchiveJobQueueRow::failReportBatchRequeue(Transaction& txn,
+                                                    const std::vector<ArchiveJobQueueRow*>& jobs,
+                                                    bool isRepack) {
+  if (jobs.empty()) return 0;
+  const std::string repack_prefix = isRepack ? "REPACK_" : "";
+
+  // Build per-row VALUES CTE: (job_id, total_report_retries, report_failure_log)
+  std::string values_rows;
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    if (i > 0) values_rows += ",\n    ";
+    const std::string s = std::to_string(i);
+    values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT)";
+  }
+
+  // Reset IS_REPORTING so the flagging loop will pick these jobs up for another attempt.
+  std::string sql = R"SQL(
+  WITH per_job(job_id, total_report_retries, report_failure_log) AS (
+    VALUES )SQL";
+  sql += values_rows;
+  sql += R"SQL(
+  )
+  UPDATE )SQL";
+  sql += repack_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE a SET
+    IS_REPORTING = FALSE,
+    TOTAL_REPORT_RETRIES = d.total_report_retries,
+    REPORT_FAILURE_LOG = d.report_failure_log,
+    LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+  FROM per_job d
+  WHERE a.JOB_ID = d.job_id
+  )SQL";
+
+  auto stmt = txn.getConn().createStmt(sql);
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    const auto* row = jobs[i];
+    const std::string s = std::to_string(i);
+    stmt.bindUint64(":JID" + s, row->jobId);
+    stmt.bindUint32(":TRR" + s, row->totalReportRetries);
+    stmt.bindString(":RFL" + s, row->reportFailureLogs.value_or(""));
+  }
+
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailReportBatchArchive);
+  stmt.executeNonQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
+}
+
 }  // namespace cta::schedulerdb::postgres

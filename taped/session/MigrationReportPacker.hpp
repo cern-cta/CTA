@@ -295,6 +295,9 @@ private:
   std::vector<std::unique_ptr<cta::ArchiveJob>> m_failedArchiveJobs;
 
   void flushFailedJobs(cta::log::LogContext& lc);
+
+  // Report m_successfulArchiveJobs and m_skippedFiles to the mount. No-op if both are empty.
+  void reportSuccessfulJobsBatch(cta::log::LogContext& lc);
 };
 
 }  // namespace cta::tape::daemon

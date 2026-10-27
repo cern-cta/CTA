@@ -42,7 +42,22 @@ public:
   * @return void
   */
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
+
+  /**
+   * Prepare in-memory state for a subsequent failReportBatch() call.
+   * Updates the report-retry counter and appends to the report failure log so that
+   * the batch SQL in rdbms::ArchiveMount::failReportBatch() can make the correct
+   * exceed-retries vs. reset-IS_REPORTING decision per job.
+   * Called from ArchiveMount::failReportBatch() (facade) on each job in the
+   * failedToReportArchiveJobs queue after FailedReportMoveToQueue is thrown.
+   */
   void prepareFailTransfer(const std::string& failureReason) override;
+
+  /**
+   * Analogous to prepareFailTransfer but for the report-failure path:
+   * increments totalReportRetries and appends to reportFailureLogs.
+   */
+  void prepareFailReport(const std::string& failureReason) override;
 
   /**
   * Sets the status of the report of the archive job to failed in Scheduler DB

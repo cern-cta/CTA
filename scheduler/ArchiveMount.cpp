@@ -48,6 +48,7 @@ std::string cta::ArchiveMount::getVid() const {
 // getDrive
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getDrive() const {
+  if (!m_dbMount) return "";
   return m_dbMount->mountInfo.drive;
 }
 
@@ -199,7 +200,9 @@ uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDs
 
 #ifdef CTA_PGSCHED
 //------------------------------------------------------------------------------
-// failTransferBatch
+// failTransferBatch (high-level ArchiveJob vector overload)
+// Called by MigrationReportPacker::flushFailedJobs() for jobs where tape write
+// or skipped-file failures were accumulated via prepareFailTransfer().
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs,
                                           cta::log::LogContext& lc) {
@@ -209,6 +212,58 @@ void cta::ArchiveMount::failTransferBatch(std::vector<std::unique_ptr<cta::Archi
     dbJobs.push_back(job->m_dbJob.get());
   }
   m_dbMount->failTransferBatch(dbJobs, lc);
+}
+
+//------------------------------------------------------------------------------
+// failTransferBatch (DB-level queue overload)
+// Called from reportSuccessfulJobsBatch()'s FailedReportCatalogueUpdate catch when
+// reportJobsBatchTransferred() could not update the catalogue.  These jobs never
+// reached the catalogue so they are treated exactly like tape-write failures.
+// prepareFailTransfer() is called here to update in-memory retry counters before
+// delegating to the DB-level batch.
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::failTransferBatch(
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
+    const std::string& failureReason,
+    cta::log::LogContext& lc) {
+  // Keep unique_ptr ownership alive in a local vector while passing raw pointers.
+  std::vector<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> owned;
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> rawPtrs;
+  owned.reserve(dbJobs.size());
+  rawPtrs.reserve(dbJobs.size());
+  while (!dbJobs.empty()) {
+    owned.push_back(std::move(dbJobs.front()));
+    dbJobs.pop();
+    owned.back()->prepareFailTransfer(failureReason);
+    rawPtrs.push_back(owned.back().get());
+  }
+  if (rawPtrs.empty()) return;
+  m_dbMount->failTransferBatch(rawPtrs, lc);
+}
+
+//------------------------------------------------------------------------------
+// failReportBatch (DB-level queue overload)
+// Called from reportSuccessfulJobsBatch()'s FailedReportMoveToQueue catch when
+// the catalogue update succeeded but setJobBatchTransferred() failed.  These jobs
+// are on tape and in the catalogue; the scheduler-DB state update is what failed.
+// prepareFailReport() is called here to update in-memory report-retry counters.
+//------------------------------------------------------------------------------
+void cta::ArchiveMount::failReportBatch(
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
+    const std::string& failureReason,
+    cta::log::LogContext& lc) {
+  std::vector<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> owned;
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> rawPtrs;
+  owned.reserve(dbJobs.size());
+  rawPtrs.reserve(dbJobs.size());
+  while (!dbJobs.empty()) {
+    owned.push_back(std::move(dbJobs.front()));
+    dbJobs.pop();
+    owned.back()->prepareFailReport(failureReason);
+    rawPtrs.push_back(owned.back().get());
+  }
+  if (rawPtrs.empty()) return;
+  m_dbMount->failReportBatch(rawPtrs, lc);
 }
 #endif  // CTA_PGSCHED
 

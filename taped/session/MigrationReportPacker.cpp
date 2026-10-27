@@ -182,19 +182,43 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 
 //------------------------------------------------------------------------------
 //reportSkipped:execute
+// A skipped file is a zero-length file or one whose checksum failed: a placeholder
+// fSeq was written to tape, so the tape catalogue record must still be written
+// (m_skippedFiles), but the file itself counts as a transfer failure.
+//
+// Objectstore path: call transferFailed() immediately (individual DB update).
+// Pgsched path:     call prepareFailTransfer() + accumulate into m_failedArchiveJobs
+//                   so the failure is batched with all other transfer failures and
+//                   flushed in a single failTransferBatch() call.
+// The tape catalogue record (m_skippedFiles) is written unconditionally in both paths.
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& reportPacker) {
-  // We have no successful file to add, but we should report the failure for the file.
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog)
       .add("fileSize", m_skippedArchiveJob->archiveFile.fileSize)
       .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     m_skippedArchiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(params);
-
     reportPacker.m_lc.log(cta::log::DEBUG,
                           "In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
   }
+
+  // Tape catalogue record: must be written before the job is potentially moved.
+  reportPacker.m_skippedFiles.push(cta::catalogue::TapeItemWritten());
+  auto& tapeItem = reportPacker.m_skippedFiles.back();
+  tapeItem.fSeq = m_skippedArchiveJob->tapeFile.fSeq;
+  tapeItem.tapeDrive = reportPacker.m_archiveMount->getDrive();
+  tapeItem.vid = m_skippedArchiveJob->tapeFile.vid;
+
+#ifdef CTA_PGSCHED
+  // Batch path: defer the DB update; it will be flushed via flushFailedJobs().
+  m_skippedArchiveJob->prepareFailTransfer(m_failureLog);
+  reportPacker.m_failedArchiveJobs.push_back(std::move(m_skippedArchiveJob));
+  if (reportPacker.m_failedArchiveJobs.size() >= MigrationReportPacker::c_failedJobsBatchMax) {
+    reportPacker.flushFailedJobs(reportPacker.m_lc);
+  }
+#else
+  // Objectstore path: update the scheduler DB immediately for this single job.
   try {
     m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::NoSuchObject& ex) {
@@ -202,7 +226,7 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
     params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
       .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::WARNING,
-                          "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed(), "
+                          "In MigrationReportPacker::ReportSkipped::execute(): call to transferFailed(), "
                           "job does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
@@ -210,14 +234,10 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
       .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(
       cta::log::ERR,
-      "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
+      "In MigrationReportPacker::ReportSkipped::execute(): call to transferFailed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
-  reportPacker.m_skippedFiles.push(cta::catalogue::TapeItemWritten());
-  auto& tapeItem = reportPacker.m_skippedFiles.back();
-  tapeItem.fSeq = m_skippedArchiveJob->tapeFile.fSeq;
-  tapeItem.tapeDrive = reportPacker.m_archiveMount->getDrive();
-  tapeItem.vid = m_skippedArchiveJob->tapeFile.vid;
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -313,92 +333,40 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPacker) {
   if (!reportPacker.m_errorHappened) {
-    // We can receive double flushes when the periodic flush happens
-    // right before the end of session (which triggers also a flush)
-    // We refrain from sending an empty report to the client in this case.
+    // We can receive double flushes when the periodic flush happens right before end-of-session.
+    // Refrain from sending an empty report to the client in this case.
     if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
       reportPacker.m_lc.log(cta::log::INFO,
                             "Received a flush report from tape, but had no file to report to client. Doing nothing.");
       return;
     }
-    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
-    try {
-      cta::utils::Timer t;
-      cta::log::ScopedParamContainer params(reportPacker.m_lc);
-      params.add("successfulBatchSize", reportPacker.m_successfulArchiveJobs.size());
-      reportPacker.m_archiveMount->reportJobsBatchTransferred(reportPacker.m_successfulArchiveJobs,
-                                                              reportPacker.m_skippedFiles,
-                                                              failedToReportArchiveJobs,
-                                                              reportPacker.m_lc);
-      params.add("reportJobsBatchTime", t.secs()).add("failedToReportBatchSize", failedToReportArchiveJobs.size());
-      reportPacker.m_lc.log(
-        cta::log::INFO,
-        "In MigrationReportPacker::ReportFlush::execute(): successfully reported batch of archive jobs to disk.");
-    } catch (const cta::ArchiveMount::FailedReportCatalogueUpdate& ex) {
-      while (!failedToReportArchiveJobs.empty()) {
-        auto archiveJob = std::move(failedToReportArchiveJobs.front());
-        try {
-          archiveJob->failTransfer(ex.getMessageValue(), reportPacker.m_lc);
-        } catch (const cta::exception::NoSuchObject&) {
-          cta::log::ScopedParamContainer params(reportPacker.m_lc);
-          params.add("fileId", archiveJob->archiveFile.archiveFileID)
-            .add("latestError", archiveJob->latestError)
-            .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-          reportPacker.m_lc.log(cta::log::WARNING,
-                                "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
-                                "archive job because it does not exist in the objectstore.");
-        } catch (const cta::exception::Exception&) {
-          //If the failTransfer method fails, we can't do anything about it
-          cta::log::ScopedParamContainer params(reportPacker.m_lc);
-          params.add("fileId", archiveJob->archiveFile.archiveFileID)
-            .add("latestError", archiveJob->latestError)
-            .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-          reportPacker.m_lc.log(cta::log::WARNING,
-                                "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
-                                "archive job because of CTA exception.");
-        }
-        failedToReportArchiveJobs.pop();
-      }
-      throw;
-    } catch (const cta::ArchiveMount::FailedReportMoveToQueue& ex) {
-      while (!failedToReportArchiveJobs.empty()) {
-        auto archiveJob = std::move(failedToReportArchiveJobs.front());
-        try {
-          archiveJob->failReport(ex.getMessageValue(), reportPacker.m_lc);
-        } catch (const cta::exception::NoSuchObject&) {
-          cta::log::ScopedParamContainer params(reportPacker.m_lc);
-          params.add("fileId", archiveJob->archiveFile.archiveFileID)
-            .add("latestError", archiveJob->latestError)
-            .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-          reportPacker.m_lc.log(cta::log::WARNING,
-                                "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
-                                "archive job because it does not exist in the objectstore.");
-        } catch (const cta::exception::Exception&) {
-          //If the failReport method fails, we can't do anything about it
-          cta::log::ScopedParamContainer params(reportPacker.m_lc);
-          params.add("fileId", archiveJob->archiveFile.archiveFileID)
-            .add("latestError", archiveJob->latestError)
-            .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-          reportPacker.m_lc.log(cta::log::WARNING,
-                                "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
-                                "archive job because of CTA exception.");
-        }
-        failedToReportArchiveJobs.pop();
-      }
-      throw;
-    }
+    reportPacker.reportSuccessfulJobsBatch(reportPacker.m_lc);
   } else {
-    // This is an abnormal situation: we should never flush after an error!
+    // In objectstore mode, a flush after an error is genuinely abnormal: the error path uses
+    // reportLastBatchError (which re-queues pending successes) followed by reportEndOfSessionWithErrors,
+    // not reportFlush. So this branch should never be reached in a correct objectstore session.
     reportPacker.m_lc.log(cta::log::ALERT, "Received a flush after an error: sending file errors to client");
+#ifdef CTA_PGSCHED
+    // In pgsched mode, individual file failures are soft — the session continues after them.
+    // A flush after a failure is therefore normal; commit any pending successful jobs so they
+    // are not lost alongside the failure batch.
+    // Catch and log rather than re-throw: flushFailedJobs below must always run.
+    try {
+      reportPacker.reportSuccessfulJobsBatch(reportPacker.m_lc);
+    } catch (const cta::exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
+      params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+      reportPacker.m_lc.log(
+        cta::log::ERR,
+        "In MigrationReportPacker::ReportFlush::execute(): failed to report successful jobs in error-recovery path; "
+        "proceeding to flush failed jobs.");
+    }
+#endif
   }
 #ifdef CTA_PGSCHED
   // Piggyback: flush accumulated failed jobs on every tape flush event.
-  // Failures are rare, so the batch-size threshold is unlikely to trigger mid-session;
-  // piggybacking here ensures they are reported promptly alongside successes.
-  // The only gap is failures that arrive after the last tape flush (e.g. drive going
-  // quiet before end-of-session) — those are held until ReportEndofSession fires,
-  // which is guaranteed. No separate timer is needed because that gap is both rare
-  // and bounded by the session lifetime.
+  // The only gap is failures that arrive after the last tape flush — those are held until
+  // ReportEndofSession fires, which is guaranteed.
   reportPacker.flushFailedJobs(reportPacker.m_lc);
 #endif
 }
@@ -532,6 +500,99 @@ void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
     lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
   m_failedArchiveJobs.clear();
+}
+
+//------------------------------------------------------------------------------
+// reportSuccessfulJobsBatch
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportSuccessfulJobsBatch(cta::log::LogContext& lc) {
+  if (m_successfulArchiveJobs.empty() && m_skippedFiles.empty()) return;
+  std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
+  try {
+    cta::utils::Timer t;
+    cta::log::ScopedParamContainer params(lc);
+    params.add("successfulBatchSize", m_successfulArchiveJobs.size());
+    m_archiveMount->reportJobsBatchTransferred(m_successfulArchiveJobs, m_skippedFiles,
+                                               failedToReportArchiveJobs, lc);
+    params.add("reportJobsBatchTime", t.secs()).add("failedToReportBatchSize", failedToReportArchiveJobs.size());
+    lc.log(cta::log::INFO,
+           "In MigrationReportPacker::reportSuccessfulJobsBatch(): successfully reported batch of archive jobs to disk.");
+  } catch (const cta::ArchiveMount::FailedReportCatalogueUpdate& ex) {
+    // The catalogue update failed before any DB state was changed, so these jobs
+    // have not been recorded anywhere and must be re-queued as transfer failures.
+    //
+    // Pgsched: batch all failedToReportArchiveJobs in one failTransferBatch() call
+    //          (prepareFailTransfer is called inside the facade for each job).
+    //          Re-throw so the caller (ReportFlush::execute) can react; in the normal
+    //          path this terminates the worker; in the error-recovery path the caller's
+    //          try/catch absorbs it so flushFailedJobs() still runs.
+    //
+    // Objectstore: update each job individually (existing behaviour unchanged).
+#ifdef CTA_PGSCHED
+    m_archiveMount->failTransferBatch(failedToReportArchiveJobs, ex.getMessageValue(), lc);
+#else
+    while (!failedToReportArchiveJobs.empty()) {
+      auto archiveJob = std::move(failedToReportArchiveJobs.front());
+      try {
+        archiveJob->failTransfer(ex.getMessageValue(), lc);
+      } catch (const cta::exception::NoSuchObject&) {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("fileId", archiveJob->archiveFile.archiveFileID)
+          .add("latestError", archiveJob->latestError)
+          .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+        lc.log(cta::log::WARNING,
+               "In MigrationReportPacker::reportSuccessfulJobsBatch(): failed to failTransfer: job not in objectstore.");
+      } catch (const cta::exception::Exception&) {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("fileId", archiveJob->archiveFile.archiveFileID)
+          .add("latestError", archiveJob->latestError)
+          .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+        lc.log(cta::log::WARNING,
+               "In MigrationReportPacker::reportSuccessfulJobsBatch(): failed to failTransfer: CTA exception.");
+      }
+      failedToReportArchiveJobs.pop();
+    }
+#endif
+    throw;
+  } catch (const cta::ArchiveMount::FailedReportMoveToQueue& ex) {
+    // The catalogue update succeeded but the scheduler-DB state update (setJobBatchTransferred)
+    // failed.  These jobs are on tape and in the catalogue; only the queue-state transition
+    // was lost.  They must go through the report-failure path (not transfer-failure).
+    //
+    // Pgsched: batch all failedToReportArchiveJobs in one failReportBatch() call
+    //          (prepareFailReport is called inside the facade for each job).
+    //          Jobs that have exhausted report retries go to ARCHIVE_FAILED_QUEUE;
+    //          the rest have IS_REPORTING reset for the next report attempt.
+    //          Re-throw for the same reason as FailedReportCatalogueUpdate above.
+    //
+    // Objectstore: update each job individually (existing behaviour unchanged).
+#ifdef CTA_PGSCHED
+    m_archiveMount->failReportBatch(failedToReportArchiveJobs, ex.getMessageValue(), lc);
+#else
+    while (!failedToReportArchiveJobs.empty()) {
+      auto archiveJob = std::move(failedToReportArchiveJobs.front());
+      try {
+        archiveJob->failReport(ex.getMessageValue(), lc);
+      } catch (const cta::exception::NoSuchObject&) {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("fileId", archiveJob->archiveFile.archiveFileID)
+          .add("latestError", archiveJob->latestError)
+          .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+        lc.log(cta::log::WARNING,
+               "In MigrationReportPacker::reportSuccessfulJobsBatch(): failed to failReport: job not in objectstore.");
+      } catch (const cta::exception::Exception&) {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("fileId", archiveJob->archiveFile.archiveFileID)
+          .add("latestError", archiveJob->latestError)
+          .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+        lc.log(cta::log::WARNING,
+               "In MigrationReportPacker::reportSuccessfulJobsBatch(): failed to failReport: CTA exception.");
+      }
+      failedToReportArchiveJobs.pop();
+    }
+#endif
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------

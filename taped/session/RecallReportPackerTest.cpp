@@ -159,14 +159,25 @@ class MockRetrieveMountWithBatch : public cta::MockRetrieveMount {
 public:
   int flushCount = 0;
   size_t lastBatchSize = 0;
+  int successCount = 0;
+  int failureCount = 0;
 
   explicit MockRetrieveMountWithBatch(cta::catalogue::Catalogue& catalogue)
       : cta::MockRetrieveMount(catalogue) {}
+
+  void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+                              cta::log::LogContext&) override {
+    while (!successfulRetrieveJobs.empty()) {
+      successCount++;
+      successfulRetrieveJobs.pop();
+    }
+  }
 
   void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs,
                          cta::log::LogContext&) override {
     flushCount++;
     lastBatchSize = jobs.size();
+    failureCount += static_cast<int>(jobs.size());
   }
 };
 
@@ -193,7 +204,8 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedAccumula
 
   // End-of-session triggers exactly one failTransferBatch call with all 3 jobs
   ASSERT_EQ(1, retrieveMount.flushCount);
-  ASSERT_EQ(3u, retrieveMount.lastBatchSize);
+  ASSERT_EQ(3, retrieveMount.failureCount);
+  ASSERT_EQ(0, retrieveMount.successCount);
   ASSERT_EQ(1, retrieveMount.completes);
 }
 
@@ -222,7 +234,8 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedBatchSiz
 
   // Two flushes: one mid-session at batch size 600, one at end-of-session with remaining 1
   ASSERT_EQ(2, retrieveMount.flushCount);
-  ASSERT_EQ(1u, retrieveMount.lastBatchSize);
+  ASSERT_EQ(601, retrieveMount.failureCount);
+  ASSERT_EQ(0, retrieveMount.successCount);
   ASSERT_EQ(1, retrieveMount.completes);
 }
 
@@ -255,10 +268,12 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedFailures
   rrp.reportEndOfSession(lc);
   rrp.waitThread();
 
-  // Failures are flushed mid-session by the success-batch piggyback; end-of-session
-  // finds the accumulator empty and does not produce a second failTransferBatch call.
+  // Failures are flushed mid-session by the success-batch piggyback (once 2000 successes
+  // accumulate, fullCheckAndFinishAsyncExecute flushes both); end-of-session finds both
+  // accumulators empty and produces no additional calls.
   ASSERT_EQ(1, retrieveMount.flushCount);
-  ASSERT_EQ(3u, retrieveMount.lastBatchSize);
+  ASSERT_EQ(3, retrieveMount.failureCount);
+  ASSERT_EQ(2000, retrieveMount.successCount);
   ASSERT_EQ(1, retrieveMount.completes);
 }
 

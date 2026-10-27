@@ -99,6 +99,15 @@ public:
    */
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
   void failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) override;
+
+  /**
+   * Batch-fail reporting for jobs whose catalogue write succeeded but whose scheduler-DB
+   * state update failed (FailedReportMoveToQueue path).  prepareFailReport() must have
+   * been called on each job before this method to update in-memory retry counters.
+   * Jobs that have exhausted report retries (or need no report) are moved to
+   * ARCHIVE_FAILED_QUEUE; the rest have IS_REPORTING reset so they will be retried.
+   */
+  void failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) override;
   void setIsRepack(log::LogContext& logContext);
 
 private:

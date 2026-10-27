@@ -159,6 +159,13 @@ void ArchiveRdbJob::prepareFailTransfer(const std::string& failureReason) {
   m_jobRow.updateRetryCounts(m_mountId);
 }
 
+void ArchiveRdbJob::prepareFailReport(const std::string& failureReason) {
+  // is_report_log=true: appends to reportFailureLogs and increments totalReportRetries.
+  // The updated counters are read by failReportBatch() to decide per-job whether to
+  // mark ReadyForDeletion (exceed retries) or reset IS_REPORTING (retry later).
+  m_jobRow.updateJobRowFailureLog(failureReason, true);
+}
+
 void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
   log::ScopedParamContainer(lc)
     .add("jobID", jobID)
