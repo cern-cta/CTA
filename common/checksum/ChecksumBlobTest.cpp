@@ -62,13 +62,13 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   checksumBlob2.insert(NONE, "");
   checksumBlob3.insert(ADLER32, "1234");
   ASSERT_THROW(checksumBlob2.validate(checksumBlob3), ChecksumTypeMismatch);
-  ASSERT_NE(checksumBlob2, checksumBlob3);
+  ASSERT_FALSE(checksumBlob2.hasSameChecksums(checksumBlob3));
 
   // Blob values are different
   checksumBlob2 = checksumBlob;
   checksumBlob2.insert(ADLER32, 0x0a0b0c0d);
   ASSERT_THROW(checksumBlob.validate(checksumBlob2), ChecksumValueMismatch);
-  ASSERT_NE(checksumBlob, checksumBlob2);
+  ASSERT_FALSE(checksumBlob.hasSameChecksums(checksumBlob2));
 
   // Clear the blob
   checksumBlob.clear();
@@ -110,19 +110,18 @@ TEST_F(cta_ChecksumBlobTest, validate) {
   EXPECT_THROW(onlyNone.validate(onlyNone), ChecksumTypeMismatch);
 }
 
-TEST_F(cta_ChecksumBlobTest, hasChecksums) {
+TEST_F(cta_ChecksumBlobTest, hasChecksum) {
   using namespace cta::checksum;
 
-  ChecksumBlob empty;
-  EXPECT_FALSE(empty.hasChecksums());
+  ChecksumBlob checksums;
+  EXPECT_FALSE(checksums.hasChecksum(ADLER32));
 
-  ChecksumBlob onlyNone;
-  onlyNone.insert(NONE, "");
-  EXPECT_FALSE(onlyNone.hasChecksums());
+  checksums.insert(MD5, "1234567890123456");
+  EXPECT_TRUE(checksums.hasChecksum(MD5));
+  EXPECT_FALSE(checksums.hasChecksum(ADLER32));
 
-  ChecksumBlob adler;
-  adler.insert(ADLER32, "1234");
-  EXPECT_TRUE(adler.hasChecksums());
+  checksums.insert(ADLER32, "1234");
+  EXPECT_TRUE(checksums.hasChecksum(ADLER32));
 }
 
 TEST_F(cta_ChecksumBlobTest, hex_to_byte_array) {
@@ -178,7 +177,7 @@ TEST_F(cta_ChecksumBlobTest, adler32) {
   ChecksumBlob checksumBlob2;
   checksumBlob2.insert(ADLER32, bytearray);
   ASSERT_EQ(checksumBlob2.size(), 1);
-  ASSERT_EQ(checksumBlob, checksumBlob2);
+  ASSERT_TRUE(checksumBlob.hasSameChecksums(checksumBlob2));
 
   // Check construction by hex string yields the same result
   ChecksumBlob checksumBlob3;
@@ -189,7 +188,7 @@ TEST_F(cta_ChecksumBlobTest, adler32) {
   ChecksumBlob checksumBlob4;
   checksumBlob4.insert(ADLER32, ChecksumBlob::HexToByteArray("a141e28"));
   ASSERT_EQ(checksumBlob4.size(), 1);
-  ASSERT_EQ(checksumBlob, checksumBlob4);
+  ASSERT_TRUE(checksumBlob.hasSameChecksums(checksumBlob4));
 }
 
 }  // namespace unitTests

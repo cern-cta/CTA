@@ -830,18 +830,24 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
            "request does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
-  if (deleteRequest.checksumBlob.has_value() && deleteRequest.checksumBlob.value() != archiveFile.checksumBlob) {
-    std::ostringstream msg;
-    msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
-        << " to the recycle-bin because the checksum of "
-           "the request does not match that of the archived file: archiveFileId="
-        << archiveFile.archiveFileID << " requestChecksum=" << deleteRequest.checksumBlob.value().serialize()
-        << " archiveFileChecksum=" << archiveFile.checksumBlob.serialize();
-    log::LogContext lc(m_log);
-    lc.log(log::ALERT,
-           "Failed to move archive file to the recycle-bin because the checksum of the request "
-           "does not match that of the archived file.");
-    throw cta::exception::Exception(msg.str());
+  if (deleteRequest.checksumBlob.has_value()) {
+    const auto& requestChecksum = deleteRequest.checksumBlob.value();
+
+    try {
+      requestChecksum.validate(archiveFile.checksumBlob);
+    } catch (const cta::exception::Exception&) {
+      std::ostringstream msg;
+      msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
+          << " to the recycle-bin because the checksum of "
+             "the request does not match that of the archived file: archiveFileId="
+          << archiveFile.archiveFileID << " requestChecksum=" << requestChecksum.serialize()
+          << " archiveFileChecksum=" << archiveFile.checksumBlob.serialize();
+      log::LogContext lc(m_log);
+      lc.log(log::ALERT,
+             "Failed to move archive file to the recycle-bin because the checksum of the request "
+             "does not match that of the archived file.");
+      throw cta::exception::Exception(msg.str());
+    }
   }
   if (deleteRequest.diskFilePath.empty()) {
     std::ostringstream msg;

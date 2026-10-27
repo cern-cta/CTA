@@ -32,7 +32,7 @@ TEST(cta_ChecksumBlobSerDeserTest, serialize_deserialize) {
 
   ChecksumBlob checksumBlob2;
   checksumBlob2.deserialize(bytearray);
-  ASSERT_EQ(checksumBlob1, checksumBlob2);
+  ASSERT_TRUE(checksumBlob1.hasSameChecksums(checksumBlob2));
 }
 
 }  // namespace unitTests
