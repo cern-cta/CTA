@@ -49,7 +49,15 @@ end
 
 Config loading is done using a combination of [tomlplusplus](https://github.com/marzer/tomlplusplus) to read TOML files and a custom parser to populate the struct.
 
-Environment expansion is a separate text-processing step before TOML parsing, shared by the runtime library rather than implemented in `Application`.
+The runtime library loads configuration through the following steps:
+
+```mermaid
+flowchart LR
+    read["Read file"] --> substitute["Substitute environment variables (optional)"]
+    substitute --> parse["Parse TOML into config struct"]
+    parse --> validate["Validate config struct"]
+```
+
 Parsing remains available without expansion, including for already-resolved text and literal data such as JWT revocation files.
 
 The only thing the developer needs to take care of is that the structure of the config struct matches the structure of TOML files. Both in terms of types and in terms of hierarchy and names. See e.g. `maintd/` for an example of what this looks like.
