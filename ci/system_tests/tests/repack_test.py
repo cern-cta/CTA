@@ -105,7 +105,7 @@ def _submit_repack_request(
     assert not (with_back_pressure and submit_only)  # Mutually exclusive
 
     print(f"Deleting existing repack request for VID {vid_to_repack}")
-    cta_cli.exec(f"cta-admin repack rm --vid {vid_to_repack}")
+    cta_cli.remove_repack_request(vid_to_repack)
 
     print(f"Marking the tape {vid_to_repack} as full before Repacking it")
     cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full true")
@@ -830,7 +830,7 @@ def test_repack_pool_routing_no_repack_route_uses_default(
             f"got {dest_pools!r}."
         )
     finally:
-        cta_cli.exec(f"cta-admin repack rm --vid {source_vid}")
+        cta_cli.remove_repack_request(source_vid)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
         cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
 
@@ -897,7 +897,7 @@ def test_repack_pool_routing_single_copy_repack_route_overrides_default(
             "the REPACK route is defined and must take priority over DEFAULT."
         )
     finally:
-        cta_cli.exec(f"cta-admin repack rm --vid {source_vid}")
+        cta_cli.remove_repack_request(source_vid)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
         cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
         cta_cli.exec(
@@ -972,7 +972,7 @@ def test_repack_pool_routing_mixed_repack_and_default_routes(
             "copy 1 has a REPACK route that must override DEFAULT."
         )
     finally:
-        cta_cli.exec(f"cta-admin repack rm --vid {source_vid}")
+        cta_cli.remove_repack_request(source_vid)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
         cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
         cta_cli.exec(
@@ -1076,7 +1076,7 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
             "a REPACK route is defined for copy 2 and must take priority."
         )
     finally:
-        cta_cli.exec(f"cta-admin repack rm --vid {source_vid}")
+        cta_cli.remove_repack_request(source_vid)
         cta_cli.modify_tape_state(source_vid, "ACTIVE")
         cta_cli.exec(f"cta-admin tape ch --vid {source_vid} --full false")
         cta_cli.exec(

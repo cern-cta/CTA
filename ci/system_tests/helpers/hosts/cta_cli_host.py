@@ -139,7 +139,9 @@ class CtaCliHost(RemoteHost):
 
     def remove_repack_request(self, vid: str) -> None:
         print(f"Removing repack request for {vid}")
-        self.exec(f"cta-admin repack rm --vid {vid}")
+        result = self.exec(f"cta-admin repack rm --vid {vid}", capture_output=True, throw_on_failure=False)
+        if not result.success and "not present" not in result.stderr and "No repack request" not in result.stderr:
+            raise RuntimeError(f"cta-admin repack rm failed unexpectedly for {vid}: {result.stderr}")
 
     def reclaim_tape(self, vid: str) -> None:
         print(f"Reclaiming tape {vid}")
