@@ -137,9 +137,9 @@ class CtaCliHost(RemoteHost):
         self.modify_tape_state(vid, state)
         time.sleep(cache_delay_secs)
 
-    def remove_repack_request(self, vid: str, throw_on_failure: bool = True) -> None:
+    def remove_repack_request(self, vid: str) -> None:
         print(f"Removing repack request for {vid}")
-        self.exec(f"cta-admin repack rm --vid {vid}", throw_on_failure=throw_on_failure)
+        self.exec(f"cta-admin repack rm --vid {vid}")
 
     def reclaim_tape(self, vid: str) -> None:
         print(f"Reclaiming tape {vid}")
@@ -150,10 +150,13 @@ class CtaCliHost(RemoteHost):
         tapefile_list = json.loads(self.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
         for tf_entry in tapefile_list:
             archive_id = tf_entry["af"]["archiveId"]
-            self.exec(
+            result = self.exec(
                 f"cta-admin tf rm -v {vid} -i {disk_instance} -I {archive_id} -r 'Test cleanup'",
+                capture_output=True,
                 throw_on_failure=False,
             )
+            if not result.success and "because it is the only copy" not in result.stderr:
+                raise RuntimeError(f"cta-admin tf rm failed unexpectedly for archive_id={archive_id} on {vid}: {result.stderr}")
 
     def has_repack_request(self, vid: str) -> bool:
         try:
