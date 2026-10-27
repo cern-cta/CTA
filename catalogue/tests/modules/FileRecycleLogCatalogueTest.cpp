@@ -439,7 +439,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, filesArePutInTheFileRecycleLogInsteadOf
       ASSERT_EQ(fileRecycleLog.diskFileUid, fileWrittenPtr->diskFileOwnerUid);
       ASSERT_EQ(fileRecycleLog.diskFileGid, fileWrittenPtr->diskFileGid);
       ASSERT_EQ(fileRecycleLog.sizeInBytes, fileWrittenPtr->size);
-      ASSERT_EQ(fileRecycleLog.checksumBlob, fileWrittenPtr->checksumBlob);
+      ASSERT_TRUE(fileRecycleLog.checksumBlob.hasSameChecksums(fileWrittenPtr->checksumBlob));
       ASSERT_EQ(fileRecycleLog.storageClassName, fileWrittenPtr->storageClassName);
       ASSERT_EQ(fileRecycleLog.reconciliationTime, fileRecycleLog.archiveFileCreationTime);
       ASSERT_EQ(std::nullopt, fileRecycleLog.collocationHint);

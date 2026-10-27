@@ -20,9 +20,9 @@ ArchiveRequest::ArchiveRequest() {}
 //------------------------------------------------------------------------------
 bool ArchiveRequest::operator==(const ArchiveRequest& rhs) const {
   return requester == rhs.requester && diskFileID == rhs.diskFileID && srcURL == rhs.srcURL && fileSize == rhs.fileSize
-         && checksumBlob == rhs.checksumBlob && storageClass == rhs.storageClass && diskFileInfo == rhs.diskFileInfo
-         && archiveReportURL == rhs.archiveReportURL && archiveErrorReportURL == rhs.archiveErrorReportURL
-         && creationLog == rhs.creationLog;
+         && checksumBlob.hasSameChecksums(rhs.checksumBlob) && storageClass == rhs.storageClass
+         && diskFileInfo == rhs.diskFileInfo && archiveReportURL == rhs.archiveReportURL
+         && archiveErrorReportURL == rhs.archiveErrorReportURL && creationLog == rhs.creationLog;
 }
 
 //------------------------------------------------------------------------------

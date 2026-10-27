@@ -2839,7 +2839,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
            << j;
         ASSERT_EQ(retrieveJob.request.dstURL, ss.str());
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.copyNb, 1);
-        ASSERT_EQ(retrieveJob.tapeCopies[vid].second.checksumBlob, checksumBlob);
+        ASSERT_TRUE(retrieveJob.tapeCopies[vid].second.checksumBlob.hasSameChecksums(checksumBlob));
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.blockId, j * 100);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.fileSize, archiveFileSize);
         ASSERT_EQ(retrieveJob.tapeCopies[vid].second.fSeq, j);
@@ -2929,7 +2929,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
           ASSERT_EQ(tapeFile.vid, allVid.at(i - 1));
           ASSERT_EQ(tapeFile.blockId, j * 100);
           ASSERT_EQ(tapeFile.fSeq, j);
-          ASSERT_EQ(tapeFile.checksumBlob, checksumBlob);
+          ASSERT_TRUE(tapeFile.checksumBlob.hasSameChecksums(checksumBlob));
           ASSERT_EQ(tapeFile.fileSize, archiveFileSize);
 
           //Testing scheduler retrieve request
@@ -3001,7 +3001,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         ASSERT_LE(1, fileIndex);
         ASSERT_GE(nbArchiveFilesPerTape, fileIndex);
         //Test the ArchiveRequest
-        ASSERT_EQ(archiveFile.checksumBlob, checksumBlob);
+        ASSERT_TRUE(archiveFile.checksumBlob.hasSameChecksums(checksumBlob));
         std::ostringstream diskFileId;
         diskFileId << (12345677 + archiveFile.archiveFileID);
         ASSERT_EQ(archiveFile.diskFileId, diskFileId.str());
