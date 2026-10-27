@@ -289,7 +289,6 @@ private:
    */
   std::queue<cta::catalogue::TapeItemWritten> m_skippedFiles;
 
-#ifdef CTA_PGSCHED
   static constexpr size_t c_failedJobsBatchMax = 600;
   static constexpr uint64_t c_failedJobsFlushIntervalSecs = 60;
 
@@ -298,7 +297,6 @@ private:
   std::chrono::steady_clock::time_point m_failedJobsLastFlushTime{std::chrono::steady_clock::now()};
 
   void flushFailedJobs(cta::log::LogContext& lc);
-#endif
 };
 
 }  // namespace cta::tape::daemon

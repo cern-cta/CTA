@@ -335,7 +335,6 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
   }
 }
 
-#ifdef CTA_PGSCHED
 void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
                                       log::LogContext& lc) {
   if (batch.empty()) return;
@@ -382,7 +381,6 @@ void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Retrie
     throw;
   }
 }
-#endif
 
 void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                            log::LogContext& lc) {

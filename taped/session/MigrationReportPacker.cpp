@@ -506,7 +506,6 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
 #endif
 }
 
-#ifdef CTA_PGSCHED
 //------------------------------------------------------------------------------
 // flushFailedJobs
 //------------------------------------------------------------------------------
@@ -528,7 +527,6 @@ void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
   m_failedArchiveJobs.clear();
   m_failedJobsLastFlushTime = std::chrono::steady_clock::now();
 }
-#endif
 
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread

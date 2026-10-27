@@ -229,9 +229,7 @@ public:
      * @return number of jobs re-queued in the DB
      */
     virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const = 0;
-#ifdef CTA_PGSCHED
     virtual void failTransferBatch(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
-#endif
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };
@@ -631,9 +629,7 @@ public:
     virtual void addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) = 0;
     virtual void
     putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) = 0;
-#ifdef CTA_PGSCHED
     virtual void failTransferBatch(std::vector<RetrieveJob*>& batch, log::LogContext& lc) = 0;
-#endif
     virtual ~RetrieveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };

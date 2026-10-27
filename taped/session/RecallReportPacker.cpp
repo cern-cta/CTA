@@ -431,7 +431,6 @@ void RecallReportPacker::WorkerThread::run() {
   m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallReportPacker thread");
 }
 
-#ifdef CTA_PGSCHED
 //------------------------------------------------------------------------------
 //flushFailedJobs()
 //------------------------------------------------------------------------------
@@ -452,7 +451,6 @@ void RecallReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
   m_failedRetrieveJobs.clear();
   m_failedJobsLastFlushTime = std::chrono::steady_clock::now();
 }
-#endif
 
 //------------------------------------------------------------------------------
 //errorHappened()

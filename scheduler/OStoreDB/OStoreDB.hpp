@@ -222,11 +222,9 @@ public:
       throw cta::exception::NotImplementedException();
     }
 
-#ifdef CTA_PGSCHED
     void failTransferBatch(std::vector<SchedulerDatabase::ArchiveJob*>&, log::LogContext&) override {
       throw cta::exception::NotImplementedException();
     }
-#endif
 
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
@@ -335,11 +333,9 @@ public:
                                 log::LogContext& lc) override {
       throw cta::exception::NotImplementedException("For RelationalDB compatibility only");
     }
-#ifdef CTA_PGSCHED
     void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>&, cta::log::LogContext&) override {
       throw cta::exception::NotImplementedException();
     }
-#endif
   };
   friend class RetrieveMount;
 
