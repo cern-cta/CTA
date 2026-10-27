@@ -272,18 +272,20 @@ def _submit_repack_request(
         pytest.fail("Repack request failed")
 
     # Check for Max Files Selection (partial repack)
+    # Use the pre-repack total_files_on_tape (captured above) to determine whether we did a
+    # partial selection: re-reading it post-repack would give the wrong count after a move_only
+    # repack because exactly max_files_to_select files have been moved off the tape.
     if max_files_to_select is not None:
-        tf_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid_to_repack}"))
-        total_files_on_tape = len(tf_ls_json)
-
         all_files_selected = bool(repack_request.get("allFilesSelectedAtStart"))
 
         if total_files_on_tape > max_files_to_select:
             assert not all_files_selected
-            assert total_files_on_tape != 0
         else:
             assert all_files_selected
-            assert total_files_on_tape == 0
+            files_remaining = len(
+                json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid_to_repack}"))
+            )
+            assert files_remaining == 0
 
     if len(destination_infos) != 0:
         print(f"{'DestinationVID':<15}\t{'NbFiles':<10}\t{'totalSize'}")
