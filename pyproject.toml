@@ -1,0 +1,216 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# The repository is a workspace, not an installable Python distribution.
+[tool.uv.workspace]
+members = ["lib/python/*", "tools/ctaops-cli"]
+
+[dependency-groups]
+dev = [{include-group = "lint"}, {include-group = "unit-tests"}]
+lint = ["ruff==0.14.9", "pyright[nodejs]", "pre-commit>=4.3.0", "hatchling>=1.27.0"]
+unit-tests = ["pytest>=8", "cattrs", "grpcio-tools", "PyYAML", "jsonschema", "typing-extensions>=4.4.0", {include-group = "docs"}]
+# These scripts also run independently in existing pipeline environments.
+scripts = ["PyYAML", "jsonschema", "packaging>=24", "typing-extensions>=4.4.0", "pyjwt", "cryptography"]
+system-tests = [
+    "kubernetes>=35.0.0,<36",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=1.2.0",
+    "oauthlib>=3.2.2",
+    "fastjsonschema>=2.21.2",
+    "packaging>=24.0",
+    "typing-extensions>=4.4.0",
+]
+docs = [
+    "babel==2.18.0",
+    "backrefs==6.2",
+    "certifi==2026.7.22",
+    "charset-normalizer==3.5.1",
+    "click==8.1.8",
+    "colorama==0.4.6",
+    "ghp-import==2.1.0",
+    "idna==3.20",
+    "importlib-metadata==8.7.1",
+    "importlib-resources==6.5.2",
+    "jinja2==3.1.6",
+    "markdown==3.9",
+    "markupsafe==3.0.3",
+    "mergedeep==1.3.4",
+    "mike==2.1.3",
+    "mkdocs==1.6.1",
+    "mkdocs-get-deps==0.2.2",
+    "mkdocs-material==9.7.6",
+    "mkdocs-material-extensions==1.3.1",
+    "packaging==26.3",
+    "paginate==0.5.7",
+    "pathspec==1.1.1",
+    "platformdirs==4.4.0",
+    "pygments==2.21.0",
+    "pymdown-extensions==10.15",
+    "pyparsing==3.3.3",
+    "python-dateutil==2.9.0.post0",
+    "pyyaml==6.0.3",
+    "pyyaml-env-tag==1.1",
+    "requests==2.32.5",
+    "six==1.17.0",
+    "typing-extensions==4.15.0",
+    "urllib3==2.6.3",
+    "verspec==0.1.0",
+    "watchdog==6.0.0",
+    "zipp==3.23.1",
+]
+
+[tool.uv.dependency-groups]
+system-tests = {requires-python = ">=3.10"}
+
+[tool.pytest.ini_options]
+addopts = "-ra --ignore=ci/system_tests"
+testpaths = ["ci", "lib/python", "tools/ctaops-cli/tests", "tools/ctaops-udev/tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = ["tmp", "**/protobuf_generated", "lib/protobuf/external", "catalogue/cta-catalogue-schema", "common/jwt-cpp"]
+
+[tool.ruff.lint]
+select = [
+    'E',      # pycodestyle (errors)
+    'W',      # pycodestyle (warnings)
+    'F',      # pyflakes
+    'N',      # pep8-naming
+    'Q',      # flake8-quotes
+    'RUF',    # ruff
+    'UP',     # pyupgrade
+    'D',      # pydocstyle
+    'S',      # flake8-bandit
+    'C4',     # flake8-comprehensions
+    'INT',    # flake8-gettext
+    'LOG',    # flake8-logging
+    'G',      # flake8-logging-format
+    'B',      # flake8-bugbear
+    'A001',   # flake8-builtins
+    'COM',    # flake8-commas
+    'T10',    # flake8-debugger
+    'EXE',    # flake8-executable
+    'ISC',    # flake8-implicit-str-concat
+    'PIE',    # flake8-pie
+    'PT',     # flake8-pytest-style
+    'RSE',    # flake8-raise
+    'RET504', # flake8-return
+    'SIM',    # flake8-simplify
+    'TID',    # flake8-tidy-imports
+    'PGH',    # pygrep-hooks
+    'PL',     # pylint
+    'TRY',    # tryceratops
+    'PERF',   # perflint
+    'FURB',   # refurb
+]
+ignore = [
+    'TRY002',  # Built-in exceptions are sufficient here.
+    'TRY003',  # Inline exception messages are easier to follow.
+    'PLR2004', # Numeric literals are often clearer than named constants.
+    'D1',      # The existing scripts do not consistently use docstrings.
+    'S101',    # Pytest tests rely on assertions.
+    'COM812',  # This rule conflicts with the formatter.
+    'PLR0913', # Test fixtures and CLI helpers naturally have many arguments.
+    'PLC0415', # Some dependencies require delayed or optional imports.
+    'PLR0917', # Very noisy
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = 'pep257'
+
+[tool.ruff.lint.per-file-ignores]
+# Release helpers invoke trusted tools and validated HTTPS endpoints.
+'ci/release/src/git_repo.py' = ['S603', 'S607']
+'ci/release/src/gitlab_api.py' = ['S310']
+
+# Release tests use fixed temporary paths and nested mock contexts.
+'ci/release/tests/test_*.py' = ['S108', 'SIM117']
+
+# This custom loader inherits from yaml.SafeLoader.
+'ci/checks/check_gitlab_ci_key_order.py' = ['S506']
+
+# The Kubernetes API URL always uses HTTPS.
+'ci/orchestration/helm/auth/scripts/create_k8s_secrets.py' = ['S310']
+
+# These wrappers invoke fixed, trusted executables.
+'ci/system_tests/helpers/connections/k8s_connection.py' = ['S603']
+'ci/system_tests/helpers/connections/ssh_connection.py' = ['S603']
+'ci/system_tests/helpers/test_env.py' = ['S603']
+
+# Integration tests favor readable scenarios over complexity limits.
+'ci/system_tests/tests/**/*_test.py' = ['PLR0915', 'PT012', 'PLR0912']
+
+# System tests intentionally use temporary paths.
+'ci/system_tests/**/*.py' = ['S108']
+
+# These remote scripts invoke a trusted executable from PATH.
+'ci/system_tests/tests/remote_scripts/eos_client/count_files.py' = ['S603', 'S607']
+'ci/system_tests/tests/remote_scripts/eos_client/xrootd_retrieve.py' = ['S603', 'S607']
+
+# This worker is intentionally complex and invokes a trusted executable.
+'ci/system_tests/tests/remote_scripts/eos_client/xrootd_archive.py' = ['PLR0915', 'PLR0912', 'S603', 'S607']
+
+[tool.pyright]
+typeCheckingMode = "strict"
+extraPaths = ["ci/release/src"]
+exclude = ["**/__pycache__", "**/.venv", "**/venv", "build", "tmp", "**/protobuf_generated", "lib/protobuf/external", "catalogue/cta-catalogue-schema", "common/jwt-cpp"]
+reportImplicitOverride = "error"
+reportMissingTypeArgument = "error"
+reportUnknownVariableType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownArgumentType = "none"
+reportMissingTypeStubs = "none"
+
+# Imported packages have not yet adopted CTA's additional generic/override rules.
+[[tool.pyright.executionEnvironments]]
+root = "lib/python"
+reportMissingTypeArgument = "none"
+reportImplicitOverride = "none"
+reportMissingParameterType = "none"
+reportUnknownLambdaType = "none"
+reportUnnecessaryIsInstance = "none"
+reportUnnecessaryComparison = "none"
+reportUnusedImport = "none"
+reportUnusedVariable = "none"
+reportUnusedFunction = "none"
+reportPrivateUsage = "none"
+reportUnnecessaryCast = "none"
+reportUnusedClass = "none"
+reportIncompatibleMethodOverride = "none"
+reportPossiblyUnboundVariable = "none"
+
+[[tool.pyright.executionEnvironments]]
+root = "tools/ctaops-cli"
+reportMissingTypeArgument = "none"
+reportImplicitOverride = "none"
+reportMissingParameterType = "none"
+reportUnknownLambdaType = "none"
+reportUnnecessaryIsInstance = "none"
+reportUnnecessaryComparison = "none"
+reportUnusedImport = "none"
+reportUnusedVariable = "none"
+reportUnusedFunction = "none"
+reportPrivateUsage = "none"
+reportUnnecessaryCast = "none"
+reportUnusedClass = "none"
+reportIncompatibleMethodOverride = "none"
+reportPossiblyUnboundVariable = "none"
+
+[[tool.pyright.executionEnvironments]]
+root = "tools/ctaops-udev"
+reportMissingTypeArgument = "none"
+reportImplicitOverride = "none"
+reportMissingParameterType = "none"
+reportUnknownLambdaType = "none"
+reportUnnecessaryIsInstance = "none"
+reportUnnecessaryComparison = "none"
+reportUnusedImport = "none"
+reportUnusedVariable = "none"
+reportUnusedFunction = "none"
+reportPrivateUsage = "none"
+reportUnnecessaryCast = "none"
+reportUnusedClass = "none"
+reportIncompatibleMethodOverride = "none"
+reportPossiblyUnboundVariable = "none"

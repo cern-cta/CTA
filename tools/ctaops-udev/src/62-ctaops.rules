@@ -1,0 +1,6 @@
+# For the media changer: map to a logicalLibrary
+SUBSYSTEM=="scsi_generic", SUBSYSTEMS=="scsi",  ATTRS{type}=="8", \
+KERNEL=="sg*[0-9]*", IMPORT{program}="/usr/lib/udev/ctaops-udev", SYMLINK+="tape/by-name/%E{CTAOPS_NAME}"
+
+# For the nst interface: map to a tapeDrive
+KERNEL=="nst*[0-9]", SUBSYSTEM=="scsi_tape", IMPORT{program}="/usr/lib/udev/ctaops-udev", SYMLINK+="tape/by-name/%E{CTAOPS_NAME}"

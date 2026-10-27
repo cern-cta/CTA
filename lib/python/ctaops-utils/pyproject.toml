@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling>=1.27.0", "hatch-vcs>=0.4.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ctaops-utils"
+authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
+description = "CTAOPS utils library for ctaops apps and tools"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+keywords = ["CTA", "tape", "CERN"]
+
+dynamic = ["version"]
+dependencies = ["tomli", "rich"]
+
+[project.urls]
+Source = "https://gitlab.cern.ch/cta/CTA/"
+Documentation = "https://ctaops.docs.cern.ch/"
+"CTA Documentation" = "https://cta.docs.cern.ch/"
+
+
+[tool.hatch.version]
+source = "vcs"
+raw-options = { root = "../../.." }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ctaops"]
+
+[tool.hatch.build.targets.sdist]
+include = ["README.md", "pyproject.toml", "src/**", "tests/**"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../../LICENSES/GPL-3.0-or-later.txt" = "LICENSE"
