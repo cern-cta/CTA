@@ -27,8 +27,8 @@ It is highly recommended to use `--config-strict` when deploying CTA to ensure o
 Services using the CTA Runtime Library expand explicit environment references before parsing and validating the main TOML configuration.
 This allows multiple processes to share a configuration file while supplying different values through their environment.
 
-- `${NAME}` or `${env:NAME}` inserts the environment variable's value. An undefined variable becomes an empty string.
-- `${NAME:-fallback}` or `${env:NAME:-fallback}` uses the fallback when the variable is undefined or empty.
+- `${NAME}` inserts the environment variable's value. An undefined variable becomes an empty string.
+- `${NAME:-fallback}` uses the fallback when the variable is undefined or empty.
 - `$$` inserts a literal dollar: `$${NAME}` produces the literal text `${NAME}`. Bare `$NAME` is not expanded.
 
 For example, a string value uses `name = "${CTA_NAME}"`, while an integer value uses `port = ${CTA_PORT:-1234}`.
@@ -37,7 +37,7 @@ Invalid substitution references cause an error.
 
 Substitution applies throughout the file, including keys and comments, and inserts values verbatim.
 Values must therefore be valid in their TOML context, including any required quoting or escaping.
-The substitution syntax follows OpenTelemetry, but this whole-file preprocessing does not prevent values from changing the TOML structure.
+The substitution syntax is based on OpenTelemetry and does not support prefixes, but this whole-file preprocessing does not prevent values from changing the TOML structure.
 
 `--config-strict` checks the resulting configuration; it does not make undefined environment variables an error by themselves.
 An undefined variable inside quotes can produce a valid empty string.

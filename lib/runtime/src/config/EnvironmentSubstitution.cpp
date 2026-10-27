@@ -41,7 +41,7 @@ void substituteSegment(std::string_view input, std::size_t offset, bool errorOnM
       output.append(input.substr(start));
       break;
     }
-    auto reference = input.substr(start + 2, end - start - 2);
+    const auto reference = input.substr(start + 2, end - start - 2);
     if (reference.empty() || !std::all_of(reference.begin(), reference.end(), isReferenceCharacter)) {
       // Not a SUBSTITUTION-REF under the specification's ABNF; keep scanning for subsequent references.
       output.append("${");
@@ -49,10 +49,6 @@ void substituteSegment(std::string_view input, std::size_t offset, bool errorOnM
       continue;
     }
 
-    // A variable named "env" can itself have a fallback; :- is not a prefix separator.
-    if (reference.starts_with("env:") && !reference.starts_with("env:-")) {
-      reference.remove_prefix(4);
-    }
     std::size_t nameEnd = 0;
     if (!reference.empty() && isNameStart(reference.front())) {
       nameEnd = 1;
@@ -66,7 +62,7 @@ void substituteSegment(std::string_view input, std::size_t offset, bool errorOnM
       // Avoid including scalar contents or defaults, which may contain credentials, in diagnostics.
       throw cta::exception::UserError(
         "Invalid environment substitution at byte " + std::to_string(offset + start)
-          + "; expected ${NAME} or ${env:NAME}, optionally with :-fallback. Only the env prefix is supported.",
+          + "; expected ${NAME}, optionally with :-fallback.",
         false);
     }
 

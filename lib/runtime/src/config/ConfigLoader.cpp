@@ -5,9 +5,10 @@
 
 #include "runtime/config/ConfigLoader.hpp"
 
+#include "common/utils/utils.hpp"
 #include "runtime/config/EnvironmentSubstitution.hpp"
 
-#include <fstream>
+#include <stdexcept>
 
 namespace cta::runtime {
 
@@ -28,19 +29,11 @@ ResolvedToml resolveToml(std::string_view contents,
 
 ResolvedToml
 readTomlFile(const std::string& filePath, bool expandEnvironmentVariables, bool errorOnMissingEnvironmentVariable) {
-  std::ifstream file(filePath, std::ios::binary);
-  if (!file.is_open()) {
-    throw cta::exception::UserError("Failed to open config file '" + filePath + "'.", false);
-  }
-
-  // Preserve exact bytes for snapshots and reject partial reads.
   std::string contents;
-  char buffer[8192];
-  while (file.read(buffer, sizeof(buffer)) || file.gcount() > 0) {
-    contents.append(buffer, static_cast<std::size_t>(file.gcount()));
-  }
-  if (file.bad() || !file.eof()) {
-    throw cta::exception::UserError("Failed to read config file '" + filePath + "'.", false);
+  try {
+    contents = cta::utils::readFileAsString(filePath);
+  } catch (const std::runtime_error& error) {
+    throw cta::exception::UserError("Failed to read config file '" + filePath + "': " + error.what(), false);
   }
   return resolveToml(contents, filePath, expandEnvironmentVariables, errorOnMissingEnvironmentVariable);
 }

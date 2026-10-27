@@ -11,15 +11,15 @@
 namespace cta::runtime {
 
 /**
- * @brief Substitute environment variable references in text using OpenTelemetry substitution syntax.
+ * @brief Substitute environment variable references in text using syntax based on OpenTelemetry.
  *
- * Supports ${NAME} and ${env:NAME}.
- * Use ${NAME:-fallback} or ${env:NAME:-fallback} to supply a fallback for an undefined or empty variable.
+ * Supports ${NAME}.
+ * Use ${NAME:-fallback} to supply a fallback for an undefined or empty variable.
  * References require braces: $NAME is left as the literal text "$NAME".
  * $$ produces a literal dollar, so $${NAME} becomes the literal text "${NAME}" without looking up NAME.
  * Substitution is not recursive: references in environment variable values or fallback text are not substituted.
  * Text that does not form a substitution reference (such as an unclosed ${NAME) is preserved.
- * Only the env prefix is supported.
+ * Prefixes are not supported.
  *
  * The process environment must not be modified concurrently with this call.
  *

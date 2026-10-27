@@ -64,7 +64,6 @@ TEST_F(EnvironmentSubstitution, OpenTelemetrySpecificationExamples) {
     {"${INT_VALUE}",                        "1"                                 },
     {"${FLOAT_VALUE}",                      "1.1"                               },
     {"${HEX_VALUE}",                        "0xdeadbeef"                        },
-    {"${env:STRING_VALUE}",                 "value"                             },
     {"${INVALID_MAP_VALUE}",                "value\nkey:value"                  },
     {"foo ${STRING_VALUE} ${FLOAT_VALUE}",  "foo value 1.1"                     },
     {"${UNDEFINED_KEY}",                    ""                                  },
@@ -95,32 +94,29 @@ TEST_F(EnvironmentSubstitution, PreservesOrdinaryTextAndBareVariables) {
 }
 
 TEST_F(EnvironmentSubstitution, SupportsNamesAndAdjacentReferences) {
-  EXPECT_EQ(substituteEnvironmentVariables("${_cta_Test9}:${STRING_VALUE}${env:INT_VALUE}"), "mixed:value1");
+  EXPECT_EQ(substituteEnvironmentVariables("${_cta_Test9}:${STRING_VALUE}${INT_VALUE}"), "mixed:value1");
   EXPECT_EQ(substituteEnvironmentVariables("${STRING_VALUE}/${STRING_VALUE}"), "value/value");
 }
 
 TEST_F(EnvironmentSubstitution, UndefinedAndEmptyVariablesResolveToEmptyByDefault) {
-  EXPECT_EQ(substituteEnvironmentVariables("a${UNDEFINED_KEY}b${env:UNDEFINED_KEY}c"), "abc");
-  EXPECT_EQ(substituteEnvironmentVariables("${EMPTY_VALUE}${env:EMPTY_VALUE}"), "");
+  EXPECT_EQ(substituteEnvironmentVariables("a${UNDEFINED_KEY}b${UNDEFINED_KEY}c"), "abc");
+  EXPECT_EQ(substituteEnvironmentVariables("${EMPTY_VALUE}"), "");
   EXPECT_EQ(substituteEnvironmentVariables("${UNDEFINED_KEY}", false), "");
 }
 
 TEST_F(EnvironmentSubstitution, MissingVariableErrorsAreOptionalAndIdentifyTheName) {
-  for (const auto* input : {"${UNDEFINED_KEY}", "${env:UNDEFINED_KEY}"}) {
-    SCOPED_TRACE(input);
-    try {
-      substituteEnvironmentVariables(input, true);
-      FAIL() << "Expected a missing-variable error";
-    } catch (const cta::exception::UserError& e) {
-      EXPECT_NE(e.getMessageValue().find("UNDEFINED_KEY"), std::string::npos);
-    }
+  try {
+    substituteEnvironmentVariables("${UNDEFINED_KEY}", true);
+    FAIL() << "Expected a missing-variable error";
+  } catch (const cta::exception::UserError& e) {
+    EXPECT_NE(e.getMessageValue().find("UNDEFINED_KEY"), std::string::npos);
   }
-  EXPECT_EQ(substituteEnvironmentVariables("${EMPTY_VALUE}${env:EMPTY_VALUE}", true), "");
+  EXPECT_EQ(substituteEnvironmentVariables("${EMPTY_VALUE}", true), "");
 }
 
 TEST_F(EnvironmentSubstitution, FallbacksApplyToUndefinedAndEmptyVariablesInBothModes) {
   for (const bool errorOnMissing : {false, true}) {
-    for (const auto* name : {"UNDEFINED_KEY", "EMPTY_VALUE", "env:UNDEFINED_KEY", "env:EMPTY_VALUE"}) {
+    for (const auto* name : {"UNDEFINED_KEY", "EMPTY_VALUE"}) {
       SCOPED_TRACE(name);
       EXPECT_EQ(substituteEnvironmentVariables("${" + std::string(name) + ":-fallback}", errorOnMissing), "fallback");
       EXPECT_EQ(substituteEnvironmentVariables("${" + std::string(name) + ":-}", errorOnMissing), "");
@@ -130,14 +126,13 @@ TEST_F(EnvironmentSubstitution, FallbacksApplyToUndefinedAndEmptyVariablesInBoth
 
 TEST_F(EnvironmentSubstitution, EnvIsAlsoAValidVariableName) {
   EXPECT_EQ(substituteEnvironmentVariables("${env:-fallback}", true), "fallback");
-  EXPECT_EQ(substituteEnvironmentVariables("${env:env:-fallback}", true), "fallback");
   ASSERT_EQ(::setenv("env", "present", 1), 0);
-  EXPECT_EQ(substituteEnvironmentVariables("${env} ${env:-fallback} ${env:env:-fallback}"), "present present present");
+  EXPECT_EQ(substituteEnvironmentVariables("${env} ${env:-fallback}"), "present present");
 }
 
 TEST_F(EnvironmentSubstitution, NonemptyValuesTakePrecedenceOverFallbacks) {
   EXPECT_EQ(substituteEnvironmentVariables("${STRING_VALUE:-fallback}"), "value");
-  EXPECT_EQ(substituteEnvironmentVariables("${env:STRING_VALUE:-fallback}", true), "value");
+  EXPECT_EQ(substituteEnvironmentVariables("${STRING_VALUE:-fallback}", true), "value");
 }
 
 TEST_F(EnvironmentSubstitution, FalseLookingAndWhitespaceValuesOverrideFallbacks) {
@@ -146,7 +141,6 @@ TEST_F(EnvironmentSubstitution, FalseLookingAndWhitespaceValuesOverrideFallbacks
     ASSERT_EQ(::setenv("STRING_VALUE", value, 1), 0);
     for (const bool errorOnMissing : {false, true}) {
       EXPECT_EQ(substituteEnvironmentVariables("${STRING_VALUE:-fallback}", errorOnMissing), value);
-      EXPECT_EQ(substituteEnvironmentVariables("${env:STRING_VALUE:-fallback}", errorOnMissing), value);
     }
   }
 }
@@ -181,7 +175,6 @@ TEST_F(EnvironmentSubstitution, ReplacementBoundariesDoNotCreateNewReferences) {
 
 TEST_F(EnvironmentSubstitution, BackslashesDoNotEscapeReferences) {
   EXPECT_EQ(substituteEnvironmentVariables(R"(\${STRING_VALUE})", true), R"(\value)");
-  EXPECT_EQ(substituteEnvironmentVariables(R"(\${env:STRING_VALUE})", true), R"(\value)");
 }
 
 TEST_F(EnvironmentSubstitution, EscapingTakesPrecedenceOverSubstitution) {
@@ -204,6 +197,10 @@ TEST_F(EnvironmentSubstitution, RejectsInvalidReferencesAndUnsupportedPrefixes) 
                             "${ STRING_VALUE}",
                             "${STRING_VALUE }",
                             "${ }",
+                            "${env:STRING_VALUE}",
+                            "${env:STRING_VALUE:-fallback}",
+                            "${env:UNDEFINED_KEY:-fallback}",
+                            "${env:EMPTY_VALUE:-fallback}",
                             "${env:}",
                             "${env:1API_KEY}",
                             "${env:STRING_VALUE:?error}",

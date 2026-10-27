@@ -199,9 +199,7 @@ The signal reactor invokes `stop()` on `SIGTERM`; the application must arrange f
 
 When `--runtime-dir` is supplied, the runtime records configuration and process metadata there.
 `Application` reads and expands the main configuration once, saves the original and resolved text, and parses the same resolved buffer.
-This keeps the snapshots consistent with what was loaded and avoids repeated expansion.
-`--config-check` rejects `--runtime-dir` before loading configuration, so validation cannot overwrite runtime snapshots.
-During normal startup, it copies referenced configuration files before consuming those copies, so the snapshot reflects what was loaded. The deployment creates and owns this directory; the application does not remove it. Use a separate directory for each process because filenames are deterministic. See [runtime-directory configuration](../../ops/deploy-and-configure/configuration/service-runtime.md#runtime-directory).
+This keeps the snapshots consistent with what was loaded and avoids repeated expansion. See [runtime-directory configuration](../../ops/deploy-and-configure/configuration/service-runtime.md#runtime-directory).
 
 The runtime keeps the health server and telemetry alive during application execution, including fatal-error reporting. Adding `health_server` to the configuration requires `isLive()` and `isReady()` methods. See [Readiness and Liveness](health-checks.md), [Telemetry Internals](telemetry.md), and the [C++ instrumentation guide](../guides/instrumentation/cpp.md).
 
