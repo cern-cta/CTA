@@ -44,8 +44,8 @@ Reference parseReference(std::string_view reference, std::size_t offset) {
   if (nameEnd == 0 || (!suffix.empty() && !hasFallback)) {
     // Avoid including scalar contents or defaults, which may contain credentials, in diagnostics.
     throw cta::exception::UserError("Invalid environment substitution at byte " + std::to_string(offset)
-                                    + "; expected ${NAME}, optionally with :-fallback.",
-                                  false);
+                                      + "; expected ${NAME}, optionally with :-fallback.",
+                                    false);
   }
   return {reference.substr(0, nameEnd), hasFallback ? std::optional {suffix.substr(2)} : std::nullopt};
 }
@@ -75,7 +75,7 @@ void substituteSegment(std::string_view input, std::size_t offset, bool errorOnM
     }
 
     const auto parsed = parseReference(reference, offset + start);
-    const std::string name(parsed.name); // parsed.name is a string_view
+    const std::string name(parsed.name);  // parsed.name is a string_view
     const char* value = std::getenv(name.c_str());
     if (value != nullptr && *value != '\0') {
       output.append(value);
