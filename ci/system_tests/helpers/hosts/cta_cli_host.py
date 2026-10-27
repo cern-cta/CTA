@@ -156,7 +156,9 @@ class CtaCliHost(RemoteHost):
                 throw_on_failure=False,
             )
             if not result.success and "because it is the only copy" not in result.stderr:
-                raise RuntimeError(f"cta-admin tf rm failed unexpectedly for archive_id={archive_id} on {vid}: {result.stderr}")
+                raise RuntimeError(
+                    f"cta-admin tf rm failed unexpectedly for archive_id={archive_id} on {vid}: {result.stderr}"
+                )
 
     def has_repack_request(self, vid: str) -> bool:
         try:
