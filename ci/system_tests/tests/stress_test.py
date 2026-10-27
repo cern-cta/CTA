@@ -269,9 +269,11 @@ async def test_generate_and_copy_files(
 
     # Run archive and monitoring concurrently — no PID polling needed
     monitor_task = asyncio.create_task(monitor_copy_and_put_drives_up())
-    exec_result = await archive_future
-    stop_monitoring.set()
-    await monitor_task
+    try:
+        exec_result = await archive_future
+    finally:
+        stop_monitoring.set()
+        await monitor_task
 
     # If archive finished before threshold was reached, still put drives up
     if stress_params.prequeue.enabled and not drives_up:
@@ -408,9 +410,11 @@ async def test_request_files_for_retrieve(
                 await asyncio.wait_for(stop_monitoring.wait(), sleep_time)
 
     monitor_task = asyncio.create_task(monitor_retrieve_and_put_drives_up())
-    exec_result = await retrieve_future
-    stop_monitoring.set()
-    await monitor_task
+    try:
+        exec_result = await retrieve_future
+    finally:
+        stop_monitoring.set()
+        await monitor_task
 
     if stress_params.retrieve_prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold — putting drives UP now")

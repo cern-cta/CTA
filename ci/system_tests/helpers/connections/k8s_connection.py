@@ -1,9 +1,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import shlex
 import subprocess
 import time
 from dataclasses import dataclass
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -118,6 +120,75 @@ class K8sConnection(RemoteConnection):
         else:
             stdout = ""
             stderr = ""
+
+        return ExecResult(stdout=stdout, stderr=stderr, success=success)
+
+    def exec_long_running(
+        self,
+        command: str,
+        capture_output: bool = False,
+        throw_on_failure: bool = True,
+        print_command: bool = False,
+        poll_timeout_secs: int = 14400,
+    ) -> ExecResult:
+        """Execute a long-running command without holding a Kubernetes WebSocket open.
+
+        Starts the command as a nohup background process on the pod, polls for
+        completion via a sentinel file, then reads back stdout/stderr.  This avoids
+        the TCP/WebSocket timeout that kills kubectl-exec sessions held open for hours.
+        """
+        if print_command:
+            print(command)
+
+        tmpdir = f"/tmp/cta_exec_{uuid.uuid4().hex}"
+        # Build the inner shell fragment that captures output and records the exit code.
+        # Write PID alongside so we can kill the process on timeout.
+        inner = f"{command} > {tmpdir}/stdout 2> {tmpdir}/stderr; echo $? > {tmpdir}/exitcode"
+        launch = (
+            f"mkdir -p {tmpdir} && "
+            f"nohup sh -c {shlex.quote(inner)} > /dev/null 2>&1 & "
+            f"echo $! > {tmpdir}/pid"
+        )
+        # This exec is short-lived — it just daemonises the process and returns.
+        self.exec(launch)
+
+        deadline = time.time() + poll_timeout_secs
+        exitcode: Optional[int] = None
+        try:
+            # Poll every 30 s for the exit-code sentinel file.
+            while True:
+                if time.time() > deadline:
+                    raise TimeoutError(
+                        f"exec_long_running: command did not finish within {poll_timeout_secs}s: {command!r}"
+                    )
+                probe = self.exec(
+                    f"cat {tmpdir}/exitcode 2>/dev/null || true",
+                    capture_output=True,
+                    throw_on_failure=False,
+                )
+                raw = probe.stdout.strip()
+                if raw:
+                    try:
+                        exitcode = int(raw)
+                        break
+                    except ValueError:
+                        pass  # partial write — retry on next poll
+                time.sleep(30)
+        finally:
+            if exitcode is None:
+                # Timed out or interrupted — kill the background process and clean up.
+                self.exec(
+                    f"kill $(cat {tmpdir}/pid 2>/dev/null) 2>/dev/null; rm -rf {tmpdir}",
+                    throw_on_failure=False,
+                )
+
+        stdout = self.exec(f"cat {tmpdir}/stdout", capture_output=True, throw_on_failure=False).stdout
+        stderr = self.exec(f"cat {tmpdir}/stderr", capture_output=True, throw_on_failure=False).stdout
+        self.exec(f"rm -rf {tmpdir}", throw_on_failure=False)
+
+        success = exitcode == 0
+        if throw_on_failure and not success:
+            raise RuntimeError(f'"{command}" failed with exit code {exitcode}: {stderr}')
 
         return ExecResult(stdout=stdout, stderr=stderr, success=success)
 
