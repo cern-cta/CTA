@@ -282,9 +282,7 @@ def _submit_repack_request(
             assert not all_files_selected
         else:
             assert all_files_selected
-            files_remaining = len(
-                json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid_to_repack}"))
-            )
+            files_remaining = len(json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid_to_repack}")))
             assert files_remaining == 0
 
     if len(destination_infos) != 0:
