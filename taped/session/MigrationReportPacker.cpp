@@ -392,6 +392,13 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
     reportPacker.m_lc.log(cta::log::ALERT, "Received a flush after an error: sending file errors to client");
   }
 #ifdef CTA_PGSCHED
+  // Piggyback: flush accumulated failed jobs on every tape flush event.
+  // Failures are rare, so the batch-size threshold is unlikely to trigger mid-session;
+  // piggybacking here ensures they are reported promptly alongside successes.
+  // The only gap is failures that arrive after the last tape flush (e.g. drive going
+  // quiet before end-of-session) — those are held until ReportEndofSession fires,
+  // which is guaranteed. No separate timer is needed because that gap is both rare
+  // and bounded by the session lifetime.
   reportPacker.flushFailedJobs(reportPacker.m_lc);
 #endif
 }
@@ -525,7 +532,6 @@ void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
     lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
   m_failedArchiveJobs.clear();
-  m_failedJobsLastFlushTime = std::chrono::steady_clock::now();
 }
 
 //------------------------------------------------------------------------------
@@ -542,27 +548,7 @@ void MigrationReportPacker::WorkerThread::run() {
   lc.push(cta::log::Param("thread", "ReportPacker"));
   try {
     while (m_parent.m_continue) {
-#ifdef CTA_PGSCHED
-      // timedPop wakes the thread every 1 s when the queue is idle so we can
-      // check whether the 60 s force-flush interval has elapsed for accumulated
-      // failed jobs.  Batch-size flushes happen inside ReportError::execute()
-      // independently of this timeout.
-      constexpr uint64_t tickUs = 1'000'000;  // 1 s in microseconds
-      auto optRep = m_parent.m_fifo.timedPop(tickUs);
-      if (!optRep.has_value()) {
-        if (!m_parent.m_failedArchiveJobs.empty()) {
-          const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::steady_clock::now() - m_parent.m_failedJobsLastFlushTime).count();
-          if (static_cast<uint64_t>(elapsed) >= MigrationReportPacker::c_failedJobsFlushIntervalSecs) {
-            m_parent.flushFailedJobs(lc);
-          }
-        }
-        continue;
-      }
-      std::unique_ptr<Report> rep = std::move(*optRep);
-#else
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
-#endif
       {
         cta::log::ScopedParamContainer params(lc);
         int demangleStatus;

@@ -273,21 +273,7 @@ void RecallReportPacker::WorkerThread::run() {
   cta::utils::Timer t;
   while (true) {
     std::string debugType;
-#ifdef CTA_PGSCHED
-    std::optional<Report*> optRep = m_parent.m_fifo.timedPop(1'000'000 /* 1s heartbeat to check 60s flush interval */);
-    if (!optRep.has_value()) {
-      auto now = std::chrono::steady_clock::now();
-      auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-        now - m_parent.m_failedJobsLastFlushTime).count();
-      if (elapsed >= static_cast<int64_t>(RecallReportPacker::c_failedJobsFlushIntervalSecs)) {
-        m_parent.flushFailedJobs(m_parent.m_lc);
-      }
-      continue;
-    }
-    std::unique_ptr<Report> rep(optRep.value());
-#else
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
-#endif
     {
       cta::log::ScopedParamContainer spc(m_parent.m_lc);
       int demangleStatus;
@@ -449,7 +435,6 @@ void RecallReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
            "In RecallReportPacker::flushFailedJobs(): failTransferBatch threw; jobs will be rescued by GC.");
   }
   m_failedRetrieveJobs.clear();
-  m_failedJobsLastFlushTime = std::chrono::steady_clock::now();
 }
 
 //------------------------------------------------------------------------------
@@ -464,6 +449,15 @@ bool RecallReportPacker::errorHappened() {
 //------------------------------------------------------------------------------
 void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
   m_retrieveMount->setJobBatchTransferred(m_successfulRetrieveJobs, m_lc);
+#ifdef CTA_PGSCHED
+  // Piggyback: flush any accumulated failed jobs whenever we flush successful ones.
+  // The only gap is if failures arrive after the last success flush and before
+  // end-of-session — in that rare case they are held until ReportEndofSession fires,
+  // which is guaranteed. A stalled session that never reaches end-of-session would
+  // not flush failures either, but that scenario also prevents any success flushes,
+  // so there is no asymmetry.
+  flushFailedJobs(m_lc);
+#endif
 }
 
 //------------------------------------------------------------------------------

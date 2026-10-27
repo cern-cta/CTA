@@ -290,11 +290,9 @@ private:
   std::queue<cta::catalogue::TapeItemWritten> m_skippedFiles;
 
   static constexpr size_t c_failedJobsBatchMax = 600;
-  static constexpr uint64_t c_failedJobsFlushIntervalSecs = 60;
 
   // Accumulator: jobs with in-memory state already updated by prepareFailTransfer().
   std::vector<std::unique_ptr<cta::ArchiveJob>> m_failedArchiveJobs;
-  std::chrono::steady_clock::time_point m_failedJobsLastFlushTime{std::chrono::steady_clock::now()};
 
   void flushFailedJobs(cta::log::LogContext& lc);
 };

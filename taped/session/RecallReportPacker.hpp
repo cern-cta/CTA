@@ -245,9 +245,7 @@ private:
   const double RECALL_REPORT_PACKER_FLUSH_TIME = 180;
 
   static constexpr size_t c_failedJobsBatchMax = 600;
-  static constexpr uint64_t c_failedJobsFlushIntervalSecs = 60;
   std::vector<std::unique_ptr<cta::RetrieveJob>> m_failedRetrieveJobs;
-  std::chrono::steady_clock::time_point m_failedJobsLastFlushTime{std::chrono::steady_clock::now()};
   void flushFailedJobs(cta::log::LogContext& lc);
 };
 
