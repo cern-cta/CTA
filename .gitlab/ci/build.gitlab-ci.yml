@@ -260,7 +260,7 @@ build-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13" || $PIPELINE_TYPE != "DEFAULT"'
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - !reference [.python-workspace, rules]
   script:

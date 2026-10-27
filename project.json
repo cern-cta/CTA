@@ -12,7 +12,6 @@
   "dev": {
     "cppVersion": "c++23",
     "pythonVersion": "3.9",
-    "uvVersion": "0.12.18",
     "defaultPlatform": "el9",
     "defaultBuildType": "RelWithDebInfo",
     "ctaImageRegistry": "gitlab-registry.cern.ch",
