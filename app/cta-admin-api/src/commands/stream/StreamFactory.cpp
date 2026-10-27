@@ -37,7 +37,7 @@ using Creator = std::function<std::unique_ptr<CtaAdminResponseStream>(const Stre
 /// Builds a stream of already loaded items, which are converted to their protobuf representation by toProto()
 template<class Item>
 std::unique_ptr<CtaAdminResponseStream>
-vectorStream(HeaderType headerType, const std::vector<Item>&& items, const std::string& instanceName) {
+vectorStream(HeaderType headerType, std::vector<Item>&& items, const std::string& instanceName) {
   return std::make_unique<VectorResponseStream<Item>>(headerType, instanceName, std::move(items));
 }
 
@@ -189,7 +189,7 @@ const std::map<CmdKey, Creator> STREAM_CMD_TABLE = {
 std::unique_ptr<CtaAdminResponseStream> createStream(const StreamContext& context, const admin::AdminCmd& adminCmd) {
   // Same rule as for the commands answered with one response
   if (isCommandDisabled(context.adminCommandMode, adminCmd)) {
-    throw exception::UserError(DISABLED_ADMIN_CMD_MSG);
+    throw DisabledAdminCmd(adminCmd);
   }
 
   const auto it = STREAM_CMD_TABLE.find(CmdKey(adminCmd.cmd(), adminCmd.subcmd()));

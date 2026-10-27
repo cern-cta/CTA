@@ -10,6 +10,7 @@
 #include "grpc-server/PbException.hpp"
 
 #include <grpcpp/grpcpp.h>
+#include <utility>
 
 #include "cta_frontend.grpc.pb.h"
 #include "cta_frontend.pb.h"
@@ -18,6 +19,7 @@ namespace cta::admin_api::rpc {
 
 void CtaAdminServerWriteReactor::OnWriteDone(bool ok) {
   if (!ok) {
+    m_requestLogger.failed("Write failed: client gone or call cancelled");
     Finish(::grpc::Status(::grpc::StatusCode::CANCELLED, "Write failed: client gone or call cancelled"));
     return;
   }
@@ -52,21 +54,28 @@ void CtaAdminServerWriteReactor::NextWrite() {
       *m_response.mutable_data() = m_stream->next();
       StartWrite(&m_response);
     } else {
+      m_requestLogger.succeeded();
       Finish(::grpc::Status::OK);
     }
   } catch (cta::exception::PbException& ex) {
+    m_requestLogger.failed(ex.getMessageValue());
     Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue()));
   } catch (cta::exception::UserError& ex) {
+    m_requestLogger.rejected(ex.getMessageValue());
     Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue()));
   } catch (cta::exception::Exception& ex) {
+    m_requestLogger.failed(ex.getMessageValue());
     Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue()));
   } catch (std::exception& ex) {
+    m_requestLogger.failed(ex.what());
     Finish(::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what()));
   }
 }
 
-CtaAdminServerWriteReactor::CtaAdminServerWriteReactor(std::unique_ptr<commands::stream::CtaAdminResponseStream> stream)
-    : m_stream(std::move(stream)) {
+CtaAdminServerWriteReactor::CtaAdminServerWriteReactor(std::unique_ptr<commands::stream::CtaAdminResponseStream> stream,
+                                                       grpc_server::RequestLogger requestLogger)
+    : m_stream(std::move(stream)),
+      m_requestLogger(std::move(requestLogger)) {
   NextWrite();
 }
 

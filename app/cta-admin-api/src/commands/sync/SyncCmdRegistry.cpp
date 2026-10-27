@@ -45,7 +45,6 @@ const std::map<CmdKey, SyncCmdHandler> SYNC_CMD_TABLE = {
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM},          handlers::removeMountPolicy        },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD},              handlers::addRepack                },
   {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_RM},               handlers::removeRepack             },
-  {{AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ERR},              handlers::showRepackErrors         },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_ADD},  handlers::addRequesterMountRule    },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_CH},   handlers::changeRequesterMountRule },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM},   handlers::removeRequesterMountRule },

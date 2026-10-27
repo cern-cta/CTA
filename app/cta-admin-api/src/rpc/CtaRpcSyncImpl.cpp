@@ -5,11 +5,14 @@
 
 #include "rpc/CtaRpcSyncImpl.hpp"
 
+#include "AdminCmdMode.hpp"
+#include "commands/AdminCmdLogParams.hpp"
 #include "commands/sync/SyncCmd.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "grpc-server/PbException.hpp"
+#include "grpc-server/server/RequestLogger.hpp"
 
 namespace cta::admin_api::rpc {
 
@@ -43,36 +46,46 @@ CtaRpcSyncImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* r
   }
 
   sp.add("remoteHost", context->peer());
+  sp.add("user", clientIdentity->username);
+  commands::addAdminCmdLogParams(sp, request->admincmd());
+  cta::grpc_server::RequestLogger requestLogger(lc, "sync admin command");
 
-  lc.log(cta::log::DEBUG, "CTA-Admin non-streaming command");
   // process the admin command
   try {
     cta::admin_api::commands::sync::SyncCmd syncCmd(m_serviceResources,
                                                     m_config,
+                                                    lc,
                                                     clientIdentity.value(),
                                                     request->admincmd());
     *response = syncCmd.process();  // success response code will be set in here if processing goes well
+    requestLogger.succeeded();
   } catch (cta::exception::PbException& ex) {
-    lc.log(cta::log::ERR, ex.getMessageValue());
+    requestLogger.failed(ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
+  } catch (DisabledAdminCmd& ex) {
+    requestLogger.rejected(ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, ex.getMessageValue());
   } catch (cta::exception::UserError& ex) {
-    lc.log(cta::log::INFO, ex.getMessageValue());
+    requestLogger.rejected(ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
-    lc.log(cta::log::ERR, ex.getMessageValue());
+    requestLogger.failed(ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
   } catch (std::runtime_error& ex) {
-    lc.log(cta::log::ERR, ex.what());
+    requestLogger.failed(ex.what());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.what());
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what());
   } catch (...) {
+    requestLogger.failed("Unknown exception");
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     return ::grpc::Status(::grpc::StatusCode::UNKNOWN, "Error processing gRPC Admin request");
   }

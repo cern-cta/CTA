@@ -14,16 +14,17 @@ using admin::OptionString;
 using admin::OptionStrList;
 using admin::OptionUInt64;
 
-void addGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& mountpolicy = opts.getRequired(OptionString::MOUNT_POLICY);
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
   auto& comment = opts.getRequired(OptionString::COMMENT);
 
   ctx.catalogue.RequesterGroupMountRule()->createRequesterGroupMountRule(ctx.identity, mountpolicy, in, name, comment);
+  return std::nullopt;
 }
 
-void changeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
 
@@ -39,16 +40,18 @@ void changeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts
                                                                                  name,
                                                                                  mountpolicy.value());
   }
+  return std::nullopt;
 }
 
-void removeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
 
   ctx.catalogue.RequesterGroupMountRule()->deleteRequesterGroupMountRule(in, name);
+  return std::nullopt;
 }
 
-void addMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& group = opts.getRequired(OptionString::MOUNT_POLICY);
   auto& archivepriority = opts.getRequired(OptionUInt64::ARCHIVE_PRIORITY);
   auto& minarchiverequestage = opts.getRequired(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
@@ -65,9 +68,10 @@ void addMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd:
   mountPolicy.comment = comment;
 
   ctx.catalogue.MountPolicy()->createMountPolicy(ctx.identity, mountPolicy);
+  return std::nullopt;
 }
 
-void changeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& group = opts.getRequired(OptionString::MOUNT_POLICY);
   auto archivepriority = opts.getOptional(OptionUInt64::ARCHIVE_PRIORITY);
   auto minarchiverequestage = opts.getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
@@ -94,24 +98,27 @@ void changeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, x
   if (comment.has_value()) {
     ctx.catalogue.MountPolicy()->modifyMountPolicyComment(ctx.identity, group, comment.value());
   }
+  return std::nullopt;
 }
 
-void removeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& group = opts.getRequired(OptionString::MOUNT_POLICY);
 
   ctx.catalogue.MountPolicy()->deleteMountPolicy(group);
+  return std::nullopt;
 }
 
-void addRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& mountpolicy = opts.getRequired(OptionString::MOUNT_POLICY);
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
   auto& comment = opts.getRequired(OptionString::COMMENT);
 
   ctx.catalogue.RequesterMountRule()->createRequesterMountRule(ctx.identity, mountpolicy, in, name, comment);
+  return std::nullopt;
 }
 
-void changeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
   auto comment = opts.getOptional(OptionString::COMMENT);
@@ -123,16 +130,18 @@ void changeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& 
   if (mountpolicy.has_value()) {
     ctx.catalogue.RequesterMountRule()->modifyRequesterMountRulePolicy(ctx.identity, in, name, mountpolicy.value());
   }
+  return std::nullopt;
 }
 
-void removeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
 
   ctx.catalogue.RequesterMountRule()->deleteRequesterMountRule(in, name);
+  return std::nullopt;
 }
 
-void addActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& mountpolicy = opts.getRequired(OptionString::MOUNT_POLICY);
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
@@ -141,9 +150,10 @@ void addActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts
 
   ctx.catalogue.RequesterActivityMountRule()
     ->createRequesterActivityMountRule(ctx.identity, mountpolicy, in, name, activityRegex, comment);
+  return std::nullopt;
 }
 
-void changeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
   auto& activityRegex = opts.getRequired(OptionString::ACTIVITY_REGEX);
@@ -164,14 +174,16 @@ void changeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& o
                                                                                        activityRegex,
                                                                                        mountpolicy.value());
   }
+  return std::nullopt;
 }
 
-void removeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& in = opts.getRequired(OptionString::INSTANCE);
   auto& name = opts.getRequired(OptionString::USERNAME);
   auto& activityRegex = opts.getRequired(OptionString::ACTIVITY_REGEX);
 
   ctx.catalogue.RequesterActivityMountRule()->deleteRequesterActivityMountRule(in, name, activityRegex);
+  return std::nullopt;
 }
 
 }  // namespace cta::admin_api::commands::sync::handlers

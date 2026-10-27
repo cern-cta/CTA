@@ -52,4 +52,15 @@ TEST(AdminCmdMode, OtherModesRejectNothing) {
   }
 }
 
+TEST(AdminCmdMode, DisabledAdminCmdIsAUserErrorNamingTheCommand) {
+  using cta::admin::AdminCmd;
+  using cta::admin_api::DisabledAdminCmd;
+
+  try {
+    throw DisabledAdminCmd(makeCmd(AdminCmd::CMD_REPACK, AdminCmd::SUBCMD_ADD));
+  } catch (const cta::exception::UserError& ex) {
+    EXPECT_EQ(ex.getMessageValue(), "Admin command pair <CMD_REPACK, SUBCMD_ADD> is disabled on this frontend.");
+  }
+}
+
 }  // namespace unitTests

@@ -8,227 +8,223 @@
 #include "commands/AdminCmdOptions.hpp"
 #include "commands/sync/SyncCmdContext.hpp"
 
-#include "cta_frontend.pb.h"
+#include <optional>
+#include <string>
 
 /// @file
 /// The handlers of the non-streamed admin commands, one per (command, subcommand) pair, registered in
 /// SyncCmdRegistry.cpp.
 ///
-/// Each handler receives what it needs from the server (ctx), the options of the command (opts) and the response to
-/// send back. The response is already set to RSP_SUCCESS when a handler is called: handlers only fill in a message
-/// when they have one. Errors are reported by throwing, cta::exception::UserError for the errors of the user.
+/// Each handler receives what it needs from the server (ctx) and the options of the command (opts), and returns the
+/// message to send back to the client, if it has one. Errors are reported by throwing, cta::exception::UserError for
+/// the errors of the user.
 namespace cta::admin_api::commands::sync::handlers {
 
 // handlers/Organization.cpp: admin users and virtual organizations
 
 /// @brief cta-admin admin add
-void addAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin admin ch
-void changeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin admin rm
-void removeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin virtualorganization add
-void addVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin virtualorganization ch
-void changeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin virtualorganization rm
-void removeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 // handlers/Storage.cpp: storage classes, tape pools and archive routes
 
 /// @brief cta-admin archiveroute add
-void addArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin archiveroute ch
-void changeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin archiveroute rm
-void removeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin storageclass add
-void addStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin storageclass ch
-void changeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin storageclass rm
-void removeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tapepool add
-void addTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tapepool ch
-void changeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tapepool rm
-void removeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 // handlers/Libraries.cpp: logical and physical libraries, media types
 
 /// @brief cta-admin logicallibrary add
-void addLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin logicallibrary ch
-void changeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin logicallibrary rm
-void removeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin mediatype add
-void addMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin mediatype ch
-void changeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin mediatype rm
-void removeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin physicallibrary add
-void addPhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addPhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin physicallibrary ch
-void changePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin physicallibrary rm
-void removePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 // handlers/Disk.cpp: disk instances, disk instance spaces and disk systems
 
 /// @brief cta-admin disksystem add
-void addDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin disksystem rm
-void removeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin disksystem ch
-void changeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin diskinstance add
-void addDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin diskinstance rm
-void removeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin diskinstance ch
-void changeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin diskinstancespace add
-void addDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin diskinstancespace rm
-void removeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin diskinstancespace ch
-void changeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 // handlers/MountRules.cpp: group, requester and activity mount rules, mount policies
 
 /// @brief cta-admin groupmountrule add
-void addGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin groupmountrule ch
-void changeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin groupmountrule rm
-void removeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeGroupMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin mountpolicy add
-void addMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin mountpolicy ch
-void changeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin mountpolicy rm
-void removeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeMountPolicy(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin requestermountrule add
-void addRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin requestermountrule ch
-void changeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin requestermountrule rm
-void removeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeRequesterMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin activitymountrule add
-void addActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin activitymountrule ch
-void changeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin activitymountrule rm
-void removeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeActivityMountRule(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 // handlers/Tapes.cpp: tapes, tape files, recycled tape files and archive files
 
 /// @brief cta-admin tape add
-void addTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tape ch
-void changeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tape rm
-void removeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tape reclaim
-void reclaimTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> reclaimTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tapefile ch
 ///
 /// User errors are reported in the response (RSP_ERR_USER) instead of being thrown.
-void changeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin tapefile rm
-void removeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin recycletf restore
-void restoreRecycleTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> restoreRecycleTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin archivefile ch
 ///
 /// Kept for standalone tools still using CMD_ARCHIVEFILE, such as cta-eos-namespace-inject. Will be
 /// removed later. User errors are reported in the response (RSP_ERR_USER) instead of being thrown.
-void changeArchiveFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeArchiveFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 // handlers/Scheduling.cpp: drives, repacks and failed requests
 
 /// @brief cta-admin drive up
 ///
 /// The outcome for each matching drive is returned in the message text.
-void setDriveUp(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> setDriveUp(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin drive down
 ///
 /// The outcome for each matching drive is returned in the message text.
-void setDriveDown(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> setDriveDown(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin drive ch
 ///
 /// The outcome for each matching drive is returned in the message text.
-void changeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> changeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin drive rm
 ///
 /// The outcome for each matching drive is returned in the message text.
-void removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin failedrequest rm
-void removeFailedRequest(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeFailedRequest(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin repack add
-void addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief cta-admin repack rm
-void removeRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
-
-/// @brief cta-admin repack err
-///
-/// Not implemented: only returns a message saying so.
-void showRepackErrors(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+std::optional<std::string> removeRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 }  // namespace cta::admin_api::commands::sync::handlers

@@ -13,27 +13,30 @@ using admin::OptionString;
 using admin::OptionStrList;
 using admin::OptionUInt64;
 
-void addAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& username = opts.getRequired(OptionString::USERNAME);
   auto& comment = opts.getRequired(OptionString::COMMENT);
 
   ctx.catalogue.AdminUser()->createAdminUser(ctx.identity, username, comment);
+  return std::nullopt;
 }
 
-void changeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& username = opts.getRequired(OptionString::USERNAME);
   auto& comment = opts.getRequired(OptionString::COMMENT);
 
   ctx.catalogue.AdminUser()->modifyAdminUserComment(ctx.identity, username, comment);
+  return std::nullopt;
 }
 
-void removeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeAdmin(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& username = opts.getRequired(OptionString::USERNAME);
 
   ctx.catalogue.AdminUser()->deleteAdminUser(username);
+  return std::nullopt;
 }
 
-void addVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::VO);
   const auto& readMaxDrives = opts.getRequired(OptionUInt64::READ_MAX_DRIVES);
   const auto& writeMaxDrives = opts.getRequired(OptionUInt64::WRITE_MAX_DRIVES);
@@ -53,9 +56,10 @@ void addVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& op
   vo.isRepackVo = isRepackVo.value_or(false);
 
   ctx.catalogue.VO()->createVirtualOrganization(ctx.identity, vo);
+  return std::nullopt;
 }
 
-void changeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::VO);
   const auto readMaxDrives = opts.getOptional(OptionUInt64::READ_MAX_DRIVES);
   const auto writeMaxDrives = opts.getOptional(OptionUInt64::WRITE_MAX_DRIVES);
@@ -92,9 +96,10 @@ void changeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions&
     }
     ctx.catalogue.VO()->modifyVirtualOrganizationIsRepackVo(ctx.identity, name, isRepackVo.value());
   }
+  return std::nullopt;
 }
 
-void removeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::VO);
 
   if (const auto defaultRepackVo = ctx.catalogue.VO()->getDefaultVirtualOrganizationForRepack();
@@ -103,6 +108,7 @@ void removeVirtualOrganization(const SyncCmdContext& ctx, const AdminCmdOptions&
   }
 
   ctx.catalogue.VO()->deleteVirtualOrganization(name);
+  return std::nullopt;
 }
 
 }  // namespace cta::admin_api::commands::sync::handlers

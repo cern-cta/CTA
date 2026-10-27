@@ -8,13 +8,17 @@
 #include "commands/AdminCmdOptions.hpp"
 #include "commands/sync/SyncCmdContext.hpp"
 
+#include <optional>
+#include <string>
+
 #include "cta_admin.pb.h"
 #include "cta_frontend.pb.h"
 
 namespace cta::admin_api::commands::sync {
 
 /// @brief Handler of a non-streamed admin command, see handlers/Handlers.hpp
-using SyncCmdHandler = void (*)(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response);
+/// @return A message to send back to the client, if any
+using SyncCmdHandler = std::optional<std::string> (*)(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
 /// @brief Finds the handler of an admin command
 ///

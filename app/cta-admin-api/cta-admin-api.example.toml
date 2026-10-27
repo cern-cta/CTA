@@ -61,7 +61,6 @@ instance_name = "CI_local"
   retrieve_queue_cache_max_age_secs = 10
 
 
-  # Object store-specific scheduler options
   [scheduler.client]
 
     # These will be removed once the objectstore scheduler is decommissioned.

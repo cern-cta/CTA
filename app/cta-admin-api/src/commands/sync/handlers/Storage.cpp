@@ -14,7 +14,7 @@ using admin::OptionString;
 using admin::OptionStrList;
 using admin::OptionUInt64;
 
-void addArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& scn = opts.getRequired(OptionString::STORAGE_CLASS);
   auto& cn = opts.getRequired(OptionUInt64::COPY_NUMBER);
   auto art_opt = opts.getOptional(OptionString::ARCHIVE_ROUTE_TYPE);
@@ -27,9 +27,10 @@ void addArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd
 
   ctx.catalogue.ArchiveRoute()
     ->createArchiveRoute(ctx.identity, scn, static_cast<uint32_t>(cn), art, tapepool, comment);
+  return std::nullopt;
 }
 
-void changeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& scn = opts.getRequired(OptionString::STORAGE_CLASS);
   auto& cn = opts.getRequired(OptionUInt64::COPY_NUMBER);
   auto& art_str = opts.getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
@@ -50,9 +51,10 @@ void changeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, 
                                                                  art,
                                                                  tapepool.value());
   }
+  return std::nullopt;
 }
 
-void removeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& scn = opts.getRequired(OptionString::STORAGE_CLASS);
   auto& cn = opts.getRequired(OptionUInt64::COPY_NUMBER);
   auto& art_str = opts.getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
@@ -60,9 +62,10 @@ void removeArchiveRoute(const SyncCmdContext& ctx, const AdminCmdOptions& opts, 
   auto art = common::dataStructures::strToArchiveRouteType(art_str);
 
   ctx.catalogue.ArchiveRoute()->deleteArchiveRoute(scn, static_cast<uint32_t>(cn), art);
+  return std::nullopt;
 }
 
-void addStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   common::dataStructures::StorageClass storageClass;
 
   storageClass.name = opts.getRequired(OptionString::STORAGE_CLASS);
@@ -71,9 +74,10 @@ void addStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd
   storageClass.vo.name = opts.getRequired(OptionString::VO);
 
   ctx.catalogue.StorageClass()->createStorageClass(ctx.identity, storageClass);
+  return std::nullopt;
 }
 
-void changeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& scn = opts.getRequired(OptionString::STORAGE_CLASS);
   auto comment = opts.getOptional(OptionString::COMMENT);
   auto cn = opts.getOptional(OptionUInt64::COPY_NUMBER);
@@ -88,15 +92,17 @@ void changeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, 
   if (vo.has_value()) {
     ctx.catalogue.StorageClass()->modifyStorageClassVo(ctx.identity, scn, vo.value());
   }
+  return std::nullopt;
 }
 
-void removeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeStorageClass(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& scn = opts.getRequired(OptionString::STORAGE_CLASS);
 
   ctx.catalogue.StorageClass()->deleteStorageClass(scn);
+  return std::nullopt;
 }
 
-void addTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& name = opts.getRequired(OptionString::TAPE_POOL);
   auto& vo = opts.getRequired(OptionString::VO);
   auto& ptn = opts.getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
@@ -113,9 +119,10 @@ void addTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Re
     encryptionKeyName = std::nullopt;
   }
   ctx.catalogue.TapePool()->createTapePool(ctx.identity, name, vo, ptn, encryptionKeyName, supply_list, comment);
+  return std::nullopt;
 }
 
-void changeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& name = opts.getRequired(OptionString::TAPE_POOL);
   auto vo = opts.getOptional(OptionString::VO);
   auto ptn = opts.getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
@@ -140,12 +147,14 @@ void changeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd:
                                                    name,
                                                    cta::utils::commaSeparatedStringToVector(supply.value()));
   }
+  return std::nullopt;
 }
 
-void removeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeTapePool(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& name = opts.getRequired(OptionString::TAPE_POOL);
 
   ctx.catalogue.TapePool()->deleteTapePool(name);
+  return std::nullopt;
 }
 
 }  // namespace cta::admin_api::commands::sync::handlers

@@ -13,7 +13,7 @@ using admin::OptionString;
 using admin::OptionStrList;
 using admin::OptionUInt64;
 
-void addDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_SYSTEM);
   const auto& diskInstance = opts.getRequired(OptionString::DISK_INSTANCE);
   const auto& diskInstanceSpace = opts.getRequired(OptionString::DISK_INSTANCE_SPACE);
@@ -30,15 +30,17 @@ void addDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::
                                                targetedFreeSpace,
                                                sleepTime,
                                                comment);
+  return std::nullopt;
 }
 
-void removeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_SYSTEM);
 
   ctx.catalogue.DiskSystem()->deleteDiskSystem(name);
+  return std::nullopt;
 }
 
-void changeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_SYSTEM);
   const auto& fileRegexp = opts.getOptional(OptionString::FILE_REGEXP);
   const auto targetedFreeSpace = opts.getOptional(OptionUInt64::TARGETED_FREE_SPACE);
@@ -67,30 +69,34 @@ void changeDiskSystem(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xr
                                                                       name,
                                                                       diskInstanceSpaceName.value());
   }
+  return std::nullopt;
 }
 
-void addDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_INSTANCE);
   const auto& comment = opts.getRequired(OptionString::COMMENT);
 
   ctx.catalogue.DiskInstance()->createDiskInstance(ctx.identity, name, comment);
+  return std::nullopt;
 }
 
-void removeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_INSTANCE);
 
   ctx.catalogue.DiskInstance()->deleteDiskInstance(name);
+  return std::nullopt;
 }
 
-void changeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeDiskInstance(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_INSTANCE);
 
   if (const auto comment = opts.getOptional(OptionString::COMMENT); comment.has_value()) {
     ctx.catalogue.DiskInstance()->modifyDiskInstanceComment(ctx.identity, name, comment.value());
   }
+  return std::nullopt;
 }
 
-void addDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_INSTANCE_SPACE);
   const auto& diskInstance = opts.getRequired(OptionString::DISK_INSTANCE);
   const auto& comment = opts.getRequired(OptionString::COMMENT);
@@ -99,16 +105,18 @@ void addDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts
 
   ctx.catalogue.DiskInstanceSpace()
     ->createDiskInstanceSpace(ctx.identity, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
+  return std::nullopt;
 }
 
-void removeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_INSTANCE_SPACE);
   const auto& diskInstance = opts.getRequired(OptionString::DISK_INSTANCE);
 
   ctx.catalogue.DiskInstanceSpace()->deleteDiskInstanceSpace(name, diskInstance);
+  return std::nullopt;
 }
 
-void changeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::DISK_INSTANCE_SPACE);
   const auto& diskInstance = opts.getRequired(OptionString::DISK_INSTANCE);
   const auto comment = opts.getOptional(OptionString::COMMENT);
@@ -133,6 +141,7 @@ void changeDiskInstanceSpace(const SyncCmdContext& ctx, const AdminCmdOptions& o
                                                                               diskInstance,
                                                                               refreshInterval.value());
   }
+  return std::nullopt;
 }
 
 }  // namespace cta::admin_api::commands::sync::handlers

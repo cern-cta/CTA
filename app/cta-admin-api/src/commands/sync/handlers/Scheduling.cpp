@@ -64,7 +64,7 @@ std::string setDriveState(const SyncCmdContext& ctx,
 
 }  // namespace
 
-void setDriveUp(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> setDriveUp(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   std::optional<std::string> reason = opts.getOptional(OptionString::REASON);
   common::dataStructures::DesiredDriveState desiredDS;
   desiredDS.up = true;
@@ -77,10 +77,10 @@ void setDriveUp(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Res
 
   std::string cmdlineOutput = setDriveState(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', desiredDS);
 
-  response.set_message_txt(cmdlineOutput);
+  return cmdlineOutput;
 }
 
-void setDriveDown(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> setDriveDown(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   std::string reason = opts.getRequired(OptionString::REASON);
   if (utils::trimString(reason).empty()) {
     throw exception::UserError("You must provide a reason in order to set the drive down");
@@ -92,10 +92,10 @@ void setDriveDown(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::R
 
   std::string cmdlineOutput = setDriveState(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', desiredDS);
 
-  response.set_message_txt(cmdlineOutput);
+  return cmdlineOutput;
 }
 
-void changeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   std::string comment = opts.getRequired(OptionString::COMMENT);
   if (utils::trimString(comment).empty()) {
     throw exception::UserError("You must provide a comment to change it.");
@@ -106,10 +106,10 @@ void changeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Re
 
   std::string cmdlineOutput = setDriveState(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', desiredDS);
 
-  response.set_message_txt(cmdlineOutput);
+  return cmdlineOutput;
 }
 
-void removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   std::stringstream cmdlineOutput;
 
   auto regex = opts.getRequired(OptionString::DRIVE);
@@ -148,16 +148,17 @@ void removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Re
     cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
   }
 
-  response.set_message_txt(cmdlineOutput.str());
+  return cmdlineOutput.str();
 }
 
-void removeFailedRequest(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeFailedRequest(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& objectId = opts.getRequired(OptionString::OBJECTID);
 
   ctx.scheduler.deleteFailed(objectId, ctx.lc);
+  return std::nullopt;
 }
 
-void addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   // VIDs can be provided as a single option or as a list
   std::vector<std::string> vid_list;
   std::string bufferURL;
@@ -238,16 +239,14 @@ void addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Resp
     SchedulerDatabase::QueueRepackRequest repackRequest(*it, bufferURL, type, mountPolicy, noRecall, maxFilesToSelect);
     ctx.scheduler.queueRepack(ctx.identity, repackRequest, ctx.lc);
   }
+  return std::nullopt;
 }
 
-void removeRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& vid = opts.getRequired(OptionString::VID);
 
   ctx.scheduler.cancelRepack(ctx.identity, vid, ctx.lc);
-}
-
-void showRepackErrors(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
-  response.set_message_txt("Not implemented");
+  return std::nullopt;
 }
 
 }  // namespace cta::admin_api::commands::sync::handlers

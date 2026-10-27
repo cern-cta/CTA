@@ -144,6 +144,11 @@ class ScopedParamContainer {
 public:
   explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
 
+  /// Disable the copy constructor, to avoid accidental copies which would trigger
+  /// the destructor
+  ScopedParamContainer(const ScopedParamContainer&) = delete;
+  ScopedParamContainer& operator=(const ScopedParamContainer&) = delete;
+
   ~ScopedParamContainer() {
     for (auto& name : m_names) {
       m_context.pop(name);

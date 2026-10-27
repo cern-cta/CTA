@@ -22,9 +22,10 @@ add_library(cta-grpc-server-auth STATIC
 target_include_directories(cta-grpc-server-auth PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/common/jwt-cpp/include)
 target_link_libraries(cta-grpc-server-auth PUBLIC cta-grpc-server-config ctaruntime ctacommon gRPC::grpc++ PRIVATE curl OpenSSL::Crypto)
 
-# Plumbing shared by cta-admin-api and cta-workflow-api: TLS credentials, request tracking
+# Plumbing shared by cta-admin-api and cta-workflow-api: TLS credentials, request logging and tracking
 # and the gRPC server builder with the settings common to the CTA gRPC servers
 add_library(cta-grpc-server STATIC
+  src/server/RequestLogger.cpp
   src/server/RequestTracker.cpp
   src/server/ServerBuilderHelper.cpp
   src/server/TlsCredentials.cpp)
@@ -36,8 +37,9 @@ target_link_libraries(cta-grpc-server PUBLIC cta-grpc-server-config ctacommon ct
 add_library(cta-grpc-server-unit-tests SHARED
   test/AuthConfigTest.cpp
   test/auth/jwt/JwkCacheTest.cpp
-  test/auth/jwt/JwtValidationTest.cpp)
-target_link_libraries(cta-grpc-server-unit-tests cta-grpc-server-config cta-grpc-server-auth ctacommon ctaruntime gtest)
+  test/auth/jwt/JwtValidationTest.cpp
+  test/server/RequestLoggerTest.cpp)
+target_link_libraries(cta-grpc-server-unit-tests cta-grpc-server-config cta-grpc-server-auth cta-grpc-server ctacommon ctaruntime gtest)
 set_property(TARGET cta-grpc-server-unit-tests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET cta-grpc-server-unit-tests PROPERTY VERSION "${CTA_LIBVERSION}")
 

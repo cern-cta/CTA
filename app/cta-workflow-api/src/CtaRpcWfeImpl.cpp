@@ -12,6 +12,7 @@
 #include "grpc-server/PbException.hpp"
 #include "grpc-server/auth/Authentication.hpp"
 #include "grpc-server/auth/jwt/JwtAuthManager.hpp"
+#include "grpc-server/server/RequestLogger.hpp"
 #include "protobuf/common/ChecksumBlobSerDeser.hpp"
 
 #include <optional>
@@ -47,6 +48,8 @@ Status CtaRpcWfeImpl::processGrpcRequest(const cta::xrd::Request* request,
                                          cta::xrd::Response* response,
                                          cta::log::LogContext& lc,
                                          const SecurityIdentity& clientIdentity) const {
+  cta::grpc_server::RequestLogger requestLogger(lc, "workflow event request");
+
   try {
     cta::frontend::WorkflowEvent wfe(m_serviceResources,
                                      m_config,
@@ -56,13 +59,15 @@ Status CtaRpcWfeImpl::processGrpcRequest(const cta::xrd::Request* request,
 #endif
                                      request->notification());
     *response = wfe.process();
+
+    requestLogger.succeeded();
   } catch (cta::exception::PbException& ex) {
-    lc.log(cta::log::ERR, ex.getMessageValue());
+    requestLogger.failed(ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
   } catch (cta::exception::UserError& ex) {
-    lc.log(cta::log::INFO, ex.getMessageValue());
+    requestLogger.rejected(ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
     /* Logic-wise, this should also be INVALID_ARGUMENT, but we need a way to
@@ -71,16 +76,17 @@ Status CtaRpcWfeImpl::processGrpcRequest(const cta::xrd::Request* request,
      */
     return ::grpc::Status(::grpc::StatusCode::ABORTED, ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
-    lc.log(cta::log::ERR, ex.getMessageValue());
+    requestLogger.failed(ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
   } catch (std::runtime_error& ex) {
-    lc.log(cta::log::ERR, ex.what());
+    requestLogger.failed(ex.what());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.what());
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what());
   } catch (...) {
+    requestLogger.failed("Unknown exception");
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, "Error processing gRPC request");
   }
