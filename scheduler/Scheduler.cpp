@@ -1983,7 +1983,25 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
              "In Scheduler::getExistingAndNextMounts(): drive is missing SchedulerBackendName configuration.");
     }
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
-      if (driveState.mountType == common::dataStructures::MountType::NoMount) {
+      // WHY this carve-out exists:
+      // DriveHandler always calls reportDriveStatus(NoMount, CleaningUp) when entering the
+      // cleaner session (both crash-recovery and normal-shutdown paths in DriveHandler.cpp).
+      // MountType::NoMount is therefore the invariant for CleaningUp, but the tape is still
+      // physically loaded and the VID is still live in the DB (setDriveCleaningUp passes
+      // currentVid=nullopt, so the conditional-SQL update preserves the previous VID value).
+      // Without this carve-out the NoMount guard below would skip CleaningUp drives entirely,
+      // their VID would never reach tapesInUse, and a second scheduler could mount the same
+      // tape on a different drive simultaneously.
+      //
+      // WHY we did not introduce a dedicated MountType::CleaningUp instead:
+      // MountType is mirrored in protobuf definitions, DB schema (MOUNT_TYPE column), and all
+      // switch statements across the codebase; adding a new value there is a disproportionately
+      // large change for this fix.  It would also require plumbing the VID explicitly through
+      // the DriveHandler→reportDriveStatus call chain, because with a real mount type the DB
+      // would no longer preserve the VID via the conditional-SQL path.  A dedicated MountType
+      // is a valid future cleanup but belongs in its own branch.
+      if (driveState.mountType == common::dataStructures::MountType::NoMount
+          && driveState.driveStatus != common::dataStructures::DriveStatus::CleaningUp) {
         log::ScopedParamContainer(logContext)
           .add("driveName", driveState.driveName)
           .add("mountType", common::dataStructures::toCamelCaseString(driveState.mountType))
