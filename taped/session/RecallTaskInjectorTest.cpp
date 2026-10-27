@@ -161,6 +161,11 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
                        cta::log::LogContext& logContext) override {
     throw cta::exception::NotImplementedException();
   }
+
+  void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
+                         cta::log::LogContext& lc) override {
+    throw cta::exception::NotImplementedException();
+  }
 };
 
 TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
