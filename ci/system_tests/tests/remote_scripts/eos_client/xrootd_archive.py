@@ -179,12 +179,12 @@ def main() -> None:
     for _ in range(args.num_procs):
         work_q.put(None)
 
-    # Print progress every 120 s so the Kubernetes exec websocket receives data
-    # and does not get cut by the API-server / LB TCP idle timeout (~2 h).
+    # Print progress every 30 s so the Kubernetes exec websocket receives data
+    # and does not get cut by intermediate proxies/NAT with ~60 s TCP idle timeouts.
     _stop_heartbeat = threading.Event()
 
     def _heartbeat() -> None:
-        while not _stop_heartbeat.wait(120):
+        while not _stop_heartbeat.wait(30):
             print(f"xrootd_archive: running... {time.time() - before:.0f}s elapsed", flush=True)
 
     hb_thread = threading.Thread(target=_heartbeat, daemon=True)
