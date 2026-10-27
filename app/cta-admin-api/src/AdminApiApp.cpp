@@ -35,7 +35,7 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
 
   // Catalogue, Scheduler DB
   service_resources::ServiceResources serviceResources(
-    "Frontend",
+    "workflow-api",
     config.catalogue,
     config.scheduler,
     service_resources::makeConnectionOptions(config.catalogue, config.scheduler),

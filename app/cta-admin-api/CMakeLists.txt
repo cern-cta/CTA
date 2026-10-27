@@ -5,6 +5,7 @@ include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 # Library
 add_library(cta-admin-api-lib STATIC
+  src/commands/AdminCmdLogParams.cpp
   src/commands/AdminCmdOptions.cpp
   src/commands/stream/StreamFactory.cpp
   src/commands/stream/converters/Disk.cpp

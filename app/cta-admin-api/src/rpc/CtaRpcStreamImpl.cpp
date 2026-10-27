@@ -5,6 +5,8 @@
 
 #include "rpc/CtaRpcStreamImpl.hpp"
 
+#include "AdminCmdMode.hpp"
+#include "commands/AdminCmdLogParams.hpp"
 #include "commands/stream/StreamFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -13,6 +15,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "grpc-server/PbException.hpp"
 #include "grpc-server/auth/jwt/JwtAuthManager.hpp"
+#include "grpc-server/server/RequestLogger.hpp"
 #include "grpc-server/server/RequestTracker.hpp"
 #include "rpc/reactors/CtaAdminServerWriteReactor.hpp"
 #include "rpc/reactors/DefaultWriteReactor.hpp"
@@ -55,6 +58,14 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   cta::grpc_server::RequestTracker requestTracker("ADMIN_STREAMING", "admin");
   const auto& adminCmd = request->admincmd();
 
+  cta::log::ScopedParamContainer params(lc);
+  params.add("remoteHost", context->peer());
+  if (clientIdentity.has_value()) {
+    params.add("user", clientIdentity->username);
+  }
+  commands::addAdminCmdLogParams(params, adminCmd);
+  cta::grpc_server::RequestLogger requestLogger(lc, "streaming admin command");
+
   std::unique_ptr<commands::stream::CtaAdminResponseStream> stream;
   try {
     const commands::stream::StreamContext streamContext {m_catalogue,
@@ -66,16 +77,24 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
                                                          m_missingFileCopiesMinAgeSecs,
                                                          m_adminCommandMode};
     stream = commands::stream::createStream(streamContext, adminCmd);
+  } catch (const DisabledAdminCmd& ex) {
+    requestLogger.rejected(ex.getMessageValue());
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
+    return new DefaultWriteReactor(ex.getMessageValue(), ::grpc::StatusCode::UNIMPLEMENTED);
   } catch (const cta::exception::UserError& ex) {
+    requestLogger.rejected(ex.getMessageValue());
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     return new DefaultWriteReactor(ex.getMessageValue(), ::grpc::StatusCode::INVALID_ARGUMENT);
   } catch (const cta::exception::PbException& ex) {
+    requestLogger.failed(ex.getMessageValue());
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     return new DefaultWriteReactor(ex.getMessageValue(), ::grpc::StatusCode::FAILED_PRECONDITION);
   } catch (const cta::exception::Exception& ex) {
+    requestLogger.failed(ex.getMessageValue());
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     return new DefaultWriteReactor(ex.getMessageValue(), ::grpc::StatusCode::FAILED_PRECONDITION);
   } catch (const std::exception& ex) {
+    requestLogger.failed(ex.what());
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     return new DefaultWriteReactor(ex.what(), ::grpc::StatusCode::UNKNOWN);
   }
@@ -84,12 +103,13 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
     // Just to return an error status code when the specified command is not implemented
     const std::string errMsg("Admin command pair <" + cta::admin::AdminCmd_Cmd_Name(adminCmd.cmd()) + ", "
                              + cta::admin::AdminCmd_SubCmd_Name(adminCmd.subcmd()) + "> is not implemented.");
+    requestLogger.failed(errMsg);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     return new DefaultWriteReactor(errMsg);
   }
 
   // proceed with command execution if no exception was thrown
-  return new CtaAdminServerWriteReactor(std::move(stream));
+  return new CtaAdminServerWriteReactor(std::move(stream), std::move(requestLogger));
 }
 
 }  // namespace cta::admin_api::rpc

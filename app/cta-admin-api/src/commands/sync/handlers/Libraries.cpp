@@ -17,7 +17,7 @@ using admin::OptionString;
 using admin::OptionStrList;
 using admin::OptionUInt64;
 
-void addLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& name = opts.getRequired(OptionString::LOGICAL_LIBRARY);
   auto isDisabled = opts.getOptional(OptionBoolean::DISABLED);
   auto physicalLibraryName = opts.getOptional(OptionString::PHYSICAL_LIBRARY);
@@ -28,9 +28,10 @@ void addLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, x
                                                        isDisabled.value_or(false),
                                                        physicalLibraryName,
                                                        comment);
+  return std::nullopt;
 }
 
-void changeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& name = opts.getRequired(OptionString::LOGICAL_LIBRARY);
   auto disabled = opts.getOptional(OptionBoolean::DISABLED);
   auto comment = opts.getOptional(OptionString::COMMENT);
@@ -57,15 +58,17 @@ void changeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts
   if (physicalLibrary.has_value()) {
     ctx.catalogue.LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(ctx.identity, name, physicalLibrary.value());
   }
+  return std::nullopt;
 }
 
-void removeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeLogicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& name = opts.getRequired(OptionString::LOGICAL_LIBRARY);
 
   ctx.catalogue.LogicalLibrary()->deleteLogicalLibrary(name);
+  return std::nullopt;
 }
 
-void addMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   // Bounds check unsigned integer options less than 64-bits in width
   const auto nbWraps = opts.getOptional(OptionUInt64::NUMBER_OF_WRAPS);
   const auto primaryDensityCode = opts.getOptional(OptionUInt64::PRIMARY_DENSITY_CODE);
@@ -106,9 +109,10 @@ void addMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::R
   mediaType.maxLPos = opts.getOptional(OptionUInt64::MAX_LPOS);
   mediaType.comment = opts.getRequired(OptionString::COMMENT);
   ctx.catalogue.MediaType()->createMediaType(ctx.identity, mediaType);
+  return std::nullopt;
 }
 
-void changeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& mediaTypeName = opts.getRequired(OptionString::MEDIA_TYPE);
   auto cartridge = opts.getOptional(OptionString::CARTRIDGE);
   auto primaryDensityCode = opts.getOptional(OptionUInt64::PRIMARY_DENSITY_CODE);
@@ -164,15 +168,17 @@ void changeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd
   if (comment.has_value()) {
     ctx.catalogue.MediaType()->modifyMediaTypeComment(ctx.identity, mediaTypeName, comment.value());
   }
+  return std::nullopt;
 }
 
-void removeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeMediaType(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& mtn = opts.getRequired(OptionString::MEDIA_TYPE);
 
   ctx.catalogue.MediaType()->deleteMediaType(mtn);
+  return std::nullopt;
 }
 
-void addPhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addPhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   common::dataStructures::PhysicalLibrary pl;
   pl.name = opts.getRequired(OptionString::PHYSICAL_LIBRARY);
   pl.manufacturer = opts.getRequired(OptionString::MANUFACTURER);
@@ -188,9 +194,10 @@ void addPhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, 
   pl.comment = opts.getOptional(OptionString::COMMENT);
 
   ctx.catalogue.PhysicalLibrary()->createPhysicalLibrary(ctx.identity, pl);
+  return std::nullopt;
 }
 
-void changePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   common::dataStructures::UpdatePhysicalLibrary pl;
 
   pl.name = opts.getRequired(OptionString::PHYSICAL_LIBRARY);
@@ -218,12 +225,14 @@ void changePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opt
   }
 
   ctx.catalogue.PhysicalLibrary()->modifyPhysicalLibrary(ctx.identity, pl);
+  return std::nullopt;
 }
 
-void removePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removePhysicalLibrary(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   const auto& name = opts.getRequired(OptionString::PHYSICAL_LIBRARY);
 
   ctx.catalogue.PhysicalLibrary()->deletePhysicalLibrary(name);
+  return std::nullopt;
 }
 
 }  // namespace cta::admin_api::commands::sync::handlers

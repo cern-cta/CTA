@@ -10,7 +10,6 @@
 #include "commands/sync/SyncCmdContext.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/utils/Timer.hpp"
 #include "service-resources/ServiceResources.hpp"
 
 #include <string>
@@ -19,15 +18,15 @@
 
 namespace cta::admin_api::commands::sync {
 
-enum class SyncCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
-
 /// @brief Processes one non-streamed admin command: authorizes the admin, runs the handler of the command (see
-/// SyncCmdRegistry and handlers/Handlers.hpp) and logs the outcome
+/// SyncCmdRegistry and handlers/Handlers.hpp)
 class SyncCmd {
 public:
+  /// @param lc  Log context carrying the request params, copied for the command handlers
   /// @throws cta::exception::UserError if the client is not an admin
   SyncCmd(const service_resources::ServiceResources& serviceResources,
           const admin_api::AdminApiConfig& config,
+          const log::LogContext& lc,
           const common::dataStructures::SecurityIdentity& clientIdentity,
           const admin::AdminCmd& adminCmd);
 
@@ -41,13 +40,6 @@ public:
   xrd::Response process();
 
 private:
-  /// Log an admin command
-  ///
-  /// @param[in]    status      Status of the executed admin command
-  /// @param[in]    reason      Reason for this log message (error message)
-  /// @param[in]    t           Timer
-  void logSyncCmd(const SyncCmdStatus status, const std::string& reason, utils::Timer& t);
-
   /// Administrator Command protocol buffer
   const admin::AdminCmd m_adminCmd;
   /// Options of the command

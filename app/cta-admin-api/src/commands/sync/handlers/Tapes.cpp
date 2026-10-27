@@ -19,7 +19,7 @@ using admin::OptionString;
 using admin::OptionStrList;
 using admin::OptionUInt64;
 
-void addTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> addTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& vid = opts.getRequired(OptionString::VID);
   auto& mediaType = opts.getRequired(OptionString::MEDIA_TYPE);
   auto& vendor = opts.getRequired(OptionString::VENDOR);
@@ -49,9 +49,10 @@ void addTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Respon
   }
   tape.stateReason = stateReason;
   ctx.catalogue.Tape()->createTape(ctx.identity, tape);
+  return std::nullopt;
 }
 
-void changeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> changeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& vid = opts.getRequired(OptionString::VID);
   auto mediaType = opts.getOptional(OptionString::MEDIA_TYPE);
   auto vendor = opts.getOptional(OptionString::VENDOR);
@@ -122,74 +123,73 @@ void changeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Res
   if (verificationStatus.has_value()) {
     ctx.catalogue.Tape()->modifyTapeVerificationStatus(ctx.identity, vid, verificationStatus.value());
   }
+  return std::nullopt;
 }
 
-void removeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& vid = opts.getRequired(OptionString::VID);
 
   if (ctx.scheduler.isBeingRepacked(vid)) {
     throw exception::UserError("Cannot delete tape " + vid + " because there is a repack for that tape");
   }
   ctx.catalogue.Tape()->deleteTape(vid);
+  return std::nullopt;
 }
 
-void reclaimTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> reclaimTape(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& vid = opts.getRequired(OptionString::VID);
 
   ctx.catalogue.Tape()->reclaimTape(ctx.identity, vid, ctx.policies.tapes.recycle_log_quarantine_secs, ctx.lc);
+  return std::nullopt;
 }
 
-void changeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
-  try {
-    const auto& newStorageClassName = opts.getRequired(OptionString::STORAGE_CLASS);
+std::optional<std::string> changeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
+  const auto& newStorageClassName = opts.getRequired(OptionString::STORAGE_CLASS);
 
-    catalogue::TapeFileSearchCriteria searchCriteria;
+  catalogue::TapeFileSearchCriteria searchCriteria;
 
-    searchCriteria.diskFileIds = opts.getOptional(OptionStrList::FILE_ID);
+  searchCriteria.diskFileIds = opts.getOptional(OptionStrList::FILE_ID);
 
-    const auto diskFileId = opts.getAndValidateDiskFileIdOptional();
+  const auto diskFileId = opts.getAndValidateDiskFileIdOptional();
 
-    if (diskFileId) {
-      if (!searchCriteria.diskFileIds) {
-        searchCriteria.diskFileIds.emplace();
-      }
-
-      searchCriteria.diskFileIds->push_back(*diskFileId);
+  if (diskFileId) {
+    if (!searchCriteria.diskFileIds) {
+      searchCriteria.diskFileIds.emplace();
     }
 
-    searchCriteria.diskInstance = opts.getOptional(OptionString::INSTANCE);
-
-    searchCriteria.archiveFileId = opts.getOptional(OptionUInt64::ARCHIVE_FILE_ID);
-
-    const bool hasDiskFileIds = searchCriteria.diskFileIds && !searchCriteria.diskFileIds->empty();
-
-    if (!hasDiskFileIds && !searchCriteria.archiveFileId) {
-      throw exception::UserError("Must specify at least one of the following search options: "
-                                 "fxidfile, fxid, diskfileid or id");
-    }
-
-    std::list<uint64_t> archiveFileIds;
-
-    {
-      auto archiveFiles = ctx.catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
-
-      while (archiveFiles.hasMore()) {
-        archiveFileIds.push_back(archiveFiles.next().archiveFileID);
-      }
-    }
-
-    if (archiveFileIds.empty()) {
-      throw exception::UserError("No archive files match the specified search options");
-    }
-
-    ctx.catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIds, newStorageClassName);
-  } catch (exception::UserError& ue) {
-    response.set_message_txt(ue.getMessage().str());
-    response.set_type(xrd::Response::RSP_ERR_USER);
+    searchCriteria.diskFileIds->push_back(*diskFileId);
   }
+
+  searchCriteria.diskInstance = opts.getOptional(OptionString::INSTANCE);
+
+  searchCriteria.archiveFileId = opts.getOptional(OptionUInt64::ARCHIVE_FILE_ID);
+
+  const bool hasDiskFileIds = searchCriteria.diskFileIds && !searchCriteria.diskFileIds->empty();
+
+  if (!hasDiskFileIds && !searchCriteria.archiveFileId) {
+    throw exception::UserError("Must specify at least one of the following search options: "
+                               "fxidfile, fxid, diskfileid or id");
+  }
+
+  std::list<uint64_t> archiveFileIds;
+
+  {
+    auto archiveFiles = ctx.catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
+
+    while (archiveFiles.hasMore()) {
+      archiveFileIds.push_back(archiveFiles.next().archiveFileID);
+    }
+  }
+
+  if (archiveFileIds.empty()) {
+    throw exception::UserError("No archive files match the specified search options");
+  }
+
+  ctx.catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIds, newStorageClassName);
+  return std::nullopt;
 }
 
-void removeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> removeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   auto& vid = opts.getRequired(OptionString::VID);
   auto& reason = opts.getRequired(OptionString::REASON);
   auto archiveFileId = opts.getOptional(OptionUInt64::ARCHIVE_FILE_ID);
@@ -215,9 +215,10 @@ void removeTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd:
   auto archiveFile = ctx.catalogue.ArchiveFile()->getArchiveFileCopyForDeletion(searchCriteria);
 
   ctx.catalogue.TapeFile()->deleteTapeFileCopy(archiveFile, reason);
+  return std::nullopt;
 }
 
-void restoreRecycleTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
+std::optional<std::string> restoreRecycleTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
   bool has_any = false;
   catalogue::RecycleTapeFileSearchCriteria searchCriteria;
 
@@ -239,43 +240,40 @@ void restoreRecycleTapeFile(const SyncCmdContext& ctx, const AdminCmdOptions& op
       "Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
   ctx.catalogue.FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, diskFileIdStr.value());
+  return std::nullopt;
 }
 
-void changeArchiveFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts, xrd::Response& response) {
-  try {
-    std::optional<std::string> newStorageClassName = opts.getOptional(OptionString::STORAGE_CLASS);
+std::optional<std::string> changeArchiveFile(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
+  std::optional<std::string> newStorageClassName = opts.getOptional(OptionString::STORAGE_CLASS);
 
-    std::optional<std::string> diskFileIdStr = opts.getAndValidateDiskFileIdOptional();
-    std::optional<std::string> diskInstance = opts.getOptional(OptionString::DISK_INSTANCE);
+  std::optional<std::string> diskFileIdStr = opts.getAndValidateDiskFileIdOptional();
+  std::optional<std::string> diskInstance = opts.getOptional(OptionString::DISK_INSTANCE);
 
-    auto archiveFileIds = opts.getRequired(OptionStrList::ARCHIVE_FILE_ID);
+  auto archiveFileIds = opts.getRequired(OptionStrList::ARCHIVE_FILE_ID);
 
-    // call is from cta-change-storageclass
-    if (newStorageClassName) {
-      std::list<uint64_t> archiveFileIdsUint64;
+  // call is from cta-change-storageclass
+  if (newStorageClassName) {
+    std::list<uint64_t> archiveFileIdsUint64;
 
-      for (const auto& id : archiveFileIds) {
-        archiveFileIdsUint64.push_back(utils::toUint64(id));
-      }
-      ctx.catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIdsUint64, *newStorageClassName);
+    for (const auto& id : archiveFileIds) {
+      archiveFileIdsUint64.push_back(utils::toUint64(id));
     }
-    // call is from cta-eos-namespace-inject
-    else if (diskFileIdStr && diskInstance) {
-      if (archiveFileIds.size() != 1) {
-        throw exception::UserError(
-          "Exactly one archive file ID must be specified when using Disk File ID and Disk Instance");
-      }
-
-      ctx.catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(utils::toUint64(archiveFileIds.front()),
-                                                                        *diskFileIdStr,
-                                                                        *diskInstance);
-    } else {
-      throw exception::UserError("Must specify either Storage Class or Disk File ID and Disk Instance");
-    }
-  } catch (exception::UserError& ue) {
-    response.set_message_txt(ue.getMessage().str());
-    response.set_type(xrd::Response::RSP_ERR_USER);
+    ctx.catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIdsUint64, *newStorageClassName);
   }
+  // call is from cta-eos-namespace-inject
+  else if (diskFileIdStr && diskInstance) {
+    if (archiveFileIds.size() != 1) {
+      throw exception::UserError(
+        "Exactly one archive file ID must be specified when using Disk File ID and Disk Instance");
+    }
+
+    ctx.catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(utils::toUint64(archiveFileIds.front()),
+                                                                      *diskFileIdStr,
+                                                                      *diskInstance);
+  } else {
+    throw exception::UserError("Must specify either Storage Class or Disk File ID and Disk Instance");
+  }
+  return std::nullopt;
 }
 
 }  // namespace cta::admin_api::commands::sync::handlers

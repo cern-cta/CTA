@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/config/Config.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <optional>
 #include <string_view>
@@ -30,8 +31,6 @@ enum class AdminCmdMode {
   NO_REPACK,
 };
 
-const std::string DISABLED_ADMIN_CMD_MSG {"Admin command disabled on this frontend."};
-
 /// @brief Whether a command is rejected by the mode of the admin API (repack)
 ///
 /// @param mode      The mode of the admin API
@@ -39,6 +38,16 @@ const std::string DISABLED_ADMIN_CMD_MSG {"Admin command disabled on this fronte
 inline bool isCommandDisabled(AdminCmdMode mode, const cta::admin::AdminCmd& adminCmd) {
   return mode == AdminCmdMode::NO_REPACK && adminCmd.cmd() == cta::admin::AdminCmd::CMD_REPACK;
 }
+
+/// @brief Thrown when a command is rejected by the mode of the admin API. See `isCommandDisabled()`
+///
+/// @param adminCmd The command received
+class DisabledAdminCmd : public cta::exception::UserError {
+public:
+  explicit DisabledAdminCmd(const cta::admin::AdminCmd& adminCmd)
+      : UserError("Admin command pair <" + cta::admin::AdminCmd_Cmd_Name(adminCmd.cmd()) + ", "
+                  + cta::admin::AdminCmd_SubCmd_Name(adminCmd.subcmd()) + "> is disabled on this frontend.") {}
+};
 
 }  // namespace cta::admin_api
 
