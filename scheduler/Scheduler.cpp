@@ -1983,7 +1983,12 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
              "In Scheduler::getExistingAndNextMounts(): drive is missing SchedulerBackendName configuration.");
     }
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
-      if (driveState.mountType == common::dataStructures::MountType::NoMount) {
+      // CleaningUp drives report MountType::NoMount (DriveHandler always calls
+      // reportDriveStatus with NoMount when entering the cleaner session), but
+      // the tape is still physically loaded. Allow them through so their VID
+      // reaches tapesInUse and prevents a second mount of the same tape.
+      if (driveState.mountType == common::dataStructures::MountType::NoMount
+          && driveState.driveStatus != common::dataStructures::DriveStatus::CleaningUp) {
         log::ScopedParamContainer(logContext)
           .add("driveName", driveState.driveName)
           .add("mountType", common::dataStructures::toCamelCaseString(driveState.mountType))
