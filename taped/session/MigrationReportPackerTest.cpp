@@ -548,6 +548,33 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedBa
   ASSERT_EQ(1, tam.completes);
 }
 
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedEndOfSessionFlush) {
+  MockArchiveMountWithBatch tam(*m_catalogue);
+
+  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedEndOfSessionFlush", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  daemon::MigrationReportPacker mrp(&tam, lc);
+  mrp.startThreads();
+
+  // 3 failed jobs, no reportFlush at all — failures must be flushed by reportEndOfSession.
+  // This verifies the guarantee: even if the tape drive never produces a flush event
+  // (e.g. the session aborts before any tape block is committed), failures are not lost.
+  for (int i = 0; i < 3; i++) {
+    std::unique_ptr<cta::ArchiveJob> job(new MockArchiveJobWithPrepare(&tam, *m_catalogue));
+    const cta::exception::Exception ex("failure " + std::to_string(i));
+    mrp.reportFailedJob(std::move(job), ex, lc);
+  }
+
+  mrp.reportEndOfSession(lc);
+  mrp.reportTestGoingToEnd(lc);
+  mrp.waitThread();
+
+  // One flush at end-of-session with all 3 accumulated jobs
+  ASSERT_EQ(1, tam.flushCount);
+  ASSERT_EQ(3u, tam.lastBatchSize);
+  ASSERT_EQ(1, tam.completes);
+}
+
 #endif  // CTA_PGSCHED
 
 }  // namespace unitTests

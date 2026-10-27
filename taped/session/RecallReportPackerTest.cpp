@@ -226,6 +226,42 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedBatchSiz
   ASSERT_EQ(1, retrieveMount.completes);
 }
 
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedFailuresPiggybackOnSuccessFlush) {
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  MockRetrieveMountWithBatch retrieveMount(catalogue);
+
+  cta::log::StringLogger log("dummy", "RecallReportPackerPgschedFailuresPiggybackOnSuccessFlush", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+  rrp.startThreads();
+
+  // 3 failures — below c_failedJobsBatchMax (600), so no batch-size flush mid-session
+  for (int i = 0; i < 3; i++) {
+    std::unique_ptr<cta::RetrieveJob> job(new MockRetrieveJobWithPrepare(retrieveMount));
+    const cta::exception::Exception ex("failure " + std::to_string(i));
+    rrp.reportFailedJob(std::move(job), ex, lc);
+  }
+
+  // RECALL_REPORT_PACKER_FLUSH_SIZE (2000) successful jobs trigger fullCheckAndFinishAsyncExecute(),
+  // which now also calls flushFailedJobs() — the piggyback added in this branch.
+  // MockRetrieveJob::asyncSetSuccessful() does not throw, so all 2000 reach m_successfulRetrieveJobs.
+  for (unsigned int i = 0; i < 2000; i++) {
+    std::unique_ptr<cta::RetrieveJob> job(new MockRetrieveJobWithPrepare(retrieveMount));
+    rrp.reportCompletedJob(std::move(job), lc);
+  }
+
+  rrp.setTapeDone();
+  rrp.setDiskDone();
+  rrp.reportEndOfSession(lc);
+  rrp.waitThread();
+
+  // Failures are flushed mid-session by the success-batch piggyback; end-of-session
+  // finds the accumulator empty and does not produce a second failTransferBatch call.
+  ASSERT_EQ(1, retrieveMount.flushCount);
+  ASSERT_EQ(3u, retrieveMount.lastBatchSize);
+  ASSERT_EQ(1, retrieveMount.completes);
+}
+
 #endif  // CTA_PGSCHED
 
 }  // namespace unitTests
