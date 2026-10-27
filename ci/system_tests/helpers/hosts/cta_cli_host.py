@@ -93,13 +93,29 @@ class CtaCliHost(RemoteHost):
         return [tape for tape in tape_ls_json if not tape.get("full", False)]
 
     def get_first_vid_containing_files(self) -> str:
+        # TAPE.NB_MASTER_FILES and TAPE.DATA_IN_BYTES are cumulative write counters that are
+        # never decremented when files are moved off a tape (e.g. via repack). The only
+        # authoritative source for current file count is the TAPE_FILE table.
         tapes = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
         for tape in tapes:
-            occupancy = tape.get("occupancy", 0)
-            last_fseq = tape.get("lastFseq", 0)
-            if occupancy not in (None, "0", 0) and last_fseq not in (None, "0", 0):
+            if self.get_number_of_files_on_tape(tape["vid"]) > 0:
                 return tape["vid"]
         raise RuntimeError("Failed to find a VID to repack")
+
+    def get_first_vid_with_single_copy_files(self) -> str:
+        """Return the first VID whose tape files all have exactly one tape copy."""
+        tapes = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
+        for tape in tapes:
+            vid = tape["vid"]
+            tapefiles = json.loads(self.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
+            if not tapefiles:
+                continue
+            if all(
+                len(json.loads(self.exec_with_output(f"cta-admin --json tf ls --id {tf['af']['archiveId']}"))) == 1
+                for tf in tapefiles
+            ):
+                return vid
+        raise RuntimeError("Failed to find a VID with single-copy files")
 
     def get_number_of_files_on_tape(self, vid: str) -> int:
         tapefile_json = self.exec_with_output(f"cta-admin --json tf ls --vid {vid}")
@@ -136,13 +152,30 @@ class CtaCliHost(RemoteHost):
         self.modify_tape_state(vid, state)
         time.sleep(cache_delay_secs)
 
-    def remove_repack_request(self, vid: str, throw_on_failure: bool = True) -> None:
+    def remove_repack_request(self, vid: str) -> None:
         print(f"Removing repack request for {vid}")
-        self.exec(f"cta-admin repack rm --vid {vid}", throw_on_failure=throw_on_failure)
+        result = self.exec(f"cta-admin repack rm --vid {vid}", capture_output=True, throw_on_failure=False)
+        if not result.success and "not present" not in result.stderr and "No repack request" not in result.stderr:
+            raise RuntimeError(f"cta-admin repack rm failed unexpectedly for {vid}: {result.stderr}")
 
     def reclaim_tape(self, vid: str) -> None:
         print(f"Reclaiming tape {vid}")
         self.exec(f"cta-admin tape reclaim --vid {vid}")
+
+    def remove_all_tape_files_from_vid(self, vid: str, disk_instance: str) -> None:
+        """Remove every TAPE_FILE entry on a VID. Skips files where this is the last copy (tf rm safety guard)."""
+        tapefile_list = json.loads(self.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
+        for tf_entry in tapefile_list:
+            archive_id = tf_entry["af"]["archiveId"]
+            result = self.exec(
+                f"cta-admin tf rm -v {vid} -i {disk_instance} -I {archive_id} -r 'Test cleanup'",
+                capture_output=True,
+                throw_on_failure=False,
+            )
+            if not result.success and "because it is the only copy" not in result.stderr:
+                raise RuntimeError(
+                    f"cta-admin tf rm failed unexpectedly for archive_id={archive_id} on {vid}: {result.stderr}"
+                )
 
     def has_repack_request(self, vid: str) -> bool:
         try:

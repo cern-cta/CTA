@@ -138,7 +138,19 @@ rdbms::Rset RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         M.RETRIEVE_REQUEST_ID,
         M.REQUEST_JOB_COUNT,
         M.STATUS,
-        :TAPE_POOL AS TAPE_POOL,
+  )SQL";
+  // For repack jobs, TAPE_POOL carries the archive destination pool (set by makeJobRow at expand
+  // time). Retrieve jobs do not use TAPE_POOL to locate a tape — repack retrieves already have a
+  // VID assigned — so nothing changes for the retrieve workflow. Preserving M.TAPE_POOL is
+  // required for correct archive routing: transformJobBatchToArchive copies this column straight
+  // to the archive queue. Overwriting with mountInfo.tapePool (the retrieve source pool) would
+  // route completed repack files to the wrong (DEFAULT) tape pool instead of the REPACK pool.
+  if (isRepack) {
+    sql += "      M.TAPE_POOL AS TAPE_POOL,\n";
+  } else {
+    sql += "      :TAPE_POOL AS TAPE_POOL,\n";
+  }
+  sql += R"SQL(
         M.MOUNT_POLICY,
         M.PRIORITY,
         M.MIN_RETRIEVE_REQUEST_AGE,
@@ -198,7 +210,9 @@ rdbms::Rset RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
-  stmt.bindString(":TAPE_POOL", mountInfo.tapePool.empty() ? "NOT_PROVIDED" : mountInfo.tapePool);
+  if (!isRepack) {
+    stmt.bindString(":TAPE_POOL", mountInfo.tapePool.empty() ? "NOT_PROVIDED" : mountInfo.tapePool);
+  }
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToActive);
   auto result = stmt.executeQuery();
@@ -671,6 +685,21 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   // MIN_ARCHIVE_REQUEST_AGE ? - to be checked if could be used same as for the
   // BASE_INSERT - the original copy NB from the retrieve
   // ALTERNATE_INSERT - the alternative COPY_NB to re-archive if any
+  //
+  // Archive-route resolution for repack:
+  // TAPE_POOL in REPACK_RETRIEVE_ACTIVE_QUEUE carries the archive destination pool set at
+  // expand time (makeJobRow). BASE_INSERT copies it directly to REPACK_ARCHIVE_PENDING_QUEUE
+  // for the primary copy (copy_nb == M.COPY_NB). ALTERNATE_INSERT handles additional copies
+  // using the REPACK_REARCHIVE_TAPE_POOLS / REPACK_REARCHIVE_COPY_NBS columns, which are
+  // never overwritten by moveJobsToDbActiveQueue.
+  //
+  // If archive-route resolution were moved here instead of being fixed in
+  // moveJobsToDbActiveQueue, both paths would need independent handling: BASE_INSERT covers
+  // only the copy whose COPY_NB matches the retrieved copy, while ALTERNATE_INSERT covers
+  // copies where REARCHIVE_COPY_VAL != M.COPY_NB. A file without a REPACK route for its
+  // primary copy number goes through BASE_INSERT only; if that case were resolved here via
+  // a catalogue lookup, the lookup would need to be per (STORAGE_CLASS, COPY_NB) and would
+  // not see the ALTERNATE_INSERT entries, which already have their pools set.
   std::string sql = R"SQL(
   WITH MOVED_ROWS AS (
     DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE rraq
