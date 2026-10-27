@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <optional>
 
 namespace cta::runtime {
 namespace {
@@ -23,6 +24,31 @@ bool isNameCharacter(char c) {
 
 bool isReferenceCharacter(char c) {
   return (c >= ' ' && c <= '~' && c != '}') || c == '\t';
+}
+
+struct Reference {
+  std::string_view name;
+  std::optional<std::string_view> fallback;
+};
+
+Reference parseReference(std::string_view reference, std::size_t offset) {
+  std::size_t nameEnd = 0;
+  if (!reference.empty() && isNameStart(reference.front())) {
+    nameEnd = 1;
+    while (nameEnd < reference.size() && isNameCharacter(reference[nameEnd])) {
+      ++nameEnd;
+    }
+  }
+  const auto suffix = reference.substr(nameEnd);
+  const bool hasFallback = suffix.starts_with(":-");
+  if (nameEnd == 0 || (!suffix.empty() && !hasFallback)) {
+    // Avoid including scalar contents or defaults, which may contain credentials, in diagnostics.
+    throw cta::exception::UserError(
+      "Invalid environment substitution at byte " + std::to_string(offset)
+        + "; expected ${NAME}, optionally with :-fallback.",
+      false);
+  }
+  return {reference.substr(0, nameEnd), hasFallback ? std::optional {suffix.substr(2)} : std::nullopt};
 }
 
 // Resolve one escape-free segment. Escape boundaries can interrupt an otherwise valid reference.
@@ -49,29 +75,13 @@ void substituteSegment(std::string_view input, std::size_t offset, bool errorOnM
       continue;
     }
 
-    std::size_t nameEnd = 0;
-    if (!reference.empty() && isNameStart(reference.front())) {
-      nameEnd = 1;
-      while (nameEnd < reference.size() && isNameCharacter(reference[nameEnd])) {
-        ++nameEnd;
-      }
-    }
-    const auto suffix = reference.substr(nameEnd);
-    const bool hasFallback = suffix.starts_with(":-");
-    if (nameEnd == 0 || (!suffix.empty() && !hasFallback)) {
-      // Avoid including scalar contents or defaults, which may contain credentials, in diagnostics.
-      throw cta::exception::UserError(
-        "Invalid environment substitution at byte " + std::to_string(offset + start)
-          + "; expected ${NAME}, optionally with :-fallback.",
-        false);
-    }
-
-    const std::string name(reference.substr(0, nameEnd));
+    const auto parsed = parseReference(reference, offset + start);
+    const std::string name(parsed.name); // parsed.name is a string_view
     const char* value = std::getenv(name.c_str());
     if (value != nullptr && *value != '\0') {
       output.append(value);
-    } else if (hasFallback) {
-      output.append(suffix.substr(2));
+    } else if (parsed.fallback) {
+      output.append(*parsed.fallback);
     } else if (value == nullptr && errorOnMissing) {
       throw cta::exception::UserError("Environment variable '" + name + "' is not defined and has no fallback.", false);
     }
