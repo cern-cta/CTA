@@ -1091,13 +1091,6 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
         cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c1} --tapepool {orig_pool_c1}")
         cta_cli.exec(f"cta-admin tape ch --vid {dest_vid_c2} --tapepool {orig_pool_c2}")
-        # Remove copy-2 TAPE_FILE entries so subsequent tests find 1-copy files.
-        # The MoveAndAddCopies repack leaves copy 1 on dest_vid_c1 and copy 2 on
-        # dest_vid_c2.  Standard teardown does not remove these catalogue entries,
-        # so get_first_vid_containing_files() would return dest_vid_c1 whose files
-        # have tapeFiles.size()==2, causing numberOfAdditionalCopies=1 instead of 2
-        # in the next MoveAndAddCopies test.
-        cta_cli.remove_all_tape_files_from_vid(dest_vid_c2, disk_instance_name)
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_repack_copy1}")
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_default_copy2}")
         cta_cli.exec(f"cta-admin tapepool rm --name {tp_repack_copy2}")
@@ -1183,7 +1176,7 @@ def test_repack_move_and_add_copies(
     cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 3")
 
     cta_cli.set_all_drives_up(wait=False)
-    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    vid_to_repack = cta_cli.get_first_vid_with_single_copy_files()
 
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack "Move and add copies" test on VID {vid_to_repack}')

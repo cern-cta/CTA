@@ -102,6 +102,21 @@ class CtaCliHost(RemoteHost):
                 return tape["vid"]
         raise RuntimeError("Failed to find a VID to repack")
 
+    def get_first_vid_with_single_copy_files(self) -> str:
+        """Return the first VID whose tape files all have exactly one tape copy."""
+        tapes = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
+        for tape in tapes:
+            vid = tape["vid"]
+            tapefiles = json.loads(self.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
+            if not tapefiles:
+                continue
+            if all(
+                len(json.loads(self.exec_with_output(f"cta-admin --json tf ls --id {tf['af']['archiveId']}"))) == 1
+                for tf in tapefiles
+            ):
+                return vid
+        raise RuntimeError("Failed to find a VID with single-copy files")
+
     def get_number_of_files_on_tape(self, vid: str) -> int:
         tapefile_json = self.exec_with_output(f"cta-admin --json tf ls --vid {vid}")
         return len(json.loads(tapefile_json))
