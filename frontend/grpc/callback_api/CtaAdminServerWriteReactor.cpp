@@ -23,7 +23,8 @@ namespace cta::frontend::grpc {
  * we introduce it to avoid having to write boilerplate code (OnDone, OnWriteDone) for each command */
 void CtaAdminServerWriteReactor::OnWriteDone(bool ok) {
   if (!ok) {
-    Finish(::grpc::Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
+    Finish(::grpc::Status(::grpc::StatusCode::CANCELLED, "Write failed: client gone or call cancelled"));
+    return;
   }
   NextWrite();
 }

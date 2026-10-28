@@ -34,7 +34,7 @@ readonly available_tests=(
 )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
-readonly debug_profile_file="${project_root}/ci/orchestration/debug/cta-debug-profile.yaml"
+readonly debug_profile_file="${project_root}/ci/orchestration/manifests/cta-debug-profile.yaml"
 
 readonly local_image_registry="localhost"
 ci_image_registry=$(jq -r .dev.ctaImageRegistry "${project_root}/project.json")
