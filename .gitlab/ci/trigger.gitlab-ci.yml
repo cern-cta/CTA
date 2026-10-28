@@ -145,55 +145,55 @@ spec:
 
 # The main pipeline already builds EL9/objectstore with Oracle.
 
-"build: objectstore + Oracle (el10)":
+"EL10: objectstore":
   extends: .build-variant-el10
   variables:
     SCHEDULER_TYPE: "objectstore"
     ENABLE_ORACLE_SUPPORT: "true"
 
-"build: objectstore (el9)":
+"EL9: pgcat":
   extends: .build-variant-el9
   variables:
     SCHEDULER_TYPE: "objectstore"
     ENABLE_ORACLE_SUPPORT: "false"
 
-"build: objectstore (el10)":
+"EL10: pgcat":
   extends: .build-variant-el10
   variables:
     SCHEDULER_TYPE: "objectstore"
     ENABLE_ORACLE_SUPPORT: "false"
 
-"build: PostgreSQL + Oracle (el9)":
+"EL9: pgsched":
   extends: .build-variant-el9
   variables:
     SCHEDULER_TYPE: "pgsched"
     ENABLE_ORACLE_SUPPORT: "true"
 
-"build: PostgreSQL + Oracle (el10)":
+"EL10: pgsched":
   extends: .build-variant-el10
   variables:
     SCHEDULER_TYPE: "pgsched"
     ENABLE_ORACLE_SUPPORT: "true"
 
-"build: PostgreSQL (el9)":
+"EL9: pgall":
   extends: .build-variant-el9
   variables:
     SCHEDULER_TYPE: "pgsched"
     ENABLE_ORACLE_SUPPORT: "false"
 
-"build: PostgreSQL (el10)":
+"EL10: pgall":
   extends: .build-variant-el10
   variables:
     SCHEDULER_TYPE: "pgsched"
     ENABLE_ORACLE_SUPPORT: "false"
 
-"build: PostgreSQL (debian13)":
+"Debian13: pgall":
   extends: .build-variant-debian13
   variables:
     SCHEDULER_TYPE: "pgsched"
     ENABLE_ORACLE_SUPPORT: "false"
 
-"analysis: ASan + UBSan":
+"Analysis: ASan + UBSan":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -204,7 +204,7 @@ spec:
           analysis: "address,undefined"
     strategy: mirror
 
-"analysis: TSan":
+"Analysis: TSan":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -215,7 +215,7 @@ spec:
           analysis: "thread"
     strategy: mirror
 
-"scheduler: pgsched + telemetry":
+"Telemetry: pgsched":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -226,7 +226,7 @@ spec:
           scheduler-type: "pgsched"
           compile-with-extra-telemetry: true
 
-"analysis: SonarCloud":
+"Analysis: SonarCloud":
   allow_failure: true
   stage: trigger
   needs: []  # Ensure no artifacts are downloaded
