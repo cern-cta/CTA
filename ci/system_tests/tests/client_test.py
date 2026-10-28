@@ -833,6 +833,41 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
         eos_client.exec(f"{eos_admin} rm -rf '{test_directory}'", throw_on_failure=False)
 
 
+def test_delete_on_closew_without_adler32(
+    # Reject a file without ADLER32 during CLOSEW
+    # EOS removes that file through delete-on-close
+    eos_client: EosClientHost,
+    eos_mgm: EosMgmHost,
+    disk_instance_name: str,
+    test_dir: Path,
+) -> None:
+    test_directory = test_dir / "closew_without_adler32"
+    test_file = test_directory / str(uuid.uuid4())
+
+    eos_mgm.force_remove_directory(test_directory)
+    eos_mgm.exec(f"eos mkdir -p '{test_directory}'")
+
+    try:
+        # Make EOS calculate MD5 instead of the ADLER32 required by CTA.
+        eos_mgm.exec(f"eos attr set sys.forced.checksum=md5 '{test_directory}'")
+
+        copy_result = eos_client.exec(
+            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+        assert not copy_result.success, "xrdcp succeeded without an ADLER32 checksum"
+
+        file_info_status = eos_client.exec_with_output(
+            f"eos root://{disk_instance_name} fileinfo '{test_file}' >/dev/null 2>&1; printf '%s' $?"
+        )
+        assert file_info_status == "2", (
+            f"Expected EOS to remove the file after CLOSEW rejection, got fileinfo exit status {file_info_status}"
+        )
+    finally:
+        eos_mgm.force_remove_directory(test_directory)
+
+
 def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
     # Create an empty source and attempt to archive it
     source_path = Path(f"/tmp/empty_file_{uuid.uuid4().hex}")
