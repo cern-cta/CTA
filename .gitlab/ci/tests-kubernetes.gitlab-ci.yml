@@ -244,6 +244,15 @@ test-catalogue-schema-update:
     # As minor versions are by definition backward compatible, we must always be able to upgrade from a .0 version
     - export EXTRA_SPAWN_ARGS="--catalogue-version ${FROM_CATALOGUE_VERSION}.0"
 
+test-lifecycle:
+  extends:
+    - .kubernetes-test
+  stage: system-test
+  rules:
+    - !reference [.manual-rules, rules]
+  variables:
+    PYTESTS: "tests/lifecycle_test.py"
+
 test-external-tape-formats:
   extends:
     - .kubernetes-test
