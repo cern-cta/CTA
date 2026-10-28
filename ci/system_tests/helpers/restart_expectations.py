@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 
@@ -88,6 +88,8 @@ class RestartExpectations:
         if not replace_pod:
             if removed or added:
                 errors.append(f"Unexpected pod changes: {changes}")
+        elif target is None:
+            raise ValueError("A target container is required for an expected pod replacement")
         elif removed != {target} or len(added) != 1:
             errors.append(f"Expected replacement of {self._baseline[target].description}; {changes}")
         else:
@@ -114,7 +116,7 @@ class RestartExpectations:
         self._baseline = current
 
     @contextmanager
-    def _expect(self, host: RemoteHost, *, count: int = 0, replace_pod: bool = False) -> Iterator[None]:
+    def _expect(self, host: RemoteHost, *, count: int = 0, replace_pod: bool = False) -> Generator[None, None, None]:
         if not isinstance(host.conn, K8sConnection):
             yield
             return
@@ -127,14 +129,14 @@ class RestartExpectations:
         self._verify(target=key, count=count, replace_pod=replace_pod)
 
     @contextmanager
-    def expect_container_restarts(self, host: RemoteHost, count: int = 1) -> Iterator[None]:
+    def expect_container_restarts(self, host: RemoteHost, count: int = 1) -> Generator[None, None, None]:
         """Allow exactly count container restarts during an operation, retaining the same pod."""
         assert count > 0, "Expected restart count must be positive"
         with self._expect(host, count=count):
             yield
 
     @contextmanager
-    def expect_pod_replacement(self, host: RemoteHost) -> Iterator[None]:
+    def expect_pod_replacement(self, host: RemoteHost) -> Generator[None, None, None]:
         """Allow one pod replacement, with no additional container restarts."""
         with self._expect(host, replace_pod=True):
             yield

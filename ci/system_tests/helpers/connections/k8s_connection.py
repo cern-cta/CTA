@@ -202,6 +202,8 @@ class K8sConnection(RemoteConnection):
     def container_snapshot(self) -> ContainerSnapshot:
         """Read current container identity and termination evidence without using cached status."""
         pod = self.core.read_namespaced_pod(name=self._pod_name, namespace=self.namespace)
+        if not isinstance(pod, V1Pod):
+            raise TypeError("Kubernetes API returned an invalid pod")
         if pod.metadata is None or pod.status is None:
             raise RuntimeError("Pod metadata or status is unavailable")
         for status in pod.status.container_statuses or []:
