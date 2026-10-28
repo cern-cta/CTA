@@ -201,7 +201,15 @@ detect_package_backend() {
       [[ "$oracle_support_explicit" == true ]] || oracle_support=false
       [[ "$scheduler_type" == pgsched && "$oracle_support" == false ]] \
         || die "Debian requires --scheduler-type pgsched and Oracle support disabled."
-      [[ "$use_internal_repos" == false ]] || die "Internal repositories are not configured for Debian."
+      if [[ "$use_internal_repos" == true ]]; then
+        log_warn "Internal repositories are not configured for Debian; ignoring --enable-internal-repos."
+        use_internal_repos=false
+      fi
+      # Accept the shared option, but do not invoke unsupported SBOM tooling.
+      if [[ -n "$sbom_path" ]]; then
+        log_warn "SBOM generation is not implemented for Debian; ignoring --sbom-path."
+        sbom_path=""
+      fi
       ;;
     *)
       die "Unsupported host platform ${os_id:-unknown} ${os_version_id:-unknown}. No package backend is implemented for it."

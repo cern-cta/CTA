@@ -55,6 +55,7 @@ release tag v6.12.0-1
 The tool selects the merged changelog MR’s commit, checks that it belongs to the target branch, and checks its release metadata and push pipeline. It opens an editor for the tag description and asks for confirmation before pushing the selected tags atomically. Resolve warnings about missing metadata or an unsuccessful pipeline before proceeding.
 
 The command creates exactly one source tag.
+CI validates tags with the same parser in `prepare-cta-version`; invalid tags fail visibly, and release variant triggers wait for that check.
 Only `.devN` and `.rcN` are accepted as optional suffixes, with positive counters; platform and backend suffixes are forbidden in Git tags.
 Explicit prereleases use the base release's changelog MR and issue:
 

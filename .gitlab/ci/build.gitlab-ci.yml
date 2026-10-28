@@ -85,15 +85,13 @@ build-cta:
       if [[ "$ENABLE_SCCACHE" == "true" ]]; then
         BUILD_OPTIONS+=" --enable-sccache"
       fi
-    # Internal repositories are only configured for RPM platforms; the input is a no-op on Debian.
-    - if [[ "$[[ inputs.platform ]]" == "el9" || "$[[ inputs.platform ]]" == "el10" ]] && $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
+    - if $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
     - |
       if $[[ inputs.compile-with-extra-telemetry ]]; then
         BUILD_OPTIONS+=" --extra-telemetry"
       fi
     - |
-      # Preserve the requested setting, but skip SBOM generation until Debian supports the tooling.
-      if [[ "$[[ inputs.platform ]]" != "debian13" && "$ENABLE_SBOM_GENERATION" == "true" ]]; then
+      if [[ "$ENABLE_SBOM_GENERATION" == "true" ]]; then
         BUILD_OPTIONS+=" --sbom-path ${CI_PROJECT_DIR}/sboms"
       fi
     - ./ci/build/build_packages.sh all --build-dir build

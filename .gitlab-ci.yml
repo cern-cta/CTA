@@ -331,6 +331,7 @@ include:
         when: never
       - when: always
     inputs:
+      pipeline-type: $[[ inputs.pipeline-type ]]
       custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]

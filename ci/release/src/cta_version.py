@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 
 BASE_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)-(\d+)$")
 TAG_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)-(\d+)(?:\.(rc|dev)([1-9]\d*))?$")
+# TODO: Remove historical parsing once supported release lines no longer need four-number tags for changelog lookup.
 HISTORICAL_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)(?:\.(\d+))?-(\d+)(?:\..+)?$")
 
 
