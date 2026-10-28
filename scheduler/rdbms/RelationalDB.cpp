@@ -1843,7 +1843,7 @@ void RelationalDB::failRetrieveJobBatchReport(
     std::vector<SchedulerDatabase::RetrieveJob*>& batch, log::LogContext& lc) {
   if (batch.empty()) return;
 
-  std::vector<postgres::RetrieveJobQueueRow*> exceed, requeue;
+  std::vector<schedulerdb::postgres::RetrieveJobQueueRow*> exceed, requeue;
   for (auto* dbJob : batch) {
     auto* rdbJob = dynamic_cast<schedulerdb::RetrieveRdbJob*>(dbJob);
     if (!rdbJob) {
@@ -1869,9 +1869,9 @@ void RelationalDB::failRetrieveJobBatchReport(
   schedulerdb::Transaction txn(m_connPool, lc);
   try {
     if (!requeue.empty())
-      postgres::RetrieveJobQueueRow::failReportBatchRequeue(txn, requeue);
+      schedulerdb::postgres::RetrieveJobQueueRow::failReportBatchRequeue(txn, requeue);
     if (!exceed.empty())
-      postgres::RetrieveJobQueueRow::failReportBatchExceedRetries(txn, exceed);
+      schedulerdb::postgres::RetrieveJobQueueRow::failReportBatchExceedRetries(txn, exceed);
     txn.commit();
   } catch (...) {
     txn.abort();
