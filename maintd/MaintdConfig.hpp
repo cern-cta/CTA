@@ -191,6 +191,7 @@ struct RoutinesConfig final {
 
 struct MaintdConfig final {
   cta::runtime::CatalogueConfig catalogue;
+  cta::runtime::MountDecisionConfig mount_decision;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
   cta::runtime::TelemetryConfig telemetry;

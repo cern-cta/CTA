@@ -189,7 +189,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
                                                                         lc);
     mountCandidateReservationGuard = std::make_unique<MountCandidateReservationGuard>(*mountDecision,
                                                                                       cta::utils::getShortHostname(),
-                                                                                      m_driveConfig.unitName,
+                                                                                      m_driveInfo.driveName,
                                                                                       lc);
   }
 #endif
