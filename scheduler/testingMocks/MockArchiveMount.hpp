@@ -85,6 +85,11 @@ public:
 
   void complete() override { completes++; }
 
+#ifdef CTA_PGSCHED
+  void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& /*failedJobs*/,
+                         cta::log::LogContext& /*lc*/) override {}
+#endif
+
 private:
   std::list<std::unique_ptr<cta::ArchiveJob>> m_jobs;
 
