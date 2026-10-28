@@ -721,13 +721,29 @@ std::string getProcessName() {
 }
 
 std::string readFileAsString(const std::string& filename) {
-  std::ifstream as_stream(filename);
-  if (!as_stream.is_open()) {
+  std::ifstream file(filename, std::ios::binary);
+  if (!file.is_open()) {
     throw std::runtime_error("Could not open file: " + filename);
   }
-  std::ostringstream as_string;
-  as_string << as_stream.rdbuf();
-  return as_string.str();
+
+  try {
+    return readStreamAsString(file);
+  } catch (const std::runtime_error& error) {
+    throw std::runtime_error("Could not read file: " + filename + ": " + error.what());
+  }
+}
+
+std::string readStreamAsString(std::istream& input) {
+  std::string contents;
+  char buffer[8192];
+  while (input) {
+    input.read(buffer, sizeof(buffer));
+    contents.append(buffer, static_cast<std::size_t>(input.gcount()));
+  }
+  if (input.bad() || !input.eof()) {
+    throw std::runtime_error("Failed to read stream");
+  }
+  return contents;
 }
 
 void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMsec, int64_t checkIntervalMsec) {

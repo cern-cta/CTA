@@ -6,11 +6,15 @@
 #include "runtime/Application.hpp"
 
 #include "tests/Argv.hpp"
+#include "tests/TempDirectory.hpp"
 #include "tests/TempFile.hpp"
 
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <gtest/gtest.h>
+#include <iterator>
 #include <stdexcept>
 #include <thread>
 
@@ -78,6 +82,110 @@ format = "json"
     return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
+}
+
+struct RuntimeDirectoryConfig {
+  cta::runtime::LoggingConfig logging;
+  std::string value;
+
+  static constexpr std::size_t memberCount() { return 2; }
+
+  cta::runtime::ValidationResult validate() const { return logging.validate(); }
+};
+
+class RuntimeDirectoryApp {
+public:
+  static inline bool wasRun = false;
+
+  void stop() {}
+
+  int run(const RuntimeDirectoryConfig& config, cta::log::Logger&) {
+    wasRun = true;
+    return EXIT_SUCCESS;
+  }
+};
+
+class ApplicationRuntimeDirectory : public ::testing::Test {
+protected:
+  void SetUp() override { RuntimeDirectoryApp::wasRun = false; }
+
+  int checkConfig(bool withRuntimeDirectory = true) {
+    Argv args = withRuntimeDirectory ?
+                  Argv {"cta-test", "--config", config.path(), "--runtime-dir", directory.path(), "--config-check"} :
+                  Argv {"cta-test", "--config", config.path(), "--config-check"};
+    cta::runtime::Application<RuntimeDirectoryApp, RuntimeDirectoryConfig, cta::runtime::CommonCliOptions> app(
+      "cta-test",
+      "");
+    return app.run(args.count, args.data());
+  }
+
+  std::string readSnapshot(const std::string& name) {
+    std::ifstream input(directory.path() + "/" + name, std::ios::binary);
+    EXPECT_TRUE(input.is_open()) << name;
+    return std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+  }
+
+  const std::string original = "value = '$${1INVALID}'\r\n[logging]\r\nlevel = 'WARNING'\r\nformat = 'json'\r\n";
+  TempDirectory directory;
+  TempFile config {original, ".toml"};
+};
+
+TEST_F(ApplicationRuntimeDirectory, ConfigCheckRejectsRuntimeDirectoryBeforeReadingConfig) {
+  ASSERT_TRUE(std::filesystem::remove(config.path()));
+  try {
+    checkConfig();
+    FAIL() << "Expected incompatible options to be rejected";
+  } catch (const cta::exception::UserError& error) {
+    EXPECT_EQ(error.getMessageValue(), "--config-check cannot be combined with --runtime-dir.");
+  }
+  EXPECT_TRUE(std::filesystem::is_empty(directory.path()));
+  EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
+}
+
+TEST_F(ApplicationRuntimeDirectory, ConfigCheckLeavesExistingSnapshotsUntouched) {
+  for (const auto* name : {"config.toml", "config.resolved.toml", "version.json"}) {
+    cta::utils::createFileWithContents("existing snapshot", directory.path() + "/" + name);
+  }
+  EXPECT_THROW(checkConfig(), cta::exception::UserError);
+  for (const auto* name : {"config.toml", "config.resolved.toml", "version.json"}) {
+    EXPECT_EQ(readSnapshot(name), "existing snapshot");
+  }
+  EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
+}
+
+TEST_F(ApplicationRuntimeDirectory, ConfigCheckWithoutRuntimeDirectoryValidatesWithoutStartingApp) {
+  ASSERT_EQ(checkConfig(false), EXIT_SUCCESS);
+  EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
+  EXPECT_TRUE(std::filesystem::is_empty(directory.path()));
+
+  config.stringFill("[logging]\nlevel = 'INVALID'\n");
+  EXPECT_THROW(checkConfig(false), cta::exception::UserError);
+  EXPECT_FALSE(RuntimeDirectoryApp::wasRun);
+}
+
+TEST(Application, ExpandsConfigWithoutRuntimeDirectory) {
+  struct Config {
+    cta::runtime::LoggingConfig logging;
+    std::string value;
+
+    static constexpr std::size_t memberCount() { return 2; }
+
+    cta::runtime::ValidationResult validate() const { return logging.validate(); }
+  };
+
+  class App {
+  public:
+    void stop() {}
+
+    int run(const Config& config, cta::log::Logger&) {
+      return config.value == "${1INVALID}" ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+  };
+
+  TempFile file("value = '$${1INVALID}'\n[logging]\nlevel = 'WARNING'\nformat = 'json'\n", ".toml");
+  Argv args({"cta-test", "--config", file.path()});
+  cta::runtime::Application<App, Config, cta::runtime::CommonCliOptions> app("cta-test", "");
+  EXPECT_EQ(app.run(args.count, args.data()), EXIT_SUCCESS);
 }
 
 TEST(Application, RootConfigValidationIsExercisedDuringConfigCheck) {

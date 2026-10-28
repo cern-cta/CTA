@@ -18,14 +18,36 @@ Services that use the CTA Runtime Library support the `--config-strict` flag whi
 - Every single config value parsed by CTA MUST be present in the config file. As a result, changes in default values will not affect the deployment, because every value is explicit and defaults are no longer relied upon. This mitigates (2) and (3).
 
 It is possible to check the validity of a config beforehand using the `--config-check` flag, which can be combined with the `--config-strict` flag. This checks the configuration and exits without starting the service.
+`--config-check` cannot be combined with `--runtime-dir`, so checking configuration does not overwrite a service's runtime snapshots.
 
 It is highly recommended to use `--config-strict` when deploying CTA to ensure operators have full control and transparency over the consumed config values.
 
+## Environment Variables
+
+Services using the CTA Runtime Library expand explicit environment references before parsing and validating the main TOML configuration.
+This allows multiple processes to share a configuration file while supplying different values through their environment.
+
+- `${NAME}` inserts the environment variable's value. An undefined variable becomes an empty string.
+- `${NAME:-fallback}` uses the fallback when the variable is undefined or empty.
+- `$$` inserts a literal dollar: `$${NAME}` produces the literal text `${NAME}`. Bare `$NAME` is not expanded.
+
+For example, a string value uses `name = "${CTA_NAME}"`, while an integer value uses `port = ${CTA_PORT:-1234}`.
+Replacement values and fallbacks are not expanded recursively.
+Invalid substitution references cause an error.
+
+Substitution applies throughout the file, including keys and comments, and inserts values verbatim.
+Values must therefore be valid in their TOML context, including any required quoting or escaping.
+The substitution syntax is based on OpenTelemetry and does not support prefixes, but this whole-file preprocessing does not prevent values from changing the TOML structure.
+
+`--config-strict` checks the resulting configuration; it does not make undefined environment variables an error by themselves.
+An undefined variable inside quotes can produce a valid empty string.
+
 ## Runtime Directory
 
-Services that use the CTA Runtime Library have the option to populate an existing directory with runtime metadata.:
+Services that use the CTA Runtime Library have the option to populate an existing directory with runtime metadata:
 
-- **`config.toml`**: the main config file of the service. This is the same file as passed in the `--config <path>` flag.
+- **`config.toml`**: the original main configuration supplied through `--config <path>`, before environment expansion.
+- **`config.resolved.toml`**: the exact text parsed after environment expansion, preserving comments and formatting.
 - **`cta-logging.schema.json`**: a JSON schema for the logs. See [Logging](../../run-and-maintain/monitoring/logging.md).
 - **`catalogue.config_file`**: the file containing the catalogue connection string. Note that the name of the file reflects the full TOML path to ensure this can be correlated with the corresponding option in the config file.
 - **`scheduler.config_file`**: the file containing the scheduler connection string. Its name reflects the full TOML path of the option. Only exists when CTA is compiled with the Postgres scheduler.
@@ -36,7 +58,10 @@ Services that use the CTA Runtime Library have the option to populate an existin
     {"service": "cta-maintd", "version": "<installed-cta-version>"}
     ```
 
-The runtime directory provides a snapshot of all files consumed by the service when it started. Typically, changing the config file on disk will not automatically restart a service, which means that your service may be running with a different config file than what you may expect. As such, the runtime directory allows operators to detect inconsistencies between the intended configuration file (e.g. the config path used in `--config <path>`) and the files actually consumed by the service (e.g. `<runtimedir>/config.toml`).
+The runtime directory contains a snapshot of all files the service read at startup. Changes to configuration files on disk do not take effect until the service restarts, and configuration management systems may not trigger a restart automatically. The runtime directory allows operators to compare the intended configuration (e.g. the file specified by `--config <path>`) with the snapshot (e.g. `<runtimedir>/config.toml`) to identify changes that have not yet taken effect.
+
+Compare the configured source file with `config.toml` to detect changes since startup.
+Compare `config.toml` with `config.resolved.toml` to see the environment variable substitutions (if any) used at startup.
 
 To enable this feature, use the `--runtime-dir <path>` flag. The lifecycle of the directory itself is not managed by the CTA process. The directory must exist before the process starts and must be readable and writable by the service. The process does not clean it up. The deployment layer manages it as follows:
 
