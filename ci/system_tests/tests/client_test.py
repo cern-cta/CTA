@@ -13,7 +13,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Union, cast
-from _pytest.fixtures import SubRequest
 
 import fastjsonschema
 import pytest
@@ -1492,85 +1491,6 @@ class TestRuntimeDeployment:
             if key in key_skip_list:
                 continue
             assert (cat, key, val) in indexed
-
-    # The following are standard for all services using the CTA runtime library
-    # For now only cta_maintd is supported, but eventually the frontend and taped should be added here
-
-    @pytest.mark.parametrize(
-        ("daemon_fixture", "expected_config_files"),
-        [
-            pytest.param("cta_maintd", ("catalogue", "telemetry"), id="maintd"),
-            pytest.param("cta_rmcd", (), id="rmcd"),
-        ],
-    )
-    def test_runtime_directory_correctness(
-        self,
-        request: SubRequest,
-        daemon_fixture: str,
-        expected_config_files: tuple[str, ...],
-        postgres_scheduler_enabled: bool,
-    ) -> None:
-        # Compare deployed inputs with their runtime copies and verify the generated service metadata
-        daemon = request.getfixturevalue(daemon_fixture)
-
-        def assert_remote_files_equal(deployed_path: str, runtime_path: str) -> None:
-            daemon.exec(
-                f'test "$(sha256sum < {shlex.quote(deployed_path)})" = "$(sha256sum < {shlex.quote(runtime_path)})"'
-            )
-
-        # Files present for every service
-        daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
-        assert_remote_files_equal(f"/etc/cta/cta-{daemon.process_name}.toml", "/run/cta/config.toml")
-        assert_remote_files_equal("/usr/share/cta/cta-logging.schema.json", "/run/cta/cta-logging.schema.json")
-        daemon.exec("jq -e '.title == \"CTA Logging Schema\"' /run/cta/cta-logging.schema.json >/dev/null")
-
-        # Determine which files we should actually check, because not every service exposes all of them
-        config_files = {
-            "catalogue": ("/etc/cta/cta-catalogue.conf", "/run/cta/catalogue.config_file"),
-            "scheduler": ("/etc/cta/cta-scheduler.conf", "/run/cta/scheduler.config_file"),
-            "telemetry": ("/etc/cta/cta-otel.yaml", "/run/cta/telemetry.config_file"),
-        }
-        files_to_check = list(expected_config_files)
-        if daemon_fixture == "cta_maintd" and postgres_scheduler_enabled:
-            files_to_check.append("scheduler")
-
-        # Now compare
-        for config_name in files_to_check:
-            deployed_path, runtime_path = config_files[config_name]
-            assert_remote_files_equal(deployed_path, runtime_path)
-
-    @pytest.mark.parametrize(
-        "daemon_fixture",
-        [
-            pytest.param("cta_maintd", id="maintd"),
-            pytest.param("cta_rmcd", id="rmcd"),
-        ],
-    )
-    def test_reopens_logfile_on_sighup(self, request: SubRequest, daemon_fixture: str):
-        daemon = request.getfixturevalue(daemon_fixture)
-        log_file = shlex.quote(str(daemon.log_file_path))
-        pid_command = f"pgrep -u cta {daemon.process_name}"
-        pid = daemon.exec_with_output(pid_command).strip()
-        assert pid.isdecimal(), f"Expected one {daemon.process_name} process, got {pid!r}"
-
-        rotated = shlex.quote(f"{daemon.log_file_path}.pytest.{uuid.uuid4().hex}")
-
-        # Start with an empty replacement so an earlier reopen message cannot satisfy this check.
-        daemon.exec(f"sudo mv {log_file} {rotated}")
-        daemon.exec(f"sudo install -o cta -g tape -m 0644 /dev/null {log_file}")
-        daemon.exec(f"kill -s HUP {pid}")
-
-        # FileLogger writes this message after reopening; /proc FD access requires unavailable capabilities.
-        deadline = time.monotonic() + 5
-        while True:
-            reopened = daemon.exec(f"grep -Fq 'Log file descriptor reopened' {log_file}", throw_on_failure=False)
-            if reopened.success:
-                break
-            assert time.monotonic() < deadline, f"{daemon.process_name} did not reopen {log_file} after SIGHUP"
-            time.sleep(0.1)
-
-        # A restart must not masquerade as successful in-process log rotation.
-        assert daemon.exec_with_output(pid_command).strip() == pid
 
     # Should be deleted once taped uses the new runtime library
     def test_log_rotation_taped(self, cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:

@@ -49,6 +49,16 @@ cta-dev test client --teardown-first
 
 On a normal run, this moves teardown before setup; it does not add a second teardown at the end. Run `cta-dev test teardown` afterwards if you need final cleanup.
 
+## Service lifecycle tests
+
+Run `cta-dev test lifecycle` to check maintd/rmcd runtime files, log rotation, and clean SIGTERM shutdown followed by container recovery.
+The SIGTERM tests require Kubernetes and the updated maintd/rmcd charts.
+The charts launch the service scripts directly, which replace themselves with the daemon so it runs as PID 1; Kubernetes observes its exit status and restarts the container directly.
+These tests interrupt one maintd instance and one rmcd instance and should run without concurrent transfer tests.
+
+The charts allow 60 seconds for pod termination, which deployments can override through `pod.extraSpec.terminationGracePeriodSeconds`.
+The SIGTERM test signals PID 1 inside the existing pod so Kubernetes retains the previous container's exit status; it does not test pod deletion or termination-grace enforcement.
+
 ## Select tests
 
 Place `cta-dev` options before the suite name; arguments after it are forwarded to pytest:

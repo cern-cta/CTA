@@ -53,21 +53,9 @@ keytab:
   secretName: eos-keytab
   subPath: eos.keytab
 
-preRun:
-  enabled: false
-  script: |
-    #!/usr/bin/bash
-
-postRun:
-  enabled: true
-  script: |
-    #!/usr/bin/bash
-    echo "Process crashed. Sleeping..."
-    sleep infinity
-
 pod:
   extraSpec:
-    terminationGracePeriodSeconds: 1
+    terminationGracePeriodSeconds: 60
 
 extraEnv:
 

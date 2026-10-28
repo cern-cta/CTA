@@ -238,6 +238,36 @@ TEST(HealthServer, NoTwoServersOnSamePort) {
   ASSERT_FALSE(hs2.isRunning());
 }
 
+TEST(HealthServer, CanRestartOnSamePortAfterServingRequest) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+  const std::string host = "127.0.0.1";
+  const int port = getFreePort();
+
+  {
+    cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; });
+    hs.start();
+    ASSERT_TRUE(hs.isRunning());
+
+    // Ask the server to close the connection, leaving its local port in TIME_WAIT.
+    httplib::Client client(host, port);
+    client.set_connection_timeout(1);
+    client.set_read_timeout(5);
+    auto response = client.Get("/health/ready",
+                               {
+                                 {"Connection", "close"}
+    });
+    ASSERT_TRUE(response);
+    ASSERT_EQ(response->status, 200);
+  }
+
+  cta::runtime::HealthServer restarted(dl, host, port, []() { return true; }, []() { return true; });
+  restarted.start();
+  ASSERT_TRUE(restarted.isRunning());
+  auto response = httpGet(host, port, "/health/ready");
+  ASSERT_TRUE(response);
+  EXPECT_EQ(response->status, 200);
+}
+
 TEST(HealthServer, StopsCorrectly) {
   cta::log::DummyLogger dl("dummy", "unitTest");
 

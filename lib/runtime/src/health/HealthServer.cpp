@@ -112,10 +112,12 @@ void HealthServer::start() {
                   }
                 });
 
-  // Prevent multiple processes being able to listen on the same port
-  // So explicitly disable SO_REUSEPORT
+  // Allow immediate restart after closed connections without sharing an active listening port.
   m_server->set_socket_options([](int sock) {
-    int opt = 0;
+    int opt = 1;
+    cta::exception::Errnum::throwOnNonZero(::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)),
+                                           "Failed to enable SO_REUSEADDR");
+    opt = 0;
     cta::exception::Errnum::throwOnNonZero(::setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)),
                                            "Failed to disable SO_REUSEPORT");
   });
