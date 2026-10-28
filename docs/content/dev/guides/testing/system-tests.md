@@ -28,7 +28,9 @@ For a regular suite, `cta-dev` includes:
 setup -> selected suite -> verification -> teardown
 ```
 
-Setup prepares the catalogue, tapes, and disk-system resources. Verification checks for unexpected errors and core dumps; teardown cleans test resources. Deployment and test preparation aim to establish a known starting state rather than relying only on cleanup from a previous run.
+Setup prepares the catalogue, tapes, and disk-system resources.
+Verification checks for unexpected errors, core dumps, and restarts.
+Teardown cleans test resources.
 
 The configuration in `ci/system_tests/pytest.ini` stops execution at the first failure (`-x`). Verification and teardown are ordinary tests in this sequence, so they may not run after a failure. Inspect the retained state before cleaning it up.
 
@@ -51,35 +53,26 @@ On a normal run, this moves teardown before setup; it does not add a second tear
 
 ## Service lifecycle tests
 
-Run `cta-dev test lifecycle` to check maintd/rmcd runtime files, log rotation, and clean SIGTERM shutdown followed by container recovery.
-The SIGTERM tests require Kubernetes and the updated maintd/rmcd charts.
-The charts launch the service scripts directly, which replace themselves with the daemon so it runs as PID 1; Kubernetes observes its exit status and restarts the container directly.
-These tests interrupt one maintd instance and one rmcd instance and should run without concurrent transfer tests.
-
-The charts allow 60 seconds for pod termination, which deployments can override through `pod.extraSpec.terminationGracePeriodSeconds`.
-The SIGTERM test signals PID 1 inside the existing pod so Kubernetes retains the previous container's exit status; it does not test pod deletion or termination-grace enforcement.
+Run `cta-dev test lifecycle` to check runtime files, log rotation, and graceful shutdown and recovery.
+Restart tests require Kubernetes and interrupt services; run them without concurrent transfer tests.
+The SIGTERM check signals the daemon inside its pod and verifies a clean container restart, rather than pod deletion.
 
 ## Expected restarts
 
-With `--verification`, the suite checks CTA container restart counts and pod identities against a baseline captured when the environment fixture starts.
-Unexpected restarts or pod replacements fail verification; existing restart counts at the baseline are not counted.
-Core-dump and error-log verification also includes maintd.
-
-Tests that deliberately restart a service must request the `restart_expectations` fixture and scope the operation:
+Verification rejects unexpected CTA container restarts and pod replacements since the environment fixture started.
+Declare intentional changes with the `restart_expectations` fixture:
 
 ```python
 with restart_expectations.expect_container_restarts(daemon, count=1):
-    # Signal the daemon and wait for its container to become ready again.
+    # Signal the daemon and wait for recovery.
     ...
 
-with restart_expectations.expect_pod_replacement(cta_taped):
-    cta_taped.restart(wait_for_restart=True)
+with restart_expectations.expect_pod_replacement(daemon):
+    daemon.restart(wait_for_restart=True)
 ```
 
-The checks run before and after the operation, require the exact declared count, and also check other CTA containers.
-A pod replacement must introduce one new pod in the same replica group without additional container restarts.
-These allowances apply only to Kubernetes; SSH connections retain their existing behavior.
-Deliberate suite teardown calls `reset_after_teardown()` after replacing services so `--teardown-first` remains supported.
+These Kubernetes-only checks require the exact expected change and reject unrelated restarts.
+Teardown uses `reset_after_teardown()` to establish a fresh baseline after deliberate cleanup.
 
 ## Select tests
 
