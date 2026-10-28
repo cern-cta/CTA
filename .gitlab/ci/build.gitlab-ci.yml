@@ -85,7 +85,7 @@ build-cta:
       if [[ "$ENABLE_SCCACHE" == "true" ]]; then
         BUILD_OPTIONS+=" --enable-sccache"
       fi
-    - if [[ "$[[ inputs.platform ]]" == "el9" || "$[[ inputs.platform ]]" == "el10" ]] && $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
+    - if $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
     - |
       if $[[ inputs.compile-with-extra-telemetry ]]; then
         BUILD_OPTIONS+=" --extra-telemetry"
@@ -97,7 +97,7 @@ build-cta:
     - ./ci/build/build_packages.sh all --build-dir build
                                       --build-generator "$[[ inputs.build-generator ]]"
                                       --create-build-dir
-                                      --cta-version "${CTA_VERSION}"
+                                      --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
                                       --xrootd-ssi-version ${XRD_SSI_VERSION}
                                       --scheduler-type ${SCHEDULER_TYPE}
                                       --oracle-support ${ENABLE_ORACLE_SUPPORT}
@@ -173,7 +173,7 @@ build-cta-pgsched:
   extends:
     - build-cta
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"' # Debian is pgsched by default
+    - if: '"$[[ inputs.platform ]]" == "debian13"'  # Debian is pgsched by default
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -192,7 +192,8 @@ build-cta-pgsched:
     # This compilation check deliberately differs from the primary pipeline variant.
     - source ci/utils/cta_version.sh
     - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-    - export CTA_VERSION
+    - CTA_PACKAGE_VERSION=$(resolve_cta_package_version "$CTA_VERSION")
+    - export CTA_VERSION CTA_PACKAGE_VERSION
     - !reference [build-cta, before_script]
   # Disable artifacts
   artifacts:
@@ -225,6 +226,7 @@ reset-sccache:
     - touch .sccache/.keep
   cache:
     - *sccache
+
 
 build-docs:
   stage: build

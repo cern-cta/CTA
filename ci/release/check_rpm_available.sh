@@ -12,7 +12,7 @@ usage() {
   echo "Usage: $0 --repository-url <repo> --package <package> --version <version>"
   echo
   echo "Checks an exact package version-release in a given (dnf/yum) repo."
-  echo "Use the exact RPM version-release (e.g. 6.12.0.0-1.pgall.el9)."
+  echo "Use the exact RPM version-release (e.g. 6.12.0-1.pgall.el9)."
   echo
   exit 1
 }

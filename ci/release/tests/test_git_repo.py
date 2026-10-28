@@ -24,12 +24,6 @@ class GitTest(unittest.TestCase):
             assert git.run(["tag", "v6.1.0.0-1"], mutate=True) == ""
         run.assert_not_called()
 
-    def test_create_tag_delegates_to_multi_tag_creation(self) -> None:
-        git = Git(Path("/tmp"))
-        with patch.object(git, "create_tags") as create_tags:
-            git.create_tag("abc", "v6.1.0.0-1", "Maintenance bug fixes")
-        create_tags.assert_called_once_with("abc", {"v6.1.0.0-1": "Maintenance bug fixes"})
-
     def test_editor_command_uses_git_editor_resolution(self) -> None:
         git = Git(Path("/tmp"))
         with patch.object(git, "run", return_value="vim") as run:
@@ -107,25 +101,34 @@ class GitTest(unittest.TestCase):
         ):
             git.resolve_remote_branch("origin", "--invalid", fetch=False)
 
-    def test_resolves_selected_remote_tags_with_one_request(self) -> None:
+    def test_resolves_annotated_remote_tag(self) -> None:
         git = Git(Path("/tmp"))
-        output = "tag-object refs/tags/v1\ncommit refs/tags/v1^{}\nother refs/tags/v2"
-        with patch.object(git, "run", return_value=output) as run:
-            assert git.remote_tag_commits("origin", ["v1", "v2"]) == {"v1": "commit", "v2": "other"}
-        run.assert_called_once()
+        with patch.object(git, "run", return_value="commit refs/tags/v1^{}"):
+            assert git.remote_tag_commit("origin", "v1") == "commit"
 
-    def test_creates_multiple_tags_and_pushes_explicit_refs_atomically(self) -> None:
+    def test_creates_and_pushes_only_selected_tag(self) -> None:
         git = Git(Path("/tmp"))
         with patch.object(git, "run") as run:
-            git.create_tags("abc", {"v1": "base", "v1.pgall": "variant"})
-            git.push_tags("origin", ["v1", "v1.pgall"])
-        assert run.call_args_list[-1] == call(
-            [
-                "push",
-                "--atomic",
-                "origin",
-                "refs/tags/v1:refs/tags/v1",
-                "refs/tags/v1.pgall:refs/tags/v1.pgall",
-            ],
-            mutate=True,
-        )
+            git.create_tag("abc", "v1", "Release")
+            git.push_tag("origin", "v1")
+        assert run.call_args_list == [
+            call(["tag", "-a", "v1", "abc", "-m", "Release"], mutate=True),
+            call(["push", "origin", "refs/tags/v1:refs/tags/v1"], mutate=True),
+        ]
+
+
+def test_ancestor_tags_exclude_divergent_release(tmp_path: Path) -> None:
+    """Exercise real Git reachability, including annotated release tags."""
+    git = Git(tmp_path)
+    git.run(["init"])
+    git.run(["config", "user.name", "Test"])
+    git.run(["config", "user.email", "test@example.com"])
+    git.run(["commit", "--allow-empty", "-m", "base"])
+    git.run(["tag", "-a", "v6.10.0-1", "-m", "base"])
+    base = git.run(["rev-parse", "HEAD"])
+    git.run(["checkout", "-b", "other"])
+    git.run(["commit", "--allow-empty", "-m", "unrelated release"])
+    git.run(["tag", "v6.11.0-1"])
+    git.run(["checkout", "--detach", base])
+    git.run(["commit", "--allow-empty", "-m", "target"])
+    assert git.tags(merged_into="HEAD") == ["v6.10.0-1"]

@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from cta_version import CTAVersion
 from errors import ReleaseWorkflowError
 from git_repo import Git
 from gitlab_api import GitLabAPI
@@ -94,12 +93,9 @@ class ReleaseContext:
     def add_issue_note(
         self,
         release_issue: dict[str, Any] | None,
-        version: str,
-        stage: str,
         body: str,
     ) -> None:
         """Add an informational progress note to a release issue."""
-        del version, stage
         if release_issue is None:
             if self.dry_run:
                 print(f"DRY-RUN: add release issue note: {body}")
@@ -172,54 +168,3 @@ class ReleaseContext:
 
         pipelines = self.api.get_all("pipelines", query_parameters)
         return pipelines[0] if pipelines else None
-
-    def load_release_context(
-        self,
-        version_text: str,
-        validate_local: bool,
-        target_branch: str | None = None,
-    ) -> tuple[dict[str, Any], dict[str, Any], str]:
-        """Validate and reconstruct a release issue, MR, and target commit."""
-        target_branch = target_branch or self.config.default_branch
-        info(f"Reconstructing release context for {version_text}")
-        CTAVersion.parse(version_text)
-
-        if validate_local:
-            self.git.validate_repository(
-                target_branch,
-                self.config.remote,
-                fetch=not self.dry_run,
-            )
-
-        release_issue = self.find_or_create_release_issue(version_text, create=False)
-        if release_issue is None:
-            raise ReleaseWorkflowError(f"Release issue {self.config.issue_title(version_text)!r} does not exist")
-
-        changelog_merge_request = self.find_changelog_merge_request(version_text, target_branch)
-        if changelog_merge_request is None:
-            raise ReleaseWorkflowError(f"Changelog MR for {version_text} does not exist")
-        if (
-            changelog_merge_request.get("state") != "merged"
-            or changelog_merge_request.get("target_branch") != target_branch
-        ):
-            raise ReleaseWorkflowError(
-                f"Changelog MR {changelog_merge_request.get('web_url')} has not been merged into {target_branch}"
-            )
-
-        release_commit = changelog_merge_request.get("squash_commit_sha") or changelog_merge_request.get(
-            "merge_commit_sha"
-        )
-        if not release_commit:
-            raise ReleaseWorkflowError(f"Changelog MR {changelog_merge_request.get('web_url')} has no resulting commit")
-
-        containing_refs = self.api.get_all(f"repository/commits/{release_commit}/refs", {"type": "branch"})
-        if not any(ref.get("name") == target_branch for ref in containing_refs):
-            raise ReleaseWorkflowError(f"Release commit {release_commit} is not on {target_branch}")
-
-        changelog, _ = self.read_repository_file(self.config.changelog_file, release_commit)
-        if version_text.removeprefix("v") not in changelog:
-            raise ReleaseWorkflowError(
-                f"{self.config.changelog_file} at {release_commit} does not contain {version_text}"
-            )
-
-        return release_issue, changelog_merge_request, release_commit

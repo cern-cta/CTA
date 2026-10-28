@@ -26,7 +26,7 @@ usage() {
   echo "  --local-source-dir <dir>         :    Local directory that will be uploaded to the provided --eos-target-dir."
   echo "  --eos-source-dir   <dir>         :    EOS directory that will be copied to the provided --eos-target-dir. Must be used with --cta-version."
   echo "  --eos-target-dir   <dir>         :    Final EOS repository directory where RPMs will be uploaded."
-  echo "  --cta-version      <cta_version> :    Exact RPM version-release (e.g. 6.12.0.0-1.pgall.el9)."
+  echo "  --cta-version      <cta_version> :    Exact RPM version-release (e.g. 6.12.0-1.pgall.el9)."
   echo
   exit 1
 }

@@ -3,6 +3,8 @@
 
 spec:
   inputs:
+    pipeline-type:
+      type: string
     custom-eos-image-tag:
       type: string
     custom-xrootd-version:
@@ -75,7 +77,123 @@ spec:
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
     strategy: mirror
 
-"analysis: ASan + UBSan":
+# Only EL9 pgsched with Oracle is automatic on tags; other variants are optional.
+.build-variant:
+  extends: .trigger-child-pipeline
+  allow_failure: false
+  rules:
+    # Variant jobs disable variable inheritance, so use the input rather than PIPELINE_TYPE.
+    - if: '$CI_PIPELINE_SOURCE == "parent_pipeline" || "$[[ inputs.pipeline-type ]]" != "DEFAULT"'
+      when: never
+    # Only build pgsched el9 automatically on tags
+    - if: '$CI_COMMIT_TAG && $BUILD_PLATFORM == "el9" && $SCHEDULER_TYPE == "pgsched" && $ENABLE_ORACLE_SUPPORT == "true"'
+      when: on_success
+      needs:
+        - job: prepare-cta-version
+          artifacts: false
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
+      needs:
+        - job: prepare-cta-version
+          artifacts: false
+    - if: '$CI_MERGE_REQUEST_ID || $CI_COMMIT_BRANCH'
+      when: manual
+      allow_failure: true
+  trigger:
+    forward:
+      # Forward the job backend settings without parent defaults.
+      yaml_variables: true
+    strategy: mirror
+  inherit:
+    variables: false
+
+# Platform inputs must be literal: GitLab validates options before expanding job variables.
+
+.build-variant-el9:
+  extends: .build-variant
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "el9"
+  variables:
+    BUILD_PLATFORM: "el9"
+
+.build-variant-el10:
+  extends: .build-variant
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "el10"
+  variables:
+    BUILD_PLATFORM: "el10"
+
+.build-variant-debian13:
+  extends: .build-variant
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "debian13"
+  variables:
+    BUILD_PLATFORM: "debian13"
+
+# The main pipeline already builds EL9/objectstore with Oracle.
+
+"EL10: objectstore":
+  extends: .build-variant-el10
+  variables:
+    SCHEDULER_TYPE: "objectstore"
+    ENABLE_ORACLE_SUPPORT: "true"
+
+"EL9: pgcat":
+  extends: .build-variant-el9
+  variables:
+    SCHEDULER_TYPE: "objectstore"
+    ENABLE_ORACLE_SUPPORT: "false"
+
+"EL10: pgcat":
+  extends: .build-variant-el10
+  variables:
+    SCHEDULER_TYPE: "objectstore"
+    ENABLE_ORACLE_SUPPORT: "false"
+
+"EL9: pgsched":
+  extends: .build-variant-el9
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "true"
+
+"EL10: pgsched":
+  extends: .build-variant-el10
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "true"
+
+"EL9: pgall":
+  extends: .build-variant-el9
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "false"
+
+"EL10: pgall":
+  extends: .build-variant-el10
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "false"
+
+"Debian13: pgall":
+  extends: .build-variant-debian13
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "false"
+
+"Analysis: ASan + UBSan":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -86,7 +204,7 @@ spec:
           analysis: "address,undefined"
     strategy: mirror
 
-"analysis: TSan":
+"Analysis: TSan":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -97,18 +215,7 @@ spec:
           analysis: "thread"
     strategy: mirror
 
-"scheduler: pgsched":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          scheduler-type: "pgsched"
-    strategy: mirror
-
-"scheduler: pgsched + telemetry":
+"Telemetry: pgsched":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -119,45 +226,7 @@ spec:
           scheduler-type: "pgsched"
           compile-with-extra-telemetry: true
 
-"catalogue: Oracle off":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          enable-oracle-support: false
-    strategy: mirror
-
-"platform: el10":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          platform: "el10"
-    strategy: mirror
-
-# May need more inputs once we run more jobs in the Debian pipeline
-"platform: debian13":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          platform: "debian13"
-          scheduler-type: "pgsched"
-          enable-oracle-support: false
-          enable-internal-repos: false
-          enable-sbom-generation: false
-    strategy: mirror
-
-"analysis: SonarCloud":
+"Analysis: SonarCloud":
   allow_failure: true
   stage: trigger
   needs: []  # Ensure no artifacts are downloaded
@@ -171,7 +240,7 @@ spec:
         BRANCH_NAME: $CI_COMMIT_BRANCH
   image: $IMAGE_LINT
   variables:
-    GIT_STRATEGY: "none" # Don't need anything from the repo for this job
+    GIT_STRATEGY: "none"  # Don't need anything from the repo for this job
     TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches
     BRANCH_NAME: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
   script:

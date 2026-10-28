@@ -16,7 +16,7 @@ from urllib.parse import quote
 from commands import SubparserRegistry
 from confirmation import confirm
 from cta_version import CTAVersion, previous_release
-from release_config import validate_major_version
+from release_config import ReleaseConfig, has_release_heading, validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
 
 CHANGELOG_CATEGORIES = {
@@ -57,13 +57,13 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""What this command does:
   1. Validates and synchronizes the selected target branch, then checks GitLab authentication.
-  2. Generates changes since the previous numeric CTA release.
+  2. Generates changes since the previous final CTA release in the target history.
   3. Opens the generated entry in Git's configured editor for approval.
   4. Finds or creates the release ticket, changelog branch, and merge request.
 
 Example:
-  release changelog v6.12.0.0-1
-  release changelog v6.12.0.0-1 --target-branch maintenance
+  release changelog v6.12.0-1
+  release changelog v6.12.0-1 --target-branch maintenance
 
 The VERSION must be unsuffixed. Build variants and release candidates share the
 base release's changelog and are selected later by "release tag".
@@ -77,8 +77,8 @@ without opening an editor or changing GitLab.""",
     parser.add_argument("version")
     parser.add_argument(
         "--target-branch",
-        default="main",
-        help="branch to prepare and merge the changelog into (default: main)",
+        default=ReleaseConfig.default_branch,
+        help="branch to prepare and merge the changelog into (default: %(default)s)",
     )
     parser.set_defaults(execute=run_from_arguments)
 
@@ -131,9 +131,7 @@ def edit_changelog_notes(context: ReleaseContext, notes: str, version: str) -> s
         edited_notes = candidate_file.read().strip()
 
     heading_version = version.removeprefix("v")
-    if not edited_notes or not any(
-        line.startswith("## ") and heading_version in line for line in edited_notes.splitlines()
-    ):
+    if not has_release_heading(edited_notes, version):
         raise ReleaseWorkflowError(f"Edited changelog must contain a level-two heading for {heading_version}")
 
     return edited_notes + "\n"
@@ -280,9 +278,8 @@ def build_changelog_plan(
 
     content_ref = changelog_branch if branch_resource is not None else changelog_commit
     old_changelog, _ = context.read_repository_file(context.config.changelog_file, content_ref)
-    heading_version = release_version.text.removeprefix("v")
-    has_release_heading = any(line.startswith("## ") and heading_version in line for line in old_changelog.splitlines())
-    if existing_merge_request is not None and not has_release_heading:
+    has_heading = has_release_heading(old_changelog, release_version.text)
+    if existing_merge_request is not None and not has_heading:
         raise ReleaseWorkflowError(
             f"Existing changelog MR {existing_merge_request['web_url']} does not contain the expected "
             f"{release_version.text} changelog heading; inspect it before rerunning changelog"
@@ -305,7 +302,7 @@ def build_changelog_plan(
         merge_request=existing_merge_request,
         branch_resource=branch_resource,
         old_changelog=old_changelog,
-        has_release_heading=has_release_heading,
+        has_release_heading=has_heading,
     )
 
 
@@ -360,8 +357,6 @@ def execute_changelog_plan(context: ReleaseContext, plan: ChangelogPlan) -> None
     )
     context.add_issue_note(
         release_issue,
-        version,
-        "changelog",
         changelog_issue_note(
             context,
             version,
@@ -380,7 +375,7 @@ def execute_changelog_plan(context: ReleaseContext, plan: ChangelogPlan) -> None
     )
 
 
-def run(context: ReleaseContext, version_text: str, target_branch: str = "main") -> None:
+def run(context: ReleaseContext, version_text: str, target_branch: str = ReleaseConfig.default_branch) -> None:
     """Create or reuse the issue, changelog branch, and merge request."""
     release_version = CTAVersion.parse(version_text, require_base=True)
 
@@ -407,9 +402,9 @@ def run(context: ReleaseContext, version_text: str, target_branch: str = "main")
         return
 
     _validate_tag_is_available(context, release_version)
-    previous_version = previous_release(release_version, context.git.tags())
+    previous_version = previous_release(release_version, context.git.tags(merged_into=changelog_commit))
 
-    # Generate the candidate changelog from the previous numeric release.
+    # Generate changes from a final release reachable in this target history.
     info(f"Generating changelog from {previous_version.text} through {changelog_commit}")
     generated_notes = generate_changelog_notes(
         context,

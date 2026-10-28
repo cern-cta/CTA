@@ -20,7 +20,7 @@ usage() {
   echo "  --build-dir <directory>                 Build root. The detected platform is appended to it."
   echo "  --build-generator <generator>           CMake generator, normally Ninja or Unix Makefiles."
   echo "  --scheduler-type <type>                 Scheduler type: objectstore or pgsched."
-  echo "  --cta-version <version>                 CTA version, e.g. 6-dev or 6.12.0.0-1.pgall.el9."
+  echo "  --cta-version <version>                 CTA version, e.g. 6-dev or 6.12.0-1.pgall.el9."
   echo "  --cmake-build-type <type>               Release, Debug, RelWithDebInfo, or MinSizeRel."
   echo
   echo "Required for binary and all:"
@@ -201,7 +201,15 @@ detect_package_backend() {
       [[ "$oracle_support_explicit" == true ]] || oracle_support=false
       [[ "$scheduler_type" == pgsched && "$oracle_support" == false ]] \
         || die "Debian requires --scheduler-type pgsched and Oracle support disabled."
-      [[ "$use_internal_repos" == false ]] || die "Internal repositories are not configured for Debian."
+      if [[ "$use_internal_repos" == true ]]; then
+        log_warn "Internal repositories are not configured for Debian; ignoring --enable-internal-repos."
+        use_internal_repos=false
+      fi
+      # Accept the shared option, but do not invoke unsupported SBOM tooling.
+      if [[ -n "$sbom_path" ]]; then
+        log_warn "SBOM generation is not implemented for Debian; ignoring --sbom-path."
+        sbom_path=""
+      fi
       ;;
     *)
       die "Unsupported host platform ${os_id:-unknown} ${os_version_id:-unknown}. No package backend is implemented for it."

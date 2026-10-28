@@ -13,6 +13,13 @@ from cta_version import CTAVersion, VersionError
 from git_repo import Git, GitError
 
 
+def has_release_heading(text: str, version: str) -> bool:
+    """Match a complete version at the start of a level-two changelog heading."""
+    return (
+        re.search(r"^##[ \t]+" + re.escape(version.removeprefix("v")) + r"(?=[ \t]|$)", text, re.MULTILINE) is not None
+    )
+
+
 def read_major_version(git: Git, revision: str) -> int:
     """Read release policy from the selected commit, ignoring the working tree."""
     project_file = f"{revision}:project.json"
@@ -30,7 +37,7 @@ def validate_major_version(git: Git, revision: str, version: str) -> None:
     """Require a new release to belong to the configured major version."""
     release_version = CTAVersion.parse(version, require_base=True)
     major_version = read_major_version(git, revision)
-    if release_version.xrootd != major_version:
+    if release_version.major != major_version:
         raise VersionError(
             f"Release {release_version.text} does not match majorVersion {major_version!r} in {revision}:project.json"
         )
