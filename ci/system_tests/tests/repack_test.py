@@ -569,7 +569,7 @@ def test_repack_with_user_provided_files(
     repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     # CTA must be able to delete the root-owned user-provided files after repacking.
-    eos_mgm.exec(f"eos chmod 0777 {repack_sub_dir}")
+    eos_mgm.exec(f"eos chmod 777 {repack_sub_dir}")
     print(
         f"Will inject {number_of_user_provided_files} files into the repack buffer directory to "
         f"simulate user provided files"
@@ -724,7 +724,7 @@ def test_repack_with_user_provided_files_no_recall(
     repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     # CTA must be able to delete the root-owned user-provided files after repacking.
-    eos_mgm.exec(f"eos chmod 0777 {repack_sub_dir}")
+    eos_mgm.exec(f"eos chmod 777 {repack_sub_dir}")
 
     tape_file_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
 

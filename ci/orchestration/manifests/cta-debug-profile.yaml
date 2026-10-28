@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Additional context that can/should be provided to kubectl debug using the --context flag to debug core dumps
+# Mount saved cores and logs in an ephemeral debugger using kubectl debug --custom.
 
 securityContext:
   runAsUser: 0
@@ -11,3 +11,5 @@ securityContext:
 volumeMounts:
   - name: coredumps
     mountPath: /var/log/tmp
+  - name: log-dir
+    mountPath: /var/log/cta
