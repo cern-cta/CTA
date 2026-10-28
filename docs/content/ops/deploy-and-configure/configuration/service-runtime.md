@@ -58,10 +58,10 @@ Services that use the CTA Runtime Library have the option to populate an existin
     {"service": "cta-maintd", "version": "<installed-cta-version>"}
     ```
 
-The runtime directory provides a snapshot of all files consumed by the service when it started. Typically, changing the config file on disk will not automatically restart a service, which means that your service may be running with a different config file than what you may expect. As such, the runtime directory allows operators to detect inconsistencies between the intended configuration file (e.g. the config path used in `--config <path>`) and the files actually consumed by the service (e.g. `<runtimedir>/config.toml`).
+The runtime directory contains a snapshot of all files the service read at startup. Changes to configuration files on disk do not take effect until the service restarts, and configuration management systems may not trigger a restart automatically. The runtime directory allows operators to compare the intended configuration (e.g. the file specified by `--config <path>`) with the snapshot (e.g. `<runtimedir>/config.toml`) to identify changes that have not yet taken effect.
 
 Compare the configured source file with `config.toml` to detect changes since startup.
-Compare `config.toml` with `config.resolved.toml` to see the substitutions used at startup.
+Compare `config.toml` with `config.resolved.toml` to see the environment variable substitutions (if any) used at startup.
 
 To enable this feature, use the `--runtime-dir <path>` flag. The lifecycle of the directory itself is not managed by the CTA process. The directory must exist before the process starts and must be readable and writable by the service. The process does not clean it up. The deployment layer manages it as follows:
 
