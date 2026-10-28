@@ -1612,6 +1612,102 @@ uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
   txn.setRowCountForTelemetry(nrows2);
   return nrows2;
 }
+
+uint64_t RetrieveJobQueueRow::failReportBatchRequeue(
+    Transaction& txn,
+    const std::vector<RetrieveJobQueueRow*>& jobs) {
+  if (jobs.empty()) return 0;
+
+  std::string values_rows;
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    if (i > 0) values_rows += ",\n    ";
+    const std::string s = std::to_string(i);
+    values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT)";
+  }
+
+  std::string sql = R"SQL(
+  WITH per_job(job_id, total_report_retries, report_failure_log) AS (
+    VALUES )SQL";
+  sql += values_rows;
+  sql += R"SQL(
+  )
+  UPDATE RETRIEVE_ACTIVE_QUEUE a
+  SET
+    TOTAL_REPORT_RETRIES = d.total_report_retries,
+    IS_REPORTING = FALSE,
+    REPORT_FAILURE_LOG = d.report_failure_log,
+    LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+  FROM per_job d
+  WHERE a.JOB_ID = d.job_id
+  )SQL";
+
+  auto stmt = txn.getConn().createStmt(sql);
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    const auto* row = jobs[i];
+    const std::string s = std::to_string(i);
+    stmt.bindUint64(":JID" + s, row->jobId);
+    stmt.bindUint32(":TRR" + s, row->totalReportRetries);
+    stmt.bindString(":RFL" + s, row->reportFailureLogs.value_or(""));
+  }
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
+  stmt.executeNonQuery();
+  const auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
+}
+
+uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(
+    Transaction& txn,
+    const std::vector<RetrieveJobQueueRow*>& jobs) {
+  if (jobs.empty()) return 0;
+
+  std::string values_rows;
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    if (i > 0) values_rows += ",\n    ";
+    const std::string s = std::to_string(i);
+    values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT)";
+  }
+
+  // Step 1: update counters and reset IS_REPORTING in ACTIVE queue
+  std::string sql = R"SQL(
+  WITH per_job(job_id, total_report_retries, report_failure_log) AS (
+    VALUES )SQL";
+  sql += values_rows;
+  sql += R"SQL(
+  )
+  UPDATE RETRIEVE_ACTIVE_QUEUE a
+  SET
+    TOTAL_REPORT_RETRIES = d.total_report_retries,
+    IS_REPORTING = FALSE,
+    REPORT_FAILURE_LOG = d.report_failure_log,
+    LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+  FROM per_job d
+  WHERE a.JOB_ID = d.job_id
+  )SQL";
+
+  auto stmt = txn.getConn().createStmt(sql);
+  for (size_t i = 0; i < jobs.size(); ++i) {
+    const auto* row = jobs[i];
+    const std::string s = std::to_string(i);
+    stmt.bindUint64(":JID" + s, row->jobId);
+    stmt.bindUint32(":TRR" + s, row->totalReportRetries);
+    stmt.bindString(":RFL" + s, row->reportFailureLogs.value_or(""));
+  }
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
+  stmt.executeNonQuery();
+  const auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+
+  // Step 2: move updated rows to RETRIEVE_FAILED_QUEUE
+  std::vector<std::string> jobIds;
+  jobIds.reserve(jobs.size());
+  for (const auto* row : jobs) {
+    jobIds.push_back(std::to_string(row->jobId));
+  }
+  moveJobBatchToFailedQueueTable(txn, jobIds, false /* isRepack=false, user jobs only */);
+
+  return nrows;
+}
 #endif
 
 }  // namespace cta::schedulerdb::postgres

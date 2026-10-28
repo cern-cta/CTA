@@ -484,6 +484,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
 //------------------------------------------------------------------------------
 // flushFailedJobs
 //------------------------------------------------------------------------------
+#ifdef CTA_PGSCHED
 void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
   if (m_failedArchiveJobs.empty()) return;
   cta::log::ScopedParamContainer params(lc);
@@ -501,6 +502,7 @@ void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
   }
   m_failedArchiveJobs.clear();
 }
+#endif  // CTA_PGSCHED
 
 //------------------------------------------------------------------------------
 // reportSuccessfulJobsBatch

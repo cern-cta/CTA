@@ -1838,6 +1838,48 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
   return;
 }
 
+#ifdef CTA_PGSCHED
+void RelationalDB::failRetrieveJobBatchReport(
+    std::vector<SchedulerDatabase::RetrieveJob*>& batch, log::LogContext& lc) {
+  if (batch.empty()) return;
+
+  std::vector<postgres::RetrieveJobQueueRow*> exceed, requeue;
+  for (auto* dbJob : batch) {
+    auto* rdbJob = dynamic_cast<schedulerdb::RetrieveRdbJob*>(dbJob);
+    if (!rdbJob) {
+      throw exception::Exception(
+        "In RelationalDB::failRetrieveJobBatchReport(): unexpected job type (not RetrieveRdbJob)");
+    }
+    auto* row = &rdbJob->m_jobRow;
+    const bool isExceed =
+      (dbJob->reportType == SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired
+       || row->totalReportRetries >= row->maxReportRetries);
+    (isExceed ? exceed : requeue).push_back(row);
+  }
+
+  {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("batchSize", batch.size())
+          .add("nExceededRetries", exceed.size())
+          .add("nRequeued", requeue.size());
+    lc.log(log::INFO,
+           "In RelationalDB::failRetrieveJobBatchReport(): processing failed retrieve report batch.");
+  }
+
+  schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    if (!requeue.empty())
+      postgres::RetrieveJobQueueRow::failReportBatchRequeue(txn, requeue);
+    if (!exceed.empty())
+      postgres::RetrieveJobQueueRow::failReportBatchExceedRetries(txn, exceed);
+    txn.commit();
+  } catch (...) {
+    txn.abort();
+    throw;
+  }
+}
+#endif
+
 void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
   throw cta::exception::NotImplementedException();
 }

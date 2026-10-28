@@ -420,6 +420,7 @@ void RecallReportPacker::WorkerThread::run() {
 //------------------------------------------------------------------------------
 //flushFailedJobs()
 //------------------------------------------------------------------------------
+#ifdef CTA_PGSCHED
 void RecallReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
   if (m_failedRetrieveJobs.empty()) return;
   cta::log::ScopedParamContainer params(lc);
@@ -436,6 +437,7 @@ void RecallReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
   }
   m_failedRetrieveJobs.clear();
 }
+#endif  // CTA_PGSCHED
 
 //------------------------------------------------------------------------------
 //errorHappened()

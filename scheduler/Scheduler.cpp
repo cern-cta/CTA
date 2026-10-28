@@ -3282,6 +3282,14 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
                                         log::LogContext& lc) {
   utils::Timer ttel;
 
+#ifdef CTA_PGSCHED
+  struct PgschedFailedReport {
+    cta::RetrieveJob* job;
+    std::string reason;
+  };
+  std::vector<PgschedFailedReport> pgschedFailedReports;
+#endif
+
   // Create the reporters
   struct JobAndReporter {
     std::unique_ptr<disk::DiskReporter> reporter;
@@ -3309,7 +3317,11 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
         .add("reportType", j->reportType())
         .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): failed to launch reporter.");
+#ifdef CTA_PGSCHED
+      pgschedFailedReports.push_back({j.get(), ex.getMessageValue()});
+#else
       j->reportFailed(ex.getMessageValue(), lc);
+#endif
     }
   }
   timingList.insertAndReset("asyncReportLaunchTime", t);
@@ -3324,7 +3336,11 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
         .add("reportType", current.retrieveJob->reportType())
         .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): failed to report.");
+#ifdef CTA_PGSCHED
+      pgschedFailedReports.push_back({current.retrieveJob, ex.getMessageValue()});
+#else
       current.retrieveJob->reportFailed(ex.getMessageValue(), lc);
+#endif
     }
   }
   timingList.insertAndReset("reportCompletionTime", t);
@@ -3333,6 +3349,25 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
   uint64_t scheddbReportedJobCount = reportedDbJobs.size();
+#ifdef CTA_PGSCHED
+  if (!pgschedFailedReports.empty()) {
+    std::vector<cta::SchedulerDatabase::RetrieveJob*> failedDbJobs;
+    failedDbJobs.reserve(pgschedFailedReports.size());
+    for (auto& f : pgschedFailedReports) {
+      f.job->prepareFailReport(f.reason);
+      failedDbJobs.push_back(f.job->m_dbJob.get());
+    }
+    try {
+      m_db.failRetrieveJobBatchReport(failedDbJobs, lc);
+    } catch (const cta::exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(lc);
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+      lc.log(log::ERR,
+             "In Scheduler::reportRetrieveJobsBatch(): failRetrieveJobBatchReport threw; "
+             "failed report jobs will be rescued by GC.");
+    }
+  }
+#endif
   utils::Timer tscheddb;
   m_db.setRetrieveJobBatchReportedToUser(reportedDbJobs, timingList, t, lc);
   auto ttel_scheddb = tscheddb.msecs();

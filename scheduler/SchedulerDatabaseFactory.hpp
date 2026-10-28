@@ -217,6 +217,13 @@ public:
     m_SchedDB->setRetrieveJobBatchReportedToUser(jobsBatch, timingList, t, lc);
   }
 
+#ifdef CTA_PGSCHED
+  void failRetrieveJobBatchReport(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
+                                  log::LogContext& lc) override {
+    m_SchedDB->failRetrieveJobBatchReport(batch, lc);
+  }
+#endif
+
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override {
     return m_SchedDB->getRetrieveRequestsByVid(vid);
   }

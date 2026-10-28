@@ -50,6 +50,14 @@ public:
    * @param failureReason  The reason of the failure as string
    */
   void prepareFailTransfer(const std::string& failureReason) override;
+
+  /**
+   * Prepares the in-memory job state for batch report-failure handling.
+   * Updates reportFailureLogs and increments totalReportRetries without DB access.
+   *
+   * @param failureReason  The reason of the failure as string
+   */
+  void prepareFailReport(const std::string& failureReason) override;
 #endif
 
   /*

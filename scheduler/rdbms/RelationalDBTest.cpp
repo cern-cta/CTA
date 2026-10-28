@@ -1425,6 +1425,297 @@ TEST_P(RelationalDBTest, archiveFailReportBatch_persistsReportFailureLog) {
   }
 }
 
+// Helper: put a retrieve job into RJS_ToReportToUserForFailure status in RETRIEVE_ACTIVE_QUEUE
+// and return the jobs batch ready for report-failure testing.
+// maxReportRetriesOverride: if set, overrides MAX_REPORT_RETRIES in RETRIEVE_PENDING_QUEUE before
+// getNextJobBatch moves rows to the active queue, so the in-memory value matches the DB.
+static std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>
+setupRetrieveJobForReportFailureTesting(cta::RelationalDBTestWrapper& db, cta::log::LogContext& lc,
+                                        uint64_t archiveFileId = 333,
+                                        std::optional<uint32_t> maxReportRetriesOverride = std::nullopt) {
+  using namespace cta;
+  queueRetrieveJob(db, lc, archiveFileId, "vidA", "A1", 3000);
+  db.waitSubthreadsComplete();
+
+  // Force exceed-retries-on-first-transfer-failure so the job reaches ToReportToUserForFailure
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE RETRIEVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+  if (maxReportRetriesOverride.has_value()) {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE RETRIEVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = :V");
+    stmt.bindUint32(":V", maxReportRetriesOverride.value());
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  auto mount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "loglib", "host");
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  for (auto& job : jobs) {
+    job->prepareFailTransfer("initial transfer failure");
+  }
+  std::vector<SchedulerDatabase::RetrieveJob*> transferBatch;
+  for (auto& job : jobs) transferBatch.push_back(job.get());
+  mount->failTransferBatch(transferBatch, lc);
+  // Job is now RJS_ToReportToUserForFailure in RETRIEVE_ACTIVE_QUEUE
+
+  auto reportJobs = db.getNextRetrieveJobsToReportBatch(10, lc);
+  return reportJobs;
+}
+
+// When totalReportRetries is below maxReportRetries, the job must stay in
+// RETRIEVE_ACTIVE_QUEUE with IS_REPORTING=FALSE (requeue path).
+TEST_P(RelationalDBTest, retrieveFailReportBatchRequeue) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  auto reportJobs = setupRetrieveJobForReportFailureTesting(db, lc);
+  ASSERT_EQ(1u, reportJobs.size());
+
+  // prepareFailReport increments totalReportRetries to 1 (default maxReportRetries=2 → requeue path)
+  reportJobs.front()->prepareFailReport("report failure reason");
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {reportJobs.front().get()};
+  db.failRetrieveJobBatchReport(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  // Job must remain in RETRIEVE_ACTIVE_QUEUE with IS_REPORTING=FALSE, TOTAL_REPORT_RETRIES=1.
+  {
+    auto stmt = conn.createStmt(
+      "SELECT TOTAL_REPORT_RETRIES, IS_REPORTING, TOTAL_RETRIES"
+      " FROM RETRIEVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("TOTAL_REPORT_RETRIES"));
+    ASSERT_FALSE(rset.columnBool("IS_REPORTING"));
+    // prepareFailReport must NOT have touched TOTAL_RETRIES (transfer counter).
+    ASSERT_EQ(1u, rset.columnUint64("TOTAL_RETRIES"));
+  }
+  // Job must NOT be in RETRIEVE_FAILED_QUEUE.
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+// When totalReportRetries reaches maxReportRetries the job must be moved atomically
+// from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_FAILED_QUEUE.
+TEST_P(RelationalDBTest, retrieveFailReportBatchExceedRetries) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // maxReportRetries=1: set in RETRIEVE_PENDING_QUEUE before getNextJobBatch so the in-memory
+  // value loaded by getNextRetrieveJobsToReportBatch is 1 → first report failure exhausts it.
+  auto reportJobs = setupRetrieveJobForReportFailureTesting(db, lc, 333, 1);
+  ASSERT_EQ(1u, reportJobs.size());
+
+  reportJobs.front()->prepareFailReport("terminal report failure");
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {reportJobs.front().get()};
+  db.failRetrieveJobBatchReport(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  // Job must be gone from RETRIEVE_ACTIVE_QUEUE.
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+  // Job must appear in RETRIEVE_FAILED_QUEUE with TOTAL_REPORT_RETRIES=1.
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT, MAX(TOTAL_REPORT_RETRIES) AS MAX_RR FROM RETRIEVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+    ASSERT_EQ(1u, rset.columnUint64("MAX_RR"));
+  }
+}
+
+// A job with reportType=NoReportRequired must be treated identically to an
+// exceed-retries job — it must be moved to RETRIEVE_FAILED_QUEUE regardless of
+// how many report retries are left.
+TEST_P(RelationalDBTest, retrieveFailReportBatch_noReportRequired) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  auto reportJobs = setupRetrieveJobForReportFailureTesting(db, lc);
+  ASSERT_EQ(1u, reportJobs.size());
+
+  // Override reportType in memory to NoReportRequired (default maxReportRetries=2, so
+  // without this override the job would take the requeue path).
+  reportJobs.front()->reportType = SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired;
+  reportJobs.front()->prepareFailReport("no report required failure");
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {reportJobs.front().get()};
+  db.failRetrieveJobBatchReport(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  // Must be moved to RETRIEVE_FAILED_QUEUE, not retried.
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+}
+
+// A single failRetrieveJobBatchReport call may contain a mix of jobs: some exceed their
+// report retry budget (→ RETRIEVE_FAILED_QUEUE) and some are merely requeued (IS_REPORTING=FALSE).
+TEST_P(RelationalDBTest, retrieveFailReportBatchMixed) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // Queue 3 jobs on the same VID
+  queueRetrieveJob(db, lc, 333, "vidA", "A1", 3000);
+  queueRetrieveJob(db, lc, 334, "vidA", "A2", 3001);
+  queueRetrieveJob(db, lc, 335, "vidA", "A3", 3002);
+  db.waitSubthreadsComplete();
+
+  // Force all to exceed transfer retries → all go to ToReportToUserForFailure
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE RETRIEVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+  // A1 gets maxReportRetries=1 so one failure exhausts the budget → exceed path.
+  // A2 and A3 keep the default maxReportRetries=2 → requeue path.
+  // Must be set in RETRIEVE_PENDING_QUEUE before getNextJobBatch moves rows to the active
+  // queue so the value loaded into memory by getNextRetrieveJobsToReportBatch is correct.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(
+      "UPDATE RETRIEVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = 1"
+      " WHERE DISK_FILE_ID = 'diskFile-A1'");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  auto mount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "loglib", "host");
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(3u, jobs.size());
+  for (auto& job : jobs) {
+    job->prepareFailTransfer("initial transfer failure");
+  }
+  std::vector<SchedulerDatabase::RetrieveJob*> transferBatch;
+  for (auto& job : jobs) transferBatch.push_back(job.get());
+  mount->failTransferBatch(transferBatch, lc);
+
+  auto reportJobs = db.getNextRetrieveJobsToReportBatch(10, lc);
+  ASSERT_EQ(3u, reportJobs.size());
+
+  std::vector<SchedulerDatabase::RetrieveJob*> reportBatch;
+  for (auto& job : reportJobs) {
+    job->prepareFailReport("report failure");
+    reportBatch.push_back(job.get());
+  }
+  db.failRetrieveJobBatchReport(reportBatch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  // A1 exceeded report retries → moved to RETRIEVE_FAILED_QUEUE.
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  // A2, A3 have retries left → still in RETRIEVE_ACTIVE_QUEUE with IS_REPORTING=FALSE.
+  {
+    auto stmt = conn.createStmt(
+      "SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+}
+
+// The failure reason passed to prepareFailReport must be persisted to the
+// REPORT_FAILURE_LOG column; FAILURE_LOG (transfer log) must remain untouched.
+TEST_P(RelationalDBTest, retrieveFailReportBatch_persistsReportFailureLog) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  auto reportJobs = setupRetrieveJobForReportFailureTesting(db, lc);
+  ASSERT_EQ(1u, reportJobs.size());
+
+  const std::string failureReason = "distinctive-retrieve-report-failure-sentinel-99";
+  reportJobs.front()->prepareFailReport(failureReason);
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {reportJobs.front().get()};
+  // requeue path (maxReportRetries=2, totalReportRetries=1 after prepareFailReport)
+  db.failRetrieveJobBatchReport(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt(
+      "SELECT REPORT_FAILURE_LOG, FAILURE_LOG FROM RETRIEVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    const auto reportLog = rset.columnString("REPORT_FAILURE_LOG");
+    ASSERT_NE(std::string::npos, reportLog.find(failureReason))
+      << "REPORT_FAILURE_LOG does not contain the expected failure reason: " << reportLog;
+    // FAILURE_LOG (transfer log) must be non-empty from the initial failTransferBatch call,
+    // but must NOT contain the report failure reason.
+    const auto transferLog = rset.columnOptionalString("FAILURE_LOG");
+    if (transferLog.has_value()) {
+      ASSERT_EQ(std::string::npos, transferLog->find(failureReason))
+        << "FAILURE_LOG was unexpectedly written by prepareFailReport: " << *transferLog;
+    }
+  }
+}
+
+// prepareFailReport must only increment TOTAL_REPORT_RETRIES, not TOTAL_RETRIES.
+// After failTransferBatch (TOTAL_RETRIES=1) and one prepareFailReport (TOTAL_REPORT_RETRIES=1),
+// both counters must be independently readable.
+TEST_P(RelationalDBTest, retrieveFailReportBatch_totalRetriesUnchanged) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  auto reportJobs = setupRetrieveJobForReportFailureTesting(db, lc);
+  ASSERT_EQ(1u, reportJobs.size());
+
+  reportJobs.front()->prepareFailReport("report failure reason");
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {reportJobs.front().get()};
+  db.failRetrieveJobBatchReport(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt(
+      "SELECT TOTAL_RETRIES, TOTAL_REPORT_RETRIES FROM RETRIEVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    // TOTAL_RETRIES was incremented by failTransferBatch (1 transfer failure).
+    ASSERT_EQ(1u, rset.columnUint64("TOTAL_RETRIES"));
+    // TOTAL_REPORT_RETRIES was incremented only by prepareFailReport.
+    ASSERT_EQ(1u, rset.columnUint64("TOTAL_REPORT_RETRIES"));
+  }
+}
+
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 INSTANTIATE_TEST_CASE_P(RelationalDBTest,
                         RelationalDBTest,

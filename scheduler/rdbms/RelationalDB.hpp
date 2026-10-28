@@ -253,6 +253,11 @@ public:
                                          utils::Timer& t,
                                          log::LogContext& lc) override;
 
+#ifdef CTA_PGSCHED
+  void failRetrieveJobBatchReport(std::vector<SchedulerDatabase::RetrieveJob*>& batch,
+                                  log::LogContext& lc) override;
+#endif
+
   JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext& logContext) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;

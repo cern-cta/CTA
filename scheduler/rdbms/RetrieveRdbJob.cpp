@@ -214,6 +214,12 @@ void RetrieveRdbJob::prepareFailTransfer(const std::string& failureReason) {
     m_jobRow.vid = newVid;
   }
 }
+
+void RetrieveRdbJob::prepareFailReport(const std::string& failureReason) {
+  // updateJobRowFailureLog with is_report_log=true appends to reportFailureLogs
+  // and increments totalReportRetries.
+  m_jobRow.updateJobRowFailureLog(failureReason, true);
+}
 #endif
 
 void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {

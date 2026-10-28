@@ -244,9 +244,11 @@ private:
    */
   const double RECALL_REPORT_PACKER_FLUSH_TIME = 180;
 
+#ifdef CTA_PGSCHED
   static constexpr size_t c_failedJobsBatchMax = 600;
   std::vector<std::unique_ptr<cta::RetrieveJob>> m_failedRetrieveJobs;
   void flushFailedJobs(cta::log::LogContext& lc);
+#endif
 };
 
 }  // namespace cta::tape::daemon
