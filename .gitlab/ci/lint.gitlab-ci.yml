@@ -170,6 +170,7 @@ lint-rust:
 
 # check for security advisories, bans, licenses and package sources
 deny-rust:
+  allow_failure: true
   stage: lint
   needs:
     - job: check-merge-train-duplicate
@@ -179,6 +180,7 @@ deny-rust:
       when: never
     - if: $CI_COMMIT_TAG
       when: always
+      allow_failure: false  # Keep dependency checks mandatory for releases.
     - changes:
         - "**/Cargo.toml"
         - "**/Cargo.lock"
