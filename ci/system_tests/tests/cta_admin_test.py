@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.hosts import (
     CtaCliHost,
     CtaTapedHost,
@@ -386,7 +387,9 @@ def test_cta_admin_tape_pool(cta_cli: CtaCliHost, disk_instance_name: str) -> No
     assert ls_before == cta_cli.exec_with_output("cta-admin --json tp ls")
 
 
-def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
+def test_cta_admin_drive(
+    cta_cli: CtaCliHost, cta_taped: CtaTapedHost, restart_expectations: RestartExpectations
+) -> None:
     pl_name = "test_cta_admin_tape_pl1"
     ll_name = "test_cta_admin_tape_ll1"
     dr_name = cta_taped.drive_name
@@ -421,7 +424,8 @@ def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
         cta_cli.exec(f"cta-admin dr rm {dr_name}")
 
     # Restart taped for the drive in question to ensure it ends up back in the catalogue again
-    cta_taped.restart(wait_for_restart=True)
+    with restart_expectations.expect_pod_replacement(cta_taped):
+        cta_taped.restart(wait_for_restart=True)
     # Until taped gets a correct readiness probe, we need this to ensure the drive registers itself in the catalogue.
     # Ideally this is more deterministic...
     wait_for_condition(

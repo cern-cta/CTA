@@ -3,16 +3,26 @@
 
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from kubernetes import client, config
-from kubernetes.client import ApiException, V1Pod
+from kubernetes.client import ApiException, V1ContainerStateTerminated, V1Pod
 from kubernetes.stream import stream
 from typing_extensions import override
 
 from system_tests.helpers.utils.timeout import Timeout
 from .remote_connection import ExecResult, RemoteConnection
+
+
+@dataclass(frozen=True)
+class ContainerSnapshot:
+    pod_uid: str
+    container_id: Optional[str]
+    restart_count: int
+    ready: bool
+    last_termination: Optional[V1ContainerStateTerminated]
 
 
 class K8sConnection(RemoteConnection):
@@ -59,40 +69,43 @@ class K8sConnection(RemoteConnection):
             print(command)
         full_command = ["/bin/sh", "-c", command]
 
-        resp = stream(
-            self.core.connect_get_namespaced_pod_exec,
-            self._pod_name,
-            self.namespace,
-            container=self.container,
-            command=full_command,
-            stderr=True,
-            stdin=False,
-            stdout=True,
-            tty=False,
-            _preload_content=False,
-        )
+        # stream() temporarily replaces the client's transport; never share it between concurrent calls.
+        with client.ApiClient(configuration=self.core.api_client.configuration) as api_client:
+            exec_core = client.CoreV1Api(api_client)
+            resp = stream(
+                exec_core.connect_get_namespaced_pod_exec,
+                self._pod_name,
+                self.namespace,
+                container=self.container,
+                command=full_command,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+                _preload_content=False,
+            )
 
-        stdout_chunks = []
-        stderr_chunks = []
+            stdout_chunks = []
+            stderr_chunks = []
 
-        while resp.is_open():
-            resp.update(timeout=0.1)
+            while resp.is_open():
+                resp.update(timeout=0.1)
 
-            if resp.peek_stdout():
-                chunk = resp.read_stdout()
-                if not capture_output:
-                    print(chunk, end="")
-                else:
-                    stdout_chunks.append(chunk)
+                if resp.peek_stdout():
+                    chunk = resp.read_stdout()
+                    if not capture_output:
+                        print(chunk, end="")
+                    else:
+                        stdout_chunks.append(chunk)
 
-            if resp.peek_stderr():
-                chunk = resp.read_stderr()
-                # In contrast to stdout, we always need stderr in case we have issues
-                stderr_chunks.append(chunk)
-                if not capture_output:
-                    print(chunk, end="")
+                if resp.peek_stderr():
+                    chunk = resp.read_stderr()
+                    # In contrast to stdout, we always need stderr in case we have issues
+                    stderr_chunks.append(chunk)
+                    if not capture_output:
+                        print(chunk, end="")
 
-        resp.close()
+            resp.close()
 
         success = resp.returncode == 0
         if throw_on_failure and not success:
@@ -188,6 +201,45 @@ class K8sConnection(RemoteConnection):
                 return cond.status == "True"
 
         return False
+
+    def container_snapshot(self) -> ContainerSnapshot:
+        """Read current container identity and termination evidence without using cached status."""
+        pod = self.core.read_namespaced_pod(name=self._pod_name, namespace=self.namespace)
+        if not isinstance(pod, V1Pod):
+            raise TypeError("Kubernetes API returned an invalid pod")
+        if pod.metadata is None or pod.status is None:
+            raise RuntimeError("Pod metadata or status is unavailable")
+        for status in pod.status.container_statuses or []:
+            if status.name == self.container:
+                return ContainerSnapshot(
+                    pod_uid=pod.metadata.uid,
+                    container_id=status.container_id,
+                    restart_count=status.restart_count,
+                    ready=status.ready,
+                    last_termination=status.last_state.terminated if status.last_state else None,
+                )
+        raise RuntimeError(f"Status for container {self.container} is unavailable")
+
+    def wait_for_container_restart(self, before: ContainerSnapshot, *, timeout_secs: int = 120) -> ContainerSnapshot:
+        """Wait for one healthy restart in the same pod, retaining the previous exit status."""
+        deadline = time.monotonic() + timeout_secs
+        while True:
+            current = self.container_snapshot()
+            if current.pod_uid != before.pod_uid:
+                raise RuntimeError("Pod was replaced instead of restarting its container")
+            if current.restart_count > before.restart_count + 1:
+                raise RuntimeError(f"Container restarted more than once: {current}")
+            if (
+                current.restart_count == before.restart_count + 1
+                and current.container_id
+                and current.container_id != before.container_id
+                and current.ready
+                and current.last_termination is not None
+            ):
+                return current
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"Container did not restart and become ready within {timeout_secs}s: {current}")
+            time.sleep(0.5)
 
     @override
     def get_ip(self) -> str:

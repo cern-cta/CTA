@@ -6,20 +6,6 @@ image:
   repository: cta/ctageneric/cta-rmcd
   tag: latest
 
-# Script to execute in the main container before starting the rmcd services
-preRun:
-  enabled: false
-  script: |
-    #!/usr/bin/bash
-
-# Script to execute in the main container after the taped process exited
-postRun:
-  enabled: true
-  script: |
-    #!/usr/bin/bash
-    echo "Process crashed. Sleeping..."
-    sleep infinity
-
 # We need to be privileged to handle the tape drives
 securityContext:
   privileged: true
@@ -45,7 +31,7 @@ service:
 
 pod:
   extraSpec:
-    terminationGracePeriodSeconds: 1
+    terminationGracePeriodSeconds: 60
 
 extraEnv:
 

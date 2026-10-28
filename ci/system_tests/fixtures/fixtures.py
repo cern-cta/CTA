@@ -28,6 +28,7 @@ from system_tests.helpers.hosts import (
     EosMgmHost,
     SchedulerPostgresHost,
 )
+from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
@@ -92,6 +93,12 @@ def make_tests_look_pretty(request: SubRequest) -> Iterator[None]:
 def error_whitelist() -> set[str]:
     """Mutable whitelist that individual test cases can add errors to."""
     return set()  # mutable whitelist shared between all tests
+
+
+@pytest.fixture(scope="session")
+def restart_expectations() -> RestartExpectations:
+    """Track unexpected restarts, with scoped allowances for intentional lifecycle operations."""
+    return RestartExpectations()
 
 
 @pytest.fixture(scope="session")
@@ -181,7 +188,9 @@ def connection_config(request: SubRequest) -> Optional[Path]:
 
 
 @pytest.fixture(scope="session")
-def env(connection_config: Optional[Path], namespace: Optional[str]) -> TestEnv:
+def env(
+    connection_config: Optional[Path], namespace: Optional[str], restart_expectations: RestartExpectations
+) -> TestEnv:
     """Give tests access to the different hosts (CLI, frontend, taped, and others)."""
     if namespace and connection_config:
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
@@ -193,9 +202,21 @@ def env(connection_config: Optional[Path], namespace: Optional[str]) -> TestEnv:
 
     if namespace is not None:
         # No connection configuration provided, so assume everything is running in a cluster
-        return TestEnv.from_namespace(namespace)
-    assert connection_config is not None
-    return TestEnv.from_config(connection_config)
+        environment = TestEnv.from_namespace(namespace)
+    else:
+        assert connection_config is not None
+        environment = TestEnv.from_config(connection_config)
+    restart_expectations.start(
+        [
+            *environment.cta_cli,
+            *environment.cta_admin_api,
+            *environment.cta_workflow_api,
+            *environment.cta_taped,
+            *environment.cta_rmcd,
+            *environment.cta_maintd,
+        ]
+    )
+    return environment
 
 
 # =========================================================================
