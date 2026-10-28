@@ -51,3 +51,21 @@ def test_rejects_invalid_release_metadata(metadata: str) -> None:
     git.run.return_value = metadata
     with pytest.raises(VersionError, match="majorVersion"):
         read_major_version(git, "release-commit")
+
+
+@pytest.mark.parametrize(
+    ("heading", "expected"),
+    [
+        ("## 6.12.0-1", True),
+        ("## 6.12.0-1 (2026-10-28)", True),
+        ("## 6.12.0-10", False),
+        ("## 6.12.0-1.rc1", False),
+        ("## 16.12.0-1", False),
+        ("### 6.12.0-1", False),
+        ("Mention 6.12.0-1", False),
+    ],
+)
+def test_release_heading_matches_complete_version(heading: str, expected: bool) -> None:
+    from release_config import has_release_heading
+
+    assert has_release_heading(heading, "v6.12.0-1") is expected

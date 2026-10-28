@@ -11,6 +11,7 @@ from contextlib import suppress
 from cta_version import CTAVersion, VersionError
 
 from commands import SubparserRegistry
+from release_config import ReleaseConfig
 from release_context import ReleaseContext, info
 
 
@@ -31,8 +32,8 @@ This command is always read-only.""",
     parser.add_argument("version")
     parser.add_argument(
         "--target-branch",
-        default="main",
-        help="branch containing the release changelog (default: main)",
+        default=ReleaseConfig.default_branch,
+        help="branch containing the release changelog (default: %(default)s)",
     )
     parser.set_defaults(execute=run_from_arguments)
 
@@ -42,7 +43,7 @@ def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Names
     run(context, parsed_arguments.version, parsed_arguments.target_branch)
 
 
-def run(context: ReleaseContext, version_text: str, target_branch: str = "main") -> None:
+def run(context: ReleaseContext, version_text: str, target_branch: str = ReleaseConfig.default_branch) -> None:
     """Print reconstructed Git and GitLab state for a release."""
     context.git.validate_target_branch(target_branch)
     version = CTAVersion.parse(version_text)

@@ -16,7 +16,7 @@ from urllib.parse import quote
 from commands import SubparserRegistry
 from confirmation import confirm
 from cta_version import CTAVersion, previous_release
-from release_config import validate_major_version
+from release_config import ReleaseConfig, has_release_heading, validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
 
 CHANGELOG_CATEGORIES = {
@@ -77,8 +77,8 @@ without opening an editor or changing GitLab.""",
     parser.add_argument("version")
     parser.add_argument(
         "--target-branch",
-        default="main",
-        help="branch to prepare and merge the changelog into (default: main)",
+        default=ReleaseConfig.default_branch,
+        help="branch to prepare and merge the changelog into (default: %(default)s)",
     )
     parser.set_defaults(execute=run_from_arguments)
 
@@ -131,9 +131,7 @@ def edit_changelog_notes(context: ReleaseContext, notes: str, version: str) -> s
         edited_notes = candidate_file.read().strip()
 
     heading_version = version.removeprefix("v")
-    if not edited_notes or not any(
-        line.startswith("## ") and heading_version in line for line in edited_notes.splitlines()
-    ):
+    if not has_release_heading(edited_notes, version):
         raise ReleaseWorkflowError(f"Edited changelog must contain a level-two heading for {heading_version}")
 
     return edited_notes + "\n"
@@ -280,9 +278,8 @@ def build_changelog_plan(
 
     content_ref = changelog_branch if branch_resource is not None else changelog_commit
     old_changelog, _ = context.read_repository_file(context.config.changelog_file, content_ref)
-    heading_version = release_version.text.removeprefix("v")
-    has_release_heading = any(line.startswith("## ") and heading_version in line for line in old_changelog.splitlines())
-    if existing_merge_request is not None and not has_release_heading:
+    has_heading = has_release_heading(old_changelog, release_version.text)
+    if existing_merge_request is not None and not has_heading:
         raise ReleaseWorkflowError(
             f"Existing changelog MR {existing_merge_request['web_url']} does not contain the expected "
             f"{release_version.text} changelog heading; inspect it before rerunning changelog"
@@ -305,7 +302,7 @@ def build_changelog_plan(
         merge_request=existing_merge_request,
         branch_resource=branch_resource,
         old_changelog=old_changelog,
-        has_release_heading=has_release_heading,
+        has_release_heading=has_heading,
     )
 
 
@@ -360,8 +357,6 @@ def execute_changelog_plan(context: ReleaseContext, plan: ChangelogPlan) -> None
     )
     context.add_issue_note(
         release_issue,
-        version,
-        "changelog",
         changelog_issue_note(
             context,
             version,
@@ -380,7 +375,7 @@ def execute_changelog_plan(context: ReleaseContext, plan: ChangelogPlan) -> None
     )
 
 
-def run(context: ReleaseContext, version_text: str, target_branch: str = "main") -> None:
+def run(context: ReleaseContext, version_text: str, target_branch: str = ReleaseConfig.default_branch) -> None:
     """Create or reuse the issue, changelog branch, and merge request."""
     release_version = CTAVersion.parse(version_text, require_base=True)
 

@@ -17,13 +17,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from commands import tag
 from confirmation import ConfirmationError
-from cta_version import CTAVersion
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
 
 
 class TagCommandTest(unittest.TestCase):
-    """Test tag-family preflight, validation, and publication."""
+    """Test single-tag preflight, validation, and publication."""
 
     @override
     def setUp(self) -> None:
@@ -46,7 +45,7 @@ class TagCommandTest(unittest.TestCase):
             ),
             patch.object(self.context, "find_pipeline", return_value={"status": "success"}),
             patch.object(self.context.git, "local_tag_commit", return_value=None),
-            patch.object(self.context.git, "remote_tag_commits", return_value={}),
+            patch.object(self.context.git, "remote_tag_commit", return_value=None),
             redirect_stdout(StringIO()) as output,
         ):
             tag.run(self.context, "v6.12.0-1", skip_confirmation=True)
@@ -96,57 +95,31 @@ class TagCommandTest(unittest.TestCase):
         assert commit == "merge-commit"
         user_input.assert_called_once()
 
-    def test_any_existing_tag_rejects_complete_family(self) -> None:
+    def test_existing_remote_tag_is_rejected(self) -> None:
         with (
             patch.object(self.context.git, "local_tag_commit", return_value=None),
-            patch.object(
-                self.context.git,
-                "remote_tag_commits",
-                return_value={"v6.12.0-1": "abc123"},
-            ) as remote_tags,
-            pytest.raises(ReleaseWorkflowError, match="family already exists"),
+            patch.object(self.context.git, "remote_tag_commit", return_value="abc"),
+            pytest.raises(ReleaseWorkflowError, match="already exists"),
         ):
-            tag._validate_selected_tags(  # pyright: ignore[reportPrivateUsage]
-                self.context,
-                ["v6.12.0-1", "v6.12.0-1"],
-                "abc123",
-            )
-        remote_tags.assert_called_once()
-
-    def test_next_release_candidate_never_completes_partial_family(self) -> None:
-        version = CTAVersion.parse("v6.12.0-1", require_base=True)
-        with patch.object(
-            self.context.git,
-            "tags",
-            return_value=["v6.12.0-1.rc2", "v6.12.0-1.rc2.pgsched"],
-        ):
-            selected = tag._select_tag_versions(  # pyright: ignore[reportPrivateUsage]
-                self.context,
-                version,
-                release_candidate=True,
-            )
-        assert len(selected) == 1
-        assert selected[0].text == "v6.12.0-1.rc3"
+            tag._validate_tag(self.context, "v6.12.0-1")  # pyright: ignore[reportPrivateUsage]
 
     def test_declining_final_confirmation_does_not_create_tags(self) -> None:
         with (
             patch.object(tag, "edit_tag_description", return_value="Release notes"),
-            patch.object(tag, "_validate_selected_tags"),
+            patch.object(tag, "_validate_tag"),
             patch("confirmation.sys.stdin.isatty", return_value=True),
             patch("builtins.input", return_value=""),
-            patch.object(self.context.git, "create_tags") as create_tags,
+            patch.object(self.context.git, "create_tag") as create_tag,
             pytest.raises(ConfirmationError, match="declined"),
         ):
             tag.build_tag_plan(
                 self.context,
                 "v6.12.0-1",
-                "main",
                 "abc123",
                 {"iid": 1},
-                [CTAVersion.parse("v6.12.0-1")],
                 skip_confirmation=False,
             )
-        create_tags.assert_not_called()
+        create_tag.assert_not_called()
 
     def test_tag_description_uses_git_editor_and_ignores_comments(self) -> None:
         def write_description(command: list[str], check: bool) -> MagicMock:
@@ -169,16 +142,16 @@ def test_tag_command_publishes_one_tag_using_base_release_metadata(suffix: str) 
     with (
         patch.object(context.git, "resolve_remote_branch", return_value="branch-tip"),
         patch.object(tag, "_validate_release_metadata", return_value=({"iid": 1}, "release-commit")) as metadata,
-        patch.object(tag, "_validate_selected_tags"),
+        patch.object(tag, "_validate_tag"),
         patch.object(tag, "edit_tag_description", return_value="Release notes"),
-        patch.object(context.git, "create_tags") as create_tags,
-        patch.object(context.git, "push_tags") as push_tags,
-        patch.object(tag, "_report_tags_and_pipelines"),
+        patch.object(context.git, "create_tag") as create_tag,
+        patch.object(context.git, "push_tag") as push_tag,
+        patch.object(tag, "_report_tag_and_pipeline"),
     ):
         tag.run(context, base + suffix, skip_confirmation=True)
     metadata.assert_called_once_with(context, base, "branch-tip", True, "main", None)
-    create_tags.assert_called_once_with("release-commit", {base + suffix: "Release notes"})
-    push_tags.assert_called_once_with("origin", [base + suffix])
+    create_tag.assert_called_once_with("release-commit", base + suffix, "Release notes")
+    push_tag.assert_called_once_with("origin", base + suffix)
 
 
 @pytest.mark.parametrize(("merge_sha", "expected"), [("merged", "merged"), (None, "squashed")])
@@ -223,4 +196,33 @@ def test_explicit_revision_rejects_unrelated_history(ancestry: list[bool], match
         tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
             context, "v6.12.0-1", "tip", True, "main", "other"
         )
-    context.git.create_tags.assert_not_called()
+    context.git.create_tag.assert_not_called()
+
+
+def test_next_candidate_uses_single_tag_plan() -> None:
+    context = MagicMock()
+    context.dry_run = False
+    context.git.tags.return_value = ["v6.12.0-1.rc2"]
+    with (
+        patch.object(tag, "_validate_release_metadata", return_value=(None, "commit")),
+        patch.object(tag, "build_tag_plan") as build_plan,
+        patch.object(tag, "execute_tag_plan"),
+        patch.object(tag, "_report_tag_and_pipeline"),
+    ):
+        tag.run(context, "v6.12.0-1", True, release_candidate=True)
+    build_plan.assert_called_once_with(context, "v6.12.0-1.rc3", "commit", None, True)
+
+
+@pytest.mark.parametrize("available", [True, False])
+def test_pipeline_reporting_after_publication(available: bool, capsys: pytest.CaptureFixture[str]) -> None:
+    context = MagicMock()
+    context.config.project_web_url = "https://gitlab.example/cta"
+    context.find_pipeline.return_value = {"status": "running", "web_url": "pipeline-url"} if available else None
+    plan = tag.TagPlan("v6.12.0-1", "commit", {"iid": 1}, "Release")
+    with patch.object(tag.time, "sleep"):
+        tag._report_tag_and_pipeline(context, plan)  # pyright: ignore[reportPrivateUsage]
+    assert context.find_pipeline.call_count == (1 if available else 6)
+    assert context.add_issue_note.call_count == (2 if available else 1)
+    output = capsys.readouterr().out
+    assert ("pipeline-url" if available else "has not appeared yet") in output
+    assert "additional release variants manually" in output

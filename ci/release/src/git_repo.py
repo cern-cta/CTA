@@ -150,41 +150,13 @@ class Git:
             output = self.run(["ls-remote", "--tags", remote, f"refs/tags/{tag_name}"])
         return output.split()[0] if output else None
 
-    def remote_tag_commits(self, remote: str, tag_names: Sequence[str]) -> dict[str, str]:
-        """Resolve selected lightweight or annotated remote tags with one request."""
-        if not tag_names:
-            return {}
-        patterns = [pattern for name in tag_names for pattern in (f"refs/tags/{name}", f"refs/tags/{name}^{{}}")]
-        output = self.run(["ls-remote", "--tags", remote, *patterns])
-        commits: dict[str, str] = {}
-        for line in output.splitlines():
-            fields = line.split()
-            if len(fields) != 2:
-                continue
-            commit, ref = fields
-            name = ref.removeprefix("refs/tags/")
-            peeled = name.endswith("^{}")
-            name = name.removesuffix("^{}")
-            if name in tag_names and (peeled or name not in commits):
-                commits[name] = commit
-        return commits
-
     def create_tag(self, target_commit: str, tag_name: str, description: str) -> None:
-        """Create one annotated local tag using the multi-tag implementation."""
-        self.create_tags(target_commit, {tag_name: description})
+        """Create one annotated tag at the validated commit."""
+        self.run(["tag", "-a", tag_name, target_commit, "-m", description], mutate=True)
 
-    def create_tags(self, target_commit: str, tag_descriptions: dict[str, str]) -> None:
-        """Create multiple annotated local tags at one commit."""
-        for tag_name, description in tag_descriptions.items():
-            self.run(["tag", "-a", tag_name, target_commit, "-m", description], mutate=True)
-
-    def push_tags(self, remote: str, tag_names: Sequence[str]) -> None:
-        """Push explicit tag refspecs atomically to prevent partial publication."""
-        if not tag_names:
-            return
-
-        refspecs = [f"refs/tags/{tag_name}:refs/tags/{tag_name}" for tag_name in tag_names]
-        self.run(["push", "--atomic", remote, *refspecs], mutate=True)
+    def push_tag(self, remote: str, tag_name: str) -> None:
+        """Push only the selected tag."""
+        self.run(["push", remote, f"refs/tags/{tag_name}:refs/tags/{tag_name}"], mutate=True)
 
 
 def discover_repository_root() -> Path:
