@@ -44,20 +44,6 @@ keytab:
   secretName: eos-keytab
   subPath: eos.keytab
 
-# Script to execute in the main container before starting the taped services
-preRun:
-  enabled: false
-  script: |
-    #!/usr/bin/bash
-
-# Script to execute in the main container after the taped process exited
-postRun:
-  enabled: true
-  script: |
-    #!/usr/bin/bash
-    echo "Process crashed. Sleeping..."
-    sleep infinity
-
 # The following is an example format of drives
 #
 # drives:

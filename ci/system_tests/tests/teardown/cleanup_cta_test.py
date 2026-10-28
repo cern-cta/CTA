@@ -4,6 +4,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 from system_tests.helpers.hosts import CtaAdminApiHost
+from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_env import TestEnv
 
 # =========================================================================
@@ -17,7 +18,7 @@ def test_cleanup_catalogue(cta_admin_api: CtaAdminApiHost) -> None:
     cta_admin_api.exec(f"cta-catalogue-schema-create -v {schema_version} /etc/cta/cta-catalogue.conf")
 
 
-def test_restart_cta(env: TestEnv) -> None:
+def test_restart_cta(env: TestEnv, restart_expectations: RestartExpectations) -> None:
     assert len(env.cta_maintd) > 0
     # CTA can't really survive a catalogue wipe, so restart all the pods. This also wipes all the test scripts and temp
     # files so it ensures a clean slate
@@ -29,3 +30,6 @@ def test_restart_cta(env: TestEnv) -> None:
 
         for future in futures:
             future.result()
+
+    # Teardown deliberately replaces services; --teardown-first needs a fresh baseline afterward.
+    restart_expectations.reset_after_teardown()

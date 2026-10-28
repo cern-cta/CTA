@@ -59,6 +59,28 @@ These tests interrupt one maintd instance and one rmcd instance and should run w
 The charts allow 60 seconds for pod termination, which deployments can override through `pod.extraSpec.terminationGracePeriodSeconds`.
 The SIGTERM test signals PID 1 inside the existing pod so Kubernetes retains the previous container's exit status; it does not test pod deletion or termination-grace enforcement.
 
+## Expected restarts
+
+With `--verification`, the suite checks CTA container restart counts and pod identities against a baseline captured when the environment fixture starts.
+Unexpected restarts or pod replacements fail verification; existing restart counts at the baseline are not counted.
+Core-dump and error-log verification also includes maintd.
+
+Tests that deliberately restart a service must request the `restart_expectations` fixture and scope the operation:
+
+```python
+with restart_expectations.expect_container_restarts(daemon, count=1):
+    # Signal the daemon and wait for its container to become ready again.
+    ...
+
+with restart_expectations.expect_pod_replacement(cta_taped):
+    cta_taped.restart(wait_for_restart=True)
+```
+
+The checks run before and after the operation, require the exact declared count, and also check other CTA containers.
+A pod replacement must introduce one new pod in the same replica group without additional container restarts.
+These allowances apply only to Kubernetes; SSH connections retain their existing behavior.
+Deliberate suite teardown calls `reset_after_teardown()` after replacing services so `--teardown-first` remains supported.
+
 ## Select tests
 
 Place `cta-dev` options before the suite name; arguments after it are forwarded to pytest:

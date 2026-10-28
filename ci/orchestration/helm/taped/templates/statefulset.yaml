@@ -47,8 +47,7 @@ spec:
           capabilities:
             add:
               - SYS_RAWIO
-        command: ["/bin/bash", "-c"]
-        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        command: ["/scripts/taped.sh"]
         stdin: true
         env:
         - name: MY_NAME

@@ -9,6 +9,13 @@ import pytest
 from _pytest.fixtures import SubRequest
 
 from system_tests.helpers.connections.k8s_connection import K8sConnection
+from system_tests.helpers.restart_expectations import RestartExpectations
+
+# The main goal of these tests are to ensure that CTA behaves correctly to different signals:
+# - SIGHUP should refresh the log descriptor
+# - SIGTERM should gracefully shutdown the service
+# Additionally, in a distributed setup, restarts (ideally even when abruptly killed by SIGKILL) should be transparent.
+# Here transparent means: "no user-visible failures, no lost work, correct data, and completion within a bounded time"
 
 
 class TestRuntimeDeployment:
@@ -62,7 +69,7 @@ class TestRuntimeDeployment:
             pytest.param("cta_rmcd", id="rmcd"),
         ],
     )
-    def test_reopens_logfile_on_sighup(self, request: SubRequest, daemon_fixture: str):
+    def test_sighup_reopens_logfile(self, request: SubRequest, daemon_fixture: str):
         daemon = request.getfixturevalue(daemon_fixture)
         connection = daemon.conn
         before = connection.container_snapshot() if isinstance(connection, K8sConnection) else None
@@ -107,7 +114,9 @@ class TestGracefulRestart:
     """
 
     @pytest.mark.parametrize("daemon_fixture", ["cta_maintd", "cta_rmcd"], ids=["maintd", "rmcd"])
-    def test_sigterm_exits_cleanly_and_restarts(self, request: SubRequest, daemon_fixture: str) -> None:
+    def test_sigterm_exits_cleanly_and_restarts(
+        self, request: SubRequest, daemon_fixture: str, restart_expectations: RestartExpectations
+    ) -> None:
         daemon = request.getfixturevalue(daemon_fixture)
         connection = daemon.conn
         if not isinstance(connection, K8sConnection):
@@ -122,18 +131,19 @@ class TestGracefulRestart:
         assert pid == "1", f"Expected {daemon.process_name} as PID 1, got {pid!r}"
 
         try:
-            # Detach the sender so the exec connection closes before container shutdown.
-            daemon.exec("(sleep 1; kill -TERM 1) </dev/null >/dev/null 2>&1 &")
-            after = connection.wait_for_container_restart(before)
-            termination = after.last_termination
-            assert termination is not None
-            assert termination.container_id == before.container_id
-            assert termination.exit_code == 0, f"Unclean SIGTERM exit: {termination}"
-            assert not termination.signal, f"Daemon was terminated by a signal: {termination}"
-            assert daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}") == "1"
-            if daemon_fixture == "cta_rmcd":
-                # Readiness alone does not prove the restarted media changer can serve requests.
-                daemon.list_tapes_in_library()
+            with restart_expectations.expect_container_restarts(daemon):
+                # Detach the sender so the exec connection closes before container shutdown.
+                daemon.exec("(sleep 1; kill -TERM 1) </dev/null >/dev/null 2>&1 &")
+                after = connection.wait_for_container_restart(before)
+                termination = after.last_termination
+                assert termination is not None
+                assert termination.container_id == before.container_id
+                assert termination.exit_code == 0, f"Unclean SIGTERM exit: {termination}"
+                assert not termination.signal, f"Daemon was terminated by a signal: {termination}"
+                assert daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}") == "1"
+                if daemon_fixture == "cta_rmcd":
+                    # Readiness alone does not prove the restarted media changer can serve requests.
+                    daemon.list_tapes_in_library()
         finally:
             # Recover a stuck service so later suites can still run after a failed assertion.
             if not connection.is_up():

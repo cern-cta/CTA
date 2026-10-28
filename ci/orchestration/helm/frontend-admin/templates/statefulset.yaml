@@ -60,8 +60,7 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        command: ["/bin/bash", "-c"]
-        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        command: ["/scripts/ctafrontend-grpc.sh"]
         readinessProbe:
           exec:
             command:
