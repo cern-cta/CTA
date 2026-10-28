@@ -27,10 +27,10 @@ def test_major_version_comes_from_selected_commit(tmp_path: Path) -> None:
     git.run(["commit", "-am", "Next major version"])
     project_file.write_text('{"majorVersion": 8}', encoding="utf-8")
 
-    validate_major_version(git, release_commit, "v6.12.0.0-1")
+    validate_major_version(git, release_commit, "v6.12.0-1")
     assert read_major_version(git, "HEAD") == 7
     with pytest.raises(VersionError, match="does not match majorVersion 6"):
-        validate_major_version(git, release_commit, "v7.12.0.0-1")
+        validate_major_version(git, release_commit, "v7.12.0-1")
 
 
 @pytest.mark.parametrize(

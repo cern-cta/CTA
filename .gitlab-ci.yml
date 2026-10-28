@@ -22,7 +22,7 @@ spec:
         Existing CTA image tag to test instead of building CTA from the selected ref.
 
         Pipeline build example: `6-123456gitabcdef12.pgall.el9`.
-        Published release example: `6.12.0.0-1.pgall.el9`.
+        Published release example: `6.12.0-1.pgall.el9`.
         Existing image tags, including historical formats, are used verbatim.
 
         Leave empty to build the selected ref for the regression.
@@ -200,14 +200,11 @@ variables:
   CUSTOM_CTA_IMAGE_TAG: "$[[ inputs.custom-cta-image-tag ]]"
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
-  # Release tag selectors
-  TAG_PGSCHED_REGEX: '/(^|\.)pgsched($|\.)/'  # Postgres scheduler
-  TAG_PGCAT_REGEX: '/(^|\.)pgcat($|\.)/'  # Postgres catalogue (no Oracle)
-  TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/'  # Postgres scheduler + Postgres catalogue
-
   # Build and runtime defaults
   CTA_BUILD_ID: "${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}"
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
+  # Matrix entries are CI/CD variables, not typed inputs; forwarding them to a boolean input fails validation.
+  # Default to the inputs here, and let matrix children override these effective build settings.
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
   ENABLE_SCCACHE: "false"
@@ -277,37 +274,13 @@ workflow:
       variables:
         SCHEDULER_TYPE: "pgsched"
         ENABLE_ORACLE_SUPPORT: "false"
-        ENABLE_SBOM_GENERATION: "false"
     - if: '"$[[ inputs.platform ]]" == "debian13"'
       when: never
-    # PostgreSQL release variants
-    - if: '$CI_COMMIT_TAG =~ $TAG_PGALL_REGEX'
-      auto_cancel:
-        on_new_commit: none
-      variables:
-        SCHEDULER_TYPE: "pgsched"
-        ENABLE_ORACLE_SUPPORT: "false"
-        ENABLE_SBOM_GENERATION: "true"
-    - if: '$CI_COMMIT_TAG =~ $TAG_PGSCHED_REGEX'
-      auto_cancel:
-        on_new_commit: none
-      variables:
-        SCHEDULER_TYPE: "pgsched"
-        ENABLE_ORACLE_SUPPORT: "true"
-        ENABLE_SBOM_GENERATION: "true"
-    - if: '$CI_COMMIT_TAG =~ $TAG_PGCAT_REGEX'
-      auto_cancel:
-        on_new_commit: none
-      variables:
-        SCHEDULER_TYPE: "objectstore"
-        ENABLE_ORACLE_SUPPORT: "false"
-        ENABLE_SBOM_GENERATION: "true"
+    # Matrix children forward their effective scheduler/Oracle configuration.
     - if: $CI_COMMIT_TAG
       auto_cancel:
         on_new_commit: none
       variables:
-        SCHEDULER_TYPE: "objectstore"
-        ENABLE_ORACLE_SUPPORT: "true"
         ENABLE_SBOM_GENERATION: "true"
     # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
@@ -351,6 +324,7 @@ include:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
     rules:
+      - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE != "parent_pipeline"'
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
@@ -374,11 +348,15 @@ include:
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
+      - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
+        when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
   - local: .gitlab/ci/lint.gitlab-ci.yml
     rules:
+      - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
+        when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       # Only lint in the default pipeline

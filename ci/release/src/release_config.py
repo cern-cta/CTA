@@ -30,7 +30,7 @@ def validate_major_version(git: Git, revision: str, version: str) -> None:
     """Require a new release to belong to the configured major version."""
     release_version = CTAVersion.parse(version, require_base=True)
     major_version = read_major_version(git, revision)
-    if release_version.xrootd != major_version:
+    if release_version.major != major_version:
         raise VersionError(
             f"Release {release_version.text} does not match majorVersion {major_version!r} in {revision}:project.json"
         )

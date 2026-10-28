@@ -75,6 +75,50 @@ spec:
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
     strategy: mirror
 
+# The same supported combinations are required on tags and optional during development.
+build-variants:
+  extends: .trigger-child-pipeline
+  allow_failure: false
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "parent_pipeline" || $PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: on_success
+      needs:
+        - job: prepare-cta-version
+          artifacts: false
+    - if: '$CI_MERGE_REQUEST_ID || $CI_COMMIT_BRANCH'
+      when: manual
+      allow_failure: true
+  trigger:
+    forward:
+      # Only matrix variables are inherited; they select the effective build configuration.
+      yaml_variables: true
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: $BUILD_PLATFORM
+    strategy: mirror
+  inherit:
+    variables: false
+  parallel:
+    matrix:
+      # The main tag pipeline already builds EL9/objectstore with Oracle.
+      - BUILD_PLATFORM: [el9]
+        SCHEDULER_TYPE: [pgsched]
+        ENABLE_ORACLE_SUPPORT: ["true", "false"]
+      - BUILD_PLATFORM: [el9]
+        SCHEDULER_TYPE: [objectstore]
+        ENABLE_ORACLE_SUPPORT: ["false"]
+      - BUILD_PLATFORM: [el10]
+        SCHEDULER_TYPE: [objectstore, pgsched]
+        ENABLE_ORACLE_SUPPORT: ["true", "false"]
+      # Debian currently supports only PostgreSQL without Oracle.
+      - BUILD_PLATFORM: [debian13]
+        SCHEDULER_TYPE: [pgsched]
+        ENABLE_ORACLE_SUPPORT: ["false"]
+
 "analysis: ASan + UBSan":
   extends:
     - .trigger-child-pipeline
@@ -97,17 +141,6 @@ spec:
           analysis: "thread"
     strategy: mirror
 
-"scheduler: pgsched":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          scheduler-type: "pgsched"
-    strategy: mirror
-
 "scheduler: pgsched + telemetry":
   extends:
     - .trigger-child-pipeline
@@ -118,44 +151,6 @@ spec:
           <<: *child-pipeline-inputs
           scheduler-type: "pgsched"
           compile-with-extra-telemetry: true
-
-"catalogue: Oracle off":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          enable-oracle-support: false
-    strategy: mirror
-
-"platform: el10":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          platform: "el10"
-    strategy: mirror
-
-# May need more inputs once we run more jobs in the Debian pipeline
-"platform: debian13":
-  extends:
-    - .trigger-child-pipeline
-  trigger:
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          platform: "debian13"
-          scheduler-type: "pgsched"
-          enable-oracle-support: false
-          enable-internal-repos: false
-          enable-sbom-generation: false
-    strategy: mirror
 
 "analysis: SonarCloud":
   allow_failure: true
@@ -171,7 +166,7 @@ spec:
         BRANCH_NAME: $CI_COMMIT_BRANCH
   image: $IMAGE_LINT
   variables:
-    GIT_STRATEGY: "none" # Don't need anything from the repo for this job
+    GIT_STRATEGY: "none"  # Don't need anything from the repo for this job
     TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches
     BRANCH_NAME: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
   script:

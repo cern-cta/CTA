@@ -42,6 +42,7 @@ def add_release_note(
 ) -> None:
     """Find the release issue and append a note to this pipeline's discussion."""
     version = release_version_for_tag(tag)
+    build_version = os.environ.get("CTA_VERSION", tag)
     context = ReleaseContext(Path.cwd(), config, api, dry_run=False)
     release_issues = context.find_release_issues(version)
     if len(release_issues) != 1:
@@ -59,7 +60,7 @@ def add_release_note(
             api.post(f"{discussions_endpoint}/{discussion['id']}/notes", json={"body": note})
             return
 
-    heading = f"### Release pipeline for `{tag}`\n\n[View pipeline]({pipeline_url})\n\n{note}\n\n{marker}"
+    heading = f"### Release pipeline for `{build_version}`\n\n[View pipeline]({pipeline_url})\n\n{note}\n\n{marker}"
     api.post(discussions_endpoint, json={"body": heading})
 
 

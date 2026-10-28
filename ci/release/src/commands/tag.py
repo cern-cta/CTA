@@ -15,14 +15,8 @@ from typing import Any
 from urllib.parse import quote
 
 from commands import SubparserRegistry
-from confirmation import ask_yes_no, confirm
-from cta_version import (
-    BUILD_VARIANTS,
-    CTAVersion,
-    BuildVariant,
-    parse_build_variants,
-    select_release_candidate,
-)
+from confirmation import confirm
+from cta_version import CTAVersion, VersionError, select_release_candidate
 from gitlab_api import GitLabAPIError
 from release_config import validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
@@ -44,62 +38,24 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
     parser = subparsers.add_parser(
         "tag",
         help="validate release context and create annotated release tags",
-        description="Validate a release commit and publish one or more annotated CTA tags.",
+        description="Validate a release commit and publish one annotated CTA tag.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""Typical final release:
-  release tag v6.12.0.0-1
-    Prompts whether to create the base tag plus pgsched, pgcat, and pgall.
+        epilog="""Examples:
+  release tag v6.12.0-1
+  release tag v6.12.0-1.rc2
+  release tag v6.12.0-1.dev1
+  release tag v6.12.0-1 --release-candidate
 
-Unattended final release:
-  release tag v6.12.0.0-1 --yes
-    Creates the base tag and all three build variants without confirmation.
-
-Only selected build variants (no base tag):
-  release tag v6.12.0.0-1 --suffix pgsched --suffix pgcat
-    --suffix may be repeated; duplicates are removed and canonical order is used.
-
-Automatically numbered release candidate:
-  release tag v6.12.0.0-1 --release-candidate
-  release tag v6.12.0.0-1 --release-candidate --suffix pgall
-    Existing RC families are inspected and the next unused rcN is selected.
-
-Tag a release merged into another target branch:
-  release tag v6.12.0.0-1 --target-branch maintenance
-    The merged changelog MR commit is tagged after verifying it is on origin/maintenance.
-    The default target branch is main.
-
-Before publishing, the command prints the exact commit, checks release metadata,
-requires a successful push pipeline for that commit, opens Git's editor for one
-shared tag description, and verifies every selected tag is absent locally and
-remotely. The complete new tag family is pushed atomically.
-
-Use "release --dry-run tag VERSION" to perform preflight and validation without
-opening an editor, creating tags, pushing refs, or changing GitLab.""",
+One source tag triggers all supported platform/backend builds.
+Use --dry-run before the subcommand to inspect the publication plan.""",
     )
     parser.add_argument("version")
+    parser.add_argument("--target-branch", default="main", help="branch containing the release commit (default: main)")
     parser.add_argument(
-        "--target-branch",
-        default="main",
-        help="branch containing the merged changelog and release commit (default: main)",
+        "--yes", dest="skip_confirmation", action="store_true", help="create the tag without confirmation"
     )
     parser.add_argument(
-        "--yes",
-        dest="skip_confirmation",
-        action="store_true",
-        help="create the tag without confirmation",
-    )
-    parser.add_argument(
-        "--release-candidate",
-        action="store_true",
-        help="automatically select and create the next RC tag family",
-    )
-    parser.add_argument(
-        "--suffix",
-        dest="requested_suffixes",
-        action="append",
-        choices=[variant.value for variant in BUILD_VARIANTS],
-        default=[],
-        help="create only this PostgreSQL variant; may be repeated",
+        "--release-candidate", action="store_true", help="automatically select the next rcN for an unsuffixed version"
     )
     parser.set_defaults(execute=run_from_arguments)
 
@@ -112,7 +68,6 @@ def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Names
         parsed_arguments.skip_confirmation,
         parsed_arguments.target_branch,
         release_candidate=parsed_arguments.release_candidate,
-        requested_suffixes=parsed_arguments.requested_suffixes,
     )
 
 
@@ -178,33 +133,6 @@ def inspect_release_context(
         warnings.append(f"Could not inspect {context.config.changelog_file} at {target_commit}: {error}")
 
     return release_issue, changelog_merge_request, str(target_commit), warnings
-
-
-def build_tag_description(shared_description: str, variant: BuildVariant | None) -> str:
-    """Append the selected build-variant explanation to a shared tag message."""
-    if variant is None:
-        return shared_description
-    return f"{shared_description.rstrip()}\n\n{variant.description}"
-
-
-def _select_build_variants(
-    context: ReleaseContext,
-    skip_confirmation: bool,
-    requested_suffixes: list[str] | None,
-) -> tuple[bool, tuple[BuildVariant, ...]]:
-    """Resolve explicit or interactively selected build variants."""
-    variants_explicitly_selected = bool(requested_suffixes)
-    build_variants = parse_build_variants(requested_suffixes or [])
-
-    if variants_explicitly_selected:
-        return True, build_variants
-
-    include_variants = ask_yes_no(
-        "Also create pgsched, pgcat, and pgall tag variants?",
-        assume_yes=skip_confirmation,
-        dry_run=context.dry_run,
-    )
-    return False, BUILD_VARIANTS if include_variants else build_variants
 
 
 def _validate_selected_tags(
@@ -307,28 +235,16 @@ def _validate_release_metadata(
 def _select_tag_versions(
     context: ReleaseContext,
     release_version: CTAVersion,
-    build_variants: tuple[BuildVariant, ...],
-    variants_explicitly_selected: bool,
     release_candidate: bool,
 ) -> list[CTAVersion]:
-    """Construct the ordered tags selected for one publication."""
-    rc_number = None
+    """Select exactly one source tag, optionally allocating its RC number."""
     if release_candidate:
-        rc_number = select_release_candidate(
-            release_version,
-            context.git.tags(),
-        )
-        info(f"Selected release candidate rc{rc_number}")
-
-    selected_versions: list[CTAVersion] = []
-    if not variants_explicitly_selected:
-        selected_versions.append(release_version.with_components(release_candidate=rc_number))
-    selected_versions.extend(
-        release_version.with_components(release_candidate=rc_number, variant=build_variant)
-        for build_variant in build_variants
-    )
-
-    return selected_versions
+        return [
+            release_version.with_components(
+                release_candidate=select_release_candidate(release_version, context.git.tags())
+            )
+        ]
+    return [release_version]
 
 
 def build_tag_plan(
@@ -358,9 +274,9 @@ def build_tag_plan(
         info("Opening Git's editor for the annotated tag description")
         tag_description = edit_tag_description(context, version_text, target_commit)
 
-    descriptions = {tag.text: build_tag_description(tag_description, tag.variant) for tag in selected_versions}
+    descriptions = {tag.text: tag_description for tag in selected_versions}
     confirm(
-        "Create and atomically push the selected tag family?",
+        "Create and atomically push the selected tag?",
         "Tag creation declined; no changes were made",
         assume_yes=skip_confirmation,
         dry_run=context.dry_run,
@@ -369,7 +285,7 @@ def build_tag_plan(
 
 
 def execute_tag_plan(context: ReleaseContext, plan: TagPlan) -> list[str]:
-    """Create and publish a fully preflighted tag family."""
+    """Create and publish a fully preflighted tag."""
     tag_names = list(plan.tag_descriptions)
     info(f"Creating {len(tag_names)} annotated local tag(s)")
     context.git.create_tags(plan.target_commit, plan.tag_descriptions)
@@ -427,25 +343,22 @@ def run(
     skip_confirmation: bool,
     target_branch: str = "main",
     release_candidate: bool = False,
-    requested_suffixes: list[str] | None = None,
 ) -> None:
-    """Resolve a revision, validate context, and publish a selected tag family."""
+    """Resolve a revision, validate context, and publish a selected tag."""
     target_branch = target_branch or context.config.default_branch
     info(f"Using explicitly requested release version {version_text}")
 
-    release_version = CTAVersion.parse(version_text, require_base=True)
+    release_version = CTAVersion.parse(version_text)
+    if release_candidate and (release_version.release_candidate or release_version.development):
+        raise VersionError("--release-candidate requires an unsuffixed base version")
+    # Release metadata belongs to the base, including for dev and RC tags.
+    version_text = CTAVersion(*release_version.core).text
     remote_branch = f"{context.config.remote}/{target_branch}"
     info(f"Refreshing target branch {remote_branch!r}")
     branch_tip = context.git.resolve_remote_branch(
         context.config.remote,
         target_branch,
         fetch=not context.dry_run,
-    )
-
-    variants_explicitly_selected, build_variants = _select_build_variants(
-        context,
-        skip_confirmation,
-        requested_suffixes,
     )
 
     release_issue, target_commit = _validate_release_metadata(
@@ -461,8 +374,6 @@ def run(
     selected_versions = _select_tag_versions(
         context,
         release_version,
-        build_variants,
-        variants_explicitly_selected,
         release_candidate,
     )
 

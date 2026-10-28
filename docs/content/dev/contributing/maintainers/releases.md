@@ -15,17 +15,16 @@ The tool needs a GitLab personal access token with the `api` scope and permissio
 
 ## Choose the version
 
-Commands take an explicit, unsuffixed version such as `v6.12.0.0-1`:
+Changelog and status commands take an explicit, unsuffixed version such as `v6.12.0-1`:
 
 ```text
-v<xrootd>.<major>.<minor>.<patch>-<package>
+v<major>.<minor>.<patch>-<package>
 ```
 
 | Field | When it changes |
 | --- | --- |
-| `xrootd` | XRootD version; the tool currently accepts `6`. |
-| `major` | A new catalogue schema is introduced. |
-| `minor` | A regular release without a new catalogue schema. |
+| `major` | The major software series, matching `majorVersion` in `project.json`. |
+| `minor` | A new feature release. |
 | `patch` | Fixes are backported to an older release. |
 | `package` | Packaging or build revisions without changes to software behaviour. |
 
@@ -34,7 +33,7 @@ Catalogue schema releases should contain only the schema dependency and compatib
 ## Prepare and review the changelog
 
 ```bash
-release changelog v6.12.0.0-1
+release changelog v6.12.0-1
 ```
 
 The command synchronizes the target branch, generates changes since the previous numeric CTA release, and opens the changelog in Git’s configured editor. Review the entries and resolve the “Commits missing valid Changelog trailers” section: move relevant changes into their categories and remove entries that do not belong in the changelog.
@@ -44,27 +43,30 @@ After confirmation, the tool creates or reuses the release issue, changelog bran
 Inspect progress with:
 
 ```bash
-release status v6.12.0.0-1
+release status v6.12.0-1
 ```
 
 ## Create release tags
 
 ```bash
-release tag v6.12.0.0-1
+release tag v6.12.0-1
 ```
 
 The tool selects the merged changelog MR’s commit, checks that it belongs to the target branch, and checks its release metadata and push pipeline. It opens an editor for the tag description and asks for confirmation before pushing the selected tags atomically. Resolve warnings about missing metadata or an unsuccessful pipeline before proceeding.
 
-The command creates the base tag and asks whether to add the `pgsched`, `pgcat`, and `pgall` variants. These select the PostgreSQL scheduler, PostgreSQL catalogue, or both. Use `--suffix` to create only selected variants, without the base tag:
+The command creates exactly one source tag.
+Only `.devN` and `.rcN` are accepted as optional suffixes, with positive counters; platform and backend suffixes are forbidden in Git tags.
+Explicit prereleases use the base release's changelog MR and issue:
 
 ```bash
-release tag v6.12.0.0-1 --suffix pgsched --suffix pgcat
+release tag v6.12.0-1.dev1
+release tag v6.12.0-1.rc2
 ```
 
 For a release candidate, let the tool select the next unused `.rcN`:
 
 ```bash
-release tag v6.12.0.0-1 --release-candidate
+release tag v6.12.0-1 --release-candidate
 ```
 
 To publish the validated candidate as a final release, run `release tag` with the same base version and target branch, without `--release-candidate`. Confirm that it selects the tested commit, then review the final tag pipelines before publishing.
@@ -74,10 +76,23 @@ The tool always selects the merged changelog MR’s commit. Repeating `--release
 Every selected tag must be new. Do not move published tags. To preview a command without making changes, put `--dry-run` before the subcommand:
 
 ```bash
-release --dry-run tag v6.12.0.0-1
+release --dry-run tag v6.12.0-1
 ```
 
 Use `release tag --help` for other options. `--yes` skips confirmations, including warnings about the release commit’s pipeline; reserve it for automation that has already checked the release state.
+
+## Release build matrix
+
+The main tag pipeline builds, tests, and publishes the default EL9/objectstore configuration with Oracle, alongside shared checks and documentation.
+Child pipelines build the other three EL9 configurations and all four EL10 configurations.
+Debian 13 builds/tests only `pgall` in the same matrix; it does not publish releases yet.
+The internal-repository and SBOM inputs are preserved for Debian but currently have no effect there.
+Each child owns its packages, images, tests, SBOMs, and publication jobs where supported.
+Package and image versions retain automatic backend/platform suffixes, for example `6.12.0-1.rc2.pgall.el10`.
+Required child failures fail the parent; optional tests and publication gates retain their existing behavior.
+The same build matrix is available manually on branch/MR pipelines, with optional failures.
+Select a complete platform/scheduler/Oracle combination; sanitizer and telemetry diagnostics remain separate triggers.
+Historical four-number tags remain readable for previous-release discovery, but cannot be created by the release tool.
 
 ## Review CI results
 
@@ -89,7 +104,7 @@ The stress-test and publication jobs post status notes with job links on the rel
 
 ## Publish packages and images
 
-After validating the release, trigger `internal-release-cta` in each tag pipeline being published. **This also starts public `unstable` RPM publication and private image publication automatically** once their dependencies succeed; it is not an internal-only publication step. These jobs do not enforce completion of all release tests, so check those first.
+After validating the release, trigger `internal-release-cta` in the main pipeline and each release child pipeline being published. **This also starts public `unstable` RPM publication and private image publication automatically** once their dependencies succeed; it is not an internal-only publication step. These jobs do not enforce completion of all release tests, so check those first.
 
 | Job | Publication |
 | --- | --- |
@@ -110,34 +125,34 @@ Complete the release issue checklist and close it when its work is done. Stable 
 
 ## Maintenance releases and backports
 
-Start from the tag of the release being fixed, rather than the current `main` branch. Choose a new version and create a branch named `release/<new-release>`. For example, to backport a reviewed fix from `v6.12.0.0-1` into `v6.12.0.1-1`:
+Start from the tag of the release being fixed, rather than the current `main` branch. Choose a new version and create a branch named `release/<new-release>`. For example, to backport a reviewed fix from `v6.12.0-1` into `v6.12.1-1`:
 
 ```bash
 # Fetch the release tags and commits to backport.
 git fetch origin --tags
 # Start from the exact release being fixed.
-git switch --detach v6.12.0.0-1
+git switch --detach v6.12.0-1
 # Create the target branch for the maintenance release.
-git switch -c release/v6.12.0.1-1
+git switch -c release/v6.12.1-1
 # Apply the fix and record its original commit (replace FIX_COMMIT_SHA).
 git cherry-pick -x FIX_COMMIT_SHA
 # Publish the branch so the release tool can target it.
-git push -u origin release/v6.12.0.1-1
+git push -u origin release/v6.12.1-1
 ```
 
 Cherry-pick any required prerequisite fixes in order. If conflicts occur, resolve them, stage the resolved files, and run `git cherry-pick --continue`; use `git cherry-pick --abort` to abandon the attempt. Review and validate any adaptations needed for the older release.
 
-Stay on `release/v6.12.0.1-1` and run the following from the repository root to prepare the changelog, using that same branch as the MR target:
+Stay on `release/v6.12.1-1` and run the following from the repository root to prepare the changelog, using that same branch as the MR target:
 
 ```bash
-release changelog v6.12.0.1-1 --target-branch release/v6.12.0.1-1
+release changelog v6.12.1-1 --target-branch release/v6.12.1-1
 ```
 
 Check that the generated changelog covers the intended backports, then review and merge its MR into the release branch. Ordinary pushes to release branches do not start a pipeline with the current CI rules. Run a `DEFAULT` pipeline manually on the release branch, confirm its SHA matches the release commit shown by `release status`, and check its results before tagging:
 
 ```bash
-release status v6.12.0.1-1 --target-branch release/v6.12.0.1-1
-release tag v6.12.0.1-1 --target-branch release/v6.12.0.1-1
+release status v6.12.1-1 --target-branch release/v6.12.1-1
+release tag v6.12.1-1 --target-branch release/v6.12.1-1
 ```
 
 The tag command checks specifically for a **push** pipeline, so it will still warn even after a successful manual pipeline. After verifying the exact release commit’s results, accept the prompt to continue without a successful push pipeline.
