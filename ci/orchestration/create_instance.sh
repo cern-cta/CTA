@@ -319,7 +319,9 @@ create_instance() {
     log_task "Installing telemetry and Prometheus charts..."
     helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    # Keep the chart compatible with the collector image pinned in the default values.
     helm install otel open-telemetry/opentelemetry-collector \
+          --version 0.128.0 \
           --namespace "${namespace}" \
           --values "${opentelemetry_collector_config}" \
           --wait --timeout 2m

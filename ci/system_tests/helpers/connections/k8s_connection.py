@@ -69,40 +69,43 @@ class K8sConnection(RemoteConnection):
             print(command)
         full_command = ["/bin/sh", "-c", command]
 
-        resp = stream(
-            self.core.connect_get_namespaced_pod_exec,
-            self._pod_name,
-            self.namespace,
-            container=self.container,
-            command=full_command,
-            stderr=True,
-            stdin=False,
-            stdout=True,
-            tty=False,
-            _preload_content=False,
-        )
+        # stream() temporarily replaces the client's transport; never share it between concurrent calls.
+        with client.ApiClient(configuration=self.core.api_client.configuration) as api_client:
+            exec_core = client.CoreV1Api(api_client)
+            resp = stream(
+                exec_core.connect_get_namespaced_pod_exec,
+                self._pod_name,
+                self.namespace,
+                container=self.container,
+                command=full_command,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+                _preload_content=False,
+            )
 
-        stdout_chunks = []
-        stderr_chunks = []
+            stdout_chunks = []
+            stderr_chunks = []
 
-        while resp.is_open():
-            resp.update(timeout=0.1)
+            while resp.is_open():
+                resp.update(timeout=0.1)
 
-            if resp.peek_stdout():
-                chunk = resp.read_stdout()
-                if not capture_output:
-                    print(chunk, end="")
-                else:
-                    stdout_chunks.append(chunk)
+                if resp.peek_stdout():
+                    chunk = resp.read_stdout()
+                    if not capture_output:
+                        print(chunk, end="")
+                    else:
+                        stdout_chunks.append(chunk)
 
-            if resp.peek_stderr():
-                chunk = resp.read_stderr()
-                # In contrast to stdout, we always need stderr in case we have issues
-                stderr_chunks.append(chunk)
-                if not capture_output:
-                    print(chunk, end="")
+                if resp.peek_stderr():
+                    chunk = resp.read_stderr()
+                    # In contrast to stdout, we always need stderr in case we have issues
+                    stderr_chunks.append(chunk)
+                    if not capture_output:
+                        print(chunk, end="")
 
-        resp.close()
+            resp.close()
 
         success = resp.returncode == 0
         if throw_on_failure and not success:
