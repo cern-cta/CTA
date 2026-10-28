@@ -77,16 +77,23 @@ spec:
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
     strategy: mirror
 
-# The same supported combinations are required on tags and optional during development.
-build-variants:
+# Only EL9 pgsched with Oracle is automatic on tags; other variants are optional.
+.build-variant:
   extends: .trigger-child-pipeline
   allow_failure: false
   rules:
     # Matrix jobs disable variable inheritance, so use the input rather than PIPELINE_TYPE.
     - if: '$CI_PIPELINE_SOURCE == "parent_pipeline" || "$[[ inputs.pipeline-type ]]" != "DEFAULT"'
       when: never
-    - if: $CI_COMMIT_TAG
+    # Only build pgsched el9 automatically on tags
+    - if: '$CI_COMMIT_TAG && $BUILD_PLATFORM == "el9" && $SCHEDULER_TYPE == "pgsched" && $ENABLE_ORACLE_SUPPORT == "true"'
       when: on_success
+      needs:
+        - job: prepare-cta-version
+          artifacts: false
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
       needs:
         - job: prepare-cta-version
           artifacts: false
@@ -95,7 +102,7 @@ build-variants:
       allow_failure: true
   trigger:
     forward:
-      # Only matrix variables are inherited; they select the effective build configuration.
+      # Forward the job backend settings and matrix platform, without parent defaults.
       yaml_variables: true
     include:
       - local: .gitlab-ci.yml
@@ -105,22 +112,43 @@ build-variants:
     strategy: mirror
   inherit:
     variables: false
+
+# The main pipeline already builds EL9/objectstore with Oracle.
+"build: objectstore + Oracle":
+  extends: .build-variant
+  variables:
+    SCHEDULER_TYPE: "objectstore"
+    ENABLE_ORACLE_SUPPORT: "true"
   parallel:
     matrix:
-      # The main tag pipeline already builds EL9/objectstore with Oracle.
-      - BUILD_PLATFORM: [el9]
-        SCHEDULER_TYPE: [pgsched]
-        ENABLE_ORACLE_SUPPORT: ["true", "false"]
-      - BUILD_PLATFORM: [el9]
-        SCHEDULER_TYPE: [objectstore]
-        ENABLE_ORACLE_SUPPORT: ["false"]
       - BUILD_PLATFORM: [el10]
-        SCHEDULER_TYPE: [objectstore, pgsched]
-        ENABLE_ORACLE_SUPPORT: ["true", "false"]
-      # Debian currently supports only PostgreSQL without Oracle.
-      - BUILD_PLATFORM: [debian13]
-        SCHEDULER_TYPE: [pgsched]
-        ENABLE_ORACLE_SUPPORT: ["false"]
+
+"build: objectstore":
+  extends: .build-variant
+  variables:
+    SCHEDULER_TYPE: "objectstore"
+    ENABLE_ORACLE_SUPPORT: "false"
+  parallel:
+    matrix:
+      - BUILD_PLATFORM: [el9, el10]
+
+"build: PostgreSQL + Oracle":
+  extends: .build-variant
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "true"
+  parallel:
+    matrix:
+      - BUILD_PLATFORM: [el9, el10]
+
+"build: PostgreSQL":
+  extends: .build-variant
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "false"
+  parallel:
+    matrix:
+      - BUILD_PLATFORM: [el9, el10, debian13]
 
 "analysis: ASan + UBSan":
   extends:

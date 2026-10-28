@@ -93,6 +93,9 @@ Package and image versions retain automatic backend/platform suffixes, for examp
 Required child failures fail the parent; optional tests and publication gates retain their existing behavior.
 The same build matrix is available manually on branch/MR pipelines, with optional failures.
 Select a complete platform/scheduler/Oracle combination; sanitizer and telemetry diagnostics remain separate triggers.
+Build trigger names identify the scheduler and include `+ Oracle` when enabled; the matrix suffix identifies the platform.
+Only EL9 `pgsched` (PostgreSQL scheduler with Oracle) starts automatically on release tags after source-tag validation.
+All other variant triggers are optional manual jobs, including EL9 `pgall`.
 Historical four-number tags remain readable for previous-release discovery, but cannot be created by the release tool.
 
 ## Review CI results

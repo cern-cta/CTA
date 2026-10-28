@@ -29,7 +29,8 @@ For example, source tag `v6.12.0-1.rc2` produces artifact version `6.12.0-1.rc2.
 The leading `v` belongs to the Git tag and is omitted from artifact versions.
 Debian currently supports only `pgall` and does not publish release packages or images.
 
-The main tag pipeline builds the default EL9/objectstore configuration with Oracle; child pipelines build the remaining supported combinations.
+The main tag pipeline builds the default EL9/objectstore configuration with Oracle.
+Only the EL9 PostgreSQL scheduler child with Oracle starts automatically on tags; the remaining supported combinations are optional manual triggers.
 The release tool and CI's `prepare-cta-version` job share the same source-tag validator.
 Invalid tags fail that job, and release variant triggers wait for validation to succeed.
 Historical four-number tags remain available for previous-release discovery but are no longer accepted as new release tags.
