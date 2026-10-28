@@ -82,7 +82,7 @@ spec:
   extends: .trigger-child-pipeline
   allow_failure: false
   rules:
-    # Matrix jobs disable variable inheritance, so use the input rather than PIPELINE_TYPE.
+    # Variant jobs disable variable inheritance, so use the input rather than PIPELINE_TYPE.
     - if: '$CI_PIPELINE_SOURCE == "parent_pipeline" || "$[[ inputs.pipeline-type ]]" != "DEFAULT"'
       when: never
     # Only build pgsched el9 automatically on tags
@@ -102,53 +102,96 @@ spec:
       allow_failure: true
   trigger:
     forward:
-      # Forward the job backend settings and matrix platform, without parent defaults.
+      # Forward the job backend settings without parent defaults.
       yaml_variables: true
-    include:
-      - local: .gitlab-ci.yml
-        inputs:
-          <<: *child-pipeline-inputs
-          platform: $BUILD_PLATFORM
     strategy: mirror
   inherit:
     variables: false
 
+# Platform inputs must be literal: GitLab validates options before expanding job variables.
+
+.build-variant-el9:
+  extends: .build-variant
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "el9"
+  variables:
+    BUILD_PLATFORM: "el9"
+
+.build-variant-el10:
+  extends: .build-variant
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "el10"
+  variables:
+    BUILD_PLATFORM: "el10"
+
+.build-variant-debian13:
+  extends: .build-variant
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "debian13"
+  variables:
+    BUILD_PLATFORM: "debian13"
+
 # The main pipeline already builds EL9/objectstore with Oracle.
-"build: objectstore + Oracle":
-  extends: .build-variant
+
+"build: objectstore + Oracle (el10)":
+  extends: .build-variant-el10
   variables:
     SCHEDULER_TYPE: "objectstore"
     ENABLE_ORACLE_SUPPORT: "true"
-  parallel:
-    matrix:
-      - BUILD_PLATFORM: [el10]
 
-"build: objectstore":
-  extends: .build-variant
+"build: objectstore (el9)":
+  extends: .build-variant-el9
   variables:
     SCHEDULER_TYPE: "objectstore"
     ENABLE_ORACLE_SUPPORT: "false"
-  parallel:
-    matrix:
-      - BUILD_PLATFORM: [el9, el10]
 
-"build: PostgreSQL + Oracle":
-  extends: .build-variant
+"build: objectstore (el10)":
+  extends: .build-variant-el10
+  variables:
+    SCHEDULER_TYPE: "objectstore"
+    ENABLE_ORACLE_SUPPORT: "false"
+
+"build: PostgreSQL + Oracle (el9)":
+  extends: .build-variant-el9
   variables:
     SCHEDULER_TYPE: "pgsched"
     ENABLE_ORACLE_SUPPORT: "true"
-  parallel:
-    matrix:
-      - BUILD_PLATFORM: [el9, el10]
 
-"build: PostgreSQL":
-  extends: .build-variant
+"build: PostgreSQL + Oracle (el10)":
+  extends: .build-variant-el10
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "true"
+
+"build: PostgreSQL (el9)":
+  extends: .build-variant-el9
   variables:
     SCHEDULER_TYPE: "pgsched"
     ENABLE_ORACLE_SUPPORT: "false"
-  parallel:
-    matrix:
-      - BUILD_PLATFORM: [el9, el10, debian13]
+
+"build: PostgreSQL (el10)":
+  extends: .build-variant-el10
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "false"
+
+"build: PostgreSQL (debian13)":
+  extends: .build-variant-debian13
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    ENABLE_ORACLE_SUPPORT: "false"
 
 "analysis: ASan + UBSan":
   extends:
