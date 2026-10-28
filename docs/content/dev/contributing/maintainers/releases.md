@@ -100,16 +100,22 @@ The stress-test and publication jobs post status notes with job links on the rel
 
 ## Publish packages and images
 
-After validating the release, trigger `internal-release-cta` in the main pipeline and each release child pipeline being published. **This also starts public `unstable` RPM publication and private image publication automatically** once their dependencies succeed; it is not an internal-only publication step. These jobs do not enforce completion of all release tests, so check those first.
+On tags, internal RPMs and private images publish automatically once their build dependencies succeed.
+Final tags also publish RPMs to `unstable` automatically; `.devN` and `.rcN` tags cannot publish to `unstable` or `stable`.
+Starting an optional variant on a tag also starts its automatic publication steps.
+These jobs do not wait for all release tests; review the results before manual promotion.
 
 | Job | Publication |
 | --- | --- |
-| `internal-release-cta` | Manual: publishes RPMs to the CTA internal repository. |
-| `public-release-cta-unstable` | Automatic after internal publication: publishes and verifies public unstable RPMs. |
-| `public-release-cta-testing` | Manual after internal publication: publishes RPMs for testing. |
-| `public-release-cta-stable` | Manual after internal and unstable publication: publishes RPMs validated in production at CERN. |
-| `publish-images-private` | Automatic after internal publication and image builds. |
-| `publish-images-public` | Manual for builds without Oracle support. |
+| `internal-release-cta` | Automatic on tags after package builds. |
+| `public-release-cta-unstable` | Automatic for final tags after internal publication. |
+| `public-release-cta-testing` | Manual after internal publication, including dev/RC tags. |
+| `public-release-cta-stable` | Manual for final tags after internal and unstable publication. |
+| `publish-images-private` | Automatic on tags after internal publication and image builds. |
+| `publish-images-public` | Automatic after stable publication and image builds, only without Oracle support. |
+
+Promoting RPMs to `stable` also publishes the corresponding public container images for Oracle-free builds.
+Dev/RC tags cannot publish public images through this stable promotion path.
 
 Check the publication jobs and their release-issue notes. Documentation publishes independently from canonical protected release tags; see [Documentation Site](documentation-site.md).
 

@@ -19,8 +19,7 @@ internal-release-cta:
     - build-cta
   rules:
     - if: $CI_COMMIT_TAG
-      when: manual
-      allow_failure: true
+      when: on_success
   image: $IMAGE_RELEASE
   before_script:
     - !reference [.merge-train-guard, before_script]
@@ -54,6 +53,13 @@ internal-release-cta:
   image: $IMAGE_RELEASE
   before_script:
     - !reference [.merge-train-guard, before_script]
+    - |
+      # Prereleases may use testing, but must never enter stable or unstable.
+      if [[ "$RELEASE_CHANNEL" == "stable" || "$RELEASE_CHANNEL" == "unstable" ]] \
+          && [[ "$CI_COMMIT_TAG" =~ \.(dev|rc)[1-9][0-9]*$ ]]; then
+        echo "Cannot publish prerelease $CI_COMMIT_TAG to $RELEASE_CHANNEL."
+        exit 1
+      fi
   script:
     - REPOSITORY_PATH="${RELEASE_CHANNEL}/cta-${CTA_MAJOR_VERSION:?Missing CTA_MAJOR_VERSION}/$[[ inputs.platform ]]/cta/x86_64"
     - echo "Publishing CTA version ${CTA_VERSION} to the ${RELEASE_CHANNEL} CTA repository"
@@ -77,6 +83,8 @@ internal-release-cta:
 public-release-cta-unstable:
   extends: .public-release-cta
   rules:
+    - if: '$CI_COMMIT_TAG =~ /\.(dev|rc)[1-9][0-9]*$/'
+      when: never
     - if: $CI_COMMIT_TAG
       when: on_success
   variables:
@@ -95,8 +103,19 @@ public-release-cta-stable:
     - internal-release-cta
     # Anything in stable must also be in unstable
     - public-release-cta-unstable
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /\.(dev|rc)[1-9][0-9]*$/'
+      when: never
+    - !reference [.public-release-cta, rules]
   variables:
     RELEASE_CHANNEL: stable
+  script:
+    - !reference [.public-release-cta, script]
+    # Optional manual jobs allow failure; record success explicitly for dependent image publication.
+    - printf 'STABLE_PUBLISHED_CTA_VERSION=%s\n' "$CTA_VERSION" > stable-publication.env
+  artifacts:
+    reports:
+      dotenv: stable-publication.env
 
 
 # =========================================================================
@@ -208,12 +227,22 @@ publish-images-private:
 
 publish-images-public:
   extends: .publish-image
+  needs:
+    - job: prepare-cta-version
+      artifacts: true
+    - job: public-release-cta-stable
+      artifacts: true
+    - job: build-cta-images
+      parallel:
+        matrix:
+          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   rules:
     - if: '$ENABLE_ORACLE_SUPPORT == "true"'
       when: never
+    - if: '$CI_COMMIT_TAG =~ /\.(dev|rc)[1-9][0-9]*$/'
+      when: never
     - if: $CI_COMMIT_TAG
-      when: manual
-      allow_failure: true
+      when: on_success
   variables:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
     DEST_IMAGE_PREFIX: $DOCKER_PUBLIC_REGISTRY_PREFIX
@@ -224,6 +253,11 @@ publish-images-public:
     DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME
     DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
   before_script:
+    - |
+      if [[ "${STABLE_PUBLISHED_CTA_VERSION:-}" != "${CTA_VERSION:?Missing CTA_VERSION}" ]]; then
+        echo "Public images require successful stable publication of $CTA_VERSION."
+        exit 1
+      fi
     - |
       if $ENABLE_ORACLE_SUPPORT; then
         echo "Oracle-enabled images cannot be published publicly."
