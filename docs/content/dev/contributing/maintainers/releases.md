@@ -55,7 +55,6 @@ release tag v6.12.0-1
 The tool selects the merged changelog MR’s commit, checks that it belongs to the target branch, and checks its release metadata and push pipeline. It opens an editor for the tag description and asks for confirmation before pushing the selected tags atomically. Resolve warnings about missing metadata or an unsuccessful pipeline before proceeding.
 
 The command creates exactly one source tag.
-CI validates tags with the same parser in `prepare-cta-version`; invalid tags fail visibly, and release variant triggers wait for that check.
 Only `.devN` and `.rcN` are accepted as optional suffixes, with positive counters; platform and backend suffixes are forbidden in Git tags.
 Explicit prereleases use the base release's changelog MR and issue:
 
@@ -84,19 +83,12 @@ Use `release tag --help` for other options. `--yes` skips confirmations, includi
 
 ## Release build matrix
 
-The main tag pipeline builds, tests, and publishes the default EL9/objectstore configuration with Oracle, alongside shared checks and documentation.
-Child pipelines build the other three EL9 configurations and all four EL10 configurations.
-Debian 13 builds/tests only `pgall` in the same matrix; it does not publish releases yet.
-The internal-repository and SBOM inputs are preserved for Debian but currently have no effect there.
-Each child owns its packages, images, tests, SBOMs, and publication jobs where supported.
-Package and image versions retain automatic backend/platform suffixes, for example `6.12.0-1.rc2.pgall.el10`.
-Required child failures fail the parent; optional tests and publication gates retain their existing behavior.
-The same build matrix is available manually on branch/MR pipelines, with optional failures.
-Select a complete platform/scheduler/Oracle combination; sanitizer and telemetry diagnostics remain separate triggers.
-Build trigger names identify the scheduler and include `+ Oracle` when enabled; the matrix suffix identifies the platform.
-Only EL9 `pgsched` (PostgreSQL scheduler with Oracle) starts automatically on release tags after source-tag validation.
-All other variant triggers are optional manual jobs, including EL9 `pgall`.
-Historical four-number tags remain readable for previous-release discovery, but cannot be created by the release tool.
+Release tags automatically build EL9/objectstore in the main pipeline and EL9/pgsched in a child, both with Oracle.
+Other EL9/EL10 combinations are optional manual triggers; Debian 13 supports only `pgall`, without publication.
+All variant triggers are manual on branch/MR pipelines, and publication retains its existing gates.
+
+Trigger names show the scheduler, Oracle support, and platform.
+Package and image versions receive these suffixes automatically, for example `6.12.0-1.rc2.pgall.el10`.
 
 ## Review CI results
 

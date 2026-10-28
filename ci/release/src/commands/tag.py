@@ -328,6 +328,11 @@ def _report_tags_and_pipelines(
         pipeline_lines.append(line)
         print(f"Tag pipeline ({tag_name}, {tag_pipeline['status']}): {tag_pipeline['web_url']}")
 
+    print(
+        "EL9/objectstore and EL9/pgsched with Oracle build automatically. "
+        "Trigger any additional release variants manually from the tag pipeline's build jobs."
+    )
+
     if pipeline_lines:
         context.add_issue_note(
             release_issue,
