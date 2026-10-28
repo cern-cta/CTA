@@ -75,3 +75,8 @@ def test_previous_release_preserves_historical_ref_and_numeric_order() -> None:
     assert previous_release(version, [*tags, "v6.11.1-1"]).text == "v6.11.1-1"
     with pytest.raises(VersionError):
         previous_release(version, ["v6.12.0-1.rc1", "v6.13.0-1"])
+
+
+def test_previous_release_excludes_prereleases_even_with_historical_suffixes() -> None:
+    tags = ["v6.10.0-1", "v6.11.0-1.rc2", "v6.11.0-1.dev1", "v6.11.0.0-1.rc2.pgall"]
+    assert previous_release(CTAVersion.parse("v6.12.0-1"), tags).text == "v6.10.0-1"

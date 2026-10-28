@@ -73,6 +73,7 @@ class ArgumentParserTest(unittest.TestCase):
             True,
             "maintenance",
             release_candidate=True,
+            ref=None,
         )
         status_run.assert_called_once_with(context, "v6.12.0-1", "main")
 

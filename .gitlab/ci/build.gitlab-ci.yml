@@ -97,7 +97,7 @@ build-cta:
     - ./ci/build/build_packages.sh all --build-dir build
                                       --build-generator "$[[ inputs.build-generator ]]"
                                       --create-build-dir
-                                      --cta-version "${CTA_VERSION}"
+                                      --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
                                       --xrootd-ssi-version ${XRD_SSI_VERSION}
                                       --scheduler-type ${SCHEDULER_TYPE}
                                       --oracle-support ${ENABLE_ORACLE_SUPPORT}
@@ -192,7 +192,8 @@ build-cta-pgsched:
     # This compilation check deliberately differs from the primary pipeline variant.
     - source ci/utils/cta_version.sh
     - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-    - export CTA_VERSION
+    - CTA_PACKAGE_VERSION=$(resolve_cta_package_version "$CTA_VERSION")
+    - export CTA_VERSION CTA_PACKAGE_VERSION
     - !reference [build-cta, before_script]
   # Disable artifacts
   artifacts:

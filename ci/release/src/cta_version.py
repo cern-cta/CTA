@@ -92,6 +92,9 @@ def previous_release(release_version: CTAVersion, tag_names: Iterable[str]) -> C
     target = (*release_version.core[:3], 0, release_version.package)
     candidates: list[tuple[tuple[int, int, int, int, int], CTAVersion]] = []
     for tag_name in tag_names:
+        # Development and candidate tags are never final-release baselines.
+        if re.search(r"\.(dev|rc)[0-9]+(?:\.|$)", tag_name):
+            continue
         match = HISTORICAL_RE.fullmatch(tag_name)
         if match is None:
             continue

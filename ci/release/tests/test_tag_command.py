@@ -52,7 +52,7 @@ class TagCommandTest(unittest.TestCase):
             tag.run(self.context, "v6.12.0-1", skip_confirmation=True)
         git_run.assert_called_once_with(["show", "merge-commit:project.json"])
         is_ancestor.assert_called_once_with("merge-commit", "newer-tip")
-        assert "Merged changelog commit to tag for v6.12.0-1: merge-commit" in output.getvalue()
+        assert "Selected release commit to tag for v6.12.0-1: merge-commit" in output.getvalue()
 
     def test_release_commit_must_be_reachable_from_target_branch(self) -> None:
         with (
@@ -176,6 +176,51 @@ def test_tag_command_publishes_one_tag_using_base_release_metadata(suffix: str) 
         patch.object(tag, "_report_tags_and_pipelines"),
     ):
         tag.run(context, base + suffix, skip_confirmation=True)
-    metadata.assert_called_once_with(context, base, "branch-tip", True, "main")
+    metadata.assert_called_once_with(context, base, "branch-tip", True, "main", None)
     create_tags.assert_called_once_with("release-commit", {base + suffix: "Release notes"})
     push_tags.assert_called_once_with("origin", [base + suffix])
+
+
+@pytest.mark.parametrize(("merge_sha", "expected"), [("merged", "merged"), (None, "squashed")])
+def test_selects_merge_result_before_squash(merge_sha: str | None, expected: str) -> None:
+    context = MagicMock()
+    context.find_changelog_merge_request.return_value = {
+        "state": "merged",
+        "merge_commit_sha": merge_sha,
+        "squash_commit_sha": "squashed",
+    }
+    context.read_repository_file.return_value = ("## 6.12.0-1\n", "blob")
+    assert tag.inspect_release_context(context, "v6.12.0-1", "main")[2] == expected
+
+
+@pytest.mark.parametrize("ref", ["corrected-commit", "v6.12.0-1.rc2"])
+def test_explicit_revision_checks_exact_commit(ref: str) -> None:
+    context = MagicMock()
+    context.git.run.side_effect = ["selected", '{"majorVersion": 6}']
+    context.git.is_ancestor.return_value = True
+    context.read_repository_file.return_value = ("## 6.12.0-1\n", "blob")
+    context.find_pipeline.return_value = {"status": "success"}
+    with patch.object(tag, "inspect_release_context", return_value=(None, {}, "merged", [])):
+        _, commit = tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
+            context, "v6.12.0-1", "tip", True, "main", ref
+        )
+    assert commit == "selected"
+    assert context.git.is_ancestor.call_args_list[0].args == ("merged", "selected")
+    assert context.git.is_ancestor.call_args_list[1].args == ("selected", "tip")
+    context.find_pipeline.assert_called_once_with("selected", "main", pipeline_source="push")
+
+
+@pytest.mark.parametrize(("ancestry", "match"), [([False], "contain"), ([True, False], "not reachable")])
+def test_explicit_revision_rejects_unrelated_history(ancestry: list[bool], match: str) -> None:
+    context = MagicMock()
+    context.git.run.return_value = "selected"
+    context.git.is_ancestor.side_effect = ancestry
+    context.read_repository_file.return_value = ("## 6.12.0-1\n", "blob")
+    with (
+        patch.object(tag, "inspect_release_context", return_value=(None, {}, "merged", [])),
+        pytest.raises(ReleaseWorkflowError, match=match),
+    ):
+        tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
+            context, "v6.12.0-1", "tip", True, "main", "other"
+        )
+    context.git.create_tags.assert_not_called()

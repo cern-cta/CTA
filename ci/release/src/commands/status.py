@@ -6,6 +6,9 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import suppress
+
+from cta_version import CTAVersion, VersionError
 
 from commands import SubparserRegistry
 from release_context import ReleaseContext, info
@@ -42,19 +45,39 @@ def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Names
 def run(context: ReleaseContext, version_text: str, target_branch: str = "main") -> None:
     """Print reconstructed Git and GitLab state for a release."""
     context.git.validate_target_branch(target_branch)
+    version = CTAVersion.parse(version_text)
+    base = CTAVersion(*version.core).text
     info(f"Inspecting release status for {version_text}")
-    release_issue, changelog_merge_request, release_commit = context.load_release_context(
-        version_text,
-        validate_local=False,
-        target_branch=target_branch,
-    )
-    pipeline = context.find_pipeline(release_commit, target_branch, pipeline_source="push")
-    local_tag_commit = context.git.local_tag_commit(version_text)
-    remote_tag_commit = context.git.remote_tag_commit(context.config.remote, version_text)
-
+    issue = context.find_or_create_release_issue(base, create=False)
+    mr = context.find_changelog_merge_request(base, target_branch)
     print(f"Version:  {version_text}")
-    print(f"Issue:    {release_issue['web_url']}")
-    print(f"MR:       {changelog_merge_request['web_url']} ({changelog_merge_request['state']})")
-    print(f"Commit:   {release_commit}")
-    print(f"Pipeline: {pipeline['status'] if pipeline else 'not found'}")
-    print(f"Tag:      local={local_tag_commit or 'absent'}, remote={remote_tag_commit or 'absent'}")
+    print(f"Issue:    {issue['web_url'] if issue else 'not created'}")
+    print(f"MR:       {mr['web_url']} ({mr['state']})" if mr else "MR:       not created")
+    if mr and mr.get("state") == "merged":
+        commit = mr.get("merge_commit_sha") or mr.get("squash_commit_sha")
+        print(f"Changelog commit: {commit or 'not available'}")
+
+    # Query remote tags so status also works without fetching newly published candidates.
+    tags = context.api.get_all("repository/tags", {"search": f"^{base}"})
+    matching_tags = []
+    for tag in tags:
+        with suppress(VersionError):
+            candidate = CTAVersion.parse(tag["name"])
+            if candidate.core == version.core and version.text in (base, candidate.text):
+                matching_tags.append(tag)
+    if not matching_tags:
+        print("Tags:     not published")
+    for tag in matching_tags:
+        commit = tag["commit"]["id"]
+        print(f"Tag:      {tag['name']} at {commit}")
+        pipeline = context.find_pipeline(commit, tag["name"], pipeline_source="push")
+        if pipeline is None:
+            print("  Tag pipeline: not found")
+            continue
+        print(f"  Tag pipeline: {pipeline['status']} {pipeline.get('web_url', '')}")
+        # Include optional triggers: a successful parent does not mean every variant ran.
+        for bridge in context.api.get_all(f"pipelines/{pipeline['id']}/bridges"):
+            child = bridge.get("downstream_pipeline")
+            state = child["status"] if child else bridge["status"]
+            url = child.get("web_url", "") if child else bridge.get("web_url", "")
+            print(f"    {bridge['name']}: {state} {url}")

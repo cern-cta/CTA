@@ -36,7 +36,7 @@ Catalogue schema releases should contain only the schema dependency and compatib
 release changelog v6.12.0-1
 ```
 
-The command synchronizes the target branch, generates changes since the previous numeric CTA release, and opens the changelog in Git’s configured editor. Review the entries and resolve the “Commits missing valid Changelog trailers” section: move relevant changes into their categories and remove entries that do not belong in the changelog.
+The command synchronizes the target branch, generates changes since the highest preceding final release reachable from the target commit, and opens the changelog in Git’s configured editor. Review the entries and resolve the “Commits missing valid Changelog trailers” section: move relevant changes into their categories and remove entries that do not belong in the changelog.
 
 After confirmation, the tool creates or reuses the release issue, changelog branch, and MR, and prints their links. Add release requirements and deployment considerations to the issue. Review and merge the changelog MR through the normal GitLab workflow, then wait for the resulting commit’s branch pipeline to succeed.
 
@@ -45,6 +45,10 @@ Inspect progress with:
 ```bash
 release status v6.12.0-1
 ```
+
+Status works while the changelog MR is open.
+After tagging, it lists the release’s final and prerelease tags, their tag pipelines, and child-variant statuses, including manual variants that have not run.
+Pass a specific prerelease version to inspect only that candidate.
 
 ## Create release tags
 
@@ -69,9 +73,22 @@ For a release candidate, let the tool select the next unused `.rcN`:
 release tag v6.12.0-1 --release-candidate
 ```
 
-To publish the validated candidate as a final release, run `release tag` with the same base version and target branch, without `--release-candidate`. Confirm that it selects the tested commit, then review the final tag pipelines before publishing.
+To publish the validated candidate as a final release, run `release tag` with the same base version and target branch, without `--release-candidate`. Confirm that it selects the tested commit, or use `--ref` as shown below, then review the final tag pipelines before publishing.
 
-The tool always selects the merged changelog MR’s commit. Repeating `--release-candidate` only advances the RC number; it does not include fixes merged afterwards. If the candidate needs code changes, the current tool requires preparing a new base release version and changelog MR containing those fixes, then tagging and validating that candidate. Do not assume a new RC number means a new source revision.
+By default, the tool selects the merged changelog MR’s commit; advancing the RC number does not change that revision.
+To include reviewed fixes, merge them and any changelog updates into the target branch, then select the exact commit:
+
+```bash
+release tag v6.12.0-1 --release-candidate --ref FIXED_COMMIT_SHA
+```
+
+The selected commit must contain the changelog merge and be reachable from the target branch.
+The tool checks the selected commit’s metadata and pipeline before tagging.
+To promote the exact tested RC revision, use:
+
+```bash
+release tag v6.12.0-1 --ref v6.12.0-1.rc2
+```
 
 Every selected tag must be new. Do not move published tags. To preview a command without making changes, put `--dry-run` before the subcommand:
 
@@ -88,7 +105,8 @@ Other EL9/EL10 combinations are optional manual triggers; Debian 13 supports onl
 All variant triggers are manual on branch/MR pipelines, and publication retains its existing gates.
 
 Trigger names show the scheduler, Oracle support, and platform.
-Package and image versions receive these suffixes automatically, for example `6.12.0-1.rc2.pgall.el10`.
+Backend and platform suffixes are appended automatically.
+For example, an RC produces package version `6.12.0-1~rc2.pgall.el10` and image tag `6.12.0-1.rc2.pgall.el10`.
 
 ## Review CI results
 

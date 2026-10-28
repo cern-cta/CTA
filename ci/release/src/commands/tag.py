@@ -46,10 +46,12 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
   release tag v6.12.0-1.dev1
   release tag v6.12.0-1 --release-candidate
 
-One source tag triggers all supported platform/backend builds.
+One source tag starts the default builds; additional variants are manual.
+Use --ref COMMIT_OR_TAG for corrected candidates or to promote a tested RC.
 Use --dry-run before the subcommand to inspect the publication plan.""",
     )
     parser.add_argument("version")
+    parser.add_argument("--ref", help="commit or tag to release instead of the changelog merge commit")
     parser.add_argument("--target-branch", default="main", help="branch containing the release commit (default: main)")
     parser.add_argument(
         "--yes", dest="skip_confirmation", action="store_true", help="create the tag without confirmation"
@@ -68,6 +70,7 @@ def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Names
         parsed_arguments.skip_confirmation,
         parsed_arguments.target_branch,
         release_candidate=parsed_arguments.release_candidate,
+        ref=parsed_arguments.ref,
     )
 
 
@@ -117,7 +120,7 @@ def inspect_release_context(
     if changelog_merge_request.get("state") != "merged":
         raise ReleaseWorkflowError(f"Release merge request {changelog_merge_request.get('web_url')} is not merged")
 
-    target_commit = changelog_merge_request.get("squash_commit_sha") or changelog_merge_request.get("merge_commit_sha")
+    target_commit = changelog_merge_request.get("merge_commit_sha") or changelog_merge_request.get("squash_commit_sha")
     if not target_commit:
         raise ReleaseWorkflowError(
             f"Release merge request {changelog_merge_request.get('web_url')} has no resulting commit"
@@ -185,11 +188,24 @@ def _validate_release_metadata(
     branch_tip: str,
     skip_confirmation: bool,
     target_branch: str = "main",
+    ref: str | None = None,
 ) -> tuple[dict[str, Any] | None, str]:
     """Validate release metadata and the exact commit pipeline."""
     # Release metadata is advisory only when the version was explicit.
     info("Inspecting release metadata for the selected version and commit")
     release_issue, _, target_commit, warnings = inspect_release_context(context, version_text, target_branch)
+    if ref is not None:
+        selected_commit = context.git.run(["rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}"])
+        # A corrected candidate must retain the reviewed release changelog.
+        if not context.git.is_ancestor(target_commit, selected_commit):
+            raise ReleaseWorkflowError("Selected revision must contain the merged release changelog")
+        target_commit = selected_commit
+        changelog, _ = context.read_repository_file(context.config.changelog_file, target_commit)
+        if not any(
+            line.startswith("## ") and version_text.removeprefix("v") in line for line in changelog.splitlines()
+        ):
+            raise ReleaseWorkflowError("Selected revision no longer contains the release changelog entry")
+
     if not context.git.is_ancestor(target_commit, branch_tip):
         raise ReleaseWorkflowError(
             f"Release commit {target_commit} is not reachable from {context.config.remote}/{target_branch}"
@@ -348,6 +364,7 @@ def run(
     skip_confirmation: bool,
     target_branch: str = "main",
     release_candidate: bool = False,
+    ref: str | None = None,
 ) -> None:
     """Resolve a revision, validate context, and publish a selected tag."""
     target_branch = target_branch or context.config.default_branch
@@ -372,9 +389,10 @@ def run(
         branch_tip,
         skip_confirmation,
         target_branch,
+        ref,
     )
     print(f"Target branch tip: {remote_branch} at {branch_tip}")
-    print(f"Merged changelog commit to tag for {version_text}: {target_commit}")
+    print(f"Selected release commit to tag for {version_text}: {target_commit}")
 
     selected_versions = _select_tag_versions(
         context,

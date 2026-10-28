@@ -11,7 +11,8 @@ The major number must match `majorVersion` in `project.json` when creating a rel
 The only optional tag suffixes are `.devN` for development releases and `.rcN` for release candidates, where `N` is a positive integer.
 Use at most one suffix, for example `v6.12.0-1.dev1` or `v6.12.0-1.rc2`.
 The release tool accepts explicit prerelease tags; `release tag v6.12.0-1 --release-candidate` selects the next unused RC number automatically.
-Changelog and release-status commands use the unsuffixed base version.
+The changelog command uses the unsuffixed base version.
+Release status accepts either the base version to show all its tags or a specific prerelease tag.
 
 One Git tag identifies the source for all supported build configurations.
 Do not append backend or platform suffixes to Git tags.
@@ -25,7 +26,9 @@ CI derives those suffixes for package versions and container image tags instead:
 | PostgreSQL | disabled | `.pgall` |
 
 The platform suffix follows the variant, such as `.el9`, `.el10`, or `.debian13`.
-For example, source tag `v6.12.0-1.rc2` produces artifact version `6.12.0-1.rc2.pgall.el10` for an EL10 PostgreSQL build without Oracle.
+For example, source tag `v6.12.0-1.rc2` produces image tag `6.12.0-1.rc2.pgall.el10` and RPM version `6.12.0-1~rc2.pgall.el10` for an EL10 PostgreSQL build without Oracle.
+RPM and Debian package versions translate `.devN` and `.rcN` to `~devN` and `~rcN`, ensuring development releases sort before candidates and candidates before final releases.
+Container image tags retain dots because they cannot contain `~`.
 The leading `v` belongs to the Git tag and is omitted from artifact versions.
 Debian currently supports only `pgall` and does not publish release packages or images.
 

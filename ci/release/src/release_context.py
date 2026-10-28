@@ -206,8 +206,8 @@ class ReleaseContext:
                 f"Changelog MR {changelog_merge_request.get('web_url')} has not been merged into {target_branch}"
             )
 
-        release_commit = changelog_merge_request.get("squash_commit_sha") or changelog_merge_request.get(
-            "merge_commit_sha"
+        release_commit = changelog_merge_request.get("merge_commit_sha") or changelog_merge_request.get(
+            "squash_commit_sha"
         )
         if not release_commit:
             raise ReleaseWorkflowError(f"Changelog MR {changelog_merge_request.get('web_url')} has no resulting commit")

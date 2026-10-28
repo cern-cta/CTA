@@ -121,9 +121,12 @@ class Git:
             return False
         return True
 
-    def tags(self) -> list[str]:
-        """List local tag names."""
-        output = self.run(["tag", "--list"])
+    def tags(self, merged_into: str | None = None) -> list[str]:
+        """List local tags, optionally restricted to ancestors of a commit."""
+        arguments = ["tag", "--list"]
+        if merged_into is not None:
+            arguments.extend(["--merged", merged_into])
+        output = self.run(arguments)
         return output.splitlines() if output else []
 
     def editor_command(self) -> str:

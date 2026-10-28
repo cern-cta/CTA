@@ -57,7 +57,7 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""What this command does:
   1. Validates and synchronizes the selected target branch, then checks GitLab authentication.
-  2. Generates changes since the previous numeric CTA release.
+  2. Generates changes since the previous final CTA release in the target history.
   3. Opens the generated entry in Git's configured editor for approval.
   4. Finds or creates the release ticket, changelog branch, and merge request.
 
@@ -407,9 +407,9 @@ def run(context: ReleaseContext, version_text: str, target_branch: str = "main")
         return
 
     _validate_tag_is_available(context, release_version)
-    previous_version = previous_release(release_version, context.git.tags())
+    previous_version = previous_release(release_version, context.git.tags(merged_into=changelog_commit))
 
-    # Generate the candidate changelog from the previous numeric release.
+    # Generate changes from a final release reachable in this target history.
     info(f"Generating changelog from {previous_version.text} through {changelog_commit}")
     generated_notes = generate_changelog_notes(
         context,

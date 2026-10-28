@@ -29,7 +29,7 @@ internal-release-cta:
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --local-source-dir build/$[[ inputs.platform ]]/RPM/RPMS/x86_64
                                     --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64
-                                    --cta-version "${CTA_VERSION:?Missing CTA_VERSION}"
+                                    --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
   after_script:
     - |
       case "$CI_JOB_STATUS" in
@@ -62,14 +62,14 @@ internal-release-cta:
       fi
   script:
     - REPOSITORY_PATH="${RELEASE_CHANNEL}/cta-${CTA_MAJOR_VERSION:?Missing CTA_MAJOR_VERSION}/$[[ inputs.platform ]]/cta/x86_64"
-    - echo "Publishing CTA version ${CTA_VERSION} to the ${RELEASE_CHANNEL} CTA repository"
+    - echo "Publishing CTA version ${CTA_PACKAGE_VERSION} to the ${RELEASE_CHANNEL} CTA repository"
     - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD}
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
                                     --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/${REPOSITORY_PATH}
-                                    --cta-version "${CTA_VERSION:?Missing CTA_VERSION}"
+                                    --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
     - REPO_URL="https://cta-public-repo.web.cern.ch/${REPOSITORY_PATH}"
-    - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CTA_VERSION}"
+    - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CTA_PACKAGE_VERSION}"
   after_script:
     - |
       case "$CI_JOB_STATUS" in

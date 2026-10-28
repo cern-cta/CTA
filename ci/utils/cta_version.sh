@@ -73,3 +73,12 @@ resolve_cta_version() {
   validate_cta_version "$version" || return 1
   printf '%s\n' "$version"
 }
+
+# Package managers sort tilde prereleases before the final release; image tags retain dots.
+resolve_cta_package_version() {
+  local version="$1"
+  if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+-[0-9]+)\.((dev|rc)[1-9][0-9]*)(\..+)$ ]]; then
+    version="${BASH_REMATCH[1]}~${BASH_REMATCH[2]}${BASH_REMATCH[4]}"
+  fi
+  printf '%s\n' "$version"
+}

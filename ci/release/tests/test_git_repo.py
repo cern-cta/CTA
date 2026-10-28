@@ -129,3 +129,20 @@ class GitTest(unittest.TestCase):
             ],
             mutate=True,
         )
+
+
+def test_ancestor_tags_exclude_divergent_release(tmp_path: Path) -> None:
+    """Exercise real Git reachability, including annotated release tags."""
+    git = Git(tmp_path)
+    git.run(["init"])
+    git.run(["config", "user.name", "Test"])
+    git.run(["config", "user.email", "test@example.com"])
+    git.run(["commit", "--allow-empty", "-m", "base"])
+    git.run(["tag", "-a", "v6.10.0-1", "-m", "base"])
+    base = git.run(["rev-parse", "HEAD"])
+    git.run(["checkout", "-b", "other"])
+    git.run(["commit", "--allow-empty", "-m", "unrelated release"])
+    git.run(["tag", "v6.11.0-1"])
+    git.run(["checkout", "--detach", base])
+    git.run(["commit", "--allow-empty", "-m", "target"])
+    assert git.tags(merged_into="HEAD") == ["v6.10.0-1"]
