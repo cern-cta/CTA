@@ -67,12 +67,17 @@ void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> faile
 //reportEndOfSession
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
+  cta::threading::MutexLocker ml(m_producterProtection);
+  if (m_endOfSessionReported) {
+    return;
+  }
+
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSession");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSession(), pushing a report.");
-  cta::threading::MutexLocker ml(m_producterProtection);
   auto rep = std::make_unique<ReportEndofSession>();
   m_fifo.push(rep.release());
+  m_endOfSessionReported = true;
 }
 
 //------------------------------------------------------------------------------
@@ -92,11 +97,16 @@ void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveSta
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, cta::log::LogContext& lc) {
+  cta::threading::MutexLocker ml(m_producterProtection);
+  if (m_endOfSessionReported) {
+    return;
+  }
+
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
-  cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg));
+  m_endOfSessionReported = true;
 }
 
 //------------------------------------------------------------------------------

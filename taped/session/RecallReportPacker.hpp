@@ -192,6 +192,10 @@ private:
 
   cta::threading::Mutex m_producterProtection;
 
+  // Tape and disk threads can both observe completion; enqueue only one terminal report.
+  // Protected by m_producterProtection.
+  bool m_endOfSessionReported = false;
+
   /**
    * m_fifo is holding all the report waiting to be processed
    */

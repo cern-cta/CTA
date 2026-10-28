@@ -85,6 +85,35 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
   ASSERT_EQ(1, retrieveMount.completes);
 }
 
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerDuplicateEnd) {
+  // Queue both producers' terminal reports before starting the worker to reproduce the race deterministically.
+  for (const bool withErrors : {false, true}) {
+    SCOPED_TRACE(withErrors);
+    auto catalogue = cta::catalogue::DummyCatalogue();
+    cta::MockRetrieveMount retrieveMount(catalogue);
+    cta::log::StringLogger log("dummy", "cta_tape_RecallReportPackerDuplicateEnd", cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+
+    rrp.setTapeDone();
+    rrp.setDiskDone();
+    if (withErrors) {
+      rrp.reportEndOfSessionWithErrors("End of recall session with error(s)", lc);
+      rrp.reportEndOfSessionWithErrors("End of recall session with error(s)", lc);
+      rrp.reportEndOfSession(lc);
+    } else {
+      rrp.reportEndOfSession(lc);
+      rrp.reportEndOfSession(lc);
+    }
+
+    rrp.startThreads();
+    rrp.waitThread();
+
+    ASSERT_EQ(std::string::npos, log.getLog().find("Popping missed report"));
+    ASSERT_EQ(1, retrieveMount.completes);
+  }
+}
+
 TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   auto catalogue = cta::catalogue::DummyCatalogue();
   cta::MockRetrieveMount retrieveMount(catalogue);
