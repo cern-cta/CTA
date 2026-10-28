@@ -226,3 +226,45 @@ def test_pipeline_reporting_after_publication(available: bool, capsys: pytest.Ca
     output = capsys.readouterr().out
     assert ("pipeline-url" if available else "has not appeared yet") in output
     assert "additional release variants manually" in output
+
+
+@pytest.mark.parametrize("failure", ["note", "lookup", "pipeline-note"])
+def test_reporting_api_failure_does_not_fail_published_tag(failure: str, capsys: pytest.CaptureFixture[str]) -> None:
+    context = MagicMock()
+    context.config.project_web_url = "https://gitlab.example/cta"
+    context.find_pipeline.return_value = {"status": "running", "web_url": "pipeline-url"}
+    error = tag.GitLabAPIError("unavailable")
+    if failure == "lookup":
+        context.find_pipeline.side_effect = error
+    else:
+        context.add_issue_note.side_effect = [error, None] if failure == "note" else [None, error]
+    plan = tag.TagPlan("v6.12.0-1", "commit", {"iid": 1}, "Release")
+    tag._report_tag_and_pipeline(context, plan)  # pyright: ignore[reportPrivateUsage]
+    output = capsys.readouterr()
+    assert "Tag published successfully" in output.out
+    assert "WARNING: Tag is published" in output.err
+
+
+@pytest.mark.parametrize("push_status", [None, "failed", "running"])
+@pytest.mark.parametrize("web_status", ["success", "failed", "running"])
+def test_manual_pipeline_fallback_requires_success(push_status: str | None, web_status: str) -> None:
+    context = MagicMock()
+    context.git.is_ancestor.return_value = True
+    context.git.run.return_value = '{"majorVersion": 6}'
+    context.find_pipeline.side_effect = [
+        {"status": push_status} if push_status else None,
+        {"status": web_status},
+    ]
+    with (
+        patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, {}, "commit", [])),
+        patch.object(tag, "confirm") as confirm,
+    ):
+        tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
+            context, "v6.12.0-1", "tip", False, "maintenance"
+        )
+    assert [call.args for call in context.find_pipeline.call_args_list] == [
+        ("commit", "maintenance"),
+        ("commit", "maintenance"),
+    ]
+    assert [call.kwargs["pipeline_source"] for call in context.find_pipeline.call_args_list] == ["push", "web"]
+    assert confirm.call_count == (0 if web_status == "success" else 1)

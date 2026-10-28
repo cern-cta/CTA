@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import shlex
 import subprocess
+import sys
 import tempfile
 import time
 from dataclasses import dataclass
@@ -201,6 +202,10 @@ def _validate_release_metadata(
     # The pipeline gate protects the exact commit that will be tagged.
     info("Checking the pipeline for the selected commit")
     pipeline = context.find_pipeline(target_commit, target_branch, pipeline_source="push")
+    if pipeline is None or pipeline.get("status") != "success":
+        manual_pipeline = context.find_pipeline(target_commit, target_branch, pipeline_source="web")
+        if manual_pipeline and (manual_pipeline.get("status") == "success" or pipeline is None):
+            pipeline = manual_pipeline
     pipeline_status = "not found" if pipeline is None else str(pipeline.get("status") or "unknown")
     if context.config.require_successful_target_pipeline and pipeline_status != "success":
         pipeline_url = pipeline.get("web_url") if pipeline else None
@@ -259,22 +264,30 @@ def _report_tag_and_pipeline(context: ReleaseContext, plan: TagPlan) -> None:
     """Record publication and print the tag and pipeline links."""
     tag_name = plan.tag_name
     commit_url = f"{context.config.project_web_url}/-/commit/{plan.target_commit}"
-    context.add_issue_note(
-        plan.release_issue,
-        f"Tag `{tag_name}` created at commit [`{plan.target_commit[:12]}`]({commit_url}).",
-    )
     tag_url = f"{context.config.project_web_url}/-/tags/{quote(tag_name, safe='')}"
-    print(f"Tag page ({tag_name}): {tag_url}")
-    pipeline = _find_tag_pipeline(context, plan.target_commit, tag_name)
-    if pipeline is None:
-        print(f"Tag pipeline ({tag_name}) has not appeared yet; check GitLab shortly.")
-    else:
-        print(f"Tag pipeline ({tag_name}, {pipeline['status']}): {pipeline['web_url']}")
-        context.add_issue_note(plan.release_issue, f"Tag pipeline ({tag_name}): {pipeline['web_url']}")
+    print(f"Tag published successfully ({tag_name}): {tag_url}")
     print(
         "EL9/objectstore and EL9/pgsched with Oracle build automatically. "
         "Trigger any additional release variants manually from the tag pipeline's build jobs."
     )
+    # Reporting failures must not obscure a successful push or suggest retrying the tag.
+    try:
+        context.add_issue_note(
+            plan.release_issue,
+            f"Tag `{tag_name}` created at commit [`{plan.target_commit[:12]}`]({commit_url}).",
+        )
+    except GitLabAPIError as error:
+        print(f"WARNING: Tag is published, but its issue note could not be posted: {error}", file=sys.stderr)
+
+    try:
+        pipeline = _find_tag_pipeline(context, plan.target_commit, tag_name)
+        if pipeline is None:
+            print(f"Tag pipeline ({tag_name}) has not appeared yet; check GitLab shortly.")
+        else:
+            print(f"Tag pipeline ({tag_name}, {pipeline['status']}): {pipeline['web_url']}")
+            context.add_issue_note(plan.release_issue, f"Tag pipeline ({tag_name}): {pipeline['web_url']}")
+    except GitLabAPIError as error:
+        print(f"WARNING: Tag is published, but pipeline reporting failed: {error}", file=sys.stderr)
 
 
 def run(

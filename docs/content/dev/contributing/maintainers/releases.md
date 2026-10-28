@@ -49,7 +49,7 @@ Pass a specific prerelease version to inspect only that candidate.
 release tag v6.12.0-1
 ```
 
-The tool selects the changelog MR’s merge commit, checks its metadata, target-branch ancestry, and push pipeline, then asks you to edit the tag description and confirm publication.
+The tool selects the changelog MR’s merge commit, checks its metadata, target-branch ancestry, and pipeline, then asks you to edit the tag description and confirm publication.
 Resolve any warnings before proceeding.
 Use `release --dry-run tag ...` to preview without changes; `--yes` skips confirmations, including pipeline warnings.
 
@@ -124,7 +124,7 @@ release status v6.12.1-1 --target-branch release/v6.12.1-1
 release tag v6.12.1-1 --target-branch release/v6.12.1-1
 ```
 
-The tool checks specifically for a push pipeline, so accept its warning only after verifying the manual pipeline’s results for that commit.
+The tool accepts a successful push or manually started pipeline for the exact commit and target branch.
 Continue with tag-pipeline validation and publication as above.
 For documentation-only fixes, see [Documentation backports](documentation-site.md#documentation-backports).
 

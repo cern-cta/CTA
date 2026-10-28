@@ -20,7 +20,7 @@ usage() {
   echo "  --build-dir <directory>                 Build root. The detected platform is appended to it."
   echo "  --build-generator <generator>           CMake generator, normally Ninja or Unix Makefiles."
   echo "  --scheduler-type <type>                 Scheduler type: objectstore or pgsched."
-  echo "  --cta-version <version>                 CTA version, e.g. 6-dev or 6.12.0.0-1.pgall.el9."
+  echo "  --cta-version <version>                 CTA version, e.g. 6-dev or 6.12.0-1.pgall.el9."
   echo "  --cmake-build-type <type>               Release, Debug, RelWithDebInfo, or MinSizeRel."
   echo
   echo "Required for binary and all:"
