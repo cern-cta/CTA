@@ -1,0 +1,21 @@
+{
+  "mount_type": "retrieve",
+  "tape_pool_name": "tp_ci",
+  "vid": "V00001",
+  "virtual_organisation_name": "vo_ci",
+  "logical_library_name": "loglib_ci",
+  "queued_file_count": 4,
+  "queued_byte_count": 400,
+  "oldest_age": 3600.0,
+  "priority": 9,
+  "min_age": 600.0,
+  "mount_count": 1,
+  "transferred_file_count": 1,
+  "transferred_byte_count": 100,
+  "is_sleeping_for_space": true,
+  "sleep_start_time": "2024-06-01T12:00:00+00:00",
+  "scheduler_backend_name": "ci",
+  "tapes_file_count": 3,
+  "tapes_byte_count": 300,
+  "tapes_capacity": 5000
+}

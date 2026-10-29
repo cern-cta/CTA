@@ -1,0 +1,20 @@
+{
+  "archive_id": 100,
+  "storage_class_name": "sc_ci",
+  "creation_time": "2024-01-01T09:00:00+00:00",
+  "size": 1024,
+  "checksum": {
+    "algo_name": "ADLER32",
+    "value": "0xdeadbeef"
+  },
+  "disk_file": {
+    "id": "df100",
+    "disk_instance_name": "instance_ci",
+    "uid": 1000,
+    "gid": 1000,
+    "path": "/eos/ci/df100"
+  },
+  "vid": "V00002",
+  "fseq": 2,
+  "block_id": 20
+}

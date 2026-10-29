@@ -90,15 +90,7 @@ lint-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: $CI_COMMIT_TAG
-      when: always
-    - changes:
-        - "**/*.py"
-        - ".gitlab-ci.yml"  # For changes in the image
-        - ".gitlab/ci/lint.gitlab-ci.yml"
-      when: always
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: always
+    - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
   image:
@@ -106,9 +98,13 @@ lint-python:
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.python-version, before_script]
+    - uv sync --locked --only-group lint
   script:
-    - ruff check --output-format gitlab | tee ruff.json | jq -C
+    - uv run --no-sync ruff check --output-format gitlab > ruff.json
   artifacts:
+    when: always
     expire_in: 7 days
     reports:
       codequality: ruff.json
@@ -395,24 +391,21 @@ format-python:
   extends:
     - .format-report
   rules:
-    - if: $CI_COMMIT_TAG
-      when: always
-    - changes:
-        - "**/*.py"
-        - ".gitlab-ci.yml"  # For changes in the image
-        - ".gitlab/ci/lint.gitlab-ci.yml"
-      when: always
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: always
+    - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
   variables:
     FORMAT_DIFF: artifacts/ruff.diff
   before_script:
-    - !reference [.merge-train-guard, before_script]
+    - !reference [.python-version, before_script]
+    - uv sync --locked --only-group lint
     - mkdir -p artifacts
     - echo "Running ruff on all Python files"
-    - ruff format . --check --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > "$FORMAT_DIFF"
+    # The inherited report script handles formatting differences; preserve tool failures.
+    - |
+      status=0
+      uv run --no-sync ruff format . --check --diff > "$FORMAT_DIFF" || status=$?
+      if [[ "$status" -gt 1 ]]; then exit "$status"; fi
 
 format-rust:
   extends:
@@ -438,35 +431,18 @@ format-rust:
     - cargo fmt --all -- --check > "$FORMAT_DIFF" 2>&1 || true
 
 type-check-python:
+  extends: .python-workspace
   stage: lint
   needs:
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: $CI_COMMIT_TAG
-      when: always
-    - changes:
-        - "**/*.py"
-        - ".gitlab-ci.yml"  # For changes in the image
-        - ".gitlab/ci/lint.gitlab-ci.yml"
-        - "pyrightconfig.json"
-        - "**/requirements.txt"
-      when: always
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: always
+    - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
-  image:
-    name: $IMAGE_LINT
-    entrypoint: ["/usr/bin/env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
-    FORCE_COLOR: 3  # Force color output of pyright
+    FORCE_COLOR: "3"
   script:
-    # Necessary dependencies, these are not in the lint image on purpose as they are project specific
-    # It is a bit unfortunate we have to do this explicitly, but they are mostly independent scripts that need this,
-    # so not one top-level "install all dependencies" is available
-    - uv pip install --system -r ci/system_tests/requirements.txt
-    - uv pip install --system pyjwt cryptography
-    - uv pip install --system -r docs/requirements.txt
-    - pyright .
+    # Type checking needs the helpers' imports, but not the system-test runner plugin.
+    - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check
+    - uv run --no-sync pyright --pythonpath .venv/bin/python .

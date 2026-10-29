@@ -1,0 +1,35 @@
+{
+  "vid": "V00002",
+  "tape_pool_name": "tp_ci",
+  "state": "pending",
+  "failed_file_count": 0,
+  "disk_buffer_url": "root://buffer",
+  "duration": 0.0,
+  "finished_time": null,
+  "destination_infos": [],
+  "last_expanded_fseq": 0,
+  "start_info": {
+    "file_count": 3,
+    "byte_count": 800,
+    "creation_user_name": "cta_ci",
+    "creation_host_name": "ci-host",
+    "creation_time": "2024-01-01T09:00:00+00:00",
+    "is_all_files_selected_at_start": true
+  },
+  "retrieve_statistics": {
+    "total_file_count": 3,
+    "total_byte_count": 800,
+    "transferred_file_count": 0,
+    "transferred_byte_count": 0,
+    "failed_file_count": 0,
+    "failed_byte_count": 0
+  },
+  "archive_statistics": {
+    "total_file_count": 3,
+    "total_byte_count": 800,
+    "transferred_file_count": 0,
+    "transferred_byte_count": 0,
+    "failed_file_count": 0,
+    "failed_byte_count": 0
+  }
+}

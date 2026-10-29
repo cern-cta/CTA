@@ -1,0 +1,21 @@
+{
+  "mount_type": "archive",
+  "tape_pool_name": "tp_ci",
+  "vid": null,
+  "virtual_organisation_name": "vo_ci",
+  "logical_library_name": "loglib_ci",
+  "queued_file_count": 10,
+  "queued_byte_count": 1000,
+  "oldest_age": 7200.0,
+  "priority": 5,
+  "min_age": 1800.0,
+  "mount_count": 1,
+  "transferred_file_count": 2,
+  "transferred_byte_count": 200,
+  "is_sleeping_for_space": false,
+  "sleep_start_time": null,
+  "scheduler_backend_name": "ci",
+  "tapes_file_count": 0,
+  "tapes_byte_count": 0,
+  "tapes_capacity": 0
+}

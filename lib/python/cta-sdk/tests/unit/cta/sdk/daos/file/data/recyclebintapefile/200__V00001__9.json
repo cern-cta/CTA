@@ -1,0 +1,23 @@
+{
+  "archive_id": 200,
+  "storage_class_name": "sc_ci",
+  "creation_time": "2024-01-01T09:00:00+00:00",
+  "size": 2048,
+  "checksum": {
+    "algo_name": "ADLER32",
+    "value": "0xdeadbeef"
+  },
+  "disk_file": {
+    "id": "df200",
+    "disk_instance_name": "instance_ci",
+    "uid": 1000,
+    "gid": 1000,
+    "path": "/eos/ci/df200"
+  },
+  "vid": "V00001",
+  "fseq": 9,
+  "block_id": 90,
+  "deletion_time": "2024-06-01T12:00:00+00:00",
+  "deletion_reason": "user delete",
+  "virtual_organisation_name": "vo_ci"
+}

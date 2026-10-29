@@ -318,6 +318,7 @@ workflow:
 # - The conditional file include below? The conditional includes are useful for skipping entire stages at once
 # - The rules: section of the job
 include:
+  - local: .gitlab/ci/templates/common.gitlab-ci.yml
   - local: .gitlab/ci/.pre.gitlab-ci.yml
     inputs:
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]

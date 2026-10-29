@@ -1,0 +1,9 @@
+timeout = 2
+
+[database]
+
+password = "fake_password"
+
+[logging]
+
+level = "DEBUG"

@@ -37,7 +37,7 @@ services=(
 case "$package_format" in
   rpm)
     libdir=/usr/lib64
-    mapfile -t packages < <(rpm -qa --qf '%{NAME}\n' | grep '^cta-')
+    mapfile -t packages < <(rpm -qa --qf '%{NAME}\n' | grep -E '^(cta-|ctaops-udev$)')
     files=$(rpm -ql "${packages[@]}")
     configs=$(rpm -q --qf '[%{FILENAMES} %{FILEFLAGS:fflags}\n]' "${packages[@]}" | \
       awk '$2 ~ /c/ && $2 ~ /n/ {print $1}')
@@ -83,7 +83,7 @@ require_file() {
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/#_configuration_files
 # Debian: https://www.debian.org/doc/debian-policy/ch-files.html#configuration-files
 require_config() {
-  require_file "$1"
+  require_file "$1" "${2:-}"
   if ! grep -Fxq -- "$1" <<< "$configs"; then
     case "$package_format" in
       rpm) fail "missing RPM %config(noreplace) flags: $1" ;;
@@ -127,6 +127,16 @@ for tool in "${tools[@]}" "${rust_tools[@]}" "${services[@]}"; do
   [[ -x "/usr/bin/$tool" ]] || fail "not executable: /usr/bin/$tool"
   require_manual "$tool"
 done
+
+# The udev helper is currently packaged only for RPM, outside /usr/bin.
+if [[ "$package_format" == rpm ]]; then
+  log_task "Checking CTA udev rules and helper..."
+  require_file /usr/lib/udev/ctaops-udev ctaops-udev
+  [[ -x /usr/lib/udev/ctaops-udev ]] || fail "not executable: /usr/lib/udev/ctaops-udev"
+  require_file /usr/lib/udev/rules.d/62-ctaops.rules ctaops-udev
+  require_config /usr/lib/udev/ctaops-udev.ini ctaops-udev
+  require_document /usr/share/man/man8/ctaops-udev.8ctaops ctaops-udev
+fi
 
 log_task "Checking service units and configuration ($package_format)..."
 

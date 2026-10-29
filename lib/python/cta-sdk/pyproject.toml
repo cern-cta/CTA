@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling>=1.27.0", "hatch-vcs>=0.4.0", "grpcio-tools>=1.60"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cta-sdk"
+authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
+description = "PYTHON CTA SDK"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+keywords = ["CTA", "tape", "CERN"]
+
+dynamic = ["version"]
+dependencies = ["grpcio", "protobuf"]
+
+[project.urls]
+Source = "https://gitlab.cern.ch/cta/CTA/"
+Documentation = "https://ctaops.docs.cern.ch/"
+"CTA Documentation" = "https://cta.docs.cern.ch/"
+
+[dependency-groups]
+dev = ["cattrs", "grpcio-tools"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+root = "../../.."
+# Scheduler/catalogue variants share the same Python package version.
+# TODO: Map CTA .rcN tags, including build variants, to PEP 440 prerelease versions.
+tag_regex = '^v?(?P<version>[0-9]+(?:\.[0-9]+)*(?:-[0-9]+)?)(?:\.(?:pgsched|pgcat|pgall))?$'
+
+[tool.hatch.build]
+ignore-vcs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cta"]
+
+[tool.hatch.build.targets.sdist]
+include = ["README.md", "pyproject.toml", "hatch_build.py", "scripts/gen_proto.py", "src/**", "tests/**"]
+exclude = ["src/external/**"]
+
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../../LICENSES/GPL-3.0-or-later.txt" = "LICENSE"

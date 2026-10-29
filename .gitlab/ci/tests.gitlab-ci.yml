@@ -57,6 +57,7 @@ spec:
       junit: test-results/*.xml
 
 unit-test-python:
+  extends: .python-workspace
   stage: test
   needs:
     - job: check-merge-train-duplicate
@@ -64,30 +65,20 @@ unit-test-python:
   rules:
     - if: '"$[[ inputs.platform ]]" == "debian13"'
       when: never
-    - changes:
-        - "**/*.py"
-        - '**/*requirements.txt'
-        - ci/docs/**/*
-        - ci/docker/pipeline/default.Dockerfile
-        - '.gitlab/ci/*.gitlab-ci.yml'
-        - .gitlab-ci.yml
-      when: on_success
-  image:
-    name: $IMAGE_DEFAULT
-    entrypoint: ["/usr/bin/env"]
-  variables:
-    GIT_SUBMODULE_STRATEGY: "none"
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    # The suite includes real mike/MkDocs publication tests.
-    - source ci/docs/prepare-environment.sh
-    - uv pip install --python "$(command -v python)" pytest
+    - !reference [.python-workspace, rules]
   script:
-    - python -m pytest ci --ignore=ci/system_tests --junitxml=python-ci-unit-tests.xml
+    # Root test discovery includes CI and imported suites, and excludes system tests.
+    - uv sync --locked --all-packages --all-extras --no-default-groups --group unit-tests
+    - uv run --no-sync python -m pytest --junitxml=python-ci-unit-tests.xml
+        --cov --cov-report=term --cov-report=xml:coverage.xml
   artifacts:
     when: always
     reports:
       junit: python-ci-unit-tests.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  coverage: '/^TOTAL\s+\d+\s+\d+\s+(\d+(?:\.\d+)?%)$/'
 
 unit-test-rust:
   stage: test
@@ -290,6 +281,7 @@ test-cta-rpm-install:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/cta-release/**/*
+        - tools/ctaops-udev/**/*
         - project.json
         - packaging/**/*
         - "**/CMakeLists.txt"
@@ -321,6 +313,7 @@ test-cta-rpm-install:
                                   cta-rmcd
                                   cta-smc
                                   cta-tools-rs
+                                  ctaops-udev
                                   eos-server
                                   eos-client
     - |

@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling>=1.27.0", "hatch-vcs>=0.4.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ctaops-cli"
+authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
+description = "Main CLI to interact with CTA"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+keywords = ["CTA", "tape", "CERN"]
+
+dynamic = ["version"]
+dependencies = [
+    "ctaops-utils",
+    "cta-sdk",
+    "click",
+    "rich",
+    "pyjwt>=2.14.0",
+    "cryptography>=47.0.0",
+    "grpcio-health-checking>=1.80.0",
+]
+
+[project.urls]
+Source = "https://gitlab.cern.ch/cta/CTA/"
+Documentation = "https://ctaops.docs.cern.ch/"
+"CTA Documentation" = "https://cta.docs.cern.ch/"
+
+[project.scripts]
+ctaops = "ctaops.cli.main:main"
+
+[tool.uv.sources]
+ctaops-utils = { workspace = true }
+cta-sdk = { workspace = true }
+ctaops-sdk = { workspace = true }
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+root = "../.."
+# Scheduler/catalogue variants share the same Python package version.
+# TODO: Map CTA .rcN tags, including build variants, to PEP 440 prerelease versions.
+tag_regex = '^v?(?P<version>[0-9]+(?:\.[0-9]+)*(?:-[0-9]+)?)(?:\.(?:pgsched|pgcat|pgall))?$'
+
+[tool.hatch.build]
+ignore-vcs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ctaops"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/ctaops/cli/ctaops-cli.example.toml" = "ctaops/cli/ctaops-cli.example.toml"
+"src/ctaops/cli/py.typed" = "ctaops/cli/py.typed"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "README.md",
+    "pyproject.toml",
+    "src/ctaops/**",
+    "tests/**",
+]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../LICENSES/GPL-3.0-or-later.txt" = "LICENSE"
+
+[project.optional-dependencies]
+tapeserver = ["ctaops-sdk"]
+workflow = ["cta-sdk"]
