@@ -17,13 +17,13 @@ from .hosts.cta_maintd_host import CtaMaintdHost
 from .hosts.cta_rmcd_host import CtaRmcdHost
 from .hosts.cta_taped_host import CtaTapedHost
 from .hosts.cta_workflow_api_host import CtaWorkflowApiHost
+from .hosts.disk.dcache_client_host import DCacheClientHost
+from .hosts.disk.dcache_host import DCacheHost
 from .hosts.disk.disk_client_host import DiskClientHost
 from .hosts.disk.disk_instance_host import DiskInstanceHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
 from .hosts.scheduler_postgres_host import SchedulerPostgresHost
-from .hosts.disk.dcache_client_host import DCacheClientHost
-from .hosts.disk.dcache_host import DCacheHost
 
 
 class TestEnv:

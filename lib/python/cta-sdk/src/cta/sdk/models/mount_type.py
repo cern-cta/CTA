@@ -5,7 +5,7 @@ from enum import Enum
 
 
 class MountType(Enum):
-    """The type of the mount
+    """The type of the mount.
 
     Attributes:
         ARCHIVE: Data is being written to tape

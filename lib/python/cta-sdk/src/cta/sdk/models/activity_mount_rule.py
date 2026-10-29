@@ -4,6 +4,8 @@
 from dataclasses import dataclass
 from typing import Final
 
+from typing_extensions import override
+
 from .metadata import Metadata
 
 
@@ -25,13 +27,16 @@ class ActivityMountRule:
     mount_policy_name: str
     metadata: Metadata
 
+    @override
     def __str__(self):
         return f"ActivityMountRule({self.user_name}, {self.disk_instance_name}, {self.regex})"
 
+    @override
     def __hash__(self) -> int:
         return hash((self.user_name, self.disk_instance_name, self.regex))
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, ActivityMountRule):
             return False
         return (

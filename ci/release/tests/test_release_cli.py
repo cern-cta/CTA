@@ -7,8 +7,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-
 from gitlab_api import GitLabAPIError
 from release_cli import create_argument_parser, create_authenticated_api
 

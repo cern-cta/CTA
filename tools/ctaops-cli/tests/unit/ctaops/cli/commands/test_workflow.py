@@ -1,19 +1,23 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import Any, Optional
+from unittest.mock import MagicMock
+
 import pytest
 from click.testing import CliRunner
 from cta.sdk.client.grpc import workflow as workflow_api
 from cta.sdk.client.grpc.exceptions import WorkflowConfigError, WorkflowRpcError
 from cta.sdk.client.grpc.models import WorkflowConfig
 from cta.sdk.client.grpc.protobuf_api import file_info_to_pb_options
-from cta.sdk.client.grpc.protobuf_generated import cta_eos_pb2, cta_frontend_pb2
+from cta.sdk.client.grpc.protobuf_generated import cta_common_pb2, cta_eos_pb2, cta_frontend_pb2
 from cta.sdk.client.grpc.workflow import WorkflowRpcClient
-
+from cta.sdk.client.protocol import CtaClient
 from ctaops.cli.commands.workflow import WorkflowFileInfo, WorkflowServerError
 from ctaops.cli.config import AppConfig
 from ctaops.cli.context import AppContext
 from ctaops.cli.main import run as cli_run
+from typing_extensions import override
 
 
 class _FakeResponse:
@@ -22,11 +26,19 @@ class _FakeResponse:
 
 
 @pytest.fixture
-def mock_send_wf_event(monkeypatch):
+def mock_send_wf_event(monkeypatch: pytest.MonkeyPatch):
     """Fixture to mock WorkflowRpcClient._send_wf_event and capture call arguments."""
     captured = {}
 
-    def fake_send_wf_event(self, event_type, user_group, instance, transport, file_metadata, workflow_options=None):
+    def fake_send_wf_event(
+        self: WorkflowRpcClient,
+        event_type: cta_eos_pb2.Workflow.EventType,
+        user_group: tuple[str, str],
+        instance: cta_common_pb2.Service,
+        transport: cta_eos_pb2.Transport,
+        file_metadata: cta_eos_pb2.Metadata,
+        workflow_options: Optional[dict[str, Any]] = None,
+    ):
         captured["event_type"] = event_type
         captured["transport"] = transport
         captured["instance"] = instance
@@ -73,7 +85,7 @@ def test_info_pb_opts():
     assert metadata.owner.gid == 1001
 
 
-def test_archive_explicit(mock_send_wf_event):
+def test_archive_explicit(mock_send_wf_event: dict[str, Any]):
     """Archive RPC payloads should carry the explicit transport URLs through to the protobuf request."""
     cfg = WorkflowConfig(disk_buffer_mode="eos-test", disk_endpoint="eos.example", frontend_endpoint="frontend:10956")
     client = WorkflowRpcClient(workflow_cfg=cfg)
@@ -99,20 +111,20 @@ def test_archive_explicit(mock_send_wf_event):
     assert captured["file_metadata"].archive_file_id == 777
 
 
-def test_archive_lookup(mock_send_wf_event, monkeypatch):
+def test_archive_lookup(mock_send_wf_event: dict[str, Any], monkeypatch: pytest.MonkeyPatch):
     """Archive transport URLs should fallback to the default when explicit values are not supplied."""
     cfg = WorkflowConfig(disk_buffer_mode="eos-test", disk_endpoint="eos.example", frontend_endpoint="frontend:10956")
     client = WorkflowRpcClient(workflow_cfg=cfg)
     captured = mock_send_wf_event
 
-    def fake_disk_buffer_config_lookup(key, workflow_cfg, file_info):
+    def fake_disk_buffer_config_lookup(key: str, workflow_cfg: WorkflowConfig, file_info: WorkflowFileInfo):
         return {
             "service_url": "http://disk-service",
             "archive_report_url": "root://archive-success",
             "archive_error_report_url": "root://archive-error",
         }[key]
 
-    monkeypatch.setattr(workflow_api, "_get_disk_buffer_mode_url", fake_disk_buffer_config_lookup)
+    monkeypatch.setattr(workflow_api, "get_disk_buffer_mode_url", fake_disk_buffer_config_lookup)
 
     file_info = WorkflowFileInfo(archive_file_id="777", id=99, path="/to/file", size=42, uid="1001", gid="1002")
     outcome = client.send_archive_event(
@@ -127,17 +139,17 @@ def test_archive_lookup(mock_send_wf_event, monkeypatch):
     assert captured["transport"].error_report_url == "root://archive-error"
 
 
-def test_prepare_missing_dst(monkeypatch):
+def test_prepare_missing_dst(monkeypatch: pytest.MonkeyPatch):
     """Prepare should raise when it cannot derive a destination URL for the transport."""
     cfg = WorkflowConfig(disk_buffer_mode=None, disk_endpoint="eos.example", frontend_endpoint="frontend:10956")
     client = WorkflowRpcClient(workflow_cfg=cfg)
 
-    def fake_disk_buffer_config_lookup(_key, _workflow_cfg, _file_info):
+    def fake_disk_buffer_config_lookup(_key: str, _workflow_cfg: WorkflowConfig, _file_info: WorkflowFileInfo):
         return None
 
-    monkeypatch.setattr(workflow_api, "_get_disk_buffer_mode_url", fake_disk_buffer_config_lookup)
+    monkeypatch.setattr(workflow_api, "get_disk_buffer_mode_url", fake_disk_buffer_config_lookup)
 
-    file_info = WorkflowFileInfo(archive_file_id="555", id=11, path="/tmp/file")
+    file_info = WorkflowFileInfo(archive_file_id="555", id=11, path="/data/file")
 
     with pytest.raises(WorkflowConfigError, match="Destination URL for prepare event"):
         client.send_prepare_event(
@@ -149,22 +161,22 @@ def test_prepare_missing_dst(monkeypatch):
         )
 
 
-def test_prepare_flags(mock_send_wf_event, monkeypatch):
+def test_prepare_flags(mock_send_wf_event: dict[str, Any], monkeypatch: pytest.MonkeyPatch):
     """Prepare-only options should be forwarded into the workflow options dict."""
     cfg = WorkflowConfig(disk_buffer_mode=None, disk_endpoint="eos.example", frontend_endpoint="frontend:10956")
     client = WorkflowRpcClient(workflow_cfg=cfg)
     captured = mock_send_wf_event
 
-    def fake_lookup(key, workflow_cfg, file_info):
+    def fake_lookup(key: str, workflow_cfg: WorkflowConfig, file_info: WorkflowFileInfo):
         return {
             "service_url": "http://svc",
             "prepare_dest_url": "root://prepare-dest",
             "prepare_error_report_url": "root://prepare-error",
         }[key]
 
-    monkeypatch.setattr(workflow_api, "_get_disk_buffer_mode_url", fake_lookup)
+    monkeypatch.setattr(workflow_api, "get_disk_buffer_mode_url", fake_lookup)
 
-    file_info = WorkflowFileInfo(archive_file_id="555", id=11, path="/tmp/file")
+    file_info = WorkflowFileInfo(archive_file_id="555", id=11, path="/data/file")
     outcome = client.send_prepare_event(
         file_info,
         "volume-001",
@@ -180,7 +192,7 @@ def test_prepare_flags(mock_send_wf_event, monkeypatch):
     assert captured["transport"].error_report_url == "root://prepare-error"
 
 
-def test_abort_contract(mock_send_wf_event):
+def test_abort_contract(mock_send_wf_event: dict[str, Any]):
     """Abort requests should keep the object-store id inside the metadata payload."""
     cfg = WorkflowConfig(disk_buffer_mode=None, disk_endpoint="eos.example", frontend_endpoint="frontend:10956")
     client = WorkflowRpcClient(workflow_cfg=cfg)
@@ -194,7 +206,7 @@ def test_abort_contract(mock_send_wf_event):
     assert captured["metadata"].archive_file_id == 901
 
 
-def test_disk_buffer_mode_eos_test(mock_send_wf_event, monkeypatch):
+def test_disk_buffer_mode_eos_test(mock_send_wf_event: dict[str, Any], monkeypatch: pytest.MonkeyPatch):
     """Disk buffer mode 'eos-test' should resolve URLs correctly."""
     cfg = WorkflowConfig(
         disk_buffer_mode="eos-test",
@@ -220,7 +232,7 @@ def test_disk_buffer_mode_eos_test(mock_send_wf_event, monkeypatch):
     assert "mgm.event=sync::archive_failed" in captured["transport"].error_report_url
 
 
-def test_timeout_configuration(monkeypatch):
+def test_timeout_configuration(monkeypatch: pytest.MonkeyPatch):
     """Timeout should be correctly passed to the gRPC with_call method."""
     custom_timeout = 42
     cfg = WorkflowConfig(
@@ -235,7 +247,12 @@ def test_timeout_configuration(monkeypatch):
 
     # Mock the gRPC stub with all RPC methods
     class FakeRpcMethod:
-        def with_call(self, request, metadata=None, timeout=None):
+        def with_call(
+            self,
+            request: cta_frontend_pb2.Request,
+            metadata: Optional[list[tuple[str, str]]] = None,
+            timeout: Optional[float] = None,
+        ):
             captured_call_args["timeout"] = timeout
             return (_FakeResponse(), None)
 
@@ -246,17 +263,17 @@ def test_timeout_configuration(monkeypatch):
         CancelRetrieve = FakeRpcMethod()
         Delete = FakeRpcMethod()
 
-    def fake_build_channel(workflow_cfg):
+    def fake_build_channel(workflow_cfg: WorkflowConfig):
         class FakeChannel:
             def __enter__(self):
                 return self
 
-            def __exit__(self, *args):
+            def __exit__(self, *args: Any):
                 pass
 
         return FakeChannel()
 
-    def fake_grpc_stub(channel):
+    def fake_grpc_stub(channel: object):
         return FakeStub()
 
     monkeypatch.setattr("cta.sdk.client.grpc.protobuf_api.build_channel", fake_build_channel)
@@ -271,24 +288,21 @@ def test_timeout_configuration(monkeypatch):
     assert captured_call_args["timeout"] == custom_timeout
 
 
-def test_create_suppresses_submission_message_raw(monkeypatch, capsys):
+def test_create_suppresses_submission_message_raw(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     """Verify create does not print submission messages when format is raw."""
 
     class FakeClient(WorkflowRpcClient):
         def __init__(self):
-            self.last_response = type(
-                "Response", (), {"type": cta_frontend_pb2.Response.RSP_SUCCESS, "message_txt": "OK"}
-            )  # type: ignore
+            self.last_response = cta_frontend_pb2.Response(type=cta_frontend_pb2.Response.RSP_SUCCESS, message_txt="OK")
 
-        def send_create_event(self, *args, **kwargs):
-            self.last_response = type(
-                "Response", (), {"type": cta_frontend_pb2.Response.RSP_SUCCESS, "message_txt": "OK"}
-            )  # type: ignore
+        @override
+        def send_create_event(self, *args: Any, **kwargs: Any):
+            self.last_response = cta_frontend_pb2.Response(type=cta_frontend_pb2.Response.RSP_SUCCESS, message_txt="OK")
             return ("RSP_SUCCESS", "OK")
 
     obj = AppContext(
         config=AppConfig(),
-        cta_client=object(),  # type: ignore
+        cta_client=MagicMock(spec=CtaClient),
         workflow_client=FakeClient(),
         workflow_cmd_opts={"user": "user", "group": "group"},
     )
@@ -320,24 +334,21 @@ def test_create_suppresses_submission_message_raw(monkeypatch, capsys):
     assert "WFE event CREATE submitted" not in result.output
 
 
-def test_create_suppresses_submission_message_json(monkeypatch, capsys):
+def test_create_suppresses_submission_message_json(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]):
     """Verify create does not print submission messages when format is json."""
 
     class FakeClient(WorkflowRpcClient):
         def __init__(self):
-            self.last_response = type(
-                "Response", (), {"type": cta_frontend_pb2.Response.RSP_SUCCESS, "message_txt": "OK"}
-            )  # type: ignore
+            self.last_response = cta_frontend_pb2.Response(type=cta_frontend_pb2.Response.RSP_SUCCESS, message_txt="OK")
 
-        def send_create_event(self, *args, **kwargs):
-            self.last_response = type(
-                "Response", (), {"type": cta_frontend_pb2.Response.RSP_SUCCESS, "message_txt": "OK"}
-            )  # type: ignore
+        @override
+        def send_create_event(self, *args: Any, **kwargs: Any):
+            self.last_response = cta_frontend_pb2.Response(type=cta_frontend_pb2.Response.RSP_SUCCESS, message_txt="OK")
             return ("RSP_SUCCESS", "OK")
 
     obj = AppContext(
         config=AppConfig(),
-        cta_client=object(),  # type: ignore
+        cta_client=MagicMock(spec=CtaClient),
         workflow_client=FakeClient(),
         workflow_cmd_opts={"user": "user", "group": "group"},
     )
@@ -369,11 +380,11 @@ def test_create_suppresses_submission_message_json(monkeypatch, capsys):
     assert "WFE event CREATE submitted" not in result.output
 
 
-def test_exit_code_server_error(monkeypatch):
+def test_exit_code_server_error(monkeypatch: pytest.MonkeyPatch):
     """Verify workflow server errors map to exit code 1."""
     import ctaops.cli.main as main_mod
 
-    def fake_main(args=None, standalone_mode=False):
+    def fake_main(args: Optional[list[str]] = None, standalone_mode: bool = False):
         raise WorkflowServerError("server rejected request")
 
     monkeypatch.setattr(main_mod.ctaops, "main", fake_main)
@@ -384,11 +395,11 @@ def test_exit_code_server_error(monkeypatch):
     assert excinfo.value.code == 1
 
 
-def test_exit_code_rpc_failure(monkeypatch):
+def test_exit_code_rpc_failure(monkeypatch: pytest.MonkeyPatch):
     """Verify workflow RPC failures map to exit code 2."""
     import ctaops.cli.main as main_mod
 
-    def fake_main(args=None, standalone_mode=False):
+    def fake_main(args: Optional[list[str]] = None, standalone_mode: bool = False):
         raise WorkflowRpcError("rpc failure")
 
     monkeypatch.setattr(main_mod.ctaops, "main", fake_main)

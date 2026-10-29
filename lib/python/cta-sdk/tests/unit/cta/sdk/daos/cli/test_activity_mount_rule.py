@@ -100,7 +100,7 @@ class TestActivityMountRuleDaoCli:
         )
 
     @pytest.mark.parametrize("mock_wrapper", [{"stdout": slice(None)}], indirect=True)
-    def test_get_command(self, ref_obj):
+    def test_get_command(self, ref_obj: ActivityMountRule):
         return_obj = self.manager.get("ctaops", "eosctaatlaspps", r"^Julien is Staging$")
         self.mock_run.assert_called_once_with(["cta-admin", "--jsonl", "activitymountrule", "ls"])
         assert asdict(return_obj) == asdict(ref_obj)

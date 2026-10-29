@@ -8,7 +8,9 @@ are requests that encountered errors during processing. Failed requests can be q
 by type, tape pool, volume, and deletion status, with optional error log retrieval.
 """
 
-from typing import Iterator, List, Optional, Protocol
+import builtins
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import FailedRequest, FailedRequestSummary, MountType
 
@@ -53,7 +55,7 @@ class FailedRequestDao(Protocol):
         """
         ...
 
-    def summary(self) -> List[FailedRequestSummary]:
+    def summary(self) -> builtins.list[FailedRequestSummary]:
         """Retrieve a summary of failed requests.
 
         Returns:

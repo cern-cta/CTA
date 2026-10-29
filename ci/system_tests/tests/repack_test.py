@@ -13,7 +13,6 @@ import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig
-
 from system_tests.helpers.utils import Timeout
 
 Fixture = Annotated

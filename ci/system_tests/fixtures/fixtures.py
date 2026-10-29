@@ -12,7 +12,6 @@ from typing import Any, Optional
 
 import pytest
 from _pytest.fixtures import SubRequest
-
 from system_tests.helpers.hosts import (
     CtaAdminApiHost,
     CtaCliHost,
@@ -20,8 +19,8 @@ from system_tests.helpers.hosts import (
     CtaRmcdHost,
     CtaTapedHost,
     CtaWorkflowApiHost,
-    DCacheHost,
     DCacheClientHost,
+    DCacheHost,
     DiskClientHost,
     DiskInstanceHost,
     EosClientHost,

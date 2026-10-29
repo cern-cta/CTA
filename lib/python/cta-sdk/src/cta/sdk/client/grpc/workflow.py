@@ -3,14 +3,14 @@
 
 import typing as t
 
-from cta.sdk.client.grpc.disk_buffer_configs import _get_disk_buffer_mode_url
+from cta.sdk.client.grpc.disk_buffer_configs import get_disk_buffer_mode_url
 from cta.sdk.client.grpc.exceptions import WorkflowConfigError
 from cta.sdk.client.grpc.models import WorkflowFileInfo
 from cta.sdk.client.grpc.protobuf_api import (
     ProtobufRpcClient,
-    _call_rpc_with_error_handling,
     build_channel,
     build_metadata,
+    call_rpc_with_error_handling,
     file_info_to_pb_options,
 )
 from cta.sdk.client.grpc.protobuf_generated import cta_common_pb2, cta_eos_pb2, cta_frontend_pb2, cta_frontend_pb2_grpc
@@ -22,16 +22,17 @@ class WorkflowRpcClient(ProtobufRpcClient):
     def _send_wf_event(
         self,
         event_type: cta_eos_pb2.Workflow.EventType,
-        user_group: t.Tuple[str, str],
+        user_group: tuple[str, str],
         instance: cta_common_pb2.Service,
         transport: cta_eos_pb2.Transport,
         file_metadata: cta_eos_pb2.Metadata,
         *,
-        workflow_options: t.Optional[dict] = None,
+        workflow_options: t.Optional[dict[str, t.Any]] = None,
     ):
-        """Helper method to send a workflow event to the CTA gRPC frontend service.
-        Selects the appropriate RPC method based on the event type and handles the request/response."""
+        """Send a workflow event to the CTA gRPC frontend service.
 
+        Selects the appropriate RPC method based on the event type and handles the request/response.
+        """
         if not workflow_options:
             workflow_options = {}
 
@@ -53,7 +54,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
         with build_channel(self.workflow_cfg) as channel:
             stub = cta_frontend_pb2_grpc.CtaRpcStub(channel)
-            response = _call_rpc_with_error_handling(
+            response = call_rpc_with_error_handling(
                 {
                     cta_eos_pb2.Workflow.CREATE: stub.Create,
                     cta_eos_pb2.Workflow.CLOSEW: stub.Archive,
@@ -74,7 +75,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
         self,
         file_info: "WorkflowFileInfo",
         storage_class: str,
-        user_group: t.Tuple[str, str],
+        user_group: tuple[str, str],
     ) -> tuple[str, str]:
         transport = cta_eos_pb2.Transport()
         instance = cta_common_pb2.Service(
@@ -89,16 +90,15 @@ class WorkflowRpcClient(ProtobufRpcClient):
         self,
         file_info: "WorkflowFileInfo",
         storage_class: str,
-        user_group: t.Tuple[str, str],
+        user_group: tuple[str, str],
         *,
         service_url: t.Optional[str] = None,
         report_url: t.Optional[str] = None,
         error_report_url: t.Optional[str] = None,
     ) -> tuple[str, str]:
         """Invoke the EOS event on the WFE frontend."""
-
-        report_url = report_url or _get_disk_buffer_mode_url("archive_report_url", self.workflow_cfg, file_info)
-        error_report_url = error_report_url or _get_disk_buffer_mode_url(
+        report_url = report_url or get_disk_buffer_mode_url("archive_report_url", self.workflow_cfg, file_info)
+        error_report_url = error_report_url or get_disk_buffer_mode_url(
             "archive_error_report_url", self.workflow_cfg, file_info
         )
 
@@ -109,7 +109,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
         instance = cta_common_pb2.Service(
             name=self.workflow_cfg.disk_instance,
-            url=service_url or _get_disk_buffer_mode_url("service_url", self.workflow_cfg, file_info),
+            url=service_url or get_disk_buffer_mode_url("service_url", self.workflow_cfg, file_info),
         )
 
         file_metadata = cta_eos_pb2.Metadata(
@@ -124,24 +124,23 @@ class WorkflowRpcClient(ProtobufRpcClient):
         file_info: "WorkflowFileInfo",
         vid: t.Optional[str],
         verify_only: bool,
-        user_group: t.Tuple[str, str],
+        user_group: tuple[str, str],
         *,
         service_url: t.Optional[str] = None,
         dst_url: t.Optional[str] = None,
         error_report_url: t.Optional[str] = None,
     ) -> tuple[str, str]:
         """Invoke the EOS event on the WFE frontend."""
-
         workflow_options = {}
 
-        dst_url = dst_url or _get_disk_buffer_mode_url("prepare_dest_url", self.workflow_cfg, file_info)
+        dst_url = dst_url or get_disk_buffer_mode_url("prepare_dest_url", self.workflow_cfg, file_info)
 
         if not dst_url:
             raise WorkflowConfigError(
                 "Destination URL for prepare event is not provided and cannot be determined from disk buffer mode."
             )
 
-        error_report_url = error_report_url or _get_disk_buffer_mode_url(
+        error_report_url = error_report_url or get_disk_buffer_mode_url(
             "prepare_error_report_url", self.workflow_cfg, file_info
         )
         transport = cta_eos_pb2.Transport(
@@ -151,7 +150,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
         instance = cta_common_pb2.Service(
             name=self.workflow_cfg.disk_instance,
-            url=service_url or _get_disk_buffer_mode_url("service_url", self.workflow_cfg, file_info),
+            url=service_url or get_disk_buffer_mode_url("service_url", self.workflow_cfg, file_info),
         )
 
         if verify_only:
@@ -175,7 +174,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
         self,
         file_info: "WorkflowFileInfo",
         object_store_id: str,
-        user_group: t.Tuple[str, str],
+        user_group: tuple[str, str],
     ) -> tuple[str, str]:
         transport = cta_eos_pb2.Transport()
         instance = cta_common_pb2.Service(name=self.workflow_cfg.disk_instance)
@@ -187,7 +186,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
     def send_delete_event(
         self,
         file_info: "WorkflowFileInfo",
-        user_group: t.Tuple[str, str],
+        user_group: tuple[str, str],
     ) -> tuple[str, str]:
         transport = cta_eos_pb2.Transport()
         instance = cta_common_pb2.Service(name=self.workflow_cfg.disk_instance)

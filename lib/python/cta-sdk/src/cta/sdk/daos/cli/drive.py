@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import FLAG, CtaCliWrapper
 from cta.sdk.daos.protocols import DriveDao
@@ -15,6 +16,7 @@ from cta.sdk.models import (
     TapeSession,
     TapeSessionState,
 )
+from typing_extensions import override
 
 
 class DriveDaoCli(DriveDao):
@@ -26,7 +28,7 @@ class DriveDaoCli(DriveDao):
         return "drive"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> Drive:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> Drive:
         drive = Drive(
             name=raw_data["driveName"],
             logical_library_name=raw_data["logicalLibrary"],
@@ -69,28 +71,34 @@ class DriveDaoCli(DriveDao):
 
         return drive
 
+    @override
     def get(self, name: str, /) -> Drive:
         return self.raw_data_to_resource(self._wrapper.get(self.resource_type, name))
 
+    @override
     def list(self, /, *, all: bool = False) -> Iterator[Drive]:
         yield from (
             self.raw_data_to_resource(raw_item)
             for raw_item in self._wrapper.list(self.resource_type, {"all": FLAG} if all else {})
         )
 
+    @override
     def delete(self, name: str, /, *, force: bool = False) -> None:
         self._wrapper.delete(self.resource_type, name, {"force": FLAG} if force else {})
 
+    @override
     def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
         data = {}
         data |= {} if comment is None else {"comment": comment}
         self._wrapper.update(self.resource_type, name, data)
 
+    @override
     def down(self, name: str, /, *, reason: str, force: bool = False) -> None:
         data = {"reason": reason}
         data |= {"force": FLAG} if force else {}
         self._wrapper.put_down(self.resource_type, name, data)
 
+    @override
     def up(self, name: str, /, *, reason: Optional[str] = None) -> None:
         data = {}
         data |= {} if reason is None else {"reason": reason}

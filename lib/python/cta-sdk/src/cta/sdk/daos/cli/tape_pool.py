@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterable, Iterator
 from datetime import datetime, timezone
-from typing import Iterable, Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import TapePoolDao
 from cta.sdk.models import Metadata, TapePool, TapePoolStatistics
+from typing_extensions import override
 
 
 class TapePoolDaoCli(TapePoolDao):
@@ -18,7 +20,7 @@ class TapePoolDaoCli(TapePoolDao):
         return "tapepool"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> TapePool:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> TapePool:
         return TapePool(
             raw_data["name"],
             virtual_organisation_name=raw_data["vo"],
@@ -42,9 +44,11 @@ class TapePoolDaoCli(TapePoolDao):
             ),
         )
 
+    @override
     def get(self, name: str, /) -> TapePool:
         return self.raw_data_to_resource(self._wrapper.get(self.resource_type, {"name": name}))
 
+    @override
     def list(
         self,
         /,
@@ -60,9 +64,11 @@ class TapePoolDaoCli(TapePoolDao):
             self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, filters=filters)
         )
 
+    @override
     def delete(self, name: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name})
 
+    @override
     def create(
         self,
         name: str,
@@ -89,6 +95,7 @@ class TapePoolDaoCli(TapePoolDao):
             data=data,
         )
 
+    @override
     def update(
         self,
         name: str,
@@ -113,6 +120,7 @@ class TapePoolDaoCli(TapePoolDao):
             data=data,
         )
 
+    @override
     def remove_encryption(self, name: str, /) -> None:
         self._wrapper.update(
             self.resource_type,
@@ -122,6 +130,7 @@ class TapePoolDaoCli(TapePoolDao):
             data={"encryptionkeyname": ""},
         )
 
+    @override
     def set_encryption_key_name(self, name: str, /, *, encryption_key_name: str) -> None:
         self._wrapper.update(
             self.resource_type,

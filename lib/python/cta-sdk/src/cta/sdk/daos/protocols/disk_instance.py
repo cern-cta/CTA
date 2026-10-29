@@ -8,7 +8,8 @@ systems used as buffer space for staging files to and from tape. Disk instances 
 physical or virtual storage infrastructure endpoints.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import DiskInstance
 

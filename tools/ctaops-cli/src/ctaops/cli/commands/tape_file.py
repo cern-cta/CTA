@@ -5,16 +5,15 @@ from pathlib import Path
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["tf"])
 def tape_file():
-    """Manage CTA Tapes Files"""
+    """Manage CTA Tapes Files."""
 
 
 @tape_file.command("list", aliases=["ls"])
@@ -34,8 +33,7 @@ def list_command(
     archive_id: Optional[int],
     fid_file: Optional[str],
 ):
-    """List CTA tape files"""
-
+    """List CTA tape files."""
     if fid_file and not disk_instance:
         raise click.UsageError("--disk-instance is required when using --fid-file")
 
@@ -69,7 +67,7 @@ def list_command(
 @click.option("--archive-id", "-I", type=click.INT, required=True)
 @click.pass_obj
 def get(obj: AppContext, vid: str, archive_id: int):
-    """List CTA tape files"""
+    """List CTA tape files."""
     print_dataclasses(obj.cta_client.tape_file.get(archive_id, vid=vid), display_config=obj.config.display)
 
 
@@ -88,7 +86,7 @@ def delete(
     archive_id: Optional[int],
     reason: str,
 ):
-    """Remove CTA tape files located on a tape"""
+    """Remove CTA tape files located on a tape."""
     if bool(disk_instance) != (bool(disk_file_id)):
         raise click.UsageError("--disk-instance and --disk-file-id/--fxid are mutually needed")
 

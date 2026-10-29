@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import GroupMountRuleDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import GroupMountRule, Metadata
+from typing_extensions import override
 
 
 class GroupMountRuleDaoCli(GroupMountRuleDao):
@@ -19,7 +21,7 @@ class GroupMountRuleDaoCli(GroupMountRuleDao):
         return "groupmountrule"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> GroupMountRule:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> GroupMountRule:
         return GroupMountRule(
             group_name=raw_data["groupMountRule"],
             disk_instance_name=raw_data["diskInstance"],
@@ -35,8 +37,9 @@ class GroupMountRuleDaoCli(GroupMountRuleDao):
             ),
         )
 
+    @override
     def get(self, name: str, disk_instance: str, /) -> GroupMountRule:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_gmr = next(
                 raw_item
@@ -49,12 +52,15 @@ class GroupMountRuleDaoCli(GroupMountRuleDao):
             ) from e
         return self.raw_data_to_resource(raw_gmr)
 
+    @override
     def list(self) -> Iterator[GroupMountRule]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, disk_instance: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name, "instance": disk_instance})
 
+    @override
     def create(
         self,
         name: str,
@@ -73,6 +79,7 @@ class GroupMountRuleDaoCli(GroupMountRuleDao):
             data={"mountpolicy": mount_policy_name, "comment": comment},
         )
 
+    @override
     def update(
         self,
         name: str,

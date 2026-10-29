@@ -8,7 +8,8 @@ hardware installations that house tape cartridges and drives. Physical libraries
 physical storage slots for cartridges and drive slots for tape drives.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import PhysicalLibrary, PhysicalLibraryState
 

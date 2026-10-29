@@ -111,6 +111,7 @@ select = [
     'E',      # pycodestyle (errors)
     'W',      # pycodestyle (warnings)
     'F',      # pyflakes
+    'I',      # isort (import sorting)
     'N',      # pep8-naming
     'Q',      # flake8-quotes
     'RUF',    # ruff
@@ -197,55 +198,3 @@ reportUnknownMemberType = "none"
 reportUnknownParameterType = "none"
 reportUnknownArgumentType = "none"
 reportMissingTypeStubs = "none"
-
-# Imported packages have not yet adopted CTA's additional generic/override rules.
-[[tool.pyright.executionEnvironments]]
-root = "lib/python"
-reportMissingTypeArgument = "none"
-reportImplicitOverride = "none"
-reportMissingParameterType = "none"
-reportUnknownLambdaType = "none"
-reportUnnecessaryIsInstance = "none"
-reportUnnecessaryComparison = "none"
-reportUnusedImport = "none"
-reportUnusedVariable = "none"
-reportUnusedFunction = "none"
-reportPrivateUsage = "none"
-reportUnnecessaryCast = "none"
-reportUnusedClass = "none"
-reportIncompatibleMethodOverride = "none"
-reportPossiblyUnboundVariable = "none"
-
-[[tool.pyright.executionEnvironments]]
-root = "tools/ctaops-cli"
-reportMissingTypeArgument = "none"
-reportImplicitOverride = "none"
-reportMissingParameterType = "none"
-reportUnknownLambdaType = "none"
-reportUnnecessaryIsInstance = "none"
-reportUnnecessaryComparison = "none"
-reportUnusedImport = "none"
-reportUnusedVariable = "none"
-reportUnusedFunction = "none"
-reportPrivateUsage = "none"
-reportUnnecessaryCast = "none"
-reportUnusedClass = "none"
-reportIncompatibleMethodOverride = "none"
-reportPossiblyUnboundVariable = "none"
-
-[[tool.pyright.executionEnvironments]]
-root = "tools/ctaops-udev"
-reportMissingTypeArgument = "none"
-reportImplicitOverride = "none"
-reportMissingParameterType = "none"
-reportUnknownLambdaType = "none"
-reportUnnecessaryIsInstance = "none"
-reportUnnecessaryComparison = "none"
-reportUnusedImport = "none"
-reportUnusedVariable = "none"
-reportUnusedFunction = "none"
-reportPrivateUsage = "none"
-reportUnnecessaryCast = "none"
-reportUnusedClass = "none"
-reportIncompatibleMethodOverride = "none"
-reportPossiblyUnboundVariable = "none"

@@ -70,7 +70,14 @@ class TestFailedRequestDaoCli:
         "mock_wrapper",
         [
             {
-                "stdout": '{"requestType":"ARCHIVE_REQUEST","totalFiles":"0","totalSize":"0","schedulerBackendName":"cephUser","instanceName":"preproduction"}\n{"requestType":"RETRIEVE_REQUEST","totalFiles":"51998","totalSize":"53241839472","schedulerBackendName":"cephUser","instanceName":"preproduction"}\n{"requestType":"TOTAL","totalFiles":"51998","totalSize":"53241839472","schedulerBackendName":"cephUser","instanceName":"preproduction"}\n'
+                "stdout": (
+                    '{"requestType":"ARCHIVE_REQUEST","totalFiles":"0","totalSize":"0","schedule'
+                    'rBackendName":"cephUser","instanceName":"preproduction"}\n{"requestType":"RE'
+                    'TRIEVE_REQUEST","totalFiles":"51998","totalSize":"53241839472","schedulerBa'
+                    'ckendName":"cephUser","instanceName":"preproduction"}\n{"requestType":"TOTAL'
+                    '","totalFiles":"51998","totalSize":"53241839472","schedulerBackendName":"ce'
+                    'phUser","instanceName":"preproduction"}\n'
+                )
             }
         ],
         indirect=True,
@@ -81,7 +88,7 @@ class TestFailedRequestDaoCli:
         assert asdict(return_obj[0]) == asdict(FailedRequestSummary(MountType.ARCHIVE, 0, 0, "cephUser"))
 
     @pytest.mark.parametrize("mock_wrapper", [{"stdout": slice(None)}], indirect=True)
-    def test_list_command(self, ref_obj):
+    def test_list_command(self, ref_obj: FailedRequest):
         return_objs = list(self.manager.list(type=MountType.RETRIEVE, logs=True))
         self.mock_stream_run.assert_called_once_with(
             ["cta-admin", "--jsonl", "failedrequest", "ls", "--justretrieve", "--log"]

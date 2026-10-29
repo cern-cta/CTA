@@ -8,7 +8,8 @@ are mounted for individual users on specific disk instances. User mount rules ap
 policies to control tape access behavior on a per-user basis.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import UserMountRule
 

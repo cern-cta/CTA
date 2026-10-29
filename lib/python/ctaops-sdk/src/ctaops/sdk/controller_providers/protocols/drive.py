@@ -18,9 +18,10 @@ from ctaops.sdk.controllers.protocols.drive import DriveController
 
 
 class DriveControllerProvider(Protocol):
-    """Locate
-    [DriveController][ctaops.sdk.controllers.protocols.drive.DriveController]
-    instances by SCSI serial or logical name."""
+    """Locate controllers by SCSI serial or logical name.
+
+    Return [DriveController][ctaops.sdk.controllers.protocols.drive.DriveController] instances.
+    """
 
     def get_drive_controller(
         self,

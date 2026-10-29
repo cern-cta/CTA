@@ -5,17 +5,16 @@ from datetime import timedelta
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.click_extension.custom_types import DurationType
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["mp"])
 def mount_policy():
-    """Manage CTA Mount Policies"""
+    """Manage CTA Mount Policies."""
 
 
 @mount_policy.command(aliases=["add"])
@@ -35,7 +34,7 @@ def create(
     min_retrieve_request_age: timedelta,
     comment: str,
 ):
-    """Create CTA mount policy"""
+    """Create CTA mount policy."""
     obj.cta_client.mount_policy.create(
         name,
         archive_priority=archive_priority,
@@ -64,7 +63,7 @@ def update(
     min_retrieve_request_age: Optional[timedelta],
     comment: Optional[str],
 ):
-    """Update CTA mount policy"""
+    """Update CTA mount policy."""
     obj.cta_client.mount_policy.update(
         name,
         archive_priority=archive_priority,
@@ -79,7 +78,7 @@ def update(
 @mount_policy.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List mount policies registered in CTA"""
+    """List mount policies registered in CTA."""
     print_dataclasses(obj.cta_client.mount_policy.list(), display_config=obj.config.display)
 
 
@@ -87,7 +86,7 @@ def list_command(obj: AppContext):
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get mount policy registered in CTA"""
+    """Get mount policy registered in CTA."""
     print_dataclasses(obj.cta_client.mount_policy.get(name), display_config=obj.config.display)
 
 
@@ -95,6 +94,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove CTA mount policy"""
+    """Remove CTA mount policy."""
     obj.cta_client.mount_policy.delete(name)
     print(f"MountPolicy({name}) DELETED")

@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any, Callable
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import TapeFileDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import TapeFile
+from typing_extensions import override
 
 
 def file_identity(*args: Any) -> tuple[Callable[[TapeFile], bool], dict[str, Any]]:
@@ -49,10 +51,12 @@ class TapeFileDaoFile(TapeFileDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def get_all_copies(self, *args: Any, **kwargs: Any) -> tuple[TapeFile, ...]:
         matches, _ = file_identity(*args, **kwargs)
         return tuple(tape_file for tape_file in self._handler.iter(self.resource_type) if matches(tape_file))
 
+    @override
     def get(self, *args: Any, vid: str) -> TapeFile:
         matches, identity = file_identity(*args)
         try:
@@ -66,6 +70,7 @@ class TapeFileDaoFile(TapeFileDao):
                 self._handler.class_to_dir_name(self.resource_type), {**identity, "vid": vid}
             ) from e
 
+    @override
     def list(self, **kwargs: Any) -> Iterator[TapeFile]:
         if "vid" in kwargs:
             vid = kwargs["vid"]
@@ -82,6 +87,7 @@ class TapeFileDaoFile(TapeFileDao):
         else:
             raise TypeError(f"Expected 'vid' or ('fids_file', 'disk_instance_name'), got {sorted(kwargs)}")
 
+    @override
     def delete(self, *args: Any, vid: str, reason: str) -> None:
         copies = self.get_all_copies(*args)
         if len(copies) == 0:

@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
-from typing import Iterator, Optional, Union
+from typing import Any, Optional, Union
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import DiskSystemDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import DiskSystem, Metadata
+from typing_extensions import override
 
 
 class DiskSystemDaoCli(DiskSystemDao):
@@ -19,7 +21,7 @@ class DiskSystemDaoCli(DiskSystemDao):
         return "disksystem"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> DiskSystem:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> DiskSystem:
         return DiskSystem(
             raw_data["name"],
             disk_instance_name=raw_data["diskInstance"],
@@ -38,21 +40,24 @@ class DiskSystemDaoCli(DiskSystemDao):
             ),
         )
 
+    @override
     def get(self, name: str, /) -> DiskSystem:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
-
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_ds = next(raw_item for raw_item in self._wrapper.list(self.resource_type) if raw_item["name"] == name)
         except StopIteration as e:
             raise ResourceNotFoundError(self.resource_type, {"name": name}) from e
         return self.raw_data_to_resource(raw_ds)
 
+    @override
     def list(self) -> Iterator[DiskSystem]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, /) -> None:
         self._wrapper.delete(self.resource_type, {self.resource_type: name})
 
+    @override
     def create(
         self,
         name: str,
@@ -78,6 +83,7 @@ class DiskSystemDaoCli(DiskSystemDao):
             },
         )
 
+    @override
     def update(
         self,
         name: str,

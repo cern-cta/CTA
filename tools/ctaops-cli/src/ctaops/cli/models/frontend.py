@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-""" """
+"""Models for frontend health checks and availability reports."""
 
 from dataclasses import dataclass
 from ipaddress import IPv4Address, IPv6Address
@@ -29,7 +29,7 @@ class Service:
         if sep and port.isdigit():
             return cls(name, int(port))
         if default_port is None:
-            raise ValueError("no port given for service %r (use name:port or --port)" % spec)
+            raise ValueError(f"no port given for service {spec!r} (use name:port or --port)")
         return cls(spec, default_port)
 
     def labels(self) -> Labels:
@@ -49,7 +49,7 @@ class Backend:
 
     @property
     def target(self) -> str:
-        """gRPC target pointing at this exact address."""
+        """GRPC target pointing at this exact address."""
         host = f"[{self.address}]" if self.address.version == 6 else str(self.address)
         return f"{self.family}:{host}:{self.service.port}"
 

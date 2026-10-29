@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Annotated, Final
 
 from cta.sdk.units import Byte
+from typing_extensions import override
 
 from .metadata import Metadata
 
@@ -29,13 +30,16 @@ class MediaType:
     secondary_density_code: int
     metadata: Metadata
 
+    @override
     def __str__(self) -> str:
         return f"MediaType({self.name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, MediaType):
             return False
         return self.name == other.name

@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Final, Literal, Optional
 
 from cta.sdk.units import Byte
+from typing_extensions import override
 
 from .mount_type import MountType
 
@@ -57,10 +58,12 @@ class UserRequest:
     tapes_byte_count: Annotated[int, Byte]
     tapes_capacity: Annotated[int, Byte]
 
+    @override
     def __hash__(self) -> int:
         return hash((self.mount_type, self.tape_pool_name, self.vid))
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, UserRequest):
             return False
         return (
@@ -69,6 +72,7 @@ class UserRequest:
             and self.vid == other.vid
         )
 
+    @override
     def __str__(self):
         return f"UserRequest({self.mount_type},{self.tape_pool_name if self.vid is None else self.vid})"
 
@@ -100,14 +104,15 @@ class UserRequestSummary(ABC):
     """Key than subclasses need to specify"""
 
     def __post_init__(self):
-        """Prevent instantiation of the abstract base class"""
+        """Prevent instantiation of the abstract base class."""
         if type(self) is UserRequestSummary:
             raise TypeError("UserRequestSummary is abstract and cannot be instantiated")
 
     def __init_subclass__(cls) -> None:
         """
-        Self register subclass to be requested from string
-        with [group_by][cta.sdk.models.user_request.UserRequestSummary.group_by] method.
+        Register the subclass for lookup by name.
+
+        Use the [group_by][cta.sdk.models.user_request.UserRequestSummary.group_by] method for lookup.
         """
         super().__init_subclass__()
 
@@ -144,7 +149,7 @@ class UserRequestSummary(ABC):
 
 @dataclass
 class UserRequestSummaryByTapePool(UserRequestSummary):
-    """User Request Summary with "tape_pool_name" as `group_key`"""
+    """User Request Summary with "tape_pool_name" as `group_key`."""
 
     group_key: ClassVar[str] = "tape_pool_name"
     """`tape_pool_name` as grouping key"""

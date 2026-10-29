@@ -4,6 +4,8 @@
 from dataclasses import dataclass
 from typing import Final
 
+from typing_extensions import override
+
 from .metadata import Metadata
 
 
@@ -23,13 +25,16 @@ class UserMountRule:
     mount_policy_name: str
     metadata: Metadata
 
+    @override
     def __str__(self) -> str:
         return f"UserMountRule({self.user_name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.user_name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, UserMountRule):
             return False
         return self.user_name == other.user_name and self.disk_instance_name == other.disk_instance_name

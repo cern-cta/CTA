@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Annotated, Final, NewType, Optional
 
 from cta.sdk.units import FreeText
+from typing_extensions import override
 
 from .tape_session import TapeSession
 
@@ -14,7 +15,7 @@ DriveConfig = NewType("DriveConfig", dict[str, str])
 
 
 class DriveOperatingState(Enum):
-    """Operating State of drive
+    """Operating State of drive.
 
     Attributes:
         UP: Drive available for CTA operation
@@ -76,13 +77,16 @@ class Drive:
     config: DriveConfig
     metadata: DriveMetadata
 
+    @override
     def __str__(self) -> str:
         return f"Drive({self.name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, Drive):
             return False
         return self.name == other.name

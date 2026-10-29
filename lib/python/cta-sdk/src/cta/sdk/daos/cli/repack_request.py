@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
-from typing import Iterator, Literal, Optional
+from typing import Any, Literal, Optional
 
 from cta.sdk.daos.cli._wrapper import FLAG, CtaCliWrapper
 from cta.sdk.daos.protocols import RepackRequestDao
@@ -12,6 +13,7 @@ from cta.sdk.models import (
     RepackState,
     RepackStatistics,
 )
+from typing_extensions import override
 
 
 class RepackRequestDaoCli(RepackRequestDao):
@@ -23,11 +25,11 @@ class RepackRequestDaoCli(RepackRequestDao):
         return "repack"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> RepackRequest:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> RepackRequest:
         return RepackRequest(
             raw_data["vid"],
             tape_pool_name=raw_data["tapepool"],
-            state=RepackState[{"ToExpand": "TO_EXPAND"}.get(raw_data["status"], raw_data["status"].upper())],  # type: ignore
+            state=RepackState["TO_EXPAND" if raw_data["status"] == "ToExpand" else raw_data["status"].upper()],
             failed_file_count=int(raw_data["totalFailedFiles"]),
             disk_buffer_url=raw_data["repackBufferUrl"],
             duration=timedelta(seconds=int(raw_data["repackTime"])),
@@ -64,15 +66,19 @@ class RepackRequestDaoCli(RepackRequestDao):
             ),
         )
 
+    @override
     def get(self, vid: str, /) -> RepackRequest:
         return self.raw_data_to_resource(self._wrapper.get(self.resource_type, {"vid": vid}))
 
+    @override
     def list(self) -> Iterator[RepackRequest]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, vid: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"vid": vid})
 
+    @override
     def create(
         self,
         vid: str,

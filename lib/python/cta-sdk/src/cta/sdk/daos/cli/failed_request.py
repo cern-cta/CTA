@@ -1,12 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import builtins
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, List, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import FLAG, CtaCliWrapper
 from cta.sdk.daos.protocols import FailedRequestDao
 from cta.sdk.models import Checksum, DiskFile, FailedRequest, FailedRequestSummary, MountType, TapeFile
+from typing_extensions import override
 
 
 class FailedRequestDaoCli(FailedRequestDao):
@@ -18,7 +21,7 @@ class FailedRequestDaoCli(FailedRequestDao):
         return "failedrequest"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> FailedRequest:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> FailedRequest:
         return FailedRequest(
             id=raw_data["objectId"],
             mount_type=(MountType.RETRIEVE if raw_data["requestType"].startswith("RETRIEVE") else MountType.ARCHIVE),
@@ -49,6 +52,7 @@ class FailedRequestDaoCli(FailedRequestDao):
             logs="\n".join(raw_data["failurelogs"]),
         )
 
+    @override
     def list(
         self,
         *,
@@ -67,10 +71,12 @@ class FailedRequestDaoCli(FailedRequestDao):
             self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.iter(self.resource_type, filters=filters)
         )
 
+    @override
     def delete(self, id: str) -> None:
         self._wrapper.delete(self.resource_type, {"objectid": id})
 
-    def summary(self) -> List[FailedRequestSummary]:
+    @override
+    def summary(self) -> builtins.list[FailedRequestSummary]:
         return [
             FailedRequestSummary(
                 mount_type=(

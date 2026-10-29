@@ -8,8 +8,9 @@ logical storage areas within a disk instance with independent free space trackin
 and refresh intervals for monitoring available capacity.
 """
 
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Iterator, Optional, Protocol, Union
+from typing import Optional, Protocol, Union
 
 from cta.sdk.models import DiskInstanceSpace
 

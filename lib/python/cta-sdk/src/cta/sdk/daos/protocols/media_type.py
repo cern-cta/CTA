@@ -8,7 +8,8 @@ cartridge specifications including capacity, density codes, and cartridge model 
 Media types define the technical characteristics of tape media that can be used in the system.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import MediaType
 

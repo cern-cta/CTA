@@ -4,15 +4,13 @@
 import socket
 import time
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from ipaddress import ip_address
 from logging import getLogger
 from typing import Literal, Optional
 
 import click
 import grpc
-from ctaops.utils.prometheus import Labels, Value, sample, write_atomic
-from grpc_health.v1 import health_pb2, health_pb2_grpc
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
@@ -26,9 +24,16 @@ from ctaops.cli.models.frontend import (
     ResolvedService,
     Service,
 )
+from ctaops.utils.prometheus import Labels, Value, sample, write_atomic
+from grpc_health.v1 import health_pb2, health_pb2_grpc
 
 LOGGER = getLogger("ctaops.cli")
 FAMILIES: dict[Family, socket.AddressFamily] = {"ipv4": socket.AF_INET, "ipv6": socket.AF_INET6}
+
+
+def select_families(ctx: click.Context, param: click.Parameter, value: Literal["all", "ipv4", "ipv6"]) -> list[Family]:
+    """Expand the all-families option into concrete DNS families."""
+    return list(FAMILIES) if value == "all" else [value]
 
 
 def dns_reverse_lookup(ip: IPAddress) -> str:
@@ -47,10 +52,11 @@ def probe_backend(backend: Backend, ca_credentials: grpc.ChannelCredentials, tim
     start = time.monotonic()
     try:
         with grpc.secure_channel(backend.target, ca_credentials, options=options) as channel:
-            response = health_pb2_grpc.HealthStub(channel).Check(health_pb2.HealthCheckRequest(), timeout=timeout)  # type: ignore
+            # The generated gRPC stub defines Check dynamically in its constructor.
+            response = health_pb2_grpc.HealthStub(channel).Check(health_pb2.HealthCheckRequest(), timeout=timeout)  # pyright: ignore[reportAttributeAccessIssue]
         serving = response.status == health_pb2.HealthCheckResponse.SERVING
     except (OSError, grpc.RpcError) as e:  # OSError covers certificate fetch failures, including ssl.SSLError
-        LOGGER.debug(f"Health check failed for {backend.target}: {e}")
+        LOGGER.debug("Health check failed for %s: %s", backend.target, e)
         serving = False
     duration = time.monotonic() - start
     return ProbeResult(backend=backend, hostname=dns_reverse_lookup(backend.address), up=serving, duration=duration)
@@ -134,7 +140,7 @@ def render(
 
 @click.group(cls=ClickAliasedGroup)
 def frontend():
-    """Manage CTA failed requests"""
+    """Manage CTA failed requests."""
 
 
 @frontend.command()
@@ -148,7 +154,7 @@ def frontend():
     type=click.Choice(["all", *FAMILIES]),
     default="all",
     show_default=True,
-    callback=lambda ctx, param, value: FAMILIES.copy() if value == "all" else [value],
+    callback=select_families,
     help="Address families to probe.",
 )
 @click.option(
@@ -190,8 +196,7 @@ def health_check(
     output_content: Literal["prom-metrics", "availability", "probe"],
     prom_output_file: Optional[str],
 ) -> None:
-    """List CTA failed requests"""
-
+    """List CTA failed requests."""
     if prom_output_file is not None and output_content != "prom-metrics":
         raise click.UsageError("You can't use --prom-output-file if --output-content/-c is not 'prometheus'")
 
@@ -207,9 +212,9 @@ def health_check(
         raise click.BadParameter(str(e), param_hint="--tls-ca-cert") from e
 
     with ThreadPoolExecutor(max_workers=jobs) as pool:
-        resolved_services = list(pool.map(lambda s: resolve_dns(s, families), services))
+        resolved_services = list(pool.map(partial(resolve_dns, families=families), services))
         backends = [b for rs in resolved_services for b in rs.backends]
-        results = list(pool.map(lambda b: probe_backend(b, ca_credentials, timeout), backends))
+        results = list(pool.map(partial(probe_backend, ca_credentials=ca_credentials, timeout=timeout), backends))
 
     availabilities = generate_availabilities(resolved_services, results, families)
     if output_content == "prom-metrics":

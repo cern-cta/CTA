@@ -26,26 +26,25 @@ from datetime import timedelta
 from logging import getLogger
 from pathlib import Path
 from time import perf_counter
-from typing import List, Optional
+from typing import Optional
 
 import click
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import DriveOperatingState, Tape, TapeState, VerificationStatus
 from cta.sdk.units import Byte, BytePerSecond
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
-from ctaops.cli.click_extension.custom_types import TapeStateType
+from ctaops.cli.click_extension.custom_types import TapeStateType, enum_choice
 from ctaops.cli.context import EXTRA_TPSRV, AppContext
 from ctaops.cli.display.encoders import encode_table_field
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 LOGGER = getLogger("ctaops.cli")
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["ta"])
 def tape():
-    """Manage CTA Tapes"""
+    """Manage CTA Tapes."""
 
 
 @tape.command(aliases=["add"])
@@ -122,7 +121,8 @@ def update(
     """Update tape properties or state.
 
     Modify one or more tape properties such as media type, vendor, pool, or state.
-    Use --state to transition tape to a new state with a reason."""
+    Use --state to transition tape to a new state with a reason.
+    """
     if verification_status is not None:
         try:
             verification_status_instance = VerificationStatus.from_dict(json.loads(verification_status))
@@ -162,7 +162,7 @@ def update(
     "--state",
     "-s",
     type=click.Choice([f.name for f in TapeState], case_sensitive=False),
-    callback=lambda _, __, value: TapeState[value.upper()] if value is not None else None,
+    callback=enum_choice(TapeState),
 )
 @click.option("--purchase-order", "-p")
 @click.option("--physical-library", "--pl")
@@ -182,7 +182,7 @@ def list_command(
     physical_library: Optional[str],
     missing_file_copies: bool,
 ):
-    """List CTA tapes in CTA"""
+    """List CTA tapes in CTA."""
     if not all and not any(
         [
             media_type,
@@ -219,7 +219,7 @@ def list_command(
 @click.argument("vid")
 @click.pass_obj
 def get(obj: AppContext, vid: str):
-    """Get tape registered in CTA"""
+    """Get tape registered in CTA."""
     print_dataclasses(obj.cta_client.tape.get(vid), display_config=obj.config.display)
 
 
@@ -227,7 +227,7 @@ def get(obj: AppContext, vid: str):
 @click.argument("vid")
 @click.pass_obj
 def delete(obj: AppContext, vid: str):
-    """Remove a tape from CTA"""
+    """Remove a tape from CTA."""
     obj.cta_client.tape.delete(vid)
     print(f"Tape({vid}) DELETED")
 
@@ -236,7 +236,7 @@ def delete(obj: AppContext, vid: str):
 @click.argument("vid")
 @click.pass_obj
 def reclaim(obj: AppContext, vid: str):
-    """Reclaim a tape from CTA"""
+    """Reclaim a tape from CTA."""
     obj.cta_client.tape.reclaim(vid)
     print(f"Tape ({vid}) RECLAIMED")
 
@@ -244,13 +244,13 @@ def reclaim(obj: AppContext, vid: str):
 @tape.command()
 @click.pass_obj
 def refresh_stats(obj: AppContext):
-    """Refresh tape statistics and print it"""
-
-    cmd_call = subprocess.run(
+    """Refresh tape statistics and print it."""
+    cmd_call = subprocess.run(  # noqa: S603 - fixed tool, argv only.
         [
             "/usr/bin/cta-statistics-update",
             obj.config.cta_catalogue_conn_file,
         ],  # On CTA side we need to move this functionality to the frontend as an admin command
+        check=False,
         encoding="utf-8",
         timeout=10,
     )
@@ -305,9 +305,9 @@ if EXTRA_TPSRV:
 
         tape_location = lib_ctrl.get_tape_location(vid)
         if tape_location.location == "HOME":
-            LOGGER.info(f"Tape {vid} is already unmounted")
+            LOGGER.info("Tape %s is already unmounted", vid)
         elif tape_location.location == "DRIVE":
-            LOGGER.info(f"Searching for drive with tape {vid} mounted at address {tape_location.address}")
+            LOGGER.info("Searching for drive with tape %s mounted at address %s", vid, tape_location.address)
             try:
                 local_drive = next(
                     (
@@ -387,18 +387,20 @@ if EXTRA_TPSRV:
 
             md.rewind()
 
-            LOGGER.info(f"Start writing files of size {encode_table_field(file_size, Byte)} on {tape}")
+            LOGGER.info("Start writing files of size %s on %s", encode_table_field(file_size, Byte), tape)
             t0 = perf_counter()
             w_checksum = 1
             with click.progressbar(length=tape.capacity // file_size, label="Writing") as bar:
+                file_index = 0
                 try:
-                    file_index = 0
                     for file_index, c_checksum in md.write_files(file_size, None):
                         bar.update(1, file_index)
                         w_checksum = c_checksum
                 except EOTError as e:
                     LOGGER.warning(
-                        f"End of tape reached after writing {file_index} files of size {encode_table_field(file_size, Byte)}"
+                        "End of tape reached after writing %s files of size %s",
+                        file_index,
+                        encode_table_field(file_size, Byte),
                     )
                     file_count = e.written_files
                 else:
@@ -406,16 +408,20 @@ if EXTRA_TPSRV:
 
             w_time = timedelta(seconds=perf_counter() - t0)
             LOGGER.info(
-                f"{file_count} files of size {encode_table_field(file_size, Byte)} witten on tape {tape} in {encode_table_field(w_time)}"
+                "%s files of size %s witten on tape %s in %s",
+                file_count,
+                encode_table_field(file_size, Byte),
+                tape,
+                encode_table_field(w_time),
             )
             LOGGER.info(
-                f"Average speed: {encode_table_field(file_count * file_size / w_time.total_seconds(), BytePerSecond)}"
+                "Average speed: %s", encode_table_field(file_count * file_size / w_time.total_seconds(), BytePerSecond)
             )
 
             md.rewind()
 
             LOGGER.info(
-                f"Start reading {file_count} files of size {encode_table_field(file_size, Byte)} on tape {tape}"
+                "Start reading %s files of size %s on tape %s", file_count, encode_table_field(file_size, Byte), tape
             )
             t0 = perf_counter()
             with click.progressbar(length=file_count, label="Reading") as bar:
@@ -423,16 +429,49 @@ if EXTRA_TPSRV:
                     bar.update(1, file_index)
                     if r_checksum != w_checksum:
                         raise click.ClickException(
-                            f"Checksum mistmatch on file index {file_index}. Read checksum : {r_checksum} (expected {w_checksum})"
+                            f"Checksum mistmatch on file index {file_index}. "
+                            f"Read checksum : {r_checksum} (expected {w_checksum})"
                         )
             r_time = timedelta(seconds=perf_counter() - t0)
 
             LOGGER.info(
-                f"{file_count} files of size {encode_table_field(file_size, Byte)} read on tape {tape} in {encode_table_field(r_time)}"
+                "%s files of size %s read on tape %s in %s",
+                file_count,
+                encode_table_field(file_size, Byte),
+                tape,
+                encode_table_field(r_time),
             )
             LOGGER.info(
-                f"Average speed: {encode_table_field(file_count * file_size / r_time.total_seconds(), BytePerSecond)}"
+                "Average speed: %s", encode_table_field(file_count * file_size / r_time.total_seconds(), BytePerSecond)
             )
+
+    def _label_library_for_drive(obj: AppContext, drive: str) -> ManagedLibraryController:
+        cta_drive = obj.cta_client.drive.get(drive)
+
+        if cta_drive.state is not DriveOperatingState.DOWN or not cta_drive.state_reason:
+            raise click.ClickException(f"Drive {cta_drive.name} must be DOWN with a reason")
+
+        try:
+            library_controller = ScsiManagedLibraryControllerProvider(
+                **asdict(obj.config.tape_server.udev_properties_map)
+            ).get_library_controller_from_drive_name(drive)
+        except ResourceNotFoundError as e:
+            raise click.ClickException(str(e)) from e
+
+        return library_controller
+
+    def _move_labelled_tape(obj: AppContext, vid: str, dstpool: str) -> None:
+        LOGGER.info("Moving tape %s to tapepool %s", vid, dstpool)
+        try:
+            obj.cta_client.tape_pool.get(dstpool)
+            obj.cta_client.tape.update(vid, tape_pool_name=dstpool)
+        except ResourceNotFoundError:
+            LOGGER.exception("Tape pool %s does not exist", dstpool)
+        else:
+            LOGGER.info("Successfully moved tape %s to tapepool %s", vid, dstpool)
+            return
+
+        LOGGER.error("Failed to moved tape %s to %s tapeppol", vid, dstpool)
 
     @tape.command(aliases=["la"])
     @click.argument("vid", required=False)
@@ -458,34 +497,6 @@ if EXTRA_TPSRV:
         if bool(vid) + bool(srcpool) + bool(file) != 1:
             raise click.UsageError("Please choose either vid arg, a srcpool, or a file")
 
-        def check_drive_input(drive: str) -> ManagedLibraryController:
-            cta_drive = obj.cta_client.drive.get(drive)
-
-            if cta_drive.state is not DriveOperatingState.DOWN or not cta_drive.state_reason:
-                raise click.ClickException(f"Drive {cta_drive.name} must be DOWN with a reason")
-
-            try:
-                library_controller = ScsiManagedLibraryControllerProvider(
-                    **asdict(obj.config.tape_server.udev_properties_map)
-                ).get_library_controller_from_drive_name(drive)
-            except ResourceNotFoundError as e:
-                raise click.ClickException(str(e)) from e
-
-            return library_controller
-
-        def move_vid_to_tapepool(vid: str, dstpool: str) -> None:
-            LOGGER.info(f"Moving tape {vid} to tapepool {dstpool}")
-            try:
-                obj.cta_client.tape_pool.get(dstpool)
-                obj.cta_client.tape.update(vid, tape_pool_name=dstpool)
-            except ResourceNotFoundError:
-                LOGGER.error(f"Tape pool {dstpool} does not exist")
-            else:
-                LOGGER.info(f"Successfully moved tape {vid} to tapepool {dstpool}")
-                return
-
-            LOGGER.error(f"Failed to moved tape {vid} to {dstpool} tapeppol")
-
         def treat_single_vid(library_controller: ManagedLibraryController, vid: str):
             try:
                 tape = obj.cta_client.tape.get(vid)
@@ -497,48 +508,54 @@ if EXTRA_TPSRV:
 
             library_controller.label_tape(drive, vid, old_vid=old_label, force=force)
             if dstpool:
-                move_vid_to_tapepool(vid, dstpool)
+                _move_labelled_tape(obj, vid, dstpool)
 
         def treat_srcpool(library_controller: ManagedLibraryController, srcpool: str, limit: Optional[int]):
-            LOGGER.info(f"Getting tape list from tapepool {srcpool}")
+            LOGGER.info("Getting tape list from tapepool %s", srcpool)
             obj.cta_client.tape_pool.get(srcpool)
             tapes = obj.cta_client.tape.list(tape_pool_name=srcpool)
             for index, t in enumerate(tapes):
-                LOGGER.info(f"Labeling tape {t.vid} from tapepool {srcpool} on drive {drive}")
+                LOGGER.info("Labeling tape %s from tapepool %s on drive %s", t.vid, srcpool, drive)
                 if limit and index > limit:
-                    LOGGER.info(f"Already {limit} treated tapes, exist the program according to limit argument")
+                    LOGGER.info("Already %s treated tapes, exist the program according to limit argument", limit)
                     return
                 if library_controller.name != t.physical_library_name:
                     LOGGER.warning(
-                        f"Tape {t.vid} is not in the same logical library than drive {drive},Skipping tape {t.vid}...",
+                        "Tape %s is not in the same logical library than drive %s,Skipping tape %s...",
+                        t.vid,
+                        drive,
+                        t.vid,
                     )
                 library_controller.label_tape(drive, t.vid, old_vid=old_label, force=force)
                 if dstpool:
-                    move_vid_to_tapepool(t.vid, dstpool)
+                    _move_labelled_tape(obj, t.vid, dstpool)
 
         def treat_file(library_controller: ManagedLibraryController, file: Path, limit: Optional[int]):
             tapes = []
-            LOGGER.info(f"Reading tape list from file {file}")
-            with open(file, mode="r", encoding="utf-8") as f:
-                tapes.extend(line.strip() for line in f.readlines() if not line.startswith("#"))
+            LOGGER.info("Reading tape list from file %s", file)
+            with open(file, encoding="utf-8") as f:
+                tapes.extend(line.strip() for line in f if not line.startswith("#"))
 
-            for index, vid in enumerate(tapes):
-                LOGGER.info(f"Labeling tape {vid} from file {file} on drive {drive}")
+            for index, tape_vid in enumerate(tapes):
+                LOGGER.info("Labeling tape %s from file %s on drive %s", tape_vid, file, drive)
                 if limit and index > limit:
-                    LOGGER.info(f"Already {limit} tape labeled, exist the program according to limit argument")
+                    LOGGER.info("Already %s tape labeled, exist the program according to limit argument", limit)
                     return
                 try:
-                    library_controller.get_tape_location(vid)
+                    library_controller.get_tape_location(tape_vid)
                 except ResourceNotFoundError:
                     LOGGER.warning(
-                        f"Tape {vid} is not in the same logical library than drive {drive},Skipping tape {vid}...",
+                        "Tape %s is not in the same logical library than drive %s,Skipping tape %s...",
+                        tape_vid,
+                        drive,
+                        tape_vid,
                     )
 
-                library_controller.label_tape(drive, vid, old_vid=old_label, force=force)
+                library_controller.label_tape(drive, tape_vid, old_vid=old_label, force=force)
                 if dstpool:
-                    move_vid_to_tapepool(vid, dstpool)
+                    _move_labelled_tape(obj, tape_vid, dstpool)
 
-        library_controller = check_drive_input(drive)
+        library_controller = _label_library_for_drive(obj, drive)
 
         if vid:
             treat_single_vid(library_controller, vid)
@@ -571,13 +588,13 @@ if EXTRA_TPSRV:
 
         if all:
             for ll in LocalLibraryRepository().list_libraries():
-                LOGGER.info(f"Importing tapes for local library {ll}")
+                LOGGER.info("Importing tapes for local library %s", ll)
                 try:
                     ScsiManagedLibraryControllerProvider(
                         **asdict(obj.config.tape_server.udev_properties_map)
                     ).get_library_controller(ll.serial_number).import_tapes()
-                except Exception as e:
-                    LOGGER.error(f"An exception occurred during unmounting {ll}:{e}")
+                except Exception:
+                    LOGGER.exception("An exception occurred during unmounting %s", ll)
 
     @tape.command("export", aliases=["ex"])
     @click.argument("vid", required=False)
@@ -614,41 +631,43 @@ if EXTRA_TPSRV:
                 )
             return tape.vid
 
-        def get_vids_from_srcpool(srcpool: str, limit: Optional[int]) -> List[str]:
-            LOGGER.info(f"Getting tape list from tapepool {srcpool}")
+        def get_vids_from_srcpool(srcpool: str, limit: Optional[int]) -> list[str]:
+            LOGGER.info("Getting tape list from tapepool %s", srcpool)
             obj.cta_client.tape_pool.get(srcpool)
             tapes = obj.cta_client.tape.list(tape_pool_name=srcpool)
             return [t.vid for t in tapes if library_controller.name == t.physical_library_name][slice(limit)]
 
-        def get_vids_from_file(file: Path, limit: Optional[int]) -> List[str]:
-            LOGGER.info(f"Reading tape list from file {file}")
-            with open(file, mode="r", encoding="utf-8") as f:
-                return [line.strip() for line in f.readlines() if not line.startswith("#")][slice(limit)]
+        def get_vids_from_file(file: Path, limit: Optional[int]) -> list[str]:
+            LOGGER.info("Reading tape list from file %s", file)
+            with open(file, encoding="utf-8") as f:
+                return [line.strip() for line in f if not line.startswith("#")][slice(limit)]
 
         max_io_slots = (
             min(library_controller.get_max_io_slots(), ioport_capacity)
             if ioport_capacity is not None
             else library_controller.get_max_io_slots()
         )
-        LOGGER.info(f"Using {max_io_slots} io slots for export")
+        LOGGER.info("Using %s io slots for export", max_io_slots)
 
         if srcpool:
             vids = get_vids_from_srcpool(srcpool, limit)
         elif file:
             vids = get_vids_from_file(file, limit)
         else:
-            vids = [get_vid(vid)]  # type: ignore (ensured by first guard close of the function)
+            assert vid is not None  # The mutually exclusive input guard ensures a VID here.
+            vids = [get_vid(vid)]
 
         export_tape_counter = 0
-        for vid in vids:
-            LOGGER.info(f"Exporting tape {vid} from physical library {physical_library}")
+        for tape_vid in vids:
+            LOGGER.info("Exporting tape %s from physical library %s", tape_vid, physical_library)
             if (
                 export_tape_counter != 0
                 and export_tape_counter % max_io_slots == 0
                 and not click.confirm(
                     f"{'*' * 50}\n"
                     f"Reached I/O port capacity of {ioport_capacity} (physical or virtual) slots.\n"
-                    "Please remove the exported tapes from the I/O port (several extractions might be needed depending on the number of physical slots).\n"
+                    "Please remove the exported tapes from the I/O port "
+                    "(several extractions might be needed depending on the number of physical slots).\n"
                     f"{'*' * 50}\n"
                     "Do you wish to continue with the execution of the script? (yes|no): "
                 )
@@ -656,17 +675,17 @@ if EXTRA_TPSRV:
                 return
 
             try:
-                if library_controller.get_tape_location(vid).location != "HOME":
-                    LOGGER.warning(f"Skipping tape {vid}, because tape is not in its slot")
+                if library_controller.get_tape_location(tape_vid).location != "HOME":
+                    LOGGER.warning("Skipping tape %s, because tape is not in its slot", tape_vid)
                     continue
             except ResourceNotFoundError:
-                LOGGER.warning(f"Skipping tape {vid}, because tape is not in the library")
+                LOGGER.warning("Skipping tape %s, because tape is not in the library", tape_vid)
                 continue
 
             try:
-                library_controller.export_tape(vid)
+                library_controller.export_tape(tape_vid)
             except Exception as e:
-                LOGGER.warning(f"An error occur during exportation of tape {vid}: {e}")
+                LOGGER.warning("An error occur during exportation of tape %s: %s", tape_vid, e)
                 continue
 
             export_tape_counter += 1

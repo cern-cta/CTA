@@ -4,16 +4,15 @@
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["tp"])
 def tape_pool():
-    """Manage CTA Tape Pools"""
+    """Manage CTA Tape Pools."""
 
 
 @tape_pool.command(aliases=["add"])
@@ -23,7 +22,7 @@ def tape_pool():
 @click.option("--comment", "-c", required=True)
 @click.pass_obj
 def create(obj: AppContext, name: str, virtual_organisation: str, partial_tape_number: int, comment: str):
-    """Create a tapepool to CTA"""
+    """Create a tapepool to CTA."""
     obj.cta_client.tape_pool.create(
         name,
         virtual_organisation_name=virtual_organisation,
@@ -50,7 +49,7 @@ def update(
     supply: Optional[str],
     comment: Optional[str],
 ):
-    """Update CTA tape pool"""
+    """Update CTA tape pool."""
     supply_pools = supply.split(",") if supply else None
     obj.cta_client.tape_pool.update(
         name,
@@ -69,7 +68,7 @@ def update(
 @click.option("--encrypted/--not-encrypted", "-e/--ne", default=None)
 @click.pass_obj
 def list_command(obj: AppContext, virtual_organisation: Optional[str], encrypted: Optional[bool]):
-    """List CTA tape pools"""
+    """List CTA tape pools."""
     print_dataclasses(
         obj.cta_client.tape_pool.list(virtual_organisation_name=virtual_organisation, encrypted=encrypted),
         display_config=obj.config.display,
@@ -80,7 +79,7 @@ def list_command(obj: AppContext, virtual_organisation: Optional[str], encrypted
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get tape pool registered in CTA"""
+    """Get tape pool registered in CTA."""
     print_dataclasses(obj.cta_client.tape_pool.get(name), display_config=obj.config.display)
 
 
@@ -88,6 +87,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove a tape pool from CTA"""
+    """Remove a tape pool from CTA."""
     obj.cta_client.tape_pool.delete(name)
     print(f"TapePool({name}) DELETED")

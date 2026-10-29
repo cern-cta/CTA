@@ -4,6 +4,8 @@
 from dataclasses import dataclass
 from typing import Final
 
+from typing_extensions import override
+
 from .archive_file import ArchiveFile
 
 
@@ -21,13 +23,16 @@ class TapeFile(ArchiveFile):
     fseq: Final[int]
     block_id: int
 
+    @override
     def __str__(self) -> str:
         return f"TapeFile({self.archive_id},{self.vid},{self.fseq})"
 
+    @override
     def __hash__(self) -> int:
         return hash((self.archive_id, self.vid, self.fseq))
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, TapeFile):
             return False
         return self.archive_id == other.archive_id and self.vid == other.vid and self.fseq == other.fseq

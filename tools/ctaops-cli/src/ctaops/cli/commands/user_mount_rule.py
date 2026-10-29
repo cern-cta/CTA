@@ -4,16 +4,15 @@
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["umr"])
 def user_mount_rule():
-    """Manage Mount Policy to username mappings"""
+    """Manage Mount Policy to username mappings."""
 
 
 @user_mount_rule.command(aliases=["add"])
@@ -23,7 +22,7 @@ def user_mount_rule():
 @click.option("--comment", "-c", required=True)
 @click.pass_obj
 def create(obj: AppContext, user_name: str, disk_instance_name: str, mount_policy: str, comment: str):
-    """Create CTA requester mount rule"""
+    """Create CTA requester mount rule."""
     obj.cta_client.user_mount_rule.create(
         user_name, disk_instance_name, comment=comment, mount_policy_name=mount_policy
     )
@@ -39,7 +38,7 @@ def create(obj: AppContext, user_name: str, disk_instance_name: str, mount_polic
 def update(
     obj: AppContext, user_name: str, disk_instance_name: str, mount_policy: Optional[str], comment: Optional[str]
 ):
-    """Update CTA requester mount rule"""
+    """Update CTA requester mount rule."""
     obj.cta_client.user_mount_rule.update(
         user_name, disk_instance_name, comment=comment, mount_policy_name=mount_policy
     )
@@ -49,7 +48,7 @@ def update(
 @user_mount_rule.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List requester mount rules registered in CTA"""
+    """List requester mount rules registered in CTA."""
     data = obj.cta_client.user_mount_rule.list()
     print_dataclasses(data, display_config=obj.config.display)
 
@@ -59,7 +58,7 @@ def list_command(obj: AppContext):
 @click.argument("disk_instance_name")
 @click.pass_obj
 def get(obj: AppContext, user_name: str, disk_instance_name: str):
-    """Get requester mount rule registered in CTA"""
+    """Get requester mount rule registered in CTA."""
     print_dataclasses(
         obj.cta_client.user_mount_rule.get(user_name, disk_instance_name), display_config=obj.config.display
     )
@@ -70,6 +69,6 @@ def get(obj: AppContext, user_name: str, disk_instance_name: str):
 @click.argument("disk_instance_name")
 @click.pass_obj
 def delete(obj: AppContext, user_name: str, disk_instance_name: str):
-    """Remove a CTA requester mount rule"""
+    """Remove a CTA requester mount rule."""
     obj.cta_client.user_mount_rule.delete(user_name, disk_instance_name)
     print(f"UserMountRule({user_name}) DELETED")

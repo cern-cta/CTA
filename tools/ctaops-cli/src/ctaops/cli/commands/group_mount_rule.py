@@ -4,22 +4,21 @@
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["gmr"])
 def group_mount_rule():
-    """Manage CTA group mount rules"""
+    """Manage CTA group mount rules."""
 
 
 @group_mount_rule.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List CTA group mount rules"""
+    """List CTA group mount rules."""
     data = obj.cta_client.group_mount_rule.list()
     print_dataclasses(data, display_config=obj.config.display)
 
@@ -29,7 +28,7 @@ def list_command(obj: AppContext):
 @click.argument("disk_instance_name")
 @click.pass_obj
 def get(obj: AppContext, group_name: str, disk_instance_name: str):
-    """Get group mount rule registered in CTA"""
+    """Get group mount rule registered in CTA."""
     print_dataclasses(
         obj.cta_client.group_mount_rule.get(group_name, disk_instance_name), display_config=obj.config.display
     )
@@ -42,7 +41,7 @@ def get(obj: AppContext, group_name: str, disk_instance_name: str):
 @click.option("--comment", "-c", required=True)
 @click.pass_obj
 def create(obj: AppContext, group_name: str, disk_instance_name: str, mount_policy: str, comment: str):
-    """Create a CTA group mount rule"""
+    """Create a CTA group mount rule."""
     obj.cta_client.group_mount_rule.create(
         group_name, disk_instance_name, comment=comment, mount_policy_name=mount_policy
     )
@@ -58,7 +57,7 @@ def create(obj: AppContext, group_name: str, disk_instance_name: str, mount_poli
 def update(
     obj: AppContext, group_name: str, disk_instance_name: str, mount_policy: Optional[str], comment: Optional[str]
 ):
-    """Update a CTA group mount rule"""
+    """Update a CTA group mount rule."""
     obj.cta_client.group_mount_rule.update(
         group_name, disk_instance_name, comment=comment, mount_policy_name=mount_policy
     )
@@ -70,6 +69,6 @@ def update(
 @click.argument("disk_instance_name")
 @click.pass_obj
 def delete(obj: AppContext, group_name: str, disk_instance_name: str):
-    """Remove a CTA group mount rule"""
+    """Remove a CTA group mount rule."""
     obj.cta_client.group_mount_rule.delete(group_name, disk_instance_name)
     print(f"GroupMountRule({group_name}, {disk_instance_name}) DELETED")

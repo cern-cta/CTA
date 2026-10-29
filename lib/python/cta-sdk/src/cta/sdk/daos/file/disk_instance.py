@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from itertools import chain
-from typing import Iterator, Optional
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import DiskInstanceDao
@@ -16,6 +17,7 @@ from cta.sdk.models import (
     UserMountRule,
     VirtualOrganisation,
 )
+from typing_extensions import override
 
 
 class DiskInstanceDaoFile(DiskInstanceDao):
@@ -24,6 +26,7 @@ class DiskInstanceDaoFile(DiskInstanceDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(self, name: str, /, *, comment: str = "From python cta-sdk") -> None:
         disk_instance = DiskInstance(
             name,
@@ -31,9 +34,11 @@ class DiskInstanceDaoFile(DiskInstanceDao):
         )
         self._handler.create(disk_instance)
 
+    @override
     def get(self, name: str, /) -> DiskInstance:
         return self._handler.get(self.resource_type, name)
 
+    @override
     def delete(self, name: str, /) -> None:
         for md in chain(
             self._handler.iter(UserMountRule),
@@ -53,14 +58,16 @@ class DiskInstanceDaoFile(DiskInstanceDao):
                 raise BackendError(
                     f"You can not delete {self.resource_type}({name}), it is referenced by {tf} ",
                     2,
-                    md,
+                    tf,
                 )
 
         self._handler.delete(self.resource_type, name)
 
+    @override
     def list(self) -> Iterator[DiskInstance]:
         yield from self._handler.iter(self.resource_type)
 
+    @override
     def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
         with self._handler.update(self.resource_type, name) as disk_instance:
             disk_instance.metadata = self._handler.refresh_metadata(disk_instance.metadata, comment=comment)

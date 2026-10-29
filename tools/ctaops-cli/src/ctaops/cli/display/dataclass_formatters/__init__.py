@@ -16,6 +16,6 @@ import pkgutil
 
 
 def load_all_formatters() -> None:
-    """Load all custom formatters of this package"""
+    """Load all custom formatters of this package."""
     for m in pkgutil.iter_modules(__path__):
         importlib.import_module(f"{__name__}.{m.name}")

@@ -1,5 +1,6 @@
 from dataclasses import asdict, astuple, dataclass, field
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from ctaops.utils.config import NOT_SET, CtaOpsConfigLoader
@@ -43,11 +44,17 @@ def file_config_path() -> Path:
     return Path(__file__).parent / "data" / "config.toml"
 
 
+def unchecked_config(config: AppConfig) -> AppConfig:
+    """Let loading tests inspect partial configs; test validation separately."""
+    return config
+
+
 class TestCtaOpsConfigLoader:
     @pytest.fixture(autouse=True)
     def set_config_loader(self):
         self.config_loader = CtaOpsConfigLoader(AppConfig)
 
+    @patch.object(AppConfig, "validate", unchecked_config)
     def test_load_from_dict(self):
         self.config_loader.load_from_dict(
             {
@@ -57,20 +64,21 @@ class TestCtaOpsConfigLoader:
             }
         )
 
-        assert self.config_loader._config == AppConfig(
+        assert self.config_loader.get_safe_config() == AppConfig(
             database=DatabaseConfig(username="test_user"),
             logging=LoggingConfiguration(file_path="overide_file"),
             workflow=WorkflowConfig(disk_endpoint="ctaeos", frontend_endpoint="grpc.example:10956"),
         )
 
-    def test_load_toml(self, file_config_path):
+    @patch.object(AppConfig, "validate", unchecked_config)
+    def test_load_toml(self, file_config_path: Path):
         self.config_loader.load_from_toml(file_config_path, file_exist_error="raise")
-        assert self.config_loader._config == AppConfig(
+        assert self.config_loader.get_safe_config() == AppConfig(
             timeout=2,
-            database=DatabaseConfig(password="fake_password"),
+            database=DatabaseConfig(password="fake_password"),  # noqa: S106 - TOML fixture value, not a credential.
             logging=LoggingConfiguration(level="DEBUG"),
         )
 
     def test_get_safe_config(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Database configuration is incomplete"):
             self.config_loader.get_safe_config()

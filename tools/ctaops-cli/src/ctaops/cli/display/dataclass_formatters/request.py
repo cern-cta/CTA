@@ -2,14 +2,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from cta.sdk.models import UserRequestSummary
-
-from ..encoders import encode_table_header
-from ..formatters import DataClassBaseFormatter, TableHeaders
+from ctaops.cli.display.encoders import encode_table_header
+from ctaops.cli.display.formatters import DataClassBaseFormatter, TableHeaders
+from typing_extensions import override
 
 
 class UserRequestSummaryFormatter(DataClassBaseFormatter[UserRequestSummary], dataclass_type=UserRequestSummary):
     """Custom Dataclass Formatter for [UserRequestSummary][cta.sdk.models.user_request.UserRequestSummary]."""
 
+    @override
     def _default_raw_columns_names(
         self,
     ) -> list[str]:
@@ -26,11 +27,11 @@ class UserRequestSummaryFormatter(DataClassBaseFormatter[UserRequestSummary], da
             "tapes_count",
         ]
 
+    @override
     def table_headers(self) -> TableHeaders:
         """Get Rich-formatted column definitions for table display.
 
         Returns:
             List of tuples (column_name, formatting_options_dict).
         """
-
-        return [encode_table_header(self.dataclass_type.group_key, str)] + super().table_headers()[1:]
+        return [encode_table_header(self.dataclass_type.group_key, str), *super().table_headers()[1:]]

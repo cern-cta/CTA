@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import ArchiveRouteDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, ArchiveRouteType, StorageClass, TapePool
+from typing_extensions import override
 
 
 class ArchiveRouteDaoFile(ArchiveRouteDao):
@@ -15,6 +17,7 @@ class ArchiveRouteDaoFile(ArchiveRouteDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         storage_class_name: str,
@@ -40,15 +43,19 @@ class ArchiveRouteDaoFile(ArchiveRouteDao):
         )
         self._handler.create(archive_route)
 
+    @override
     def get(self, storage_class_name: str, copy_number: int, type: ArchiveRouteType, /) -> ArchiveRoute:
         return self._handler.get(self.resource_type, storage_class_name, copy_number, type)
 
+    @override
     def delete(self, storage_class_name: str, copy_number: int, type: ArchiveRouteType, /) -> None:
         self._handler.delete(self.resource_type, storage_class_name, copy_number, type)
 
+    @override
     def list(self) -> Iterator[ArchiveRoute]:
         yield from self._handler.iter(self.resource_type)
 
+    @override
     def update(
         self,
         storage_class_name: str,

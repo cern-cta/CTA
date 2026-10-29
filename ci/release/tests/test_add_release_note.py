@@ -6,8 +6,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
-
-
 from add_release_note import add_release_note, discussion_marker, main, release_version_for_tag
 from release_config import ReleaseConfig
 

@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""ctaops-sdk: Python library for managing CTA tape server hardware locally.
+"""
+ctaops-sdk: Python library for managing CTA tape server hardware locally.
 
 The package layers cleanly into three pieces, each with a small set of
 [typing.Protocol][typing.Protocol] interfaces and SCSI/udev-backed
@@ -31,7 +32,7 @@ implementations:
   [ScsiManagedLibraryController][ctaops.sdk.controllers.scsi.library.ScsiManagedLibraryController].
 * **Controller providers** — preferred entry points that wire the above
   together with a single shared pyudev context:
-  [ScsiManagedLibraryControllerProvider][ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider]
+  [Reference][ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider]
   and
   [ScsiDriveControllerProvider][ctaops.sdk.controller_providers.scsi.drive.ScsiDriveControllerProvider].
 
@@ -117,45 +118,45 @@ from ctaops.sdk.repositories.protocols.library import (
 
 __all__ = [
     "CtaopsSdkError",
-    "ResourceNotFoundError",
+    "Drive",
+    "DriveController",
+    "DriveControllerProvider",
     "DriveError",
-    "TapeError",
-    "LibraryOperationError",
     "DriveIOError",
+    "DriveLibraryLocation",
     "DriveOperationError",
+    "DriveRepository",
     "DriveStateError",
     "EODError",
     "EOTError",
-    "TapeLabelError",
-    "TapeStateError",
-    "DriveControllerProvider",
+    "Library",
+    "LibraryController",
     "LibraryControllerProvider",
+    "LibraryOperationError",
+    "LibraryRepository",
+    "LocalDriveRepository",
+    "LocalLibraryRepository",
+    "LocalLocatedDriveRepository",
+    "LocalLocatedNamedDriveRepository",
+    "LocalNamedDriveRepository",
+    "LocalNamedLibraryRepository",
+    "LocatedDrive",
+    "LocatedDriveRepository",
+    "LocatedNamedDrive",
+    "LocatedNamedDriveRepository",
+    "ManagedLibraryController",
     "ManagedLibraryControllerProvider",
+    "MountedDriveController",
+    "NamedDrive",
+    "NamedDriveRepository",
+    "NamedLibrary",
+    "NamedLibraryRepository",
+    "ResourceNotFoundError",
     "ScsiDriveControllerProvider",
     "ScsiLibraryControllerProvider",
     "ScsiManagedLibraryControllerProvider",
-    "DriveController",
-    "MountedDriveController",
-    "LibraryController",
-    "ManagedLibraryController",
+    "TapeError",
+    "TapeLabelError",
     "TapeLocation",
-    "DriveLibraryLocation",
-    "Drive",
-    "NamedDrive",
-    "LocatedDrive",
-    "LocatedNamedDrive",
-    "DriveRepository",
-    "NamedDriveRepository",
-    "LocatedDriveRepository",
-    "LocatedNamedDriveRepository",
-    "Library",
-    "NamedLibrary",
-    "LibraryRepository",
-    "NamedLibraryRepository",
-    "LocalDriveRepository",
-    "LocalNamedDriveRepository",
-    "LocalLocatedDriveRepository",
-    "LocalLocatedNamedDriveRepository",
-    "LocalLibraryRepository",
-    "LocalNamedLibraryRepository",
+    "TapeStateError",
 ]

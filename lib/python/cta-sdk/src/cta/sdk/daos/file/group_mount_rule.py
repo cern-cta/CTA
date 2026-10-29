@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import GroupMountRuleDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import DiskInstance, GroupMountRule, MountPolicy
+from typing_extensions import override
 
 
 class GroupMountRuleDaoFile(GroupMountRuleDao):
@@ -15,6 +17,7 @@ class GroupMountRuleDaoFile(GroupMountRuleDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         group_name: str,
@@ -37,15 +40,19 @@ class GroupMountRuleDaoFile(GroupMountRuleDao):
         )
         self._handler.create(group_mount_rule)
 
+    @override
     def get(self, group_name: str, disk_instance_name: str, /) -> GroupMountRule:
         return self._handler.get(self.resource_type, group_name, disk_instance_name)
 
+    @override
     def delete(self, group_name: str, disk_instance_name: str, /) -> None:
         self._handler.delete(self.resource_type, group_name, disk_instance_name)
 
+    @override
     def list(self) -> Iterator[GroupMountRule]:
         yield from self._handler.iter(self.resource_type)
 
+    @override
     def update(
         self,
         group_name: str,

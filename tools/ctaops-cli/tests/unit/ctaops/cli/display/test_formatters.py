@@ -6,18 +6,19 @@
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 import pytest
 from cta.sdk.units import Byte, FreeText, Percentage
-from rich.table import Table
-from rich.text import Text
-
 from ctaops.cli.display.formatters import (
     DataClassBaseFormatter,
     DataClassFormatterProvider,
     dataclass_to_rich_table,
 )
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
+from typing_extensions import override
 
 
 @dataclass
@@ -53,12 +54,12 @@ class Contractor:
     car: Optional[str] = None
 
 
-def get_formatter(dataclass_type: type, *exclude_fields: str) -> DataClassBaseFormatter:
+def get_formatter(dataclass_type: type, *exclude_fields: str) -> DataClassBaseFormatter[Any]:
     """Shortcut on the provider, the entry point to every formatting operation."""
     return DataClassFormatterProvider.get(dataclass_type, *exclude_fields)
 
 
-def make_contractor(name: str = "Bob Wilson", **overrides) -> Contractor:
+def make_contractor(name: str = "Bob Wilson", **overrides: Any) -> Contractor:
     defaults = {
         "rate": 0.25,
         "quota": 1_500,
@@ -113,7 +114,7 @@ class TestDefaultFormatter:
 
     def test_columns_parameters_are_sized_on_the_given_chunk(self):
         chunk = [make_contractor("Bob"), make_contractor("a-much-longer-name")]
-        widths = [p["width"] for p in get_formatter(Contractor).table_columns_parameters(chunk=chunk)]  # type: ignore
+        widths = [p["width"] for p in get_formatter(Contractor).table_columns_parameters(chunk=chunk)]
         assert widths[0] == len("a-much-longer-name")
 
     def test_to_json_encodes_nested_and_sdk_types(self):
@@ -148,21 +149,30 @@ class TestDataClassToRichTable:
 
     def test_nested_dataclasses_become_sub_tables(self):
         table = dataclass_to_rich_table(make_contractor(), title="custom")
+        assert isinstance(table, Table)
         assert table.title == "custom"
-        nested = table.columns[1]._cells[5]  # the address field
-        assert isinstance(nested, Table)
-        assert nested.title == "address"
+        console = Console(width=120)
+        with console.capture() as capture:
+            console.print(table)
+        rendered = capture.get()
+        assert "address" in rendered
+        assert "456 Oak Ave" in rendered
+        assert "Portland" in rendered
 
     def test_list_of_dataclasses_becomes_a_list_table(self):
         @dataclass
         class Fleet:
-            cars: list
+            cars: list[Apartment]
 
         table = dataclass_to_rich_table(Fleet([Apartment(1, 1), Apartment(2, 2)]))
-        list_table = table.columns[1]._cells[0]
-        assert isinstance(list_table, Table)
-        assert list_table.title == "cars (List)"
-        assert list_table.row_count == 2
+        assert isinstance(table, Table)
+        console = Console(width=120)
+        with console.capture() as capture:
+            console.print(table)
+        rendered = capture.get()
+        assert "cars (List)" in rendered
+        assert "1" in rendered
+        assert "2" in rendered
 
     def test_recursion_is_bounded(self):
         @dataclass
@@ -183,8 +193,9 @@ class TestFormatterProvider:
             name: str
             size: int
 
-        class WidgetFormatter(DataClassBaseFormatter, dataclass_type=Widget):
-            def _raw_columns_names(self) -> list:
+        class WidgetFormatter(DataClassBaseFormatter[Widget], dataclass_type=Widget):
+            @override
+            def _raw_columns_names(self) -> list[str]:
                 return ["size"]
 
         formatter = get_formatter(Widget)
@@ -205,8 +216,9 @@ class TestFormatterProvider:
             name: str
             size: int
 
-        class BaseFormatter(DataClassBaseFormatter, dataclass_type=Base):
-            def _raw_columns_names(self) -> list:
+        class BaseFormatter(DataClassBaseFormatter[Base], dataclass_type=Base):
+            @override
+            def _raw_columns_names(self) -> list[str]:
                 return ["name"]
 
         @dataclass
@@ -234,11 +246,13 @@ class TestFormatterProvider:
             address: Address
             ratio: Annotated[float, Percentage] = field(default=0.5)
 
-        class DeepFormatter(DataClassBaseFormatter, dataclass_type=Deep):
-            def _raw_columns_names(self) -> list:
+        class DeepFormatter(DataClassBaseFormatter[Deep], dataclass_type=Deep):
+            @override
+            def _raw_columns_names(self) -> list[str]:
                 return ["address.apartment.number", "ratio", "unknown.column"]
 
         formatter = get_formatter(Deep)
+        assert isinstance(formatter, DeepFormatter)
         deep = Deep("n", Address("s", "c", "z", Apartment(7, 2)))
         # a column name that matches no field of the dataclass is simply dropped
         assert [t.plain for t in formatter.table_headers()] == ["ADDRESS.APARTMENT.NUMBER", "RATIO"]
@@ -276,8 +290,9 @@ class TestExcludedFields:
             name: str
             port: int
 
-        class SwitchFormatter(DataClassBaseFormatter, dataclass_type=Switch):
-            def _raw_columns_names(self) -> list:
+        class SwitchFormatter(DataClassBaseFormatter[Switch], dataclass_type=Switch):
+            @override
+            def _raw_columns_names(self) -> list[str]:
                 return ["port"]
 
         formatter = get_formatter(Switch, "port")

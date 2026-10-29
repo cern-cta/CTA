@@ -7,15 +7,15 @@ This module provides functions for printing dataclass objects in different
 output formats: raw (string representation), JSON, and table display.
 """
 
+from collections.abc import Iterable
 from dataclasses import is_dataclass
 from itertools import chain, islice
-from typing import Iterable, Optional, Union
+from typing import Optional, Union
 
+from ctaops.cli.config import DisplayConfig
 from rich import print, print_json
 from rich.console import Console
 from rich.table import Table
-
-from ctaops.cli.config import DisplayConfig
 
 from .dataclass_formatters import load_all_formatters
 from .formatters import DataClassFormatterProvider, DataClassProtocol
@@ -54,7 +54,6 @@ def print_as_json(objects: Union[DataClassProtocol, Iterable[DataClassProtocol]]
     Args:
         objects: A single dataclass object or sequence of dataclass objects.
     """
-
     if not isinstance(objects, Iterable):
         print_json(DataClassFormatterProvider.get(type(objects)).to_json(objects))
         return

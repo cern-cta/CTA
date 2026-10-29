@@ -49,7 +49,7 @@ class TestRequestDaoCli:
         self.mock_stream_run = mock_wrapper[1][1]
 
     @pytest.mark.parametrize("mock_wrapper", [{"stdout": slice(None)}], indirect=True)
-    def test_list_command(self, ref_obj):
+    def test_list_command(self, ref_obj: UserRequest):
         return_objs = list(self.manager.list(request_type=MountType.ARCHIVE))
         self.mock_stream_run.assert_called_once_with(
             [

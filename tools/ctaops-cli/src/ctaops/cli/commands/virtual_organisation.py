@@ -4,16 +4,15 @@
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["vo"])
 def virtual_organisation():
-    """Manage CTA Virtual organizations"""
+    """Manage CTA Virtual organizations."""
 
 
 @virtual_organisation.command(aliases=["add"])
@@ -27,7 +26,7 @@ def virtual_organisation():
 def create(
     obj: AppContext, name: str, disk_instance: str, read_max_drives: int, write_max_drives: int, type: str, comment: str
 ):
-    """Create a virtual organization to CTA"""
+    """Create a virtual organization to CTA."""
     obj.cta_client.virtual_organisation.create(
         name,
         disk_instance_name=disk_instance,
@@ -58,7 +57,7 @@ def update(
     type: Optional[str],
     comment: Optional[str],
 ):
-    """Update CTA virtual organization"""
+    """Update CTA virtual organization."""
     obj.cta_client.virtual_organisation.update(
         name,
         disk_instance_name=disk_instance,
@@ -74,7 +73,7 @@ def update(
 @virtual_organisation.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List CTA virtual organizations"""
+    """List CTA virtual organizations."""
     data = obj.cta_client.virtual_organisation.list()
     print_dataclasses(data, display_config=obj.config.display)
 
@@ -83,7 +82,7 @@ def list_command(obj: AppContext):
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get virtual organization registered in CTA"""
+    """Get virtual organization registered in CTA."""
     print_dataclasses(obj.cta_client.virtual_organisation.get(name), display_config=obj.config.display)
 
 
@@ -91,6 +90,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove a virtual organization from CTA"""
+    """Remove a virtual organization from CTA."""
     obj.cta_client.virtual_organisation.delete(name)
     print(f"VirtualOrganisation({name}) DELETED")

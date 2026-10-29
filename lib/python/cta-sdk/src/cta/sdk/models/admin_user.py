@@ -4,6 +4,8 @@
 from dataclasses import dataclass
 from typing import Final
 
+from typing_extensions import override
+
 from .metadata import Metadata
 
 
@@ -19,13 +21,16 @@ class AdminUser:
     name: Final[str]
     metadata: Metadata
 
+    @override
     def __str__(self):
         return f"AdminUser({self.name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, AdminUser):
             return False
         return self.name == other.name

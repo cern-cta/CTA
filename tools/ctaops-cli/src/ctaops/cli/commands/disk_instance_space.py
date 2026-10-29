@@ -5,17 +5,16 @@ from datetime import timedelta
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.click_extension.custom_types import DurationType
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["dis"])
 def disk_instance_space():
-    """Manage CTA disk instance spaces"""
+    """Manage CTA disk instance spaces."""
 
 
 @disk_instance_space.command(aliases=["add"])
@@ -38,7 +37,7 @@ def create(
     refresh_interval: timedelta,
     comment: str,
 ):
-    """Create a CTA disk instance space"""
+    """Create a CTA disk instance space."""
     obj.cta_client.disk_instance_space.create(
         name,
         disk_instance_name,
@@ -64,7 +63,7 @@ def update(
     refresh_interval: Optional[timedelta],
     comment: Optional[str],
 ):
-    """Update CTA disk instance space"""
+    """Update CTA disk instance space."""
     obj.cta_client.disk_instance_space.update(
         name,
         disk_instance_name,
@@ -78,7 +77,7 @@ def update(
 @disk_instance_space.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List disk instances spaces"""
+    """List disk instances spaces."""
     print_dataclasses(obj.cta_client.disk_instance_space.list(), display_config=obj.config.display)
 
 
@@ -87,7 +86,7 @@ def list_command(obj: AppContext):
 @click.argument("disk_instance_name")
 @click.pass_obj
 def get(obj: AppContext, name: str, disk_instance_name: str):
-    """Get disk instance space registered in CTA"""
+    """Get disk instance space registered in CTA."""
     print_dataclasses(
         obj.cta_client.disk_instance_space.get(name, disk_instance_name), display_config=obj.config.display
     )
@@ -97,7 +96,7 @@ def get(obj: AppContext, name: str, disk_instance_name: str):
 @click.argument("name")
 @click.argument("disk_instance_name")
 @click.pass_obj
-def delete(obj: AppContext, name, disk_instance_name):
-    """Remove a CTA disk instance space"""
+def delete(obj: AppContext, name: str, disk_instance_name: str):
+    """Remove a CTA disk instance space."""
     obj.cta_client.disk_instance_space.delete(name, disk_instance_name)
     print(f"DiskInstanceSpace({name}, {disk_instance_name}) DELETED")

@@ -9,14 +9,13 @@ from enum import Enum
 
 import pytest
 from cta.sdk.units import Byte, BytePerSecond, FreeText, Percentage
-from rich.text import Text
-
 from ctaops.cli.display.encoders import (
     CtaSdkJsonEncoder,
     encode_table_field,
     encode_table_header,
     format_bytes,
 )
+from rich.text import Text
 
 
 class COLOR(Enum):
@@ -25,7 +24,7 @@ class COLOR(Enum):
 
 class TestFormatBytes:
     @pytest.mark.parametrize(
-        "value,expected",
+        ("value", "expected"),
         [
             (0, "0B"),
             (1, "1.0B"),
@@ -39,7 +38,7 @@ class TestFormatBytes:
             (1_000**7, "1000.0EB"),  # EB is the biggest unit, bigger values keep piling up on it
         ],
     )
-    def test_scales_to_the_biggest_fitting_unit(self, value, expected):
+    def test_scales_to_the_biggest_fitting_unit(self, value: float, expected: str):
         assert format_bytes(value) == expected
 
     def test_suffix_is_appended(self):
@@ -49,7 +48,7 @@ class TestFormatBytes:
 
 class TestCtaSdkJsonEncoder:
     @pytest.mark.parametrize(
-        "value,expected",
+        ("value", "expected"),
         [
             (datetime(2024, 5, 1, 13, 45, 30), int(datetime(2024, 5, 1, 13, 45, 30).timestamp())),
             (date(2024, 5, 1), "2024-05-01"),
@@ -57,7 +56,7 @@ class TestCtaSdkJsonEncoder:
             (COLOR.BLUE, "BLUE"),
         ],
     )
-    def test_encodes_cta_sdk_types(self, value, expected):
+    def test_encodes_cta_sdk_types(self, value: object, expected: object):
         assert json.loads(json.dumps({"field": value}, cls=CtaSdkJsonEncoder)) == {"field": expected}
 
     def test_unknown_type_still_raises(self):
@@ -67,7 +66,7 @@ class TestCtaSdkJsonEncoder:
 
 class TestEncodeTableField:
     @pytest.mark.parametrize(
-        "obj,types,expected",
+        ("obj", "types", "expected"),
         [
             # units drive the formatting of numbers
             (0.121, (float, Percentage), "12.1%"),
@@ -89,11 +88,11 @@ class TestEncodeTableField:
             (None, (int, type(None)), "-"),  # a missing value stays "-" whatever the column unit is
         ],
     )
-    def test_encode(self, obj, types, expected):
+    def test_encode(self, obj: object, types: tuple[type, ...], expected: str):
         assert encode_table_field(obj, *types).plain == expected
 
     @pytest.mark.parametrize(
-        "value,expected",
+        ("value", "expected"),
         [
             (timedelta(seconds=0), "0s"),
             (timedelta(seconds=45), "45s"),
@@ -102,7 +101,7 @@ class TestEncodeTableField:
             (timedelta(days=1, hours=2), "1d2h0m"),
         ],
     )
-    def test_timedelta(self, value, expected):
+    def test_timedelta(self, value: timedelta, expected: str):
         assert encode_table_field(value).plain == expected
 
     def test_datetime(self):
@@ -115,7 +114,7 @@ class TestEncodeTableField:
 
 class TestEncodeTableHeader:
     @pytest.mark.parametrize(
-        "col_name,expected",
+        ("col_name", "expected"),
         [
             ("my.first.column_name", "MY.FIRST.COLUMN"),
             ("column_name", "COLUMN"),
@@ -130,14 +129,14 @@ class TestEncodeTableHeader:
             ("vid", "VID"),
         ],
     )
-    def test_name_is_shortened_and_upper_cased(self, col_name, expected):
+    def test_name_is_shortened_and_upper_cased(self, col_name: str, expected: str):
         assert encode_table_header(col_name).plain == expected
 
     def test_free_text_columns_are_left_justified(self):
         assert encode_table_header("metadata.comment", str, FreeText).justify == "left"
 
     @pytest.mark.parametrize("col_types", [(), (int,), (int, Byte)])
-    def test_other_columns_are_right_justified(self, col_types):
+    def test_other_columns_are_right_justified(self, col_types: tuple[type, ...]):
         assert encode_table_header("capacity", *col_types).justify == "right"
 
     def test_returns_a_folding_rich_text(self):

@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 from unittest.mock import MagicMock
 
+import click
 import pytest
 from click.testing import CliRunner, Result
 from cta.sdk.client.protocol import CtaClient
@@ -33,7 +34,6 @@ from cta.sdk.models import (
     TapeStatistics,
     UserRequest,
 )
-
 from ctaops.cli.config import AppConfig, DisplayConfig
 from ctaops.cli.context import AppContext
 
@@ -188,19 +188,19 @@ def make_user_request(**overrides: Any) -> UserRequest:
 
 @pytest.fixture
 def cta_client() -> MagicMock:
-    """A mocked CtaClient: every Dao is a MagicMock, typos on Dao names raise."""
+    """Return a mocked CtaClient whose DAOs reject unknown attributes."""
     return MagicMock(spec=CtaClient)
 
 
 @pytest.fixture
 def app_config() -> AppConfig:
-    """An AppConfig that never touches the filesystem (no log file, no backend)."""
+    """Return an AppConfig with no log file or backend."""
     return AppConfig(display=DisplayConfig(format="table"))
 
 
 @pytest.fixture
 def app_context(app_config: AppConfig, cta_client: MagicMock) -> AppContext:
-    """The object Click passes to every command through ``@click.pass_obj``."""
+    """Build the context passed to commands through ``@click.pass_obj``."""
     return AppContext(config=app_config, cta_client=cta_client)
 
 
@@ -219,7 +219,9 @@ def invoke(runner: CliRunner, app_context: AppContext):
         obj: Optional AppContext override.
     """
 
-    def _invoke(command, args: Optional[list] = None, obj: Optional[AppContext] = None, **kwargs: Any) -> Result:
+    def _invoke(
+        command: click.Command, args: Optional[list[str]] = None, obj: Optional[AppContext] = None, **kwargs: Any
+    ) -> Result:
         return runner.invoke(command, args or [], obj=obj if obj is not None else app_context, **kwargs)
 
     return _invoke

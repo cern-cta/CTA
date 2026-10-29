@@ -18,7 +18,7 @@ classifiers = [
 keywords = ["CTA", "tape", "CERN"]
 
 dynamic = ["version"]
-dependencies = ["tomli", "rich"]
+dependencies = ["typing-extensions>=4.4.0", "tomli", "rich"]
 
 [project.urls]
 Source = "https://gitlab.cern.ch/cta/CTA/"

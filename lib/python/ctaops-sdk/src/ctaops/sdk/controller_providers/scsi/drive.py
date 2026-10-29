@@ -18,12 +18,14 @@ from ctaops.sdk.controller_providers.protocols.drive import DriveControllerProvi
 from ctaops.sdk.controllers.scsi.drive import ScsiDriveController
 from ctaops.sdk.exceptions import ResourceNotFoundError
 from pyudev import Context, Device
+from typing_extensions import override
 
 LOGGER = logging.getLogger("ctaops.sdk")
 
 
 class ScsiDriveControllerProvider(DriveControllerProvider):
-    """Build [ScsiDriveController][ctaops.sdk.controllers.scsi.drive.ScsiDriveController] instances for local tape drives.
+    """
+    Build [ScsiDriveController][ctaops.sdk.controllers.scsi.drive.ScsiDriveController] instances for local tape drives.
 
     Implements the
     [DriveControllerProvider][ctaops.sdk.controller_providers.protocols.drive.DriveControllerProvider]
@@ -57,6 +59,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
             if re.match(r"^nst[0-9]+$", device.sys_name)
         }
 
+    @override
     def find_drive_controller(
         self,
         serial_number: str,
@@ -71,6 +74,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
             None,
         )
 
+    @override
     def get_drive_controller(self, serial_number: str) -> ScsiDriveController:
         """Return the controller for the drive with the given SCSI serial.
 
@@ -85,6 +89,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
         LOGGER.debug("Resolved drive controller for serial=%s", serial_number)
         return drive_controller
 
+    @override
     def find_drive_controller_by_name(
         self,
         name: str,
@@ -99,6 +104,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
             None,
         )
 
+    @override
     def get_drive_controller_by_name(
         self,
         name: str,

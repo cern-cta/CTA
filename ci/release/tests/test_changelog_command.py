@@ -8,13 +8,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from typing_extensions import override
-
-
 from commands import changelog
-from release_version import CTAVersion
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
+from release_version import CTAVersion
+from typing_extensions import override
 
 
 class ChangelogCommandTest(unittest.TestCase):

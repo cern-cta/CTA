@@ -14,17 +14,17 @@ import sys
 import typing as t
 from dataclasses import asdict
 from pathlib import Path
+from typing import Optional
 
 import click
 from cta.sdk import get_cta_client
 from cta.sdk.client.grpc.exceptions import WorkflowConfigError, WorkflowRpcError
 from cta.sdk.exceptions import CtaSdkError
+from ctaops.cli.display.printers import print_dataclasses
 from ctaops.utils.config import CtaOpsConfigLoader
 from ctaops.utils.logging import configure_logging
 from rich.console import Console
 from rich.panel import Panel
-
-from ctaops.cli.display.printers import print_dataclasses
 
 from .click_extension.aliases import ClickAliasedGroup
 from .config import AppConfig
@@ -52,7 +52,7 @@ from .context import AppContext, __version__
     show_default=True,
 )
 @click.pass_context
-def ctaops(ctx, format, log_level, config_file):
+def ctaops(ctx: click.Context, format: str, log_level: str, config_file: Optional[Path]):
     """Manage CERN Tape Archive (CTA) operations from the command line.
 
     This is the main entry point for the CTA operations Cli. Use subcommands to
@@ -68,7 +68,7 @@ def ctaops(ctx, format, log_level, config_file):
 
     configure_logging(config.logging)
 
-    cta_client = get_cta_client(config.backend, **asdict(getattr(config.backends, config.backend)))  # type: ignore
+    cta_client = get_cta_client(config.backend, **asdict(getattr(config.backends, config.backend)))
     workflow_client = None
 
     # if a workflow endpoint has been configured, attempt to initialize the ProtobufRpcClient
@@ -113,7 +113,6 @@ def load_commands(package_name: str):
 
 def _infer_output_format(argv: t.Optional[list[str]] = None) -> t.Optional[str]:
     """Infer the output format from command-line arguments or config file."""
-
     # Unfortunately, the only way to do this seems to be creating a temporary Click
     # context and parsing the arguments.
     args = argv if argv is not None else sys.argv[1:]

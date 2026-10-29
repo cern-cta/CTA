@@ -14,10 +14,10 @@ from __future__ import annotations
 
 import argparse
 import multiprocessing as mp
-from multiprocessing.queues import JoinableQueue
 import os
 import subprocess
 import time
+from multiprocessing.queues import JoinableQueue
 from typing import Any
 
 

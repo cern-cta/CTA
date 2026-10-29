@@ -10,13 +10,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from typing_extensions import override
-
-
 from commands import tag
 from confirmation import ConfirmationError
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
+from typing_extensions import override
 
 
 class TagCommandTest(unittest.TestCase):

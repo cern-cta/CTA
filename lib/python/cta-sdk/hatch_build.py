@@ -3,13 +3,16 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 from pathlib import Path
+from typing import Any
 
+from hatchling.builders.config import BuilderConfig
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
+from typing_extensions import override
 
 
 def _has_git_repo(root: Path) -> bool:
     result = subprocess.run(
-        ["git", "rev-parse", "--is-inside-work-tree"],
+        ["git", "rev-parse", "--is-inside-work-tree"],  # noqa: S607 - fixed tool, argv only.
         cwd=root,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -18,10 +21,11 @@ def _has_git_repo(root: Path) -> bool:
     return result.returncode == 0
 
 
-class CustomBuildHook(BuildHookInterface):
+class CustomBuildHook(BuildHookInterface[BuilderConfig]):
     """Generate protobuf sources during hatch builds."""
 
-    def initialize(self, version: str, build_data: dict) -> None:
+    @override
+    def initialize(self, version: str, build_data: dict[str, Any]) -> None:
         root = Path(self.root)
         gen_script = root / "scripts" / "gen_proto.py"
 

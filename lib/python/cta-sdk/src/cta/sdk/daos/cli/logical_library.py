@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import LogicalLibraryDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import LogicalLibrary, LogicalLibraryState, Metadata
+from typing_extensions import override
 
 
 class LogicalLibraryDaoCli(LogicalLibraryDao):
@@ -19,7 +21,7 @@ class LogicalLibraryDaoCli(LogicalLibraryDao):
         return "logicallibrary"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> LogicalLibrary:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> LogicalLibrary:
         return LogicalLibrary(
             raw_data["name"],
             physical_library_name=raw_data["physicalLibrary"],
@@ -36,14 +38,16 @@ class LogicalLibraryDaoCli(LogicalLibraryDao):
             ),
         )
 
+    @override
     def get(self, name: str, /) -> LogicalLibrary:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_ll = next(raw_item for raw_item in self._wrapper.list(self.resource_type) if raw_item["name"] == name)
         except StopIteration as e:
             raise ResourceNotFoundError(self.resource_type, {"name": name}) from e
         return self.raw_data_to_resource(raw_ll)
 
+    @override
     def list(self, *, state: Optional[LogicalLibraryState] = None) -> Iterator[LogicalLibrary]:
         filters = {}
         filters |= {} if state is None else {"disabled": str(state == LogicalLibraryState.DISABLED).lower()}
@@ -51,9 +55,11 @@ class LogicalLibraryDaoCli(LogicalLibraryDao):
             self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, filters=filters)
         )
 
+    @override
     def delete(self, name: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name})
 
+    @override
     def create(
         self,
         name: str,
@@ -75,6 +81,7 @@ class LogicalLibraryDaoCli(LogicalLibraryDao):
             data=data,
         )
 
+    @override
     def update(
         self,
         name: str,
@@ -95,8 +102,10 @@ class LogicalLibraryDaoCli(LogicalLibraryDao):
             data=data,
         )
 
+    @override
     def disable(self, name: str, /, *, reason: str) -> None:
         self._wrapper.update(self.resource_type, {"name": name}, data={"disabled": "true", "disabledreason": reason})
 
+    @override
     def enable(self, name: str, /) -> None:
         self._wrapper.update(self.resource_type, {"name": name}, data={"disabled": "false"})

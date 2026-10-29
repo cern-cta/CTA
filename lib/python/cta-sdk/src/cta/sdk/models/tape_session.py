@@ -7,12 +7,13 @@ from enum import Enum, auto
 from typing import Annotated, Final
 
 from cta.sdk.units import Byte, BytePerSecond
+from typing_extensions import override
 
 from .mount_type import MountType
 
 
 class TapeSessionState(Enum):
-    """Tape tape_session possible states
+    """Tape tape_session possible states.
 
     Attributes:
         STARTING:
@@ -24,7 +25,8 @@ class TapeSessionState(Enum):
         DRAINING_TO_DISK:
     """
 
-    def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]
+    # Enum supplies the member name, not self, to this Python 3.9 hook.
+    def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]  # noqa: N805
         return name.lower().replace("_", "-")
 
     STARTING = auto()
@@ -67,13 +69,16 @@ class TapeSession:
     def __post_init__(self):
         self.speed = self.byte_transferred_count / max(self.duration.total_seconds(), 1)
 
+    @override
     def __str__(self) -> str:
         return f"Session({self.id})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.id)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, TapeSession):
             return False
         return self.id == other.id

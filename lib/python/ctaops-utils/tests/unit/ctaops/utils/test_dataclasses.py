@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from typing import Annotated, Final, Optional, Union
+from typing import Annotated, Any, Final, Optional, Union
 
 import pytest
 from ctaops.utils.dataclasses import (
+    DataclassProtocol,
     flatten_dataclass_class,
     flatten_dataclass_instance,
 )
@@ -58,7 +59,7 @@ class Person:
 
 
 @pytest.mark.parametrize(
-    "dataclass_instance,max_depth, extra_flatten_fields,include_properties,expected",
+    ("dataclass_instance", "max_depth", "extra_flatten_fields", "include_properties", "expected"),
     [
         (
             Contractor("Bob Wilson", 120.0, None, Address("456 Oak Ave", "Portland", "97201", None)),
@@ -139,7 +140,13 @@ class Person:
         ),
     ],
 )
-def test_flatten_dataclass_instance(dataclass_instance, max_depth, extra_flatten_fields, include_properties, expected):
+def test_flatten_dataclass_instance(
+    dataclass_instance: DataclassProtocol,
+    max_depth: Optional[int],
+    extra_flatten_fields: tuple[str, ...],
+    include_properties: bool,
+    expected: dict[str, Any],
+):
     assert (
         flatten_dataclass_instance(
             dataclass_instance,
@@ -152,7 +159,7 @@ def test_flatten_dataclass_instance(dataclass_instance, max_depth, extra_flatten
 
 
 @pytest.mark.parametrize(
-    "dataclass_class,max_depth,extra_flatten_fields,include_properties,expected",
+    ("dataclass_class", "max_depth", "extra_flatten_fields", "include_properties", "expected"),
     [
         (
             CompanyInfo,
@@ -245,7 +252,13 @@ def test_flatten_dataclass_instance(dataclass_instance, max_depth, extra_flatten
         ),
     ],
 )
-def test_flatten_dataclass_class(dataclass_class, max_depth, extra_flatten_fields, include_properties, expected):
+def test_flatten_dataclass_class(
+    dataclass_class: type,
+    max_depth: Optional[int],
+    extra_flatten_fields: tuple[str, ...],
+    include_properties: bool,
+    expected: list[tuple[str, frozenset[type]]],
+):
     assert (
         flatten_dataclass_class(
             dataclass_class, max_depth, extra_flatten_fields=extra_flatten_fields, include_properties=include_properties

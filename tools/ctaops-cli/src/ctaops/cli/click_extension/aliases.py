@@ -8,9 +8,14 @@ functionality with support for command and group aliases, allowing users to
 invoke commands using shorter alternative names.
 """
 
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Optional, Protocol, Union, cast
 
 import click
+from typing_extensions import override
+
+
+class _HasAliases(Protocol):
+    aliases: list[str]
 
 
 class ClickAliasedGroup(click.Group):
@@ -35,10 +40,11 @@ class ClickAliasedGroup(click.Group):
             **kwargs: Keyword arguments passed to parent Click Group.
         """
         super().__init__(*args, **kwargs)
-        self._commands: Dict[str, list[str]] = {}
-        self._aliases: Dict[str, str] = {}
+        self._commands: dict[str, list[str]] = {}
+        self._aliases: dict[str, str] = {}
         self.aliases = aliases or []
 
+    @override
     def add_command(self, cmd: click.Command, name: Optional[str] = None, aliases: Optional[list[str]] = None) -> None:
         """Add a command to the group with optional aliases.
 
@@ -49,7 +55,7 @@ class ClickAliasedGroup(click.Group):
         """
         # Extract aliases if they were stored on the command object
         if aliases is None and hasattr(cmd, "aliases"):
-            aliases = cmd.aliases  # type: ignore
+            aliases = cast(_HasAliases, cmd).aliases
 
         # Call parent's add_command with proper arguments
         super().add_command(cmd, name=name)
@@ -68,7 +74,7 @@ class ClickAliasedGroup(click.Group):
     def command(  # type: ignore[override]
         self, *args: Any, **kwargs: Any
     ) -> Union[Callable[[Callable[..., Any]], click.Command], click.Command]:
-        """Decorator for registering a command with optional aliases.
+        """Register a command with optional aliases.
 
         Args:
             *args: Positional arguments passed to parent command decorator.
@@ -83,12 +89,14 @@ class ClickAliasedGroup(click.Group):
         if not aliases:
             return decorator
 
-        def _decorator(f):
+        def _decorator(f: Callable[..., Any]):
             cmd = decorator(f)
+            if cmd.name is None:
+                raise TypeError("Command has no name.")
             if aliases:
-                self._commands[cmd.name] = aliases  # type: ignore
+                self._commands[cmd.name] = aliases
                 for alias in aliases:
-                    self._aliases[alias] = cmd.name  # type: ignore
+                    self._aliases[alias] = cmd.name
             return cmd
 
         return _decorator
@@ -96,7 +104,7 @@ class ClickAliasedGroup(click.Group):
     def group(  # type: ignore[override]
         self, *args: Any, **kwargs: Any
     ) -> Union[Callable[[Callable[..., Any]], click.Group], click.Group]:
-        """Decorator for registering a group with optional aliases.
+        """Register a group with optional aliases.
 
         Args:
             *args: Positional arguments passed to parent group decorator.
@@ -112,14 +120,16 @@ class ClickAliasedGroup(click.Group):
         if not aliases:
             return decorator
 
-        def _decorator(f):
+        def _decorator(f: Callable[..., Any]):
             cmd = decorator(f)
             if aliases:
                 # Store aliases on the command object itself
-                cmd.aliases = aliases  # type: ignore
-                self._commands[cmd.name] = aliases  # type: ignore
+                cast(_HasAliases, cmd).aliases = aliases
+                if cmd.name is None:
+                    raise TypeError("Group has no name.")
+                self._commands[cmd.name] = aliases
                 for alias in aliases:
-                    self._aliases[alias] = cmd.name  # type: ignore
+                    self._aliases[alias] = cmd.name
             return cmd
 
         return _decorator
@@ -137,6 +147,7 @@ class ClickAliasedGroup(click.Group):
             return self._aliases[cmd_name]
         return cmd_name
 
+    @override
     def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:
         """Get a command by name, resolving aliases.
 
@@ -153,6 +164,7 @@ class ClickAliasedGroup(click.Group):
             return command
         return None
 
+    @override
     def format_commands(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
         """Format the help text for available commands, showing aliases.
 
@@ -176,11 +188,12 @@ class ClickAliasedGroup(click.Group):
                 continue
             if hasattr(cmd, "hidden") and cmd.hidden:
                 continue
+            display_name = sub_command
             if sub_command in self._commands:
                 aliases = ",".join(sorted(self._commands[sub_command]))
-                sub_command = f"{sub_command} ({aliases})"
+                display_name = f"{sub_command} ({aliases})"
             cmd_help = cmd.get_short_help_str(limit)
-            rows.append((sub_command, cmd_help))
+            rows.append((display_name, cmd_help))
 
         if rows:
             with formatter.section("Commands"):

@@ -1,8 +1,12 @@
 import re
+from collections.abc import Callable
 from datetime import timedelta
+from enum import Enum
+from typing import ClassVar, Optional, TypeVar
 
 import click
 from cta.sdk.models import TapeState
+from typing_extensions import override
 
 
 class DurationType(click.ParamType):
@@ -13,7 +17,7 @@ class DurationType(click.ParamType):
         re.IGNORECASE,
     )
 
-    _UNITS = {
+    _UNITS: ClassVar[dict[str, str]] = {
         "ms": "milliseconds",
         "s": "seconds",
         "m": "minutes",
@@ -21,7 +25,8 @@ class DurationType(click.ParamType):
         "d": "days",
     }
 
-    def convert(self, value, param, ctx) -> timedelta:
+    @override
+    def convert(self, value: object, param: Optional[click.Parameter], ctx: Optional[click.Context]) -> timedelta:
         if isinstance(value, timedelta):
             return value
 
@@ -47,7 +52,7 @@ class BytesType(click.ParamType):
         re.IGNORECASE,
     )
 
-    _UNITS = {
+    _UNITS: ClassVar[dict[str, int]] = {
         "b": 1,
         "kb": 10**3,
         "mb": 10**6,
@@ -61,7 +66,8 @@ class BytesType(click.ParamType):
         "pib": 2**50,
     }
 
-    def convert(self, value, param, ctx) -> int:
+    @override
+    def convert(self, value: object, param: Optional[click.Parameter], ctx: Optional[click.Context]) -> int:
         if isinstance(value, int):
             return value
 
@@ -84,7 +90,10 @@ class BytesType(click.ParamType):
 class TapeStateType(click.ParamType):
     name = "state[:reason]"
 
-    def convert(self, value, param, ctx) -> tuple[TapeState, str]:
+    @override
+    def convert(
+        self, value: object, param: Optional[click.Parameter], ctx: Optional[click.Context]
+    ) -> tuple[TapeState, str]:
         value = str(value).strip()
 
         state_name, separator, reason = value.partition(":")
@@ -109,3 +118,20 @@ class TapeStateType(click.ParamType):
             )
 
         return tape_state, reason
+
+
+E = TypeVar("E", bound=Enum)
+
+
+def enum_choice(enum_type: type[E]) -> Callable[[click.Context, click.Parameter, Optional[str]], Optional[E]]:
+    """Convert a validated Click choice to its enum member."""
+
+    def convert(ctx: click.Context, param: click.Parameter, value: Optional[str]) -> Optional[E]:
+        return enum_type[value.upper()] if value is not None else None
+
+    return convert
+
+
+def uppercase_choice(ctx: click.Context, param: click.Parameter, value: Optional[str]) -> Optional[str]:
+    """Normalize a validated case-insensitive Click choice."""
+    return value.upper() if value is not None else None

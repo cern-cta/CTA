@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
-from typing import Iterator, Optional, Union
+from typing import Any, Optional, Union
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import DiskInstanceSpaceDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import DiskInstanceSpace, Metadata
+from typing_extensions import override
 
 
 class DiskInstanceSpaceDaoCli(DiskInstanceSpaceDao):
@@ -19,7 +21,7 @@ class DiskInstanceSpaceDaoCli(DiskInstanceSpaceDao):
         return "diskinstancespace"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> DiskInstanceSpace:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> DiskInstanceSpace:
         return DiskInstanceSpace(
             name=raw_data["name"],
             disk_instance_name=raw_data["diskInstance"],
@@ -37,8 +39,9 @@ class DiskInstanceSpaceDaoCli(DiskInstanceSpaceDao):
             ),
         )
 
+    @override
     def get(self, name: str, disk_instance: str, /) -> DiskInstanceSpace:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_dis = next(
                 raw_item
@@ -49,12 +52,15 @@ class DiskInstanceSpaceDaoCli(DiskInstanceSpaceDao):
             raise ResourceNotFoundError(self.resource_type, {"name": name, "diskInstance": disk_instance}) from e
         return self.raw_data_to_resource(raw_dis)
 
+    @override
     def list(self) -> Iterator[DiskInstanceSpace]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, disk_instance: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name, "diskinstance": disk_instance})
 
+    @override
     def create(
         self,
         name: str,
@@ -79,6 +85,7 @@ class DiskInstanceSpaceDaoCli(DiskInstanceSpaceDao):
             },
         )
 
+    @override
     def update(
         self,
         name: str,

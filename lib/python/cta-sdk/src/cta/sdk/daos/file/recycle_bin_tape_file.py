@@ -1,14 +1,16 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Any, Iterator, Union
+from typing import Any, Union
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.file.tape_file import file_identity, read_fids_file
 from cta.sdk.daos.protocols import RecycleBinTapeFileDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import RecycleBinTapeFile
+from typing_extensions import override
 
 
 def _as_datetime(value: Union[datetime, int]) -> datetime:
@@ -27,10 +29,12 @@ class RecycleBinTapeFileDaoFile(RecycleBinTapeFileDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def get_all_copies(self, *args: Any, **kwargs: Any) -> tuple[RecycleBinTapeFile, ...]:
         matches, _ = file_identity(*args, **kwargs)
         return tuple(recycled for recycled in self._handler.iter(self.resource_type) if matches(recycled))
 
+    @override
     def get(self, *args: Any, vid: str) -> RecycleBinTapeFile:
         matches, identity = file_identity(*args)
         try:
@@ -44,6 +48,7 @@ class RecycleBinTapeFileDaoFile(RecycleBinTapeFileDao):
                 self._handler.class_to_dir_name(self.resource_type), {**identity, "vid": vid}
             ) from e
 
+    @override
     def list(self, **kwargs: Any) -> Iterator[RecycleBinTapeFile]:
         vid = kwargs.get("vid")
         fids_file = kwargs.get("fids_file")

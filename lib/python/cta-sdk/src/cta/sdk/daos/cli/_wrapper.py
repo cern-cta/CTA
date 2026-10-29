@@ -1,11 +1,13 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import builtins
 import json
 import os
 import subprocess
+from collections.abc import Generator, Mapping
 from logging import getLogger
-from typing import Any, Generator, List, Optional, Union
+from typing import Any, Optional, Union
 
 from cta.sdk.exceptions import BackendError, ResourceAlreadyExistsError, ResourceConflictError, ResourceNotFoundError
 
@@ -31,7 +33,7 @@ class CtaCliWrapper:
         )
 
     def _build_env(self) -> dict[str, str]:
-        kt = os.environ.get("CTAXrdSecSSSKT") or self.sss_keytab_file
+        kt = os.environ.get("CTAXrdSecSSSKT") or self.sss_keytab_file  # noqa: SIM112 - external CTA variable.
         extra = {"XrdSecPROTOCOL": "sss", "XrdSecSSSKT": kt} if kt is not None and os.access(kt, os.R_OK) else {}
         return os.environ | extra
 
@@ -42,11 +44,11 @@ class CtaCliWrapper:
         LOGGER.debug("Executing shell command: %s", cmd)
 
         try:
-            cmd_call: subprocess.CompletedProcess[str] = subprocess.run(
+            cmd_call: subprocess.CompletedProcess[str] = subprocess.run(  # noqa: S603 - configured executable, argv only.
                 cmd,
+                check=False,
                 encoding="utf-8",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 timeout=self.timeout,
                 env=self._build_env(),
             )
@@ -58,13 +60,13 @@ class CtaCliWrapper:
 
         return cmd_call
 
-    def _run_streaming_command(
+    def run_streaming_command(
         self,
         cmd: list[str],
     ) -> Generator[str, None, None]:
         LOGGER.debug("Executing shell command (streaming): %s", cmd)
 
-        with subprocess.Popen(
+        with subprocess.Popen(  # noqa: S603 - configured executable, argv only.
             cmd,
             encoding="utf-8",
             stdout=subprocess.PIPE,
@@ -73,8 +75,7 @@ class CtaCliWrapper:
             env=self._build_env(),
         ) as proc:
             try:
-                if proc.stdout is None:
-                    raise StopIteration()
+                assert proc.stdout is not None  # stdout=PIPE guarantees a readable stream.
                 yield from proc.stdout
                 _, stderr = proc.communicate(timeout=5)
 
@@ -90,7 +91,7 @@ class CtaCliWrapper:
 
     @property
     def cta_version(self) -> dict[str, Any]:
-        cmd_call = self._run_command(self.base_command + ["version"])
+        cmd_call = self._run_command([*self.base_command, "version"])
         return json.loads(cmd_call.stdout)
 
     def create(
@@ -102,7 +103,7 @@ class CtaCliWrapper:
         payload = [resource_id] if isinstance(resource_id, str) else CtaCliWrapper.build_options(resource_id)
         payload += CtaCliWrapper.build_options(data)
         try:
-            self._run_command(self.base_command + [resource_type, "add"] + payload)
+            self._run_command([*self.base_command, resource_type, "add", *payload])
         except BackendError as e:
             if e.return_code == 2:
                 raise ResourceAlreadyExistsError(resource_type, resource_id) from e
@@ -113,7 +114,7 @@ class CtaCliWrapper:
         payload += CtaCliWrapper.build_options(data)
 
         try:
-            self._run_command(self.base_command + [resource_type, "ch"] + payload)
+            self._run_command([*self.base_command, resource_type, "ch", *payload])
         except BackendError as e:
             if e.return_code == 2:
                 raise ResourceNotFoundError(resource_type, resource_id) from e
@@ -126,7 +127,7 @@ class CtaCliWrapper:
         payload += CtaCliWrapper.build_options(data)
 
         try:
-            self._run_command(self.base_command + [resource_type, "rm"] + payload)
+            self._run_command([*self.base_command, resource_type, "rm", *payload])
         except BackendError as e:
             if e.return_code == 2:
                 raise ResourceNotFoundError(resource_type, resource_id) from e
@@ -135,7 +136,7 @@ class CtaCliWrapper:
     def get(self, resource_type: str, resource_id: Union[dict[str, Any], str]) -> dict[str, Any]:
         payload = [resource_id] if isinstance(resource_id, str) else CtaCliWrapper.build_options(resource_id)
         try:
-            cmd_call = self._run_command(self.base_command + [resource_type, "ls"] + payload)
+            cmd_call = self._run_command([*self.base_command, resource_type, "ls", *payload])
         except BackendError as e:
             if e.return_code == 2:
                 raise ResourceNotFoundError(resource_type, resource_id) from e
@@ -151,7 +152,7 @@ class CtaCliWrapper:
     def list(self, resource_type: str, filters: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
         payload = CtaCliWrapper.build_options(filters)
 
-        cmd_call = self._run_command(self.base_command + [resource_type, "ls"] + payload)
+        cmd_call = self._run_command([*self.base_command, resource_type, "ls", *payload])
         return [json.loads(line) for line in cmd_call.stdout.splitlines()]
 
     def iter(
@@ -159,8 +160,7 @@ class CtaCliWrapper:
     ) -> Generator[dict[str, Any], None, None]:
         payload = CtaCliWrapper.build_options(filters)
         yield from (
-            json.loads(line)
-            for line in self._run_streaming_command(self.base_command + [resource_type, "ls"] + payload)
+            json.loads(line) for line in self.run_streaming_command([*self.base_command, resource_type, "ls", *payload])
         )
 
     def put_up(
@@ -168,24 +168,24 @@ class CtaCliWrapper:
     ) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaCliWrapper.build_options(resource_id)
         payload += CtaCliWrapper.build_options(data)
-        self._run_command(self.base_command + [resource_type, "up"] + payload)
+        self._run_command([*self.base_command, resource_type, "up", *payload])
 
     def put_down(
         self, resource_type: str, resource_id: Union[dict[str, Any], str], data: Optional[dict[str, Any]] = None
     ) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaCliWrapper.build_options(resource_id)
         payload += CtaCliWrapper.build_options(data)
-        self._run_command(self.base_command + [resource_type, "down"] + payload)
+        self._run_command([*self.base_command, resource_type, "down", *payload])
 
     def reclaim(
         self, resource_type: str, resource_id: Union[dict[str, Any], str], data: Optional[dict[str, Any]] = None
     ) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaCliWrapper.build_options(resource_id)
         payload += CtaCliWrapper.build_options(data)
-        self._run_command(self.base_command + [resource_type, "reclaim"] + payload)
+        self._run_command([*self.base_command, resource_type, "reclaim", *payload])
 
     @staticmethod
-    def build_options(data: Optional[dict] = None) -> List[str]:
+    def build_options(data: Optional[Mapping[str, object]] = None) -> builtins.list[str]:
         if data is None:
             return []
 

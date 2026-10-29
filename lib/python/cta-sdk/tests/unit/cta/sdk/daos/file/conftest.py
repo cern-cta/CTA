@@ -30,7 +30,7 @@ SEED_UPDATE_TIME = datetime(2024, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
 
 @pytest.fixture
 def data_root(tmp_path: Path) -> Path:
-    """A writable copy of the data snapshot."""
+    """Return a writable copy of the data snapshot."""
     root = tmp_path / "cta_root"
     shutil.copytree(DATA_DIR, root)
     return root

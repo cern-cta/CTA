@@ -8,7 +8,8 @@ containers for CTA resources including storage classes, tape pools, and tape med
 Virtual organisations control resource isolation and operational policies.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import VirtualOrganisation
 

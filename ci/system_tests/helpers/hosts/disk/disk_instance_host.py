@@ -5,7 +5,6 @@ import time
 from collections import deque
 from pathlib import Path
 
-
 from system_tests.helpers.hosts.remote_host import RemoteHost
 
 

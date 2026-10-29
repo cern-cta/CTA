@@ -15,12 +15,13 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
 
-from commands import SubparserRegistry
 from confirmation import confirm
-from release_version import CTAVersion, VersionError, select_development, select_release_candidate
 from gitlab_api import GitLabAPIError
 from release_config import ReleaseConfig, has_release_heading, validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
+from release_version import CTAVersion, VersionError, select_development, select_release_candidate
+
+from commands import SubparserRegistry
 
 
 @dataclass(frozen=True)

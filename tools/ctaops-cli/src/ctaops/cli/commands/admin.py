@@ -4,16 +4,15 @@
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["ad"])
 def admin():
-    """Manage CTA administrator accounts"""
+    """Manage CTA administrator accounts."""
 
 
 @admin.command(aliases=["add"])
@@ -21,7 +20,7 @@ def admin():
 @click.option("--comment", "-c", required=True)
 @click.pass_obj
 def create(obj: AppContext, name: str, comment: str):
-    """Create CTA admin user"""
+    """Create CTA admin user."""
     obj.cta_client.admin_user.create(name, comment=comment)
     print(f"AdminUser({name}) CREATED")
 
@@ -31,7 +30,7 @@ def create(obj: AppContext, name: str, comment: str):
 @click.option("--comment", "-c")
 @click.pass_obj
 def update(obj: AppContext, name: str, comment: Optional[str]):
-    """Change CTA admin user"""
+    """Change CTA admin user."""
     obj.cta_client.admin_user.update(name, comment=comment)
     print(f"AdminUser({name}) UPDATED")
 
@@ -39,8 +38,7 @@ def update(obj: AppContext, name: str, comment: Optional[str]):
 @admin.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List admin users registered in CTA"""
-
+    """List admin users registered in CTA."""
     print_dataclasses(obj.cta_client.admin_user.list(), display_config=obj.config.display)
 
 
@@ -48,8 +46,7 @@ def list_command(obj: AppContext):
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get admin user registered in CTA"""
-
+    """Get admin user registered in CTA."""
     print_dataclasses(obj.cta_client.admin_user.get(name), display_config=obj.config.display)
 
 
@@ -57,6 +54,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove a CTA admin user"""
+    """Remove a CTA admin user."""
     obj.cta_client.admin_user.delete(name)
     print(f"AdminUser({name}) DELETED")

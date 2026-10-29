@@ -19,7 +19,7 @@ class WorkflowFileInfo:
     gid: t.Optional[str] = None
     size: t.Optional[int] = None
     checksum: t.Optional[str] = None
-    xattr: t.Optional[dict] = None
+    xattr: t.Optional[dict[str, str]] = None
 
     @property
     def fxid(self) -> t.Optional[str]:
@@ -31,7 +31,7 @@ class WorkflowFileInfo:
 
 @dataclass
 class WorkflowConfig:
-    """Configuration for the workflow gRPC endpoint
+    """Configuration for the workflow gRPC endpoint.
 
     Attributes:
         disk_buffer_mode: predefined disk buffer URLs, for testing/troubleshooting.

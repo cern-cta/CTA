@@ -12,8 +12,8 @@ from typing import Literal, Optional, get_args
 import click
 from cta.sdk.daos.protocols.user_request import GroupBy, OrderBy
 from cta.sdk.models import MountType
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
+from ctaops.cli.click_extension.custom_types import enum_choice
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
 
@@ -22,9 +22,14 @@ GROUP_BY_CHOICES = get_args(GroupBy) + get_args(GroupByAlias)
 GROUP_BY_ALIAS_MAP = dict(zip(get_args(GroupByAlias), get_args(GroupBy)))
 
 
+def normalize_group_by(ctx: click.Context, param: click.Parameter, value: str) -> str:
+    """Expand the short grouping names accepted by the CLI."""
+    return GROUP_BY_ALIAS_MAP.get(value, value)
+
+
 @click.group(cls=ClickAliasedGroup, aliases=["rq"])
 def request():
-    """Manage CTA requests"""
+    """Manage CTA requests."""
 
 
 @request.command("list", aliases=["ls"])
@@ -32,7 +37,7 @@ def request():
     "--type",
     "-t",
     type=click.Choice([f.name for f in MountType], case_sensitive=False),
-    callback=lambda _, __, value: MountType[value.upper()] if value is not None else None,
+    callback=enum_choice(MountType),
 )
 @click.pass_obj
 def list_command(obj: AppContext, type: Optional[MountType]):
@@ -46,14 +51,14 @@ def list_command(obj: AppContext, type: Optional[MountType]):
     "--type",
     "-t",
     type=click.Choice([f.name for f in MountType], case_sensitive=False),
-    callback=lambda _, __, value: MountType[value.upper()] if value is not None else None,
+    callback=enum_choice(MountType),
     required=True,
 )
 @click.option(
     "--group-by",
     "-g",
     type=click.Choice(GROUP_BY_CHOICES),
-    callback=lambda _, __, value: GROUP_BY_ALIAS_MAP.get(value, value),
+    callback=normalize_group_by,
     default="tape_pool_name",
 )
 @click.option(

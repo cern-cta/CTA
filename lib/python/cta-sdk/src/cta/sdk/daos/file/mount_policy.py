@@ -1,14 +1,16 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import timedelta
 from itertools import chain
-from typing import Iterator, Optional, Union
+from typing import Optional, Union
 
 from cta.sdk.daos.file._handler import CtaFileHandler, as_timedelta
 from cta.sdk.daos.protocols import MountPolicyDao
 from cta.sdk.exceptions import BackendError
 from cta.sdk.models import ActivityMountRule, GroupMountRule, MountPolicy, UserMountRule
+from typing_extensions import override
 
 
 class MountPolicyDaoFile(MountPolicyDao):
@@ -17,6 +19,7 @@ class MountPolicyDaoFile(MountPolicyDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         name: str,
@@ -38,9 +41,11 @@ class MountPolicyDaoFile(MountPolicyDao):
         )
         self._handler.create(mount_policy)
 
+    @override
     def get(self, name: str, /) -> MountPolicy:
         return self._handler.get(self.resource_type, name)
 
+    @override
     def delete(self, name: str, /) -> None:
         for mr in chain(
             self._handler.iter(UserMountRule),
@@ -56,9 +61,11 @@ class MountPolicyDaoFile(MountPolicyDao):
 
         self._handler.delete(self.resource_type, name)
 
+    @override
     def list(self) -> Iterator[MountPolicy]:
         yield from self._handler.iter(self.resource_type)
 
+    @override
     def update(
         self,
         name: str,

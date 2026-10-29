@@ -9,7 +9,8 @@ Archive routes control which tape pool receives archived data and the priority o
 for multiple routes to the same storage class.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import ArchiveRoute, ArchiveRouteType
 

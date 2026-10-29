@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""The top level package to interact with CTA
+"""The top level package to interact with CTA.
 
 You can directly begin by getting a CtaClient object and explore the different Dao
 available to interact with CTA resource.

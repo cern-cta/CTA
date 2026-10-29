@@ -10,8 +10,9 @@ locally-attached SCSI medium changers via pyudev.
 
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Container
 from logging import getLogger
-from typing import Container, Optional
+from typing import Optional
 
 from ctaops.sdk.exceptions import ResourceNotFoundError
 from ctaops.sdk.repositories.protocols.library import (
@@ -21,6 +22,7 @@ from ctaops.sdk.repositories.protocols.library import (
     NamedLibraryRepository,
 )
 from pyudev import Context, Device
+from typing_extensions import override
 
 LOGGER = getLogger("ctaops.sdk")
 
@@ -72,23 +74,31 @@ class LocalLibraryRepository(_LocalAbstractLibraryRepository, LibraryRepository)
         ```
     """
 
+    @override
     def list_libraries(self) -> set[Library]:
-        """See [LibraryRepository.list_libraries][ctaops.sdk.repositories.protocols.library.LibraryRepository.list_libraries].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.library.LibraryRepository.list_libraries].
 
         Implementation: enumerates medium-changer `sgN` devices and emits
         one
         [Library][ctaops.sdk.repositories.protocols.library.Library] per
         device that exposes `ID_SCSI_SERIAL`.
         """
-
         return {
             Library(device.properties["ID_SCSI_SERIAL"])
             for device in self._list_media_changer_sg_devices()
             if "ID_SCSI_SERIAL" in device.properties
         }
 
+    @override
     def get_library(self, serial_number: str) -> Library:
-        """See [LibraryRepository.get_library][ctaops.sdk.repositories.protocols.library.LibraryRepository.get_library]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.library.LibraryRepository.get_library].
+        """
         try:
             return next(library for library in self.list_libraries() if library.serial_number == serial_number)
         except StopIteration as e:
@@ -108,23 +118,38 @@ class LocalNamedLibraryRepository(_LocalAbstractLibraryRepository, NamedLibraryR
         super().__init__(context)
         self._library_name_key = library_name_key
 
+    @override
     def list_libraries(self) -> set[NamedLibrary]:
-        """See [NamedLibraryRepository.list_libraries][ctaops.sdk.repositories.protocols.library.NamedLibraryRepository.list_libraries]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.library.NamedLibraryRepository.list_libraries].
+        """
         return {
             NamedLibrary(device.properties["ID_SCSI_SERIAL"], device.properties[self._library_name_key])
             for device in self._list_media_changer_sg_devices()
             if "ID_SCSI_SERIAL" in device.properties and self._library_name_key in device.properties
         }
 
+    @override
     def get_library(self, serial_number: str) -> NamedLibrary:
-        """See [NamedLibraryRepository.get_library][ctaops.sdk.repositories.protocols.library.NamedLibraryRepository.get_library]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.library.NamedLibraryRepository.get_library].
+        """
         try:
             return next(library for library in self.list_libraries() if library.serial_number == serial_number)
         except StopIteration as e:
             raise ResourceNotFoundError(f"Library with serial number {serial_number} not found locally") from e
 
+    @override
     def get_library_by_name(self, name: str) -> NamedLibrary:
-        """See [NamedLibraryRepository.get_library_by_name][ctaops.sdk.repositories.protocols.library.NamedLibraryRepository.get_library_by_name]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.library.NamedLibraryRepository.get_library_by_name].
+        """
         try:
             return next(library for library in self.list_libraries() if library.name == name)
         except StopIteration as e:

@@ -1289,6 +1289,7 @@ dependencies = [
     { name = "grpcio", version = "1.85.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "protobuf", version = "6.33.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "protobuf", version = "7.36.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -1303,6 +1304,7 @@ dev = [
 requires-dist = [
     { name = "grpcio" },
     { name = "protobuf" },
+    { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1324,6 +1326,7 @@ dependencies = [
     { name = "grpcio-health-checking", version = "1.85.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pyjwt" },
     { name = "rich" },
+    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -1345,6 +1348,7 @@ requires-dist = [
     { name = "grpcio-health-checking", specifier = ">=1.80.0" },
     { name = "pyjwt", specifier = ">=2.14.0" },
     { name = "rich" },
+    { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 provides-extras = ["tapeserver", "workflow"]
 
@@ -1354,10 +1358,14 @@ source = { editable = "lib/python/ctaops-sdk" }
 dependencies = [
     { name = "pyudev", version = "0.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyudev", version = "0.24.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "typing-extensions" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyudev" }]
+requires-dist = [
+    { name = "pyudev" },
+    { name = "typing-extensions", specifier = ">=4.4.0" },
+]
 
 [[package]]
 name = "ctaops-utils"
@@ -1365,12 +1373,14 @@ source = { editable = "lib/python/ctaops-utils" }
 dependencies = [
     { name = "rich" },
     { name = "tomli" },
+    { name = "typing-extensions" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "rich" },
     { name = "tomli" },
+    { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 
 [[package]]

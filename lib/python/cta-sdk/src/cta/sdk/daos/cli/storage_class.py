@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import StorageClassDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import Metadata, StorageClass
+from typing_extensions import override
 
 
 class StorageClassDaoCli(StorageClassDao):
@@ -19,7 +21,7 @@ class StorageClassDaoCli(StorageClassDao):
         return "storageclass"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> StorageClass:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> StorageClass:
         return StorageClass(
             raw_data["name"],
             virtual_organisation_name=raw_data["vo"],
@@ -35,6 +37,7 @@ class StorageClassDaoCli(StorageClassDao):
             ),
         )
 
+    @override
     def get(self, name: str, /) -> StorageClass:
         try:
             raw_sc = self._wrapper.get(self.resource_type, {"name": name})
@@ -47,12 +50,15 @@ class StorageClassDaoCli(StorageClassDao):
 
         return self.raw_data_to_resource(raw_sc)
 
+    @override
     def list(self) -> Iterator[StorageClass]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name})
 
+    @override
     def create(
         self,
         name: str,
@@ -74,6 +80,7 @@ class StorageClassDaoCli(StorageClassDao):
             },
         )
 
+    @override
     def update(
         self,
         name: str,

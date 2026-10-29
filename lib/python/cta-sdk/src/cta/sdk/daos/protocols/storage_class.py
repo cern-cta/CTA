@@ -8,7 +8,8 @@ including replica counts and virtual organisation assignments. Storage classes d
 how many copies of archived data are maintained on tape.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import StorageClass
 

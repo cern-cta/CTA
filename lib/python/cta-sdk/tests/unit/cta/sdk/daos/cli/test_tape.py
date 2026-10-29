@@ -17,7 +17,7 @@ def raw_data() -> str:
 
 
 @pytest.fixture
-def manager(mock_wrapper):
+def manager(mock_wrapper: tuple[CtaCliWrapper, tuple[MagicMock, MagicMock]]):
     return TapeDaoCli(mock_wrapper[0]), mock_wrapper[1]
 
 
@@ -162,7 +162,10 @@ class TestTapeDaoCli:
                 "--tapepool",
                 "test_tp",
                 "--verificationstatus",
-                '{"date": 1735689600, "status": "finished", "files_submitted": 10, "files_verified": 0, "files_failed": 0}',
+                (
+                    '{"date": 1735689600, "status": "finished", "files_submitted": 10, "files_ve'
+                    'rified": 0, "files_failed": 0}'
+                ),
                 "--dirtybit",
                 "false",
                 "--comment",

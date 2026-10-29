@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from cta.sdk.models import Tape
+from ctaops.cli.display.formatters import DataClassBaseFormatter
+from typing_extensions import override
 
-from ..formatters import DataClassBaseFormatter
 
-
-class TapeFormatter(DataClassBaseFormatter, dataclass_type=Tape):
+class TapeFormatter(DataClassBaseFormatter[Tape], dataclass_type=Tape):
     """Custom Dataclass Formatter for [Tape][cta.sdk.models.tape.Tape]."""
 
+    @override
     def _default_raw_columns_names(self) -> list[str]:
         return [
             "vid",

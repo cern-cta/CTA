@@ -8,7 +8,8 @@ creating, updating, deleting, and querying tapes, as well as reclaiming
 space and changing tape state.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import Tape, TapeState, VerificationStatus
 

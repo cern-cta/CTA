@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Optional, Protocol, TypeVar
 
 import tomli
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -63,9 +64,10 @@ class NotSetType:
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(NotSetType, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
+    @override
     def __repr__(self) -> str:
         """
         Return the string representation of the NOT_SET singleton.
@@ -77,9 +79,13 @@ class NotSetType:
 
 
 NOT_SET: Any = NotSetType()
-"""A singleton value used to represent unset configuration fields. This allows distinguishing between fields that are explicitly set to None
-and fields that have not been set at all. The NOT_SET value is used as a default for configuration fields for field where a default hardcoded value has no sense
-like password or secret keys."""
+"""
+A singleton value used to represent unset configuration fields. This allows distinguishing between fields that are
+    explicitly set to None
+and fields that have not been set at all. The NOT_SET value is used as a default for configuration fields for field
+    where a default hardcoded value has no sense
+like password or secret keys.
+"""
 
 T = TypeVar("T", bound=DataclassWithValidation)
 
@@ -96,7 +102,7 @@ class CtaOpsConfigLoader(Generic[T]):
 
     def __init__(self, config_class: type[T]):
         """
-        Initializes the config loader with a dataclass type.
+        Initialize the config loader with a dataclass type.
 
         Args:
             config_class: The dataclass type to be used for configuration.
@@ -130,7 +136,6 @@ class CtaOpsConfigLoader(Generic[T]):
         Raises:
             FileNotFoundError: If `file_exist_error` is "raise" and the file does not exist.
         """
-
         if toml_path is None or not Path(toml_path).exists():
             if file_exist_error == "raise":
                 raise FileNotFoundError(f"Config file '{toml_path}' does not exist.")
@@ -158,7 +163,7 @@ class CtaOpsConfigLoader(Generic[T]):
         dc.load_data(self._config, raw_dict)
         return self
 
-    def set(self, *keys, value) -> "CtaOpsConfigLoader[T]":
+    def set(self, *keys: str, value: object) -> "CtaOpsConfigLoader[T]":
         """
         Set a configuration value for a nested key.
 
@@ -193,7 +198,7 @@ class CtaOpsConfigLoader(Generic[T]):
 
     def get_safe_config(self) -> T:
         """
-        Returns the validated configuration object.
+        Return the validated configuration object.
 
         This method calls the `validate()` method on the configuration object,
         which is expected to perform all necessary validation checks, such as
@@ -202,7 +207,6 @@ class CtaOpsConfigLoader(Generic[T]):
         Returns:
             The validated configuration object.
         """
-
         return self._config.validate()
 
     @staticmethod

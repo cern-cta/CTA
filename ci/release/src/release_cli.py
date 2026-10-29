@@ -16,11 +16,11 @@ from pathlib import Path
 
 from commands import changelog, status, tag
 from confirmation import ConfirmationError, ask_yes_no
-from release_version import VersionError
 from git_repo import GitError, discover_repository_root
 from gitlab_api import GitLabAPI, GitLabAPIError
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
+from release_version import VersionError
 
 # Default token file shared by various CTA CI scripts that need to make use of the GitLab API
 TOKEN_FILE = Path(pwd.getpwuid(os.getuid()).pw_dir) / ".config" / "cta" / "gitlab-api-token"

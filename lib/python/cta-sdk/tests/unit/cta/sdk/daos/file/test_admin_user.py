@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 from cta.sdk.daos.file import AdminUserDaoFile
+from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.exceptions import ResourceAlreadyExistsError, ResourceNotFoundError
 from cta.sdk.models import AdminUser, Metadata
 
@@ -13,7 +14,7 @@ from .conftest import SEED_CREATION_TIME
 
 
 @pytest.fixture
-def dao(handler) -> AdminUserDaoFile:
+def dao(handler: CtaFileHandler) -> AdminUserDaoFile:
     return AdminUserDaoFile(handler)
 
 
@@ -34,58 +35,58 @@ def ref_obj() -> AdminUser:
 
 
 class TestGet:
-    def test_get_returns_seeded_object(self, dao, ref_obj):
+    def test_get_returns_seeded_object(self, dao: AdminUserDaoFile, ref_obj: AdminUser):
         assert asdict(dao.get("admin_ci")) == asdict(ref_obj)
 
-    def test_get_missing_raises(self, dao):
+    def test_get_missing_raises(self, dao: AdminUserDaoFile):
         with pytest.raises(ResourceNotFoundError):
             dao.get("nobody")
 
 
 class TestList:
-    def test_list_contains_seed(self, dao):
+    def test_list_contains_seed(self, dao: AdminUserDaoFile):
         assert [u.name for u in dao.list()] == ["admin_ci"]
 
 
 class TestCreate:
-    def test_create_then_get(self, dao):
+    def test_create_then_get(self, dao: AdminUserDaoFile):
         dao.create("new_admin", comment="a new admin")
         created = dao.get("new_admin")
         assert created.name == "new_admin"
         assert created.metadata.comment == "a new admin"
 
-    def test_create_default_comment(self, dao):
+    def test_create_default_comment(self, dao: AdminUserDaoFile):
         dao.create("defaulted")
         assert dao.get("defaulted").metadata.comment == "From python cta-sdk"
 
-    def test_create_duplicate_raises(self, dao):
+    def test_create_duplicate_raises(self, dao: AdminUserDaoFile):
         with pytest.raises(ResourceAlreadyExistsError):
             dao.create("admin_ci")
 
 
 class TestUpdate:
-    def test_update_comment(self, dao):
+    def test_update_comment(self, dao: AdminUserDaoFile):
         dao.update("admin_ci", comment="updated")
         assert dao.get("admin_ci").metadata.comment == "updated"
 
-    def test_update_preserves_creation_metadata(self, dao):
+    def test_update_preserves_creation_metadata(self, dao: AdminUserDaoFile):
         dao.update("admin_ci", comment="updated")
         assert dao.get("admin_ci").metadata.creation_time == SEED_CREATION_TIME
 
-    def test_update_none_keeps_comment(self, dao):
+    def test_update_none_keeps_comment(self, dao: AdminUserDaoFile):
         dao.update("admin_ci")
         assert dao.get("admin_ci").metadata.comment == "Admin CI"
 
-    def test_update_missing_raises(self, dao):
+    def test_update_missing_raises(self, dao: AdminUserDaoFile):
         with pytest.raises(ResourceNotFoundError):
             dao.update("nobody", comment="x")
 
 
 class TestDelete:
-    def test_delete_removes(self, dao):
+    def test_delete_removes(self, dao: AdminUserDaoFile):
         dao.delete("admin_ci")
         assert list(dao.list()) == []
 
-    def test_delete_missing_raises(self, dao):
+    def test_delete_missing_raises(self, dao: AdminUserDaoFile):
         with pytest.raises(ResourceNotFoundError):
             dao.delete("nobody")

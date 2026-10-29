@@ -21,7 +21,8 @@ and
 [ScsiMountedDriveController][ctaops.sdk.controllers.scsi.drive.ScsiMountedDriveController].
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 
 class DriveController(Protocol):
@@ -160,7 +161,7 @@ class MountedDriveController(DriveController, Protocol):
         """
         ...
 
-    def get_VOL1(self) -> str:
+    def get_VOL1(self) -> str:  # noqa: N802 - VOL1 is the tape-label format and existing API.
         """Read and return the 80-byte VOL1 label as UTF-8.
 
         Rewinds the tape internally before reading; on exit the tape is

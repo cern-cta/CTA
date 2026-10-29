@@ -5,11 +5,13 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Final
 
+from typing_extensions import override
+
 from .metadata import Metadata
 
 
 class ArchiveRouteType(Enum):
-    """CTA supports two types of archive route
+    """CTA supports two types of archive route.
 
     Attributes:
         DEFAULT: For user worflow
@@ -38,13 +40,16 @@ class ArchiveRoute:
     tape_pool_name: str
     metadata: Metadata
 
+    @override
     def __str__(self):
         return f"ArchiveRoute({self.storage_class_name}, {self.copy_number}, {self.type})"
 
+    @override
     def __hash__(self) -> int:
         return hash((self.storage_class_name, self.copy_number, self.type))
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, ArchiveRoute):
             return False
         return (

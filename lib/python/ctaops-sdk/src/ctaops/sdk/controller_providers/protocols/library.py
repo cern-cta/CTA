@@ -26,9 +26,10 @@ from ctaops.sdk.controllers.protocols.library import LibraryController, ManagedL
 
 
 class LibraryControllerProvider(Protocol):
-    """Locate
-    [LibraryController][ctaops.sdk.controllers.protocols.library.LibraryController]
-    instances by SCSI serial or logical name."""
+    """Locate controllers by SCSI serial or logical name.
+
+    Return [LibraryController][ctaops.sdk.controllers.protocols.library.LibraryController] instances.
+    """
 
     def get_library_controller(
         self,
@@ -68,9 +69,10 @@ class LibraryControllerProvider(Protocol):
 
 
 class ManagedLibraryControllerProvider(Protocol):
-    """Locate
-    [ManagedLibraryController][ctaops.sdk.controllers.protocols.library.ManagedLibraryController]
-    instances by SCSI serial or logical name."""
+    """Locate controllers by SCSI serial or logical name.
+
+    Return [ManagedLibraryController][ctaops.sdk.controllers.protocols.library.ManagedLibraryController] instances.
+    """
 
     def get_library_controller(
         self,

@@ -17,6 +17,7 @@ from typing import Any, Callable, Optional, Protocol
 
 from cta.sdk.units import Byte, BytePerSecond, FreeText, Percentage, Unit
 from rich.text import Text
+from typing_extensions import override
 
 
 class TableFieldEncoder(Protocol):
@@ -30,7 +31,8 @@ class CtaSdkJsonEncoder(json.JSONEncoder):
     that are commonly found in CTA SDK model objects.
     """
 
-    def default(self, o):
+    @override
+    def default(self, o: object):
         """Encode CTA SDK-specific types to JSON-serializable format.
 
         Args:
@@ -91,7 +93,7 @@ _unit_encoders: dict[Any, FieldFormatterFn] = {
 
 
 @singledispatch
-def field_encoder(value: Any, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
+def field_encoder(value: Any, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
     """Dispatch encoder selection based on value type.
 
     Returns a formatter function appropriate for the given value type.
@@ -107,9 +109,9 @@ def field_encoder(value: Any, unit_type=Optional[type[Unit]]) -> FieldFormatterF
     return str
 
 
-@field_encoder.register
-def _(value: list, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
-    """Encoder for list values.
+@field_encoder.register(list)
+def _(value: list[object], unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+    """Encode list values.
 
     Args:
         value: Example list value.
@@ -122,8 +124,8 @@ def _(value: list, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(value: int, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
-    """Encoder for integer values.
+def _(value: int, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+    """Encode integer values.
 
     Args:
         value: Example integer value.
@@ -136,8 +138,8 @@ def _(value: int, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(value: float, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
-    """Encoder for float values.
+def _(value: float, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+    """Encode float values.
 
     Args:
         value: Example float value.
@@ -150,8 +152,8 @@ def _(value: float, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(value: datetime, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
-    """Encoder for datetime values.
+def _(value: datetime, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+    """Encode datetime values.
 
     Args:
         value: Example datetime value.
@@ -164,8 +166,8 @@ def _(value: datetime, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(value: timedelta, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
-    """Encoder for timedelta values.
+def _(value: timedelta, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+    """Encode timedelta values.
 
     Args:
         value: Example timedelta value.
@@ -174,7 +176,6 @@ def _(value: timedelta, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
     Returns:
         Formatter that converts timedelta to <>d<>h<>m<>s format.
     """
-
     return (
         lambda value: (f"{value.days}d" if value.days else "")
         + (f"{value.seconds // 3600}h" if value.total_seconds() >= 3600 else "")
@@ -184,8 +185,8 @@ def _(value: timedelta, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(value: Enum, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
-    """Encoder for Enum values.
+def _(value: Enum, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+    """Encode Enum values.
 
     Args:
         value: Example Enum value.
@@ -198,8 +199,8 @@ def _(value: Enum, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(_: None, unit_type=Optional[type[Unit]]) -> FieldFormatterFn:
-    """Encoder for None/null values.
+def _(_: None, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+    """Encode None/null values.
 
     Args:
         _: None value.
@@ -223,7 +224,6 @@ def encode_table_field(value: Any, *col_types: type) -> Text:
     Returns:
         Formatted string representation of the value.
     """
-
     return Text(field_encoder(value, next((t for t in col_types if issubclass(t, Unit)), None))(value))
 
 

@@ -8,12 +8,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import tarfile
 import tempfile
+from pathlib import Path
 from typing import Any
 
 CANONICAL_TAG = re.compile(r"v(\d+)\.(\d+)\.(\d+)(?:(?:\.(\d+))?-(\d+))?")

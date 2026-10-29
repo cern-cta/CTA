@@ -8,8 +8,9 @@ policies for specific disk instance spaces. Disk systems control file ingestion 
 to tape based on file patterns, retention targets, and polling intervals.
 """
 
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Iterator, Optional, Protocol, Union
+from typing import Optional, Protocol, Union
 
 from cta.sdk.models import DiskSystem
 

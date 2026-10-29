@@ -4,9 +4,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
-from typing import Annotated, Final, Optional
+from typing import Annotated, Any, Final, Optional
 
 from cta.sdk.units import Byte, Percentage
+from typing_extensions import override
 
 from .metadata import Metadata
 
@@ -30,7 +31,7 @@ class VerificationStatus:
     file_failed_count: int
 
     @classmethod
-    def from_dict(cls, data: dict) -> "VerificationStatus":
+    def from_dict(cls, data: dict[str, Any]) -> "VerificationStatus":
         return cls(
             date=data[""],
             status=data[""],
@@ -70,18 +71,22 @@ class TapeMetadata(Metadata):
 
 
 class TapeState(Enum):
-    """Tape tape_session possible states
+    """
+    Tape tape_session possible states.
 
     Attributes:
         ACTIVE: The tape is in good condition to allow a user to read data from it or to write data to it.
         DISABLED: The tape cannot be mounted, but can still have retrieve requests queued to it.
         BROKEN: A tape can stay in this state for long and it is very likely that it is its very last state.
         EXPORTED: A tape can stay in this state for long. It means that the tape was removed from the tape library.
-        REPACKING: A tape should be moved to REPACKING state before the operator submits a repack request. Otherwise, the repack request won't be accepted.
-        REPACKING_DISABLED: The state REPACKING_DISABLED is similar to DISABLED, but for repacking tapes (we can't move out of repacking states while a repack is ongoing).
+        REPACKING: A tape should be moved to REPACKING state before the operator submits a repack request. Otherwise,
+            the repack request won't be accepted.
+        REPACKING_DISABLED: The state REPACKING_DISABLED is similar to DISABLED, but for repacking tapes (we can't move
+            out of repacking states while a repack is ongoing).
     """
 
-    def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]
+    # Enum supplies the member name, not self, to this Python 3.9 hook.
+    def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]  # noqa: N805
         return name.lower().replace("_", "-")
 
     ACTIVE = auto()
@@ -156,13 +161,16 @@ class Tape:
     statistics: TapeStatistics
     metadata: TapeMetadata
 
+    @override
     def __str__(self) -> str:
         return f"Tape({self.vid})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.vid)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, Tape):
             return False
         return self.vid == other.vid
@@ -176,7 +184,7 @@ class Tape:
 
     @property
     def is_empty(self) -> bool:
-        """Checks if a tape volume is empty"""
+        """Checks if a tape volume is empty."""
         return (
             not self.statistics.is_full
             and self.statistics.physical_usage == 0

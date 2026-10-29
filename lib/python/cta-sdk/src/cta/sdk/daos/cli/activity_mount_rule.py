@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import ActivityMountRuleDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import ActivityMountRule, Metadata
+from typing_extensions import override
 
 
 class ActivityMountRuleDaoCli(ActivityMountRuleDao):
@@ -19,7 +21,7 @@ class ActivityMountRuleDaoCli(ActivityMountRuleDao):
         return "activitymountrule"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> ActivityMountRule:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> ActivityMountRule:
         return ActivityMountRule(
             user_name=raw_data["activityMountRule"],
             disk_instance_name=raw_data["diskInstance"],
@@ -36,9 +38,9 @@ class ActivityMountRuleDaoCli(ActivityMountRuleDao):
             ),
         )
 
+    @override
     def get(self, name: str, disk_instance: str, regex: str, /) -> ActivityMountRule:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
-
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_amr = next(
                 raw_item
@@ -54,12 +56,15 @@ class ActivityMountRuleDaoCli(ActivityMountRuleDao):
 
         return self.raw_data_to_resource(raw_amr)
 
+    @override
     def list(self) -> Iterator[ActivityMountRule]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, disk_instance: str, regex: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name, "instance": disk_instance, "activityregex": regex})
 
+    @override
     def create(
         self,
         name: str,
@@ -83,6 +88,7 @@ class ActivityMountRuleDaoCli(ActivityMountRuleDao):
             },
         )
 
+    @override
     def update(
         self,
         name: str,

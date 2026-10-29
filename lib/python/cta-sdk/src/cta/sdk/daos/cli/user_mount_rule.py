@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import UserMountRuleDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Metadata, UserMountRule
+from typing_extensions import override
 
 
 class UserMountRuleDaoCli(UserMountRuleDao):
@@ -19,7 +21,7 @@ class UserMountRuleDaoCli(UserMountRuleDao):
         return "requestermountrule"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> UserMountRule:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> UserMountRule:
         return UserMountRule(
             raw_data["requesterMountRule"],
             raw_data["diskInstance"],
@@ -35,8 +37,9 @@ class UserMountRuleDaoCli(UserMountRuleDao):
             ),
         )
 
+    @override
     def get(self, name: str, disk_instance: str, /) -> UserMountRule:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_gmr = next(
                 raw_item
@@ -49,12 +52,15 @@ class UserMountRuleDaoCli(UserMountRuleDao):
             ) from e
         return self.raw_data_to_resource(raw_gmr)
 
+    @override
     def list(self) -> Iterator[UserMountRule]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, disk_instance: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name, "instance": disk_instance})
 
+    @override
     def create(
         self,
         name: str,
@@ -76,6 +82,7 @@ class UserMountRuleDaoCli(UserMountRuleDao):
             },
         )
 
+    @override
     def update(
         self,
         name: str,
