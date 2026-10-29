@@ -26,6 +26,7 @@ dev = [
     { name = "click", specifier = "==8.1.8" },
     { name = "colorama", specifier = "==0.4.6" },
     { name = "ghp-import", specifier = "==2.1.0" },
+    { name = "griffe", specifier = "==1.14.0" },
     { name = "grpcio-tools" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "idna", specifier = "==3.20" },
@@ -38,9 +39,12 @@ dev = [
     { name = "mergedeep", specifier = "==1.3.4" },
     { name = "mike", specifier = "==2.1.3" },
     { name = "mkdocs", specifier = "==1.6.1" },
+    { name = "mkdocs-autorefs", specifier = "==1.4.2" },
     { name = "mkdocs-get-deps", specifier = "==0.2.2" },
     { name = "mkdocs-material", specifier = "==9.7.6" },
     { name = "mkdocs-material-extensions", specifier = "==1.3.1" },
+    { name = "mkdocstrings", specifier = "==0.30.1" },
+    { name = "mkdocstrings-python", specifier = "==1.18.2" },
     { name = "packaging", specifier = "==26.3" },
     { name = "paginate", specifier = "==0.5.7" },
     { name = "pathspec", specifier = "==1.1.1" },
@@ -74,6 +78,7 @@ docs = [
     { name = "click", specifier = "==8.1.8" },
     { name = "colorama", specifier = "==0.4.6" },
     { name = "ghp-import", specifier = "==2.1.0" },
+    { name = "griffe", specifier = "==1.14.0" },
     { name = "idna", specifier = "==3.20" },
     { name = "importlib-metadata", specifier = "==8.7.1" },
     { name = "importlib-resources", specifier = "==6.5.2" },
@@ -83,9 +88,12 @@ docs = [
     { name = "mergedeep", specifier = "==1.3.4" },
     { name = "mike", specifier = "==2.1.3" },
     { name = "mkdocs", specifier = "==1.6.1" },
+    { name = "mkdocs-autorefs", specifier = "==1.4.2" },
     { name = "mkdocs-get-deps", specifier = "==0.2.2" },
     { name = "mkdocs-material", specifier = "==9.7.6" },
     { name = "mkdocs-material-extensions", specifier = "==1.3.1" },
+    { name = "mkdocstrings", specifier = "==0.30.1" },
+    { name = "mkdocstrings-python", specifier = "==1.18.2" },
     { name = "packaging", specifier = "==26.3" },
     { name = "paginate", specifier = "==0.5.7" },
     { name = "pathspec", specifier = "==1.1.1" },
@@ -138,6 +146,7 @@ type-check = [
     { name = "cryptography" },
     { name = "fastjsonschema", specifier = ">=2.21.2" },
     { name = "ghp-import", specifier = "==2.1.0" },
+    { name = "griffe", specifier = "==1.14.0" },
     { name = "grpcio-tools" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "idna", specifier = "==3.20" },
@@ -151,9 +160,12 @@ type-check = [
     { name = "mergedeep", specifier = "==1.3.4" },
     { name = "mike", specifier = "==2.1.3" },
     { name = "mkdocs", specifier = "==1.6.1" },
+    { name = "mkdocs-autorefs", specifier = "==1.4.2" },
     { name = "mkdocs-get-deps", specifier = "==0.2.2" },
     { name = "mkdocs-material", specifier = "==9.7.6" },
     { name = "mkdocs-material-extensions", specifier = "==1.3.1" },
+    { name = "mkdocstrings", specifier = "==0.30.1" },
+    { name = "mkdocstrings-python", specifier = "==1.18.2" },
     { name = "oauthlib", specifier = ">=3.2.2" },
     { name = "packaging", specifier = "==26.3" },
     { name = "packaging", specifier = ">=24" },
@@ -191,6 +203,7 @@ unit-tests = [
     { name = "click", specifier = "==8.1.8" },
     { name = "colorama", specifier = "==0.4.6" },
     { name = "ghp-import", specifier = "==2.1.0" },
+    { name = "griffe", specifier = "==1.14.0" },
     { name = "grpcio-tools" },
     { name = "idna", specifier = "==3.20" },
     { name = "importlib-metadata", specifier = "==8.7.1" },
@@ -202,9 +215,12 @@ unit-tests = [
     { name = "mergedeep", specifier = "==1.3.4" },
     { name = "mike", specifier = "==2.1.3" },
     { name = "mkdocs", specifier = "==1.6.1" },
+    { name = "mkdocs-autorefs", specifier = "==1.4.2" },
     { name = "mkdocs-get-deps", specifier = "==0.2.2" },
     { name = "mkdocs-material", specifier = "==9.7.6" },
     { name = "mkdocs-material-extensions", specifier = "==1.3.1" },
+    { name = "mkdocstrings", specifier = "==0.30.1" },
+    { name = "mkdocstrings-python", specifier = "==1.18.2" },
     { name = "packaging", specifier = "==26.3" },
     { name = "paginate", specifier = "==0.5.7" },
     { name = "pathspec", specifier = "==1.1.1" },
@@ -1478,6 +1494,18 @@ wheels = [
 ]
 
 [[package]]
+name = "griffe"
+version = "1.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ec/d7/6c09dd7ce4c7837e4cdb11dce980cb45ae3cd87677298dc3b781b6bce7d3/griffe-1.14.0.tar.gz", hash = "sha256:9d2a15c1eca966d68e00517de5d69dd1bc5c9f2335ef6c1775362ba5b8651a13", size = 424684, upload-time = "2025-09-05T15:02:29.167Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/b1/9ff6578d789a89812ff21e4e0f80ffae20a65d5dd84e7a17873fe3b365be/griffe-1.14.0-py3-none-any.whl", hash = "sha256:0e9d52832cccf0f7188cfe585ba962d2674b241c01916d780925df34873bceb0", size = 144439, upload-time = "2025-09-05T15:02:27.511Z" },
+]
+
+[[package]]
 name = "grpcio"
 version = "1.80.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2229,6 +2257,20 @@ wheels = [
 ]
 
 [[package]]
+name = "mkdocs-autorefs"
+version = "1.4.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown" },
+    { name = "markupsafe" },
+    { name = "mkdocs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/47/0c/c9826f35b99c67fa3a7cddfa094c1a6c43fafde558c309c6e4403e5b37dc/mkdocs_autorefs-1.4.2.tar.gz", hash = "sha256:e2ebe1abd2b67d597ed19378c0fff84d73d1dbce411fce7a7cc6f161888b6749", size = 54961, upload-time = "2025-05-20T13:09:09.886Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/dc/fc063b78f4b769d1956319351704e23ebeba1e9e1d6a41b4b602325fd7e4/mkdocs_autorefs-1.4.2-py3-none-any.whl", hash = "sha256:83d6d777b66ec3c372a1aad4ae0cf77c243ba5bcda5bf0c6b8a2c5e7a3d89f13", size = 24969, upload-time = "2025-05-20T13:09:08.237Z" },
+]
+
+[[package]]
 name = "mkdocs-get-deps"
 version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2272,6 +2314,39 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/79/9b/9b4c96d6593b2a541e1cb8b34899a6d021d208bb357042823d4d2cabdbe7/mkdocs_material_extensions-1.3.1.tar.gz", hash = "sha256:10c9511cea88f568257f960358a467d12b970e1f7b2c0e5fb2bb48cab1928443", size = 11847, upload-time = "2023-11-22T19:09:45.208Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/54/662a4743aa81d9582ee9339d4ffa3c8fd40a4965e033d77b9da9774d3960/mkdocs_material_extensions-1.3.1-py3-none-any.whl", hash = "sha256:adff8b62700b25cb77b53358dad940f3ef973dd6db797907c49e3c2ef3ab4e31", size = 8728, upload-time = "2023-11-22T19:09:43.465Z" },
+]
+
+[[package]]
+name = "mkdocstrings"
+version = "0.30.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "importlib-metadata", marker = "python_full_version < '3.10'" },
+    { name = "jinja2" },
+    { name = "markdown" },
+    { name = "markupsafe" },
+    { name = "mkdocs" },
+    { name = "mkdocs-autorefs" },
+    { name = "pymdown-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c5/33/2fa3243439f794e685d3e694590d28469a9b8ea733af4b48c250a3ffc9a0/mkdocstrings-0.30.1.tar.gz", hash = "sha256:84a007aae9b707fb0aebfc9da23db4b26fc9ab562eb56e335e9ec480cb19744f", size = 106350, upload-time = "2025-09-19T10:49:26.446Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/2c/f0dc4e1ee7f618f5bff7e05898d20bf8b6e7fa612038f768bfa295f136a4/mkdocstrings-0.30.1-py3-none-any.whl", hash = "sha256:41bd71f284ca4d44a668816193e4025c950b002252081e387433656ae9a70a82", size = 36704, upload-time = "2025-09-19T10:49:24.805Z" },
+]
+
+[[package]]
+name = "mkdocstrings-python"
+version = "1.18.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "griffe" },
+    { name = "mkdocs-autorefs" },
+    { name = "mkdocstrings" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/95/ae/58ab2bfbee2792e92a98b97e872f7c003deb903071f75d8d83aa55db28fa/mkdocstrings_python-1.18.2.tar.gz", hash = "sha256:4ad536920a07b6336f50d4c6d5603316fafb1172c5c882370cbbc954770ad323", size = 207972, upload-time = "2025-08-28T16:11:19.847Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d5/8f/ce008599d9adebf33ed144e7736914385e8537f5fc686fdb7cceb8c22431/mkdocstrings_python-1.18.2-py3-none-any.whl", hash = "sha256:944fe6deb8f08f33fa936d538233c4036e9f53e840994f6146e8e94eb71b600d", size = 138215, upload-time = "2025-08-28T16:11:18.176Z" },
 ]
 
 [[package]]

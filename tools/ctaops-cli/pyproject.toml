@@ -29,7 +29,7 @@ dependencies = [
 
 [project.urls]
 Source = "https://gitlab.cern.ch/cta/CTA/"
-Documentation = "https://ctaops.docs.cern.ch/"
+Documentation = "https://cta.docs.cern.ch/latest/ops/tools/ctaops/"
 "CTA Documentation" = "https://cta.docs.cern.ch/"
 
 [project.scripts]

@@ -13,9 +13,17 @@ MkDocs Material builds the site. Paths below are relative to `docs/` unless stat
 | `content/stylesheets/extra.css`, `overrides/` | Shared styling and template overrides |
 | `content/assets/images/` | Shared images and favicons |
 | `hooks.py` | Generated content and include handling |
+| `python/` | Python API reference configuration and module pages |
 | `ci/docs/` (repository root) | Publication scripts and tests |
 
 Restart `mkdocs serve` after changing hooks; live reload does not reload the Python module.
+
+### Generated references
+
+The build generates the Python reference with `mkdocstrings` and the Rust reference with `cargo doc`.
+Both are included in each published documentation version under `api/python/` and `api/rust/`.
+
+Keep `requirements.txt` and the repository root’s `pyproject.toml` docs group synchronized, and update `uv.lock` after dependency changes.
 
 ### Diagram colors
 

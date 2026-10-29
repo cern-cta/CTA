@@ -21,7 +21,7 @@ dependencies = ["tomli", "rich"]
 
 [project.urls]
 Source = "https://gitlab.cern.ch/cta/CTA/"
-Documentation = "https://ctaops.docs.cern.ch/"
+Documentation = "https://cta.docs.cern.ch/latest/dev/guides/python/ctaops-utils/"
 "CTA Documentation" = "https://cta.docs.cern.ch/"
 
 

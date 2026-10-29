@@ -8,6 +8,7 @@ Schema deletion and scheduler repair/reset commands modify or remove state. Thei
 
 | Tool | Purpose |
 | --- | --- |
+| [ctaops](ctaops.md) | Manage CTA resources and local tape hardware. |
 | [cta-admin](cta-admin.md) | Inspect and manage CTA resources, policies, and requests. |
 | [cta-ops-admin](cta-ops-admin.md) | Perform higher-level operator tasks through the CTA administration wrapper. |
 | [cta-versionlock](cta-versionlock.md) | Inspect and manage RPM dependency version locks. |

@@ -14,6 +14,8 @@ watch:
   - ../taped
   - ../maintd
   - ../mediachanger/rmcd
+  - ../lib/python
+  - python
   - ../lib/telemetry
 
 site_name: CTA Documentation
@@ -42,6 +44,8 @@ markdown_extensions:
       check_paths: true
       auto_append:
         - docs/includes/abbreviations.md
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.details
   - pymdownx.superfences:
       custom_fences:
@@ -182,6 +186,7 @@ nav:
               - 'Tape Server Setup': ops/deploy-and-configure/deployment/tape-servers.md
               # Bind stable hardware identities to non-rewinding paths; runtime settings belong in Configuration.
               - 'Stable Drive Identities & udev': ops/deploy-and-configure/deployment/udev-rules.md
+              - 'ctaops-udev Setup': ops/deploy-and-configure/deployment/ctaops-udev.md
               - 'Initialisation & Verification': ops/deploy-and-configure/deployment/initialisation.md
           # Explain settings, prerequisites, and examples; managing live resources belongs in Administration.
           - 'Configuration':
@@ -246,7 +251,9 @@ nav:
       # Provide command lookup, syntax, and tool-specific usage; link to end-to-end operational procedures.
       - 'Tools & Reference':
           - 'Tool Index': ops/tools/index.md
-          # Install separately packaged tools and configure shared runtime settings; library APIs belong upstream.
+          # Install separately packaged tools and configure shared runtime settings; library APIs belong in Development.
+          - 'ctaops': ops/tools/ctaops.md
+          - 'ctaops Usage': ops/tools/ctaops-usage.md
           - 'Installation & Shared Configuration': ops/tools/installation-and-configuration.md
           # Reference general management commands; put task sequences in Administration.
           - 'Administration':
@@ -336,6 +343,18 @@ nav:
               - 'Debugging': dev/guides/tools-and-environment/debugging.md
               - 'Pre-commit Hooks': dev/guides/tools-and-environment/pre-commit.md
               - 'Building Images & Packages': dev/guides/tools-and-environment/building-images-and-packages.md
+          - 'Python Libraries & Tools':
+              - 'Overview': dev/guides/python/index.md
+              - 'cta-sdk':
+                  - 'Overview': dev/guides/python/cta-sdk/index.md
+                  - 'Usage': dev/guides/python/cta-sdk/api-usage.md
+              - 'ctaops-sdk':
+                  - 'Overview': dev/guides/python/ctaops-sdk/index.md
+                  - 'Usage': dev/guides/python/ctaops-sdk/api-usage.md
+              - 'ctaops-utils':
+                  - 'Overview': dev/guides/python/ctaops-utils/index.md
+                  - 'Usage': dev/guides/python/ctaops-utils/api-usage.md
+              - 'Extending ctaops': dev/guides/python/ctaops-cli.md
           # Select, write, and run tests before learning pipeline mechanics; CI administration belongs to maintainers.
           - 'Testing & CI':
               - 'Testing CTA': dev/guides/testing/index.md

@@ -1,4 +1,5 @@
-# cta-sdk Documentation
+# cta-sdk
 
-Please refer to the docs directory for [cta-sdk documentation](/docs/pages/cta-sdk/index.md) 
-or directly to [ctaops docs website](https://ctaops.docs.cern.ch/cta-sdk/).
+See the [library guide](../../../docs/content/dev/guides/python/cta-sdk/index.md), [usage examples](../../../docs/content/dev/guides/python/cta-sdk/api-usage.md), and [published API reference](https://cta.docs.cern.ch/latest/api/python/cta-sdk/).
+
+See the [Python workspace](../README.md) for local development.

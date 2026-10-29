@@ -18,6 +18,9 @@ Inspect the udev properties exposed by the host and define rules that match a st
 
 CTA's supplied `99-tape.rules` assigns the `st` group to `nst*` devices; it does not create stable drive names. Site-specific identity rules must complement the required device permissions.
 
+For hardware discovery with the Python tools, see [ctaops-udev Setup](ctaops-udev.md).
+Its naming conventions are CERN-specific; adapt and validate them for your deployment.
+
 ## Configure CTA
 
 Use the persistent paths in the [Tape Daemon Configuration](../configuration/tape-daemon.md). Keep the mapping between the symlink, physical drive, CTA drive name, and library address explicit. Container deployments must expose the corresponding devices and paths to the service.
