@@ -50,6 +50,31 @@ kubectl -n dev exec <pod> -c <container> -- cat /var/log/tmp/<core-file> > ./<co
 
 Record the image tag or digest, source revision, and configuration alongside the dump. Analysing it requires the matching executable, libraries, and debug symbols. See [Debugger tooling](#debugger-tooling) for the planned core-dump analysis instructions (currently TODO).
 
+### Identify the build
+
+CTA C/C++ executables and shared libraries embed the package name, version, and Git commit (when available) in ELF package metadata.
+The commit is preserved through source packaging; it identifies the source revision, not uncommitted local changes.
+
+On hosts using `systemd-coredump`, inspect a recorded crash with `coredumpctl info <pid>`.
+For example, the output includes:
+
+```text
+       Package: cta/6-dev
+      build-id: 54d8dcba85e86da02da915a7040dd850836a6d31
+```
+
+The `gitCommit` field is available in the recorded JSON metadata, alongside metadata for loaded libraries:
+
+```bash
+coredumpctl --field=COREDUMP_PACKAGE_JSON info <pid> | jq .
+```
+
+To inspect a binary directly without a recorded crash:
+
+```bash
+systemd-analyze inspect-elf /usr/bin/cta-taped
+```
+
 ## Reproduce a failing operation
 
 Once the instance is healthy enough to run the operation, narrow the failure to a repeatable example. For example, if a test suite fails during retrieval, rerun the relevant [system test](../testing/system-tests.md) instead of the entire suite, keeping the same scheduler backend and disk system.
