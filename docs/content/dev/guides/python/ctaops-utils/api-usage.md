@@ -86,7 +86,7 @@ config = loader.get_safe_config()
 ```
 
 !!! info
-    See also different loading mode for [`load_from_toml()`](../../../../../api/python/ctaops-utils/reference/)
+    See also different loading mode for [`load_from_toml()`](../../../../api/python/ctaops-utils/reference.md)
 
 ??? tip
     You can chain all operations in one line.
@@ -142,7 +142,7 @@ LOGGER.error("An error occurred")
 ```
 
 !!! info
-    See also [Package reference](../../../../../api/python/ctaops-utils/reference/).
+    See also [Package reference](../../../../api/python/ctaops-utils/reference.md).
 
 ## Dataclass Utilities
 
@@ -272,7 +272,7 @@ print(types)  # frozenset({<class 'str'>})
 ```
 
 !!! info 
-    For **Supported Type Constructs** see also [ctaops.utils reference](../../../../../api/python/ctaops-utils/reference/).
+    For **Supported Type Constructs** see also [ctaops.utils reference](../../../../api/python/ctaops-utils/reference.md).
 
 !!! note
     **Performance:** The function is cached with LRU (Least Recently Used) caching for fast repeated calls.

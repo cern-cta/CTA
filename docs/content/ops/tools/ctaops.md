@@ -47,7 +47,7 @@ The `tapeserver` extra pulls in [`ctaops-sdk`](../../dev/guides/python/ctaops-sd
 1. Command-line flags (e.g. `--format`, `--log-level`).
 2. Environment variables (e.g. `CTAXrdSecSSSKT` to override the keytab path).
 3. The TOML file pointed at by `--config-file` / `-C`, defaulting to `/etc/ctaops/ctaops-cli.toml`.
-4. Built-in defaults (see [AppConfig](../../../api/python/ctaops-cli/reference/config/#ctaops.cli.config.AppConfig)).
+4. Built-in defaults (see [AppConfig](../../api/python/ctaops-cli/reference/config.md#ctaops.cli.config.AppConfig)).
 
 ### Reference configuration file
 

@@ -15,7 +15,6 @@ watch:
   - ../maintd
   - ../mediachanger/rmcd
   - ../lib/python
-  - python
   - ../lib/telemetry
 
 site_name: CTA Documentation
@@ -60,6 +59,27 @@ hooks:
 
 plugins:
   - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - ../lib/python/cta-sdk/src
+            - ../lib/python/ctaops-sdk/src
+            - ../lib/python/ctaops-utils/src
+            - ../tools/ctaops-cli/src
+          inventories:
+            - https://docs.python.org/3.9/objects.inv
+          options:
+            allow_inspection: false
+            show_if_no_docstring: true
+            docstring_style: google
+            docstring_options:
+              warn_unknown_params: false
+              warn_missing_types: false
+            show_root_heading: true
+            show_root_full_path: true
+            show_symbol_type_toc: true
 
 theme:
   name: material
@@ -444,4 +464,31 @@ nav:
               - 'Readiness & Liveness': dev/internals/health-checks.md
   # Render the release history from CHANGELOG.md; upgrade instructions belong in Operations > Upgrades.
   - 'Changelog': changelog.md
-  - 'Reference': dev/internals/reference.md
+  - 'Reference':
+      - 'Overview': dev/internals/reference.md
+      - 'Python API':
+          - Overview: api/python/index.md
+          - cta-sdk:
+              - api/python/cta-sdk/index.md
+              - api/python/cta-sdk/reference/client.md
+              - api/python/cta-sdk/reference/daos.md
+              - api/python/cta-sdk/reference/exceptions.md
+              - api/python/cta-sdk/reference/factory.md
+              - api/python/cta-sdk/reference/models.md
+              - api/python/cta-sdk/reference/units.md
+              - api/python/cta-sdk/reference/workflow.md
+          - ctaops-sdk:
+              - api/python/ctaops-sdk/index.md
+              - api/python/ctaops-sdk/reference/controller-providers.md
+              - api/python/ctaops-sdk/reference/controllers.md
+              - api/python/ctaops-sdk/reference/exceptions.md
+              - api/python/ctaops-sdk/reference/infrastructure-repository.md
+          - ctaops-utils:
+              - api/python/ctaops-utils/reference.md
+          - ctaops-cli:
+              - api/python/ctaops-cli/index.md
+              - api/python/ctaops-cli/reference/commands.md
+              - api/python/ctaops-cli/reference/config.md
+              - api/python/ctaops-cli/reference/display.md
+              - api/python/ctaops-cli/reference/entrypoint.md
+              - api/python/ctaops-cli/reference/models.md

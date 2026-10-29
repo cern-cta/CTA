@@ -94,21 +94,21 @@ classDiagram
 
 ### DAOs 
 
-For the available resource DAOs, see [CtaClient Reference ](../../../../api/python/cta-sdk/reference/client/) 
+For the available resource DAOs, see [CtaClient Reference ](../../../../api/python/cta-sdk/reference/client.md) 
 
 ### Backends
 
 The SDK is designed to support multiple backends for communicating with CTA. Currently, only the **`CLI`** backend is fully implemented and a **`FILE`** backend for local development . You can select a backend using the `get_cta_client` factory function.
 
 !!! note "See also"
-    [CtaClient reference](../../../../api/python/cta-sdk/reference/client/)
+    [CtaClient reference](../../../../api/python/cta-sdk/reference/client.md)
 
 !!! info
     **`FILE`** backend is only available when installing with dev extra `cta-sdk[dev]`
 
 !!! info
     The administrative factory supports `CLI` and `FILE`.
-    The separate [gRPC workflow client](../../../../api/python/cta-sdk/reference/workflow/) handles archive and retrieve requests; it is not a `get_cta_client("GRPC")` backend.
+    The separate [gRPC workflow client](../../../../api/python/cta-sdk/reference/workflow.md) handles archive and retrieve requests; it is not a `get_cta_client("GRPC")` backend.
 
 ## Installation
 
@@ -136,7 +136,7 @@ The only configuration provided for now, is during the backend instantiation whe
     ```
 
 !!! note
-    See also [CtaClient reference](../../../../api/python/cta-sdk/reference/client/).
+    See also [CtaClient reference](../../../../api/python/cta-sdk/reference/client.md).
 
 `CTAXrdSecSSSKT` environment variable can be used to override the keytab file location.
 

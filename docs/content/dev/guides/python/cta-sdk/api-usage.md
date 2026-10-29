@@ -123,4 +123,4 @@ except CtaSdkError as e:
 
 
 !!! info
-    See also [**Exception Types** reference](../../../../../api/python/cta-sdk/reference/exceptions/)
+    See also [**Exception Types** reference](../../../../api/python/cta-sdk/reference/exceptions.md)

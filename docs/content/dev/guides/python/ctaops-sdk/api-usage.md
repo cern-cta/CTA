@@ -34,7 +34,7 @@ drive = drv_repo.get_drive_by_ordinal(0, "LIBSN")                 # LocatedNamed
 
 ## Resolve a library controller
 
-The recommended entry point is [`ScsiManagedLibraryControllerProvider`](../../../../../api/python/ctaops-sdk/reference/controller-providers/#ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider), which yields a fully-wired [`ScsiManagedLibraryController`](../../../../../api/python/ctaops-sdk/reference/controllers/#ctaops.sdk.controllers.scsi.library.ScsiManagedLibraryController):
+The recommended entry point is [`ScsiManagedLibraryControllerProvider`](../../../../api/python/ctaops-sdk/reference/controller-providers.md#ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider), which yields a fully-wired [`ScsiManagedLibraryController`](../../../../api/python/ctaops-sdk/reference/controllers.md#ctaops.sdk.controllers.scsi.library.ScsiManagedLibraryController):
 
 ```python
 from ctaops.sdk import ScsiManagedLibraryControllerProvider
@@ -48,7 +48,7 @@ print(f"Library {lib.name} (serial {lib.serial_number})")
 print(f"I/O slots: {lib.get_max_io_slots()}")
 ```
 
-If you only need ordinal-only addressing (no logical-name resolution, no `label_tape`), use the lighter [`ScsiLibraryControllerProvider`](../../../../../api/python/ctaops-sdk/reference/controller-providers/#ctaops.sdk.controller_providers.scsi.library.ScsiLibraryControllerProvider) which yields a [`ScsiLibraryController`](../../../../../api/python/ctaops-sdk/reference/controllers/#ctaops.sdk.controllers.scsi.library.ScsiLibraryController).
+If you only need ordinal-only addressing (no logical-name resolution, no `label_tape`), use the lighter [`ScsiLibraryControllerProvider`](../../../../api/python/ctaops-sdk/reference/controller-providers.md#ctaops.sdk.controller_providers.scsi.library.ScsiLibraryControllerProvider) which yields a [`ScsiLibraryController`](../../../../api/python/ctaops-sdk/reference/controllers.md#ctaops.sdk.controllers.scsi.library.ScsiLibraryController).
 
 You can also resolve the managed library that hosts a given drive — handy when callers only know the drive's logical name and not the parent library:
 
@@ -109,7 +109,7 @@ if lib.drive_is_free("T0-LIB0-DRV0"):
 
 ## Drive-only operations (no library)
 
-For unmanaged drives — or for cases where you want a drive controller without a library context — use [`ScsiDriveControllerProvider`](../../../../../api/python/ctaops-sdk/reference/controller-providers/#ctaops.sdk.controller_providers.scsi.drive.ScsiDriveControllerProvider):
+For unmanaged drives — or for cases where you want a drive controller without a library context — use [`ScsiDriveControllerProvider`](../../../../api/python/ctaops-sdk/reference/controller-providers.md#ctaops.sdk.controller_providers.scsi.drive.ScsiDriveControllerProvider):
 
 ```python
 from ctaops.sdk import ScsiDriveControllerProvider
