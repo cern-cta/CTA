@@ -1,4 +1,4 @@
-# API Usage
+# Usage
 
 ## Configuration Management
 

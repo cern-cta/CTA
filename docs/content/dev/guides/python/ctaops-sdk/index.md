@@ -1,18 +1,12 @@
 # Overview
 
-**ctaops-sdk** is a Python library for managing CTA (CERN Tape Archive) tape
-server hardware locally. It provides a Pythonic, type-annotated interface to discover, configure and operate tape libraries (medium changers) and tape drives on a CTA tape server system.
+`ctaops-sdk` discovers and operates tape libraries and drives on a CTA tape server through udev metadata and SCSI utilities.
+It provides typed interfaces for mounting tapes, reading and writing data, and inspecting hardware state.
 
-**Key features:**
-
-- 🔍 **udev-driven discovery** — locate libraries and drives via udev metadata, no static config files.
-- 🏗️ **Three-layer architecture** — clean separation between *what is here* (repositories), *what to do with it* (controllers), and *how to obtain a controller* (controller providers).
-- 🧩 **Protocol-based design** — repository, controller, and controller-provider layers are defined as `typing.Protocol`s, so alternative backends (mock, gRPC, …) can be plugged in without touching call sites.
-- 🔒 **Fully typed** — Python 3.9+ type hints, `py.typed` marker, dedicated value objects for each level of binding (`Drive`/`NamedDrive`/`LocatedDrive`/`LocatedNamedDrive`).
-- 🔁 **Context-managed mounts** — `library.mount(...)` returns a context manager that always returns the tape to its slot, even on errors or end-of-tape.
-- 🌡️ **Hardware telemetry** — read drive temperature, humidity, write-protect, and online status via `mt` and `sg_logs`.
-- ✍️ **Streaming I/O** — generator-based `read_files` / `write_files` with Adler-32 checksumming and EOT/EOD signalling.
-- 📝 **Stdlib logging** — every subprocess invocation and state transition is logged on the `ctaops.sdk` logger.
+- Mount context managers handle unmounting when the context exits.
+- `read_files` and `write_files` use generators, Adler-32 checksums, and end-of-tape or end-of-data signals.
+- Hardware queries report temperature, humidity, write protection, and online status.
+- The `ctaops.sdk` logger records subprocess calls and state changes.
 
 The package is organised in three layers, each with a `Protocol`-based interface and a concrete SCSI/udev-backed implementation:
 
@@ -54,7 +48,7 @@ Devices missing the metadata required for the variant you queried are silently s
 
 ## Usage
 
-Please see [API Usage](api-usage.md) page.
+See [Usage](api-usage.md) for examples.
 
 ## Type hints
 
