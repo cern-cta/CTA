@@ -6,6 +6,7 @@
 #include "scheduler/rdbms/RepackRequest.hpp"
 
 #include "common/exception/NotImplementedException.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -542,6 +543,11 @@ void RepackRequest::insert() {
     m_lc.log(log::INFO, "In RepackRequest::insert(): before inserting row");
     auto conn = m_connPool.getConn();
     rjr.insert(conn);
+  } catch (rdbms::UniqueConstraintError& ex) {
+    log::ScopedParamContainer(m_lc)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .log(log::WARNING, "In RepackRequest::insert(): repack already queued for this VID.");
+    throw exception::UserError("A repack request already exists for this VID.");
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(m_lc)
       .add(semconv::log::exceptionMessage, ex.getMessageValue())
