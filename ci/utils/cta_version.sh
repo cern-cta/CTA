@@ -28,12 +28,10 @@ validate_cta_version() {
     pgsched | pgcat | pgall) version="${version%.*}" ;;
   esac
 
-  # Release image tags use neutral versions; branch builds retain their unique build ID.
-  if [[ ! "$version" =~ ^[1-9][0-9]*\.[0-9]+\.[0-9]+(\.(dev|rc)[1-9][0-9]*)?$ ]] \
-      && [[ ! "$version" =~ ^[1-9][0-9]*\.dev[1-9][0-9]*(\.g[a-f0-9]+(\.dirty)?)?$ ]]; then
-    echo "Invalid CTA version: $1; expected major.minor.patch[.devN|.rcN][.variant].platform." >&2
-    return 1
-  fi
+  # Source-version grammar is shared with release tooling and Python packaging.
+  local version_helper
+  version_helper="$(dirname "${BASH_SOURCE[0]}")/../../lib/python/package_version.py"
+  python3 "$version_helper" --validate-source "$version" || return 1
 }
 
 # Resolve a software version using the actual build variant and platform.

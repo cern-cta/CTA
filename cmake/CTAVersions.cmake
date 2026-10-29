@@ -8,7 +8,7 @@ set(CTA_VERSION "" CACHE STRING "CTA version-release")
 if(NOT CTA_VERSION MATCHES "^[A-Za-z0-9._+~^]+-[A-Za-z0-9._+~^]+$")
   message(FATAL_ERROR
     "CTA_VERSION must contain two nonempty parts separated by exactly one hyphen, "
-    "using only letters, numbers, '.', '_', '+', '~', or '^'; for example 6-dev.")
+    "using only letters, numbers, '.', '_', '+', '~', or '^'; for example 6~dev1-1.")
 endif()
 
 set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0" CACHE STRING

@@ -45,6 +45,10 @@ def add_release_note(
     build_version = os.environ.get("CTA_VERSION", tag)
     context = ReleaseContext(Path.cwd(), config, api, dry_run=False)
     release_issues = context.find_release_issues(version)
+    # Prereleases may precede the release issue and changelog.
+    release = CTAVersion.parse(tag)
+    if not release_issues and (release.development or release.release_candidate):
+        return
     if len(release_issues) != 1:
         raise ReleaseWorkflowError(
             f"Expected one release issue titled {config.issue_title(version)!r}, found {len(release_issues)}"

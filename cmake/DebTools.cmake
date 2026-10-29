@@ -14,7 +14,7 @@ endif()
 
 # Debian upstream versions must begin with a digit and use Debian's version alphabet.
 if(NOT CTA_VERSION MATCHES "^[0-9][A-Za-z0-9.+~]*-[A-Za-z0-9.+~]+$")
-  message(FATAL_ERROR "Invalid Debian version: ${CTA_VERSION}; use e.g. 6.0.0-1 or 6-dev")
+  message(FATAL_ERROR "Invalid Debian version: ${CTA_VERSION}; use e.g. 6.0.0-1 or 6~dev1-1")
 endif()
 
 string(REGEX REPLACE "-[^-]+$" "" CTA_DEB_UPSTREAM_VERSION "${CTA_VERSION}")

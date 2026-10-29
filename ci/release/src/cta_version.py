@@ -6,12 +6,16 @@
 from __future__ import annotations
 
 import re
+import sys
 from collections.abc import Iterable
 from contextlib import suppress
 from dataclasses import dataclass, field
+from pathlib import Path
 
-BASE_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)$")
-TAG_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)(?:\.(rc|dev)([1-9]\d*))?$")
+# Keep tag spelling identical to Python and native package builds.
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib/python"))
+from package_version import BASE_RE, TAG_RE
+
 # TODO: Remove historical parsing once maintained release lines have neutral final tags for changelog lookup.
 HISTORICAL_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)(?:\.(\d+))?-(\d+)(?:\..+)?$")
 

@@ -5,13 +5,17 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
 import subprocess
 from pathlib import Path
 
-TAG_REGEX = re.compile(r"^v([1-9][0-9]*\.[0-9]+\.[0-9]+(?:\.(?:dev|rc)[1-9][0-9]*)?)$")
+# Shared by release tooling and artifact builders.
+BASE_RE = re.compile(r"^v([1-9][0-9]*)\.([0-9]+)\.([0-9]+)$")
+TAG_RE = re.compile(r"^v([1-9][0-9]*)\.([0-9]+)\.([0-9]+)(?:\.(rc|dev)([1-9][0-9]*))?$")
+DEVELOPMENT_RE = re.compile(r"^[1-9][0-9]*\.dev[1-9][0-9]*(\.g[a-f0-9]+(\.dirty)?)?$")
 
 
 def source_version() -> str:
@@ -24,7 +28,7 @@ def source_version() -> str:
     requested = os.environ.get("CI_COMMIT_TAG")
     if requested:
         tags = git("tag", "--points-at", "HEAD").splitlines()
-        if requested not in tags or not TAG_REGEX.fullmatch(requested):
+        if requested not in tags or not TAG_RE.fullmatch(requested):
             raise ValueError(f"CI_COMMIT_TAG is not a valid release tag at HEAD: {requested}")
         if git("status", "--porcelain", "--untracked-files=normal"):
             raise ValueError("Cannot build a release version from a dirty checkout")
@@ -51,4 +55,11 @@ def package_version() -> str:
 
 
 if __name__ == "__main__":
-    print(source_version())
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--validate-source", help="validate a neutral source version without inspecting Git")
+    args = parser.parse_args()
+    if args.validate_source is not None:
+        if not (TAG_RE.fullmatch(f"v{args.validate_source}") or DEVELOPMENT_RE.fullmatch(args.validate_source)):
+            parser.error(f"Invalid CTA source version: {args.validate_source}")
+    else:
+        print(source_version())

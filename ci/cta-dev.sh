@@ -1090,6 +1090,11 @@ build_cta() {
 
   write_build_state "$build_configuration_json" false
 
+  # Resolve native package metadata before invoking the container build.
+  local resolved_image_version package_version
+  resolved_image_version=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+  package_version=$(resolve_cta_package_version "$resolved_image_version")
+
   print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.
   podman exec --interactive --tty "${build_container_name}" \
@@ -1097,7 +1102,7 @@ build_cta() {
     --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
     --create-build-dir \
-    --cta-version "$(resolve_cta_package_version "$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")")" \
+    --cta-version "${package_version}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
     --oracle-support "${oracle_support}" \
