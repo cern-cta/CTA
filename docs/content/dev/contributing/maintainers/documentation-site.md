@@ -27,7 +27,7 @@ Mermaid colors are configured in `content/stylesheets/extra.css`. Prefer the def
 
 Publication uses `CI_JOB_TOKEN` to push to the protected `gl-pages` branch. Repository pushes must be enabled for job tokens, and the triggering user must have permission to push to that branch (maintainer or higher). Use the publication workflow rather than editing `gl-pages` manually.
 
-Each tag updates its minor-series documentation: for example, `v6.12.0-1` updates `6.12`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
+Each tag updates its minor-series documentation: for example, `v6.12.0` updates `6.12`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
 
 If publication fails, inspect the `publish-docs` log and resolve the cause, such as missing push permissions. Retry the job in the original tag pipeline when the source contents are unchanged. If a source fix is needed, use a new tag; do not move the existing tag. Check the published version after the retry.
 
@@ -38,11 +38,11 @@ See [Release Procedure](releases.md) for the surrounding release workflow.
 Documentation corrections for an older minor series can be published without releasing new RPMs or container images:
 
 1. Backport the correction through a reviewed MR based on the appropriate release source. Keep included manuals and configurations consistent with that series.
-2. Create a new protected canonical release tag on the corrected commit, higher than the tag currently published for that series. For example, if `6.9` was published from `v6.9.2-1`, use an unused revision such as `v6.9.2-2`. For this documentation-only update, create the tag directly with Git on the reviewed commit (replace the example version and SHA):
+2. Create a new protected canonical release tag on the corrected commit, higher than the tag currently published for that series. For example, if `6.9` was published from `v6.9.2`, use an unused patch version such as `v6.9.3`. For this documentation-only update, create the tag directly with Git on the reviewed commit (replace the example version and SHA):
 
     ```bash
-    git tag -a v6.9.2-2 REVIEWED_COMMIT_SHA -m "Documentation update for CTA 6.9"
-    git push origin refs/tags/v6.9.2-2
+    git tag -a v6.9.3 REVIEWED_COMMIT_SHA -m "Documentation update for CTA 6.9"
+    git push origin refs/tags/v6.9.3
     ```
 
     Use the CERN GitLab remote and ensure the new tag matches the project’s protection rules. Do not move existing tags; older versions cannot replace newer published documentation, and reuse of a version for a different commit is rejected.

@@ -28,7 +28,7 @@ class ChangelogCommandTest(unittest.TestCase):
         self.context = ReleaseContext(Path("/tmp"), ReleaseConfig(), self.api, dry_run=False)
 
     def test_preview_includes_commits_without_valid_trailers(self) -> None:
-        self.api.get.return_value = {"notes": "## 6.12.0-1\n\n### Bug Fixes\n\n- Fixed"}
+        self.api.get.return_value = {"notes": "## 6.12.0\n\n### Bug Fixes\n\n- Fixed"}
         self.api.get_all.return_value = [
             {"title": "Missing trailer", "web_url": "https://gitlab.example/commit/abc", "trailers": {}},
             {
@@ -42,7 +42,7 @@ class ChangelogCommandTest(unittest.TestCase):
                 "trailers": {"Changelog": "typo"},
             },
         ]
-        notes = changelog.generate_changelog_notes(self.context, "old", "new", "6.12.0-1")
+        notes = changelog.generate_changelog_notes(self.context, "old", "new", "6.12.0")
         assert "[Missing trailer](https://gitlab.example/commit/abc)" in notes
         assert "[Invalid category](https://gitlab.example/commit/ghi)" in notes
         assert "Valid fix" not in notes
@@ -51,22 +51,22 @@ class ChangelogCommandTest(unittest.TestCase):
     def test_issue_note_contains_clickable_release_context(self) -> None:
         note = changelog.changelog_issue_note(
             self.context,
-            "v6.12.0-1",
+            "v6.12.0",
             "abcdef1234567890",
-            "v6.12.0-1-changelog-update",
+            "v6.12.0-changelog-update",
             "https://gitlab.example/branch",
             {"iid": 42, "web_url": "https://gitlab.example/mr/42"},
         )
         assert "[`abcdef123456`](https://gitlab.cern.ch/cta/CTA/-/commit/abcdef1234567890)" in note
-        assert "[`v6.12.0-1-changelog-update`](https://gitlab.example/branch)" in note
+        assert "[`v6.12.0-changelog-update`](https://gitlab.example/branch)" in note
         assert "[merge request !42](https://gitlab.example/mr/42)" in note
-        assert "will be tagged as **v6.12.0-1**" in note
+        assert "will be tagged as **v6.12.0**" in note
         assert note.endswith("Awaiting MR approval and merge.")
 
     def test_release_merge_request_metadata(self) -> None:
-        description = changelog.merge_request_description("v6.12.0-1", 42)
+        description = changelog.merge_request_description("v6.12.0", 42)
         assert description.startswith("### Description\n\n")
-        assert "Updates the changelog in preparation for release v6.12.0-1." in description
+        assert "Updates the changelog in preparation for release v6.12.0." in description
         assert "See #42" in description
         assert "\n\n### Checklist\n\n" in description
         assert changelog.MERGE_REQUEST_LABELS == ("type::release", "priority::high")
@@ -91,13 +91,13 @@ class ChangelogCommandTest(unittest.TestCase):
             changelog.confirm_changelog_publication()
 
     def test_declining_existing_changelog_resources_does_not_create_issue(self) -> None:
-        branch = {"name": "v6.12.0-1-main-changelog-update", "commit": {"id": "abc123"}}
+        branch = {"name": "v6.12.0-main-changelog-update", "commit": {"id": "abc123"}}
         merge_request = {"state": "opened", "web_url": "https://gitlab.example/mr/42"}
         with (
-            patch.object(changelog, "edit_changelog_notes", return_value="## 6.12.0-1\n"),
+            patch.object(changelog, "edit_changelog_notes", return_value="## 6.12.0\n"),
             patch.object(changelog, "confirm_changelog_publication"),
             patch.object(self.api, "get_all", return_value=[branch]),
-            patch.object(self.context, "read_repository_file", return_value=("## 6.12.0-1\n", "blob")),
+            patch.object(self.context, "read_repository_file", return_value=("## 6.12.0\n", "blob")),
             patch.object(self.context, "find_or_create_release_issue") as find_issue,
             patch("builtins.input", return_value=""),
             patch("confirmation.sys.stdin.isatty", return_value=True),
@@ -105,9 +105,9 @@ class ChangelogCommandTest(unittest.TestCase):
         ):
             changelog.build_changelog_plan(
                 self.context,
-                CTAVersion.parse("v6.12.0-1"),
+                CTAVersion.parse("v6.12.0"),
                 "abc123",
-                "## 6.12.0-1\n",
+                "## 6.12.0\n",
                 7,
                 merge_request,
                 "main",
@@ -116,15 +116,15 @@ class ChangelogCommandTest(unittest.TestCase):
 
     def test_mutation_uses_preflight_plan_without_api_reads(self) -> None:
         branch = {
-            "name": "v6.12.0-1-maintenance-changelog-update",
+            "name": "v6.12.0-maintenance-changelog-update",
             "commit": {"id": "abc123"},
             "web_url": "https://gitlab.example/branch",
         }
         plan = changelog.ChangelogPlan(
-            release_version=CTAVersion.parse("v6.12.0-1"),
+            release_version=CTAVersion.parse("v6.12.0"),
             target_branch="maintenance",
             changelog_commit="abc123",
-            edited_notes="## 6.12.0-1\n",
+            edited_notes="## 6.12.0\n",
             user_id=7,
             release_issue={"iid": 1, "web_url": "https://gitlab.example/issue/1"},
             merge_request=None,
@@ -155,11 +155,11 @@ class ChangelogCommandTest(unittest.TestCase):
             patch.object(self.context.git, "run", return_value='{"majorVersion": 6}') as git_run,
             pytest.raises(ReleaseWorkflowError, match="no valid numeric ID"),
         ):
-            changelog.run(self.context, "v6.12.0-1")
+            changelog.run(self.context, "v6.12.0")
         git_run.assert_called_once_with(["show", "abc123:project.json"])
 
     def test_newer_tags_do_not_block_an_available_maintenance_tag(self) -> None:
-        version = CTAVersion.parse("v6.11.19-1")
+        version = CTAVersion.parse("v6.11.19")
         with (
             patch.object(self.context.git, "local_tag_commit", return_value=None),
             patch.object(self.context.git, "remote_tag_commit", return_value=None),
@@ -167,7 +167,7 @@ class ChangelogCommandTest(unittest.TestCase):
             changelog._validate_tag_is_available(self.context, version)  # pyright: ignore[reportPrivateUsage]
 
     def test_exact_existing_tag_is_rejected(self) -> None:
-        version = CTAVersion.parse("v6.11.19-1")
+        version = CTAVersion.parse("v6.11.19")
         with (
             patch.object(self.context.git, "local_tag_commit", return_value="abc123"),
             pytest.raises(ReleaseWorkflowError, match="already exists"),

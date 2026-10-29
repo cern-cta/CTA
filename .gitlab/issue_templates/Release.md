@@ -1,4 +1,4 @@
-<!-- Ensure the title of this ticket is the release title. E.g. `Release v6.12.0-1` -->
+<!-- Ensure the title of this ticket is the release title. E.g. `Release v6.12.0` -->
 
 * See [Releasing a new version of CTA](https://cta.docs.cern.ch/latest/dev/contributing/maintainers/releases/)
 

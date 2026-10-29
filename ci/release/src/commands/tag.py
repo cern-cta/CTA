@@ -41,11 +41,11 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         description="Validate a release commit and publish one annotated CTA tag.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
-  release tag v6.12.0-1
-  release tag v6.12.0-1.rc2
-  release tag v6.12.0-1.dev1
-  release tag v6.12.0-1 --development
-  release tag v6.12.0-1 --release-candidate
+  release tag v6.12.0
+  release tag v6.12.0.rc2
+  release tag v6.12.0.dev1
+  release tag v6.12.0 --development
+  release tag v6.12.0 --release-candidate
 
 One source tag starts the default builds; additional variants are manual.
 Use --ref COMMIT_OR_TAG for corrected candidates or to promote a tested RC.

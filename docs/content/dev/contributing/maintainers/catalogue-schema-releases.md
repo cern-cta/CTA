@@ -6,7 +6,7 @@ For authoring schema changes and migrations, see [Schema Development](../../inte
 
 ## Review and coordinate
 
-Before tagging the schema, collect the following evidence in the CTA release issue. If changelog preparation has not created it yet, create it using the Release issue template, the title `Release <version>` (for example, `Release v6.12.0-1`), and the `type::release` label. The release tool will reuse it:
+Before tagging the schema, collect the following evidence in the CTA release issue. If changelog preparation has not created it yet, create it using the Release issue template, the title `Release <version>` (for example, `Release v6.12.0`), and the `type::release` label. The release tool will reuse it:
 
 - The reviewed schema MR and exact schema and CTA commit SHAs used for validation. Check that the schema version, generated SQL, migration scripts, and `ReleaseNotes.md` agree.
 - Links to fresh-catalogue and migration-test results, identifying the source and destination schema versions and database backends tested. Record rollback limitations and any required intermediate upgrades.

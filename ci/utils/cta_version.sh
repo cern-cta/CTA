@@ -28,10 +28,10 @@ validate_cta_version() {
     pgsched | pgcat | pgall) version="${version%.*}" ;;
   esac
 
-  # Reserved labels may appear only in the suffixes removed above.
-  if [[ ! "$version" =~ ^[0-9]+([.][0-9]+)*-[a-z0-9]+([.][a-z0-9]+)*$ ]] \
-      || [[ "$version" =~ [.-](pgsched|pgcat|pgall|${platform_pattern})([.]|$) ]]; then
-    echo "Invalid CTA version: $1; expected version-release[.variant].platform with no misplaced or repeated labels." >&2
+  # Release image tags use neutral versions; branch builds retain their unique build ID.
+  if [[ ! "$version" =~ ^[1-9][0-9]*\.[0-9]+\.[0-9]+(\.(dev|rc)[1-9][0-9]*)?$ ]] \
+      && [[ ! "$version" =~ ^[1-9][0-9]*-dev\.[0-9]+git[a-f0-9]+$ ]]; then
+    echo "Invalid CTA version: $1; expected major.minor.patch[.devN|.rcN][.variant].platform." >&2
     return 1
   fi
 }
@@ -74,11 +74,33 @@ resolve_cta_version() {
   printf '%s\n' "$version"
 }
 
-# Package managers sort tilde prereleases before the final release; image tags retain dots.
+# Convert an image version to native package metadata, keeping variants in the revision.
 resolve_cta_package_version() {
   local version="$1"
-  if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+-[0-9]+)\.((dev|rc)[1-9][0-9]*)(\..+)$ ]]; then
-    version="${BASH_REMATCH[1]}~${BASH_REMATCH[2]}${BASH_REMATCH[4]}"
+  local platform_pattern='(el[0-9]+|(debian|ubuntu)[0-9]+([.][0-9]+)*)'
+  local platform variant="" revision=1
+
+  validate_cta_version "$version" || return 1
+  [[ "$version" =~ [.]${platform_pattern}$ ]]
+  platform="${BASH_REMATCH[1]}"
+  version="${version%."$platform"}"
+  case "${version##*.}" in
+    pgsched | pgcat | pgall)
+      variant="${version##*.}"
+      version="${version%.*}"
+      ;;
+  esac
+
+  if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.((dev|rc)[1-9][0-9]*)$ ]]; then
+    version="${BASH_REMATCH[1]}~${BASH_REMATCH[2]}"
+  elif [[ "$version" == *-dev.* ]]; then
+    # Preserve unique branch build revisions independently of the package format.
+    revision="${version#*-}"
+    version="${version%%-*}"
   fi
-  printf '%s\n' "$version"
+
+  case "$platform" in
+    el*) printf '%s-%s%s.%s\n' "$version" "$revision" "${variant:+.$variant}" "$platform" ;;
+    debian* | ubuntu*) printf '%s-%s%s\n' "$version" "$revision" "${variant:+.$variant}" ;;
+  esac
 }

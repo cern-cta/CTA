@@ -17,19 +17,18 @@ The token needs permission to create release issues and MRs; Git pushes use your
 
 ## Prepare the release
 
-Choose an unsuffixed version such as `v6.12.0-1` using `v<major>.<minor>.<patch>-<package>`:
+Choose an unsuffixed version such as `v6.12.0` using `v<major>.<minor>.<patch>`:
 
 | Field | When it changes |
 | --- | --- |
 | `major` | The major software series, matching `majorVersion` in `project.json`. |
 | `minor` | A new feature release. |
-| `patch` | Fixes are backported to an older release. |
-| `package` | Packaging or build revisions without changes to software behaviour. |
+| `patch` | Bug fixes, backports, or packaging and build changes. |
 
 See [Versioning](../../guides/conventions/versioning.md) for artifact suffixes and [Catalogue Schema Releases](catalogue-schema-releases.md) for schema upgrades.
 
 ```bash
-release changelog v6.12.0-1
+release changelog v6.12.0
 ```
 
 The tool synchronizes the target branch and opens generated changes since the previous final release in Git’s editor.
@@ -37,7 +36,7 @@ Review the entries, including commits with missing Changelog trailers, then conf
 Add release requirements and deployment considerations to the issue, merge the MR, and check the resulting branch pipeline.
 
 ```bash
-release status v6.12.0-1
+release status v6.12.0
 ```
 
 Status shows the issue and MR, then published tags and their pipelines, including child variants.
@@ -46,7 +45,7 @@ Pass a specific prerelease version to inspect only that candidate.
 ## Tag the release
 
 ```bash
-release tag v6.12.0-1
+release tag v6.12.0
 ```
 
 The tool selects the changelog MR’s merge commit, checks its metadata, target-branch ancestry, and pipeline, then asks you to edit the tag description and confirm publication.
@@ -57,18 +56,33 @@ Only `.devN` and `.rcN` are accepted as tag suffixes.
 Prereleases do not require a changelog entry, merged changelog MR, or release issue.
 
 ```bash
-release tag v6.12.0-1 --development
-release tag v6.12.0-1 --release-candidate
+release tag v6.12.0 --development
+release tag v6.12.0 --release-candidate
 ```
 
 Use `--ref` to select a specific commit or tag reachable from the target branch.
 Prepare and merge the changelog before tagging an RC that you intend to promote unchanged to a final release:
 
 ```bash
-release tag v6.12.0-1 --release-candidate --ref FIXED_COMMIT_SHA
+release tag v6.12.0 --release-candidate --ref FIXED_COMMIT_SHA
 # Promote the exact tested candidate to a final tag.
-release tag v6.12.0-1 --ref v6.12.0-1.rc2
+release tag v6.12.0 --ref v6.12.0.rc2
 ```
+
+Git tags identify the source release independently of its packaging format.
+CI adds packaging revision `1` and the selected build variant when producing RPMs and Debian packages:
+
+| Git tag | Python version | RPM version-release (EL9, pgsched) | Debian version (pgsched) |
+| --- | --- | --- | --- |
+| `v6.12.0.dev1` | `6.12.0.dev1` | `6.12.0~dev1-1.pgsched.el9` | `6.12.0~dev1-1.pgsched` |
+| `v6.12.0.rc1` | `6.12.0rc1` | `6.12.0~rc1-1.pgsched.el9` | `6.12.0~rc1-1.pgsched` |
+| `v6.12.0` | `6.12.0` | `6.12.0-1.pgsched.el9` | `6.12.0-1.pgsched` |
+| `v6.12.1` | `6.12.1` | `6.12.1-1.pgsched.el9` | `6.12.1-1.pgsched` |
+
+Packaging-only changes also increment the patch version.
+If the same upstream version was already published under the old tag scheme, use the next patch version to preserve package upgrade ordering.
+Container image tags retain the source version spelling without `v`, followed by the variant and platform, for example `6.12.0.rc1.pgsched.el9`.
+Build variants are versions of the same package; select repositories or pin versions to avoid switching backends during upgrades.
 
 ## Review CI results
 
@@ -108,10 +122,10 @@ Create the maintenance branch from the release being fixed and cherry-pick the r
 
 ```bash
 git fetch origin --tags
-git switch -c release/v6.12.1-1 v6.12.0-1
+git switch -c release/v6.12.1 v6.12.0
 git cherry-pick -x FIX_COMMIT_SHA
-git push -u origin release/v6.12.1-1
-release changelog v6.12.1-1 --target-branch release/v6.12.1-1
+git push -u origin release/v6.12.1
+release changelog v6.12.1 --target-branch release/v6.12.1
 ```
 
 Review and merge the changelog MR into that branch.
@@ -119,8 +133,8 @@ Ordinary release-branch pushes do not start CI: run a `DEFAULT` pipeline manuall
 Use the same target branch when tagging:
 
 ```bash
-release status v6.12.1-1 --target-branch release/v6.12.1-1
-release tag v6.12.1-1 --target-branch release/v6.12.1-1
+release status v6.12.1 --target-branch release/v6.12.1
+release tag v6.12.1 --target-branch release/v6.12.1
 ```
 
 The tool accepts a successful push or manually started pipeline for the exact commit and target branch.

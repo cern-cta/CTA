@@ -50,7 +50,7 @@ prepare-cta-version:
     - source ci/utils/cta_version.sh
     - CTA_MAJOR_VERSION=$(read_cta_major_version project.json)
     - CTA_VERSION_BASE="${CI_COMMIT_TAG:-${CTA_MAJOR_VERSION}-dev.${CTA_BUILD_ID}}"
-    # The resolve function works correctly even if the commit tag already contains suffixes
+    # Add build suffixes to the neutral source tag; derive native package metadata separately.
     - CTA_VERSION=$(resolve_cta_version "$CTA_VERSION_BASE" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
     - CTA_PACKAGE_VERSION=$(resolve_cta_package_version "$CTA_VERSION")
     - |

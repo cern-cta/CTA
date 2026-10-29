@@ -10,9 +10,9 @@ from collections.abc import Iterable
 from contextlib import suppress
 from dataclasses import dataclass, field
 
-BASE_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)-(\d+)$")
-TAG_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)-(\d+)(?:\.(rc|dev)([1-9]\d*))?$")
-# TODO: Remove historical parsing once supported release lines no longer need four-number tags for changelog lookup.
+BASE_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)$")
+TAG_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)(?:\.(rc|dev)([1-9]\d*))?$")
+# TODO: Remove historical parsing once maintained release lines have neutral final tags for changelog lookup.
 HISTORICAL_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)(?:\.(\d+))?-(\d+)(?:\..+)?$")
 
 
@@ -27,7 +27,6 @@ class CTAVersion:
     major: int
     minor: int
     patch: int
-    package: int
     release_candidate: int | None = None
     development: int | None = None
     source_text: str | None = field(default=None, compare=False, repr=False)
@@ -37,15 +36,15 @@ class CTAVersion:
         """Accept only the current tag format for new release operations."""
         match = (BASE_RE if require_base else TAG_RE).fullmatch(text)
         if not match:
-            expected = "v<major>.<minor>.<patch>-<package>"
+            expected = "v<major>.<minor>.<patch>"
             if not require_base:
                 expected += "[.devN|.rcN]"
-            raise VersionError(f"Invalid CTA version {text!r}; expected {expected}, for example 'v6.12.0-1'")
+            raise VersionError(f"Invalid CTA version {text!r}; expected {expected}, for example 'v6.12.0'")
         groups = match.groups()
-        suffix = None if require_base else groups[4]
-        number = None if require_base or groups[5] is None else int(groups[5])
+        suffix = None if require_base else groups[3]
+        number = None if require_base or groups[4] is None else int(groups[4])
         return cls(
-            *map(int, groups[:4]),
+            *map(int, groups[:3]),
             release_candidate=number if suffix == "rc" else None,
             development=number if suffix == "dev" else None,
         )
@@ -55,7 +54,7 @@ class CTAVersion:
         """Render the tag, preserving historical spelling for changelog refs."""
         if self.source_text is not None:
             return self.source_text
-        text = f"v{self.major}.{self.minor}.{self.patch}-{self.package}"
+        text = f"v{self.major}.{self.minor}.{self.patch}"
         if self.release_candidate is not None:
             text += f".rc{self.release_candidate}"
         if self.development is not None:
@@ -63,9 +62,9 @@ class CTAVersion:
         return text
 
     @property
-    def core(self) -> tuple[int, int, int, int]:
+    def core(self) -> tuple[int, int, int]:
         """Return the current numeric release fields."""
-        return self.major, self.minor, self.patch, self.package
+        return self.major, self.minor, self.patch
 
     def with_components(self, *, release_candidate: int | None = None, development: int | None = None) -> CTAVersion:
         """Add one positive prerelease counter to an unsuffixed version."""
@@ -88,20 +87,26 @@ def parsed_versions(tag_names: Iterable[str]) -> list[CTAVersion]:
 
 
 def previous_release(release_version: CTAVersion, tag_names: Iterable[str]) -> CTAVersion:
-    """Compare historical four-number releases without losing their Git refs."""
-    target = (*release_version.core[:3], 0, release_version.package)
+    """Find the previous final release, including transitional historical baselines."""
+    target = (*release_version.core, 0, 0)
     candidates: list[tuple[tuple[int, int, int, int, int], CTAVersion]] = []
     for tag_name in tag_names:
-        # Development and candidate tags are never final-release baselines.
-        if re.search(r"\.(dev|rc)[0-9]+(?:\.|$)", tag_name):
-            continue
-        match = HISTORICAL_RE.fullmatch(tag_name)
-        if match is None:
-            continue
-        major, minor, patch, old_patch, package = (int(value or 0) for value in match.groups())
-        key = (major, minor, patch, old_patch, package)
+        # Neutral final tags are preferred; legacy parsing only supplies older baselines.
+        match = BASE_RE.fullmatch(tag_name)
+        if match:
+            version = CTAVersion.parse(tag_name)
+            key = (*version.core, 0, 0)
+        else:
+            if re.search(r"\.(dev|rc)[0-9]+(?:\.|$)", tag_name):
+                continue
+            historical = HISTORICAL_RE.fullmatch(tag_name)
+            if historical is None:
+                continue
+            major, minor, patch, old_patch, package = (int(value or 0) for value in historical.groups())
+            key = (major, minor, patch, old_patch, package)
+            version = CTAVersion(major, minor, patch, source_text=tag_name)
         if key < target:
-            candidates.append((key, CTAVersion(major, minor, patch, package, source_text=tag_name)))
+            candidates.append((key, version))
     if not candidates:
         raise VersionError(f"No previous CTA release tag exists before {release_version.text}")
     return max(candidates, key=lambda item: item[0])[1]

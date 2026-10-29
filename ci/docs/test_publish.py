@@ -24,13 +24,23 @@ from publish import publication_decision, release_key
 
 class VersionTests(unittest.TestCase):
     def test_canonical_versions(self):
+        self.assertEqual(release_key("v6.2.4"), (6, 2, 4, 0, 0))
         self.assertEqual(release_key("v6.2.4-1"), (6, 2, 4, 0, 1))
         self.assertEqual(release_key("v6.12.0.0-1"), (6, 12, 0, 0, 1))
         self.assertGreater(release_key("v6.12.0.0-1"), release_key("v6.9.99.0-1"))
         self.assertGreater(release_key("v6.12.0.0-10"), release_key("v6.12.0.0-2"))
 
     def test_noncanonical_tags(self):
-        for tag in ["6.2.4-1", "v6.2", "v6.2.4-1.rc1", "v6.2.4-1.pgsched", "v6.2.4-1.pgcat", "v6.2.4-1.pgall"]:
+        for tag in [
+            "v6.2.4.rc1",
+            "v6.2.4.dev1",
+            "6.2.4-1",
+            "v6.2",
+            "v6.2.4-1.rc1",
+            "v6.2.4-1.pgsched",
+            "v6.2.4-1.pgcat",
+            "v6.2.4-1.pgall",
+        ]:
             with self.subTest(tag=tag), self.assertRaises(ValueError):
                 release_key(tag)
 
@@ -107,12 +117,12 @@ class PublicationTests(unittest.TestCase):
         return output, json.loads((output / "versions.json").read_text())
 
     def test_versions_aliases_retries_and_preservation(self):
-        for tag in ["v6.9.1-1", "v6.12.0.0-1", "v6.9.2-1", "v6.12.1.0-2"]:
+        for tag in ["v6.9.1-1", "v6.12.0.0-1", "v6.9.2-1", "v6.12.1"]:
             self.deploy(tag)
-        output, versions = self.deploy("v6.12.1.0-2")
+        output, versions = self.deploy("v6.12.1")
         latest = next(version for version in versions if "latest" in version["aliases"])
         self.assertEqual(latest["version"], "6.12")
-        self.assertEqual(latest["properties"]["source_tag"], "v6.12.1.0-2")
+        self.assertEqual(latest["properties"]["source_tag"], "v6.12.1")
         self.assertEqual((output / "v4/index.html").read_text(), "Historical v4")
         self.assertEqual((output / "v5/index.html").read_text(), "Historical v5")
         self.assertIn("latest/", (output / "index.html").read_text())

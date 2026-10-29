@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.27.0", "hatch-vcs>=0.4.0"]
+requires = ["hatchling>=1.27.0", "setuptools-scm>=8", "packaging>=24"]
 build-backend = "hatchling.build"
 
 [project]
@@ -26,13 +26,9 @@ Documentation = "https://ctaops.docs.cern.ch/"
 "CTA Documentation" = "https://cta.docs.cern.ch/"
 
 [tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.version.raw-options]
-root = "../../.."
-# Scheduler/catalogue variants share the same Python package version.
-# TODO: Map CTA .rcN tags, including build variants, to PEP 440 prerelease versions.
-tag_regex = '^v?(?P<version>[0-9]+(?:\.[0-9]+)*(?:-[0-9]+)?)(?:\.(?:pgsched|pgcat|pgall))?$'
+source = "code"
+path = "../../../ci/python_package_version.py"
+expression = "package_version()"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ctaops"]

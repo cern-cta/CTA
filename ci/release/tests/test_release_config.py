@@ -27,10 +27,10 @@ def test_major_version_comes_from_selected_commit(tmp_path: Path) -> None:
     git.run(["commit", "-am", "Next major version"])
     project_file.write_text('{"majorVersion": 8}', encoding="utf-8")
 
-    validate_major_version(git, release_commit, "v6.12.0-1")
+    validate_major_version(git, release_commit, "v6.12.0")
     assert read_major_version(git, "HEAD") == 7
     with pytest.raises(VersionError, match="does not match majorVersion 6"):
-        validate_major_version(git, release_commit, "v7.12.0-1")
+        validate_major_version(git, release_commit, "v7.12.0")
 
 
 @pytest.mark.parametrize(
@@ -56,16 +56,16 @@ def test_rejects_invalid_release_metadata(metadata: str) -> None:
 @pytest.mark.parametrize(
     ("heading", "expected"),
     [
-        ("## 6.12.0-1", True),
-        ("## 6.12.0-1 (2026-10-28)", True),
+        ("## 6.12.0", True),
+        ("## 6.12.0 (2026-10-28)", True),
         ("## 6.12.0-10", False),
-        ("## 6.12.0-1.rc1", False),
-        ("## 16.12.0-1", False),
-        ("### 6.12.0-1", False),
-        ("Mention 6.12.0-1", False),
+        ("## 6.12.0.rc1", False),
+        ("## 16.12.0", False),
+        ("### 6.12.0", False),
+        ("Mention 6.12.0", False),
     ],
 )
 def test_release_heading_matches_complete_version(heading: str, expected: bool) -> None:
     from release_config import has_release_heading
 
-    assert has_release_heading(heading, "v6.12.0-1") is expected
+    assert has_release_heading(heading, "v6.12.0") is expected

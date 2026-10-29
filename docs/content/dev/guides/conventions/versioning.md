@@ -4,25 +4,28 @@ Version conventions for CTA software, catalogue schemas, and published documenta
 
 ## Software and package versions
 
-- Source release tags use `v<major>.<minor>.<patch>-<package>`, for example `v6.12.0-1`. The first three numbers identify the software release; the number after `-` is the packaging revision.
-- The only optional tag suffixes are `.devN` for development releases and `.rcN` for release candidates, where `N` is a positive integer. Use at most one suffix, for example `v6.12.0-1.dev1` or `v6.12.0-1.rc2`.
-- One Git tag identifies the source for all supported build configurations. Backend and platform suffixes are added automatically to package versions and image tags, never to Git tags.
+- Source release tags use `v<major>.<minor>.<patch>`, for example `v6.12.0`. Packaging-only changes also increment the patch version.
+- The only optional tag suffixes are `.devN` for development releases and `.rcN` for release candidates, where `N` is a positive integer. Use at most one suffix.
+- One Git tag identifies the source for all supported build configurations. Backend and platform suffixes never appear in Git tags or Python package versions.
 - The leading `v` belongs to the Git tag and is omitted from artifact versions.
-- Historical four-number tags remain readable for previous-release discovery but are no longer accepted for new releases.
+- Historical tags remain readable temporarily for previous-release discovery, until maintained release lines have a final tag in the new format.
 - Published tags and artifacts must not be moved or replaced with different release contents.
 
-CI derives the artifact variant suffix from the build configuration:
+CI derives the artifact variant from the build configuration:
 
-| Scheduler | Oracle support | Artifact variant suffix |
+| Scheduler | Oracle support | Variant |
 | --- | --- | --- |
 | objectstore | enabled | none |
-| PostgreSQL | enabled | `.pgsched` |
-| objectstore | disabled | `.pgcat` |
-| PostgreSQL | disabled | `.pgall` |
+| PostgreSQL | enabled | `pgsched` |
+| objectstore | disabled | `pgcat` |
+| PostgreSQL | disabled | `pgall` |
 
-- The platform suffix follows the variant, such as `.el9`, `.el10`, or `.debian13`.
-- RPM and Debian package versions translate `.devN` and `.rcN` to `~devN` and `~rcN`, so development releases sort before candidates and candidates before final releases. Container image tags retain dots because they cannot contain `~`.
-- For example, source tag `v6.12.0-1.rc2` produces image tag `6.12.0-1.rc2.pgall.el10` and RPM version `6.12.0-1~rc2.pgall.el10` for an EL10 PostgreSQL build without Oracle.
+- RPMs use packaging revision `1`, followed by the variant and platform: `6.12.0-1.pgsched.el9`.
+- Debian packages use revision `1`, followed by `.variant` when applicable: `6.12.0-1.pgsched`. The distribution target is selected by the build and repository rather than appended to the version.
+- RPM and Debian upstream versions translate `.devN` and `.rcN` to `~devN` and `~rcN`, so development releases sort before candidates and candidates before final releases.
+- Python versions use standard development and candidate suffixes: `6.12.0.dev1`, `6.12.0rc1`, and `6.12.0`.
+- Container image tags retain dots because they cannot contain `~`. The variant and platform follow the source version: `6.12.0.rc2.pgall.el10`.
+- Build variants share package names and are compared as versions by package managers. Repository selection or version pinning must prevent unintended backend changes.
 
 See the [Release Procedure](../../contributing/maintainers/releases.md) for version increments, release preparation, the build matrix, and publication gates.
 
@@ -39,7 +42,7 @@ For implementation and migration guidance, see [Catalogue Schema Changes](../../
 
 ## Documentation versions
 
-- Documentation is published per CTA **minor series**, such as `6.12`, rather than separately for every patch or package revision. For example, `v6.12.0-1` publishes to `6.12`; a newer release in that series updates the same documentation version.
+- Documentation is published per CTA **minor series**, such as `6.12`, rather than separately for every patch release. For example, `v6.12.0` publishes to `6.12`; a newer release in that series updates the same documentation version.
 - Publication runs from protected canonical release tags. Development and release-candidate tags do not publish documentation. Merging a documentation change alone does not update the public site.
 - `latest` points to the highest published minor series. Updating an older series does not move this alias backwards, and an older release tag cannot overwrite documentation already published from a newer release in the same series.
 - Write pages for the release represented by the selected documentation version. Put historical feature introductions in the [Changelog](../../../changelog.md), while retaining dependency constraints and migration details needed to use or upgrade that release.

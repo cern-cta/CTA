@@ -20,7 +20,7 @@ def test_status_before_tagging(state: str | None, capsys: pytest.CaptureFixture[
         {"state": state, "web_url": "mr-url", "merge_commit_sha": "merge"} if state else None
     )
     context.api.get_all.return_value = []
-    status.run(context, "v6.12.0-1")
+    status.run(context, "v6.12.0")
     output = capsys.readouterr().out
     assert "Tags:     not published" in output
     assert (state or "not created") in output
@@ -34,7 +34,7 @@ def test_status_reports_candidate_pipeline_and_manual_variants(capsys: pytest.Ca
     context.find_changelog_merge_request.return_value = None
     context.api.get_all.side_effect = [
         [
-            {"name": "v6.12.0-1.rc2", "commit": {"id": "corrected"}},
+            {"name": "v6.12.0.rc2", "commit": {"id": "corrected"}},
             {"name": "v6.12.0-10", "commit": {"id": "other"}},
         ],
         [
@@ -43,9 +43,9 @@ def test_status_reports_candidate_pipeline_and_manual_variants(capsys: pytest.Ca
         ],
     ]
     context.find_pipeline.return_value = {"id": 42, "status": "failed", "web_url": "tag-url"}
-    status.run(context, "v6.12.0-1.rc2")
-    context.find_or_create_release_issue.assert_called_once_with("v6.12.0-1", create=False)
-    context.find_pipeline.assert_called_once_with("corrected", "v6.12.0-1.rc2", pipeline_source="push")
+    status.run(context, "v6.12.0.rc2")
+    context.find_or_create_release_issue.assert_called_once_with("v6.12.0", create=False)
+    context.find_pipeline.assert_called_once_with("corrected", "v6.12.0.rc2", pipeline_source="push")
     output = capsys.readouterr().out
     assert "Tag pipeline: failed tag-url" in output
     assert "pgsched: failed child-url" in output
