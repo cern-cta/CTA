@@ -18,7 +18,7 @@ target_include_directories(ctatelemetry PUBLIC
 target_include_directories(ctatelemetry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(ctatelemetry
   PUBLIC ctacommon opentelemetry-cpp::api
-  PRIVATE ${OPENTELEMETRY_CPP_LIBRARIES})
+  PRIVATE ${OPENTELEMETRY_CPP_LIBRARIES} opentelemetry-cpp::configuration_metrics_builders)
 
 install(TARGETS ctatelemetry DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES cta-otel.example.yaml

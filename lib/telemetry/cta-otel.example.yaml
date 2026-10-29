@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0 AND GPL-3.0-or-later
 
 # This file is an example file for configuring the OpenTelemetry SDK
-# It was copied and modified accordingly from https://github.com/open-telemetry/opentelemetry-cpp/blob/main/examples/configuration/kitchen-sink.yaml
+# It was copied and modified accordingly from https://github.com/open-telemetry/opentelemetry-cpp/blob/v1.30.0/examples/configuration/kitchen-sink.yaml
 
 # The file format version.
 # The yaml format is documented at
-# https://github.com/open-telemetry/opentelemetry-configuration/tree/main/schema
-file_format: "1.0-rc.1"
+# https://github.com/open-telemetry/opentelemetry-configuration/tree/v1.1.0/schema
+file_format: "1.1"
 # Configure if the SDK is disabled or not.
 # If omitted or null, false is used.
 disabled: true
@@ -61,7 +61,7 @@ meter_provider:
           # Configure exporter to be OTLP with HTTP transport.
           otlp_http:
             # Configure endpoint, including the metric specific path.
-            # If omitted or null, https://localhost:4318/v1/metrics is used.
+            # If omitted or null, http://localhost:4318/v1/metrics is used.
             endpoint: https://localhost:4318/v1/metrics
             # Configure headers. Entries have lower priority than entries from .headers.
             # The value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS.

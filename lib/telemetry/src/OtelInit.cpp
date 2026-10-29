@@ -17,6 +17,7 @@
 #include <opentelemetry/sdk/common/global_log_handler.h>
 #include <opentelemetry/sdk/configuration/configuration.h>
 #include <opentelemetry/sdk/configuration/configured_sdk.h>
+#include <opentelemetry/sdk/configuration/metrics_builders.h>
 #include <opentelemetry/sdk/configuration/registry.h>
 #include <opentelemetry/sdk/configuration/yaml_configuration_parser.h>
 
@@ -68,6 +69,8 @@ void initOpenTelemetry(const std::string& configFile,
 
   // Populate the registry with the core components supported
   auto registry = std::make_shared<opentelemetry::sdk::configuration::Registry>();
+  // Registries start empty in SDK 1.29; register the meter provider, configurator and reader builders.
+  opentelemetry::sdk::configuration::RegisterDefaultMetricsBuilders(registry.get());
   // If we ever support logRecords/Spans, make sure to register them here
 
   // Console exporters

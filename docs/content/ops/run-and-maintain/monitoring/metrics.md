@@ -156,6 +156,8 @@ Set the following options in each service's TOML configuration file:
 Both the experimental flag and a nonempty `telemetry.config_file` are required.
 Initialization failures log a warning by default; set `telemetry.on_init_failure = "fatal"` to abort startup instead.
 
+Keep `resource.attributes_list` below: the SDK no longer implicitly reads `OTEL_RESOURCE_ATTRIBUTES` or supplies a default `service.name` for declarative configuration.
+
 Configure `/etc/cta/cta-otel.yaml` using the bundled [example configuration](#example-configuration):
 
 - Set `disabled: false`.
