@@ -30,7 +30,7 @@ validate_cta_version() {
 
   # Release image tags use neutral versions; branch builds retain their unique build ID.
   if [[ ! "$version" =~ ^[1-9][0-9]*\.[0-9]+\.[0-9]+(\.(dev|rc)[1-9][0-9]*)?$ ]] \
-      && [[ ! "$version" =~ ^[1-9][0-9]*-dev\.[0-9]+git[a-f0-9]+$ ]]; then
+      && [[ ! "$version" =~ ^[1-9][0-9]*\.dev[1-9][0-9]*(\.g[a-f0-9]+(\.dirty)?)?$ ]]; then
     echo "Invalid CTA version: $1; expected major.minor.patch[.devN|.rcN][.variant].platform." >&2
     return 1
   fi
@@ -91,13 +91,9 @@ resolve_cta_package_version() {
       ;;
   esac
 
-  if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)\.((dev|rc)[1-9][0-9]*)$ ]]; then
-    version="${BASH_REMATCH[1]}~${BASH_REMATCH[2]}"
-  elif [[ "$version" == *-dev.* ]]; then
-    # Preserve unique branch build revisions independently of the package format.
-    revision="${version#*-}"
-    version="${version%%-*}"
-  fi
+  # Prerelease status belongs to the upstream version for both package formats.
+  version="${version/.dev/~dev}"
+  version="${version/.rc/~rc}"
 
   case "$platform" in
     el*) printf '%s-%s%s.%s\n' "$version" "$revision" "${variant:+.$variant}" "$platform" ;;

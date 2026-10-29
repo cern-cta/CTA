@@ -69,20 +69,7 @@ release tag v6.12.0 --release-candidate --ref FIXED_COMMIT_SHA
 release tag v6.12.0 --ref v6.12.0.rc2
 ```
 
-Git tags identify the source release independently of its packaging format.
-CI adds packaging revision `1` and the selected build variant when producing RPMs and Debian packages:
-
-| Git tag | Python version | RPM version-release (EL9, pgsched) | Debian version (pgsched) |
-| --- | --- | --- | --- |
-| `v6.12.0.dev1` | `6.12.0.dev1` | `6.12.0~dev1-1.pgsched.el9` | `6.12.0~dev1-1.pgsched` |
-| `v6.12.0.rc1` | `6.12.0rc1` | `6.12.0~rc1-1.pgsched.el9` | `6.12.0~rc1-1.pgsched` |
-| `v6.12.0` | `6.12.0` | `6.12.0-1.pgsched.el9` | `6.12.0-1.pgsched` |
-| `v6.12.1` | `6.12.1` | `6.12.1-1.pgsched.el9` | `6.12.1-1.pgsched` |
-
-Packaging-only changes also increment the patch version.
-If the same upstream version was already published under the old tag scheme, use the next patch version to preserve package upgrade ordering.
-Container image tags retain the source version spelling without `v`, followed by the variant and platform, for example `6.12.0.rc1.pgsched.el9`.
-Build variants are versions of the same package; select repositories or pin versions to avoid switching backends during upgrades.
+See [Versioning](../../guides/conventions/versioning.md#release-artifact-versions) for the tag-to-artifact mapping and [local and CI development builds](../../guides/conventions/versioning.md#local-and-ci-development-builds) for untagged builds.
 
 ## Review CI results
 

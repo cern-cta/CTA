@@ -3,12 +3,12 @@
 
 # The repository is a workspace, not an installable Python distribution.
 [tool.uv.workspace]
-members = ["lib/python/*", "tools/ctaops-cli"]
+members = ["lib/python/cta*", "tools/ctaops-cli"]
 
 [dependency-groups]
 dev = [{include-group = "lint"}, {include-group = "unit-tests"}]
 lint = ["ruff==0.14.9", "pyright[nodejs]", "pre-commit>=4.3.0", "hatchling>=1.27.0"]
-unit-tests = ["hatchling>=1.27.0", "setuptools-scm>=8", "pytest>=8", "pytest-cov", "cattrs", "grpcio-tools", "PyYAML", "jsonschema", "typing-extensions>=4.4.0", {include-group = "docs"}]
+unit-tests = ["hatchling>=1.27.0", "pytest>=8", "pytest-cov", "cattrs", "grpcio-tools", "PyYAML", "jsonschema", "typing-extensions>=4.4.0", {include-group = "docs"}]
 # These scripts also run independently in existing pipeline environments.
 scripts = ["PyYAML", "jsonschema", "packaging>=24", "typing-extensions>=4.4.0", "pyjwt", "cryptography"]
 # Imports needed for static analysis; pytest-asyncio is only needed to run system tests.

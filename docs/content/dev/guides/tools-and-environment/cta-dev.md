@@ -62,19 +62,20 @@ cp ci/.cta-dev.env.example ci/.cta-dev.env
 | `CTA_DEV_PLATFORM` | A platform defined in `project.json` |
 | `CTA_DEV_BUILD_GENERATOR` | `Ninja` or `Unix Makefiles` |
 | `CTA_DEV_CMAKE_BUILD_TYPE` | `Release`, `Debug`, `RelWithDebInfo`, or `MinSizeRel` |
-| `CTA_DEV_CTA_VERSION` | `<version>-<suffix>`, for example `6-dev` |
+| `CTA_DEV_CTA_VERSION` | Neutral source version, for example `6.12.0.dev1`; unset by default |
 | `CTA_DEV_NAMESPACE` | Kubernetes namespace |
 
 Command-line options override `ci/.cta-dev.env`, which overrides the built-in defaults. The file belongs to the worktree selected by the command symlink.
 
 ### Custom versions and image tags
 
-Most development builds should use the default version and tag (`6-dev`).
-When a distinct version is needed, pass the complete value with `--cta-version`.
-For example, this sets package version `6`, package release `local.test`, and image tag `6-local.test`:
+Local builds default to `<major>.dev1`, regardless of Git tags or uncommitted changes.
+Repeated builds reuse the same local version and image tag.
+Package revision and backend/platform suffixes are added automatically.
+To override the source version:
 
 ```bash
-cta-dev up --cta-version 6-local.test
+cta-dev up --cta-version 6.12.0.dev1
 ```
 
 This labels the build from your checkout; it does not select a Git tag or change the source revision.
@@ -102,7 +103,7 @@ cta-dev build --platform debian13
 | `--scheduler-type pgsched` | Select the PostgreSQL scheduler. |
 | `--enable-oracle-support` | Include Oracle support; requires access to the Oracle dependencies. Do not publish images containing Oracle RPMs publicly. |
 | `--platform <platform>` | Select a supported target from `project.json`. |
-| `--cta-version <version>` | Set the package version and image tag; the default is `6-dev`. |
+| `--cta-version <version>` | Override the neutral source version; the default is `<major>.dev1`. |
 | `--enable-unit-tests` | Run unit tests during the package build. |
 | `--cmake-build-type Debug` | Select a debug build. |
 | `--sanitizers <mode>` | Select `none` (default), `address`, `undefined`, `address,undefined`, or `thread`. |

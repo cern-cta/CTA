@@ -49,7 +49,7 @@ prepare-cta-version:
       fi
     - source ci/utils/cta_version.sh
     - CTA_MAJOR_VERSION=$(read_cta_major_version project.json)
-    - CTA_VERSION_BASE="${CI_COMMIT_TAG:-${CTA_MAJOR_VERSION}-dev.${CTA_BUILD_ID}}"
+    - CTA_VERSION_BASE=$(python3 lib/python/package_version.py)
     # Add build suffixes to the neutral source tag; derive native package metadata separately.
     - CTA_VERSION=$(resolve_cta_version "$CTA_VERSION_BASE" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
     - CTA_PACKAGE_VERSION=$(resolve_cta_package_version "$CTA_VERSION")

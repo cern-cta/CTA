@@ -58,7 +58,7 @@ On hosts using `systemd-coredump`, inspect a recorded crash with `coredumpctl in
 For example, the output includes:
 
 ```text
-       Package: cta/6-dev
+       Package: cta/6~dev1.gabcdef12-1
       build-id: 54d8dcba85e86da02da915a7040dd850836a6d31
 ```
 

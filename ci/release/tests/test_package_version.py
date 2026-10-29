@@ -50,8 +50,11 @@ def test_artifact_mapping(platform: str, scheduler: str, oracle: str, variant: s
 @pytest.mark.parametrize(
     ("image", "expected"),
     [
-        ("6-dev.123gitabcdef.pgall.el9", "6-dev.123gitabcdef.pgall.el9"),
-        ("6-dev.123gitabcdef.pgall.debian13", "6-dev.123gitabcdef.pgall"),
+        ("6.dev1.pgall.el9", "6~dev1-1.pgall.el9"),
+        ("6.dev1.pgall.debian13", "6~dev1-1.pgall"),
+        ("6.dev1.gabcdef.dirty.pgall.el9", "6~dev1.gabcdef.dirty-1.pgall.el9"),
+        ("6.dev123.gabcdef.pgall.el9", "6~dev123.gabcdef-1.pgall.el9"),
+        ("6.dev123.gabcdef.pgall.debian13", "6~dev123.gabcdef-1.pgall"),
     ],
 )
 def test_branch_version(image: str, expected: str) -> None:

@@ -1,5 +1,6 @@
 [build-system]
-requires = ["hatchling>=1.27.0", "setuptools-scm>=8", "packaging>=24"]
+# Hatch reads release tags or local development identifiers through the shared version helper.
+requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -27,7 +28,7 @@ Documentation = "https://ctaops.docs.cern.ch/"
 
 [tool.hatch.version]
 source = "code"
-path = "../../../ci/python_package_version.py"
+path = "../package_version.py"
 expression = "package_version()"
 
 [tool.hatch.build.targets.wheel]

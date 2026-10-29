@@ -53,7 +53,7 @@ spec:
       when: manual
   trigger:
     forward:
-      # Keep disabled so the child pipeline derives CTA_BUILD_ID from its own CI_PIPELINE_ID
+      # Keep disabled so the child pipeline derives its development version from its own CI_PIPELINE_ID
       yaml_variables: false
     include:
       - local: .gitlab-ci.yml

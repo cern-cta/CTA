@@ -201,7 +201,6 @@ variables:
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
   # Build and runtime defaults
-  CTA_BUILD_ID: "${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}"
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
   # Variant jobs forward scheduler/Oracle settings as variables, avoiding variable-to-boolean input validation.
   # Default to the inputs here, and let child variants override these effective build settings.
