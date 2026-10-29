@@ -1,23 +1,10 @@
 # Overview
 
-The `cta-sdk` is a Python package that offers a high-level, object-oriented API for interacting with the CERN Tape Archive (CTA). It provides functionality equivalent to the `cta-admin` command-line tool but with the benefits of a modern Python interface, including full static typing support and comprehensive domain models.
+`cta-sdk` provides a typed Python interface for administering CTA resources.
+Its `CtaClient` exposes resource DAOs such as `TapeDao` and `DriveDao`, which return Python dataclasses.
+The CLI backend runs `cta-admin` and parses its output for the caller.
 
-The main motivation of building this SDK was to have a cleaner way to build scripts with a higher confidence thanks to static type checker, unit tests and dataclasses models, to avoid to parse and run `cta-admin` subprocesses.
-
-With this SDK, you can initialize a `CtaClient` and access **resource DAOs** (e.g., `TapeDao`, `DriveDao`, `UserRequestDao`) to perform operations like creating, retrieving, updating, and deleting CTA resources. Each dao returns data as structured Python `dataclasses`, providing a clear and type-safe way to work with CTA objects, complete with IDE autocompletion and static analysis support.
-
-
-**Key Features:**:
-
-- 🔒 **Fully typed** with Python 3.9+ type hints
-- 📊 **Comprehensive domain models** with nested dataclasses for complex resources
-- ⚡ **Streaming support** for large result sets
-- 🔐 **XRootD SSS authentication** via keytab files
-- 📦 **Protocol-based architecture** enabling multiple backends
-
-
-> This SDK is the first package to consider when you want to develop tools which talks to `cta-frontend` from an operator perspective.
-
+The SDK supports streaming results, XRootD SSS authentication through keytab files, and backend interfaces defined with Python protocols.
 
 ## Architecture
 ```mermaid
@@ -157,11 +144,11 @@ The only configuration provided for now, is during the backend instantiation whe
 
 ## Usage
 
-Please see [API Usage](api-usage.md) page.
+See [Usage](api-usage.md) for examples.
 
 ## Type Support and IDE Integration
 
-The SDK is fully type-annotated, providing excellent IDE support. All resource models are defined in `cta.sdk.models` package for type hinting and runtime use.
+The SDK includes type annotations and defines its resource models in `cta.sdk.models`.
 
 
 

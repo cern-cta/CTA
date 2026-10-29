@@ -1,21 +1,9 @@
 # ctaops
 
-`ctaops-cli` is the main command-line interface for the CERN Tape Archive (CTA) operations toolkit. It is the day-to-day tool a tape operator uses to manage, monitor, and troubleshoot a CTA tape archive system from a terminal.
+`ctaops` is the command-line interface provided by `ctaops-cli` for managing CTA resources and local tape hardware.
+It uses [`cta-sdk`](../../dev/guides/python/cta-sdk/index.md) to communicate with CTA and the optional [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) for tape-server operations.
 
-The tool is a thin, opinionated [Click](https://click.palletsprojects.com/) front-end on top of [`cta-sdk`](../../dev/guides/python/cta-sdk/index.md) for talking to the CTA frontend, [`ctaops-utils`](../../dev/guides/python/ctaops-utils/index.md) for configuration / logging, and — optionally, on a tape server — [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) for local hardware operations.
-
-**Key features:**
-
-- 📋 **Resource command groups** — manage tapes, drives, storage classes, pools, policies, requests, and more.
-- 📊 **Multiple output formats** — `table` (default), `json`, and `raw`, switchable globally or per command.
-- ⚙️ **Layered configuration** — TOML files, environment variables, and command-line flags merged with predictable precedence.
-- 🔍 **Rich filtering & querying** — first-class options on every `list` command.
-- 📝 **Smart logging** — rotating, compressed log files driven by `ctaops-utils`.
-- 🎯 **Aliases** — short forms for every command group (e.g. `ta` for `tape`, `dr` for `drive`, `tp` for `tape-pool`).
-- 🔌 **Pluggable command architecture** — new command modules are auto-loaded from `ctaops.cli.commands`.
-- 💾 **Tape server extra** — install with `[tapeserver]` to enable additional commands on a tape server.
-
-> This is the tool to reach for when you want to *operate* CTA. For programmatic access, use [`cta-sdk`](../../dev/guides/python/cta-sdk/index.md) directly.
+Commands support table, JSON, and raw output, with configuration supplied through TOML files and command-line options.
 
 ## Installation
 
@@ -31,7 +19,8 @@ The tool is a thin, opinionated [Click](https://click.palletsprojects.com/) fron
         --extra-index-url https://cta-public-repo.web.cern.ch/cta-operations/stable/pypi/simple/
     ```
 
-The `tapeserver` extra pulls in [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) and unlocks the local-hardware command groups. These commands only work when the local tape server is wired up correctly — see the [ctaops-sdk system requirements](../../dev/guides/python/ctaops-sdk/index.md#system-requirements).
+The `tapeserver` extra installs [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) and enables local hardware commands.
+See the [system requirements](../../dev/guides/python/ctaops-sdk/index.md#system-requirements) for tape-server setup.
 
 ### Prerequisites
 
@@ -73,7 +62,7 @@ The bundled example currently uses `rotation_max_size` and `rotation_keep_files`
 
 ## Usage
 
-Please see the [Command Examples](ctaops-usage.md) page for command examples covering daily operator workflows.
+See [Command Examples](ctaops-usage.md) for daily operator tasks.
 
 
 ## License

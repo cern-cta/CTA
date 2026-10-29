@@ -1,5 +1,4 @@
-
-# API Usage
+# Usage
 
 This section presents code examples to use the `cta-sdk`.
 
