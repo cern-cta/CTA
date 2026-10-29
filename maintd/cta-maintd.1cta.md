@@ -125,7 +125,7 @@ config_file
 backend_name
 
 :   Unique identifier for the backend scheduler resources.
-Example structure: [ceph|postgres|vfs][User|Repack].
+Example structure: `[ceph|postgres|vfs][User|Repack]`.
 
 config_file
 

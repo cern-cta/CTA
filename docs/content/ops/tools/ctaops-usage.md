@@ -278,4 +278,4 @@ tail -f /tmp/ctaops-debug.log
 When `ctaops-cli` is installed with the `[tapeserver]` extra on a host where [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) requirements are met (udev rules, `cta-smc`, `mt`, `sg_logs`), additional commands and command options light up automatically — typically for local mount/unmount, label, and media check operations.
 
 !!! note
-    Availability of these extra options is detected at start-up via [`tapeserver_option`](../../../api/python/ctaops-cli/reference/entrypoint/#ctaops.cli.context.tapeserver_option): when `ctaops.sdk` is importable, the corresponding Click options are registered; otherwise they are silently omitted.
+    Availability of these extra options is detected at start-up via [`tapeserver_option`](../../api/python/ctaops-cli/reference/entrypoint.md#ctaops.cli.context.tapeserver_option): when `ctaops.sdk` is importable, the corresponding Click options are registered; otherwise they are silently omitted.

@@ -13,7 +13,7 @@ MkDocs Material builds the site. Paths below are relative to `docs/` unless stat
 | `content/stylesheets/extra.css`, `overrides/` | Shared styling and template overrides |
 | `content/assets/images/` | Shared images and favicons |
 | `hooks.py` | Generated content and include handling |
-| `python/` | Python API reference configuration and module pages |
+| `content/api/python/` | Python API reference module pages |
 | `ci/docs/` (repository root) | Publication scripts and tests |
 
 Restart `mkdocs serve` after changing hooks; live reload does not reload the Python module.

@@ -9,7 +9,7 @@ CTA's Python workspace contains libraries for scripting CTA and operating tape h
 | [ctaops-utils](ctaops-utils/index.md) | `lib/python/ctaops-utils` | Configuration, logging and dataclass utilities. |
 | [ctaops-cli](../../../ops/tools/ctaops.md) | `tools/ctaops-cli` | Operator commands built on these libraries. |
 
-See the [Python API reference](../../../api/python/) for classes and functions, [Extending ctaops](ctaops-cli.md) to add commands, and [ctaops-udev](../../../ops/deploy-and-configure/deployment/ctaops-udev.md) for hardware discovery setup.
+See the [Python API reference](../../../api/python/index.md) for classes and functions, [Extending ctaops](ctaops-cli.md) to add commands, and [ctaops-udev](../../../ops/deploy-and-configure/deployment/ctaops-udev.md) for hardware discovery setup.
 
 ## Development environment
 

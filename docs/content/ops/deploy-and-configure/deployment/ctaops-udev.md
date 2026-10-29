@@ -26,7 +26,7 @@ It also creates persistent device symlinks under `/dev/tape/by-name/` from the `
 
 [`ctaops-sdk`](../../../dev/guides/python/ctaops-sdk/index.md) discovers tape libraries and drives
 **entirely from udev metadata**. Its
-[local repositories](../../../../api/python/ctaops-sdk/reference/infrastructure-repository/) read exactly the three properties listed above:
+[local repositories](../../../api/python/ctaops-sdk/reference/infrastructure-repository.md) read exactly the three properties listed above:
 
 - `CTAOPS_NAME` resolves a `NamedLibrary.name` (for changers) or a
   `NamedDrive.name` (for drives).

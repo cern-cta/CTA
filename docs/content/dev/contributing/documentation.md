@@ -6,6 +6,8 @@ The CTA documentation is published at <https://cta.docs.cern.ch/>. Update docume
 
 Most pages live under `docs/content/`. Some reference pages include manuals or example configurations from elsewhere in the repository; check the page’s include directive and edit the original source rather than duplicating it.
 
+The Python API reference is generated from source docstrings using module directives in `docs/content/api/python/`.
+
 The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary contributions, follow [Changelog Entries](changelog.md) to prepare commit metadata; maintainers generate the changelog during release preparation.
 
 ## Preview locally
@@ -25,21 +27,6 @@ mkdocs serve
 ```
 
 Open <http://127.0.0.1:8000/>. For later sessions, enter `docs/`, activate the same environment, and run `mkdocs serve`.
-
-## API reference
-
-Edit Python API descriptions in the source docstrings.
-Add module directives under `docs/python/content/` to include new APIs in the reference.
-
-To build only the Python reference from the repository root:
-
-```bash
-docs/.venv/bin/python -m mkdocs build --strict --config-file docs/python/mkdocs.yml
-```
-
-This writes `build/docs/generated/api/python/`.
-Preview the full site to check links between the reference and the manual.
-Links to generated reference pages must be relative to the rendered page URL, including the extra directory for a non-index Markdown page, so they stay within the selected release version.
 
 ## Organize the content
 

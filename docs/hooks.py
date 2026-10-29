@@ -5,7 +5,6 @@
 
 from pathlib import Path
 import logging
-import os
 import re
 import shutil
 import subprocess
@@ -48,16 +47,6 @@ def on_pre_build(config: MkDocsConfig) -> None:
         check=True,
     )
 
-    # Preserve the version prefix that mike adds to the parent site URL.
-    python_site_url = config["site_url"].rstrip("/") + "/api/python/"
-    # Build the independent Python reference without inheriting these hooks.
-    subprocess.run(  # noqa: S603 - fixed generator and configuration from this checkout
-        [sys.executable, "-m", "mkdocs", "build", "--strict", "--config-file", "docs/python/mkdocs.yml"],
-        cwd=root,
-        env={**os.environ, "CTA_PYTHON_DOCS_SITE_URL": python_site_url},
-        check=True,
-    )
-
     log.info("Generating Rust docs...")
     # Generate the Rust docs
     cargo_bin = shutil.which("cargo")
@@ -83,15 +72,12 @@ def on_pre_build(config: MkDocsConfig) -> None:
 
 def on_post_build(config: MkDocsConfig) -> None:
     root = Path(config.config_file_path).resolve().parent.parent
-    site_dir = Path(config["site_dir"])
-    # Assemble both references inside the current version's site directory.
-    for language in ("rust", "python"):
-        source = root / "build/docs/generated/api" / language
-        destination = site_dir / "api" / language
-        if destination.exists():
-            shutil.rmtree(destination)
-        shutil.copytree(source, destination)
-        log.info("%s docs published to %s", language.capitalize(), destination)
+    source = root / "build/docs/generated/api/rust"
+    destination = Path(config["site_dir"]) / "api/rust"
+    if destination.exists():
+        shutil.rmtree(destination)
+    shutil.move(source, destination)
+    log.info("Rust docs published to %s", destination)
 
 
 def on_page_markdown(markdown: str, config: MkDocsConfig, **kwargs: Any) -> str:
