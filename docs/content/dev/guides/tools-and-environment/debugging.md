@@ -52,8 +52,7 @@ Record the image tag or digest, source revision, and configuration alongside the
 
 ### Identify the build
 
-CTA C/C++ executables and shared libraries embed the package name, version, and Git commit (when available) in ELF package metadata.
-The commit is preserved through source packaging; it identifies the source revision, not uncommitted local changes.
+CTA C/C++ executables and shared libraries embed the package format, name, and version in ELF package metadata.
 
 On hosts using `systemd-coredump`, inspect a recorded crash with `coredumpctl info <pid>`.
 For example, the output includes:
@@ -63,7 +62,7 @@ For example, the output includes:
       build-id: 54d8dcba85e86da02da915a7040dd850836a6d31
 ```
 
-The `gitCommit` field is available in the recorded JSON metadata, alongside metadata for loaded libraries:
+View the recorded metadata for the executable and loaded libraries as JSON:
 
 ```bash
 coredumpctl --field=COREDUMP_PACKAGE_JSON info <pid> | jq .

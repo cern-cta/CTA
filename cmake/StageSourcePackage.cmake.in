@@ -21,6 +21,3 @@ file(COPY "@CMAKE_SOURCE_DIR@/"
 # Rust doctests need this header even though the documentation site is excluded.
 file(COPY "@CMAKE_SOURCE_DIR@/docs/rust/header.html"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/docs/rust")
-
-# Carry the original revision into RPM and Debian builds, which exclude .git.
-file(WRITE "${CMAKE_INSTALL_PREFIX}/cmake/cta-git-commit.txt" "@CTA_GIT_COMMIT@\n")
