@@ -333,6 +333,7 @@ bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException& ex) {
     case 12537:
     case 12541:
     case 12571:
+    case 12592:  // TNS: bad packet
     case 24338:
     case 25401:
     case 25409:
