@@ -30,6 +30,13 @@ set(CTA_SOMINOR 1)
 set(CTA_SOPATCH 0)
 
 if(CTA_BUILD_MODE STREQUAL "compile")
+  # Embed the package version in every C/C++ executable and shared library for systemd-coredump.
+  # Pass JSON as one linker argument: -Wl would split its commas.
+  # Spaces also make CMake quote the argument, preventing shell brace expansion.
+  set(CTA_ELF_PACKAGE_METADATA
+    "{ \"type\": \"${CTA_PACKAGE_FORMAT}\", \"name\": \"cta\", \"version\": \"${CTA_VERSION}\" }")
+  add_link_options("SHELL:-Xlinker '--package-metadata=${CTA_ELF_PACKAGE_METADATA}'")
+
   configure_file(
     ${PROJECT_SOURCE_DIR}/version.cpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
