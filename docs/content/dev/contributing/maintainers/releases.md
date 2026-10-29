@@ -54,16 +54,15 @@ Resolve any warnings before proceeding.
 Use `release --dry-run tag ...` to preview without changes; `--yes` skips confirmations, including pipeline warnings.
 
 Only `.devN` and `.rcN` are accepted as tag suffixes.
-Prereleases share the base release’s issue and changelog; `--release-candidate` selects the next unused RC number:
+Prereleases do not require a changelog entry, merged changelog MR, or release issue.
 
 ```bash
-release tag v6.12.0-1.dev1
+release tag v6.12.0-1 --development
 release tag v6.12.0-1 --release-candidate
 ```
 
-Increasing the RC number does not change the selected commit.
-To include fixes, merge them and any changelog updates into the target branch, then use `--ref`.
-The revision must contain the changelog merge and belong to the target branch:
+Use `--ref` to select a specific commit or tag reachable from the target branch.
+Prepare and merge the changelog before tagging an RC that you intend to promote unchanged to a final release:
 
 ```bash
 release tag v6.12.0-1 --release-candidate --ref FIXED_COMMIT_SHA
@@ -89,13 +88,13 @@ Publication follows this policy for each selected variant, including manually tr
 | Job | Publication |
 | --- | --- |
 | `internal-release-cta` | Automatic on tags after package builds. |
-| `public-release-cta-unstable` | Automatic for final tags after internal publication. |
-| `public-release-cta-testing` | Manual after internal publication, including dev/RC tags. |
+| `public-release-cta-unstable` | Automatic for RC tags after internal publication; manual for dev and final tags. |
+| `public-release-cta-testing` | Automatic for dev tags after internal publication; manual for RC and final tags. |
 | `public-release-cta-stable` | Manual for final tags after internal and unstable publication. |
 | `publish-images-private` | Automatic on tags after internal publication and image builds. |
 | `publish-images-public` | Automatic after stable publication and image builds, only without Oracle support. |
 
-Dev/RC tags cannot publish to `stable` or `unstable`.
+Dev/RC tags can publish to `unstable` and `testing`, but cannot publish to `stable`.
 Publication does not wait for all tests; review their results before manual promotion, and promote to `stable` only after production validation.
 Check publication jobs and their status notes on the release issue.
 Documentation publishes independently from protected final release tags; see [Documentation Site](documentation-site.md).

@@ -17,7 +17,7 @@ from urllib.parse import quote
 
 from commands import SubparserRegistry
 from confirmation import confirm
-from cta_version import CTAVersion, VersionError, select_release_candidate
+from cta_version import CTAVersion, VersionError, select_development, select_release_candidate
 from gitlab_api import GitLabAPIError
 from release_config import ReleaseConfig, has_release_heading, validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
@@ -44,6 +44,7 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
   release tag v6.12.0-1
   release tag v6.12.0-1.rc2
   release tag v6.12.0-1.dev1
+  release tag v6.12.0-1 --development
   release tag v6.12.0-1 --release-candidate
 
 One source tag starts the default builds; additional variants are manual.
@@ -51,7 +52,9 @@ Use --ref COMMIT_OR_TAG for corrected candidates or to promote a tested RC.
 Use --dry-run before the subcommand to inspect the publication plan.""",
     )
     parser.add_argument("version")
-    parser.add_argument("--ref", help="commit or tag to release instead of the changelog merge commit")
+    parser.add_argument(
+        "--ref", help="commit or tag to release instead of the final changelog merge commit or prerelease branch tip"
+    )
     parser.add_argument(
         "--target-branch",
         default=ReleaseConfig.default_branch,
@@ -60,7 +63,11 @@ Use --dry-run before the subcommand to inspect the publication plan.""",
     parser.add_argument(
         "--yes", dest="skip_confirmation", action="store_true", help="create the tag without confirmation"
     )
-    parser.add_argument(
+    prerelease = parser.add_mutually_exclusive_group()
+    prerelease.add_argument(
+        "--development", action="store_true", help="automatically select the next devN for an unsuffixed version"
+    )
+    prerelease.add_argument(
         "--release-candidate", action="store_true", help="automatically select the next rcN for an unsuffixed version"
     )
     parser.set_defaults(execute=run_from_arguments)
@@ -74,6 +81,7 @@ def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Names
         parsed_arguments.skip_confirmation,
         parsed_arguments.target_branch,
         release_candidate=parsed_arguments.release_candidate,
+        development=parsed_arguments.development,
         ref=parsed_arguments.ref,
     )
 
@@ -166,20 +174,29 @@ def _validate_release_metadata(
     skip_confirmation: bool,
     target_branch: str = ReleaseConfig.default_branch,
     ref: str | None = None,
+    prerelease: bool = False,
 ) -> tuple[dict[str, Any] | None, str]:
     """Validate release metadata and the exact commit pipeline."""
-    # Release metadata is advisory only when the version was explicit.
-    info("Inspecting release metadata for the selected version and commit")
-    release_issue, _, target_commit, warnings = inspect_release_context(context, version_text, target_branch)
-    if ref is not None:
-        selected_commit = context.git.run(["rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}"])
-        # A corrected candidate must retain the reviewed release changelog.
-        if not context.git.is_ancestor(target_commit, selected_commit):
-            raise ReleaseWorkflowError("Selected revision must contain the merged release changelog")
-        target_commit = selected_commit
-        changelog, _ = context.read_repository_file(context.config.changelog_file, target_commit)
-        if not has_release_heading(changelog, version_text):
-            raise ReleaseWorkflowError("Selected revision no longer contains the release changelog entry")
+    warnings: list[str] = []
+    if prerelease:
+        # Candidates can be tested before the final release changelog is prepared.
+        info("Selecting prerelease commit without requiring release metadata")
+        release_issue = context.find_or_create_release_issue(version_text, create=False)
+        target_commit = branch_tip
+        if ref is not None:
+            target_commit = context.git.run(["rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}"])
+    else:
+        info("Inspecting release metadata for the selected version and commit")
+        release_issue, _, target_commit, warnings = inspect_release_context(context, version_text, target_branch)
+        if ref is not None:
+            selected_commit = context.git.run(["rev-parse", "--verify", "--end-of-options", f"{ref}^{{commit}}"])
+            # Final releases must retain the reviewed release changelog.
+            if not context.git.is_ancestor(target_commit, selected_commit):
+                raise ReleaseWorkflowError("Selected revision must contain the merged release changelog")
+            target_commit = selected_commit
+            changelog, _ = context.read_repository_file(context.config.changelog_file, target_commit)
+            if not has_release_heading(changelog, version_text):
+                raise ReleaseWorkflowError("Selected revision no longer contains the release changelog entry")
 
     if not context.git.is_ancestor(target_commit, branch_tip):
         raise ReleaseWorkflowError(
@@ -196,9 +213,21 @@ def _validate_release_metadata(
             assume_yes=skip_confirmation,
             dry_run=context.dry_run,
         )
-    else:
+    elif not prerelease:
         info("Release issue, merged MR, and changelog entry were found")
 
+    _validate_commit_pipeline(context, version_text, target_commit, target_branch, skip_confirmation)
+    return release_issue, target_commit
+
+
+def _validate_commit_pipeline(
+    context: ReleaseContext,
+    version_text: str,
+    target_commit: str,
+    target_branch: str,
+    skip_confirmation: bool,
+) -> None:
+    """Check the selected commit's pipeline and confirm any pipeline warning."""
     # The pipeline gate protects the exact commit that will be tagged.
     info("Checking the pipeline for the selected commit")
     pipeline = context.find_pipeline(target_commit, target_branch, pipeline_source="push")
@@ -223,8 +252,6 @@ def _validate_release_metadata(
         info("No pipeline found; the pipeline gate is disabled")
     else:
         info(f"Found successful pipeline: {pipeline.get('web_url') or pipeline.get('id', 'unknown')}")
-
-    return release_issue, target_commit
 
 
 def build_tag_plan(
@@ -297,14 +324,18 @@ def run(
     target_branch: str = ReleaseConfig.default_branch,
     release_candidate: bool = False,
     ref: str | None = None,
+    development: bool = False,
 ) -> None:
     """Resolve a revision, validate context, and publish a selected tag."""
     target_branch = target_branch or context.config.default_branch
     info(f"Using explicitly requested release version {version_text}")
 
     release_version = CTAVersion.parse(version_text)
-    if release_candidate and (release_version.release_candidate or release_version.development):
-        raise VersionError("--release-candidate requires an unsuffixed base version")
+    if release_candidate and development:
+        raise VersionError("Choose either --release-candidate or --development")
+    if (release_candidate or development) and (release_version.release_candidate or release_version.development):
+        flag = "--development" if development else "--release-candidate"
+        raise VersionError(f"{flag} requires an unsuffixed base version")
     # Release metadata belongs to the base, including for dev and RC tags.
     version_text = CTAVersion(*release_version.core).text
     remote_branch = f"{context.config.remote}/{target_branch}"
@@ -322,6 +353,9 @@ def run(
         skip_confirmation,
         target_branch,
         ref,
+        prerelease=bool(
+            development or release_candidate or release_version.release_candidate or release_version.development
+        ),
     )
     print(f"Target branch tip: {remote_branch} at {branch_tip}")
     print(f"Selected release commit to tag for {version_text}: {target_commit}")
@@ -329,6 +363,10 @@ def run(
     if release_candidate:
         release_version = release_version.with_components(
             release_candidate=select_release_candidate(release_version, context.git.tags())
+        )
+    elif development:
+        release_version = release_version.with_components(
+            development=select_development(release_version, context.git.tags())
         )
     plan = build_tag_plan(context, release_version.text, target_commit, release_issue, skip_confirmation)
     if context.dry_run:

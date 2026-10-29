@@ -120,3 +120,18 @@ def select_release_candidate(release_version: CTAVersion, tag_names: Iterable[st
         )
         + 1
     )
+
+
+def select_development(release_version: CTAVersion, tag_names: Iterable[str]) -> int:
+    """Select the next unused dev number for this release."""
+    return (
+        max(
+            (
+                version.development or 0
+                for version in parsed_versions(tag_names)
+                if version.core == release_version.core
+            ),
+            default=0,
+        )
+        + 1
+    )

@@ -55,8 +55,8 @@ internal-release-cta:
   before_script:
     - !reference [.merge-train-guard, before_script]
     - |
-      # Prereleases may use testing, but must never enter stable or unstable.
-      if [[ "$RELEASE_CHANNEL" == "stable" || "$RELEASE_CHANNEL" == "unstable" ]] \
+      # Prereleases may use unstable and testing, but must never enter stable.
+      if [[ "$RELEASE_CHANNEL" == "stable" ]] \
           && [[ "$CI_COMMIT_TAG" =~ \.(dev|rc)[1-9][0-9]*$ ]]; then
         echo "Cannot publish prerelease $CI_COMMIT_TAG to $RELEASE_CHANNEL."
         exit 1
@@ -84,15 +84,18 @@ internal-release-cta:
 public-release-cta-unstable:
   extends: .public-release-cta
   rules:
-    - if: '$CI_COMMIT_TAG =~ /\.(dev|rc)[1-9][0-9]*$/'
-      when: never
-    - if: $CI_COMMIT_TAG
+    - if: '$CI_COMMIT_TAG =~ /\.rc[1-9][0-9]*$/'
       when: on_success
+    - !reference [.public-release-cta, rules]
   variables:
     RELEASE_CHANNEL: unstable
 
 public-release-cta-testing:
   extends: .public-release-cta
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /\.dev[1-9][0-9]*$/'
+      when: on_success
+    - !reference [.public-release-cta, rules]
   variables:
     RELEASE_CHANNEL: testing
 

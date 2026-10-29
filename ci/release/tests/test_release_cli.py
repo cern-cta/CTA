@@ -73,6 +73,7 @@ class ArgumentParserTest(unittest.TestCase):
             True,
             "maintenance",
             release_candidate=True,
+            development=False,
             ref=None,
         )
         status_run.assert_called_once_with(context, "v6.12.0-1", "main")
@@ -160,3 +161,15 @@ def test_dry_run_validates_prompted_token_without_storing_it(tmp_path: Path) -> 
     api.authenticate.assert_called_once_with()
     ask_yes_no.assert_not_called()
     assert not token_file.exists()
+
+
+def test_development_flag_dispatch_and_exclusivity() -> None:
+    parser = create_argument_parser()
+    context = MagicMock()
+    arguments = parser.parse_args(["tag", "v6.12.0-1", "--development"])
+    with patch("release_cli.tag.run") as run:
+        arguments.execute(context, arguments)
+    assert run.call_args.kwargs["development"] is True
+    assert run.call_args.kwargs["release_candidate"] is False
+    with pytest.raises(SystemExit):
+        parser.parse_args(["tag", "v6.12.0-1", "--development", "--release-candidate"])

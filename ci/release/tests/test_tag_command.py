@@ -149,7 +149,7 @@ def test_tag_command_publishes_one_tag_using_base_release_metadata(suffix: str) 
         patch.object(tag, "_report_tag_and_pipeline"),
     ):
         tag.run(context, base + suffix, skip_confirmation=True)
-    metadata.assert_called_once_with(context, base, "branch-tip", True, "main", None)
+    metadata.assert_called_once_with(context, base, "branch-tip", True, "main", None, prerelease=bool(suffix))
     create_tag.assert_called_once_with("release-commit", base + suffix, "Release notes")
     push_tag.assert_called_once_with("origin", base + suffix)
 
@@ -268,3 +268,73 @@ def test_manual_pipeline_fallback_requires_success(push_status: str | None, web_
     ]
     assert [call.kwargs["pipeline_source"] for call in context.find_pipeline.call_args_list] == ["push", "web"]
     assert confirm.call_count == (0 if web_status == "success" else 1)
+
+
+@pytest.mark.parametrize(
+    ("version", "next_rc"),
+    [
+        ("v6.12.0-1.dev1", False),
+        ("v6.12.0-1.rc1", False),
+        ("v6.12.0-1", True),
+    ],
+)
+@pytest.mark.parametrize("ref", [None, "candidate-commit"])
+def test_prerelease_needs_no_changelog(version: str, next_rc: bool, ref: str | None) -> None:
+    context = MagicMock()
+    context.dry_run = True
+    context.config.remote = "origin"
+    context.git.resolve_remote_branch.return_value = "tip"
+    context.git.run.return_value = "selected"
+    context.git.is_ancestor.return_value = True
+    context.git.tags.return_value = []
+    context.find_or_create_release_issue.return_value = None
+    context.find_pipeline.return_value = {"status": "success"}
+    expected_commit = "selected" if ref else "tip"
+    with (
+        patch.object(tag, "validate_major_version") as validate_major,
+        patch.object(tag, "inspect_release_context") as inspect_metadata,
+        patch.object(tag, "build_tag_plan") as build_plan,
+        patch.object(tag, "confirm") as confirm,
+    ):
+        tag.run(context, version, False, release_candidate=next_rc, ref=ref)
+    inspect_metadata.assert_not_called()
+    context.read_repository_file.assert_not_called()
+    context.find_or_create_release_issue.assert_called_once_with("v6.12.0-1", create=False)
+    context.git.is_ancestor.assert_called_once_with(expected_commit, "tip")
+    validate_major.assert_called_once_with(context.git, expected_commit, "v6.12.0-1")
+    context.find_pipeline.assert_called_once_with(expected_commit, "main", pipeline_source="push")
+    confirm.assert_not_called()
+    expected_tag = "v6.12.0-1.rc1" if next_rc else version
+    build_plan.assert_called_once_with(context, expected_tag, expected_commit, None, False)
+
+
+def test_prerelease_rejects_revision_outside_target_branch() -> None:
+    context = MagicMock()
+    context.git.run.return_value = "unrelated"
+    context.git.is_ancestor.return_value = False
+    with pytest.raises(ReleaseWorkflowError, match="not reachable"):
+        tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
+            context, "v6.12.0-1", "tip", True, ref="other", prerelease=True
+        )
+    context.find_pipeline.assert_not_called()
+
+
+def test_next_development_uses_prerelease_validation() -> None:
+    context = MagicMock()
+    context.dry_run = True
+    context.git.tags.return_value = ["v6.12.0-1.dev2"]
+    with (
+        patch.object(tag, "_validate_release_metadata", return_value=(None, "commit")) as metadata,
+        patch.object(tag, "build_tag_plan") as build_plan,
+    ):
+        tag.run(context, "v6.12.0-1", True, development=True)
+    assert metadata.call_args.kwargs["prerelease"] is True
+    build_plan.assert_called_once_with(context, "v6.12.0-1.dev3", "commit", None, True)
+
+
+@pytest.mark.parametrize("version", ["v6.12.0-1.dev1", "v6.12.0-1.rc1"])
+def test_development_flag_requires_base_version(version: str) -> None:
+    context = MagicMock()
+    with pytest.raises(tag.VersionError, match="unsuffixed"):
+        tag.run(context, version, True, development=True)
+    context.git.resolve_remote_branch.assert_not_called()
