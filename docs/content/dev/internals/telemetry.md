@@ -27,4 +27,4 @@ Cumulative metrics represent measurements since their start or reset; delta metr
 
 ## SDK dependency
 
-CTA uses `opentelemetry-cpp`, with dependency packaging maintained in the [cta-dependencies repository](https://gitlab.cern.ch/cta/cta-dependencies/). Consult `project.json` for the selected dependency constraints. Library upgrades require validation of initialization, exporter configuration, and emitted metrics; they are separate from adding an application instrument.
+CTA uses `opentelemetry-cpp`, with dependency packaging maintained in the [cta-vendored-packages repository](https://gitlab.cern.ch/cta/cta-vendored-packages/). Consult `project.json` for the selected dependency constraints. Library upgrades require validation of initialization, exporter configuration, and emitted metrics; they are separate from adding an application instrument.
