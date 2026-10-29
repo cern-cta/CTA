@@ -1,5 +1,7 @@
 # ctaops-cli
 
+See the CTA documentation for the [operator guide](../../docs/content/ops/tools/ctaops.md), [command examples](../../docs/content/ops/tools/ctaops-usage.md), and [extension guide](../../docs/content/dev/guides/python/ctaops-cli.md).
+
 The main command-line interface for the CERN Tape Archive (CTA) operations toolkit. ctaops-cli provides a comprehensive set of commands for tape operators to manage, monitor, and troubleshoot CTA tape archive systems.
 
 This tool combines the power of the **cta-sdk** (Python API client for CTA) with a user-friendly command-line interface, making it easy to perform CTA operations directly from the terminal.

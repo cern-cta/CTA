@@ -28,8 +28,9 @@ This reorganization is not yet complete. The map below describes where code live
 | `disk/` | Disk-file access and transfer support. |
 | `common/` | Shared types and utilities, including authentication, configuration, logging, and checksums. |
 | `rdbms/` | Shared relational database access. This is distinct from catalogue and scheduler implementations in their own `rdbms/` directories. |
-| `lib/` | Runtime, telemetry, plugin-manager, and protobuf libraries. These are not yet grouped by language. |
-| `tools/` | Administrative and diagnostic command-line tools, including `cta-admin`. |
+| `lib/` | Runtime, telemetry, plugin-manager, and protobuf libraries. |
+| `lib/python/` | [Python SDKs and shared utilities](../guides/python/index.md). |
+| `tools/` | Administrative and diagnostic command-line tools, including `cta-admin`, `ctaops-cli`, and `ctaops-udev`. |
 
 ## Build, tests, and documentation
 

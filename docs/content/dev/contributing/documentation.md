@@ -10,6 +10,10 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 
 ## Preview locally
 
+Install the Rust toolchain specified by `rust-toolchain.toml` as well as Python 3.9 or later.
+The build generates the Rust and Python API references automatically.
+The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
+
 From the repository root:
 
 ```bash
@@ -21,6 +25,21 @@ mkdocs serve
 ```
 
 Open <http://127.0.0.1:8000/>. For later sessions, enter `docs/`, activate the same environment, and run `mkdocs serve`.
+
+## API reference
+
+Edit Python API descriptions in the source docstrings.
+Add module directives under `docs/python/content/` to include new APIs in the reference.
+
+To build only the Python reference from the repository root:
+
+```bash
+docs/.venv/bin/python -m mkdocs build --strict --config-file docs/python/mkdocs.yml
+```
+
+This writes `build/docs/generated/api/python/`.
+Preview the full site to check links between the reference and the manual.
+Links to generated reference pages must be relative to the rendered page URL, including the extra directory for a non-index Markdown page, so they stay within the selected release version.
 
 ## Organize the content
 

@@ -187,9 +187,14 @@ global:
 
 The examples above describe sections of the same configuration file; combine their `global` settings rather than defining duplicate YAML keys. Adapt paths, identities, and hardware mappings to the deployment.
 
+## ctaops configuration
+
+[ctaops](ctaops.md) uses `/etc/ctaops/ctaops-cli.toml`, separately from the legacy YAML configuration above.
+See its [installation guide](ctaops.md#installation) and [configuration example](ctaops.md#reference-configuration-file).
+
 ## Developing operator tools
 
-See the [upstream utilities repository](https://gitlab.cern.ch/cta/cta-operations-utilities) for library documentation and tool development.
+See [Python Libraries and Tools](../../dev/guides/python/index.md) for library documentation and tool development.
 
 ## Troubleshooting
 

@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+site_name: CTA Python API Reference
+site_url: !ENV [CTA_PYTHON_DOCS_SITE_URL, "https://cta.docs.cern.ch/latest/api/python/"]
+docs_dir: content
+site_dir: ../../build/docs/generated/api/python
+strict: true
+repo_name: cta/CTA
+repo_url: https://gitlab.cern.ch/cta/CTA
+
+theme:
+  name: material
+  font: false
+  features:
+    - content.code.copy
+
+hooks:
+  - hooks.py
+
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          inventories:
+            - https://docs.python.org/3.9/objects.inv
+          options:
+            allow_inspection: false
+            show_if_no_docstring: true
+            docstring_style: google
+            docstring_options:
+              warn_unknown_params: false
+              warn_missing_types: false
+            show_root_heading: true
+            show_root_full_path: true
+            show_symbol_type_toc: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: '#'
+
+nav:
+  - Overview: index.md
+  - cta-sdk:
+      - cta-sdk/index.md
+      - cta-sdk/reference/client.md
+      - cta-sdk/reference/daos.md
+      - cta-sdk/reference/exceptions.md
+      - cta-sdk/reference/factory.md
+      - cta-sdk/reference/models.md
+      - cta-sdk/reference/units.md
+      - cta-sdk/reference/workflow.md
+  - ctaops-sdk:
+      - ctaops-sdk/index.md
+      - ctaops-sdk/reference/controller-providers.md
+      - ctaops-sdk/reference/controllers.md
+      - ctaops-sdk/reference/exceptions.md
+      - ctaops-sdk/reference/infrastructure-repository.md
+  - ctaops-utils:
+      - ctaops-utils/reference.md
+  - ctaops-cli:
+      - ctaops-cli/index.md
+      - ctaops-cli/reference/commands.md
+      - ctaops-cli/reference/config.md
+      - ctaops-cli/reference/display.md
+      - ctaops-cli/reference/entrypoint.md
+      - ctaops-cli/reference/models.md
