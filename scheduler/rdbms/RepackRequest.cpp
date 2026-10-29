@@ -542,6 +542,11 @@ void RepackRequest::insert() {
     m_lc.log(log::INFO, "In RepackRequest::insert(): before inserting row");
     auto conn = m_connPool.getConn();
     rjr.insert(conn);
+  } catch (rdbms::UniqueConstraintError& ex) {
+    log::ScopedParamContainer(m_lc)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .log(log::WARNING, "In RepackRequest::insert(): repack already queued for this VID.");
+    throw;
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(m_lc)
       .add(semconv::log::exceptionMessage, ex.getMessageValue())

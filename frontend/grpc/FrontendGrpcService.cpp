@@ -7,6 +7,7 @@
 #include "FrontendGrpcService.hpp"
 
 #include "catalogue/Catalogue.hpp"
+#include "rdbms/UniqueConstraintError.hpp"
 #include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogLevel.hpp"
@@ -373,6 +374,11 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
+  } catch (cta::rdbms::UniqueConstraintError& ex) {
+    lc.log(cta::log::WARNING, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::ALREADY_EXISTS, ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
