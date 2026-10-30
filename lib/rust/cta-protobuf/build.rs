@@ -4,14 +4,18 @@
 //! Build script: generates the Rust bindings for the CTA frontend protobuf/gRPC
 //! interface. See the crate documentation in `src/lib.rs` for details.
 
-use std::path::PathBuf;
+use std::{env, fs, path::PathBuf};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proto_dir = PathBuf::from(
         "../../../lib/protobuf/external/xrootd-ssi-protobuf-interface/eos_cta/protobuf",
     );
 
+    let descriptor_path = PathBuf::from(env::var("OUT_DIR")?).join("cta_descriptor.bin");
+
     tonic_prost_build::configure()
+        // keep the file descriptor set, as pbjson-build needs it below
+        .file_descriptor_set_path(&descriptor_path)
         // do not build server bindings, as we only have client apps for now
         .build_server(false)
         // box these types, as the differences between variants can be quite big
@@ -29,5 +33,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ],
             &[proto_dir],
         )?;
+
+    // proto3 JSON (serde) impls
+    let descriptor_set = fs::read(&descriptor_path)?;
+    pbjson_build::Builder::new()
+        .register_descriptors(&descriptor_set)?
+        .emit_fields()
+        .build(&[".cta"])?;
     Ok(())
 }
