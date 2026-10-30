@@ -16,7 +16,6 @@ namespace cta::tape::daemon {
 struct DriveRegistrationConfig final {
   bool auto_up = false;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 1; }
 
   /// Both registration policies are valid.
@@ -28,7 +27,6 @@ struct DriveStartupConfig final {
   bool recover_existing_up = false;
   bool auto_up = false;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 2; }
 
   /// Accept all combinations of startup flags.
@@ -46,7 +44,6 @@ struct DriveConfig final {
   DriveStartupConfig startup;
   DriveRegistrationConfig registration;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 7; }
 
   /// Collect missing drive identity and path errors, including startup and registration validation.
@@ -77,7 +74,6 @@ struct RmcdConfig final {
   uint32_t request_timeout_secs = 600;
   uint32_t request_attempts = 10;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 4; }
 
   /// Collect invalid media-changer endpoint and retry settings.
@@ -106,7 +102,6 @@ struct ArchiveUnderfillConfig final {
   uint64_t start_threshold_percent = 40;
   uint64_t recovery_threshold_percent = 60;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 4; }
 
   /// Collect invalid sampling settings and inconsistent underfill thresholds.
@@ -146,7 +141,6 @@ struct MountsConfig final {
   uint32_t preparing_timeout_secs = 900;
   uint32_t finalizing_timeout_secs = 900;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 12; }
 
   /// Collect zero scheduling thresholds, polling intervals and phase timeouts.
@@ -200,7 +194,6 @@ struct ArchiveTransferConfig final {
   uint64_t flush_max_files = 200;
   ArchiveUnderfillConfig underfill;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 5; }
 
   /// Collect invalid archive batch limits and underfill settings.
@@ -228,7 +221,6 @@ struct EncryptionConfig final {
   bool enabled = true;
   std::string external_key_script = "/usr/local/bin/cta-get-encryption-key.sh";
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 2; }
 
   /// Require a key-script path when encryption is enabled.
@@ -246,7 +238,6 @@ struct RaoConfig final {
   bool enabled = true;
   std::string lto_algorithm = "sltf";
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 2; }
 
   /// Reject unknown LTO access-order algorithms, even when RAO is disabled.
@@ -268,7 +259,6 @@ struct RetrieveTransferConfig final {
   std::string external_free_disk_space_script = "";
   RaoConfig rao;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 5; }
 
   /// Collect invalid retrieval batch limits, disk-drain timeout and RAO settings.
@@ -299,7 +289,6 @@ struct TransfersConfig final {
   RetrieveTransferConfig retrieve;
   EncryptionConfig encryption;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 8; }
 
   /// Collect invalid pipeline resource limits, reporting intervals and transfer settings.
@@ -342,7 +331,6 @@ struct TapedConfig final {
   RmcdConfig rmcd;
   TransfersConfig transfers;
 
-  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 11; }
 
   /// Collect validation errors from all sections, prefixed with their section names.

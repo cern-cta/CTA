@@ -32,14 +32,14 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
       m_cleanupResult(cleanupResult),
       m_lc(lc) {
   m_cleanupResult.reset();
-  const bool readOnly = volume.mountType == common::dataStructures::MountType::Retrieve;
+  const bool mountReadOnly = volume.mountType == common::dataStructures::MountType::Retrieve;
   const auto slot = mediachanger::LibrarySlotParser::parse(drive.info.rawLibrarySlot);
   try {
     log::ScopedParamContainer params(m_lc);
     params.add("drive_Slot", slot.str());
     utils::Timer timer;
     try {
-      if (readOnly) {
+      if (mountReadOnly) {
         mediaChanger.mountTapeReadOnly(volume.vid, slot);
       } else {
         mediaChanger.mountTapeReadWrite(volume.vid, slot);
@@ -51,21 +51,21 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
         tracker.addTapeSetupStats({.initialMountTime = mountTime});
       } catch (...) {}
       log::logCurrentExceptionNoThrow(m_lc,
-                                      readOnly ? "Failed to mount the tape for read-only access" :
-                                                 "Failed to mount the tape for read/write access");
+                                      mountReadOnly ? "Failed to mount the tape for read-only access" :
+                                                      "Failed to mount the tape for read/write access");
       throw;
     }
     const double mountTime = timer.secs();
     tracker.addTapeSetupStats({.initialMountTime = mountTime});
-    params.add("MCMountTime", mountTime).add("mode", readOnly ? "R" : "RW");
+    params.add("MCMountTime", mountTime).add("mode", mountReadOnly ? "R" : "RW");
     telemetry::metrics::ctaTapedMountDuration->Record(
       std::lround(mountTime),
       {
         {semconv::attr::kCtaIoDirection,
-         readOnly ? semconv::attr::CtaIoDirectionValues::kRead : semconv::attr::CtaIoDirectionValues::kWrite}
+         mountReadOnly ? semconv::attr::CtaIoDirectionValues::kRead : semconv::attr::CtaIoDirectionValues::kWrite}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
-    m_lc.log(log::INFO, readOnly ? "Tape mounted for read-only access" : "Tape mounted for read/write access");
+    m_lc.log(log::INFO, mountReadOnly ? "Tape mounted for read-only access" : "Tape mounted for read/write access");
   } catch (...) {
     // Construction failed, so the destructor cannot clean up a partially mounted cartridge.
     cleanup();
