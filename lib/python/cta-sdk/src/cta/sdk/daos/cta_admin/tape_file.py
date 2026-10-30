@@ -73,6 +73,6 @@ class TapeFileDaoCtaAdmin(TapeFileDao):
 
     @override
     def delete(self, *args: int | str, vid: str, reason: str) -> None:
-        resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "intance": args[1]}
+        resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1]}
         resource_id |= {"vid": vid, "reason": reason}
         self._wrapper.delete("tapefile", resource_id)

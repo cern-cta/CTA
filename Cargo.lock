@@ -326,6 +326,7 @@ dependencies = [
  "log",
  "prost",
  "serde",
+ "serde_json",
  "strum",
  "thiserror",
  "tokio",

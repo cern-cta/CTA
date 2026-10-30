@@ -10,6 +10,7 @@
 //!
 //! | Module | Description |
 //! | ------ | ----------- |
+//! | [`commands`] | Typed admin commands, converted into admin command protobufs ([`commands::TypedAdminCmd`]) |
 //! | [`client`] | CTA frontend client in unary and streaming flavours ([`client::CtaGrpcClient`]) |
 //! | [`types`] | Domain types wrapping protobuf representations ([`types::File`], [`types::Checksum`], [`types::ChecksumType`]) |
 //! | [`stream`] | Streaming adapters, most notably [`stream::StreamResponseExt`] |
@@ -55,6 +56,7 @@
 #![warn(missing_docs)]
 
 pub mod client;
+pub mod commands;
 pub mod errors;
 pub mod macros;
 pub mod stream;
