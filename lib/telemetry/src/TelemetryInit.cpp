@@ -198,7 +198,7 @@ void reinitTelemetryWithJitter(const std::string& instanceId, cta::log::LogConte
       std::this_thread::sleep_for(std::chrono::milliseconds(jitterMs));
     }
   }
-  initTelemetry(config, lc);
+  reinitTelemetry(lc);
 }
 
 void shutdownTelemetry(cta::log::LogContext& lc) {

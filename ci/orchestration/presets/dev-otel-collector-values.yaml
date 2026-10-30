@@ -26,7 +26,6 @@ config:
       # 10 s absorbs a full 100-pod export burst before flushing to the
       # Prometheus exporter, preventing partial-flush races during scrape.
       timeout: 10s
-      send_batch_max_size: 5000
 
   exporters:
     prometheus:
