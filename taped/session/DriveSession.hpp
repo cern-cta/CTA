@@ -96,11 +96,25 @@ private:
   /// If worker termination cannot be established, the process exits without recovery or unwinding.
   TapeSessionResult runTapeSession(TapeMount& tapeMount);
 
-  /// @brief Probe or clean the drive for preparation, returning whether scheduling may continue.
-  ///
-  /// Initial preparation follows clean_on_up; active-session recovery always cleans.
-  /// Only recovery supplies a known tape volume identifier (VID). A Down request prevents further scheduling.
-  bool prepareDrive(const std::optional<std::string>& vid = std::nullopt);
+  class ScopedDriveOperationTracker;
+
+  /// Acquire ownership and verify the drive is empty before reporting Up.
+  /// @return True if the drive is empty and Up is still desired; false otherwise.
+  bool probeDrive();
+
+  /// Acquire ownership and clean an unknown cartridge before reporting Up.
+  /// @return True if cleanup succeeded and Up is still desired; false otherwise.
+  bool cleanDriveForStartup();
+
+  /// Clean under existing ownership even if Down was requested.
+  /// @return True if cleanup succeeded and Up is still desired; false otherwise.
+  bool cleanDriveForSessionRecovery(const std::string& vid);
+
+  /// Clean the reserved drive, enter Finalizing, and request Down on failure.
+  /// The caller finishes tracking and decides whether to report Up.
+  /// @pre Hardware ownership is held and the cleanup tracker has been started.
+  /// @return True if hardware is reusable; false if cleanup failed.
+  bool cleanDrive(const std::string& vid, TapeSessionTracker& tracker);
 
   /// @brief Release drive ownership, then report Down; retry a failed catalogue update on the next call.
   ///

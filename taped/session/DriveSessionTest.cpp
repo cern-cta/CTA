@@ -146,7 +146,9 @@ protected:
 
   bool canUseHardware() { return session->m_driveReservation.canUseHardware(); }
 
-  bool prepare(const std::optional<std::string>& vid = std::nullopt) { return session->prepareDrive(vid); }
+  bool probeOnly() { return session->probeDrive(); }
+
+  bool prepare() { return config.drive.clean_on_up ? session->cleanDriveForStartup() : session->probeDrive(); }
 
   std::shared_ptr<const TapeSessionTracker> activeTracker() { return session->m_activeTracker.load(); }
 
@@ -173,7 +175,7 @@ protected:
 
   bool recover() {
     session->m_driveReservation.acquire();
-    return session->prepareDrive("V00001");
+    return session->cleanDriveForSessionRecovery("V00001");
   }
 };
 
@@ -391,6 +393,42 @@ TEST_F(DriveSessionTest, ConstructionDefersPreparationUntilRun) {
   EXPECT_TRUE(reported().desiredUp);
   EXPECT_FALSE(canUseHardware());
   EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionTest, ProbeTrackingClearsAfterPublicationFailure) {
+  std::shared_ptr<const TapeSessionTracker> tracker;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Starting) {
+      tracker = activeTracker();
+      ASSERT_TRUE(tracker);
+      EXPECT_FALSE(tracker->type().has_value());
+      throw std::runtime_error("Starting publication failed");
+    }
+  };
+
+  EXPECT_THROW(probeOnly(), std::runtime_error);
+  ASSERT_TRUE(tracker);
+  EXPECT_FALSE(activeTracker());
+  EXPECT_FALSE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, RecoveryTrackingFinishesAfterPublicationFailure) {
+  std::shared_ptr<const TapeSessionTracker> tracker;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Starting) {
+      tracker = activeTracker();
+      ASSERT_TRUE(tracker);
+      EXPECT_EQ(session::SessionType::Cleanup, tracker->type());
+      throw std::runtime_error("Starting publication failed");
+    }
+  };
+
+  EXPECT_THROW(recover(), std::runtime_error);
+  ASSERT_TRUE(tracker);
+  EXPECT_FALSE(activeTracker());
+  EXPECT_EQ(session::TapeSessionState::Finished, tracker->state());
+  EXPECT_TRUE(tracker->hasFailures());
+  EXPECT_TRUE(canUseHardware());
 }
 
 TEST_F(DriveSessionTest, InitialCleanupPublishesUpOnlyAfterHardwareIsPrepared) {
@@ -660,7 +698,7 @@ TEST_F(DriveSessionTest, RecoveryCleansEvenAfterOperatorRequestsDown) {
   ASSERT_TRUE(canUseHardware());
   installEmptyDrive();
   requestUp(false, "Maintenance");
-  EXPECT_FALSE(prepare("V00001"));
+  EXPECT_FALSE(recover());
   EXPECT_FALSE(system.m_pathToDrive.contains("/dev/nst0"));
   EXPECT_TRUE(canUseHardware());
   session.reset();
