@@ -33,9 +33,9 @@ def test_tag_metadata(
     package_root = tmp_path / package
     package_root.mkdir(parents=True)
     shutil.copyfile(ROOT / package / "pyproject.toml", package_root / "pyproject.toml")
-    helper = tmp_path / "lib/python/package_version.py"
+    helper = tmp_path / "ci/utils/cta_version.py"
     helper.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(ROOT / "lib/python/package_version.py", helper)
+    shutil.copyfile(ROOT / "ci/utils/cta_version.py", helper)
 
     def git(*args: str) -> None:
         subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)  # noqa: S603, S607

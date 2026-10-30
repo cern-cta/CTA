@@ -8,9 +8,9 @@ release checkout, <major>.dev<pipeline>.g<sha>[.dirty] for CI, or <major>.dev1 l
 Hatch calls package_version() for PEP 440 metadata; archive metadata stays with Hatch.
 
 CLI examples (each prints one value):
-    python3 lib/python/package_version.py major
-    python3 lib/python/package_version.py image v6.12.0.rc1 el9 pgsched true
-    python3 lib/python/package_version.py native v6.12.0.rc1 el9 pgsched true
+    python3 ci/utils/cta_version.py major
+    python3 ci/utils/cta_version.py image v6.1.0.rc1 el9 pgsched true
+    python3 ci/utils/cta_version.py native v6.1.0.rc1 el9 pgsched true
 
 Image tags retain dots; native packages use ~dev/~rc and packaging revision 1.
 Backend suffixes belong to the revision; only RPMs also include the platform.
@@ -129,7 +129,7 @@ def main() -> None:
             version = args.version.removeprefix("v")
             validate_source(version)
             if not PLATFORM_RE.fullmatch(args.platform):
-                raise ValueError(f"Invalid CTA platform: {args.platform}")
+                parser.error(f"Invalid CTA platform: {args.platform}")
             variant = build_variant(args.scheduler, args.oracle)
             formatter = image_version if args.command == "image" else native_version
             print(formatter(version, args.platform, variant))

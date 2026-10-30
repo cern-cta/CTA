@@ -62,7 +62,7 @@ cp ci/.cta-dev.env.example ci/.cta-dev.env
 | `CTA_DEV_PLATFORM` | A platform defined in `project.json` |
 | `CTA_DEV_BUILD_GENERATOR` | `Ninja` or `Unix Makefiles` |
 | `CTA_DEV_CMAKE_BUILD_TYPE` | `Release`, `Debug`, `RelWithDebInfo`, or `MinSizeRel` |
-| `CTA_DEV_CTA_VERSION` | Neutral source version, for example `6.12.0.dev1`; unset by default |
+| `CTA_DEV_CTA_VERSION` | Neutral source version, for example `6.1.0.dev1`; unset by default |
 | `CTA_DEV_NAMESPACE` | Kubernetes namespace |
 
 Command-line options override `ci/.cta-dev.env`, which overrides the built-in defaults. The file belongs to the worktree selected by the command symlink.
@@ -75,7 +75,7 @@ Package revision and backend/platform suffixes are added automatically.
 To override the source version:
 
 ```bash
-cta-dev up --cta-version 6.12.0.dev1
+cta-dev up --cta-version 6.1.0.dev1
 ```
 
 This labels the build from your checkout; it does not select a Git tag or change the source revision.

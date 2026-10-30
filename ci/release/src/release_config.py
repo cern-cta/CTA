@@ -9,7 +9,7 @@ import json
 import re
 from dataclasses import dataclass
 
-from cta_version import CTAVersion, VersionError
+from release_version import CTAVersion, VersionError
 from git_repo import Git, GitError
 
 

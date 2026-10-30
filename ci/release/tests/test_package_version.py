@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-VERSION_SCRIPT = Path(__file__).resolve().parents[3] / "lib/python/package_version.py"
+VERSION_SCRIPT = Path(__file__).resolve().parents[3] / "ci/utils/cta_version.py"
 
 
 def version_cli(command: str, *arguments: str) -> str:
@@ -35,10 +35,10 @@ def version_cli(command: str, *arguments: str) -> str:
 )
 @pytest.mark.parametrize("prerelease", ["", ".dev1", ".dev12", ".rc1", ".rc12"])
 def test_artifact_mapping(platform: str, scheduler: str, oracle: str, variant: str, prerelease: str) -> None:
-    source = f"v6.12.0{prerelease}"
-    image = f"6.12.0{prerelease}{'.' + variant if variant else ''}.{platform}"
+    source = f"v6.1.0{prerelease}"
+    image = f"6.1.0{prerelease}{'.' + variant if variant else ''}.{platform}"
     assert version_cli("image", source, platform, scheduler, oracle) == image
-    upstream = f"6.12.0{prerelease.replace('.', '~')}"
+    upstream = f"6.1.0{prerelease.replace('.', '~')}"
     revision = (
         f"1{'.' + variant if variant else ''}.{platform}"
         if platform.startswith("el")
@@ -64,11 +64,11 @@ def test_branch_version(source: str, platform: str, expected: str) -> None:
 @pytest.mark.parametrize(
     "version",
     [
-        "v6.12.0-1",
-        "v6.12.0.rc0",
-        "v6.12.0.dev1.rc1",
-        "v6.12.0.pgall",
-        "v6.12.0.el10",
+        "v6.1.0-1",
+        "v6.1.0.rc0",
+        "v6.1.0.dev1.rc1",
+        "v6.1.0.pgall",
+        "v6.1.0.el10",
     ],
 )
 def test_invalid_source_versions(version: str) -> None:
@@ -85,7 +85,7 @@ def test_native_package_ordering(manager: str, platform: str, variant: str) -> N
     oracle = "false" if variant in {".pgcat", ".pgall"} else "true"
     versions = [
         version_cli("native", version, platform, scheduler, oracle)
-        for version in ["6.12.0.dev1", "6.12.0.dev2", "6.12.0.rc1", "6.12.0.rc2", "6.12.0", "6.12.1"]
+        for version in ["6.1.0.dev1", "6.1.0.dev2", "6.1.0.rc1", "6.1.0.rc2", "6.1.0", "6.1.1"]
     ]
     for older, newer in zip(versions, versions[1:]):
         if manager == "rpm":

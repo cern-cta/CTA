@@ -4,7 +4,7 @@ Version conventions for CTA software, catalogue schemas, and published documenta
 
 ## Software and package versions
 
-- Source release tags use `v<major>.<minor>.<patch>`, for example `v6.12.0`.
+- Source release tags use `v<major>.<minor>.<patch>`, for example `v6.1.0`.
 - For packaging releases, increment the `<patch>` number.
 - The only optional tag suffixes are `.devN` for development releases and `.rcN` for release candidates, where `N` is a positive integer. Use at most one suffix.
 - One Git tag identifies the source for all supported build configurations. Backend and platform suffixes never appear in Git tags or Python package versions.
@@ -26,16 +26,16 @@ The following examples use the `pgsched` variant and EL9 for RPMs and Docker ima
 
 | Git tag | Python version | RPM version-release (EL9, pgsched) | Debian version (pgsched) | Docker image tag (EL9, pgsched) |
 | --- | --- | --- | --- | --- |
-| `v6.12.0.dev1` | `6.12.0.dev1` | `6.12.0~dev1-1.pgsched.el9` | `6.12.0~dev1-1.pgsched` | `6.12.0.dev1.pgsched.el9` |
-| `v6.12.0.rc1` | `6.12.0rc1` | `6.12.0~rc1-1.pgsched.el9` | `6.12.0~rc1-1.pgsched` | `6.12.0.rc1.pgsched.el9` |
-| `v6.12.0` | `6.12.0` | `6.12.0-1.pgsched.el9` | `6.12.0-1.pgsched` | `6.12.0.pgsched.el9` |
-| `v6.12.1` | `6.12.1` | `6.12.1-1.pgsched.el9` | `6.12.1-1.pgsched` | `6.12.1.pgsched.el9` |
+| `v6.1.0.dev1` | `6.1.0.dev1` | `6.1.0~dev1-1.pgsched.el9` | `6.1.0~dev1-1.pgsched` | `6.1.0.dev1.pgsched.el9` |
+| `v6.1.0.rc1` | `6.1.0rc1` | `6.1.0~rc1-1.pgsched.el9` | `6.1.0~rc1-1.pgsched` | `6.1.0.rc1.pgsched.el9` |
+| `v6.1.0` | `6.1.0` | `6.1.0-1.pgsched.el9` | `6.1.0-1.pgsched` | `6.1.0.pgsched.el9` |
+| `v6.1.1` | `6.1.1` | `6.1.1-1.pgsched.el9` | `6.1.1-1.pgsched` | `6.1.1.pgsched.el9` |
 
-- RPMs use packaging revision `1`, followed by the variant and platform: `6.12.0-1.pgsched.el9`.
-- Debian packages use revision `1`, followed by `.variant` when applicable: `6.12.0-1.pgsched`. The distribution target is selected by the build and repository rather than appended to the version.
+- RPMs use packaging revision `1`, followed by the variant and platform: `6.1.0-1.pgsched.el9`.
+- Debian packages use revision `1`, followed by `.variant` when applicable: `6.1.0-1.pgsched`. The distribution target is selected by the build and repository rather than appended to the version.
 - RPM and Debian upstream versions translate `.devN` and `.rcN` to `~devN` and `~rcN`, so development releases sort before candidates and candidates before final releases.
-- Python versions use standard development and candidate suffixes: `6.12.0.dev1`, `6.12.0rc1`, and `6.12.0`.
-- Container image tags retain dots because they cannot contain `~`. The variant and platform follow the source version: `6.12.0.rc2.pgall.el10`.
+- Python versions use standard development and candidate suffixes: `6.1.0.dev1`, `6.1.0rc1`, and `6.1.0`.
+- Container image tags retain dots because they cannot contain `~`. The variant and platform follow the source version: `6.1.0.rc2.pgall.el10`.
 - Build variants share package names and are compared as versions by package managers. Repository selection or version pinning must prevent unintended backend changes.
 
 ### Local and CI development builds
@@ -70,7 +70,7 @@ For implementation and migration guidance, see [Catalogue Schema Changes](../../
 
 ## Documentation versions
 
-- Documentation is published per CTA **minor series**, such as `6.12`, rather than separately for every patch release. For example, `v6.12.0` publishes to `6.12`; a newer release in that series updates the same documentation version.
+- Documentation is published per CTA **minor series**, such as `6.1`, rather than separately for every patch release. For example, `v6.1.0` publishes to `6.1`; a newer release in that series updates the same documentation version.
 - Publication runs from protected canonical release tags. Development and release-candidate tags do not publish documentation. Merging a documentation change alone does not update the public site.
 - `latest` points to the highest published minor series. Updating an older series does not move this alias backwards, and an older release tag cannot overwrite documentation already published from a newer release in the same series.
 - Write pages for the release represented by the selected documentation version. Put historical feature introductions in the [Changelog](../../../changelog.md), while retaining dependency constraints and migration details needed to use or upgrade that release.

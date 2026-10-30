@@ -22,17 +22,17 @@ class ArgumentParserTest(unittest.TestCase):
     def test_changelog_has_no_tag_family_options(self) -> None:
         parser = create_argument_parser()
         with pytest.raises(SystemExit):
-            parser.parse_args(["changelog", "v6.12.0", "--suffix", "pgall"])
+            parser.parse_args(["changelog", "v6.1.0", "--suffix", "pgall"])
         with pytest.raises(SystemExit):
-            parser.parse_args(["changelog", "v6.12.0", "--release-candidate"])
+            parser.parse_args(["changelog", "v6.1.0", "--release-candidate"])
 
     def test_tag_rejects_build_suffix_option(self) -> None:
         with pytest.raises(SystemExit):
-            create_argument_parser().parse_args(["tag", "v6.12.0", "--suffix", "pgall"])
+            create_argument_parser().parse_args(["tag", "v6.1.0", "--suffix", "pgall"])
 
     def test_tag_parser_rejects_unsupported_suffix(self) -> None:
         with pytest.raises(SystemExit):
-            create_argument_parser().parse_args(["tag", "v6.12.0", "--suffix", "pg"])
+            create_argument_parser().parse_args(["tag", "v6.1.0", "--suffix", "pg"])
 
     def test_tag_and_status_require_explicit_versions(self) -> None:
         parser = create_argument_parser()
@@ -49,13 +49,13 @@ class ArgumentParserTest(unittest.TestCase):
             patch("release_cli.tag.run") as tag_run,
             patch("release_cli.status.run") as status_run,
         ):
-            changelog_args = parser.parse_args(["changelog", "v6.12.0"])
+            changelog_args = parser.parse_args(["changelog", "v6.1.0"])
             changelog_args.execute(context, changelog_args)
 
             tag_args = parser.parse_args(
                 [
                     "tag",
-                    "v6.12.0",
+                    "v6.1.0",
                     "--yes",
                     "--target-branch",
                     "maintenance",
@@ -64,19 +64,20 @@ class ArgumentParserTest(unittest.TestCase):
             )
             tag_args.execute(context, tag_args)
 
-            status_args = parser.parse_args(["status", "v6.12.0"])
+            status_args = parser.parse_args(["status", "v6.1.0"])
             status_args.execute(context, status_args)
-        changelog_run.assert_called_once_with(context, "v6.12.0", "main")
+        changelog_run.assert_called_once_with(context, "v6.1.0", "main")
         tag_run.assert_called_once_with(
             context,
-            "v6.12.0",
+            "v6.1.0",
             True,
             "maintenance",
             release_candidate=True,
             development=False,
+            allow_unsuccessful_pipeline=False,
             ref=None,
         )
-        status_run.assert_called_once_with(context, "v6.12.0", "main")
+        status_run.assert_called_once_with(context, "v6.1.0", "main")
 
 
 def test_missing_token_prompts_validates_and_stores(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -166,10 +167,10 @@ def test_dry_run_validates_prompted_token_without_storing_it(tmp_path: Path) -> 
 def test_development_flag_dispatch_and_exclusivity() -> None:
     parser = create_argument_parser()
     context = MagicMock()
-    arguments = parser.parse_args(["tag", "v6.12.0", "--development"])
+    arguments = parser.parse_args(["tag", "v6.1.0", "--development"])
     with patch("release_cli.tag.run") as run:
         arguments.execute(context, arguments)
     assert run.call_args.kwargs["development"] is True
     assert run.call_args.kwargs["release_candidate"] is False
     with pytest.raises(SystemExit):
-        parser.parse_args(["tag", "v6.12.0", "--development", "--release-candidate"])
+        parser.parse_args(["tag", "v6.1.0", "--development", "--release-candidate"])

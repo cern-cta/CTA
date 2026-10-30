@@ -84,7 +84,8 @@ internal-release-cta:
 public-release-cta-unstable:
   extends: .public-release-cta
   rules:
-    - if: '$CI_COMMIT_TAG =~ /\.rc[1-9][0-9]*$/'
+    # RC and final releases go to unstable by default.
+    - if: '$CI_COMMIT_TAG =~ /^v[1-9][0-9]*\.[0-9]+\.[0-9]+(\.rc[1-9][0-9]*)?$/'
       when: on_success
     - !reference [.public-release-cta, rules]
   variables:
@@ -93,6 +94,7 @@ public-release-cta-unstable:
 public-release-cta-testing:
   extends: .public-release-cta
   rules:
+    # dev releases go to testing by default
     - if: '$CI_COMMIT_TAG =~ /\.dev[1-9][0-9]*$/'
       when: on_success
     - !reference [.public-release-cta, rules]
@@ -108,6 +110,7 @@ public-release-cta-stable:
     # Anything in stable must also be in unstable
     - public-release-cta-unstable
   rules:
+    # dev/rc releases cannot land in stable
     - if: '$CI_COMMIT_TAG =~ /\.(dev|rc)[1-9][0-9]*$/'
       when: never
     - !reference [.public-release-cta, rules]

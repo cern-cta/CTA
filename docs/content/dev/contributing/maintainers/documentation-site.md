@@ -27,7 +27,7 @@ Mermaid colors are configured in `content/stylesheets/extra.css`. Prefer the def
 
 Publication uses `CI_JOB_TOKEN` to push to the protected `gl-pages` branch. Repository pushes must be enabled for job tokens, and the triggering user must have permission to push to that branch (maintainer or higher). Use the publication workflow rather than editing `gl-pages` manually.
 
-Each tag updates its minor-series documentation: for example, `v6.12.0` updates `6.12`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
+Each tag updates its minor-series documentation: for example, `v6.1.0` updates `6.1`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
 
 If publication fails, inspect the `publish-docs` log and resolve the cause, such as missing push permissions. Retry the job in the original tag pipeline when the source contents are unchanged. If a source fix is needed, use a new tag; do not move the existing tag. Check the published version after the retry.
 

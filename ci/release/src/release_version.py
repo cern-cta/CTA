@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 # Keep tag spelling identical to Python and native package builds.
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "lib/python"))
-from package_version import BASE_RE, TAG_RE
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from ci.utils.cta_version import BASE_RE, TAG_RE
 
 # TODO: Remove historical parsing once maintained release lines have neutral final tags for changelog lookup.
 HISTORICAL_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)(?:\.(\d+))?-(\d+)(?:\..+)?$")
@@ -43,7 +43,7 @@ class CTAVersion:
             expected = "v<major>.<minor>.<patch>"
             if not require_base:
                 expected += "[.devN|.rcN]"
-            raise VersionError(f"Invalid CTA version {text!r}; expected {expected}, for example 'v6.12.0'")
+            raise VersionError(f"Invalid CTA version {text!r}; expected {expected}, for example 'v6.1.0'")
         groups = match.groups()
         suffix = None if require_base else groups[3]
         number = None if require_base or groups[4] is None else int(groups[4])

@@ -25,7 +25,7 @@ uv build --all-packages --out-dir build/python
 
 - System tests run separately; see [ci/system_tests](../../ci/system_tests/README.md).
 - Keep existing requirements files and dependency groups in sync, then run `uv lock`.
-- Package versions come from CTA Git tags through the shared [version helper](package_version.py).
+- Package versions come from CTA Git tags through the shared [version helper](../../ci/utils/cta_version.py).
   Hatch builds the packages; explicit CI release tags supply release versions.
   Local builds always use `<major>.dev1`; CI development builds use `<major>.dev<pipeline>+g<sha>[.dirty]`.
 - SDK builds generate protobuf bindings from the submodule above.

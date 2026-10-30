@@ -17,7 +17,7 @@ The token needs permission to create release issues and MRs; Git pushes use your
 
 ## Prepare the release
 
-Choose an unsuffixed version such as `v6.12.0` using `v<major>.<minor>.<patch>`:
+Choose an unsuffixed version such as `v6.1.0` using `v<major>.<minor>.<patch>`:
 
 | Field | When it changes |
 | --- | --- |
@@ -28,7 +28,7 @@ Choose an unsuffixed version such as `v6.12.0` using `v<major>.<minor>.<patch>`:
 See [Versioning](../../guides/conventions/versioning.md) for artifact suffixes and [Catalogue Schema Releases](catalogue-schema-releases.md) for schema upgrades.
 
 ```bash
-release changelog v6.12.0
+release changelog v6.1.0
 ```
 
 The tool synchronizes the target branch and opens generated changes since the previous final release in Git’s editor.
@@ -36,7 +36,7 @@ Review the entries, including commits with missing Changelog trailers, then conf
 Add release requirements and deployment considerations to the issue, merge the MR, and check the resulting branch pipeline.
 
 ```bash
-release status v6.12.0
+release status v6.1.0
 ```
 
 Status shows the issue and MR, then published tags and their pipelines, including child variants.
@@ -45,28 +45,31 @@ Pass a specific prerelease version to inspect only that candidate.
 ## Tag the release
 
 ```bash
-release tag v6.12.0
+release tag v6.1.0
 ```
 
 The tool selects the changelog MR’s merge commit, checks its metadata, target-branch ancestry, and pipeline, then asks you to edit the tag description and confirm publication.
 Resolve any warnings before proceeding.
-Use `release --dry-run tag ...` to preview without changes; `--yes` skips confirmations, including pipeline warnings.
+Use `release --dry-run tag ...` to preview without changes; `--yes` skips confirmations but does not bypass the pipeline requirement.
+Use `--allow-unsuccessful-pipeline` only when intentionally tagging without a successful pipeline for the selected commit.
 
 Only `.devN` and `.rcN` are accepted as tag suffixes.
-Prereleases do not require a changelog entry, merged changelog MR, or release issue.
+Development releases do not require a changelog entry, merged changelog MR, or release issue.
+RCs and final releases require the base version’s changelog entry and merged changelog MR, and default to that MR’s merge commit.
 
 ```bash
-release tag v6.12.0 --development
-release tag v6.12.0 --release-candidate
+release tag v6.1.0 --development
+release tag v6.1.0 --release-candidate
 ```
 
 Use `--ref` to select a specific commit or tag reachable from the target branch.
-Prepare and merge the changelog before tagging an RC that you intend to promote unchanged to a final release:
+Prepare and merge the changelog before tagging an RC.
+To include later fixes, use `--ref` with a commit containing the changelog merge and entry; promote the tested candidate with the same explicit reference:
 
 ```bash
-release tag v6.12.0 --release-candidate --ref FIXED_COMMIT_SHA
+release tag v6.1.0 --release-candidate --ref FIXED_COMMIT_SHA
 # Promote the exact tested candidate to a final tag.
-release tag v6.12.0 --ref v6.12.0.rc2
+release tag v6.1.0 --ref v6.1.0.rc2
 ```
 
 See [Versioning](../../guides/conventions/versioning.md#release-artifact-versions) for the tag-to-artifact mapping and [local and CI development builds](../../guides/conventions/versioning.md#local-and-ci-development-builds) for untagged builds.
@@ -89,7 +92,7 @@ Publication follows this policy for each selected variant, including manually tr
 | Job | Publication |
 | --- | --- |
 | `internal-release-cta` | Automatic on tags after package builds. |
-| `public-release-cta-unstable` | Automatic for RC tags after internal publication; manual for dev and final tags. |
+| `public-release-cta-unstable` | Automatic for RC and final tags after internal publication; manual for dev tags. |
 | `public-release-cta-testing` | Automatic for dev tags after internal publication; manual for RC and final tags. |
 | `public-release-cta-stable` | Manual for final tags after internal and unstable publication. |
 | `publish-images-private` | Automatic on tags after internal publication and image builds. |
@@ -109,19 +112,20 @@ Create the maintenance branch from the release being fixed and cherry-pick the r
 
 ```bash
 git fetch origin --tags
-git switch -c release/v6.12.1 v6.12.0
+git switch -c release/v6.1.1 v6.1.0
 git cherry-pick -x FIX_COMMIT_SHA
-git push -u origin release/v6.12.1
-release changelog v6.12.1 --target-branch release/v6.12.1
+git push -u origin release/v6.1.1
+release changelog v6.1.1 --target-branch release/v6.1.1
 ```
 
 Review and merge the changelog MR into that branch.
-Ordinary release-branch pushes do not start CI: run a `DEFAULT` pipeline manually and verify its SHA matches the changelog commit shown by `release status`.
+Pushes to `release/*` branches start CI automatically.
+Verify the successful pipeline’s SHA matches the changelog commit shown by `release status`.
 Use the same target branch when tagging:
 
 ```bash
-release status v6.12.1 --target-branch release/v6.12.1
-release tag v6.12.1 --target-branch release/v6.12.1
+release status v6.1.1 --target-branch release/v6.1.1
+release tag v6.1.1 --target-branch release/v6.1.1
 ```
 
 The tool accepts a successful push or manually started pipeline for the exact commit and target branch.

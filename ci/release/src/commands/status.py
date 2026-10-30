@@ -8,7 +8,7 @@ from __future__ import annotations
 import argparse
 from contextlib import suppress
 
-from cta_version import CTAVersion, VersionError
+from release_version import CTAVersion, VersionError
 
 from commands import SubparserRegistry
 from release_config import ReleaseConfig
@@ -24,8 +24,8 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   Inspect a known release:
-    release status v6.12.0
-    release status v6.12.0 --target-branch maintenance
+    release status v6.1.0
+    release status v6.1.0 --target-branch maintenance
 
 This command is always read-only.""",
     )

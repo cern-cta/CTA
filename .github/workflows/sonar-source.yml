@@ -89,9 +89,8 @@ jobs:
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             export CI_COMMIT_TAG="$GITHUB_REF_NAME"
           fi
-          CTA_VERSION_BASE=$(python3 lib/python/package_version.py)
-          CTA_VERSION=$(python3 lib/python/package_version.py image "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-          CTA_PACKAGE_VERSION=$(python3 lib/python/package_version.py native "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+          CTA_VERSION_BASE=$(python3 ci/utils/cta_version.py)
+          CTA_PACKAGE_VERSION=$(python3 ci/utils/cta_version.py native "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
           CTA_USE_PGSCHED=OFF
           [[ "$SCHEDULER_TYPE" == "pgsched" ]] && CTA_USE_PGSCHED=ON
           CTA_WITH_ORACLE=OFF

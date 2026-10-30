@@ -26,9 +26,9 @@ class VersionTests(unittest.TestCase):
     def test_canonical_versions(self):
         self.assertEqual(release_key("v6.2.4"), (6, 2, 4, 0, 0))
         self.assertEqual(release_key("v6.2.4-1"), (6, 2, 4, 0, 1))
-        self.assertEqual(release_key("v6.12.0.0-1"), (6, 12, 0, 0, 1))
-        self.assertGreater(release_key("v6.12.0.0-1"), release_key("v6.9.99.0-1"))
-        self.assertGreater(release_key("v6.12.0.0-10"), release_key("v6.12.0.0-2"))
+        self.assertEqual(release_key("v6.1.0.0-1"), (6, 1, 0, 0, 1))
+        self.assertGreater(release_key("v6.1.0.0-1"), release_key("v6.0.99.0-1"))
+        self.assertGreater(release_key("v6.1.0.0-10"), release_key("v6.1.0.0-2"))
 
     def test_noncanonical_tags(self):
         for tag in [
@@ -117,30 +117,30 @@ class PublicationTests(unittest.TestCase):
         return output, json.loads((output / "versions.json").read_text())
 
     def test_versions_aliases_retries_and_preservation(self):
-        for tag in ["v6.9.1-1", "v6.12.0.0-1", "v6.9.2-1", "v6.12.1"]:
+        for tag in ["v6.0.1-1", "v6.1.0.0-1", "v6.0.2-1", "v6.1.1"]:
             self.deploy(tag)
-        output, versions = self.deploy("v6.12.1")
+        output, versions = self.deploy("v6.1.1")
         latest = next(version for version in versions if "latest" in version["aliases"])
-        self.assertEqual(latest["version"], "6.12")
-        self.assertEqual(latest["properties"]["source_tag"], "v6.12.1")
+        self.assertEqual(latest["version"], "6.1")
+        self.assertEqual(latest["properties"]["source_tag"], "v6.1.1")
         self.assertEqual((output / "v4/index.html").read_text(), "Historical v4")
         self.assertEqual((output / "v5/index.html").read_text(), "Historical v5")
         self.assertIn("latest/", (output / "index.html").read_text())
-        self.assertIn("6.12/", (output / "latest/index.html").read_text())
+        self.assertIn("6.1/", (output / "latest/index.html").read_text())
         self.assertFalse((output / "latest").is_symlink())
         previous = self.command("git", "rev-parse", "gl-pages").stdout
-        self.deploy("v6.12.0.0-1")
+        self.deploy("v6.1.0.0-1")
         self.assertEqual(previous, self.command("git", "rev-parse", "gl-pages").stdout)
 
     def test_refreshes_stale_pages_branch(self):
-        self.deploy("v6.9.1-1")
+        self.deploy("v6.0.1-1")
         old = self.command("git", "rev-parse", "gl-pages").stdout.strip()
-        self.deploy("v6.12.0.0-1")
+        self.deploy("v6.1.0.0-1")
         # Simulate a second serialized publisher whose local branch is stale.
         self.command("git", "update-ref", "refs/heads/gl-pages", old)
-        _, versions = self.deploy("v6.9.2-1")
-        self.assertIn("6.12", [entry["version"] for entry in versions])
-        self.assertEqual(next(entry["version"] for entry in versions if "latest" in entry["aliases"]), "6.12")
+        _, versions = self.deploy("v6.0.2-1")
+        self.assertIn("6.1", [entry["version"] for entry in versions])
+        self.assertEqual(next(entry["version"] for entry in versions if "latest" in entry["aliases"]), "6.1")
 
     def test_missing_snippet_prevents_publication(self):
         config = self.repo / "docs/mkdocs.yml"
@@ -149,9 +149,9 @@ class PublicationTests(unittest.TestCase):
         (self.repo / "docs/content/index.md").write_text('--8<-- "missing-file.md"\n')
         self.command("git", "add", "docs")
         self.command("git", "commit", "--message", "Missing snippet")
-        self.command("git", "tag", "v6.12.0.0-1")
+        self.command("git", "tag", "v6.1.0.0-1")
         previous = self.command("git", "ls-remote", "origin", "gl-pages").stdout
-        result = self.command(sys.executable, str(self.publisher), "--tag", "v6.12.0.0-1", check=False)
+        result = self.command(sys.executable, str(self.publisher), "--tag", "v6.1.0.0-1", check=False)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Snippet at path 'missing-file.md' could not be found", result.stdout)
         self.assertEqual(previous, self.command("git", "ls-remote", "origin", "gl-pages").stdout)

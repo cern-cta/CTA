@@ -22,7 +22,7 @@ spec:
         Existing CTA image tag to test instead of building CTA from the selected ref.
 
         Pipeline build example: `6-123456gitabcdef12.pgall.el9`.
-        Published release example: `6.12.0-1.pgall.el9`.
+        Published release example: `6.1.0-1.pgall.el9`.
         Existing image tags, including historical formats, are used verbatim.
 
         Leave empty to build the selected ref for the regression.
@@ -266,7 +266,7 @@ workflow:
     - if: '$CI_COMMIT_BRANCH == "gl-pages"'
       when: never
     # Preserve push filtering for Debian while selecting its supported build variant.
-    - if: '"$[[ inputs.platform ]]" == "debian13" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+    - if: '"$[[ inputs.platform ]]" == "debian13" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_BRANCH !~ /^release\//'
       when: never
     # Debian currently supports package builds with the PostgreSQL scheduler only.
     - if: '"$[[ inputs.platform ]]" == "debian13" && $PIPELINE_TYPE == "DEFAULT"'
@@ -306,11 +306,17 @@ workflow:
         CACHE_BRANCH: '$CI_COMMIT_BRANCH'
         ENABLE_SBOM_GENERATION: "true"
         GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
+    # Maintenance commits need an exact-commit pipeline before RC/final tagging.
+    - if: '$CI_COMMIT_BRANCH =~ /^release\// && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "parent_pipeline")'
+      auto_cancel:
+        on_new_commit: none
+      variables:
+        ENABLE_SBOM_GENERATION: "true"
+        GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
-    # Push events to main will still trigger the pipeline as per the previous rule
-    # But we want to prevent dual pipelines on MRs
+    # Other feature-branch pushes use merge-request pipelines instead.
     - if: $CI_PIPELINE_SOURCE != "push"
 
 # Whether a job runs is controlled by two things:

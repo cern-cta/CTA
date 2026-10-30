@@ -188,7 +188,7 @@ convention = 'pep257'
 
 [tool.pyright]
 typeCheckingMode = "strict"
-extraPaths = ["ci/release/src", "lib/python"]
+extraPaths = ["ci/release/src", "."]
 exclude = ["**/__pycache__", "**/.venv", "**/venv", "build", "tmp", "**/protobuf_generated", "lib/protobuf/external", "catalogue/cta-catalogue-schema", "common/jwt-cpp"]
 reportImplicitOverride = "error"
 reportMissingTypeArgument = "error"

@@ -30,7 +30,7 @@ dev = ["cattrs", "grpcio-tools"]
 
 [tool.hatch.version]
 source = "code"
-path = "../package_version.py"
+path = "../../../ci/utils/cta_version.py"
 expression = "package_version()"
 
 [tool.hatch.build]

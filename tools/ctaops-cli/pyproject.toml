@@ -43,7 +43,7 @@ ctaops-sdk = { workspace = true }
 
 [tool.hatch.version]
 source = "code"
-path = "../../lib/python/package_version.py"
+path = "../../ci/utils/cta_version.py"
 expression = "package_version()"
 
 [tool.hatch.build]
