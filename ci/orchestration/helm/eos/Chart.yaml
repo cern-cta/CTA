@@ -9,5 +9,5 @@ version: 0.1.0
 
 dependencies:
   - name: server
-    version: 0.10.6
+    version: 0.11.12
     repository: oci://registry.cern.ch/eos/charts
