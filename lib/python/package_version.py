@@ -10,11 +10,12 @@ Hatch calls package_version() for PEP 440 metadata; archive metadata stays with 
 CLI examples (each prints one value):
     python3 lib/python/package_version.py major
     python3 lib/python/package_version.py image v6.12.0.rc1 el9 pgsched true
-    python3 lib/python/package_version.py native 6.12.0.rc1.pgsched.el9
+    python3 lib/python/package_version.py native v6.12.0.rc1 el9 pgsched true
 
 Image tags retain dots; native packages use ~dev/~rc and packaging revision 1.
 Backend suffixes belong to the revision; only RPMs also include the platform.
-Explicit artifact conversions do not inspect Git or CI environment variables.
+Both artifact commands take a source version and explicit build settings.
+They reject artifact tags and do not inspect Git or CI environment variables.
 """
 
 from __future__ import annotations
@@ -32,7 +33,6 @@ TAG_RE = re.compile(r"^v([1-9][0-9]*)\.([0-9]+)\.([0-9]+)(?:\.(rc|dev)([1-9][0-9
 DEVELOPMENT_RE = re.compile(r"^[1-9][0-9]*\.dev[1-9][0-9]*(\.g[a-f0-9]+(\.dirty)?)?$")
 
 PLATFORM_RE = re.compile(r"el[0-9]+|(?:debian|ubuntu)[0-9]+(?:\.[0-9]+)*")
-VARIANTS = {"pgsched", "pgcat", "pgall"}
 REPOSITORY = Path(__file__).resolve().parents[2]
 
 
@@ -50,41 +50,24 @@ def validate_source(version: str) -> None:
         raise ValueError(f"Invalid CTA source version: {version}")
 
 
-def image_version(version: str, platform: str, scheduler: str, oracle: str) -> str:
-    """Append backend/platform labels; accept matching labels already present."""
-    if not PLATFORM_RE.fullmatch(platform):
-        raise ValueError(f"Invalid CTA platform: {platform}")
+def build_variant(scheduler: str, oracle: str) -> str:
+    """Resolve the backend label from validated build settings."""
     oracle = oracle.lower()
     if scheduler not in {"objectstore", "pgsched"} or oracle not in {"true", "on", "false", "off"}:
         raise ValueError(f"Invalid scheduler/Oracle configuration: {scheduler}/{oracle}")
-    has_oracle = oracle in {"true", "on"}
-    variant = "pgsched" if scheduler == "pgsched" else ""
-    if not has_oracle:
-        variant = "pgall" if scheduler == "pgsched" else "pgcat"
+    if oracle in {"true", "on"}:
+        return "pgsched" if scheduler == "pgsched" else ""
+    return "pgall" if scheduler == "pgsched" else "pgcat"
 
-    version = version.removeprefix("v").removesuffix(f".{platform}")
-    source, _, supplied_variant = version.rpartition(".")
-    if supplied_variant in VARIANTS:
-        if supplied_variant != variant:
-            raise ValueError(f"CTA version variant does not match the build configuration: {version}")
-        version = source
-    validate_source(version)
+
+def image_version(version: str, platform: str, variant: str) -> str:
+    """Format validated source/build inputs as a container image tag."""
     return f"{version}{'.' + variant if variant else ''}.{platform}"
 
 
-def native_version(image: str) -> str:
-    """Convert a complete image tag to an RPM or Debian version-release."""
-    platform_match = re.search(rf"\.({PLATFORM_RE.pattern})$", image)
-    if platform_match is None:
-        raise ValueError(f"Invalid CTA image version: {image}; expected a terminal platform suffix")
-    platform = platform_match.group(1)
-    version = image[: platform_match.start()]
-    source, _, variant = version.rpartition(".")
-    revision = "1"
-    if variant in VARIANTS:
-        version = source
-        revision += f".{variant}"
-    validate_source(version)
+def native_version(version: str, platform: str, variant: str) -> str:
+    """Format validated source/build inputs as an RPM or Debian version-release."""
+    revision = "1" + (f".{variant}" if variant else "")
     if platform.startswith("el"):
         revision += f".{platform}"
     upstream = version.replace(".dev", "~dev").replace(".rc", "~rc")
@@ -131,21 +114,25 @@ def main() -> None:
     commands.add_parser("source", help="resolve the source version from CI metadata or local defaults")
     major = commands.add_parser("major", help="read the software series from project.json")
     major.add_argument("project_file", nargs="?", type=Path, default=REPOSITORY / "project.json")
-    image = commands.add_parser("image", help="append platform and backend labels to a source version")
-    image.add_argument("version", help="source version or matching resolved image tag")
-    image.add_argument("platform", help="target platform, e.g. el9 or debian13")
-    image.add_argument("scheduler", choices=["objectstore", "pgsched"])
-    image.add_argument("oracle", help="Oracle support: true/false or on/off (case-insensitive)")
-    native = commands.add_parser("native", help="convert an image tag to an RPM or Debian version-release")
-    native.add_argument("image", help="complete image tag including platform and optional backend")
+    for name, help_text in [("image", "format an image tag"), ("native", "format an RPM or Debian version-release")]:
+        artifact = commands.add_parser(name, help=help_text)
+        artifact.add_argument("version", help="neutral source version, with optional v prefix; no build suffixes")
+        artifact.add_argument("platform", help="target platform, e.g. el9 or debian13")
+        artifact.add_argument("scheduler", choices=["objectstore", "pgsched"])
+        artifact.add_argument("oracle", help="Oracle support: true/false or on/off (case-insensitive)")
     args = parser.parse_args()
     try:
         if args.command == "major":
             print(major_version(args.project_file))
-        elif args.command == "image":
-            print(image_version(args.version, args.platform, args.scheduler, args.oracle))
-        elif args.command == "native":
-            print(native_version(args.image))
+        elif args.command in {"image", "native"}:
+            # Validate once at the CLI boundary; formatters only render known inputs.
+            version = args.version.removeprefix("v")
+            validate_source(version)
+            if not PLATFORM_RE.fullmatch(args.platform):
+                raise ValueError(f"Invalid CTA platform: {args.platform}")
+            variant = build_variant(args.scheduler, args.oracle)
+            formatter = image_version if args.command == "image" else native_version
+            print(formatter(version, args.platform, variant))
         else:
             print(source_version())
     except (ValueError, OSError, KeyError, subprocess.CalledProcessError) as error:

@@ -1090,9 +1090,8 @@ build_cta() {
   write_build_state "$build_configuration_json" false
 
   # Resolve native package metadata before invoking the container build.
-  local resolved_image_version package_version
-  resolved_image_version=$(python3 "${project_root}/lib/python/package_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
-  package_version=$(python3 "${project_root}/lib/python/package_version.py" native "$resolved_image_version")
+  local package_version
+  package_version=$(python3 "${project_root}/lib/python/package_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 
   print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.

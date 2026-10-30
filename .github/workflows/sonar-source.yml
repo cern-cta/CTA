@@ -91,7 +91,7 @@ jobs:
           fi
           CTA_VERSION_BASE=$(python3 lib/python/package_version.py)
           CTA_VERSION=$(python3 lib/python/package_version.py image "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-          CTA_PACKAGE_VERSION=$(python3 lib/python/package_version.py native "$CTA_VERSION")
+          CTA_PACKAGE_VERSION=$(python3 lib/python/package_version.py native "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
           CTA_USE_PGSCHED=OFF
           [[ "$SCHEDULER_TYPE" == "pgsched" ]] && CTA_USE_PGSCHED=ON
           CTA_WITH_ORACLE=OFF
