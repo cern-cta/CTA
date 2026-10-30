@@ -181,26 +181,26 @@ TEST(VirtualDrive, BlockIdPositioningCount) {
 TEST(VirtualDrive, SpaceFileMarksForward) {
   VirtualDrive drv;
   const std::string d = "data";
-  drv.writeBlock(d.data(), d.size()); // pos 0
-  drv.writeSyncFileMarks(1);          // pos 1 (FM)
-  drv.writeBlock(d.data(), d.size()); // pos 2
-  drv.writeSyncFileMarks(1);          // pos 3 (FM)
+  drv.writeBlock(d.data(), d.size());  // pos 0
+  drv.writeSyncFileMarks(1);           // pos 1 (FM)
+  drv.writeBlock(d.data(), d.size());  // pos 2
+  drv.writeSyncFileMarks(1);           // pos 3 (FM)
 
   drv.rewind();
-  drv.spaceFileMarksForward(1); // advances past first FM → pos 2
+  drv.spaceFileMarksForward(1);  // advances past first FM → pos 2
   EXPECT_EQ(2u, drv.getPositionInfo().currentPosition);
 }
 
 TEST(VirtualDrive, SpaceFileMarksBackwards) {
   VirtualDrive drv;
   const std::string d = "data";
-  drv.writeBlock(d.data(), d.size()); // pos 0
-  drv.writeSyncFileMarks(1);          // pos 1 (FM)
-  drv.writeBlock(d.data(), d.size()); // pos 2
+  drv.writeBlock(d.data(), d.size());  // pos 0
+  drv.writeSyncFileMarks(1);           // pos 1 (FM)
+  drv.writeBlock(d.data(), d.size());  // pos 2
 
   // Position is at 3 (past last write); go back over 1 FM → land on FM at pos 1
   drv.spaceFileMarksBackwards(1);
-  EXPECT_NO_THROW(drv.readFileMark("test")); // reads pos 1 (FM), advances to 2
+  EXPECT_NO_THROW(drv.readFileMark("test"));  // reads pos 1 (FM), advances to 2
 }
 
 TEST(VirtualDrive, WriteImmediateFileMarks_BehavesLikeSyncFileMarks) {

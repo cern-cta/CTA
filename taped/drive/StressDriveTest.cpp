@@ -63,21 +63,15 @@ protected:
 
   void TearDown() override { fs::remove_all(m_baseDir); }
 
-  fs::path driveDir() const {
-    return m_baseDir / "contents" / m_lib / "drives" / m_drive;
-  }
+  fs::path driveDir() const { return m_baseDir / "contents" / m_lib / "drives" / m_drive; }
 
   fs::path slotsDir() const { return m_baseDir / "contents" / m_lib / "slots"; }
 
-  fs::path changerDir() const {
-    return m_baseDir / "contents" / m_lib / "changer";
-  }
+  fs::path changerDir() const { return m_baseDir / "contents" / m_lib / "changer"; }
 
   // Place an empty (blank) tape file in the drive directory, simulating a
   // completed MediaChangerFacade mount.
-  void mountBlankTape(const std::string& vid) const {
-    std::ofstream(driveDir() / (vid + ".tape"), std::ios::binary);
-  }
+  void mountBlankTape(const std::string& vid) const { std::ofstream(driveDir() / (vid + ".tape"), std::ios::binary); }
 };
 
 TEST_F(StressDriveTest, ConstructionParsesLibraryConf) {
@@ -238,7 +232,7 @@ TEST_F(StressDriveTest, MultipleBlocksAndFilemarksRoundTrip) {
     drv2.readBlock(vol1buf, sizeof(vol1buf));  // skip VOL1 (pos 0 → 1)
 
     char buf[64] = {};
-    drv2.readBlock(buf, sizeof(buf));            // HDR1
+    drv2.readBlock(buf, sizeof(buf));                    // HDR1
     const ssize_t n = drv2.readBlock(buf, sizeof(buf));  // data
     EXPECT_EQ("file body", std::string(buf, static_cast<size_t>(n)));
     EXPECT_NO_THROW(drv2.readFileMark("test"));  // FM

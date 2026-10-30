@@ -156,10 +156,7 @@ class K8sConnection(RemoteConnection):
         # nohup only ignores SIGHUP, while setsid moves the process into a new session
         # that the runtime never touches.  The subshell ( ... ) ensures $! refers to the
         # setsid PID and that tmpdir already exists before the pid file is written.
-        launch = (
-            f"mkdir -p {tmpdir} && "
-            f"( setsid sh -c {shlex.quote(inner)} > /dev/null 2>&1 & echo $! > {tmpdir}/pid )"
-        )
+        launch = f"mkdir -p {tmpdir} && ( setsid sh -c {shlex.quote(inner)} > /dev/null 2>&1 & echo $! > {tmpdir}/pid )"
         # This exec is short-lived — it just daemonises the process and returns.
         self.exec(launch)
 
