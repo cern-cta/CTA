@@ -32,7 +32,7 @@ private:
   uint64_t m_tapeCapacity;
   int m_beginOfCompressStats = 0;
 
-  /// Return the capacity remaining before the supplied record position, including full capacity at BOT.
+  /// Return the capacity remaining before the supplied record position.
   uint64_t getRemaingSpace(uint32_t currentPosition);
 
 public:
@@ -71,7 +71,6 @@ public:
   /// Create an empty tape with unlimited capacity and an optional simulated readiness failure.
   explicit FakeDrive(bool failOnMount) noexcept;
 
-  /// Release the stored in-memory tape records.
   ~FakeDrive() override = default;
 
   /// Count stored bytes since the last reset as both tape-read and tape-write bytes; host counters stay zero.
@@ -110,7 +109,7 @@ public:
   /// Throw cta::exception::NotImplementedException; this hardware operation is not simulated.
   std::string getSerialNumber() final;
 
-  /// Count the positioning attempt and select an existing record; reject positions beyond stored data.
+  /// Count every positioning attempt, including attempts beyond stored data.
   void positionToLogicalObject(uint32_t blockId) final;
 
   /// Return the current record index with no buffered writes.
@@ -173,16 +172,14 @@ public:
   /// Position on the last stored record; requires a nonempty simulated tape.
   void fastSpaceToEOM(void) final;
 
-  /// Reset the record position to zero after applying failure injection.
+  /// Support injected rewind failures.
   void rewind(void) final;
 
   /// Position on the last stored record; requires a nonempty simulated tape.
   void spaceToEOM(void) final;
 
-  /// Move backwards across the requested number of file marks, towards the beginning of tape.
   void spaceFileMarksBackwards(size_t count) final;
 
-  /// Move forwards across the requested number of file marks, towards the end of data.
   void spaceFileMarksForward(size_t count) final;
 
   /// Mark the cartridge absent after applying failure injection; retain stored records.
@@ -191,7 +188,7 @@ public:
   /// Raise an ENOSPC error for deferred capacity exhaustion; otherwise do nothing.
   void flush(void) final;
 
-  /// Insert empty records without consuming capacity, truncating any subsequent tape contents.
+  /// File marks consume no capacity; writing them truncates subsequent tape contents.
   void writeSyncFileMarks(size_t count) final;
 
   /// Insert file marks synchronously; asynchronous buffering is not simulated.
@@ -200,13 +197,13 @@ public:
   /// Store one record and truncate later records, reporting capacity exhaustion at the configured failure moment.
   void writeBlock(const void* data, size_t count) final;
 
-  /// Copy the next stored record and advance; reject a buffer smaller than the record.
+  /// Throw cta::exception::Exception if the buffer is smaller than the stored record.
   ssize_t readBlock(void* data, size_t count) final;
 
-  /// Copy and advance only if the next record size matches count; context is unused.
+  /// Ignore diagnostic context; size mismatches throw cta::exception::Exception.
   void readExactBlock(void* data, size_t count, const std::string& context) final;
 
-  /// Advance over an empty record or throw if the next record contains data; context is unused.
+  /// Ignore diagnostic context; a data record throws cta::exception::Exception.
   void readFileMark(const std::string& context) final;
 
   /// Return immediately unless mount failure was configured; the timeout is ignored.
@@ -215,16 +212,14 @@ public:
   /// Always return false; write protection is not simulated.
   bool isWriteProtected() final;
 
-  /// Check whether the tape is positioned at its beginning.
   bool isAtBOT() final;
 
   /// Check whether the current position is the last stored record.
   bool isAtEOD() final;
 
-  /// Check whether the in-memory tape has no records, without changing position.
+  /// Check blankness without moving the tape.
   bool isTapeBlank() final;
 
-  /// Return the protection mode selected for the software read/write path.
   lbpToUse getLbpToUse() final;
 
   /// Return the configured cartridge-presence state after applying failure injection.
