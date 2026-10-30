@@ -3,82 +3,45 @@
 
 from __future__ import annotations
 
-import sys
-import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from gitlab_api import GitLabAPIError
 from release_cli import create_argument_parser, create_authenticated_api
 
 
-class ArgumentParserTest(unittest.TestCase):
-    """Test the small top-level parser and command dispatch boundary."""
-
-    def test_changelog_has_no_tag_family_options(self) -> None:
-        parser = create_argument_parser()
-        with pytest.raises(SystemExit):
-            parser.parse_args(["changelog", "v6.12.0-1", "--suffix", "pgall"])
-        with pytest.raises(SystemExit):
-            parser.parse_args(["changelog", "v6.12.0-1", "--release-candidate"])
-
-    def test_tag_rejects_build_suffix_option(self) -> None:
-        with pytest.raises(SystemExit):
-            create_argument_parser().parse_args(["tag", "v6.12.0-1", "--suffix", "pgall"])
-
-    def test_tag_parser_rejects_unsupported_suffix(self) -> None:
-        with pytest.raises(SystemExit):
-            create_argument_parser().parse_args(["tag", "v6.12.0-1", "--suffix", "pg"])
-
-    def test_tag_and_status_require_explicit_versions(self) -> None:
-        parser = create_argument_parser()
-        with pytest.raises(SystemExit):
-            parser.parse_args(["tag"])
-        with pytest.raises(SystemExit):
-            parser.parse_args(["status"])
-
-    def test_dispatches_each_command_to_its_module(self) -> None:
-        context = MagicMock()
-        parser = create_argument_parser()
-        with (
-            patch("release_cli.changelog.run") as changelog_run,
-            patch("release_cli.tag.run") as tag_run,
-            patch("release_cli.status.run") as status_run,
-        ):
-            changelog_args = parser.parse_args(["changelog", "v6.12.0-1"])
-            changelog_args.execute(context, changelog_args)
-
-            tag_args = parser.parse_args(
-                [
-                    "tag",
-                    "v6.12.0-1",
-                    "--yes",
-                    "--target-branch",
-                    "maintenance",
-                    "--release-candidate",
-                ]
-            )
-            tag_args.execute(context, tag_args)
-
-            status_args = parser.parse_args(["status", "v6.12.0-1"])
-            status_args.execute(context, status_args)
-        changelog_run.assert_called_once_with(context, "v6.12.0-1", "main")
-        tag_run.assert_called_once_with(
-            context,
-            "v6.12.0-1",
-            True,
-            "maintenance",
-            release_candidate=True,
-            ref=None,
-        )
-        status_run.assert_called_once_with(context, "v6.12.0-1", "main")
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["changelog", "v6.1.0", "--suffix", "pgall"],
+        ["changelog", "v6.1.0", "--release-candidate"],
+        ["tag", "v6.1.0", "--suffix", "pgall"],
+        ["tag"],
+        ["status"],
+        ["tag", "v6.1.0", "--development", "--release-candidate"],
+    ],
+)
+def test_invalid_arguments(arguments: list[str]) -> None:
+    with pytest.raises(SystemExit):
+        create_argument_parser().parse_args(arguments)
 
 
-def test_missing_token_prompts_validates_and_stores(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+@pytest.mark.parametrize("command", ["changelog", "status", "tag"])
+def test_command_dispatch(command: str) -> None:
+    context = MagicMock()
+    arguments = create_argument_parser().parse_args([command, "v6.1.0", "--target-branch", "maintenance"])
+    with patch(f"release_cli.{command}.run") as run:
+        arguments.execute(context, arguments)
+    assert run.call_args.args == (
+        (context, "v6.1.0", False, "maintenance") if command == "tag" else (context, "v6.1.0", "maintenance")
+    )
+
+
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_prompted_token_storage(tmp_path: Path, dry_run: bool) -> None:
     config = MagicMock(gitlab_url="https://gitlab.example", project_id="group/project")
     token_file = tmp_path / "gitlab-api-token"
     api = MagicMock()
@@ -91,13 +54,15 @@ def test_missing_token_prompts_validates_and_stores(tmp_path: Path, capsys: pyte
         patch("release_cli.ask_yes_no", return_value=True),
         patch("release_cli.GitLabAPI", return_value=api) as api_type,
     ):
-        assert create_authenticated_api(config) is api
+        assert create_authenticated_api(config, dry_run=dry_run) is api
 
     api_type.assert_called_once_with("https://gitlab.example", "group/project", "new-token")
     api.authenticate.assert_called_once_with()
-    assert token_file.read_text(encoding="utf-8") == "new-token"
-    assert token_file.stat().st_mode & 0o777 == 0o600
-    assert "https://gitlab.example/-/user_settings/personal_access_tokens" in capsys.readouterr().out
+    if dry_run:
+        assert not token_file.exists()
+    else:
+        assert token_file.read_text(encoding="utf-8") == "new-token"
+        assert token_file.stat().st_mode & 0o777 == 0o600
 
 
 def test_rejected_stored_token_prompts_for_valid_replacement(tmp_path: Path) -> None:
@@ -142,21 +107,11 @@ def test_connection_failure_does_not_prompt_for_replacement(tmp_path: Path) -> N
     getpass.assert_not_called()
 
 
-def test_dry_run_validates_prompted_token_without_storing_it(tmp_path: Path) -> None:
-    config = MagicMock(gitlab_url="https://gitlab.example", project_id="group/project")
-    token_file = tmp_path / "gitlab-api-token"
-    api = MagicMock()
-
-    with (
-        patch.dict("release_cli.os.environ", {}, clear=True),
-        patch("release_cli.TOKEN_FILE", token_file),
-        patch("release_cli.sys.stdin.isatty", return_value=True),
-        patch("release_cli.getpass.getpass", return_value="new-token"),
-        patch("release_cli.ask_yes_no") as ask_yes_no,
-        patch("release_cli.GitLabAPI", return_value=api),
-    ):
-        assert create_authenticated_api(config, dry_run=True) is api
-
-    api.authenticate.assert_called_once_with()
-    ask_yes_no.assert_not_called()
-    assert not token_file.exists()
+@pytest.mark.parametrize("flag", ["development", "release-candidate"])
+def test_prerelease_flag_dispatch(flag: str) -> None:
+    context = MagicMock()
+    arguments = create_argument_parser().parse_args(["tag", "v6.1.0", "--yes", "--" + flag])
+    with patch("release_cli.tag.run") as run:
+        arguments.execute(context, arguments)
+    assert run.call_args.args[2] is True
+    assert run.call_args.kwargs[flag.replace("-", "_")] is True

@@ -192,6 +192,7 @@ unit-tests = [
     { name = "colorama", specifier = "==0.4.6" },
     { name = "ghp-import", specifier = "==2.1.0" },
     { name = "grpcio-tools" },
+    { name = "hatchling", specifier = ">=1.27.0" },
     { name = "idna", specifier = "==3.20" },
     { name = "importlib-metadata", specifier = "==8.7.1" },
     { name = "importlib-resources", specifier = "==6.5.2" },

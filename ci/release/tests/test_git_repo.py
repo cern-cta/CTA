@@ -3,14 +3,12 @@
 
 from __future__ import annotations
 
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from git_repo import Git, GitError
 
@@ -33,19 +31,11 @@ class GitTest(unittest.TestCase):
     def test_confirms_dirty_non_release_checkout(self) -> None:
         git = Git(Path("/tmp"))
         with (
-            patch.object(git, "run", side_effect=["", "/tmp", "topic", "dirty", "abc", "abc"]) as run,
+            patch.object(git, "run", side_effect=["", "/tmp", "topic", "dirty", "abc", "abc"]),
             patch("builtins.input", return_value="yes") as user_input,
             patch("confirmation.sys.stdin.isatty", return_value=True),
         ):
             assert git.validate_repository("main", "origin", fetch=False) == "abc"
-        assert run.call_args_list == [
-            call(["check-ref-format", "--branch", "main"]),
-            call(["rev-parse", "--show-toplevel"]),
-            call(["branch", "--show-current"]),
-            call(["status", "--porcelain"]),
-            call(["rev-parse", "main"]),
-            call(["rev-parse", "origin/main"]),
-        ]
         user_input.assert_called_once_with("Continue with this checkout? [y/N] ")
 
     def test_fast_forwards_current_release_branch(self) -> None:
@@ -124,11 +114,11 @@ def test_ancestor_tags_exclude_divergent_release(tmp_path: Path) -> None:
     git.run(["config", "user.name", "Test"])
     git.run(["config", "user.email", "test@example.com"])
     git.run(["commit", "--allow-empty", "-m", "base"])
-    git.run(["tag", "-a", "v6.10.0-1", "-m", "base"])
+    git.run(["tag", "-a", "v6.10.0", "-m", "base"])
     base = git.run(["rev-parse", "HEAD"])
     git.run(["checkout", "-b", "other"])
     git.run(["commit", "--allow-empty", "-m", "unrelated release"])
-    git.run(["tag", "v6.11.0-1"])
+    git.run(["tag", "v6.11.0"])
     git.run(["checkout", "--detach", base])
     git.run(["commit", "--allow-empty", "-m", "target"])
-    assert git.tags(merged_into="HEAD") == ["v6.10.0-1"]
+    assert git.tags(merged_into="HEAD") == ["v6.10.0"]

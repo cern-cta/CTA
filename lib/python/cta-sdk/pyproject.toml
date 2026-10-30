@@ -1,5 +1,6 @@
 [build-system]
-requires = ["hatchling>=1.27.0", "hatch-vcs>=0.4.0", "grpcio-tools>=1.60"]
+# Hatch reads release tags or local development identifiers through the shared version helper.
+requires = ["hatchling>=1.27.0", "grpcio-tools>=1.60"]
 build-backend = "hatchling.build"
 
 [project]
@@ -28,13 +29,9 @@ Documentation = "https://ctaops.docs.cern.ch/"
 dev = ["cattrs", "grpcio-tools"]
 
 [tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.version.raw-options]
-root = "../../.."
-# Scheduler/catalogue variants share the same Python package version.
-# TODO: Map CTA .rcN tags, including build variants, to PEP 440 prerelease versions.
-tag_regex = '^v?(?P<version>[0-9]+(?:\.[0-9]+)*(?:-[0-9]+)?)(?:\.(?:pgsched|pgcat|pgall))?$'
+source = "code"
+path = "../../../ci/utils/cta_version.py"
+expression = "package_version()"
 
 [tool.hatch.build]
 ignore-vcs = true

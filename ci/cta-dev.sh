@@ -41,16 +41,14 @@ ci_image_registry=$(jq -r .dev.ctaImageRegistry "${project_root}/project.json")
 readonly ci_image_registry
 
 # Global
-source "${script_dir}/utils/cta_version.sh"
-CTA_MAJOR_VERSION=$(read_cta_major_version "${project_root}/project.json")
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type=""
 oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
-# A single <version>-<suffix> string used by the package build and as the image tag.
-cta_version="${CTA_MAJOR_VERSION}-dev"
+# Neutral source version; native packaging adds its revision separately.
+cta_version=$(python3 "${project_root}/ci/utils/cta_version.py")
 cta_image_tag=""
 
 # Build
@@ -185,8 +183,8 @@ Global options:
       --platform <platform>          Platform to build for. Defaults to project.json.
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build packages and images with Oracle support.
-      --cta-version <version>        CTA version as <version>-<suffix>, defaults to '$cta_version'.
-                                     Used unchanged for package versions and the CTA image tag.
+      --cta-version <version>        Neutral CTA source version, defaults to '$cta_version'.
+                                     Build suffixes and native packaging revisions are added automatically.
       --use-public-repos             Force public package repositories. By default, CERN internal
                                      repos are used when they are reachable.
 EOF
@@ -684,7 +682,7 @@ parse_options() {
     cta_image_tag_is_valid "$cta_image_tag" || \
       unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
   else
-    cta_image_tag="$cta_version"
+    cta_image_tag=$(python3 "${project_root}/ci/utils/cta_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
   fi
 
   # An explicit image tag refers to an image built elsewhere, most commonly by the CI. Without
@@ -1090,6 +1088,10 @@ build_cta() {
 
   write_build_state "$build_configuration_json" false
 
+  # Resolve native package metadata before invoking the container build.
+  local package_version
+  package_version=$(python3 "${project_root}/ci/utils/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+
   print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.
   podman exec --interactive --tty "${build_container_name}" \
@@ -1097,7 +1099,7 @@ build_cta() {
     --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
     --create-build-dir \
-    --cta-version "${cta_version}" \
+    --cta-version "${package_version}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
     --oracle-support "${oracle_support}" \

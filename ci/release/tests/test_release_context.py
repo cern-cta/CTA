@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -11,7 +10,6 @@ from unittest.mock import MagicMock
 import pytest
 from typing_extensions import override
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
@@ -26,28 +24,28 @@ class ReleaseContextTest(unittest.TestCase):
         self.context = ReleaseContext(Path("/tmp"), ReleaseConfig(), self.api, dry_run=False)
 
     def test_closed_changelog_merge_requests_are_ignored(self) -> None:
-        source_branch = "v6.12.0-1-main-changelog-update"
+        source_branch = "v6.1.0-main-changelog-update"
         self.api.get_all.return_value = [
             {"state": "closed", "target_branch": "main", "source_branch": source_branch},
         ]
-        assert self.context.find_changelog_merge_request("v6.12.0-1", "main") is None
+        assert self.context.find_changelog_merge_request("v6.1.0", "main") is None
 
     def test_target_branch_is_part_of_changelog_branch(self) -> None:
-        assert self.context.config.changelog_branch("v6.12.0-1", "release/5.12") == (
-            "v6.12.0-1-release-5.12-changelog-update"
+        assert self.context.config.changelog_branch("v6.1.0", "release/5.12") == (
+            "v6.1.0-release-5.12-changelog-update"
         )
 
     def test_active_source_branch_collision_is_rejected(self) -> None:
         self.api.get_all.return_value = [
             {
                 "state": "opened",
-                "title": "[Misc] Update changelog for release 6.12.0-1",
+                "title": "[Misc] Update changelog for release 6.1.0",
                 "target_branch": "other",
-                "source_branch": "v6.12.0-1-main-changelog-update",
+                "source_branch": "v6.1.0-main-changelog-update",
             }
         ]
         with pytest.raises(ReleaseWorkflowError, match="targeting another branch"):
-            self.context.find_changelog_merge_request("v6.12.0-1", "main")
+            self.context.find_changelog_merge_request("v6.1.0", "main")
 
     def test_main_pipeline_is_filtered_to_push_source(self) -> None:
         self.api.get_all.return_value = [{"status": "success"}]
@@ -56,5 +54,5 @@ class ReleaseContextTest(unittest.TestCase):
 
     def test_tag_pipeline_is_filtered_to_tag(self) -> None:
         self.api.get_all.return_value = [{"status": "running"}]
-        self.context.find_pipeline("abc", "v6.12.0-1")
-        self.api.get_all.assert_called_once_with("pipelines", {"sha": "abc", "ref": "v6.12.0-1"})
+        self.context.find_pipeline("abc", "v6.1.0")
+        self.api.get_all.assert_called_once_with("pipelines", {"sha": "abc", "ref": "v6.1.0"})

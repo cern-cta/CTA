@@ -70,7 +70,7 @@ Separating these steps avoids configuring compilation twice and lets source pack
 **Compile directly:**
 
 ```bash
-cmake -S . -B build/direct -DCTA_VERSION=6-dev
+cmake -S . -B build/direct -DCTA_VERSION=6~dev1.gabcdef12-1
 cmake --build build/direct --parallel
 ```
 
@@ -79,7 +79,7 @@ cmake --build build/direct --parallel
 ```bash
 cmake -S . -B build/packages \
   -DCTA_BUILD_MODE=binary-package \
-  -DCTA_VERSION=6-dev
+  -DCTA_VERSION=6~dev1.gabcdef12-1
 cmake --build build/packages --target cta_rpm
 ```
 

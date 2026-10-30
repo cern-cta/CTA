@@ -39,7 +39,6 @@
     name: $IMAGE_DEFAULT
     entrypoint: ["/usr/bin/env"]
   variables:
-    GIT_DEPTH: "0"  # hatch-vcs needs the CTA tags and history.
     GIT_SUBMODULE_STRATEGY: "none"
   before_script:
     - !reference [.python-version, before_script]

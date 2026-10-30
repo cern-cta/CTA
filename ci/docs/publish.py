@@ -16,12 +16,12 @@ import tarfile
 import tempfile
 from typing import Any
 
-CANONICAL_TAG = re.compile(r"v(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?-(\d+)")
+CANONICAL_TAG = re.compile(r"v(\d+)\.(\d+)\.(\d+)(?:(?:\.(\d+))?-(\d+))?")
 SERIES = re.compile(r"(\d+)\.(\d+)")
 
 
 def release_key(tag: str) -> tuple[int, ...]:
-    """Normalize three/four-component tags before comparing the package revision."""
+    """Compare neutral tags and historical documentation provenance."""
     match = CANONICAL_TAG.fullmatch(tag)
     if not match:
         raise ValueError(f"Not a canonical release tag: {tag}")

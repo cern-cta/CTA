@@ -15,7 +15,7 @@ from urllib.parse import quote
 
 from commands import SubparserRegistry
 from confirmation import confirm
-from cta_version import CTAVersion, previous_release
+from release_version import CTAVersion, previous_release
 from release_config import ReleaseConfig, has_release_heading, validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
 
@@ -62,8 +62,8 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
   4. Finds or creates the release ticket, changelog branch, and merge request.
 
 Example:
-  release changelog v6.12.0-1
-  release changelog v6.12.0-1 --target-branch maintenance
+  release changelog v6.1.0
+  release changelog v6.1.0 --target-branch maintenance
 
 The VERSION must be unsuffixed. Build variants and release candidates share the
 base release's changelog and are selected later by "release tag".
