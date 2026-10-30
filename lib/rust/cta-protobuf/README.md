@@ -12,8 +12,11 @@ Only minimal scaffolding is written by hand: `build.rs` runs
 [`tonic-prost-build`](https://docs.rs/tonic-prost-build) over the `.proto` files
 of the `xrootd-ssi-protobuf-interface` submodule
 (`lib/protobuf/external/` in the CTA repository), so the bindings always match
-the C++ frontend of the same checkout. Initialise the submodules before
-building:
+the C++ frontend of the same checkout. `serde::Serialize` / `Deserialize` are implemented
+through [proto3 JSON mapping](https://protobuf.dev/programming-guides/json/), generated
+by [`pbjson-build`](https://docs.rs/pbjson-build).
+
+Initialise the submodules before building:
 
 ```bash
 git submodule update --init --recursive

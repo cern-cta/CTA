@@ -41,6 +41,9 @@
     tonic             = "^0.14"
     tonic-prost       = "^0.14"
     tonic-prost-build = "^0.14"
+    # proto3 JSON mapping (serde impls) for the prost types
+    pbjson       = "^0.9"
+    pbjson-build = "^0.9"
     # async
     tokio        = "^1"
     tokio-stream = "^0.1"
