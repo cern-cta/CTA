@@ -166,8 +166,12 @@ TEST_F(StressDriveTest, MediaTypeCapacityIsApplied) {
   mountBlankTape("ST0003");
 
   StressDrive drv(m_drive, m_lib, m_baseDir);
-  drv.waitUntilReady(30);
+  drv.waitUntilReady(30);  // position = 0, VOL1 at tape[0], remainingSpaceAfter = 20
 
+  char vol1buf[80] = {};
+  drv.readBlock(vol1buf, sizeof(vol1buf));  // skip VOL1, position → 1
+
+  // getRemainingSpace(1) = tape[0].remainingSpaceAfter = 100 - 80 = 20; writing 25 → ENOSPC.
   const std::string big(25, 'X');
   try {
     drv.writeBlock(big.data(), big.size());
