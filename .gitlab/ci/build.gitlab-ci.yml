@@ -59,7 +59,7 @@ build-cta:
     SCCACHE_IDLE_TIMEOUT: "0"
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - 'echo "CTA version: ${CTA_VERSION:?Missing CTA_VERSION}"'
+    - 'echo "CTA version: ${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}"'
     - git -C "$XRD_SSI_PATH" fetch --tags
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
@@ -190,9 +190,9 @@ build-cta-pgsched:
   before_script:
     - !reference [.merge-train-guard, before_script]
     # This compilation check deliberately differs from the primary pipeline variant.
-    - CTA_VERSION=$(python3 ci/utils/cta_version.py image "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+    - CTA_IMAGE_TAG=$(python3 ci/utils/cta_version.py image "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
     - CTA_PACKAGE_VERSION=$(python3 ci/utils/cta_version.py native "$CTA_VERSION_BASE" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-    - export CTA_VERSION CTA_PACKAGE_VERSION
+    - export CTA_IMAGE_TAG CTA_PACKAGE_VERSION
     - !reference [build-cta, before_script]
   # Disable artifacts
   artifacts:
@@ -256,6 +256,9 @@ build-python:
   extends: .python-workspace
   stage: build
   needs:
+    - job: prepare-cta-version
+      artifacts: true
+      optional: true  # Existing-image pipelines do not prepare a build version.
     - job: check-merge-train-duplicate
       optional: true
   rules:

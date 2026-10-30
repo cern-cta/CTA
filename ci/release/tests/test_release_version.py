@@ -22,6 +22,11 @@ def test_current_tags(suffix: str) -> None:
         "v6.1.0-1",
         "v6.1.0-2.rc1",
         "v0.12.0",
+        "v06.1.0",
+        "v6.01.0",
+        "v6.1.00",
+        "v6.01.0.rc1",
+        "v6.1.00.dev1",
         "v6.1.0.0-1",
         "v6.1.0.pgall",
         "v6.1.0.pgsched",
@@ -41,6 +46,12 @@ def test_rejects_invalid_new_tags(tag: str) -> None:
 def test_base_commands_reject_prereleases() -> None:
     with pytest.raises(VersionError):
         CTAVersion.parse("v6.1.0.rc1", require_base=True)
+
+
+@pytest.mark.parametrize("tag", ["v06.1.0", "v6.01.0", "v6.1.00"])
+def test_base_commands_reject_leading_zeros(tag: str) -> None:
+    with pytest.raises(VersionError):
+        CTAVersion.parse(tag, require_base=True)
 
 
 def test_prerelease_construction() -> None:

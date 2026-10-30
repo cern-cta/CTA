@@ -4,7 +4,7 @@
 """Single source of CTA version spelling for release tooling and artifact builds.
 
 No arguments (or ``source``) prints the source version: CI_COMMIT_TAG for a clean
-release checkout, <major>.dev<pipeline>.g<sha>[.dirty] for CI, or <major>.dev1 locally.
+release checkout, <major>.dev<pipeline>.g<sha> for CI, or <major>.dev1 locally.
 Hatch calls package_version() for PEP 440 metadata; archive metadata stays with Hatch.
 
 CLI examples (each prints one value):
@@ -28,9 +28,9 @@ import subprocess
 from pathlib import Path
 
 # Shared by release tooling and artifact builders.
-BASE_RE = re.compile(r"^v([1-9][0-9]*)\.([0-9]+)\.([0-9]+)$")
-TAG_RE = re.compile(r"^v([1-9][0-9]*)\.([0-9]+)\.([0-9]+)(?:\.(rc|dev)([1-9][0-9]*))?$")
-DEVELOPMENT_RE = re.compile(r"^[1-9][0-9]*\.dev[1-9][0-9]*(\.g[a-f0-9]+(\.dirty)?)?$")
+BASE_RE = re.compile(r"^v([1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
+TAG_RE = re.compile(r"^v([1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:\.(rc|dev)([1-9][0-9]*))?$")
+DEVELOPMENT_RE = re.compile(r"^[1-9][0-9]*\.dev[1-9][0-9]*(\.g[a-f0-9]+)?$")
 
 PLATFORM_RE = re.compile(r"el[0-9]+|(?:debian|ubuntu)[0-9]+(?:\.[0-9]+)*")
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -83,8 +83,13 @@ def source_version() -> str:
     requested = os.environ.get("CI_COMMIT_TAG")
     if requested:
         tags = git("tag", "--points-at", "HEAD").splitlines()
-        if requested not in tags or not TAG_RE.fullmatch(requested):
+        match = TAG_RE.fullmatch(requested)
+        if requested not in tags or not match:
             raise ValueError(f"CI_COMMIT_TAG is not a valid release tag at HEAD: {requested}")
+        # Direct Git tags must obey the same major-version rule as the release tool.
+        major = major_version()
+        if int(match[1]) != major:
+            raise ValueError(f"Release {requested} does not match majorVersion {major} in project.json")
         if git("status", "--porcelain", "--untracked-files=normal"):
             raise ValueError("Cannot build a release version from a dirty checkout")
         return requested[1:]
@@ -96,14 +101,21 @@ def source_version() -> str:
         return f"{major}.dev1"
     if not re.fullmatch(r"[1-9][0-9]*", build):
         raise ValueError("CI_PIPELINE_ID must be a positive integer")
-    dirty = bool(git("status", "--porcelain", "--untracked-files=normal"))
     sha = git("rev-parse", "--short=8", "HEAD")
-    return f"{major}.dev{build}.g{sha}{'.dirty' if dirty else ''}"
+    return f"{major}.dev{build}.g{sha}"
 
 
 def package_version() -> str:
     """Translate the neutral version to PEP 440; Hatch handles archive metadata."""
-    version = source_version()
+    version = os.environ.get("CTA_VERSION_BASE")
+    if version is None:
+        version = source_version()
+    else:
+        # Reuse pipeline metadata so job-generated files cannot rename development builds.
+        validate_source(version)
+        if os.environ.get("CI_COMMIT_TAG") and version != source_version():
+            # source_version also enforces the release tag and clean-checkout checks.
+            raise ValueError("CTA_VERSION_BASE does not match CI_COMMIT_TAG")
     return version.replace(".rc", "rc").replace(".g", "+g", 1)
 
 

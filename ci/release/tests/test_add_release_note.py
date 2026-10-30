@@ -63,7 +63,7 @@ def test_argument_errors_do_not_fail_the_job(capsys: pytest.CaptureFixture[str])
 
 
 def test_child_discussion_identifies_artifact_variant(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CTA_VERSION", "6.12.3.rc1.pgall.el10")
+    monkeypatch.setenv("CTA_IMAGE_TAG", "6.12.3.rc1.pgall.el10")
     api = MagicMock()
     api.get_all.side_effect = [[{"iid": 42, "title": "Release v6.12.3"}], []]
     add_release_note(api, ReleaseConfig(), "v6.12.3.rc1", "123", "https://pipeline", "Published.")

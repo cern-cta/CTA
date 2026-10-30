@@ -42,7 +42,7 @@ def add_release_note(
 ) -> None:
     """Find the release issue and append a note to this pipeline's discussion."""
     version = release_version_for_tag(tag)
-    build_version = os.environ.get("CTA_VERSION", tag)
+    build_version = os.environ.get("CTA_IMAGE_TAG", tag)
     context = ReleaseContext(Path.cwd(), config, api, dry_run=False)
     release_issues = context.find_release_issues(version)
     # Prereleases may precede the release issue and changelog.

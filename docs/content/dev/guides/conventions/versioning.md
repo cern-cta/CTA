@@ -4,12 +4,12 @@ Version conventions for CTA software, catalogue schemas, and published documenta
 
 ## Software and package versions
 
-- Source release tags use `v<major>.<minor>.<patch>`, for example `v6.1.0`.
-- For packaging releases, increment the `<patch>` number.
+- Source release tags use `v<major>.<minor>.<patch>`, for example `v6.1.0`. Components have no leading zeros, and the major must match `majorVersion` in `project.json`.
+- Packaging and build changes increment the `<patch>` number; the packaging revision stays at `1`. This avoids tracking multiple packaging releases for each software version: every release uses the same tagging and version increment rules.
 - The only optional tag suffixes are `.devN` for development releases and `.rcN` for release candidates, where `N` is a positive integer. Use at most one suffix.
 - One Git tag identifies the source for all supported build configurations. Backend and platform suffixes never appear in Git tags or Python package versions.
 - The leading `v` belongs to the Git tag and is omitted from artifact versions.
-- Published tags and artifacts must not be moved or replaced with different release contents.
+- Published release tags and release artifacts, including tagged development releases and release candidates, must not be moved or replaced with different contents.
 
 CI derives the artifact variant from the build configuration:
 
@@ -42,17 +42,20 @@ The following examples use the `pgsched` variant and EL9 for RPMs and Docker ima
 
 The examples below use commit `abcdef12`, CI pipeline `123`, and the `pgall` variant:
 
-| Build | Neutral source version | Python version | RPM version-release (EL9) | Debian version | Docker image tag (EL9) |
+The source version is the shared input used to derive each artifact version, before package formatting and build suffixes are applied.
+
+| Build | Source version | Python version | RPM version-release (EL9) | Debian version | Docker image tag (EL9) |
 | --- | --- | --- | --- | --- | --- |
 | Local | `6.dev1` | `6.dev1` | `6~dev1-1.pgall.el9` | `6~dev1-1.pgall` | `6.dev1.pgall.el9` |
 | CI | `6.dev123.gabcdef12` | `6.dev123+gabcdef12` | `6~dev123.gabcdef12-1.pgall.el9` | `6~dev123.gabcdef12-1.pgall` | `6.dev123.gabcdef12.pgall.el9` |
 
 - Local builds use `<major>.dev1`, regardless of Git tags or uncommitted changes. Rebuilds reuse the same version and image tag without a commit SHA or dirty marker.
-- CI development builds use `<major>.dev<pipeline>.g<sha>`, including branch pipelines whose commit also has a release tag. Uncommitted changes add `.dirty` after the commit SHA.
+- CI development builds use `<major>.dev<pipeline>.g<sha>`, including branch pipelines whose commit also has a release tag. Uncommitted changes do not affect the version.
 - Python versions separate the commit SHA with `+`, for example `6.dev123+gabcdef12`.
+- CI prepares the source version once for native packages, images, and Python packages; later development-job changes do not alter it.
 - RPM and Debian packages translate `.dev` to `~dev` and append packaging revision `1` and the applicable build suffixes.
 - Container image tags append the variant and platform to the neutral source version, for example `6.dev123.gabcdef12.pgall.el9`.
-- Development build identifiers do not imply chronological ordering across local and CI builds.
+- Untagged local and CI builds are disposable; their versions carry no chronological ordering guarantees relative to other builds or releases.
 - CI release builds require an explicit `CI_COMMIT_TAG` matching a release tag at HEAD. Dirty release checkouts are rejected.
 
 See the [Release Procedure](../../contributing/maintainers/releases.md) for version increments, release preparation, the build matrix, and publication gates.
