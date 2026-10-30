@@ -16,8 +16,6 @@ namespace cta::common::dataStructures {
  */
 class DesiredDriveState {
 public:
-  DesiredDriveState() = default;
-
   bool operator==(const DesiredDriveState& rhs) const { return up == rhs.up && forceDown == rhs.forceDown; }
 
   void setReasonFromLogMsg(int logLevel, std::string_view msg);

@@ -196,19 +196,14 @@ void TapeDrivesCatalogueState::writeDesiredState(const std::string& drive,
 void TapeDrivesCatalogueState::requestDriveUp(const std::string& driveName,
                                               std::string_view reason,
                                               log::LogContext& lc) const {
-  common::dataStructures::DesiredDriveState desired;
-  desired.up = true;
-  desired.reason = reason;
-  writeDesiredState(driveName, desired, lc);
+  writeDesiredState(driveName, {.up = true, .reason = std::string(reason)}, lc);
 }
 
 void TapeDrivesCatalogueState::requestDriveDown(const std::string& driveName,
                                                 const common::dataStructures::DriveDownRequest& request,
                                                 log::LogContext& lc) const {
   using namespace common::dataStructures;
-  DesiredDriveState desired;
-  desired.forceDown = request.force;
-  desired.reason = request.reason;
+  std::optional<std::string> reason = request.reason;
   const auto current = m_catalogue.DriveState()->getTapeDrive(driveName);
   if (!current) {
     throw NoSuchDrive("Cannot request Down for missing drive: " + driveName);
@@ -217,11 +212,11 @@ void TapeDrivesCatalogueState::requestDriveDown(const std::string& driveName,
     if (!current->desiredUp && current->reasonUpDown && !current->reasonUpDown->empty()
         && classifyPersistedDriveReason(*current->reasonUpDown) == PersistedDriveReasonKind::Other) {
       // Omit the reason rather than writing a stale snapshot over a concurrent operator update.
-      desired.reason.reset();
+      reason.reset();
     }
   }
   // Still apply reason and force changes when Down; only the transition event is suppressed.
-  writeDesiredState(driveName, desired, lc, current->desiredUp);
+  writeDesiredState(driveName, {.up = false, .forceDown = request.force, .reason = reason}, lc, current->desiredUp);
 }
 
 void TapeDrivesCatalogueState::setDriveComment(const std::string& driveName,
