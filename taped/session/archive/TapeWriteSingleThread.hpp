@@ -51,16 +51,11 @@ public:
                         const uint64_t tapeLoadTimeout,
                         cta::catalogue::Catalogue& catalogue);
 
-  /**
-   * Sets up the pointer to the task injector. This cannot be done at
-   * construction time as both task injector and tape write single thread refer to
-   * each other. This function should be called before starting the threads.
-   * This is used for signalling problems during mounting. After that, each
-   * tape write task does the signalling itself, either on tape problem, or
-   * when receiving an error from the disk tasks via memory blocks.
-   * @param injector pointer to the task injector
-   */
-  void setTaskInjector(MigrationTaskInjector* injector) { m_taskInjector = injector; }
+  /// Attach the injector and start the tape writer.
+  /// The tape thread needs it to stop further injection when a tape operation fails.
+  /// Attach it here because constructing the injector requires the tape writer to exist first.
+  /// The injector must remain alive until the tape writer has been joined.
+  void startThreadsWithInjector(MigrationTaskInjector& injector);
 
   /**
    * Requeues all jobs in from the list of jobIDs failed tape tasks

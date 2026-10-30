@@ -50,6 +50,11 @@ TapeWriteSingleThread::TapeWriteSingleThread(drive::DriveInterface& drive,
       m_archiveMount(archiveMount),
       m_catalogue(catalogue) {}
 
+void TapeWriteSingleThread::startThreadsWithInjector(MigrationTaskInjector& injector) {
+  m_taskInjector = &injector;
+  TapeSingleThreadInterface<TapeWriteTask>::startThreads();
+}
+
 //------------------------------------------------------------------------------
 //TapeThreadFinalizer::~TapeThreadFinalizer()
 //------------------------------------------------------------------------------

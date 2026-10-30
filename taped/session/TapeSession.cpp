@@ -253,14 +253,12 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   RecallTaskInjector recallTaskInjector(memoryManager,
                                         tapeReadThread,
                                         diskWriteThreadPool,
+                                        *drive,
                                         retrieveMount,
                                         m_transfersConfig.retrieve.fetch_max_files,
                                         m_transfersConfig.retrieve.fetch_max_bytes,
                                         *m_tapeSessionTracker,
                                         logContext);
-
-  // TODO: do we really need it like this?
-  recallTaskInjector.setDriveInterface(tapeReadThread.getDriveReference());
 
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
@@ -275,6 +273,7 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   bool diskSpaceReservationSucceeded = false;
   // Do an initial fetch to see if there is something to retrieve in the first place (might be an empty mount)
   try {
+    // TODO for separate MR: we don't need both a return value and reference arg here
     jobsFetched = recallTaskInjector.synchronousFetch(noFilesToRecall);
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
@@ -383,7 +382,6 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
                                               archiveDismountPolicy,
                                               *m_tapeSessionTracker,
                                               logContext);
-  tapeWriteThread.setTaskInjector(&migrationTaskInjector);
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
   utils::Timer startupTimer;
@@ -391,6 +389,7 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
   bool jobsInjected = false;
   // Do an initial inject to see if there is something to archive in the first place (might be an empty mount)
   try {
+    // TODO for separate MR: we don't need both a return value and reference arg here
     jobsInjected = migrationTaskInjector.synchronousInjection(noFilesToMigrate);
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
@@ -414,7 +413,7 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
       memoryManager.startThreads();
       diskReadThreadPool.startThreads(migrationTaskInjector);
       tapeWriteThread.setWaitForInstructionsTime(startupTimer.secs());
-      tapeWriteThread.startThreads();
+      tapeWriteThread.startThreadsWithInjector(migrationTaskInjector);
       reportPacker.startThreads();
       migrationTaskInjector.startThreads();
       state.completionDelegated = true;
