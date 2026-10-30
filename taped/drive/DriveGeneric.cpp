@@ -871,6 +871,7 @@ void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& 
 }
 
 bool drive::DriveGeneric::isTapeBlank() {
+  // Rewind and try spacing one record; a blank tape reports both BOT and EOD after the failed spacing.
   struct mtop mtCmd1 = {};
   mtCmd1.mt_op = MTREW;
   mtCmd1.mt_count = 1;

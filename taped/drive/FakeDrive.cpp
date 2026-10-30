@@ -36,7 +36,7 @@ cta::tape::drive::compressionStats cta::tape::drive::FakeDrive::getCompression()
     stats.toTape += m_tape[i].data.length();
   }
 
-  // that way we set also stats for reading
+  // Reuse stored byte counts for reads; the simulation does not track I/O separately.
   stats.fromTape = stats.toTape;
   return stats;
 }
@@ -217,6 +217,7 @@ void cta::tape::drive::FakeDrive::flush(void) {
 }
 
 uint64_t cta::tape::drive::FakeDrive::getRemaingSpace(uint32_t currentPosition) {
+  // At BOT no stored record precedes the position, so the full capacity remains.
   if (!currentPosition) {
     return m_tapeCapacity;
   }
@@ -227,6 +228,7 @@ void cta::tape::drive::FakeDrive::writeSyncFileMarks(size_t count) {
   if (count == 0) {
     return;
   }
+  // Resize discards later records; empty records represent file marks.
   m_tape.resize(m_currentPosition + count);
   for (size_t i = 0; i < count; ++i) {
     m_tape.at(m_currentPosition).data = filemark;

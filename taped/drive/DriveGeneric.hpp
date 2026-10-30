@@ -24,7 +24,6 @@ public:
 
   /* Operations to be used by the higher levels */
 
-  /// Return host and tape byte counters using the vendor-specific implementation.
   compressionStats getCompression() override = 0;
 
   /// Return an empty metric map; vendor subclasses supply supported counters.
@@ -33,7 +32,6 @@ public:
   /// Return an empty metric map; vendor subclasses supply supported counters.
   std::map<std::string, uint64_t> getTapeReadErrors() override;
 
-  /// Return named error counters unrelated to the recording medium.
   std::map<std::string, uint32_t> getTapeNonMediumErrors() override;
 
   /// Return an empty metric map; vendor subclasses supply supported counters.
@@ -45,48 +43,33 @@ public:
   /// Return an empty metric map; vendor subclasses supply supported counters.
   std::map<std::string, uint32_t> getVolumeStats() override;
 
-  /// Return the firmware revision reported by the device.
   std::string getDriveFirmwareVersion() override;
 
-  /// Reset the compression counters or establish a new baseline for subsequent queries.
   void clearCompressionStats() override = 0;
 
-  /// Return device identity and protection-information support for tape labels and diagnostics.
   deviceInfo getDeviceInfo() override;
 
-  /// Return the generic SCSI device path for external drive-control tools.
   std::string getGenericSCSIPath() override;
 
-  /// Return the vendor-assigned unit serial number.
   std::string getSerialNumber() override;
 
-  /// Position to a logical object identifier, waiting for the locate operation to complete.
   void positionToLogicalObject(uint32_t blockId) override;
 
-  /// Return the next logical object address and information about buffered writes.
   positionInfo getPositionInfo() override;
 
-  /// Return the current physical wrap and longitudinal position.
   physicalPositionInfo getPhysicalPositionInfo() override;
 
   /// Throw cta::exception::Exception unless a drive subclass implements wrap-boundary reporting.
   std::vector<endOfWrapPosition> getEndOfWrapPositions() override;
 
-  /// Read active TapeAlert codes; querying hardware may clear the reported alerts.
   std::vector<uint16_t> getTapeAlertCodes() override;
 
-  /// Translate TapeAlert codes into descriptive messages for logging.
   std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>& codes) override;
 
-  /// Translate TapeAlert codes into compact identifiers for diagnostics.
   std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>& codes) override;
 
-  /// Check whether any supplied TapeAlert code makes a write session unsafe.
   bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>& codes) override;
 
-  /// @brief Configure recording density and hardware compression.
-  /// @param compression Whether hardware compression is enabled.
-  /// @param densityCode Recording density, or zero to retain the drive-selected density.
   void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0) override;
 
   /// Throw cta::exception::NotImplementedException; combined status is not implemented for hardware drives.
@@ -100,7 +83,6 @@ public:
   /// @throws cta::exception::TimeOut If readiness times out or the refreshed driver status is offline.
   void waitUntilReady(const uint32_t timeoutSecond) override;
 
-  /// Check whether a cartridge is present, independently of media readiness.
   bool hasTapeInPlace() override {
     struct mtget mtInfo;
     /* Read drive status */
@@ -117,7 +99,6 @@ public:
     return GMT_DR_OPEN(mtInfo.mt_gstat) == 0;
   }
 
-  /// Check whether the loaded cartridge prohibits writes.
   bool isWriteProtected() override {
     struct mtget mtInfo;
     /* Read drive status */
@@ -134,7 +115,6 @@ public:
     return GMT_WR_PROT(mtInfo.mt_gstat) != 0;
   }
 
-  /// Check whether the tape is positioned at its beginning.
   bool isAtBOT() override {
     struct mtget mtInfo;
     /* Read drive status */
@@ -151,7 +131,6 @@ public:
     return GMT_BOT(mtInfo.mt_gstat) != 0;
   }
 
-  /// Check whether the tape is positioned at the end of recorded data.
   bool isAtEOD() override {
     struct mtget mtInfo;
     /* Read drive status */
@@ -168,62 +147,38 @@ public:
     return GMT_EOD(mtInfo.mt_gstat) != 0;
   }
 
-  /// Probe for a blank tape by rewinding and spacing one record; attempt to leave the tape at its beginning.
+  /// Probe for blank media, attempting to leave the tape at its beginning.
   bool isTapeBlank() override;
 
-  /// Return the protection mode selected for the software read/write path.
   lbpToUse getLbpToUse() override { return m_lbpToUse; }
 
-  /// Enable or disable buffered writes in the Linux tape driver.
   void setSTBufferWrite(bool bufWrite) override;
 
-  /// Seek to the end of recorded data with fast positioning enabled.
   void fastSpaceToEOM(void) override;
 
-  /// Rewind the loaded tape to its beginning.
   void rewind(void) override;
 
-  /// Seek to the end of recorded data with fast positioning disabled.
   void spaceToEOM(void) override;
 
-  /// Move backwards across the requested number of file marks, towards the beginning of tape.
   void spaceFileMarksBackwards(size_t count) override;
 
-  /// Move forwards across the requested number of file marks, towards the end of data.
   void spaceFileMarksForward(size_t count) override;
 
-  /// Unload the cartridge from the drive mechanism so the media changer can remove it.
   void unloadTape(void) override;
 
-  /// Wait until buffered writes have been committed to tape.
   void flush(void) override;
 
-  /// Write the requested number of file marks and wait for them to be committed to tape.
   void writeSyncFileMarks(size_t count) override;
 
-  /// Queue the requested number of file marks without waiting for them to reach tape.
   void writeImmediateFileMarks(size_t count) override;
 
-  /// @brief Write one tape record from the supplied buffer using the selected protection mode.
-  /// @param data Buffer containing at least count payload bytes.
-  /// @param count Payload size in bytes, excluding any protection checksum.
   void writeBlock(const void* data, size_t count) override;
 
-  /// @brief Read the next tape record into the supplied buffer.
-  /// @param data Destination with room for count payload bytes.
-  /// @param count Maximum payload size in bytes, excluding any protection checksum.
-  /// @return Payload bytes read, or zero when a file mark is encountered.
   ssize_t readBlock(void* data, size_t count) override;
 
-  /// @brief Read one tape record, failing if its payload size differs from count.
-  /// @param data Destination with room for count payload bytes.
-  /// @param count Required payload size in bytes.
-  /// @param context Diagnostic context to include in read errors.
   /// @throws UnexpectedSize If the record payload does not match the requested size.
   void readExactBlock(void* data, size_t count, const std::string& context = "") override;
 
-  /// @brief Consume the next record, failing if it is not a file mark.
-  /// @param context Diagnostic context to include in read errors.
   /// @throws NotAFileMark If a data record is encountered.
   void readFileMark(const std::string& context = "") override;
 
@@ -237,16 +192,12 @@ public:
   /// Issue a diagnostic SCSI INQUIRY and print the returned status and data to standard output.
   void SCSI_inquiry();
 
-  /// Enable CRC32C verification for reads while preventing protected writes.
   void enableCRC32CLogicalBlockProtectionReadOnly() override;
 
-  /// Enable CRC32C verification for reads and checksum generation for writes.
   void enableCRC32CLogicalBlockProtectionReadWrite() override;
 
-  /// Disable logical block protection in the drive and the software I/O path.
   void disableLogicalBlockProtection() override;
 
-  /// Return the drive protection method, checksum length and read/write protection flags.
   LBPInfo getLBPInfo() override;
 
   /// @brief Install AES-256 key material, or clear encryption for an empty key.
@@ -255,14 +206,11 @@ public:
   /// @pre The key contains at most 32 bytes; its length is not checked.
   void setEncryptionKey(const std::string& encryption_key) override;
 
-  /// @brief Clear the drive encryption parameters.
-  /// @return True if encryption is supported and the clearing command succeeds; false if unsupported.
   bool clearEncryptionKey() override;
 
   /// Return false by default; vendor subclasses query the encryption capability.
   bool isEncryptionCapEnabled() override;
 
-  /// Query the maximum number and size of user data segments supported for recommended access order (RAO).
   SCSI::Structures::RAO::udsLimits getLimitUDS() override;
 
   /// @brief Replace files with the drive-recommended ordering of the first maxSupported ranges.
@@ -282,11 +230,6 @@ protected:
   /// Retry SCSI readiness for timeoutSecond seconds, tolerating NotReady and UnitAttention sense errors.
   void waitTestUnitReady(const uint32_t timeoutSecond) const;
 
-  /// @brief Configure the drive logical block protection mode.
-  /// @param method SCSI protection method identifier, or zero to disable protection.
-  /// @param methodLength Protection information length in bytes.
-  /// @param enableLPBforRead Whether the drive applies protection on reads.
-  /// @param enableLBBforWrite Whether the drive applies protection on writes.
   void setLogicalBlockProtection(const unsigned char method,
                                  unsigned char methodLength,
                                  const bool enableLPBforRead,
@@ -320,25 +263,18 @@ public:
   /// Save the current counters as the baseline for subsequent compression statistics.
   void clearCompressionStats() override;
 
-  /// Check whether the vendor-specific encryption capability is enabled.
   bool isEncryptionCapEnabled() override;
 
-  /// Return named write-error counters supplied by the drive; unsupported metrics may be absent.
   std::map<std::string, uint64_t> getTapeWriteErrors() override;
 
-  /// Return named read-error counters supplied by the drive; unsupported metrics may be absent.
   std::map<std::string, uint64_t> getTapeReadErrors() override;
 
-  /// Return vendor-specific statistics for the loaded cartridge.
   std::map<std::string, uint32_t> getVolumeStats() override;
 
-  /// Return vendor-specific quality ratings and efficiency metrics.
   std::map<std::string, float> getQualityStats() override;
 
-  /// Return vendor-specific drive statistics for the mount.
   std::map<std::string, uint32_t> getDriveStats() override;
 
-  /// Return device identity and protection-information support for tape labels and diagnostics.
   drive::deviceInfo getDeviceInfo() override;
 };
 
@@ -398,7 +334,6 @@ public:
   /// Return no metrics because MHVTL does not support the corresponding vendor log pages.
   std::map<std::string, uint32_t> getVolumeStats() override;
 
-  /// Return device identity and protection-information support for tape labels and diagnostics.
   drive::deviceInfo getDeviceInfo() override;
 
   /// Throw DriveDoesNotSupportRAOException because MHVTL does not support enterprise RAO.
@@ -414,7 +349,6 @@ public:
   /// Open the device through the borrowed system wrapper using the LTO adapter.
   DriveLTO(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {}
 
-  /// Return byte counters for host and tape traffic; reset behavior depends on the drive model.
   compressionStats getCompression() override;
 
   /// Reset the drive's compression counters through SCSI LOG SELECT.
@@ -423,16 +357,12 @@ public:
   /// Return all wrap boundaries reported by the READ END OF WRAP POSITION command.
   std::vector<cta::tape::drive::endOfWrapPosition> getEndOfWrapPositions() override;
 
-  /// Check whether the vendor-specific encryption capability is enabled.
   bool isEncryptionCapEnabled() override;
 
-  /// Return vendor-specific statistics for the loaded cartridge.
   std::map<std::string, uint32_t> getVolumeStats() override;
 
-  /// Return vendor-specific quality ratings and efficiency metrics.
   std::map<std::string, float> getQualityStats() override;
 
-  /// Return vendor-specific drive statistics for the mount.
   std::map<std::string, uint32_t> getDriveStats() override;
 };
 
@@ -442,28 +372,21 @@ public:
   /// Open the device through the borrowed system wrapper using the IBM3592 adapter.
   DriveIBM3592(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {}
 
-  /// Return byte counters for host and tape traffic; reset behavior depends on the drive model.
   compressionStats getCompression() override;
 
   /// Reset the drive's compression counters through SCSI LOG SELECT.
   void clearCompressionStats() override;
 
-  /// Return named write-error counters supplied by the drive; unsupported metrics may be absent.
   std::map<std::string, uint64_t> getTapeWriteErrors() override;
 
-  /// Return named read-error counters supplied by the drive; unsupported metrics may be absent.
   std::map<std::string, uint64_t> getTapeReadErrors() override;
 
-  /// Return vendor-specific statistics for the loaded cartridge.
   std::map<std::string, uint32_t> getVolumeStats() override;
 
-  /// Return vendor-specific quality ratings and efficiency metrics.
   std::map<std::string, float> getQualityStats() override;
 
-  /// Return vendor-specific drive statistics for the mount.
   std::map<std::string, uint32_t> getDriveStats() override;
 
-  /// Check whether the vendor-specific encryption capability is enabled.
   bool isEncryptionCapEnabled() override;
 };
 
