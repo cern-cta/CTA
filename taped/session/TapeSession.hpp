@@ -24,6 +24,8 @@
 
 namespace cta::tape::daemon {
 
+class RecallTaskInjector;
+
 /// @brief Run one archive or retrieval assignment: mount the tape, transfer files, then unmount it.
 ///
 /// DriveSession schedules the assignment; MountedTape ensures cartridge cleanup, including after failures.
@@ -84,6 +86,9 @@ private:
   /// Record whether the pipeline completes the scheduler mount and whether the drive can be reused.
   /// execute() completes empty or rejected mounts.
   void executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount, ExecutionState& state);
+
+  /// Configure requested RAO unless the tape label format is incompatible.
+  void configureRAO(cta::log::LogContext& logContext, RecallTaskInjector& taskInjector);
 
   /// @brief Run the disk-to-tape pipeline if archive jobs are available.
   ///
