@@ -181,6 +181,7 @@ void TapeDrivesCatalogueState::writeDesiredState(const std::string& drive,
   } else {
     spc.add("reasonPreserved", true);
   }
+  // Ensure we only log on actual state changes
   if (logStateChange) {
     lc.logEvent(log::INFO,
                 desiredState.up ? "Putting the drive up" : "Putting the drive down",

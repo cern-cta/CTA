@@ -39,7 +39,6 @@ struct ReportDriveStatsInputs {
 };
 
 /// Manage desired drive state (requested operation) and reported drive state (observed operation).
-/// Requesting Down does not report that a session has ended; reporting Down does.
 class TapeDrivesCatalogueState {
 public:
   /// Bind to the catalogue without changing desired or reported drive state.
@@ -81,6 +80,8 @@ public:
 
   /// Request Down without changing reported activity; reason policy is explicit.
   /// Preserving an existing specific reason is best effort: the read and update are not atomic.
+  /// Requesting Down does not report that a session has ended; reporting Down does.
+  /// @see reportDriveState()
   void requestDriveDown(const std::string& driveName,
                         const common::dataStructures::DriveDownRequest& request,
                         log::LogContext& lc) const;
@@ -95,7 +96,7 @@ public:
                              log::LogContext& lc) const;
 
   /// Publish readiness and optional tape activity without modifying desired state.
-  /// Preparing precedes hardware acquisition; Up requires successful preparation; Down requires released hardware.
+  /// Depending on the reported state, this may reset various timers in the drive state table.
   void reportDriveState(const common::dataStructures::DriveInfo& driveInfo,
                         const common::dataStructures::DriveReport& report,
                         log::LogContext& lc) const;
