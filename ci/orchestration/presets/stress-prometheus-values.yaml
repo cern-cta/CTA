@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Prometheus overlay for stress/scale tests with virtual StressDrives.
+# Applied on top of dev-prometheus-values.yaml when --no-hardware-drives is used.
+#
+# Why scrape_timeout must be increased for scale tests
+# -----------------------------------------------------
+# Each taped pod is an independent OTel exporter.  With 100 drives all pushing
+# to the same OTel collector every 60 s, the collector handles 100 concurrent
+# HTTP POSTs at regular intervals.  During these bursts it takes longer to
+# respond to Prometheus scrape requests on :8889.  The default 3 s scrape
+# timeout fires before the collector can reply, causing holes in Grafana.
+# 10 s is well below the 15 s scrape interval and comfortably exceeds the
+# measured collector response time under 100-pod load.
+
+server:
+  global:
+    scrape_interval: 15s
+    scrape_timeout: 10s

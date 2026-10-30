@@ -16,8 +16,17 @@ config:
           endpoint: 0.0.0.0:4318
 
   processors:
+    # memory_limiter must be first in every pipeline: it sheds load before data
+    # reaches downstream processors.  500 MiB is generous for a single-node dev
+    # or scale-test deployment; adjust if the collector pod is OOM-killed.
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 500
     batch:
-      timeout: 5s
+      # 10 s absorbs a full 100-pod export burst before flushing to the
+      # Prometheus exporter, preventing partial-flush races during scrape.
+      timeout: 10s
+      send_batch_max_size: 5000
 
   exporters:
     prometheus:
@@ -34,6 +43,7 @@ config:
         receivers:
           - otlp
         processors:
+          - memory_limiter
           - batch
         exporters:
           - prometheus

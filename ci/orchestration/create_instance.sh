@@ -469,9 +469,18 @@ create_instance() {
           --namespace "${namespace}" \
           --values "${opentelemetry_collector_config}" \
           --wait --timeout 2m
+    # For virtual-drive (stress/scale) tests, overlay relaxed scrape settings on
+    # top of the base Prometheus config: 100 pods export simultaneously, which
+    # temporarily slows the OTel collector's :8889 Prometheus endpoint and causes
+    # holes in Grafana when the default 3 s scrape_timeout fires first.
+    stress_prometheus_overlay=""
+    if [[ "${no_hardware_drives}" == "true" ]]; then
+      stress_prometheus_overlay="--values presets/stress-prometheus-values.yaml"
+    fi
     helm install prometheus prometheus-community/prometheus \
           --namespace "${namespace}" \
           --values "${prometheus_config}" \
+          ${stress_prometheus_overlay} \
           --wait --timeout 2m
   fi
 

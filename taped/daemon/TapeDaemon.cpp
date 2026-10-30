@@ -74,8 +74,8 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   // Set process name
   const auto processName = m_globalConfiguration.constructProcessName(lc, "parent");
   prctl(PR_SET_NAME, processName.c_str());
-  // Initialise telemetry only after the process name is available
-  cta::telemetry::reinitTelemetry(lc);
+  // Initialise telemetry with per-drive jitter so 100 pods do not all export at once.
+  cta::telemetry::reinitTelemetryWithJitter(m_globalConfiguration.driveName.value(), lc);
   // Create the process manager and signal handler
   ProcessManager pm(lc);
   auto sh = std::make_unique<SignalHandler>(pm);
