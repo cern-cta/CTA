@@ -134,13 +134,16 @@ TEST_F(StressDriveTest, DataPersistsAcrossMountCycle) {
   const std::string vid = "ST0002";
   mountBlankTape(vid);
 
-  // First session: write a payload block after the synthetic VOL1, then save.
+  // First session: skip VOL1, write a payload block, then save.
   {
     StressDrive drv(m_drive, m_lib, m_baseDir);
-    drv.waitUntilReady(30);
+    drv.waitUntilReady(30);  // position = 0, tape = [VOL1(80)]
+
+    char vol1buf[80] = {};
+    drv.readBlock(vol1buf, sizeof(vol1buf));  // skip VOL1, position → 1
 
     const std::string payload = "persistent data block";
-    drv.writeBlock(payload.data(), payload.size());
+    drv.writeBlock(payload.data(), payload.size());  // pos 1
     drv.unloadTape();
   }
 
@@ -150,13 +153,14 @@ TEST_F(StressDriveTest, DataPersistsAcrossMountCycle) {
   // Second session: reload and verify the payload survives.
   {
     StressDrive drv2(m_drive, m_lib, m_baseDir);
-    drv2.waitUntilReady(30);
+    drv2.waitUntilReady(30);  // position = 0, tape = [VOL1, payload]
     EXPECT_FALSE(drv2.isTapeBlank());
 
-    // Skip VOL1 (pos 0), then read the payload (pos 1).
+    char vol1buf[80] = {};
+    drv2.readBlock(vol1buf, sizeof(vol1buf));  // skip VOL1 (pos 0 → 1)
+
     char buf[64] = {};
-    drv2.readBlock(buf, sizeof(buf));  // VOL1
-    const ssize_t n = drv2.readBlock(buf, sizeof(buf));
+    const ssize_t n = drv2.readBlock(buf, sizeof(buf));  // payload at pos 1
     EXPECT_EQ("persistent data block", std::string(buf, static_cast<size_t>(n)));
   }
 }
@@ -210,7 +214,10 @@ TEST_F(StressDriveTest, MultipleBlocksAndFilemarksRoundTrip) {
   // Write [VOL1 | HDR1 | data | FM | HDR1 | data | FM] and reload.
   {
     StressDrive drv(m_drive, m_lib, m_baseDir);
-    drv.waitUntilReady(30);
+    drv.waitUntilReady(30);  // position = 0, tape = [VOL1(80)]
+
+    char vol1buf[80] = {};
+    drv.readBlock(vol1buf, sizeof(vol1buf));  // skip VOL1, position → 1
 
     const std::string hdr = "HDR1xxxx";
     const std::string dat = "file body";
@@ -225,10 +232,12 @@ TEST_F(StressDriveTest, MultipleBlocksAndFilemarksRoundTrip) {
 
   {
     StressDrive drv2(m_drive, m_lib, m_baseDir);
-    drv2.waitUntilReady(30);
+    drv2.waitUntilReady(30);  // position = 0, tape = [VOL1 | HDR1 | data | FM | ...]
+
+    char vol1buf[80] = {};
+    drv2.readBlock(vol1buf, sizeof(vol1buf));  // skip VOL1 (pos 0 → 1)
 
     char buf[64] = {};
-    drv2.readBlock(buf, sizeof(buf));            // VOL1
     drv2.readBlock(buf, sizeof(buf));            // HDR1
     const ssize_t n = drv2.readBlock(buf, sizeof(buf));  // data
     EXPECT_EQ("file body", std::string(buf, static_cast<size_t>(n)));

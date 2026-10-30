@@ -134,7 +134,6 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     block.data.assign(reinterpret_cast<const char*>(&vol1), sizeof(vol1));
     block.remainingSpaceAfter = m_tapeCapacity - sizeof(vol1);
     m_tape.push_back(std::move(block));
-    m_currentPosition = 1;
   }
 
   setTapeInPlace(true);
