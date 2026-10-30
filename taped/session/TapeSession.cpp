@@ -44,6 +44,19 @@
 namespace cta::tape::daemon {
 
 namespace {
+/// Populate VolumeInfo from a TapeMount
+VolumeInfo volumeInfoFromMount(const TapeMount& mount) {
+  VolumeInfo volume {};
+  volume.mountType = mount.getMountType();
+  volume.vid = mount.getVid();
+  volume.nbFiles = mount.getNbFiles();
+  volume.mountId = mount.getMountTransactionId();
+  volume.labelFormat = mount.getLabelFormat();
+  volume.encryptionKeyName = mount.getEncryptionKeyName();
+  volume.tapePool = mount.getPoolName();
+  return volume;
+}
+
 /// Resolve the immutable session type before publishing its first activity.
 session::SessionType sessionTypeForMount(common::dataStructures::MountType mountType) {
   using session::SessionType;
@@ -136,13 +149,7 @@ TapeSessionResult TapeSession::execute() {
   ScopedTapeSessionReporter scopedReporter(reporter, lc);
 
   try {
-    m_volInfo.mountType = m_tapeMount.getMountType();
-    m_volInfo.vid = m_tapeMount.getVid();
-    m_volInfo.nbFiles = m_tapeMount.getNbFiles();
-    m_volInfo.mountId = m_tapeMount.getMountTransactionId();
-    m_volInfo.labelFormat = m_tapeMount.getLabelFormat();
-    m_volInfo.encryptionKeyName = m_tapeMount.getEncryptionKeyName();
-    m_volInfo.tapePool = m_tapeMount.getPoolName();
+    m_volInfo = volumeInfoFromMount(m_tapeMount);
 
     // Ensure we publish correctly what kind of mount type this session is for
     m_tapeSessionTracker->beginTapeSession(sessionTypeForMount(m_volInfo.mountType));
