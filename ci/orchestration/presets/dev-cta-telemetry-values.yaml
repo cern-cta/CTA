@@ -47,7 +47,9 @@ maintd: &runtimeTelemetry
       readers:
         - periodic:
             interval: 2000
-            timeout: 100
+            # Under scale-test load the collector can take >100 ms to respond.
+            # timeout must be < interval (2000 ms); 1500 ms leaves 500 ms margin.
+            timeout: 1500
             exporter:
               otlp_http:
                 endpoint: http://otel-opentelemetry-collector:4318/v1/metrics

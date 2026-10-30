@@ -22,10 +22,6 @@ config:
     memory_limiter:
       check_interval: 1s
       limit_mib: 500
-    batch:
-      # 10 s absorbs a full 100-pod export burst before flushing to the
-      # Prometheus exporter, preventing partial-flush races during scrape.
-      timeout: 10s
 
   exporters:
     prometheus:
@@ -43,7 +39,6 @@ config:
           - otlp
         processors:
           - memory_limiter
-          - batch
         exporters:
           - prometheus
 

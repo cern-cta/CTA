@@ -162,6 +162,12 @@ class K8sConnection(RemoteConnection):
 
         deadline = time.time() + poll_timeout_secs
         exitcode: Optional[int] = None
+        # Under 100-drive scale-test load the K8s API server can be temporarily
+        # slow and return a TCP-level timeout on established WebSocket connections.
+        # Track consecutive failures so we retry transient errors but still raise
+        # after 5 consecutive failures (~2.5 min worst-case overhead).
+        _consecutive_failures = 0
+        _MAX_CONSECUTIVE_FAILURES = 5
         try:
             # Poll every 30 s for the exit-code sentinel file.
             while True:
@@ -169,11 +175,19 @@ class K8sConnection(RemoteConnection):
                     raise TimeoutError(
                         f"exec_long_running: command did not finish within {poll_timeout_secs}s: {command!r}"
                     )
-                probe = self.exec(
-                    f"cat {tmpdir}/exitcode 2>/dev/null || true",
-                    capture_output=True,
-                    throw_on_failure=False,
-                )
+                try:
+                    probe = self.exec(
+                        f"cat {tmpdir}/exitcode 2>/dev/null || true",
+                        capture_output=True,
+                        throw_on_failure=False,
+                    )
+                    _consecutive_failures = 0
+                except Exception:
+                    _consecutive_failures += 1
+                    if _consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                        raise
+                    time.sleep(30)
+                    continue
                 raw = probe.stdout.strip()
                 if raw:
                     try:
@@ -185,10 +199,13 @@ class K8sConnection(RemoteConnection):
         finally:
             if exitcode is None:
                 # Timed out or interrupted — kill the background process and clean up.
-                self.exec(
-                    f"kill $(cat {tmpdir}/pid 2>/dev/null) 2>/dev/null; rm -rf {tmpdir}",
-                    throw_on_failure=False,
-                )
+                try:
+                    self.exec(
+                        f"kill $(cat {tmpdir}/pid 2>/dev/null) 2>/dev/null; rm -rf {tmpdir}",
+                        throw_on_failure=False,
+                    )
+                except Exception:
+                    pass  # best-effort cleanup; don't mask the original exception
 
         stdout = self.exec(f"cat {tmpdir}/stdout", capture_output=True, throw_on_failure=False).stdout
         stderr = self.exec(f"cat {tmpdir}/stderr", capture_output=True, throw_on_failure=False).stdout
