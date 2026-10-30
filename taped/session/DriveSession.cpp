@@ -146,7 +146,8 @@ void DriveSession::run(std::stop_token stopToken) {
   if (!stopToken.stop_requested()) {
     try {
       // Clean the drive (if configured to do so; otherwise exit and report Down when there is already a tape there)
-      if (!prepareDrive()) {
+      const bool prepared = m_config.drive.clean_on_up ? cleanDriveForStartup() : probeDrive();
+      if (!prepared) {
         releaseAndReportDown();
         return;
       }
@@ -284,7 +285,7 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
   if (!transferResult) {
     // Failed before we even got a transfer result.
     // Cleanup may not be necessary, but it's the only way we can establish whether the drive is safe.
-    const bool reusable = prepareDrive(vid);
+    const bool reusable = cleanDriveForSessionRecovery(vid);
     return {.driveReusable = reusable,
             .successful = false,
             .downDetail = "Drive cleaning did not permit further scheduling"};
@@ -298,99 +299,181 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
   return *transferResult;
 }
 
-bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
-  const bool canUseHardware = m_driveReservation.canUseHardware();
-  const bool shouldCleanDrive = canUseHardware || m_config.drive.clean_on_up;
-  // Track preparation for liveness; cleanup also has its own tape-session lifetime.
-  auto tracker = std::make_shared<TapeSessionTracker>(
-    [this, shouldCleanDrive](session::TapeSessionState state) {
-      // Preparation must be published explicitly before acquisition; failure must propagate there.
-      if (shouldCleanDrive && state != session::TapeSessionState::Preparing) {
-        reportDriveState({.state = ReportedDriveState::Preparing, .tapeSession = TapeSessionReport {.state = state}});
-      }
-    },
-    &m_lc.logger());
-  tracker->reportState(session::TapeSessionState::Preparing);
-  m_activeTracker.store(tracker);
-  bool cleanupStarted = false;
-  const auto uncaughtOnEntry = std::uncaught_exceptions();
-  // Finish and clean up the tracker when we exit this function
-  const utils::ScopeExit clearActiveTracker([this, &tracker, &cleanupStarted, uncaughtOnEntry] {
-    if (cleanupStarted) {
-      if (std::uncaught_exceptions() > uncaughtOnEntry) {
-        tracker->recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
-      }
-      tracker->reportState(session::TapeSessionState::Finished);
-    }
-    m_activeTracker.store(nullptr);
-  });
+// Share liveness registration and cleanup finalization without selecting hardware policy.
+// This is something to be improved: at the moment we "artificially" have to construct a TapeSessionTracker
+// just to clean/probe. Conceptually this does not make too much sense, so should be refined later.
+class DriveSession::ScopedDriveOperationTracker {
+public:
+  explicit ScopedDriveOperationTracker(DriveSession& owner)
+      : m_owner(owner),
+        m_tracker(std::make_shared<TapeSessionTracker>(
+          [this](session::TapeSessionState state) {
+            // Preparing is published explicitly by the caller so failures propagate.
+            if (m_cleanupStarted && state != session::TapeSessionState::Preparing) {
+              m_owner.reportDriveState(
+                {.state = ReportedDriveState::Preparing, .tapeSession = TapeSessionReport {.state = state}});
+            }
+          },
+          &owner.m_lc.logger())),
+        m_uncaughtOnEntry(std::uncaught_exceptions()) {
+    m_tracker->reportState(session::TapeSessionState::Preparing);
+    m_owner.m_activeTracker.store(m_tracker);
+  }
 
-  log::ScopedParamContainer cleanupParams(m_lc);
-  cleanupParams.add("cleanupPhase", canUseHardware ? "recovery" : "preparation");
-  // Recovery must finish under existing ownership even if Up has been withdrawn.
-  if (!canUseHardware && !m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
+  ScopedDriveOperationTracker(const ScopedDriveOperationTracker&) = delete;
+  ScopedDriveOperationTracker& operator=(const ScopedDriveOperationTracker&) = delete;
+
+  ~ScopedDriveOperationTracker() {
+    if (m_cleanupStarted) {
+      if (std::uncaught_exceptions() > m_uncaughtOnEntry) {
+        m_tracker->recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
+      }
+      m_tracker->reportState(session::TapeSessionState::Finished);
+    }
+    m_owner.m_activeTracker.store(nullptr);
+  }
+
+  // Probes use liveness tracking only; cleanup additionally has a session lifetime.
+  void beginCleanup() {
+    m_tracker->beginTapeSession(session::SessionType::Cleanup);
+    m_cleanupStarted = true;
+  }
+
+  TapeSessionTracker& tracker() { return *m_tracker; }
+
+private:
+  DriveSession& m_owner;
+  bool m_cleanupStarted = false;
+  std::shared_ptr<TapeSessionTracker> m_tracker;
+  const int m_uncaughtOnEntry;
+};
+
+bool DriveSession::probeDrive() {
+  // Keep liveness monitoring active through hardware work and outcome reporting.
+  ScopedDriveOperationTracker tracking(*this);
+  if (!m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
     return false;
   }
   // Publish preparation before acquiring hardware access.
-  if (shouldCleanDrive) {
-    tracker->beginTapeSession(session::SessionType::Cleanup);
-    cleanupStarted = true;
-  }
-  // Probing owns hardware too, but does not create a tape session.
   reportDriveState({.state = ReportedDriveState::Preparing});
   m_driveReservation.acquire();
-  m_lc.log(log::INFO,
-           shouldCleanDrive ? "Cleaning drive for preparation or recovery." : "Probing drive before going Up.");
-  bool prepared = false;
-  std::string preparationError;
-  auto downReason = shouldCleanDrive ? common::dataStructures::DriveDownReason::DriveCleanupFailed :
-                                       common::dataStructures::DriveDownReason::DriveProbeFailed;
+  m_lc.log(log::INFO, "Probing drive before going Up.");
+
+  // A probe must establish that the drive is empty without ejecting a cartridge.
+  bool ready = false;
+  std::string error;
+  auto reason = common::dataStructures::DriveDownReason::DriveProbeFailed;
   try {
-    if (shouldCleanDrive) {
-      DriveCleaner cleaner(m_mediaChanger,
-                           m_lc.logger(),
-                           m_driveInfo,
-                           vid.value_or(""),
-                           true,
-                           m_config.mounts.tape_load_timeout_secs,
-                           m_schedulerContext.catalogue(),
-                           *tracker);
-      const auto result = cleaner.cleanDrive(m_sysWrapper);
-      prepared = result.driveReusable();
-      preparationError = result.errorMessage;
-    } else {
-      const auto result = probeEmptyDrive(m_driveInfo, m_sysWrapper);
-      prepared = result.status == EmptyDriveProbeResult::Status::Empty;
-      preparationError = result.errorMessage;
-      if (result.status == EmptyDriveProbeResult::Status::CartridgePresent) {
-        downReason = common::dataStructures::DriveDownReason::TapeDetected;
-      }
+    const auto result = probeEmptyDrive(m_driveInfo, m_sysWrapper);
+    ready = result.status == EmptyDriveProbeResult::Status::Empty;
+    error = result.errorMessage;
+    if (result.status == EmptyDriveProbeResult::Status::CartridgePresent) {
+      reason = common::dataStructures::DriveDownReason::TapeDetected;
     }
   } catch (...) {
-    preparationError = exception::currentExceptionMessage();
+    error = exception::currentExceptionMessage();
   }
-  // Hardware preparation has ended; only outcome reporting remains.
-  tracker->reportState(session::TapeSessionState::Finalizing);
-
-  if (!prepared) {
-    if (cleanupStarted) {
-      tracker->recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
-    }
+  // Hardware work has ended; keep final reporting within the liveness budget.
+  tracking.tracker().reportState(session::TapeSessionState::Finalizing);
+  if (!ready) {
     log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, preparationError);
+    params.add(semconv::log::exceptionMessage, error);
     m_lc.log(log::ERR, "Drive preparation or cleanup failed; ending drive session.");
-    requestDown(downReason, preparationError);
+    requestDown(reason, error);
     return false;
   }
 
-  // Preparation takes time; an operator may have withdrawn the up request while it ran.
-  // Never publish desired-up here; a withdrawn request ends this ownership period.
+  // An operator may have withdrawn Up while the probe ran.
   if (!m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
     // The caller releases ownership and reports Down.
     m_lc.log(log::INFO, "Desired drive state became Down during preparation; ending drive session.");
     return false;
   }
   reportDriveState({.state = ReportedDriveState::Up});
+  return true;
+}
+
+bool DriveSession::cleanDriveForStartup() {
+  // Keep liveness monitoring active through hardware work and outcome reporting.
+  ScopedDriveOperationTracker tracking(*this);
+  if (!m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
+    return false;
+  }
+  tracking.beginCleanup();
+  // Publish preparation before acquiring hardware access.
+  reportDriveState({.state = ReportedDriveState::Preparing});
+  m_driveReservation.acquire();
+  m_lc.log(log::INFO, "Cleaning drive for preparation.");
+
+  // Startup may find a stranded cartridge whose VID is unknown.
+  if (!cleanDrive("", tracking.tracker())) {
+    return false;
+  }
+
+  // Successful cleanup permits scheduling only while Up is still requested.
+  if (!m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
+    // The caller releases ownership and reports Down.
+    m_lc.log(log::INFO, "Desired drive state became Down during preparation; ending drive session.");
+    return false;
+  }
+  reportDriveState({.state = ReportedDriveState::Up});
+  return true;
+}
+
+bool DriveSession::cleanDriveForSessionRecovery(const std::string& vid) {
+  if (!m_driveReservation.canUseHardware()) {
+    throw std::logic_error("Drive recovery requires existing hardware ownership");
+  }
+  // Keep liveness monitoring active through hardware work and outcome reporting.
+  ScopedDriveOperationTracker tracking(*this);
+  tracking.beginCleanup();
+  // Recovery must finish even if the operator has requested Down.
+  reportDriveState({.state = ReportedDriveState::Preparing});
+  m_lc.log(log::INFO, "Cleaning drive for recovery.");
+
+  // Use the failed assignment's VID to recover under the existing reservation.
+  if (!cleanDrive(vid, tracking.tracker())) {
+    return false;
+  }
+
+  // Successful cleanup permits scheduling only while Up is still requested.
+  if (!m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
+    // The caller releases ownership and reports Down.
+    m_lc.log(log::INFO, "Desired drive state became Down during recovery; ending drive session.");
+    return false;
+  }
+  reportDriveState({.state = ReportedDriveState::Up});
+  return true;
+}
+
+bool DriveSession::cleanDrive(const std::string& vid, TapeSessionTracker& tracker) {
+  bool reusable = false;
+  std::string error;
+  try {
+    DriveCleaner cleaner(m_mediaChanger,
+                         m_lc.logger(),
+                         m_driveInfo,
+                         vid,
+                         true,
+                         m_config.mounts.tape_load_timeout_secs,
+                         m_schedulerContext.catalogue(),
+                         tracker);
+    const auto result = cleaner.cleanDrive(m_sysWrapper);
+    reusable = result.driveReusable();
+    error = result.errorMessage;
+  } catch (...) {
+    error = exception::currentExceptionMessage();
+  }
+  // Hardware work has ended; keep final reporting within the liveness budget.
+  tracker.reportState(session::TapeSessionState::Finalizing);
+  if (!reusable) {
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, error);
+    m_lc.log(log::ERR, "Drive preparation or cleanup failed; ending drive session.");
+    tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
+    requestDown(common::dataStructures::DriveDownReason::DriveCleanupFailed, error);
+    return false;
+  }
   return true;
 }
 
