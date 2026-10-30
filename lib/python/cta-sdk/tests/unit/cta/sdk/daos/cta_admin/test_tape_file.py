@@ -100,3 +100,28 @@ class TestTapeFileDaoCtaAdmin:
             ]
         )
         assert len(return_objs) == 3
+
+    def test_delete_command(self):
+        self.manager.delete(4303580667, vid="I72052", reason="test")
+
+        self.mock_run.assert_called_once_with(
+            ["cta-admin", "--jsonl", "tapefile", "rm", "--id", "4303580667", "--vid", "I72052", "--reason", "test"]
+        )
+
+        self.manager.delete(4296353178, "eosctaatlaspps", vid="L85033", reason="test")
+        self.mock_run.assert_called_with(
+            [
+                "cta-admin",
+                "--jsonl",
+                "tapefile",
+                "rm",
+                "--diskfileid",
+                "4296353178",
+                "--instance",
+                "eosctaatlaspps",
+                "--vid",
+                "L85033",
+                "--reason",
+                "test",
+            ]
+        )

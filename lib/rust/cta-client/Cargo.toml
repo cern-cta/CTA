@@ -31,8 +31,11 @@
   url          = { workspace = true }
   strum        = { workspace = true, features = ["derive"] }
 
+[build-dependencies]
+  serde_json = { workspace = true }
+
 [dev-dependencies]
-  tokio          = { workspace = true, features = ["macros", "rt"] }
+  tokio          = { workspace = true, features = ["macros", "rt", "fs"] }
   prost          = { workspace = true }
   tonic-prost    = { workspace = true }
   bytes          = { workspace = true }
