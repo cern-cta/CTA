@@ -230,92 +230,93 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   RecallReportPacker reportPacker(&retrieveMount, logContext, *m_tapeSessionTracker);
   reportPacker.disableBulk();  //no bulk needed anymore
   RecallMemoryManager memoryManager(m_transfersConfig.buffer_count, m_transfersConfig.buffer_size_bytes, logContext);
-  // TODO: rename these variables to something a bit more accurate
-  TapeReadSingleThread readSingleThread(*drive,
-                                        m_mediaChanger,
-                                        *m_tapeSessionTracker,
-                                        m_volInfo,
-                                        m_transfersConfig.retrieve.fetch_max_files,
-                                        logContext,
-                                        reportPacker,
-                                        c_useLbp,
-                                        m_transfersConfig.retrieve.rao.enabled,
-                                        m_transfersConfig.encryption.enabled,
-                                        m_transfersConfig.encryption.external_key_script,
-                                        retrieveMount,
-                                        m_tapeLoadTimeoutSecs,
-                                        m_catalogue);
+  TapeReadSingleThread tapeReadThread(*drive,
+                                      m_mediaChanger,
+                                      *m_tapeSessionTracker,
+                                      m_volInfo,
+                                      m_transfersConfig.retrieve.fetch_max_files,
+                                      logContext,
+                                      reportPacker,
+                                      c_useLbp,
+                                      m_transfersConfig.retrieve.rao.enabled,
+                                      m_transfersConfig.encryption.enabled,
+                                      m_transfersConfig.encryption.external_key_script,
+                                      retrieveMount,
+                                      m_tapeLoadTimeoutSecs,
+                                      m_catalogue);
 
-  DiskWriteThreadPool threadPool(m_transfersConfig.disk_io_threads,
-                                 reportPacker,
-                                 *m_tapeSessionTracker,
-                                 logContext,
-                                 c_xrootTimeout);
-  RecallTaskInjector taskInjector(memoryManager,
-                                  readSingleThread,
-                                  threadPool,
-                                  retrieveMount,
-                                  m_transfersConfig.retrieve.fetch_max_files,
-                                  m_transfersConfig.retrieve.fetch_max_bytes,
-                                  *m_tapeSessionTracker,
-                                  logContext);
+  DiskWriteThreadPool diskWriteThreadPool(m_transfersConfig.disk_io_threads,
+                                          reportPacker,
+                                          *m_tapeSessionTracker,
+                                          logContext,
+                                          c_xrootTimeout);
+  RecallTaskInjector recallTaskInjector(memoryManager,
+                                        tapeReadThread,
+                                        diskWriteThreadPool,
+                                        retrieveMount,
+                                        m_transfersConfig.retrieve.fetch_max_files,
+                                        m_transfersConfig.retrieve.fetch_max_bytes,
+                                        *m_tapeSessionTracker,
+                                        logContext);
 
   // TODO: do we really need it like this?
-  taskInjector.setDriveInterface(readSingleThread.getDriveReference());
+  recallTaskInjector.setDriveInterface(tapeReadThread.getDriveReference());
 
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
-  utils::Timer timer;
+  utils::Timer startupTimer;
 
   // The RecallTaskInjector and the TapeReadSingleThread share the promise
   if (m_transfersConfig.retrieve.rao.enabled) {
-    configureRAO(logContext, taskInjector);
+    configureRAO(logContext, recallTaskInjector);
   }
   bool noFilesToRecall = false;
-  bool fetchResult = false;
-  bool reservationResult = false;
+  bool jobsFetched = false;
+  bool diskSpaceReservationSucceeded = false;
   // Do an initial fetch to see if there is something to retrieve in the first place (might be an empty mount)
   try {
-    fetchResult = taskInjector.synchronousFetch(noFilesToRecall);
+    jobsFetched = recallTaskInjector.synchronousFetch(noFilesToRecall);
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
-  if (fetchResult) {
+  if (jobsFetched) {
     // Check disk space reservation before committing to a tape mount.
-    reservationResult = taskInjector.testDiskSpaceReservationWorking();
+    diskSpaceReservationSucceeded = recallTaskInjector.testDiskSpaceReservationWorking();
   }
   // Only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
-  if (fetchResult && reservationResult) {
+  if (jobsFetched && diskSpaceReservationSucceeded) {
     // We got something to retrieve. Time to start the machinery
-    readSingleThread.setWaitForInstructionsTime(timer.secs());
+    tapeReadThread.setWaitForInstructionsTime(startupTimer.secs());
 
     // We still haven't obtained a physical mount at this point: that will happen when we start the tape thread.
     // However, at this point we are sure we are at least attempting to physically mount a tape.
     m_tapeSessionTracker->setMountAttempted(true);
     // Do not unwind pipeline resources unless every worker has joined successfully.
     runOrExitOnWorkerFailure(logContext, [&] {
-      readSingleThread.startThreadsWithInjector(taskInjector);
-      threadPool.startThreads();
+      tapeReadThread.startThreadsWithInjector(recallTaskInjector);
+      diskWriteThreadPool.startThreads();
       reportPacker.startThreads();
-      taskInjector.startThreads();
+      recallTaskInjector.startThreads();
       state.completionDelegated = true;
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
-      taskInjector.waitThreads();
-      threadPool.waitThreads();
-      readSingleThread.waitThreads();
+      recallTaskInjector.waitThreads();
+      diskWriteThreadPool.waitThreads();
+      tapeReadThread.waitThreads();
       reportPacker.waitThread();
     });
+    // Done with retrieval
+
     // Use the tape thread's cleanup result to decide whether the drive can be reused.
-    state.result.driveReusable = readSingleThread.isDriveReusable();
+    state.result.driveReusable = tapeReadThread.isDriveReusable();
     if (!state.result.driveReusable) {
       state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
-      state.result.downDetail = readSingleThread.cleanupError();
+      state.result.downDetail = tapeReadThread.cleanupError();
     }
     return;
   } else {
-    if (!noFilesToRecall && !fetchResult) {
+    if (!noFilesToRecall && !jobsFetched) {
       m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::TaskInjection);
     }
     // Nothing transferred
@@ -324,7 +325,7 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
       m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToRecall);
     }
     // Couldn't reserve free disk space
-    if (fetchResult && !reservationResult) {
+    if (jobsFetched && !diskSpaceReservationSucceeded) {
       m_tapeSessionTracker->recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
     }
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
@@ -345,28 +346,27 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
   // to refer them to each other)
   MigrationMemoryManager memoryManager(m_transfersConfig.buffer_count, m_transfersConfig.buffer_size_bytes, logContext);
   MigrationReportPacker reportPacker(&archiveMount, logContext, *m_tapeSessionTracker);
-  // TODO: rename these variables to something a bit more accurate
-  TapeWriteSingleThread writeSingleThread(*drive,
-                                          m_mediaChanger,
-                                          *m_tapeSessionTracker,
-                                          m_volInfo,
-                                          logContext,
-                                          reportPacker,
-                                          m_transfersConfig.archive.flush_max_files,
-                                          m_transfersConfig.archive.flush_max_bytes,
-                                          c_useLbp,
-                                          m_transfersConfig.encryption.enabled,
-                                          m_transfersConfig.encryption.external_key_script,
-                                          archiveMount,
-                                          m_tapeLoadTimeoutSecs,
-                                          m_catalogue);
+  TapeWriteSingleThread tapeWriteThread(*drive,
+                                        m_mediaChanger,
+                                        *m_tapeSessionTracker,
+                                        m_volInfo,
+                                        logContext,
+                                        reportPacker,
+                                        m_transfersConfig.archive.flush_max_files,
+                                        m_transfersConfig.archive.flush_max_bytes,
+                                        c_useLbp,
+                                        m_transfersConfig.encryption.enabled,
+                                        m_transfersConfig.encryption.external_key_script,
+                                        archiveMount,
+                                        m_tapeLoadTimeoutSecs,
+                                        m_catalogue);
 
-  DiskReadThreadPool threadPool(m_transfersConfig.disk_io_threads,
-                                m_transfersConfig.archive.fetch_max_files,
-                                m_transfersConfig.archive.fetch_max_bytes,
-                                *m_tapeSessionTracker,
-                                logContext,
-                                c_xrootTimeout);
+  DiskReadThreadPool diskReadThreadPool(m_transfersConfig.disk_io_threads,
+                                        m_transfersConfig.archive.fetch_max_files,
+                                        m_transfersConfig.archive.fetch_max_bytes,
+                                        *m_tapeSessionTracker,
+                                        logContext,
+                                        c_xrootTimeout);
 
   // Configure when the injector should stop waiting for more archive work.
   const auto& underfill = m_transfersConfig.archive.underfill;
@@ -374,35 +374,35 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
                                                                             underfill.minimum_samples,
                                                                             underfill.start_threshold_percent,
                                                                             underfill.recovery_threshold_percent);
-  MigrationTaskInjector taskInjector(memoryManager,
-                                     threadPool,
-                                     writeSingleThread,
-                                     archiveMount,
-                                     m_transfersConfig.archive.fetch_max_files,
-                                     m_transfersConfig.archive.fetch_max_bytes,
-                                     archiveDismountPolicy,
-                                     *m_tapeSessionTracker,
-                                     logContext);
-  writeSingleThread.setTaskInjector(&taskInjector);
+  MigrationTaskInjector migrationTaskInjector(memoryManager,
+                                              diskReadThreadPool,
+                                              tapeWriteThread,
+                                              archiveMount,
+                                              m_transfersConfig.archive.fetch_max_files,
+                                              m_transfersConfig.archive.fetch_max_bytes,
+                                              archiveDismountPolicy,
+                                              *m_tapeSessionTracker,
+                                              logContext);
+  tapeWriteThread.setTaskInjector(&migrationTaskInjector);
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
-  utils::Timer timer;
+  utils::Timer startupTimer;
   bool noFilesToMigrate = false;
-  bool injected = false;
-  // Do an initial fetch to see if there is something to archive in the first place (might be an empty mount)
+  bool jobsInjected = false;
+  // Do an initial inject to see if there is something to archive in the first place (might be an empty mount)
   try {
-    injected = taskInjector.synchronousInjection(noFilesToMigrate);
+    jobsInjected = migrationTaskInjector.synchronousInjection(noFilesToMigrate);
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
   // Only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
-  if (injected) {
+  if (jobsInjected) {
     logContext.log(log::DEBUG, "After if (taskInjector.synchronousInjection())");
-    const uint64_t firstFseqFromClient = taskInjector.firstFseqToWrite();
+    const uint64_t firstFseqFromClient = migrationTaskInjector.firstFseqToWrite();
 
     // The last fseq written on the tape is the first file's fseq minus one
-    writeSingleThread.setlastFseq(firstFseqFromClient - 1);
+    tapeWriteThread.setlastFseq(firstFseqFromClient - 1);
 
     // We got something to archive. Time to start the machinery
 
@@ -412,26 +412,27 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
     // Do not unwind pipeline resources unless every worker has joined successfully.
     runOrExitOnWorkerFailure(logContext, [&] {
       memoryManager.startThreads();
-      threadPool.startThreads(taskInjector);
-      writeSingleThread.setWaitForInstructionsTime(timer.secs());
-      writeSingleThread.startThreads();
+      diskReadThreadPool.startThreads(migrationTaskInjector);
+      tapeWriteThread.setWaitForInstructionsTime(startupTimer.secs());
+      tapeWriteThread.startThreads();
       reportPacker.startThreads();
-      taskInjector.startThreads();
+      migrationTaskInjector.startThreads();
       state.completionDelegated = true;
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
-      taskInjector.waitThreads();
-      writeSingleThread.waitThreads();
-      threadPool.waitThreads();
+      migrationTaskInjector.waitThreads();
+      tapeWriteThread.waitThreads();
+      diskReadThreadPool.waitThreads();
       memoryManager.waitThreads();
       reportPacker.waitThread();
     });
+    // Done with archival
 
     // Use the tape thread's cleanup result to decide whether the drive can be reused.
-    state.result.driveReusable = writeSingleThread.isDriveReusable();
+    state.result.driveReusable = tapeWriteThread.isDriveReusable();
     if (!state.result.driveReusable) {
       state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
-      state.result.downDetail = writeSingleThread.cleanupError();
+      state.result.downDetail = tapeWriteThread.cleanupError();
     }
     return;
   } else {
