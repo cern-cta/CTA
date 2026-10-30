@@ -165,7 +165,7 @@ void VirtualDrive::spaceFileMarksBackwards(size_t count) {
   }
   size_t countdown = count;
   std::vector<std::string>::size_type i = 0;
-  for (i = m_currentPosition; i != (std::vector<std::string>::size_type) - 1 && countdown != 0; i--) {
+  for (i = m_currentPosition - 1; i != (std::vector<std::string>::size_type) - 1 && countdown != 0; i--) {
     if (!m_tape[i].data.compare(filemark)) {
       countdown--;
     }

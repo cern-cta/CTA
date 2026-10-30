@@ -133,21 +133,32 @@ class K8sConnection(RemoteConnection):
     ) -> ExecResult:
         """Execute a long-running command without holding a Kubernetes WebSocket open.
 
-        Starts the command as a nohup background process on the pod, polls for
-        completion via a sentinel file, then reads back stdout/stderr.  This avoids
-        the TCP/WebSocket timeout that kills kubectl-exec sessions held open for hours.
+        Starts the command as a setsid background process on the pod, polls for
+        completion via a sentinel file, then reads back stdout/stderr.
+
+        The critical property: setsid moves the background process into a new session
+        and process group.  Kubernetes keeps an exec WebSocket open until every process
+        in the exec session's process group exits.  Without setsid the background
+        process shares the shell's process group, so the WebSocket stays open for the
+        entire duration of the command (hours) and eventually times out.  With setsid
+        the shell's process group is empty as soon as the shell exits (~1 s), so the
+        WebSocket closes immediately and the poll loop takes over.
         """
         if print_command:
             print(command)
 
         tmpdir = f"/tmp/cta_exec_{uuid.uuid4().hex}"
         # Build the inner shell fragment that captures output and records the exit code.
-        # Write PID alongside so we can kill the process on timeout.
         inner = f"{command} > {tmpdir}/stdout 2> {tmpdir}/stderr; echo $? > {tmpdir}/exitcode"
+        # setsid creates a new session so the background process is fully detached from
+        # the exec session.  Some Kubernetes container runtimes (containerd/cri-o) send
+        # SIGHUP or even SIGKILL to the entire session when the exec WebSocket closes;
+        # nohup only ignores SIGHUP, while setsid moves the process into a new session
+        # that the runtime never touches.  The subshell ( ... ) ensures $! refers to the
+        # setsid PID and that tmpdir already exists before the pid file is written.
         launch = (
             f"mkdir -p {tmpdir} && "
-            f"nohup sh -c {shlex.quote(inner)} > /dev/null 2>&1 & "
-            f"echo $! > {tmpdir}/pid"
+            f"( setsid sh -c {shlex.quote(inner)} > /dev/null 2>&1 & echo $! > {tmpdir}/pid )"
         )
         # This exec is short-lived — it just daemonises the process and returns.
         self.exec(launch)
