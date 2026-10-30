@@ -29,6 +29,7 @@ TEST(TapeSessionTrackerTest, SessionTypeIsEstablishedBeforeFirstPublication) {
       EXPECT_EQ(expectedType, tracker.type());
     });
     EXPECT_EQ(std::nullopt, tracker.type());
+    EXPECT_FALSE(tracker.mountAttempted());
     tracker.reportState(TapeSessionState::Preparing);
     EXPECT_EQ(std::nullopt, tracker.type());
 
@@ -37,7 +38,9 @@ TEST(TapeSessionTrackerTest, SessionTypeIsEstablishedBeforeFirstPublication) {
     EXPECT_EQ(2, publications);
     tracker.reportState(TapeSessionState::Finished);
     EXPECT_EQ(type, tracker.type());
-    EXPECT_EQ(type != SessionType::Cleanup, tracker.mountAttempted());
+    EXPECT_FALSE(tracker.mountAttempted());
+    tracker.setMountAttempted(true);
+    EXPECT_TRUE(tracker.mountAttempted());
   }
 }
 
@@ -268,7 +271,7 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
   tracker.notifyBlockMovement(100);
   tracker.notifyDiskFileOpened(1, 1234, "file:///one");
   tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
-  tracker.setMountAttempted(false);
+  tracker.setMountAttempted(true);
 
   tracker.beginTapeSession(session::SessionType::Retrieve);
 
@@ -284,7 +287,7 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
   EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.livenessSnapshot().lastBlockMovement);
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
   EXPECT_FALSE(tracker.outcomeSnapshot().finished);
-  EXPECT_TRUE(tracker.mountAttempted());
+  EXPECT_FALSE(tracker.mountAttempted());
   const auto sessionStartTime = tracker.sessionStartTime();
   EXPECT_NE(std::chrono::steady_clock::time_point {}, sessionStartTime);
 

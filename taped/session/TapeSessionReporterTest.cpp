@@ -188,7 +188,6 @@ TEST(TapeSessionReporterTest, DerivesMountMetadataAndReportsFailureWithoutStarti
   TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
 
   tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
-  tracker.setMountAttempted(false);
   tracker.reportState(session::TapeSessionState::Finalizing);
   reporter.reportSessionFinished();
 

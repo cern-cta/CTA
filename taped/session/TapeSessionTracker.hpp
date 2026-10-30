@@ -135,8 +135,8 @@ public:
 
   /// @brief Begin a session of the supplied type, resetting tracking data and entering Preparing at now.
   ///
-  /// Only the session owner may reset the tracker. Cleanup sessions start without a mount attempt.
-  /// For other session types, call setMountAttempted(false) until mounting is attempted.
+  /// Only the session owner may reset the tracker. All sessions start without a mount attempt.
+  /// Call setMountAttempted(true) when mounting is attempted.
   void beginTapeSession(session::SessionType type, Clock::time_point now = Clock::now());
 
   /// @brief Set the phase without resetting progress; repeated reports preserve its entry time.
@@ -166,7 +166,7 @@ public:
   /// Record whether the assignment is attempting a physical tape mount.
   void setMountAttempted(bool attempted);
 
-  /// Return the recorded mount-attempt flag; false for cleanup sessions, true for other sessions after reset.
+  /// Return the recorded mount-attempt flag; false initially and after session reset.
   bool mountAttempted() const;
 
   /// Count a classified failure and return a receipt for propagation without recounting it.
@@ -284,7 +284,7 @@ private:
   bool m_tapeDone = false;
   bool m_diskDone = false;
   std::optional<session::SessionType> m_type;
-  bool m_mountAttempted = true;
+  bool m_mountAttempted = false;
 
   uint64_t m_fileId = 0;
   uint64_t m_fSeq = 0;

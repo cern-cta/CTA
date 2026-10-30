@@ -26,7 +26,7 @@ void TapeSessionTracker::beginTapeSession(session::SessionType type, Clock::time
     m_eventCounts.fill(0);
     m_tapeAlertStats.clear();
     m_activeDiskFiles.clear();
-    m_mountAttempted = type != session::SessionType::Cleanup;
+    m_mountAttempted = false;
     m_fileId = 0;
     m_fSeq = 0;
     m_fileBeingMoved = false;
