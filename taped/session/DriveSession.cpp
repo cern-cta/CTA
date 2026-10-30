@@ -299,13 +299,13 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
 }
 
 bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
-  const bool recovering = m_driveReservation.canUseHardware();
-  const bool clean = recovering || m_config.drive.clean_on_up;
+  const bool canUseHardware = m_driveReservation.canUseHardware();
+  const bool shouldCleanDrive = canUseHardware || m_config.drive.clean_on_up;
   // Track preparation for liveness; cleanup also has its own tape-session lifetime.
   auto tracker = std::make_shared<TapeSessionTracker>(
-    [this, clean](session::TapeSessionState state) {
+    [this, shouldCleanDrive](session::TapeSessionState state) {
       // Preparation must be published explicitly before acquisition; failure must propagate there.
-      if (clean && state != session::TapeSessionState::Preparing) {
+      if (shouldCleanDrive && state != session::TapeSessionState::Preparing) {
         reportDriveState({.state = ReportedDriveState::Preparing, .tapeSession = TapeSessionReport {.state = state}});
       }
     },
@@ -314,6 +314,7 @@ bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
   m_activeTracker.store(tracker);
   bool cleanupStarted = false;
   const auto uncaughtOnEntry = std::uncaught_exceptions();
+  // Finish and clean up the tracker when we exit this function
   const utils::ScopeExit clearActiveTracker([this, &tracker, &cleanupStarted, uncaughtOnEntry] {
     if (cleanupStarted) {
       if (std::uncaught_exceptions() > uncaughtOnEntry) {
@@ -325,26 +326,27 @@ bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
   });
 
   log::ScopedParamContainer cleanupParams(m_lc);
-  cleanupParams.add("cleanupPhase", recovering ? "recovery" : "preparation");
+  cleanupParams.add("cleanupPhase", canUseHardware ? "recovery" : "preparation");
   // Recovery must finish under existing ownership even if Up has been withdrawn.
-  if (!recovering && !m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
+  if (!canUseHardware && !m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
     return false;
   }
   // Publish preparation before acquiring hardware access.
-  if (clean) {
+  if (shouldCleanDrive) {
     tracker->beginTapeSession(session::SessionType::Cleanup);
     cleanupStarted = true;
   }
   // Probing owns hardware too, but does not create a tape session.
   reportDriveState({.state = ReportedDriveState::Preparing});
   m_driveReservation.acquire();
-  m_lc.log(log::INFO, clean ? "Cleaning drive for preparation or recovery." : "Probing drive before going Up.");
+  m_lc.log(log::INFO,
+           shouldCleanDrive ? "Cleaning drive for preparation or recovery." : "Probing drive before going Up.");
   bool prepared = false;
   std::string preparationError;
-  auto downReason = clean ? common::dataStructures::DriveDownReason::DriveCleanupFailed :
-                            common::dataStructures::DriveDownReason::DriveProbeFailed;
+  auto downReason = shouldCleanDrive ? common::dataStructures::DriveDownReason::DriveCleanupFailed :
+                                       common::dataStructures::DriveDownReason::DriveProbeFailed;
   try {
-    if (clean) {
+    if (shouldCleanDrive) {
       DriveCleaner cleaner(m_mediaChanger,
                            m_lc.logger(),
                            m_driveInfo,
