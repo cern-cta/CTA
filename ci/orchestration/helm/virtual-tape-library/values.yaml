@@ -84,6 +84,9 @@ pvc:
 # Pre-population Job image
 # ---------------------------------------------------------------------------
 image:
+  # Overridden by create_instance.sh to use cta-tools (already pulled onto the
+  # node for scheduler/catalogue reset jobs).  This default applies only to
+  # manual helm invocations outside of create_instance.sh.
   repository: registry.cern.ch/docker.io/almalinux/9-minimal
   tag: "9.7"
   pullPolicy: IfNotPresent
