@@ -106,7 +106,7 @@ private:
 
   /// Compatibility encoding belongs here, not in scheduler or daemon callers.
   static std::optional<common::dataStructures::DriveStatus>
-  catalogueStatus(const common::dataStructures::DriveReport& report);
+  mapToDriveStatus(const common::dataStructures::DriveReport& report);
 
   void updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                          const ReportDriveStatusInputs& inputs,
