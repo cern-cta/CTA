@@ -436,7 +436,7 @@ Recovering the drive does not establish that interrupted file transfers complete
 
 The settings and defaults are described in [Drive startup and preparation](../../ops/deploy-and-configure/configuration/tape-daemon.md#drive-startup-and-preparation).
 
-### Tape session failures and counters
+### Tape session failures and event counters
 
 Throughout a tape session, the daemon counts failed operations by category, such as disk reads, tape writes, cleanup, and reporting.
 It separately tracks informational events, such as reaching the end of a tape, and hardware tape alerts.
@@ -480,7 +480,7 @@ A session that transfers no files can therefore finish successfully if no failur
 | --- | --- |
 | Disk-space reservation test failure; disk-space reservation failure | The daemon could not confirm or reserve enough destination disk space, so it did not start retrieving the affected files. |
 | No retrieval files; no archival files | The scheduler assigned a tape session, but the initial job fetch found no files to transfer. Assignment and fetching jobs are separate steps, so assignment alone does not guarantee work. The session ends before physically mounting the cartridge. |
-| Empty mount | The assigned session ended before mounting a cartridge because no jobs could be started, for example because none were available or destination disk space could not be reserved. Here, “mount” refers to the scheduler assignment, not a cartridge already loaded in the drive. |
+| Empty mount | The assigned session ended before mounting a cartridge because no jobs could be started, for example because none were available, destination disk space could not be reserved or another taped process has claimed the mount. Here, “mount” refers to the scheduler assignment, not a cartridge already loaded in the drive. |
 | Tape full | The tape reached capacity. This is recorded once per session, rather than counting every subsequent observation. |
 
 Tape alerts are counted separately by alert code.
