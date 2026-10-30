@@ -16,7 +16,7 @@
 #include <opentelemetry/context/runtime_context.h>
 #include <optional>
 
-namespace cta::frontend {
+namespace cta::workflow_api {
 
 namespace {
 
@@ -525,4 +525,4 @@ void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-}  // namespace cta::frontend
+}  // namespace cta::workflow_api

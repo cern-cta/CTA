@@ -51,13 +51,13 @@ Status CtaRpcWfeImpl::processGrpcRequest(const cta::xrd::Request* request,
   cta::grpc_server::RequestLogger requestLogger(lc, "workflow event request");
 
   try {
-    cta::frontend::WorkflowEvent wfe(m_serviceResources,
-                                     m_config,
-                                     clientIdentity,
+    WorkflowEvent wfe(m_serviceResources,
+                      m_config,
+                      clientIdentity,
 #ifdef CTA_PGSCHED
-                                     m_batchingLayer,
+                      m_batchingLayer,
 #endif
-                                     request->notification());
+                      request->notification());
     *response = wfe.process();
 
     requestLogger.succeeded();

@@ -7,6 +7,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "grpc-server/PbException.hpp"
 
 #include <grpcpp/grpcpp.h>
@@ -20,6 +21,7 @@ namespace cta::admin_api::rpc {
 void CtaAdminServerWriteReactor::OnWriteDone(bool ok) {
   if (!ok) {
     m_requestLogger.failed("Write failed: client gone or call cancelled");
+    m_requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     Finish(::grpc::Status(::grpc::StatusCode::CANCELLED, "Write failed: client gone or call cancelled"));
     return;
   }
@@ -47,7 +49,7 @@ void CtaAdminServerWriteReactor::NextWrite() {
   // fail well after the header has already been streamed to the client. Without this try/catch, an
   // exception here would escape uncaught from a gRPC callback and crash the whole frontend process,
   // taking down every other in-flight request with it. Mapped onto the same exception types and
-  // gRPC status codes as the equivalent catch chain in FrontendGrpcService.cpp's Admin(), so a
+  // gRPC status codes as the equivalent catch chain in CtaRpcStreamImpl::GenericAdminStream(), so a
   // client sees the same kind of error whether the command used the unary or the streaming RPC.
   try {
     if (!m_stream->isDone()) {
@@ -59,22 +61,28 @@ void CtaAdminServerWriteReactor::NextWrite() {
     }
   } catch (cta::exception::PbException& ex) {
     m_requestLogger.failed(ex.getMessageValue());
+    m_requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue()));
   } catch (cta::exception::UserError& ex) {
     m_requestLogger.rejected(ex.getMessageValue());
+    m_requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue()));
   } catch (cta::exception::Exception& ex) {
     m_requestLogger.failed(ex.getMessageValue());
+    m_requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue()));
   } catch (std::exception& ex) {
     m_requestLogger.failed(ex.what());
+    m_requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     Finish(::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what()));
   }
 }
 
 CtaAdminServerWriteReactor::CtaAdminServerWriteReactor(std::unique_ptr<commands::stream::CtaAdminResponseStream> stream,
-                                                       grpc_server::RequestLogger requestLogger)
-    : m_stream(std::move(stream)),
+                                                       grpc_server::RequestLogger requestLogger,
+                                                       grpc_server::RequestTracker requestTracker)
+    : m_requestTracker(std::move(requestTracker)),
+      m_stream(std::move(stream)),
       m_requestLogger(std::move(requestLogger)) {
   NextWrite();
 }

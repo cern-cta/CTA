@@ -15,7 +15,7 @@
 
 #include "cta_frontend.pb.h"
 
-namespace cta::frontend {
+namespace cta::workflow_api {
 
 /// Helpers extracting fields from a workflow event. Exposed for unit testing only.
 namespace proto_notifications {
@@ -96,4 +96,4 @@ private:
   std::set<std::string, std::less<>> m_zeroLengthFilesDisallowedExceptions;
 };
 
-}  // namespace cta::frontend
+}  // namespace cta::workflow_api
