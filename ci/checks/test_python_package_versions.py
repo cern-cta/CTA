@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
 from pathlib import Path
 import runpy
 import shutil
@@ -17,8 +19,11 @@ ROOT = Path(__file__).resolve().parents[2]
 PACKAGES = ["lib/python/cta-sdk", "lib/python/ctaops-sdk", "lib/python/ctaops-utils", "tools/ctaops-cli"]
 
 
+VersionSource = tuple[dict[str, Any], Callable[..., str]]
+
+
 @pytest.fixture
-def version_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def version_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> VersionSource:
     for name in ("CI_COMMIT_TAG", "CI_PIPELINE_ID", "CTA_VERSION_BASE"):
         monkeypatch.delenv(name, raising=False)
     helper = tmp_path / "ci/utils/cta_version.py"
@@ -36,7 +41,7 @@ def version_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.mark.parametrize("tag", ["6.0.0", "6.0.0.dev1", "6.0.0.rc2"])
-def test_source_selection(version_source, monkeypatch: pytest.MonkeyPatch, tag: str) -> None:
+def test_source_selection(version_source: VersionSource, monkeypatch: pytest.MonkeyPatch, tag: str) -> None:
     version, git = version_source
     git("tag", "v" + tag)
     assert version["source_version"]() == "6.dev1"
@@ -48,7 +53,7 @@ def test_source_selection(version_source, monkeypatch: pytest.MonkeyPatch, tag: 
 
 @pytest.mark.parametrize("prepared", [False, True])
 def test_release_checkout_validation(
-    version_source, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prepared: bool
+    version_source: VersionSource, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prepared: bool
 ) -> None:
     version, git = version_source
     monkeypatch.setenv("CI_COMMIT_TAG", "v6.0.0")
@@ -98,7 +103,11 @@ def test_release_metadata_mismatch(monkeypatch: pytest.MonkeyPatch, tag: str, pr
     version = runpy.run_path(str(ROOT / "ci/utils/cta_version.py"))
     # Git integration is covered above; isolate the metadata comparison here.
     monkeypatch.setitem(version["source_version"].__globals__, "major_version", lambda: 6)
-    monkeypatch.setattr(subprocess, "check_output", lambda args, **kwargs: tag if args[1] == "tag" else "")
+
+    def git_output(args: list[str], **kwargs: object) -> str:
+        return tag if args[1] == "tag" else ""
+
+    monkeypatch.setattr(subprocess, "check_output", git_output)
     monkeypatch.delenv("CTA_VERSION_BASE", raising=False)
     monkeypatch.setenv("CI_COMMIT_TAG", tag)
     if prepared:

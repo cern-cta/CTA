@@ -311,7 +311,9 @@ def test_next_prerelease_uses_validated_commit(kind: str) -> None:
         patch.object(tag, "_validate_release_metadata", return_value=(None, "commit")) as metadata,
         patch.object(tag, "build_tag_plan") as build_plan,
     ):
-        tag.run(context, "v6.1.0", True, **{kind: True})
+        tag.run(
+            context, "v6.1.0", True, development=kind == "development", release_candidate=kind == "release_candidate"
+        )
     assert metadata.call_args.kwargs["development"] is (kind == "development")
     build_plan.assert_called_once_with(context, f"v6.1.0.{suffix}3", "commit", None, True)
 

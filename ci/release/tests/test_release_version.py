@@ -3,6 +3,8 @@
 
 """Source tags stay independent from package build variants."""
 
+from collections.abc import Callable, Iterable
+
 import pytest
 
 from release_version import CTAVersion, VersionError, previous_release, select_development, select_release_candidate
@@ -82,7 +84,7 @@ def test_previous_release_excludes_prereleases_even_with_historical_suffixes() -
     ("select", "suffix", "other"),
     [(select_development, "dev", "rc"), (select_release_candidate, "rc", "dev")],
 )
-def test_prerelease_numbering(select, suffix: str, other: str) -> None:
+def test_prerelease_numbering(select: Callable[[CTAVersion, Iterable[str]], int], suffix: str, other: str) -> None:
     version = CTAVersion.parse("v6.1.0")
     assert select(version, []) == 1
     tags = [f"v6.1.0.{suffix}3", f"v6.1.0.{other}9", f"v6.1.1.{suffix}8", f"v6.1.0.{suffix}7.el9", "unrelated"]
