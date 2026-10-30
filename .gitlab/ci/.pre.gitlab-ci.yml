@@ -42,12 +42,11 @@ prepare-cta-version:
   before_script:
     - !reference [.merge-train-guard, before_script]
   script:
-    - source ci/utils/cta_version.sh
-    - CTA_MAJOR_VERSION=$(read_cta_major_version project.json)
+    - CTA_MAJOR_VERSION=$(python3 lib/python/package_version.py major project.json)
     - CTA_VERSION_BASE=$(python3 lib/python/package_version.py)
     # Add build suffixes to the neutral source tag; derive native package metadata separately.
-    - CTA_VERSION=$(resolve_cta_version "$CTA_VERSION_BASE" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-    - CTA_PACKAGE_VERSION=$(resolve_cta_package_version "$CTA_VERSION")
+    - CTA_VERSION=$(python3 lib/python/package_version.py image "$CTA_VERSION_BASE" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+    - CTA_PACKAGE_VERSION=$(python3 lib/python/package_version.py native "$CTA_VERSION")
     - |
       printf 'CTA_MAJOR_VERSION=%s\nCTA_VERSION_BASE=%s\nCTA_VERSION=%s\nCTA_PACKAGE_VERSION=%s\n' \
         "$CTA_MAJOR_VERSION" "$CTA_VERSION_BASE" "$CTA_VERSION" "$CTA_PACKAGE_VERSION" > cta-version.env

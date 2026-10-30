@@ -190,9 +190,8 @@ build-cta-pgsched:
   before_script:
     - !reference [.merge-train-guard, before_script]
     # This compilation check deliberately differs from the primary pipeline variant.
-    - source ci/utils/cta_version.sh
-    - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-    - CTA_PACKAGE_VERSION=$(resolve_cta_package_version "$CTA_VERSION")
+    - CTA_VERSION=$(python3 lib/python/package_version.py image "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+    - CTA_PACKAGE_VERSION=$(python3 lib/python/package_version.py native "$CTA_VERSION")
     - export CTA_VERSION CTA_PACKAGE_VERSION
     - !reference [build-cta, before_script]
   # Disable artifacts

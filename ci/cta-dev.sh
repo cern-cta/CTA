@@ -41,8 +41,7 @@ ci_image_registry=$(jq -r .dev.ctaImageRegistry "${project_root}/project.json")
 readonly ci_image_registry
 
 # Global
-source "${script_dir}/utils/cta_version.sh"
-CTA_MAJOR_VERSION=$(read_cta_major_version "${project_root}/project.json")
+CTA_MAJOR_VERSION=$(python3 "${project_root}/lib/python/package_version.py" major "${project_root}/project.json")
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type=""
 oracle_support="false"
@@ -684,7 +683,7 @@ parse_options() {
     cta_image_tag_is_valid "$cta_image_tag" || \
       unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
   else
-    cta_image_tag=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+    cta_image_tag=$(python3 "${project_root}/lib/python/package_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
   fi
 
   # An explicit image tag refers to an image built elsewhere, most commonly by the CI. Without
@@ -1092,8 +1091,8 @@ build_cta() {
 
   # Resolve native package metadata before invoking the container build.
   local resolved_image_version package_version
-  resolved_image_version=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
-  package_version=$(resolve_cta_package_version "$resolved_image_version")
+  resolved_image_version=$(python3 "${project_root}/lib/python/package_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+  package_version=$(python3 "${project_root}/lib/python/package_version.py" native "$resolved_image_version")
 
   print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.

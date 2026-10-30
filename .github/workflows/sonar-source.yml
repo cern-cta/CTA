@@ -82,7 +82,6 @@ jobs:
           echo "PLATFORM=${PLATFORM}" >> "$GITHUB_ENV"
           cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
           ./ci/project-json/generate_versionlock.py --platform "${PLATFORM}" > /etc/yum/pluginconf.d/versionlock.list
-          source ci/utils/cta_version.sh
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           # Map GitHub metadata to the shared source-version helper's CI inputs.
           export CI_PIPELINE_ID="$GITHUB_RUN_ID"
@@ -91,8 +90,8 @@ jobs:
             export CI_COMMIT_TAG="$GITHUB_REF_NAME"
           fi
           CTA_VERSION_BASE=$(python3 lib/python/package_version.py)
-          CTA_VERSION=$(resolve_cta_version "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
-          CTA_PACKAGE_VERSION=$(resolve_cta_package_version "$CTA_VERSION")
+          CTA_VERSION=$(python3 lib/python/package_version.py image "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+          CTA_PACKAGE_VERSION=$(python3 lib/python/package_version.py native "$CTA_VERSION")
           CTA_USE_PGSCHED=OFF
           [[ "$SCHEDULER_TYPE" == "pgsched" ]] && CTA_USE_PGSCHED=ON
           CTA_WITH_ORACLE=OFF
