@@ -23,10 +23,10 @@ public:
   static constexpr const char* const c_tpsrvPrefixComment = "[cta-taped]";
   static std::string generateReasonFromLogMsg(int logLevel, std::string_view msg);
 
-  bool up = false;                     //!< Should the drive be up?
-  bool forceDown = false;              //!< Should going down preempt an existig mount?
-  std::optional<std::string> reason;   //!< The reason why operators put the drive down or up
-  std::optional<std::string> comment;  //!< General informations about the drive given by the operators
+  bool up = false;                                    //!< Should the drive be up?
+  bool forceDown = false;                             //!< Should going down preempt an existig mount?
+  std::optional<std::string> reason = std::nullopt;   //!< The reason why operators put the drive down or up
+  std::optional<std::string> comment = std::nullopt;  //!< General informations about the drive given by the operators
 };
 
 std::ostream& operator<<(std::ostream& os, const DesiredDriveState& obj);

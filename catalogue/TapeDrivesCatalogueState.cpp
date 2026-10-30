@@ -39,7 +39,7 @@ struct TapeDrivesCatalogueState::ReportDriveStatusInputs {
 TapeDrivesCatalogueState::TapeDrivesCatalogueState(catalogue::Catalogue& catalogue) : m_catalogue(catalogue) {}
 
 std::optional<common::dataStructures::DriveStatus>
-TapeDrivesCatalogueState::catalogueStatus(const common::dataStructures::DriveReport& report) {
+TapeDrivesCatalogueState::mapToDriveStatus(const common::dataStructures::DriveReport& report) {
   using common::dataStructures::DriveStatus;
   using common::dataStructures::ReportedDriveState;
   if (report.state == ReportedDriveState::Down && report.tapeSession) {
@@ -82,7 +82,7 @@ TapeDrivesCatalogueState::catalogueStatus(const common::dataStructures::DriveRep
 void TapeDrivesCatalogueState::reportDriveState(const common::dataStructures::DriveInfo& driveInfo,
                                                 const common::dataStructures::DriveReport& report,
                                                 log::LogContext& lc) const {
-  const auto status = catalogueStatus(report);
+  const auto status = mapToDriveStatus(report);
   if (!status) {
     return;
   }
