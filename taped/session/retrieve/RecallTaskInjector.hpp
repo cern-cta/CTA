@@ -51,6 +51,7 @@ public:
   * tape-reading tasks
   * @param diskWriter the one object that will hold all the threads which will be executing
   * disk-writing tasks
+  * @param drive Drive used for RAO queries; must outlive the injector.
   * @param client The one that will give us files to recall
   * @param filesPerRequest number of files we request from the client at once
   * @param bytesPerRequest number of bytes we request from the client at once
@@ -60,6 +61,7 @@ public:
   RecallTaskInjector(RecallMemoryManager& mm,
                      TapeSingleThreadInterface<TapeReadTask>& tapeReader,
                      DiskWriteThreadPool& diskWriter,
+                     cta::tape::drive::DriveInterface& drive,
                      cta::RetrieveMount& retrieveMount,
                      uint64_t maxFilesPerRequest,
                      uint64_t maxBytesPerRequest,
@@ -70,6 +72,7 @@ public:
         m_tapeReader(tapeReader),
         m_diskWriter(diskWriter),
         m_retrieveMount(retrieveMount),
+        m_drive(drive),
         m_lc(lc),
         m_maxBatchFiles(maxFilesPerRequest),
         m_maxBatchBytes(maxBytesPerRequest),
@@ -120,12 +123,6 @@ public:
    */
 
   bool reserveSpaceForNextJobBatch(std::list<std::unique_ptr<cta::RetrieveJob>>& nextJobBatch);
-
-  /**
-   * Set the drive interface in use
-   * @param di - Drive interface
-   */
-  void setDriveInterface(cta::tape::drive::DriveInterface* di);
 
   /**
    * Initialize Recommended Access Order parameters
@@ -235,7 +232,7 @@ private:
   cta::RetrieveMount& m_retrieveMount;
 
   /// Drive interface needed for performing Recommended Access Order query
-  cta::tape::drive::DriveInterface* m_drive {};
+  cta::tape::drive::DriveInterface& m_drive;
 
   std::vector<std::unique_ptr<cta::RetrieveJob>> m_jobs;
 

@@ -55,17 +55,10 @@ void RecallTaskInjector::startThreads() {
 }
 
 //------------------------------------------------------------------------------
-//setDriveInterface
-//------------------------------------------------------------------------------
-void RecallTaskInjector::setDriveInterface(cta::tape::drive::DriveInterface* di) {
-  m_drive = di;
-}
-
-//------------------------------------------------------------------------------
 //initRAO
 //------------------------------------------------------------------------------
 void RecallTaskInjector::initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue) {
-  m_raoManager = cta::tape::rao::RAOManager(dataConfig, m_drive, catalogue);
+  m_raoManager = cta::tape::rao::RAOManager(dataConfig, &m_drive, catalogue);
   m_raoFuture = m_raoPromise.get_future();
 }
 
@@ -414,7 +407,7 @@ void RecallTaskInjector::WorkerThread::run() {
      */
       m_parent.waitForPromise();
       try {
-        m_parent.m_raoManager.setEnterpriseRAOUdsLimits(m_parent.m_drive->getLimitUDS());
+        m_parent.m_raoManager.setEnterpriseRAOUdsLimits(m_parent.m_drive.getLimitUDS());
         LogContext::ScopedParam sp(m_parent.m_lc,
                                    Param("maxSupportedUDS", m_parent.m_raoManager.getMaxFilesSupported().value()));
         m_parent.m_lc.log(cta::log::INFO, "Query getLimitUDS for RAO Enterprise completed");

@@ -185,7 +185,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
   FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
-  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc);
+  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc);
 
   bool noFilesToRecall;
   ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
@@ -244,7 +244,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
   FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
-  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, tracker, lc);
+  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, drive, trm, 6, blockSize, tracker, lc);
 
   bool noFilesToRecall;
   ASSERT_FALSE(rti.synchronousFetch(noFilesToRecall));
