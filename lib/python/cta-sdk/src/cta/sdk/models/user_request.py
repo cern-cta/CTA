@@ -4,7 +4,7 @@
 from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Annotated, ClassVar, Final, Literal, Optional
+from typing import Annotated, Any, ClassVar, Final, Literal, Optional
 
 from cta.sdk.units import Byte
 from typing_extensions import override
@@ -108,13 +108,14 @@ class UserRequestSummary(ABC):
         if type(self) is UserRequestSummary:
             raise TypeError("UserRequestSummary is abstract and cannot be instantiated")
 
-    def __init_subclass__(cls) -> None:
+    @classmethod
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """
         Register the subclass for lookup by name.
 
         Use the [group_by][cta.sdk.models.user_request.UserRequestSummary.group_by] method for lookup.
         """
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
 
         if cls.group_key in cls._registry:
             raise ValueError(f"Duplicate group_key: {cls.group_key}")
