@@ -3,8 +3,9 @@
 
 import base64
 import re
+from collections.abc import Generator
 from contextlib import contextmanager
-from dataclasses import fields, replace
+from dataclasses import Field, fields, replace
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from getpass import getuser
@@ -16,7 +17,6 @@ from typing import (
     Any,
     ClassVar,
     Final,
-    Generator,
     Optional,
     Protocol,
     TypeVar,
@@ -37,7 +37,7 @@ class DataClassProtocol(Protocol):
         __dataclass_fields__: Dictionary of dataclass field definitions.
     """
 
-    __dataclass_fields__: ClassVar[dict]
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
 
 
 D = TypeVar("D", bound=DataClassProtocol)

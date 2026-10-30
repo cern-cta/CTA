@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import LogicalLibraryDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import LogicalLibrary, LogicalLibraryState, PhysicalLibrary, Tape
+from typing_extensions import override
 
 
 class LogicalLibraryDaoFile(LogicalLibraryDao):
@@ -15,6 +17,7 @@ class LogicalLibraryDaoFile(LogicalLibraryDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         name: str,
@@ -37,9 +40,11 @@ class LogicalLibraryDaoFile(LogicalLibraryDao):
         )
         self._handler.create(logical_library)
 
+    @override
     def get(self, name: str, /) -> LogicalLibrary:
         return self._handler.get(self.resource_type, name)
 
+    @override
     def delete(self, name: str, /) -> None:
         for tape in self._handler.iter(Tape):
             if tape.logical_library_name == name:
@@ -51,6 +56,7 @@ class LogicalLibraryDaoFile(LogicalLibraryDao):
 
         self._handler.delete(self.resource_type, name)
 
+    @override
     def list(self, *, state: Optional[LogicalLibraryState] = None) -> Iterator[LogicalLibrary]:
         yield from (
             logical_library
@@ -58,6 +64,7 @@ class LogicalLibraryDaoFile(LogicalLibraryDao):
             if state is None or logical_library.state == state
         )
 
+    @override
     def update(
         self,
         name: str,
@@ -77,12 +84,14 @@ class LogicalLibraryDaoFile(LogicalLibraryDao):
 
             logical_library.metadata = self._handler.refresh_metadata(logical_library.metadata, comment=comment)
 
+    @override
     def disable(self, name: str, /, *, reason: str) -> None:
         with self._handler.update(self.resource_type, name) as logical_library:
             logical_library.state = LogicalLibraryState.DISABLED
             logical_library.state_reason = reason
             logical_library.metadata = self._handler.refresh_metadata(logical_library.metadata)
 
+    @override
     def enable(self, name: str, /) -> None:
         with self._handler.update(self.resource_type, name) as logical_library:
             logical_library.state = LogicalLibraryState.ENABLED

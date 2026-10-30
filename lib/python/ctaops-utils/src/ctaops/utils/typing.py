@@ -25,7 +25,7 @@ def unwrap_optional_type(tp: Any) -> Optional[type]:
     origin = get_origin(tp)
 
     # Handle both `Union`` and the new `UnionType` (PEP 604) for Python 3.10+
-    if origin is Union or (hasattr(types, "UnionType") and origin is types.UnionType):  # type: ignore
+    if origin is Union or (hasattr(types, "UnionType") and origin is types.UnionType):
         return next((t for t in get_args(tp) if t is not type(None)), None)
     return None
 
@@ -76,7 +76,7 @@ def normalize_types(tp: Any) -> frozenset[type]:
         return frozenset(out)
 
     if origin is Literal:
-        out = set(type(lit) for lit in get_args(tp))
+        out = {type(lit) for lit in get_args(tp)}
         return frozenset(out)
 
     if isclass(origin):

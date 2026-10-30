@@ -8,7 +8,8 @@ are mounted for users based on disk activity patterns. Activity mount rules enab
 tape mounting decisions based on user access patterns and activity levels.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import ActivityMountRule
 

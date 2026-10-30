@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
+from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import UserRequestDao
 from cta.sdk.models import MountType, UserRequest
+from typing_extensions import override
 
 
 class UserRequestDaoCli(UserRequestDao):
@@ -19,7 +21,7 @@ class UserRequestDaoCli(UserRequestDao):
         return "queue"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> UserRequest:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> UserRequest:
         return UserRequest(
             MountType.RETRIEVE if raw_data["mountType"] == "RETRIEVE" else MountType.ARCHIVE,
             tape_pool_name=raw_data["tapepool"],
@@ -46,9 +48,10 @@ class UserRequestDaoCli(UserRequestDao):
             tapes_capacity=int(raw_data["tapesCapacity"]),
         )
 
+    @override
     def list(self, *, request_type: Optional[MountType] = None) -> Iterator[UserRequest]:
         yield from (
             self.raw_data_to_resource(json.loads(line))
-            for line in self._wrapper._run_streaming_command(self._wrapper.base_command + ["showqueues"])
+            for line in self._wrapper.run_streaming_command([*self._wrapper.base_command, "showqueues"])
             if (request_type is None or json.loads(line)["mountType"].upper().startswith(request_type.name))
         )

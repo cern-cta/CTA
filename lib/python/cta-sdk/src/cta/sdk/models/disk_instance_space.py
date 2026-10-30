@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Annotated, Final
 
 from cta.sdk.units import Byte
+from typing_extensions import override
 
 from .metadata import Metadata
 
@@ -30,13 +31,16 @@ class DiskInstanceSpace:
     free_space: Annotated[int, Byte]
     metadata: Metadata
 
+    @override
     def __str__(self):
         return f"DiskInstanceSpace({self.name}, {self.disk_instance_name})"
 
+    @override
     def __hash__(self) -> int:
         return hash((self.name, self.disk_instance_name))
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, DiskInstanceSpace):
             return False
         return self.name == other.name and self.disk_instance_name == other.disk_instance_name

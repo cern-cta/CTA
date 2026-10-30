@@ -1,9 +1,10 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from itertools import chain
-from typing import Iterator, Optional
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import TapeDao
@@ -20,6 +21,7 @@ from cta.sdk.models import (
     TapeStatistics,
     VerificationStatus,
 )
+from typing_extensions import override
 
 
 class TapeDaoFile(TapeDao):
@@ -28,6 +30,7 @@ class TapeDaoFile(TapeDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         vid: str,
@@ -90,9 +93,11 @@ class TapeDaoFile(TapeDao):
         )
         self._handler.create(tape)
 
+    @override
     def get(self, vid: str, /) -> Tape:
         return self._handler.get(self.resource_type, vid)
 
+    @override
     def delete(self, vid: str, /) -> None:
         for obj in chain(
             self._handler.iter(TapeFile),
@@ -107,6 +112,7 @@ class TapeDaoFile(TapeDao):
 
         self._handler.delete(self.resource_type, vid)
 
+    @override
     def list(
         self,
         /,
@@ -143,6 +149,19 @@ class TapeDaoFile(TapeDao):
             and (physical_library_name is None or tape.physical_library_name == physical_library_name)
         )
 
+    def _update_encryption_key(self, tape: Tape, encryption_key_name: str) -> None:
+        """Reject key changes on nonempty tapes before updating the key."""
+        if (
+            tape.encryption_key_name
+            and tape.encryption_key_name != encryption_key_name
+            and tape.statistics.file_count != 0
+        ):
+            raise BackendError(
+                f"Could not change an encryption key on a none empty tape: {self.resource_type}({tape.vid})", 2, {}
+            )
+        tape.encryption_key_name = encryption_key_name
+
+    @override
     def update(
         self,
         vid: str,
@@ -194,18 +213,11 @@ class TapeDaoFile(TapeDao):
             if dirty is not None:
                 tape.statistics.is_dirty = dirty
             if encryption_key_name is not None:
-                if (
-                    tape.encryption_key_name
-                    and tape.encryption_key_name != encryption_key_name
-                    and tape.statistics.file_count != 0
-                ):
-                    raise BackendError(
-                        f"Could not change an encryption key on a none empty tape: {self.resource_type}({vid})", 2, {}
-                    )
-                tape.encryption_key_name = encryption_key_name
+                self._update_encryption_key(tape, encryption_key_name)
 
             tape.metadata = self._handler.refresh_metadata(tape.metadata, comment=comment)
 
+    @override
     def reclaim(self, vid: str, /) -> None:
         with self._handler.update(self.resource_type, vid) as tape:
             tape.statistics = TapeStatistics(
@@ -218,6 +230,7 @@ class TapeDaoFile(TapeDao):
             )
             tape.metadata = self._handler.refresh_metadata(tape.metadata)
 
+    @override
     def change_state(self, vid: str, /, *, state: TapeState, reason: str) -> None:
         with self._handler.update(self.resource_type, vid) as tape:
             tape.state = state

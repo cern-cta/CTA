@@ -8,7 +8,8 @@ the protocol interface that DAO implementations must follow to create, read,
 update and delete `AdminUser` objects.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import AdminUser
 

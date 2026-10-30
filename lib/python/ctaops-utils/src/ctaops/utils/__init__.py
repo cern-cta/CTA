@@ -20,13 +20,13 @@ from ctaops.utils.dataclasses import copy_dataclass, flatten_dataclass_class, fl
 from ctaops.utils.logging import LoggingConfiguration, configure_logging
 
 __all__ = [
-    "CtaOpsConfigLoader",
     "NOT_SET",
+    "CtaOpsConfigLoader",
     "DataclassWithValidation",
     "LoggingConfiguration",
     "configure_logging",
-    "load_data",
+    "copy_dataclass",
     "flatten_dataclass_class",
     "flatten_dataclass_instance",
-    "copy_dataclass",
+    "load_data",
 ]

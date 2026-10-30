@@ -5,17 +5,15 @@ from typing import Optional
 
 import click
 from cta.sdk.models import LogicalLibraryState
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
+from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
-
-from ..context import AppContext
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["ll"])
 def logical_library():
-    """Manage CTA Logical Libraries"""
+    """Manage CTA Logical Libraries."""
 
 
 @logical_library.command(aliases=["add"])
@@ -24,7 +22,7 @@ def logical_library():
 @click.option("--comment", "-c", required=True)
 @click.pass_obj
 def create(obj: AppContext, name: str, physical_library: str, comment: str):
-    """Create CTA logical library"""
+    """Create CTA logical library."""
     obj.cta_client.logical_library.create(name, physical_library_name=physical_library, comment=comment)
     print(f"LogicalLibrary({name}) CREATED")
 
@@ -35,7 +33,7 @@ def create(obj: AppContext, name: str, physical_library: str, comment: str):
 @click.option("--comment", "-c")
 @click.pass_obj
 def update(obj: AppContext, name: str, physical_library: Optional[str], comment: Optional[str]):
-    """Update CTA logical library"""
+    """Update CTA logical library."""
     obj.cta_client.logical_library.update(name, comment=comment, physical_library_name=physical_library)
     print(f"LogicalLibrary({name}) UPDATED")
 
@@ -45,7 +43,7 @@ def update(obj: AppContext, name: str, physical_library: Optional[str], comment:
 @click.option("--reason", "-r", required=True)
 @click.pass_obj
 def disable(obj: AppContext, name: str, reason: str):
-    """Disable a CTA logical library"""
+    """Disable a CTA logical library."""
     obj.cta_client.logical_library.disable(name, reason=reason)
     print(f"LogicalLibrary({name}) DISABLED")
 
@@ -54,7 +52,7 @@ def disable(obj: AppContext, name: str, reason: str):
 @click.argument("name")
 @click.pass_obj
 def enable(obj: AppContext, name: str):
-    """Enable a CTA logical library"""
+    """Enable a CTA logical library."""
     obj.cta_client.logical_library.enable(name)
     print(f"LogicalLibrary({name}) ENABLED")
 
@@ -70,7 +68,7 @@ def enable(obj: AppContext, name: str):
 )
 @click.pass_obj
 def list_command(obj: AppContext, disabled: Optional[bool]):
-    """List logical libraries registered in CTA"""
+    """List logical libraries registered in CTA."""
     state = None if disabled is None else (LogicalLibraryState.DISABLED if disabled else LogicalLibraryState.ENABLED)
     print_dataclasses(obj.cta_client.logical_library.list(state=state), display_config=obj.config.display)
 
@@ -79,7 +77,7 @@ def list_command(obj: AppContext, disabled: Optional[bool]):
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get logical library registered in CTA"""
+    """Get logical library registered in CTA."""
     print_dataclasses(obj.cta_client.logical_library.get(name), display_config=obj.config.display)
 
 
@@ -87,6 +85,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove a CTA logical library"""
+    """Remove a CTA logical library."""
     obj.cta_client.logical_library.delete(name)
     print(f"LogicalLibrary({name}) DELETED")

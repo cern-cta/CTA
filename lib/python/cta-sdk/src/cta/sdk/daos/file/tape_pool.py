@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterable, Iterator
 from itertools import chain
-from typing import Iterable, Iterator, Optional
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import TapePoolDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, Tape, TapePool, TapePoolStatistics, VirtualOrganisation
+from typing_extensions import override
 
 
 class TapePoolDaoFile(TapePoolDao):
@@ -16,6 +18,7 @@ class TapePoolDaoFile(TapePoolDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         name: str,
@@ -30,9 +33,9 @@ class TapePoolDaoFile(TapePoolDao):
         try:
             self._handler.get(VirtualOrganisation, virtual_organisation_name)
             if supply_tape_pool_names is not None:
-                list(
+                [
                     self._handler.get(TapePool, tp_name) for tp_name in supply_tape_pool_names
-                )  # use list just to consume iterator
+                ]  # use list just to consume iterator
         except ResourceNotFoundError as e:
             raise BackendError("Linked resource does not exist", 2, {}) from e
         tape_pool = TapePool(
@@ -46,9 +49,11 @@ class TapePoolDaoFile(TapePoolDao):
         )
         self._handler.create(tape_pool)
 
+    @override
     def get(self, name: str, /) -> TapePool:
         return self._handler.get(self.resource_type, name)
 
+    @override
     def delete(self, name: str, /) -> None:
         for obj in chain(
             self._handler.iter(Tape),
@@ -69,6 +74,7 @@ class TapePoolDaoFile(TapePoolDao):
                 )
         self._handler.delete(self.resource_type, name)
 
+    @override
     def list(
         self,
         /,
@@ -83,6 +89,7 @@ class TapePoolDaoFile(TapePoolDao):
             and (encrypted is None or (tape_pool.encryption_key_name is not None) == encrypted)
         )
 
+    @override
     def update(
         self,
         name: str,
@@ -105,19 +112,21 @@ class TapePoolDaoFile(TapePoolDao):
                 tape_pool.min_writable_tape_count = min_writable_tape_count
             if supply_tape_pool_names is not None:
                 try:
-                    tape_pool.supply_tape_pool_names = list(
+                    tape_pool.supply_tape_pool_names = [
                         self._handler.get(TapePool, tp_name).name for tp_name in supply_tape_pool_names
-                    )
+                    ]
                 except ResourceNotFoundError as e:
                     raise BackendError("Linked resource does not exist", 2, {}) from e
 
             tape_pool.metadata = self._handler.refresh_metadata(tape_pool.metadata, comment=comment)
 
+    @override
     def remove_encryption(self, name: str, /) -> None:
         with self._handler.update(self.resource_type, name) as tape_pool:
             tape_pool.encryption_key_name = None
             tape_pool.metadata = self._handler.refresh_metadata(tape_pool.metadata)
 
+    @override
     def set_encryption_key_name(self, name: str, /, *, encryption_key_name: str) -> None:
         with self._handler.update(self.resource_type, name) as tape_pool:
             tape_pool.encryption_key_name = encryption_key_name

@@ -7,8 +7,6 @@ import unittest
 from unittest.mock import patch
 
 import pytest
-
-
 from gitlab_api import GitLabAPI, GitLabAPIError
 
 

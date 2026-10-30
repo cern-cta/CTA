@@ -1,4 +1,4 @@
-from typing import Generator
+from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,12 +10,14 @@ def mock_wrapper(
     request: pytest.FixtureRequest, raw_data: str
 ) -> Generator[tuple[CtaCliWrapper, tuple[MagicMock, MagicMock]], None, None]:
     """
+    Configure overrides for the CLI wrapper.
+
     You can override with:
     - stdout: str or slice:
         - slice select raw_data elements to return
         - any other string: used as-is
     - stderr: str (default: "")
-    - returncode: int (default: 0)
+    - returncode: int (default: 0).
     """
     stdout = ""
     stderr = ""
@@ -23,15 +25,12 @@ def mock_wrapper(
 
     if hasattr(request, "param"):
         stdout_param = request.param.get("stdout", "")
-        if isinstance(stdout_param, slice):
-            stdout = "\n".join(raw_data.splitlines()[stdout_param])
-        else:
-            stdout = stdout_param
+        stdout = "\n".join(raw_data.splitlines()[stdout_param]) if isinstance(stdout_param, slice) else stdout_param
 
         stderr = request.param.get("stderr", "")
         returncode = request.param.get("returncode", 0)
 
-    def fake_run_streaming_command(*args, **kwargs):
+    def fake_run_streaming_command(*args: object, **kwargs: object):
         yield from stdout.splitlines()
 
     with (
@@ -40,9 +39,7 @@ def mock_wrapper(
             "_run_command",
             return_value=MagicMock(args="Nothing for now", stdout=stdout, stderr=stderr, returncode=returncode),
         ) as mock_run,
-        patch.object(
-            CtaCliWrapper, "_run_streaming_command", side_effect=fake_run_streaming_command
-        ) as mock_stream_run,
+        patch.object(CtaCliWrapper, "run_streaming_command", side_effect=fake_run_streaming_command) as mock_stream_run,
     ):
         yield CtaCliWrapper("cta-admin"), (mock_run, mock_stream_run)
 

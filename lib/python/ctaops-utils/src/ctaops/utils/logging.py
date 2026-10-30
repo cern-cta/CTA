@@ -35,11 +35,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from typing_extensions import override
+
 try:
-    from rich.console import Console
     from rich.logging import RichHandler
 except ImportError:
-    RichHandler = None  # type: ignore
+    RichHandler = None
 
 
 @dataclass
@@ -92,7 +93,6 @@ class RotatingCompressingGroupFileHandler(logging.handlers.RotatingFileHandler):
         Raises:
             FileNotFoundError: If the parent directory does not exist.
         """
-
         if not self.file_path.parent.exists():
             raise FileNotFoundError(f"Parent directory {self.file_path.parent} does not exist")
 
@@ -105,11 +105,11 @@ class RotatingCompressingGroupFileHandler(logging.handlers.RotatingFileHandler):
         self,
         file_path: Path,
         date_fmt: str,
-        mode="a",
-        max_bytes=0,
-        backup_count=0,
-        encoding="utf-8",
-        delay=False,
+        mode: str = "a",
+        max_bytes: int = 0,
+        backup_count: int = 0,
+        encoding: Optional[str] = "utf-8",
+        delay: bool = False,
     ):
         """
         Initialize the rotating, compressing file handler.
@@ -123,7 +123,6 @@ class RotatingCompressingGroupFileHandler(logging.handlers.RotatingFileHandler):
             encoding: The file encoding (default: "utf-8").
             delay: If True, file opening is deferred until the first log message (default: False).
         """
-
         self.file_path = file_path
         self.date_fmt = date_fmt
         self._create_log_file()
@@ -157,15 +156,15 @@ class RotatingCompressingGroupFileHandler(logging.handlers.RotatingFileHandler):
             src: The path to the source log file to rotate.
             dst: The path to the destination compressed log file (.gz).
         """
-        with open(src, "rb") as source_file:
-            with gzip.GzipFile(dst, "wb") as dst_file:
-                shutil.copyfileobj(source_file, dst_file)
+        with open(src, "rb") as source_file, gzip.GzipFile(dst, "wb") as dst_file:
+            shutil.copyfileobj(source_file, dst_file)
         shutil.chown(path=dst, group=self.file_path.parent.group())
         os.remove(src)
 
+    @override
     def doRollover(self):  # Name decided by logging lib
         """
-        Performs the log file rotation, compression, and cleanup.
+        Rotate, compress, and clean up log files.
 
         This method is called by the logging system when the current log file
         reaches its maximum size. It handles the rotation, compresses the old
@@ -174,7 +173,7 @@ class RotatingCompressingGroupFileHandler(logging.handlers.RotatingFileHandler):
         """
         if self.stream:
             self.stream.close()
-            self.stream = None  # type: ignore
+            self.stream = None
 
         log_archive_list = sorted(Path(".").glob("*.gz"))
         if self.backupCount > 0:
@@ -193,7 +192,7 @@ class RotatingCompressingGroupFileHandler(logging.handlers.RotatingFileHandler):
 
 def configure_logging(logging_conf: LoggingConfiguration) -> None:
     """
-    Configures the root logger based on the provided configuration.
+    Configure the root logger based on the provided configuration.
 
     This function sets up two handlers for the root logger:
     1. A `StreamHandler` that logs to stderr (used if no file provided)
@@ -206,7 +205,6 @@ def configure_logging(logging_conf: LoggingConfiguration) -> None:
         logging_conf: A `LoggingConfiguration` object containing all the
                       necessary settings for logging.
     """
-
     root_logger = logging.getLogger()
     root_logger.handlers.clear()
     root_logger.setLevel(logging_conf.level)
@@ -223,6 +221,8 @@ def configure_logging(logging_conf: LoggingConfiguration) -> None:
         stderr_handler.setFormatter(formatter)
         root_logger.addHandler(stderr_handler)
     else:
+        from rich.console import Console
+
         stderr_console = Console(stderr=True)
         root_logger.addHandler(
             RichHandler(

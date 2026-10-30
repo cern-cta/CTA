@@ -12,7 +12,7 @@ if t.TYPE_CHECKING:
     from cta.sdk.client.grpc.models import WorkflowConfig, WorkflowFileInfo
 
 
-def _get_disk_buffer_mode_url(
+def get_disk_buffer_mode_url(
     key: str, workflow_cfg: "WorkflowConfig", file_info: "WorkflowFileInfo"
 ) -> t.Optional[str]:
     """Resolve a named disk-buffer URL from the workflow configuration."""
@@ -30,7 +30,7 @@ def _get_disk_buffer_mode_url(
     raise WorkflowConfigError(f"Unknown disk buffer mode '{workflow_cfg.disk_buffer_mode}'")
 
 
-def _build_eos_query(disk_endpoint: str, query: dict, schema: str = "eosQuery"):
+def _build_eos_query(disk_endpoint: str, query: dict[str, object], schema: str = "eosQuery"):
     """Build an EOS query URL for the given file info."""
     query_str = "&".join(f"{k}={v}" for k, v in query.items())
     return f"{schema}://{disk_endpoint}?{query_str}"

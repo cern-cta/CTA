@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import PhysicalLibraryDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Metadata, PhysicalLibrary, PhysicalLibraryState
+from typing_extensions import override
 
 
 class PhysicalLibraryDaoCli(PhysicalLibraryDao):
@@ -19,7 +21,7 @@ class PhysicalLibraryDaoCli(PhysicalLibraryDao):
         return "physicallibrary"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> PhysicalLibrary:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> PhysicalLibrary:
         return PhysicalLibrary(
             name=raw_data["name"],
             manufacturer=raw_data["manufacturer"],
@@ -44,15 +46,16 @@ class PhysicalLibraryDaoCli(PhysicalLibraryDao):
             ),
         )
 
+    @override
     def get(self, name: str, /) -> PhysicalLibrary:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
-
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_pl = next(raw_item for raw_item in self._wrapper.list(self.resource_type) if raw_item["name"] == name)
         except StopIteration as e:
             raise ResourceNotFoundError(self.resource_type, {"name": name}) from e
         return self.raw_data_to_resource(raw_pl)
 
+    @override
     def list(self, *, state: Optional[PhysicalLibraryState] = None) -> Iterator[PhysicalLibrary]:
         yield from (
             self.raw_data_to_resource(raw_item)
@@ -60,9 +63,11 @@ class PhysicalLibraryDaoCli(PhysicalLibraryDao):
             if (state is None or raw_item["isDisabled"] == (state == PhysicalLibraryState.DISABLED))
         )
 
+    @override
     def delete(self, name: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name})
 
+    @override
     def create(
         self,
         name: str,
@@ -98,6 +103,7 @@ class PhysicalLibraryDaoCli(PhysicalLibraryDao):
             data=data,
         )
 
+    @override
     def update(
         self,
         name: str,
@@ -128,8 +134,10 @@ class PhysicalLibraryDaoCli(PhysicalLibraryDao):
             data=data,
         )
 
+    @override
     def disable(self, name: str, /, *, reason: str) -> None:
         self._wrapper.update(self.resource_type, {"name": name}, data={"disabled": "true", "disabledreason": reason})
 
+    @override
     def enable(self, name: str, /) -> None:
         self._wrapper.update(self.resource_type, {"name": name}, data={"disabled": "false"})

@@ -42,7 +42,6 @@ class Unit(ABC):
     @abstractmethod
     def __init__(self):
         """Initialize the unit marker."""
-        pass
 
 
 class Byte(Unit):
@@ -59,7 +58,6 @@ class Byte(Unit):
 
     def __init__(self):
         """Initialize the Byte unit marker."""
-        pass
 
 
 class Percentage(Unit):
@@ -76,7 +74,6 @@ class Percentage(Unit):
 
     def __init__(self):
         """Initialize the Percentage unit marker."""
-        pass
 
 
 class BytePerSecond(Unit):
@@ -93,7 +90,6 @@ class BytePerSecond(Unit):
 
     def __init__(self):
         """Initialize the BytePerSecond unit marker."""
-        pass
 
 
 class FreeText(Unit):
@@ -107,4 +103,3 @@ class FreeText(Unit):
 
     def __init__(self):
         """Initialize the FreeText unit marker."""
-        pass

@@ -8,7 +8,8 @@ of tapes that map to a physical library. Logical libraries organize tape media a
 logical access patterns independent of physical arrangements.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import LogicalLibrary, LogicalLibraryState
 

@@ -9,7 +9,7 @@ field formatting.
 """
 
 import json
-from dataclasses import asdict, fields, is_dataclass
+from dataclasses import Field, asdict, fields, is_dataclass
 from typing import (
     Any,
     ClassVar,
@@ -17,15 +17,15 @@ from typing import (
     Optional,
     Protocol,
     TypeVar,
+    Union,
     cast,
 )
 
 from cta.sdk.units import FreeText
+from ctaops.cli.display.encoders import CtaSdkJsonEncoder, encode_table_field, encode_table_header
 from ctaops.utils.dataclasses import flatten_dataclass_class, flatten_dataclass_instance
 from rich.table import Table
 from rich.text import Text
-
-from ctaops.cli.display.encoders import CtaSdkJsonEncoder, encode_table_field, encode_table_header
 
 
 class DataClassProtocol(Protocol):
@@ -35,7 +35,7 @@ class DataClassProtocol(Protocol):
         __dataclass_fields__: Dictionary of dataclass field definitions.
     """
 
-    __dataclass_fields__: ClassVar[dict]
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
 
 
 D = TypeVar("D", bound=DataClassProtocol)
@@ -43,7 +43,7 @@ D = TypeVar("D", bound=DataClassProtocol)
 
 def dataclass_to_rich_table(
     obj: DataClassProtocol, title: Optional[str] = None, max_depth: int = 5, _current_depth: int = 0
-) -> Table:
+) -> Union[Table, Text]:
     """Convert a dataclass object to a Rich table for display.
 
     Creates a formatted table showing all fields and values of a dataclass,
@@ -57,7 +57,7 @@ def dataclass_to_rich_table(
         _current_depth: Current recursion depth (internal use only).
 
     Returns:
-        Rich Table object formatted for display.
+        Rich table, or a Text placeholder when the recursion limit is reached.
 
     Raises:
         ValueError: If obj is not a dataclass instance.
@@ -66,7 +66,7 @@ def dataclass_to_rich_table(
         raise ValueError("Object must be a dataclass instance")
 
     if _current_depth >= max_depth:
-        return Text(f"[yellow]Max depth ({max_depth}) reached[/yellow]")  # type: ignore
+        return Text(f"[yellow]Max depth ({max_depth}) reached[/yellow]")
 
     table = Table(
         title=title or f"{type(obj).__name__}", show_header=True, header_style="bold magenta", border_style="blue"
@@ -84,7 +84,7 @@ def dataclass_to_rich_table(
                 cast(DataClassProtocol, field_value),
                 title=f"{field_name}",
                 max_depth=max_depth,
-                _current_depth=_current_depth + 1,  # type: ignore
+                _current_depth=_current_depth + 1,
             )
             table.add_row(field_name, nested_table)
 
@@ -122,7 +122,7 @@ class DataClassBaseFormatter(Generic[D]):
         D: Dataclass type being formatted.
     """
 
-    def __init_subclass__(cls, dataclass_type: type[D], **kwargs) -> None:
+    def __init_subclass__(cls, dataclass_type: type[D], **kwargs: object) -> None:
         """Register subclass as formatter for specified dataclass type.
 
         Args:
@@ -160,7 +160,9 @@ class DataClassBaseFormatter(Generic[D]):
         Returns:
             Rich Table for display.
         """
-        return dataclass_to_rich_table(obj)
+        table = dataclass_to_rich_table(obj)
+        assert isinstance(table, Table)  # The default depth always produces a root table.
+        return table
 
     def _default_raw_columns_names(self) -> list[str]:
         return [
@@ -222,7 +224,6 @@ class DataClassBaseFormatter(Generic[D]):
         Returns:
             List of tuples (column_name, formatting_options_dict).
         """
-
         return [
             encode_table_header(col_name, *col_types)
             for col_name, col_types in zip(self._raw_columns_names(), self._raw_columns_types())
@@ -272,11 +273,12 @@ class DataClassFormatterProvider:
     and caches formatter instances for performance.
     """
 
-    _registry: dict[type[DataClassProtocol], type[DataClassBaseFormatter]] = {}
-    _formatters_cache: dict[type[DataClassProtocol], DataClassBaseFormatter] = {}
+    # The cache holds different model types; register/get preserve each caller's model type.
+    _registry: ClassVar[dict[type[DataClassProtocol], type[DataClassBaseFormatter[Any]]]] = {}
+    _formatters_cache: ClassVar[dict[type[DataClassProtocol], DataClassBaseFormatter[Any]]] = {}
 
     @classmethod
-    def register(cls, dataclass_type: type[DataClassProtocol], custom_formatter: type[DataClassBaseFormatter]) -> None:
+    def register(cls, dataclass_type: type[D], custom_formatter: type[DataClassBaseFormatter[D]]) -> None:
         """Register a custom formatter for a dataclass type.
 
         Args:
@@ -286,7 +288,7 @@ class DataClassFormatterProvider:
         cls._registry.setdefault(dataclass_type, custom_formatter)
 
     @classmethod
-    def get(cls, dataclass_type: type[DataClassProtocol], *exclude_fields: str) -> DataClassBaseFormatter:
+    def get(cls, dataclass_type: type[D], *exclude_fields: str) -> DataClassBaseFormatter[D]:
         """Get or create a formatter instance for a dataclass type.
 
         Returns cached formatter if available, otherwise creates new instance

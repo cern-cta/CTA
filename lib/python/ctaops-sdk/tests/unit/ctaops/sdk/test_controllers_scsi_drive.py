@@ -7,7 +7,9 @@ and pathlib.Path.is_char_device to keep tests hermetic.
 
 import errno
 import subprocess
-from typing import Any
+from collections.abc import Callable, Iterable
+from types import TracebackType
+from typing import Any, Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -24,12 +26,22 @@ from ctaops.sdk.exceptions import (
 
 
 @pytest.fixture(autouse=True)
-def patch_is_char_device(monkeypatch):
+def patch_is_char_device(monkeypatch: pytest.MonkeyPatch):
     """Treat any /dev/* path the SDK opens as a character device."""
-    monkeypatch.setattr("pathlib.Path.is_char_device", lambda self: True)
+
+    def fake_callback(self: object):
+        return True
+
+    monkeypatch.setattr("pathlib.Path.is_char_device", fake_callback)
 
 
-def _build_st_device(device_factory, *, sys_name="nst0", serial="DRSN", ctaops_name="T0-LIB0-DRV0"):
+def _build_st_device(
+    device_factory: Callable[..., MagicMock],
+    *,
+    sys_name: str = "nst0",
+    serial: Optional[str] = "DRSN",
+    ctaops_name: str = "T0-LIB0-DRV0",
+):
     parent = MagicMock(name="ScsiTarget")
     nst_device = device_factory(
         sys_name=sys_name,
@@ -54,31 +66,37 @@ def _build_st_device(device_factory, *, sys_name="nst0", serial="DRSN", ctaops_n
 
 
 @pytest.fixture
-def fake_context(device_factory, make_context):
+def fake_context(device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]):
     nst_device, sg_device, st_device = _build_st_device(device_factory)
     ctx = make_context([nst_device, sg_device, st_device])
     return ctx, nst_device
 
 
-def test_init_rejects_non_st_device(device_factory, make_context):
+def test_init_rejects_non_st_device(
+    device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]
+):
     bad = device_factory(sys_name="sda", subsystem="block")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="not a valid tape drive nst device"):
         ScsiDriveController(bad, context=make_context([]))
 
 
-def test_init_rejects_st_with_wrong_sys_name(device_factory, make_context):
+def test_init_rejects_st_with_wrong_sys_name(
+    device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]
+):
     bad = device_factory(sys_name="sttX", subsystem="scsi_tape")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="not a valid tape drive nst device"):
         ScsiDriveController(bad, context=make_context([]))
 
 
-def test_serial_number_returns_id_scsi_serial(fake_context):
+def test_serial_number_returns_id_scsi_serial(fake_context: MagicMock):
     ctx, nst = fake_context
     drv = ScsiDriveController(nst, context=ctx)
     assert drv.serial_number == "DRSN"
 
 
-def test_serial_number_missing_raises(device_factory, make_context):
+def test_serial_number_missing_raises(
+    device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]
+):
     parent = MagicMock(name="ScsiTarget")
     nst = device_factory(
         sys_name="nst0",
@@ -89,16 +107,16 @@ def test_serial_number_missing_raises(device_factory, make_context):
     sg = device_factory(sys_name="sg5", subsystem="scsi_generic", parent=parent)
     st = device_factory(sys_name="st0", subsystem="scsi_tape", parent=parent)
     drv = ScsiDriveController(nst, context=make_context([nst, sg, st]))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="ID_SCSI_SERIAL"):
         drv.serial_number  # noqa: B018
 
 
-def test_set_compression_invokes_mt(monkeypatch, fake_context):
+def test_set_compression_invokes_mt(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     ctx, nst = fake_context
     drv = ScsiDriveController(nst, context=ctx)
     seen: dict[str, Any] = {}
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         seen["cmd"] = list(cmd)
         return subprocess.CompletedProcess(args=cmd, returncode=0)
 
@@ -110,11 +128,11 @@ def test_set_compression_invokes_mt(monkeypatch, fake_context):
     assert seen["cmd"][3:] == ["compression", "1"]
 
 
-def test_set_compression_subprocess_error_wrapped(monkeypatch, fake_context):
+def test_set_compression_subprocess_error_wrapped(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     ctx, nst = fake_context
     drv = ScsiDriveController(nst, context=ctx)
 
-    def fake_run(*args, **kwargs):
+    def fake_run(*args: Any, **kwargs: Any):
         raise subprocess.CalledProcessError(1, args[0])
 
     monkeypatch.setattr("ctaops.sdk.controllers.scsi.drive.subprocess.run", fake_run)
@@ -122,45 +140,58 @@ def test_set_compression_subprocess_error_wrapped(monkeypatch, fake_context):
         drv.set_compression(1)
 
 
-def test_has_loaded_tape_true_when_online(monkeypatch, fake_context):
+def test_has_loaded_tape_true_when_online(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout="DRIVE: ONLINE\n")
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="DRIVE: ONLINE\n"),
+        fake_run,
     )
     assert drv.has_loaded_tape() is True
 
 
-def test_has_loaded_tape_false_when_no_online(monkeypatch, fake_context):
+def test_has_loaded_tape_false_when_no_online(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout="DRIVE: OFFLINE\n")
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="DRIVE: OFFLINE\n"),
+        fake_run,
     )
     assert drv.has_loaded_tape() is False
 
 
-def test_has_loaded_tape_uses_word_boundaries(monkeypatch, fake_context):
-    """Regression: `ONLINE` embedded in a longer token must NOT trigger a
-    positive — the previous `"ONLINE" in stdout` check did, the new
-    word-boundary matcher does not."""
+def test_has_loaded_tape_uses_word_boundaries(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
+    """Reject `ONLINE` embedded in a longer token.
+
+    The previous `"ONLINE" in stdout` check matched these tokens; the word-boundary matcher does not.
+    """
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout="status: NOT_ONLINE_YET\n")
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="status: NOT_ONLINE_YET\n"),
+        fake_run,
     )
     assert drv.has_loaded_tape() is False
 
 
-def test_unload_skips_when_no_tape(monkeypatch, fake_context):
+def test_unload_skips_when_no_tape(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
     calls: list[list[str]] = []
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         calls.append(list(cmd))
         if "status" in cmd:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="OFFLINE")
@@ -171,12 +202,12 @@ def test_unload_skips_when_no_tape(monkeypatch, fake_context):
     assert len(calls) == 1  # only the status check, no eject
 
 
-def test_unload_runs_eject_when_tape_loaded(monkeypatch, fake_context):
+def test_unload_runs_eject_when_tape_loaded(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
     calls: list[list[str]] = []
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         calls.append(list(cmd))
         if "status" in cmd:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="ONLINE")
@@ -198,18 +229,22 @@ def test_unload_runs_eject_when_tape_loaded(monkeypatch, fake_context):
         "    0000 11 22 33 44 55 66 77 88 09 19 aa bb cc dd ee\n",
     ],
 )
-def test_get_drive_temperature_parses_value(monkeypatch, fake_context, row):
+def test_get_drive_temperature_parses_value(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock, row: str):
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
     sg_logs_output = "Log page code=0xd,0x1, DS=0, SPF=1, page_len=0x100\n" + row
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout=sg_logs_output)
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout=sg_logs_output),
+        fake_run,
     )
     assert drv.get_drive_temperature() == 0x19
 
 
-def test_get_drive_temperature_short_dump_raises(monkeypatch, fake_context):
+def test_get_drive_temperature_short_dump_raises(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     """The hex parser must fail loudly when the dump is shorter than expected."""
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
@@ -217,20 +252,28 @@ def test_get_drive_temperature_short_dump_raises(monkeypatch, fake_context):
         "Log page code=0xd,0x1, DS=0, SPF=1, page_len=0x100\n"
         "    00 11 22 33\n"  # only 4 bytes — not enough for offset 9
     )
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout=sg_logs_output)
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout=sg_logs_output),
+        fake_run,
     )
     with pytest.raises(DriveOperationError):
         drv.get_drive_temperature()
 
 
-def test_get_drive_temperature_unsupported_drive(monkeypatch, fake_context):
+def test_get_drive_temperature_unsupported_drive(monkeypatch: pytest.MonkeyPatch, fake_context: MagicMock):
     ctx, st = fake_context
     drv = ScsiDriveController(st, context=ctx)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout="some other format\n")
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="some other format\n"),
+        fake_run,
     )
     with pytest.raises(DriveOperationError):
         drv.get_drive_temperature()
@@ -239,7 +282,12 @@ def test_get_drive_temperature_unsupported_drive(monkeypatch, fake_context):
 # --- Mounted drive tests --------------------------------------------------- #
 
 
-def _build_mounted(monkeypatch, device_factory, make_context, vid="VID000"):
+def _build_mounted(
+    monkeypatch: pytest.MonkeyPatch,
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    vid: str = "VID000",
+):
     st_device, sg_device, nst_device = _build_st_device(device_factory)
     ctx = make_context([st_device, sg_device, nst_device])
     callback = MagicMock(name="UnmountCallback")
@@ -247,7 +295,11 @@ def _build_mounted(monkeypatch, device_factory, make_context, vid="VID000"):
     return md, callback
 
 
-def test_mounted_drive_unmount_runs_once(device_factory, make_context, monkeypatch):
+def test_mounted_drive_unmount_runs_once(
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    monkeypatch: pytest.MonkeyPatch,
+):
     md, callback = _build_mounted(monkeypatch, device_factory, make_context)
 
     md.unmount()
@@ -255,7 +307,11 @@ def test_mounted_drive_unmount_runs_once(device_factory, make_context, monkeypat
     assert callback.call_count == 1
 
 
-def test_mounted_drive_context_manager_invokes_callback(device_factory, make_context, monkeypatch):
+def test_mounted_drive_context_manager_invokes_callback(
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    monkeypatch: pytest.MonkeyPatch,
+):
     md, callback = _build_mounted(monkeypatch, device_factory, make_context)
 
     with md:
@@ -280,24 +336,37 @@ def test_checksum_matches_adler32_of_repeated_block():
     assert actual == expected
 
 
-def test_write_files_yields_then_raises_eot_on_enospc(device_factory, make_context, monkeypatch):
+def test_write_files_yields_then_raises_eot_on_enospc(
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    monkeypatch: pytest.MonkeyPatch,
+):
     md, _ = _build_mounted(monkeypatch, device_factory, make_context)
 
-    monkeypatch.setattr("ctaops.sdk.controllers.scsi.drive.os.urandom", lambda n: b"\x00" * n)
+    def zero_bytes(n: int):
+        return b"\x00" * n
+
+    monkeypatch.setattr("ctaops.sdk.controllers.scsi.drive.os.urandom", zero_bytes)
 
     write_calls = {"count": 0}
 
     class _BoomDev:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args: Any, **kwargs: Any):
             pass
 
         def __enter__(self):
             return self
 
-        def __exit__(self, exc_type, exc, tb):
+        def __exit__(
+            self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
+        ):
             return False
 
-        def write(self, data):
+        def writelines(self, blocks: Iterable[bytes]) -> None:
+            for block in blocks:
+                self.write(block)
+
+        def write(self, data: bytes):
             write_calls["count"] += 1
             # Blow up on third file, mid-write
             if write_calls["count"] > 8:
@@ -305,19 +374,25 @@ def test_write_files_yields_then_raises_eot_on_enospc(device_factory, make_conte
                 err.errno = errno.ENOSPC
                 raise err
 
-    monkeypatch.setattr("builtins.open", lambda *a, **kw: _BoomDev())
+    def fake_open(*a: Any, **kw: Any):
+        return _BoomDev()
+
+    monkeypatch.setattr("builtins.open", fake_open)
 
     yielded: list[tuple[int, int]] = []
     with pytest.raises(EOTError) as excinfo:
-        for item in md.write_files(file_size=1024, n=10, block_size=256):
-            yielded.append(item)
+        yielded.extend(md.write_files(file_size=1024, n=10, block_size=256))
 
     # We yielded at least one full file before the next file ran out of space.
     assert yielded
     assert excinfo.value.written_files == len(yielded)
 
 
-def test_write_files_raises_when_already_unmounted(device_factory, make_context, monkeypatch):
+def test_write_files_raises_when_already_unmounted(
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    monkeypatch: pytest.MonkeyPatch,
+):
     md, _ = _build_mounted(monkeypatch, device_factory, make_context)
     md.unmount()
 
@@ -325,7 +400,11 @@ def test_write_files_raises_when_already_unmounted(device_factory, make_context,
         list(md.write_files(file_size=1024, n=1, block_size=256))
 
 
-def test_read_files_yields_per_file_then_raises_eod(device_factory, make_context, monkeypatch):
+def test_read_files_yields_per_file_then_raises_eod(
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    monkeypatch: pytest.MonkeyPatch,
+):
     md, _ = _build_mounted(monkeypatch, device_factory, make_context)
 
     sequence = iter(
@@ -342,36 +421,55 @@ def test_read_files_yields_per_file_then_raises_eod(device_factory, make_context
         def __enter__(self):
             return self
 
-        def __exit__(self, exc_type, exc, tb):
+        def __exit__(
+            self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
+        ):
             return False
 
-        def read(self, _block_size):
+        def read(self, _block_size: int):
             return next(sequence)
 
-    monkeypatch.setattr("builtins.open", lambda *a, **kw: _Dev())
+    def fake_open(*a: Any, **kw: Any):
+        return _Dev()
+
+    monkeypatch.setattr("builtins.open", fake_open)
 
     out: list[tuple[int, int]] = []
     with pytest.raises(EODError):
-        for item in md.read_files(n=5, block_size=256):
-            out.append(item)
+        out.extend(md.read_files(n=5, block_size=256))
 
     assert [idx for idx, _ in out] == [1, 2]
 
 
-def test_read_files_blocks_when_already_unmounted(device_factory, make_context, monkeypatch):
+def test_read_files_blocks_when_already_unmounted(
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    monkeypatch: pytest.MonkeyPatch,
+):
     md, _ = _build_mounted(monkeypatch, device_factory, make_context)
     md.unmount()
     with pytest.raises(DriveStateError):
         list(md.read_files(n=1, block_size=256))
 
 
-def test_get_vol1_returns_decoded_label(device_factory, make_context, monkeypatch):
+def test_get_vol1_returns_decoded_label(
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+    monkeypatch: pytest.MonkeyPatch,
+):
     md, _ = _build_mounted(monkeypatch, device_factory, make_context)
-    monkeypatch.setattr("ctaops.sdk.controllers.scsi.drive.os.sync", lambda: None)
+
+    def fake_callback():
+        return None
+
+    monkeypatch.setattr("ctaops.sdk.controllers.scsi.drive.os.sync", fake_callback)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0)
 
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0),
+        fake_run,
     )
 
     label_bytes = b"VOL1ABC123" + b" " * 70
@@ -380,30 +478,47 @@ def test_get_vol1_returns_decoded_label(device_factory, make_context, monkeypatc
         def __enter__(self):
             return self
 
-        def __exit__(self, exc_type, exc, tb):
+        def __exit__(
+            self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
+        ):
             return False
 
-        def read(self, n):
+        def read(self, n: int):
             return label_bytes[:n]
 
-    monkeypatch.setattr("builtins.open", lambda *a, **kw: _Dev())
+    def fake_open(*a: Any, **kw: Any):
+        return _Dev()
+
+    monkeypatch.setattr("builtins.open", fake_open)
     assert md.get_VOL1() == label_bytes.decode("utf-8")
 
 
-def test_is_tape_write_protected(monkeypatch, device_factory, make_context):
+def test_is_tape_write_protected(
+    monkeypatch: pytest.MonkeyPatch,
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+):
     md, _ = _build_mounted(monkeypatch, device_factory, make_context)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout="WR_PROT")
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.drive.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="WR_PROT"),
+        fake_run,
     )
     assert md.is_tape_write_protected() is True
 
 
-def test_set_block_size_runs_mt_setblk(monkeypatch, device_factory, make_context):
+def test_set_block_size_runs_mt_setblk(
+    monkeypatch: pytest.MonkeyPatch,
+    device_factory: Callable[..., MagicMock],
+    make_context: Callable[[list[MagicMock]], MagicMock],
+):
     md, _ = _build_mounted(monkeypatch, device_factory, make_context)
     seen: dict[str, Any] = {}
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         seen["cmd"] = list(cmd)
         return subprocess.CompletedProcess(args=cmd, returncode=0)
 

@@ -10,7 +10,7 @@ import re
 from configparser import ConfigParser
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Optional, Protocol, TypedDict, Union
 from xml.dom import minidom
 
 logging.basicConfig(format="%(asctime)s %(process)d %(name)s %(levelname)s: %(message)s", level=logging.WARNING)
@@ -95,6 +95,16 @@ class Parser(Protocol):
     def parse(self, file: Path) -> list[LibraryDriveInventoryEntry]: ...
 
 
+class IBMDriveEntry(TypedDict):
+    """Fields consumed from the IBM library inventory JSON."""
+
+    sn: str
+    elementAddress: Union[str, int]
+    logicalLibrary: str
+    location: str
+    mtm: str
+
+
 class IBMInventoryParser:
     def __init__(self, tech_model_drive_map: Optional[TechModelDriveMapping] = None) -> None:
         self.tech_model_drive_map = (
@@ -121,7 +131,7 @@ class IBMInventoryParser:
             KeyError: If required fields (sn, elementAddress) are missing.
         """
 
-        def drive_elt_to_dict(elt: dict) -> LibraryDriveInventoryEntry:
+        def drive_elt_to_dict(elt: IBMDriveEntry) -> LibraryDriveInventoryEntry:
             # As observed on IBM tape libraries at CERN, the drive element
             # addresses are sequential and start from 257 so we will use that
             # value for substraction to calculate the drive ordinal number
@@ -149,8 +159,8 @@ class IBMInventoryParser:
                 ),
             )
 
-        with open(file, "r", encoding="utf-8") as f:
-            lib_drives: list[dict] = json.load(f)
+        with open(file, encoding="utf-8") as f:
+            lib_drives: list[IBMDriveEntry] = json.load(f)
             return [drive_elt_to_dict(drive) for drive in lib_drives]
 
 
@@ -180,26 +190,32 @@ class SpectraInventoryParser:
             AttributeError: If required XML elements are missing.
         """
 
-        def drive_elt_to_dict(elt) -> LibraryDriveInventoryEntry:
-            location = re.match(r"FR(\d+)\/DBA(\d+)\/fLTO-DRV(\d+)", elt.getElementsByTagName("ID")[0].firstChild.data)
-            if not location:
-                raise TypeError()
+        def element_text(elt: minidom.Element, name: str) -> str:
+            child = elt.getElementsByTagName(name)[0].firstChild
+            if child is None or child.nodeValue is None:
+                raise AttributeError(f"Missing text in Spectra inventory element {name}")
+            return child.nodeValue
 
-            drive_type = elt.getElementsByTagName("driveType")[0].firstChild.data
+        def drive_elt_to_dict(elt: minidom.Element) -> LibraryDriveInventoryEntry:
+            location = re.match(r"FR(\d+)\/DBA(\d+)\/fLTO-DRV(\d+)", element_text(elt, "ID"))
+            if not location:
+                raise TypeError
+
+            drive_type = element_text(elt, "driveType")
 
             return LibraryDriveInventoryEntry(
-                serial_number=elt.getElementsByTagName("serialNumber")[0].firstChild.data,
-                address=int(elt.getElementsByTagName("partitionDriveNumber")[0].firstChild.data) + 255,
-                ordinal=int(elt.getElementsByTagName("partitionDriveNumber")[0].firstChild.data) - 1,
-                library=elt.getElementsByTagName("partition")[0].firstChild.data,
+                serial_number=element_text(elt, "serialNumber"),
+                address=int(element_text(elt, "partitionDriveNumber")) + 255,
+                ordinal=int(element_text(elt, "partitionDriveNumber")) - 1,
+                library=element_text(elt, "partition"),
                 location=f"F{location.group(1).zfill(2)}B{location.group(2)}S{location.group(3)}",
                 tech=next(
                     tech for tech, models in self.tech_model_drive_map.items() for m in models if m == drive_type
                 ),
             )
 
-        with open(file, "r", encoding="utf-8") as f:
-            lib_drives = minidom.parse(f).getElementsByTagName("drive")
+        with open(file, encoding="utf-8") as f:
+            lib_drives = minidom.parse(f).getElementsByTagName("drive")  # noqa: S318 - preserve existing parsing for now.
             return [drive_elt_to_dict(drive) for drive in lib_drives]
 
 
@@ -241,17 +257,14 @@ class MediaChangerPropertiesGenerator:
 
     @property
     def _cache_path(self) -> Path:
-        return (
-            self.conf.library_config_dir
-            / f"{self._vendor}-{os.environ['SCSI_MODEL']}-{os.environ['ID_SCSI_SERIAL']}{self.conf.vendor_map_suffix[self._vendor]}"
+        return self.conf.library_config_dir / (
+            f"{self._vendor}-{os.environ['SCSI_MODEL']}-"
+            f"{os.environ['ID_SCSI_SERIAL']}{self.conf.vendor_map_suffix[self._vendor]}"
         )
 
     def get_name(self) -> str:
         drive_inventory = get_parser_from_vendor(self._vendor, self.conf.tech_model_drive_map).parse(self._cache_path)
-        cta_physical_library_name = next(
-            d.library for d in drive_inventory if d.library not in self.conf.exclude_vendor_logical_library
-        )
-        return cta_physical_library_name
+        return next(d.library for d in drive_inventory if d.library not in self.conf.exclude_vendor_logical_library)
 
     def generate_udev_properties(self) -> str:
         return f"CTAOPS_NAME={self.get_name()}"
@@ -272,8 +285,12 @@ class DrivePropertiesGenerator:
         return next(d for d in drive_generator if d.serial_number == os.environ["ID_SCSI_SERIAL"].lstrip("0"))
 
     def generate_udev_properties(self) -> str:
-        drive_inventory_entry = self.get_drive_inventory_entry()
-        return f"CTAOPS_NAME={drive_inventory_entry.library}-{drive_inventory_entry.tech}-{drive_inventory_entry.location}\nCTAOPS_LIBRARY_ADDRESS={drive_inventory_entry.address}\nCTAOPS_LIBRARY_ORDINAL={drive_inventory_entry.ordinal}"
+        entry = self.get_drive_inventory_entry()
+        return (
+            f"CTAOPS_NAME={entry.library}-{entry.tech}-{entry.location}\n"
+            f"CTAOPS_LIBRARY_ADDRESS={entry.address}\n"
+            f"CTAOPS_LIBRARY_ORDINAL={entry.ordinal}"
+        )
 
 
 def get_udev_properties_generator(conf: Config) -> UdevPropertiesGenerator:
@@ -295,5 +312,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception:
-        LOGGER.exception("Uncaught exception", exc_info=True)
+        LOGGER.exception("Uncaught exception")
         raise

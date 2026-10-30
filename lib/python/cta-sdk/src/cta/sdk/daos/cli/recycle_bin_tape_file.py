@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator
+from typing import Any, Union
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import RecycleBinTapeFileDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Checksum, DiskFile, RecycleBinTapeFile
+from typing_extensions import override
 
 
 class RecycleBinTapeFileDaoCli(RecycleBinTapeFileDao):
@@ -19,7 +21,7 @@ class RecycleBinTapeFileDaoCli(RecycleBinTapeFileDao):
         return "recycletf"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> RecycleBinTapeFile:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> RecycleBinTapeFile:
         return RecycleBinTapeFile(
             int(raw_data["archiveFileId"]),
             storage_class_name=raw_data["storageClass"],
@@ -41,21 +43,26 @@ class RecycleBinTapeFileDaoCli(RecycleBinTapeFileDao):
             virtual_organisation_name=raw_data["virtualOrganization"],
         )
 
-    def get_all_copies(self, *args) -> tuple[RecycleBinTapeFile, ...]:
-        id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1]}
+    @override
+    def get_all_copies(self, *args: Union[int, str]) -> tuple[RecycleBinTapeFile, ...]:
+        resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1]}
         tape_files = tuple(
-            self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, id)
+            self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, resource_id)
         )
         if not tape_files:
-            raise ResourceNotFoundError(self.resource_type, id)
+            raise ResourceNotFoundError(self.resource_type, resource_id)
         return tape_files
 
-    def get(self, *args, vid: str) -> RecycleBinTapeFile:
-        id = {"id": args[0], "vid": vid} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1], "vid": vid}
+    @override
+    def get(self, *args: Union[int, str], vid: str) -> RecycleBinTapeFile:
+        resource_id = (
+            {"id": args[0], "vid": vid} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1], "vid": vid}
+        )
 
-        return self.raw_data_to_resource(self._wrapper.get(self.resource_type, id))
+        return self.raw_data_to_resource(self._wrapper.get(self.resource_type, resource_id))
 
-    def list(self, **kwargs) -> Iterator[RecycleBinTapeFile]:
+    @override
+    def list(self, **kwargs: object) -> Iterator[RecycleBinTapeFile]:
         filters = {}
         filters |= {} if kwargs.get("vid") is None else {"vid": kwargs["vid"]}
         filters |= (

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Annotated, Final, Optional
 
 from cta.sdk.units import Byte, Percentage
+from typing_extensions import override
 
 from .metadata import Metadata
 
@@ -27,7 +28,7 @@ class TapePoolStatistics:
 
     @property
     def usage_percent(self) -> Annotated[float, Percentage]:
-        """Usage percentage (Percentage between 0 and 1)"""
+        """Usage percentage (Percentage between 0 and 1)."""
         return self.usage / (self.capacity or 1)
 
 
@@ -53,13 +54,16 @@ class TapePool:
     statistics: TapePoolStatistics
     metadata: Metadata
 
+    @override
     def __str__(self) -> str:
         return f"TapePool({self.name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, TapePool):
             return False
         return self.name == other.name

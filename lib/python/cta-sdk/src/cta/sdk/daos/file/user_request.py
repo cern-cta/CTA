@@ -1,11 +1,13 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import UserRequestDao
 from cta.sdk.models import MountType, UserRequest
+from typing_extensions import override
 
 
 class UserRequestDaoFile(UserRequestDao):
@@ -21,6 +23,7 @@ class UserRequestDaoFile(UserRequestDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def list(self, *, request_type: Optional[MountType] = None) -> Iterator[UserRequest]:
         yield from (
             user_request

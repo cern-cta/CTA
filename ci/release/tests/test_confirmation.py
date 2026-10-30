@@ -6,8 +6,6 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-
-
 from confirmation import ConfirmationError, ask_yes_no, confirm
 
 

@@ -5,10 +5,9 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-
-from release_version import VersionError
 from git_repo import Git
 from release_config import read_major_version, validate_major_version
+from release_version import VersionError
 
 
 def test_major_version_comes_from_selected_commit(tmp_path: Path) -> None:

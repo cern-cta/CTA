@@ -18,7 +18,7 @@ def sample(metric: str, labels: Labels, value: Value, *, prefix: str) -> str:
 def write_atomic(path: str, content: str) -> None:
     """Write via rename so node_exporter's textfile collector never reads a partial file."""
     directory = os.path.dirname(os.path.abspath(path))
-    fd, tmp = tempfile.mkstemp(dir=directory, prefix=".%s." % os.path.basename(path))
+    fd, tmp = tempfile.mkstemp(dir=directory, prefix=f".{os.path.basename(path)}.")
     try:
         with os.fdopen(fd, "w") as f:
             f.write(content)

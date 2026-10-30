@@ -8,11 +8,11 @@ from __future__ import annotations
 import argparse
 from contextlib import suppress
 
+from release_config import ReleaseConfig
+from release_context import ReleaseContext, info
 from release_version import CTAVersion, VersionError
 
 from commands import SubparserRegistry
-from release_config import ReleaseConfig
-from release_context import ReleaseContext, info
 
 
 def add_subparser(subparsers: SubparserRegistry) -> None:

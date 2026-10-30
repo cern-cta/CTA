@@ -13,11 +13,12 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
 
-from commands import SubparserRegistry
 from confirmation import confirm
-from release_version import CTAVersion, previous_release
 from release_config import ReleaseConfig, has_release_heading, validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
+from release_version import CTAVersion, previous_release
+
+from commands import SubparserRegistry
 
 CHANGELOG_CATEGORIES = {
     "addition",

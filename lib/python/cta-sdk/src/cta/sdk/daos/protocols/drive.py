@@ -8,7 +8,8 @@ retrieving drive state, listing drives, updating metadata, and controlling
 drive status (up/down).
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import Drive
 

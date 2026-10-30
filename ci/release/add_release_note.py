@@ -15,10 +15,10 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from release_version import CTAVersion
 from gitlab_api import GitLabAPI
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
+from release_version import CTAVersion
 
 
 def release_version_for_tag(tag: str) -> str:

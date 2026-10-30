@@ -2,17 +2,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from cta.sdk.models import Drive, DriveOperatingState
-from rich.text import Text
-
+from ctaops.cli.display.encoders import TableFieldEncoder, encode_table_field
+from ctaops.cli.display.formatters import DataClassBaseFormatter, TableEntry
 from ctaops.cli.models.drive import EnrichedDrive
+from rich.text import Text
+from typing_extensions import override
 
-from ..encoders import TableFieldEncoder, encode_table_field
-from ..formatters import DataClassBaseFormatter, TableEntry
 
-
-class DriveFormatter(DataClassBaseFormatter, dataclass_type=Drive):
+class DriveFormatter(DataClassBaseFormatter[Drive], dataclass_type=Drive):
     """Custom Dataclass Formatter for [Drive][cta.sdk.models.drive.Drive]."""
 
+    @override
     def _default_raw_columns_names(self) -> list[str]:
         return [
             "name",
@@ -31,6 +31,7 @@ class DriveFormatter(DataClassBaseFormatter, dataclass_type=Drive):
             "state_reason",
         ]
 
+    @override
     def table_entry(self, obj: Drive) -> TableEntry:
         custom_field_encoders: dict[str, TableFieldEncoder] = {
             "tape_session.mount_type": lambda value, *col_types: Text(
@@ -53,9 +54,10 @@ class DriveFormatter(DataClassBaseFormatter, dataclass_type=Drive):
         ]
 
 
-class EnrichedDriveFormatter(DataClassBaseFormatter, dataclass_type=EnrichedDrive):
+class EnrichedDriveFormatter(DataClassBaseFormatter[EnrichedDrive], dataclass_type=EnrichedDrive):
     """Custom Dataclass Formatter for [EnrichedDrive][ctaops.cli.models.drive.EnrichedDrive]."""
 
+    @override
     def _default_raw_columns_names(self) -> list[str]:
         return [
             "name",
@@ -76,7 +78,8 @@ class EnrichedDriveFormatter(DataClassBaseFormatter, dataclass_type=EnrichedDriv
             "state_reason",
         ]
 
-    def table_entry(self, obj: Drive) -> TableEntry:
+    @override
+    def table_entry(self, obj: EnrichedDrive) -> TableEntry:
         custom_field_encoders: dict[str, TableFieldEncoder] = {
             "tape_session.state": lambda value, *col_types: Text(
                 encode_table_field(value, *col_types).plain.replace("RING", "").replace("ING", "")

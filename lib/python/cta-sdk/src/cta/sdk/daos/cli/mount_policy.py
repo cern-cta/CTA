@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
-from typing import Iterator, Optional, Union
+from typing import Any, Optional, Union
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import MountPolicyDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Metadata, MountPolicy
+from typing_extensions import override
 
 
 class MountPolicyDaoCli(MountPolicyDao):
@@ -19,7 +21,7 @@ class MountPolicyDaoCli(MountPolicyDao):
         return "mountpolicy"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> MountPolicy:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> MountPolicy:
         return MountPolicy(
             raw_data["name"],
             archive_priority=int(raw_data["archivePriority"]),
@@ -37,20 +39,24 @@ class MountPolicyDaoCli(MountPolicyDao):
             ),
         )
 
+    @override
     def get(self, name: str, /) -> MountPolicy:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_mp = next(raw_item for raw_item in self._wrapper.list(self.resource_type) if raw_item["name"] == name)
         except StopIteration as e:
             raise ResourceNotFoundError(self.resource_type, {"name": name}) from e
         return self.raw_data_to_resource(raw_mp)
 
+    @override
     def list(self) -> Iterator[MountPolicy]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name})
 
+    @override
     def create(
         self,
         name: str,
@@ -80,6 +86,7 @@ class MountPolicyDaoCli(MountPolicyDao):
             },
         )
 
+    @override
     def update(
         self,
         name: str,

@@ -12,8 +12,9 @@ changer.
 
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Container
 from logging import getLogger
-from typing import Container, Optional
+from typing import Optional
 
 from ctaops.sdk.exceptions import ResourceNotFoundError
 from ctaops.sdk.repositories.protocols.drive import (
@@ -28,6 +29,7 @@ from ctaops.sdk.repositories.protocols.drive import (
     NamedDriveRepository,
 )
 from pyudev import Context, Device
+from typing_extensions import override
 
 LOGGER = getLogger("ctaops.sdk")
 
@@ -90,6 +92,7 @@ class LocalDriveRepository(_LocalAbstractDriveRepository, DriveRepository):
             context is created.
     """
 
+    @override
     def list_drives(self) -> set[Drive]:
         """See [DriveRepository.list_drives][ctaops.sdk.repositories.protocols.drive.DriveRepository.list_drives]."""
         return {
@@ -100,6 +103,7 @@ class LocalDriveRepository(_LocalAbstractDriveRepository, DriveRepository):
             if "ID_SCSI_SERIAL" in nst_device.properties
         }
 
+    @override
     def get_drive(self, serial_number: str) -> Drive:
         """See [DriveRepository.get_drive][ctaops.sdk.repositories.protocols.drive.DriveRepository.get_drive]."""
         try:
@@ -121,8 +125,13 @@ class LocalNamedDriveRepository(_LocalAbstractDriveRepository, NamedDriveReposit
         super().__init__(context)
         self._drive_name_key = drive_name_key
 
+    @override
     def list_drives(self) -> set[NamedDrive]:
-        """See [NamedDriveRepository.list_drives][ctaops.sdk.repositories.protocols.drive.NamedDriveRepository.list_drives]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.NamedDriveRepository.list_drives].
+        """
         return {
             NamedDrive(
                 serial_number=nst_device.properties["ID_SCSI_SERIAL"],
@@ -132,15 +141,25 @@ class LocalNamedDriveRepository(_LocalAbstractDriveRepository, NamedDriveReposit
             if "ID_SCSI_SERIAL" in nst_device.properties and self._drive_name_key in nst_device.properties
         }
 
+    @override
     def get_drive(self, serial_number: str) -> NamedDrive:
-        """See [NamedDriveRepository.get_drive][ctaops.sdk.repositories.protocols.drive.NamedDriveRepository.get_drive]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.NamedDriveRepository.get_drive].
+        """
         try:
             return next(drive for drive in self.list_drives() if drive.serial_number == serial_number)
         except StopIteration as e:
             raise ResourceNotFoundError(f"Drive {serial_number} not found locally") from e
 
+    @override
     def get_drive_by_name(self, name: str) -> NamedDrive:
-        """See [NamedDriveRepository.get_drive_by_name][ctaops.sdk.repositories.protocols.drive.NamedDriveRepository.get_drive_by_name]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.NamedDriveRepository.get_drive_by_name].
+        """
         try:
             return next(drive for drive in self.list_drives() if drive.name == name)
         except StopIteration as e:
@@ -167,8 +186,13 @@ class LocalLocatedDriveRepository(_LocalAbstractDriveRepository, LocatedDriveRep
         self._drive_library_address_key = drive_library_address_key
         self._drive_library_ordinal_key = drive_library_ordinal_key
 
+    @override
     def list_drives(self, lib_serial_number: Optional[str] = None) -> set[LocatedDrive]:
-        """See [LocatedDriveRepository.list_drives][ctaops.sdk.repositories.protocols.drive.LocatedDriveRepository.list_drives]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.LocatedDriveRepository.list_drives].
+        """
         return {
             LocatedDrive(
                 serial_number=nst_device.properties["ID_SCSI_SERIAL"],
@@ -186,15 +210,25 @@ class LocalLocatedDriveRepository(_LocalAbstractDriveRepository, LocatedDriveRep
             and (lib_serial_number is None or lib_serial_number == mc_sn)
         }
 
+    @override
     def get_drive(self, serial_number: str, lib_serial_number: Optional[str] = None) -> LocatedDrive:
-        """See [LocatedDriveRepository.get_drive][ctaops.sdk.repositories.protocols.drive.LocatedDriveRepository.get_drive]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.LocatedDriveRepository.get_drive].
+        """
         try:
             return next(drive for drive in self.list_drives(lib_serial_number) if drive.serial_number == serial_number)
         except StopIteration as e:
             raise ResourceNotFoundError(f"Drive {serial_number} not found locally") from e
 
+    @override
     def get_drive_by_ordinal(self, ordinal: int, lib_serial_number: str) -> LocatedDrive:
-        """See [LocatedDriveRepository.get_drive_by_ordinal][ctaops.sdk.repositories.protocols.drive.LocatedDriveRepository.get_drive_by_ordinal]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.LocatedDriveRepository.get_drive_by_ordinal].
+        """
         try:
             return next(drive for drive in self.list_drives(lib_serial_number) if drive.location.ordinal == ordinal)
         except StopIteration as e:
@@ -227,8 +261,13 @@ class LocalLocatedNamedDriveRepository(_LocalAbstractDriveRepository, LocatedNam
         self._drive_library_address_key = drive_library_address_key
         self._drive_library_ordinal_key = drive_library_ordinal_key
 
+    @override
     def list_drives(self, lib_serial_number: Optional[str] = None) -> set[LocatedNamedDrive]:
-        """See [LocatedNamedDriveRepository.list_drives][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.list_drives]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.list_drives].
+        """
         return {
             LocatedNamedDrive(
                 serial_number=nst_device.properties["ID_SCSI_SERIAL"],
@@ -248,22 +287,37 @@ class LocalLocatedNamedDriveRepository(_LocalAbstractDriveRepository, LocatedNam
             and (lib_serial_number is None or lib_serial_number == mc_sn)
         }
 
+    @override
     def get_drive(self, serial_number: str, lib_serial_number: Optional[str] = None) -> LocatedNamedDrive:
-        """See [LocatedNamedDriveRepository.get_drive][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.get_drive]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.get_drive].
+        """
         try:
             return next(drive for drive in self.list_drives(lib_serial_number) if drive.serial_number == serial_number)
         except StopIteration as e:
             raise ResourceNotFoundError(f"Drive {serial_number} not found locally") from e
 
+    @override
     def get_drive_by_name(self, name: str, lib_serial_number: Optional[str] = None) -> LocatedNamedDrive:
-        """See [LocatedNamedDriveRepository.get_drive_by_name][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.get_drive_by_name]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.get_drive_by_name].
+        """
         try:
             return next(drive for drive in self.list_drives(lib_serial_number) if drive.name == name)
         except StopIteration as e:
             raise ResourceNotFoundError(f"Drive {name} not found locally") from e
 
+    @override
     def get_drive_by_ordinal(self, ordinal: int, lib_serial_number: str) -> LocatedNamedDrive:
-        """See [LocatedNamedDriveRepository.get_drive_by_ordinal][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.get_drive_by_ordinal]."""
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.repositories.protocols.drive.LocatedNamedDriveRepository.get_drive_by_ordinal].
+        """
         try:
             return next(drive for drive in self.list_drives(lib_serial_number) if drive.location.ordinal == ordinal)
         except StopIteration as e:

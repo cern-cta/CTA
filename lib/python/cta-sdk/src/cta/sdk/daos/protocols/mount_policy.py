@@ -8,8 +8,9 @@ behavior through configurable priorities and minimum age requirements. Mount pol
 determine when tapes should be mounted for archive and retrieve operations.
 """
 
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Iterator, Optional, Protocol, Union
+from typing import Optional, Protocol, Union
 
 from cta.sdk.models import MountPolicy
 

@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import DiskInstanceDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import DiskInstance, Metadata
+from typing_extensions import override
 
 
 class DiskInstanceDaoCli(DiskInstanceDao):
@@ -19,7 +21,7 @@ class DiskInstanceDaoCli(DiskInstanceDao):
         return "diskinstance"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> DiskInstance:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> DiskInstance:
         return DiskInstance(
             raw_data["name"],
             metadata=Metadata(
@@ -33,24 +35,28 @@ class DiskInstanceDaoCli(DiskInstanceDao):
             ),
         )
 
+    @override
     def get(self, name: str, /) -> DiskInstance:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
-
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_di = next(raw_item for raw_item in self._wrapper.list(self.resource_type) if raw_item["name"] == name)
         except StopIteration as e:
             raise ResourceNotFoundError(self.resource_type, {"name": name}) from e
         return self.raw_data_to_resource(raw_di)
 
+    @override
     def list(self) -> Iterator[DiskInstance]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, name: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"name": name})
 
+    @override
     def create(self, name: str, /, *, comment: str = "From python cta-sdk") -> None:
         self._wrapper.create(self.resource_type, {"name": name}, data={"comment": comment})
 
+    @override
     def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
         data = {}
         data |= {} if comment is None else {"comment": comment}

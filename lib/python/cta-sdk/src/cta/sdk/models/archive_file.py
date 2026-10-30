@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Annotated, Final
 
 from cta.sdk.units import Byte
+from typing_extensions import override
 
 
 @dataclass(frozen=True)
@@ -39,13 +40,16 @@ class DiskFile:
     gid: int
     path: str
 
+    @override
     def __str__(self) -> str:
         return f"DiskFile({self.id},{self.disk_instance_name})"
 
+    @override
     def __hash__(self) -> int:
         return hash((self.id, self.disk_instance_name))
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, DiskFile):
             return False
         return self.id == other.id and self.disk_instance_name == other.disk_instance_name
@@ -71,13 +75,16 @@ class ArchiveFile:
     checksum: Checksum
     disk_file: DiskFile
 
+    @override
     def __str__(self) -> str:
         return f"ArchiveFile({self.archive_id})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.archive_id)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, ArchiveFile):
             return False
         return self.archive_id == other.archive_id

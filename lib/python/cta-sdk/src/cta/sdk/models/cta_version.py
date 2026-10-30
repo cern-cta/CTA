@@ -7,10 +7,11 @@ from typing import Optional
 
 @dataclass(frozen=True)
 class CtaCliVersion:
-    """CTA CLI version (cta-admin)
+    """CTA CLI version (cta-admin).
+
     Attributes:
         version: The version of cli client used
-        xrootd_ssi_protobuf_version: xrootD interface version
+        xrootd_ssi_protobuf_version: xrootD interface version.
     """
 
     version: str
@@ -19,7 +20,7 @@ class CtaCliVersion:
 
 @dataclass(frozen=True)
 class CtaServerVersion:
-    """CTA server version (frontend)
+    """CTA server version (frontend).
 
     Attributes:
         version: The version of cta frontend used
@@ -32,7 +33,7 @@ class CtaServerVersion:
 
 @dataclass(frozen=True)
 class CtaVersion:
-    """CTA client and server configuration information
+    """CTA client and server configuration information.
 
     Attributes:
         cli_version: The version of cli client used

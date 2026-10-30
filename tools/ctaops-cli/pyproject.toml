@@ -19,6 +19,7 @@ keywords = ["CTA", "tape", "CERN"]
 
 dynamic = ["version"]
 dependencies = [
+    "typing-extensions>=4.4.0",
     "ctaops-utils",
     "cta-sdk",
     "click",

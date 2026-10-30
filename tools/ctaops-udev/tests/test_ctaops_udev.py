@@ -2,10 +2,10 @@ import json
 from pathlib import Path
 
 import pytest
-
 from ctaops_udev import (  # pyright: ignore[reportMissingImports]  # path is injected by conftest.py
     Config,
     DrivePropertiesGenerator,
+    IBMDriveEntry,
     IBMInventoryParser,
     LibraryDriveInventoryEntry,
     MediaChangerPropertiesGenerator,
@@ -408,7 +408,7 @@ def test_media_changer_generator_rejects_unknown_vendor(tmp_path: Path, monkeypa
 # ---------------------------------------------------------------------------
 
 
-def _write_ibm_inventory(directory: Path, entries: list[dict], name: str = "IBM-03584-1234.json") -> None:
+def _write_ibm_inventory(directory: Path, entries: list[IBMDriveEntry], name: str = "IBM-03584-1234.json") -> None:
     (directory / name).write_text(json.dumps(entries))
 
 

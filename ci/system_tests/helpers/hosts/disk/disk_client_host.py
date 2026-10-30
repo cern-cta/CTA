@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from system_tests.helpers.utils.timeout import Timeout
 from system_tests.helpers.hosts.remote_host import RemoteHost
+from system_tests.helpers.utils.timeout import Timeout
 
 PrepareRequest = tuple[str, Path]
 

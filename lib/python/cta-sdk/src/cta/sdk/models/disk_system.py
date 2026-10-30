@@ -6,6 +6,7 @@ from datetime import timedelta
 from typing import Annotated, Final
 
 from cta.sdk.units import Byte
+from typing_extensions import override
 
 from .metadata import Metadata
 
@@ -34,13 +35,16 @@ class DiskSystem:
     sleep_time: timedelta
     metadata: Metadata
 
+    @override
     def __str__(self) -> str:
         return f"DiskSystem({self.name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, DiskSystem):
             return False
         return self.name == other.name

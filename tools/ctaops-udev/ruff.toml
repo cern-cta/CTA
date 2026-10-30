@@ -1,9 +1,0 @@
-# SPDX-FileCopyrightText: 2026 CERN
-# SPDX-License-Identifier: GPL-3.0-or-later
-
-# Retain the imported lint baseline until these packages adopt all CTA rules.
-extend = "../../pyproject.toml"
-
-[lint]
-select = ["E", "F", "I", "B"]
-ignore = ["E501"]

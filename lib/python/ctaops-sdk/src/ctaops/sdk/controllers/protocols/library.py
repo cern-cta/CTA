@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from typing import Literal, Optional, Protocol, Union
 
 from ctaops.sdk.controllers.protocols.drive import MountedDriveController
+from typing_extensions import override
 
 
 @dataclass(frozen=True)
@@ -65,7 +66,7 @@ class LibraryController(Protocol):
 
     @property
     def serial_number(self) -> str:
-        """Serial number of the changer. (usually SCSI serial number)"""
+        """Serial number of the changer. (usually SCSI serial number)."""
         ...
 
     def mount(self, drive_key: DriveOrdinal, vid: str) -> object:
@@ -167,6 +168,7 @@ class ManagedLibraryController(LibraryController, Protocol):
         """Logical library name (`CTAOPS_NAME` udev property)."""
         ...
 
+    @override
     def mount(self, drive_key: Union[DriveOrdinal, DriveName], vid: str) -> MountedDriveController:
         """Mount tape `vid` in `drive_key` and return an I/O context manager.
 
@@ -191,6 +193,7 @@ class ManagedLibraryController(LibraryController, Protocol):
         """
         ...
 
+    @override
     def unmount(self, drive_key: Union[DriveOrdinal, DriveName]) -> None:
         """Eject the tape in `drive_key` and return it to its home slot.
 
@@ -206,6 +209,7 @@ class ManagedLibraryController(LibraryController, Protocol):
         """
         ...
 
+    @override
     def drive_is_free(self, drive_key: Union[DriveOrdinal, DriveName]) -> bool:
         """Return `True` if the named/ordinal-addressed drive is free.
 

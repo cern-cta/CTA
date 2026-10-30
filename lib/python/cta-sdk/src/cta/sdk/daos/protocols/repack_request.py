@@ -8,7 +8,8 @@ consolidate or reorganize data on tape cartridges. Repack requests support vario
 operations and configuration options for tape data optimization.
 """
 
-from typing import Iterator, Literal, Optional, Protocol
+from collections.abc import Iterator
+from typing import Literal, Optional, Protocol
 
 from cta.sdk.models import RepackRequest
 

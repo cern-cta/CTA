@@ -8,7 +8,8 @@ Tape files can be accessed via multiple identifiers (archive ID, disk file ID, o
 support retrieval, listing, and deletion operations with streaming support for large result sets.
 """
 
-from typing import Iterator, Protocol, overload
+from collections.abc import Iterator
+from typing import Protocol, overload
 
 from cta.sdk.models import TapeFile
 

@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Iterator, Optional, Union
+from typing import Optional, Union
 
 from cta.sdk.daos.file._handler import CtaFileHandler, as_timedelta
 from cta.sdk.daos.protocols import DiskInstanceSpaceDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import DiskInstance, DiskInstanceSpace, DiskSystem
+from typing_extensions import override
 
 
 class DiskInstanceSpaceDaoFile(DiskInstanceSpaceDao):
@@ -16,6 +18,7 @@ class DiskInstanceSpaceDaoFile(DiskInstanceSpaceDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         name: str,
@@ -40,9 +43,11 @@ class DiskInstanceSpaceDaoFile(DiskInstanceSpaceDao):
         )
         self._handler.create(disk_instance_space)
 
+    @override
     def get(self, name: str, disk_instance_name: str, /) -> DiskInstanceSpace:
         return self._handler.get(self.resource_type, name, disk_instance_name)
 
+    @override
     def delete(self, name: str, disk_instance_name: str, /) -> None:
         for ds in self._handler.iter(DiskSystem):
             if ds.disk_instance_space_name == name:
@@ -53,9 +58,11 @@ class DiskInstanceSpaceDaoFile(DiskInstanceSpaceDao):
                 )
         self._handler.delete(self.resource_type, name, disk_instance_name)
 
+    @override
     def list(self) -> Iterator[DiskInstanceSpace]:
         yield from self._handler.iter(self.resource_type)
 
+    @override
     def update(
         self,
         name: str,

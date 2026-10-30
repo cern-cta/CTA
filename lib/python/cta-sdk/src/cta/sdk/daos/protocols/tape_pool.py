@@ -8,7 +8,8 @@ organized by virtual organisation and used as destinations for archival operatio
 Tape pools support encryption, supply pool relationships, and writable tape management.
 """
 
-from typing import Iterable, Iterator, Optional, Protocol
+from collections.abc import Iterable, Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import TapePool
 

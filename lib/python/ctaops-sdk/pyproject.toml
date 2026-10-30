@@ -19,7 +19,7 @@ keywords = ["CTA", "tape", "CERN"]
 
 dynamic = ["version"]
 
-dependencies = ["pyudev"]
+dependencies = ["typing-extensions>=4.4.0", "pyudev"]
 
 [project.urls]
 Source = "https://gitlab.cern.ch/cta/CTA/"

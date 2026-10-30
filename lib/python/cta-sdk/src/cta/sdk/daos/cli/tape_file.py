@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator
+from typing import Any, Union
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import TapeFileDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Checksum, DiskFile, TapeFile
+from typing_extensions import override
 
 
 class TapeFileDaoCli(TapeFileDao):
@@ -19,7 +21,7 @@ class TapeFileDaoCli(TapeFileDao):
         return "tapefile"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> TapeFile:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> TapeFile:
         return TapeFile(
             int(raw_data["af"]["archiveId"]),
             storage_class_name=raw_data["af"]["storageClass"],
@@ -40,21 +42,26 @@ class TapeFileDaoCli(TapeFileDao):
             fseq=int(raw_data["tf"]["fSeq"]),
         )
 
-    def get_all_copies(self, *args) -> tuple[TapeFile, ...]:
-        id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1]}
+    @override
+    def get_all_copies(self, *args: Union[int, str]) -> tuple[TapeFile, ...]:
+        resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1]}
         tape_files = tuple(
-            self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, id)
+            self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, resource_id)
         )
         if not tape_files:
-            raise ResourceNotFoundError(self.resource_type, id)
+            raise ResourceNotFoundError(self.resource_type, resource_id)
         return tape_files
 
-    def get(self, *args, vid: str) -> TapeFile:
-        id = {"id": args[0], "vid": vid} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1], "vid": vid}
+    @override
+    def get(self, *args: Union[int, str], vid: str) -> TapeFile:
+        resource_id = (
+            {"id": args[0], "vid": vid} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1], "vid": vid}
+        )
 
-        return self.raw_data_to_resource(self._wrapper.get(self.resource_type, id))
+        return self.raw_data_to_resource(self._wrapper.get(self.resource_type, resource_id))
 
-    def list(self, **kwargs) -> Iterator[TapeFile]:
+    @override
+    def list(self, **kwargs: object) -> Iterator[TapeFile]:
         filters = {}
         filters |= {"vid": kwargs["vid"]} if "vid" in kwargs else {}
         filters |= (
@@ -65,7 +72,8 @@ class TapeFileDaoCli(TapeFileDao):
             self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.iter(self.resource_type, filters=filters)
         )
 
-    def delete(self, *args, vid: str, reason: str) -> None:
-        id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "intance": args[1]}
-        id |= {"vid": vid, "reason": reason}
-        self._wrapper.delete("tapefile", id)
+    @override
+    def delete(self, *args: Union[int, str], vid: str, reason: str) -> None:
+        resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "intance": args[1]}
+        resource_id |= {"vid": vid, "reason": reason}
+        self._wrapper.delete("tapefile", resource_id)

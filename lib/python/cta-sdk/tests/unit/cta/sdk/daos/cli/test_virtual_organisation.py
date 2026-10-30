@@ -116,7 +116,7 @@ class TestVirtualOrganisationDaoCli:
         )
 
     @pytest.mark.parametrize("mock_wrapper", [{"stdout": slice(None)}], indirect=True)
-    def test_get_command(self, ref_obj):
+    def test_get_command(self, ref_obj: VirtualOrganisation):
         return_obj = self.manager.get("ATLAS")
         self.mock_run.assert_called_once_with(["cta-admin", "--jsonl", "virtualorganization", "ls"])
         assert asdict(return_obj) == asdict(ref_obj)

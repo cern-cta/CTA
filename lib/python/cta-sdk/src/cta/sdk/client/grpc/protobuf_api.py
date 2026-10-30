@@ -57,20 +57,19 @@ def build_metadata(workflow_cfg: WorkflowConfig) -> list[tuple[str, str]]:
     return metadata
 
 
-def _call_rpc_with_error_handling(
-    rpc_call: grpc.UnaryUnaryMultiCallable,
+def call_rpc_with_error_handling(
+    rpc_call: grpc.UnaryUnaryMultiCallable[cta_frontend_pb2.Request, cta_frontend_pb2.Response],
     request: cta_frontend_pb2.Request,
     metadata: list[tuple[str, str]],
     timeout: int,
 ) -> cta_frontend_pb2.Response:
     """Call a gRPC RPC method with error handling and logging."""
-
     LOGGER.debug("Sending gRPC request: %s", request)
 
     try:
-        response, _ = rpc_call.with_call(request, metadata=metadata, timeout=timeout)  # type: ignore
+        response, _ = rpc_call.with_call(request, metadata=tuple(metadata), timeout=timeout)
     except grpc.RpcError as err:
-        LOGGER.error("gRPC call failed: %s - %s", err.code(), err.details())
+        LOGGER.exception("gRPC call failed: %s - %s", err.code(), err.details())
         raise WorkflowRpcError(f"gRPC call failed: {err.code()} - {err.details()}") from err
 
     LOGGER.debug(
@@ -107,7 +106,7 @@ def file_info_to_pb_options(file_info: WorkflowFileInfo) -> dict[str, t.Any]:
         options["lpath"] = file_info.path
 
     if file_info.xattr:
-        options["xattr"] = list(file_info.xattr.items())  # type: ignore
+        options["xattr"] = list(file_info.xattr.items())
 
     if file_info.id:
         options["disk_file_id"] = str(file_info.id)
@@ -129,4 +128,4 @@ class ProtobufRpcClient:
     """Client helper for CTA gRPC frontend services."""
 
     workflow_cfg: WorkflowConfig
-    last_response: t.Optional[cta_frontend_pb2.Response] = None
+    last_response: cta_frontend_pb2.Response | None = None

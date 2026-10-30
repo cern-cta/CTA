@@ -1,29 +1,28 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterable
 from datetime import timedelta
 from logging import getLogger
 from socket import gethostname
 from time import perf_counter
-from typing import Iterable, Optional
+from typing import Optional
 
 import click
 from cta.sdk.models import Drive, DriveOperatingState, LogicalLibraryState
 from cta.sdk.units import Byte, BytePerSecond
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
+from ctaops.cli.context import EXTRA_TPSRV, AppContext, tapeserver_option
 from ctaops.cli.display.encoders import encode_table_field
 from ctaops.cli.display.printers import print_dataclasses
-
-from ..context import EXTRA_TPSRV, AppContext, tapeserver_option
+from rich import print
 
 LOGGER = getLogger("ctaops.cli")
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["dr"])
 def drive():
-    """Manage CTA Tape Drives"""
+    """Manage CTA Tape Drives."""
 
 
 @drive.command("list", aliases=["ls"])
@@ -31,7 +30,7 @@ def drive():
 @tapeserver_option("--local", "-l", is_flag=True, help="Mutually exclusive with --all.")
 @click.pass_obj
 def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
-    """List drive in cta catalogue"""
+    """List drive in cta catalogue."""
 
     def updated_drives_with_disabled_libraries(drives: Iterable[Drive]) -> list[Drive]:
         drives = list(drives)
@@ -44,9 +43,8 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
         return drives
 
     if EXTRA_TPSRV:
-        from ctaops.sdk import LocalDriveRepository, LocalNamedDriveRepository
-
         from ctaops.cli.models.drive import EnrichedDrive
+        from ctaops.sdk import LocalDriveRepository, LocalNamedDriveRepository
 
         local_named_drives = LocalNamedDriveRepository(
             drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
@@ -70,8 +68,8 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
         )
 
         if local:
-            cta_drive_names = set(pl.name for pl in obj.cta_client.drive.list(all=True))
-            if cta_unknown_named_libs := set(lnd for lnd in local_named_drives if lnd.name not in cta_drive_names):
+            cta_drive_names = {pl.name for pl in obj.cta_client.drive.list(all=True)}
+            if cta_unknown_named_libs := {lnd for lnd in local_named_drives if lnd.name not in cta_drive_names}:
                 print_dataclasses(
                     cta_unknown_named_libs, display_config=obj.config.display, title="Non-CTA Drives (Named)"
                 )
@@ -89,14 +87,12 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get drive registered in CTA"""
-
+    """Get drive registered in CTA."""
     drive = obj.cta_client.drive.get(name)
 
     if EXTRA_TPSRV:
-        from ctaops.sdk import LocalNamedDriveRepository, ResourceNotFoundError
-
         from ctaops.cli.models.drive import EnrichedDrive
+        from ctaops.sdk import LocalNamedDriveRepository, ResourceNotFoundError
 
         try:
             local_drive = LocalNamedDriveRepository(
@@ -116,7 +112,7 @@ def get(obj: AppContext, name: str):
 @tapeserver_option("-l", "--local", is_flag=True)
 @click.pass_obj
 def up(obj: AppContext, name: Optional[str], reason: Optional[str], local: Optional[bool] = None):
-    """Putting cta drive up"""
+    """Put the CTA drive up."""
     if not (bool(name is not None) ^ bool(local)):
         raise click.UsageError("Provide either a drive arg or --local flag")
 
@@ -141,7 +137,7 @@ def up(obj: AppContext, name: Optional[str], reason: Optional[str], local: Optio
 @tapeserver_option("-l", "--local", is_flag=True)
 @click.pass_obj
 def down(obj: AppContext, name: Optional[str], reason: str, force: bool, local: Optional[bool] = None):
-    """Putting cta drive down"""
+    """Put the CTA drive down."""
     if not (bool(name is not None) ^ bool(local)):
         raise click.UsageError("Provide either a drive arg or --local flag")
 
@@ -165,7 +161,7 @@ def down(obj: AppContext, name: Optional[str], reason: str, force: bool, local: 
 @click.option("--comment", "-c")
 @click.pass_obj
 def update(obj: AppContext, name: str, comment: Optional[str]):
-    """Update the comment of a drive"""
+    """Update the comment of a drive."""
     obj.cta_client.drive.update(name, comment=comment)
     print(f"Drive({name}) UPDATED")
 
@@ -175,7 +171,7 @@ def update(obj: AppContext, name: str, comment: Optional[str]):
 @click.option("-f", "--force", is_flag=True)
 @click.pass_obj
 def delete(obj: AppContext, name: str, force: bool):
-    """Remove a drive from CTA"""
+    """Remove a drive from CTA."""
     obj.cta_client.drive.delete(name, force=force)
     print(f"Drive({name}) DELETED")
 
@@ -227,22 +223,22 @@ if EXTRA_TPSRV:
 
         if all:
             local_libraries = {ll.serial_number: ll for ll in LocalLibraryRepository().list_libraries()}
-            LOGGER.debug(f"Local libraries found: {local_libraries}")
+            LOGGER.debug("Local libraries found: %s", local_libraries)
 
             for drive in LocalLocatedDriveRepository(
                 drive_library_address_key=obj.config.tape_server.udev_properties_map.drive_library_address_key,
                 drive_library_ordinal_key=obj.config.tape_server.udev_properties_map.drive_library_ordinal_key,
             ).list_drives():
                 if drive.location.library_serial_number in local_libraries:
-                    LOGGER.info(f"Found {drive} in library {drive.location.library_serial_number}")
+                    LOGGER.info("Found %s in library %s", drive, drive.location.library_serial_number)
                     try:
                         ScsiManagedLibraryControllerProvider(
                             **asdict(obj.config.tape_server.udev_properties_map)
                         ).get_library_controller(drive.location.library_serial_number).unmount(drive.location.ordinal)
-                    except Exception as e:
-                        LOGGER.error(f"An exception occurred during unmounting {drive}:{e}", exc_info=True)
+                    except Exception:
+                        LOGGER.exception("An exception occurred during unmounting %s", drive)
                 else:
-                    LOGGER.warning(f"Skipping {drive}, unable to find mediachanger locally")
+                    LOGGER.warning("Skipping %s, unable to find mediachanger locally", drive)
 
     @drive.command(aliases=["t"])
     @click.argument("drive_name")
@@ -279,7 +275,9 @@ if EXTRA_TPSRV:
 
             md.rewind()
 
-            LOGGER.info(f"Start writing {file_count} files of size {encode_table_field(file_size, Byte)} on tape {vid}")
+            LOGGER.info(
+                "Start writing %s files of size %s on tape %s", file_count, encode_table_field(file_size, Byte), vid
+            )
             t0 = perf_counter()
             w_checksum = 1
             with click.progressbar(length=file_count, label="Writing") as bar:
@@ -288,28 +286,39 @@ if EXTRA_TPSRV:
                     w_checksum = c_checksum
             w_time = timedelta(seconds=perf_counter() - t0)
             LOGGER.info(
-                f"{file_count} files of size {encode_table_field(file_size, Byte)} written on tape {vid} in {encode_table_field(w_time)}"
+                "%s files of size %s written on tape %s in %s",
+                file_count,
+                encode_table_field(file_size, Byte),
+                vid,
+                encode_table_field(w_time),
             )
             LOGGER.info(
-                f"Average speed: {encode_table_field(file_count * file_size / w_time.total_seconds(), BytePerSecond)}"
+                "Average speed: %s", encode_table_field(file_count * file_size / w_time.total_seconds(), BytePerSecond)
             )
 
             md.rewind()
 
-            LOGGER.info(f"Start reading {file_count} files of size {encode_table_field(file_size, Byte)} on tape {vid}")
+            LOGGER.info(
+                "Start reading %s files of size %s on tape %s", file_count, encode_table_field(file_size, Byte), vid
+            )
             t0 = perf_counter()
             with click.progressbar(length=file_count, label="Reading") as bar:
                 for file_index, r_checksum in md.read_files(file_count):
                     bar.update(1, file_index)
                     if r_checksum != w_checksum:
                         raise click.ClickException(
-                            f"Checksum mistmatch on file index {file_index}. Read checksum : {r_checksum} (expected {w_checksum})"
+                            f"Checksum mistmatch on file index {file_index}. "
+                            f"Read checksum : {r_checksum} (expected {w_checksum})"
                         )
             r_time = timedelta(seconds=perf_counter() - t0)
 
             LOGGER.info(
-                f"{file_count} files of size {encode_table_field(file_size, Byte)} read on tape {vid} in {encode_table_field(r_time)}"
+                "%s files of size %s read on tape %s in %s",
+                file_count,
+                encode_table_field(file_size, Byte),
+                vid,
+                encode_table_field(r_time),
             )
             LOGGER.info(
-                f"Average speed: {encode_table_field(file_count * file_size / r_time.total_seconds(), BytePerSecond)}"
+                "Average speed: %s", encode_table_field(file_count * file_size / r_time.total_seconds(), BytePerSecond)
             )

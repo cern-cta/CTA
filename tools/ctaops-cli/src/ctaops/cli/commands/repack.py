@@ -4,16 +4,16 @@
 from typing import Literal, Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
+from ctaops.cli.click_extension.custom_types import uppercase_choice
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["re"])
 def repack():
-    """Manage CTA Repacks"""
+    """Manage CTA Repacks."""
 
 
 @repack.command(aliases=["add"])
@@ -22,7 +22,7 @@ def repack():
 @click.option(
     "--action",
     type=click.Choice(["MOVE", "ADDCOPIES"], case_sensitive=False),
-    callback=lambda _, __, value: value.upper() if value is not None else None,
+    callback=uppercase_choice,
     help="Does BOTH by default",
 )
 @click.option("--buffer-url", "--burl")
@@ -38,7 +38,7 @@ def create(
     max_files_to_select: Optional[int],
     no_recall: bool,
 ):
-    """Create CTA tape repack"""
+    """Create CTA tape repack."""
     obj.cta_client.repack_request.create(
         name,
         mount_policy_name=mount_policy,
@@ -53,7 +53,7 @@ def create(
 @repack.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List CTA tape repacks in CTA"""
+    """List CTA tape repacks in CTA."""
     print_dataclasses(obj.cta_client.repack_request.list(), display_config=obj.config.display)
 
 
@@ -61,7 +61,7 @@ def list_command(obj: AppContext):
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get tape repack registered in CTA"""
+    """Get tape repack registered in CTA."""
     print_dataclasses(obj.cta_client.repack_request.get(name), display_config=obj.config.display)
 
 
@@ -69,6 +69,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove a CTA tape repack"""
+    """Remove a CTA tape repack."""
     obj.cta_client.repack_request.delete(name)
     print(f"RepackRequest({name}) DELETED")

@@ -5,15 +5,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
-from pathlib import Path
 import runpy
 import shutil
 import subprocess
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any
 
-from hatchling.builders.wheel import WheelBuilder
 import pytest
+from hatchling.builders.wheel import WheelBuilder
 
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGES = ["lib/python/cta-sdk", "lib/python/ctaops-sdk", "lib/python/ctaops-utils", "tools/ctaops-cli"]

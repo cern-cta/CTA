@@ -7,6 +7,7 @@ This module provides a factory function for instantiating the appropriate
 CtaClient implementation based on the requested backend.
 """
 
+from importlib import import_module
 from typing import Any, Literal
 
 from cta.sdk.client.cli import CtaClientCli
@@ -51,7 +52,7 @@ def get_cta_client(backend: Literal["CLI", "FILE"], *args: Any, **kwargs: Any) -
         return CtaClientCli(*args, **kwargs)
     elif backend == "FILE":
         try:
-            import cattrs  # noqa: F401
+            import_module("cattrs")
         except ImportError as e:
             raise ImportError("Cannot instantiate CtaClient with FILE backend: [dev] extra is not installed") from e
         from cta.sdk.client.file import CtaClientFile

@@ -24,6 +24,8 @@ Concrete udev-backed implementations:
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
+from typing_extensions import override
+
 
 @dataclass(frozen=True)
 class DriveLibraryLocation:
@@ -77,9 +79,11 @@ class Drive:
 
     serial_number: str
 
+    @override
     def __hash__(self) -> int:
         return hash(self.serial_number)
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Drive):
             return False
@@ -110,6 +114,12 @@ class NamedDrive(Drive):
             raise ValueError("NamedDrive.name must be a non-empty string")
 
 
+def _validate_location(location: object) -> None:
+    """Reject missing locations supplied by untyped callers."""
+    if location is None:
+        raise ValueError("LocatedDrive.location must be a DriveLibraryLocation instance")
+
+
 @dataclass(frozen=True, eq=False)
 class LocatedDrive(Drive):
     """Drive that is bound to a parent library.
@@ -122,15 +132,12 @@ class LocatedDrive(Drive):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        if self.location is None:
-            raise ValueError("LocatedDrive.location must be a DriveLibraryLocation instance")
+        _validate_location(self.location)
 
 
 @dataclass(frozen=True, eq=False)
 class LocatedNamedDrive(LocatedDrive, NamedDrive):
     """Drive carrying both a logical ctaops name and a library binding."""
-
-    pass
 
 
 class DriveRepository(Protocol):

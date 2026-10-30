@@ -135,7 +135,7 @@ class EOTError(DriveIOError):
         ```
     """
 
-    def __init__(self, *args, checksum: int, written_files: int) -> None:
+    def __init__(self, *args: object, checksum: int, written_files: int) -> None:
         super().__init__(*args)
         self.write_checksum = checksum
         self.written_files = written_files

@@ -19,6 +19,8 @@ and
 from dataclasses import dataclass
 from typing import Protocol
 
+from typing_extensions import override
+
 
 @dataclass(frozen=True)
 class Library:
@@ -37,11 +39,13 @@ class Library:
         if not self.serial_number:
             raise ValueError("Library.serial_number must be a non-empty string")
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Library):
             return False
         return self.serial_number == other.serial_number
 
+    @override
     def __hash__(self) -> int:
         return hash(self.serial_number)
 

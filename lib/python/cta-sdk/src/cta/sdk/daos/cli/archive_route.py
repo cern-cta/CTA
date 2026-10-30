@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import CtaCliWrapper
 from cta.sdk.daos.protocols import ArchiveRouteDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, ArchiveRouteType, Metadata
+from typing_extensions import override
 
 
 class ArchiveRouteDaoCli(ArchiveRouteDao):
@@ -19,7 +21,7 @@ class ArchiveRouteDaoCli(ArchiveRouteDao):
         return "archiveroute"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> ArchiveRoute:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> ArchiveRoute:
         return ArchiveRoute(
             storage_class_name=raw_data["storageClass"],
             copy_number=int(raw_data["copyNumber"]),
@@ -36,8 +38,9 @@ class ArchiveRouteDaoCli(ArchiveRouteDao):
             ),
         )
 
+    @override
     def get(self, storage_class_name: str, copy_number: int, type: ArchiveRouteType, /) -> ArchiveRoute:
-        """Avoid to use multiple times, there is performance issue prefer list()"""
+        """Avoid to use multiple times, there is performance issue prefer list()."""
         try:
             raw_ar = next(
                 raw_item
@@ -58,15 +61,18 @@ class ArchiveRouteDaoCli(ArchiveRouteDao):
 
         return self.raw_data_to_resource(raw_ar)
 
+    @override
     def list(self) -> Iterator[ArchiveRoute]:
         yield from (self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type))
 
+    @override
     def delete(self, storage_class_name: str, copy_number: int, type: ArchiveRouteType, /) -> None:
         self._wrapper.delete(
             self.resource_type,
             {"storageclass": storage_class_name, "copynb": copy_number, "archiveroutetype": type.name},
         )
 
+    @override
     def create(
         self,
         storage_class_name: str,
@@ -90,6 +96,7 @@ class ArchiveRouteDaoCli(ArchiveRouteDao):
             },
         )
 
+    @override
     def update(
         self,
         storage_class_name: str,

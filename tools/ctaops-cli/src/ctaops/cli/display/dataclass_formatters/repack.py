@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from cta.sdk.models import RepackRequest
+from ctaops.cli.display.formatters import DataClassBaseFormatter
+from typing_extensions import override
 
-from ..formatters import DataClassBaseFormatter
 
-
-class RepackRequestFormatter(DataClassBaseFormatter, dataclass_type=RepackRequest):
+class RepackRequestFormatter(DataClassBaseFormatter[RepackRequest], dataclass_type=RepackRequest):
     """Custom Dataclass Formatter for [RepackRequest][cta.sdk.models.repack_request.RepackRequest]."""
 
+    @override
     def _default_raw_columns_names(self) -> list[str]:
         return [
             "start_info.creation_time",

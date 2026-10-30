@@ -10,7 +10,6 @@ cta-sdk with dev extra `cta-sdk[dev]` .
 You can have a root directory with the following structure:
 
 Example:
-
     root_dir/
     ├── adminuser/
     │   ├── user1.json
@@ -56,26 +55,26 @@ from .user_request import UserRequestDaoFile
 from .virtual_organisation import VirtualOrganisationDaoFile
 
 __all__ = [
+    "ActivityMountRuleDaoFile",
     "AdminUserDaoFile",
-    "VirtualOrganisationDaoFile",
+    "ArchiveRouteDaoFile",
     "DiskInstanceDaoFile",
     "DiskInstanceSpaceDaoFile",
     "DiskSystemDaoFile",
-    "TapeFileDaoFile",
-    "RecycleBinTapeFileDaoFile",
-    "StorageClassDaoFile",
     "DriveDaoFile",
-    "MediaTypeDaoFile",
-    "PhysicalLibraryDaoFile",
-    "TapeDaoFile",
-    "TapePoolDaoFile",
-    "LogicalLibraryDaoFile",
-    "ArchiveRouteDaoFile",
-    "ActivityMountRuleDaoFile",
-    "GroupMountRuleDaoFile",
-    "UserMountRuleDaoFile",
-    "MountPolicyDaoFile",
-    "RepackRequestDaoFile",
     "FailedRequestDaoFile",
+    "GroupMountRuleDaoFile",
+    "LogicalLibraryDaoFile",
+    "MediaTypeDaoFile",
+    "MountPolicyDaoFile",
+    "PhysicalLibraryDaoFile",
+    "RecycleBinTapeFileDaoFile",
+    "RepackRequestDaoFile",
+    "StorageClassDaoFile",
+    "TapeDaoFile",
+    "TapeFileDaoFile",
+    "TapePoolDaoFile",
+    "UserMountRuleDaoFile",
     "UserRequestDaoFile",
+    "VirtualOrganisationDaoFile",
 ]

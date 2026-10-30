@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import MediaTypeDao
 from cta.sdk.exceptions import BackendError
 from cta.sdk.models import MediaType, Tape
+from typing_extensions import override
 
 
 class MediaTypeDaoFile(MediaTypeDao):
@@ -15,6 +17,7 @@ class MediaTypeDaoFile(MediaTypeDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         name: str,
@@ -36,9 +39,11 @@ class MediaTypeDaoFile(MediaTypeDao):
         )
         self._handler.create(media_type)
 
+    @override
     def get(self, name: str, /) -> MediaType:
         return self._handler.get(self.resource_type, name)
 
+    @override
     def delete(self, name: str, /) -> None:
         for tape in self._handler.iter(Tape):
             if tape.media_type_name == name:
@@ -49,9 +54,11 @@ class MediaTypeDaoFile(MediaTypeDao):
                 )
         self._handler.delete(self.resource_type, name)
 
+    @override
     def list(self) -> Iterator[MediaType]:
         yield from self._handler.iter(self.resource_type)
 
+    @override
     def update(
         self,
         name: str,

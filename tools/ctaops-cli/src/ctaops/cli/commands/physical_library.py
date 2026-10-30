@@ -5,17 +5,15 @@ from typing import Optional
 
 import click
 from cta.sdk.models import PhysicalLibraryState
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
+from ctaops.cli.context import EXTRA_TPSRV, AppContext, tapeserver_option
 from ctaops.cli.display.printers import print_dataclasses
-
-from ..context import EXTRA_TPSRV, AppContext, tapeserver_option
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["pl"])
 def physical_library():
-    """Manage CTA Physical Libraries"""
+    """Manage CTA Physical Libraries."""
 
 
 @physical_library.command(aliases=["add"])
@@ -35,7 +33,7 @@ def create(
     nb_physical_drive_slots: int,
     comment: str,
 ):
-    """Create CTA physical library"""
+    """Create CTA physical library."""
     obj.cta_client.physical_library.create(
         name,
         manufacturer=manufacturer,
@@ -69,7 +67,7 @@ def update(
     nb_physical_drive_slots: Optional[int],
     comment: Optional[str],
 ):
-    """Update CTA physical library"""
+    """Update CTA physical library."""
     obj.cta_client.physical_library.update(
         name,
         gui_url=gui_url,
@@ -88,7 +86,7 @@ def update(
 @click.option("--reason", "-r", required=True)
 @click.pass_obj
 def disable(obj: AppContext, name: str, reason: str):
-    """Disable a CTA physical library"""
+    """Disable a CTA physical library."""
     obj.cta_client.physical_library.disable(name, reason=reason)
     print(f"PhysicalLibrary({name}) DISABLED")
 
@@ -97,7 +95,7 @@ def disable(obj: AppContext, name: str, reason: str):
 @click.argument("name")
 @click.pass_obj
 def enable(obj: AppContext, name: str):
-    """Enable a CTA physical library"""
+    """Enable a CTA physical library."""
     obj.cta_client.physical_library.enable(name)
     print(f"PhysicalLibrary({name}) ENABLED")
 
@@ -114,14 +112,12 @@ def enable(obj: AppContext, name: str):
 @tapeserver_option("-l", "--local", is_flag=True, help="Show local information")
 @click.pass_obj
 def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool] = None):
-    """List physical libraries registered in CTA"""
-
+    """List physical libraries registered in CTA."""
     state = None if disabled is None else (PhysicalLibraryState.DISABLED if disabled else PhysicalLibraryState.ENABLED)
 
     if EXTRA_TPSRV:
-        from ctaops.sdk import LocalLibraryRepository, LocalNamedLibraryRepository
-
         from ctaops.cli.models.physical_library import EnrichedPhysicalLibrary
+        from ctaops.sdk import LocalLibraryRepository, LocalNamedLibraryRepository
 
         local_named_libraries = LocalNamedLibraryRepository(
             library_name_key=obj.config.tape_server.udev_properties_map.library_name_key
@@ -146,8 +142,8 @@ def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool
         )
 
         if local:
-            cta_lib_names = set(pl.name for pl in obj.cta_client.physical_library.list())
-            if cta_unknown_named_libs := set(lnl for lnl in local_named_libraries if lnl.name not in cta_lib_names):
+            cta_lib_names = {pl.name for pl in obj.cta_client.physical_library.list()}
+            if cta_unknown_named_libs := {lnl for lnl in local_named_libraries if lnl.name not in cta_lib_names}:
                 print_dataclasses(
                     cta_unknown_named_libs, display_config=obj.config.display, title="Non-CTA Libraries (Named)"
                 )
@@ -162,13 +158,12 @@ def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get physical library registered in CTA"""
+    """Get physical library registered in CTA."""
     library = obj.cta_client.physical_library.get(name)
 
     if EXTRA_TPSRV:
-        from ctaops.sdk import LocalNamedLibraryRepository, ResourceNotFoundError
-
         from ctaops.cli.models.physical_library import EnrichedPhysicalLibrary
+        from ctaops.sdk import LocalNamedLibraryRepository, ResourceNotFoundError
 
         try:
             local_library = LocalNamedLibraryRepository(
@@ -188,6 +183,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove a CTA physical library"""
+    """Remove a CTA physical library."""
     obj.cta_client.physical_library.delete(name)
     print(f"PhysicalLibrary({name}) DELETED")

@@ -7,10 +7,11 @@ from enum import Enum, auto
 from typing import Annotated, Any, Final, Optional
 
 from cta.sdk.units import Byte, Percentage
+from typing_extensions import override
 
 
 class RepackState(Enum):
-    """Possible Repack UserRequest states
+    """Possible Repack UserRequest states.
 
     Attributes:
         COMPLETE: All the Retrieve and Archive subrequest are completed have been reported as successful.
@@ -21,7 +22,8 @@ class RepackState(Enum):
         TO_EXPAND: UserRequest waiting to be popped by the maintenance daemon.
     """
 
-    def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]
+    # Enum supplies the member name, not self, to this Python 3.9 hook.
+    def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]  # noqa: N805
         return name.lower().replace("_", "-")
 
     COMPLETE = auto()
@@ -54,12 +56,12 @@ class RepackStatistics:
 
     @property
     def remaining_file_count(self) -> int:
-        """Remaining number of files to repack"""
+        """Remaining number of files to repack."""
         return self.total_file_count - self.transferred_file_count
 
     @property
     def remaining_byte_count(self) -> int:
-        """Remaining number of bytes to repack"""
+        """Remaining number of bytes to repack."""
         return self.total_byte_count - self.transferred_byte_count
 
 
@@ -116,20 +118,23 @@ class RepackRequest:
     retrieve_statistics: RepackStatistics
     archive_statistics: RepackStatistics
 
+    @override
     def __str__(self) -> str:
         return f"RepackRequest({self.vid})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.vid)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, RepackRequest):
             return False
         return self.vid == other.vid
 
     @property
     def progress(self) -> Annotated[float, Percentage]:
-        """Progression of the repack (Percentage between 0 and 1)"""
+        """Progression of the repack (Percentage between 0 and 1)."""
         if self.retrieve_statistics.total_byte_count == 0 or self.archive_statistics.total_byte_count == 0:
             return 0
 

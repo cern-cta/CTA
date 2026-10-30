@@ -15,9 +15,10 @@ Protocols:
     DataclassProtocol: Protocol for type hinting dataclass instances.
 """
 
-from dataclasses import fields, is_dataclass
+from collections.abc import Iterator
+from dataclasses import Field, fields, is_dataclass
 from functools import lru_cache
-from typing import Any, ClassVar, Iterator, Optional, Protocol, TypeVar, get_args, get_origin, get_type_hints
+from typing import Any, ClassVar, Optional, Protocol, TypeVar, cast, get_args, get_origin, get_type_hints
 
 from ctaops.utils.typing import normalize_types
 
@@ -31,7 +32,7 @@ class DataclassProtocol(Protocol):
     attribute, which is present on all dataclass instances.
     """
 
-    __dataclass_fields__: ClassVar[dict]
+    __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
 
 
 D = TypeVar("D", bound=DataclassProtocol)
@@ -39,7 +40,9 @@ D = TypeVar("D", bound=DataclassProtocol)
 
 def _iter_dataclass_properties(obj_type: type) -> Iterator[tuple[str, property]]:
     """Yield (name, property) for all properties on a dataclass type, own + inherited.
-    A subclass property overrides a same-named property from a parent."""
+
+    A subclass property overrides a same-named property from a parent.
+    """
     seen: dict[str, property] = {}
     for klass in obj_type.__mro__:
         for name, member in vars(klass).items():
@@ -72,7 +75,6 @@ def load_data(dataclass_instance: D, data: dict[str, Any]) -> D:
     Returns:
         The same dataclass instance, now populated with data.
     """
-
     for f in fields(dataclass_instance):
         if f.name not in data:
             continue
@@ -80,8 +82,13 @@ def load_data(dataclass_instance: D, data: dict[str, Any]) -> D:
         if is_dataclass(f.type):
             load_data(getattr(dataclass_instance, f.name), data[f.name])
 
-        elif get_origin(f.type) is list and (args := get_args(f.type)) and is_dataclass((dc_type := args[0])):
-            setattr(dataclass_instance, f.name, [dc_type(**dc_map) for dc_map in data[f.name]])  # type: ignore
+        elif (
+            get_origin(f.type) is list
+            and (args := get_args(f.type))
+            and isinstance(dc_type := args[0], type)
+            and is_dataclass(dc_type)
+        ):
+            setattr(dataclass_instance, f.name, [dc_type(**dc_map) for dc_map in data[f.name]])
         else:
             setattr(dataclass_instance, f.name, data[f.name])
 
@@ -147,7 +154,7 @@ def flatten_dataclass_instance(
         if is_dataclass(value):
             result.update(
                 flatten_dataclass_instance(
-                    value,  # type: ignore
+                    cast(DataclassProtocol, value),
                     max_depth=(max_depth if not any(f == key for f in extra_flatten_fields) else None),
                     extra_flatten_fields=extra_flatten_fields,
                     include_properties=include_properties,
@@ -174,7 +181,7 @@ def flatten_dataclass_instance(
             if is_dataclass(value):
                 result.update(
                     flatten_dataclass_instance(
-                        value,  # type: ignore
+                        cast(DataclassProtocol, value),
                         max_depth=(max_depth if not any(f == key for f in extra_flatten_fields) else None),
                         extra_flatten_fields=extra_flatten_fields,
                         include_properties=include_properties,
@@ -197,8 +204,9 @@ def flatten_dataclass_class(
     _prefix: str = "",
 ) -> list[tuple[str, frozenset[type]]]:
     """
-    Recursively flatten a dataclass class into a list of (dot-path, types) tuples,
-    privileging dataclass types over other types.
+    Recursively flatten a dataclass class into a list of (dot-path, types) tuples.
+
+    Privilege dataclass types over other types.
 
     Notes:
         - If a field type includes one or more dataclass types, recurse into them

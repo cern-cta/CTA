@@ -13,11 +13,10 @@ from tempfile import gettempdir
 from typing import Literal, Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 JWKS_CONTENT = dict[Literal["keys"], list[dict[str, str]]]
 
@@ -44,7 +43,7 @@ class JWTClaim:
     aud: Optional[str] = None
     typ: Literal["Bearer"] = "Bearer"
 
-    def __post_init__(self, lifetime_sec) -> None:
+    def __post_init__(self, lifetime_sec: int) -> None:
         self.exp = self.iat + lifetime_sec
 
         if self.jti is None:
@@ -89,7 +88,7 @@ def generate_jwk_from_public_key(
 
 @click.group(cls=ClickAliasedGroup, aliases=["to"])
 def token():
-    """Manage JWT"""
+    """Manage JWT."""
 
 
 @token.command(aliases=["create"])
@@ -136,10 +135,10 @@ def generate(
     jti: Optional[str],
     output_dir: Path,
 ):
-    """Generate a new JWT token
-    <subject> claim (repeatable). Each <subject> argument will generate a separate JWT with the name of the subject",
-    """
+    """Generate a new JWT token.
 
+    <subject> claim (repeatable). Each <subject> argument will generate a separate JWT with the name of the subject",.
+    """
     import jwt
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -207,8 +206,7 @@ def generate(
 @click.option("--output-path", type=click.Path(path_type=Path), default=Path(gettempdir()) / "jwks.json")
 @click.pass_obj
 def generate_jwks(obj: AppContext, public_key_path: tuple[Path, ...], output_path: Path):
-    """Generate jwks file from public key(s)"""
-
+    """Generate jwks file from public key(s)."""
     jwks: list[JWK] = [generate_jwk_from_public_key(key_path) for key_path in public_key_path]
     print_dataclasses(jwks, display_config=obj.config.display)
 
@@ -235,7 +233,7 @@ def generate_jwks(obj: AppContext, public_key_path: tuple[Path, ...], output_pat
 )
 @click.pass_obj
 def inspect(obj: AppContext, token: str, pub: Path):
-    """Change CTA admin user"""
+    """Change CTA admin user."""
     import jwt
 
     try:

@@ -12,7 +12,6 @@ from typing import Any
 
 import yaml
 
-
 GUARD_JOB = ".merge-train-guard"
 # CI files are grouped by stage, as enforced by check_gitlab_ci_single_stage.py.
 # These stages are excluded from merge-train pipelines, so their jobs don't need the guard.

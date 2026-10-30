@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
+from collections.abc import Iterator
 from datetime import datetime, timezone
-from typing import Iterator, Optional
+from typing import Any, Optional
 
 from cta.sdk.daos.cli._wrapper import FLAG, CtaCliWrapper
 from cta.sdk.daos.protocols import TapeDao
 from cta.sdk.models import Tape, TapeMetadata, TapeState, TapeStatistics, VerificationStatus
+from typing_extensions import override
 
 
 class TapeDaoCli(TapeDao):
@@ -19,7 +21,7 @@ class TapeDaoCli(TapeDao):
         return "tape"
 
     @staticmethod
-    def raw_data_to_resource(raw_data: dict) -> Tape:
+    def raw_data_to_resource(raw_data: dict[str, Any]) -> Tape:
         verification_status = None
         if r := raw_data["verificationStatus"]:
             vs_raw_dict = json.loads(r)
@@ -87,9 +89,11 @@ class TapeDaoCli(TapeDao):
             ),
         )
 
+    @override
     def get(self, vid: str, /) -> Tape:
         return self.raw_data_to_resource(self._wrapper.get("tape", {"vid": vid}))
 
+    @override
     def list(
         self,
         /,
@@ -125,12 +129,15 @@ class TapeDaoCli(TapeDao):
             self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.iter(self.resource_type, filters=filters)
         )
 
+    @override
     def delete(self, vid: str, /) -> None:
         self._wrapper.delete(self.resource_type, {"vid": vid})
 
+    @override
     def reclaim(self, vid: str, /) -> None:
         self._wrapper.reclaim(self.resource_type, {"vid": vid})
 
+    @override
     def create(
         self,
         vid: str,
@@ -161,6 +168,7 @@ class TapeDaoCli(TapeDao):
             data=data,
         )
 
+    @override
     def update(
         self,
         vid: str,
@@ -211,6 +219,7 @@ class TapeDaoCli(TapeDao):
             data=data,
         )
 
+    @override
     def change_state(
         self,
         vid: str,

@@ -11,17 +11,16 @@ from pathlib import Path
 import click
 from cta.sdk.client.grpc.models import WorkflowFileInfo as WorkflowFileInfoBase
 from cta.sdk.client.grpc.workflow import WorkflowRpcClient
+from ctaops.cli.click_extension.aliases import ClickAliasedGroup
+from ctaops.cli.context import AppContext
 from ctaops.utils.dataclasses import load_data
 from ctaops.utils.typing import unwrap_optional_type
 from rich import print as print_rich
 from rich.panel import Panel
 from rich.pretty import Pretty
 
-from ctaops.cli.click_extension.aliases import ClickAliasedGroup
-from ctaops.cli.context import AppContext
 
-
-def proto_to_dict(message: t.Any) -> dict:
+def proto_to_dict(message: t.Any) -> dict[str, t.Any]:
     """Recursively convert a protobuf message to a dictionary."""
     if not hasattr(message, "DESCRIPTOR"):
         return message
@@ -96,10 +95,11 @@ REQUIRED_FIELDS = {field.name for field in fields(WorkflowFileInfo) if unwrap_op
 
 
 def file_info_options(required: t.Union[set[str], frozenset[str]] = frozenset()):
-    def _file_info_options(f):
-        """Adds --file-info plus the individual options, and passes a single
-        `file_info: WorkflowFileInfo` argument to the wrapped command instead."""
+    def _file_info_options(f: t.Callable[..., t.Any]):
+        """Add --file-info and the individual file options.
 
+        Pass a single `file_info: WorkflowFileInfo` argument to the wrapped command.
+        """
         options = [
             click.option(
                 "--file-info", "file_info_path", type=click.File("r"), help="Path to a file describing the target."
@@ -117,7 +117,7 @@ def file_info_options(required: t.Union[set[str], frozenset[str]] = frozenset())
             options.append(click.option(f"--{field.name.replace('_', '-')}", f"opt_{field.name}", type=field_t))
 
         @functools.wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: t.Any, **kwargs: t.Any):
             file_info_path = kwargs.pop("file_info_path")
 
             individual = {field.name: kwargs.pop(f"opt_{field.name}") for field in fields(WorkflowFileInfo)}
@@ -189,7 +189,6 @@ def workflow(
     show_request: bool,
 ):
     """Manage CTA workflow RPC operations."""
-
     if obj.workflow_client is None:
         raise click.ClickException("CTA Workflow integration is not configured. Check [workflow] in ctaops-cli.toml.")
 
@@ -214,10 +213,8 @@ def workflow(
 
 
 @contextmanager
-def _workflow_client(obj: AppContext) -> t.Generator[t.Tuple[WorkflowRpcClient, dict], None, None]:
-    """
-    Context manager to handle the workflow client and its options. Does error handling.
-    """
+def _workflow_client(obj: AppContext) -> t.Generator[tuple[WorkflowRpcClient, dict[str, t.Any]], None, None]:
+    """Context manager to handle the workflow client and its options. Does error handling."""
     from cta.sdk.client.grpc.protobuf_generated import cta_frontend_pb2
 
     if obj.workflow_client is None:

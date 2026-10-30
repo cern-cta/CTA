@@ -18,7 +18,7 @@ from ctaops.sdk import (
 
 
 @pytest.mark.parametrize(
-    "exc_cls,parent",
+    ("exc_cls", "parent"),
     [
         (ResourceNotFoundError, CtaopsSdkError),
         (LibraryOperationError, CtaopsSdkError),

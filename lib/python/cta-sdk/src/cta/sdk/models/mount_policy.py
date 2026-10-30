@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Final
 
+from typing_extensions import override
+
 from .metadata import Metadata
 
 
@@ -28,13 +30,16 @@ class MountPolicy:
     min_retrieve_age: timedelta
     metadata: Metadata
 
+    @override
     def __str__(self) -> str:
         return f"MountPolicy({self.name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, MountPolicy):
             return False
         return self.name == other.name

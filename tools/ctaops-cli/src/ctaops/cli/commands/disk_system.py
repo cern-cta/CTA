@@ -5,17 +5,16 @@ from datetime import timedelta
 from typing import Optional
 
 import click
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.click_extension.custom_types import BytesType, DurationType
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["ds"])
 def disk_system():
-    """Manage CTA disk systems"""
+    """Manage CTA disk systems."""
 
 
 @disk_system.command(aliases=["add"])
@@ -37,7 +36,7 @@ def create(
     sleep_time: timedelta,
     comment: str,
 ):
-    """Create a CTA disk system"""
+    """Create a CTA disk system."""
     obj.cta_client.disk_system.create(
         name,
         disk_instance_name=disk_instance,
@@ -65,7 +64,7 @@ def update(
     sleep_time: Optional[timedelta],
     comment: Optional[str],
 ):
-    """Update CTA disk disk system"""
+    """Update CTA disk disk system."""
     obj.cta_client.disk_system.update(
         name, file_regex=file_regex, desired_min_free_space=targeted_free_space, sleep_time=sleep_time, comment=comment
     )
@@ -75,7 +74,7 @@ def update(
 @disk_system.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List disk system"""
+    """List disk system."""
     print_dataclasses(obj.cta_client.disk_system.list(), display_config=obj.config.display)
 
 
@@ -83,7 +82,7 @@ def list_command(obj: AppContext):
 @click.argument("name")
 @click.pass_obj
 def get(obj: AppContext, name: str):
-    """Get disk system registered in CTA"""
+    """Get disk system registered in CTA."""
     print_dataclasses(obj.cta_client.disk_system.get(name), display_config=obj.config.display)
 
 
@@ -91,6 +90,6 @@ def get(obj: AppContext, name: str):
 @click.argument("name")
 @click.pass_obj
 def delete(obj: AppContext, name: str):
-    """Remove a CTA disk system"""
+    """Remove a CTA disk system."""
     obj.cta_client.disk_system.delete(name)
     print(f"DiskSystem({name}) DELETED")

@@ -2,15 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
-from pathlib import Path
 import shlex
 import time
+from pathlib import Path
 
 from typing_extensions import override
 
-from .disk_client_host import DiskClientHost
-from .dcache_constants import DCACHE_ADMIN_AUTH, DCACHE_REST_PORT, DCACHE_WEBDAV_PORT
 from system_tests.helpers.utils.timeout import Timeout
+
+from .dcache_constants import DCACHE_ADMIN_AUTH, DCACHE_REST_PORT, DCACHE_WEBDAV_PORT
+from .disk_client_host import DiskClientHost
 
 
 class DCacheClientHost(DiskClientHost):

@@ -6,7 +6,6 @@
 from collections.abc import Callable, Iterable
 
 import pytest
-
 from release_version import CTAVersion, VersionError, previous_release, select_development, select_release_candidate
 
 

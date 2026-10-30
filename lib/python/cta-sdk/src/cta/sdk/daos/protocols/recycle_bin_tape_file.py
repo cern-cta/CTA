@@ -8,8 +8,9 @@ been deleted and placed in a recycle bin for recovery. Supports querying deleted
 various criteria including volume, archive ID, virtual organisation, and deletion time ranges.
 """
 
+from collections.abc import Iterator
 from datetime import datetime
-from typing import Iterator, Optional, Protocol, Union, overload
+from typing import Optional, Protocol, Union, overload
 
 from cta.sdk.models import RecycleBinTapeFile
 

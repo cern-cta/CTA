@@ -5,16 +5,16 @@ from typing import Optional
 
 import click
 from cta.sdk.models import ArchiveRouteType
-from rich import print
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
+from ctaops.cli.click_extension.custom_types import enum_choice
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
+from rich import print
 
 
 @click.group(cls=ClickAliasedGroup, aliases=["ar"])
 def archive_route():
-    """Manage CTA Archive Routes"""
+    """Manage CTA Archive Routes."""
 
 
 @archive_route.command(aliases=["add"])
@@ -23,13 +23,13 @@ def archive_route():
 @click.argument(
     "type",
     type=click.Choice([f.name for f in ArchiveRouteType], case_sensitive=False),
-    callback=lambda _, __, value: ArchiveRouteType[value.upper()] if value is not None else None,
+    callback=enum_choice(ArchiveRouteType),
 )
 @click.option("--tape-pool", "--tp", required=True)
 @click.option("--comment", "-c", required=True)
 @click.pass_obj
 def create(obj: AppContext, storage_class_name: str, number: int, type: ArchiveRouteType, tape_pool: str, comment: str):
-    """Create a CTA archive route"""
+    """Create a CTA archive route."""
     obj.cta_client.archive_route.create(storage_class_name, number, type, tape_pool_name=tape_pool, comment=comment)
     print(f"ArchiveRoute({storage_class_name}, {number}, {type}) CREATED")
 
@@ -40,7 +40,7 @@ def create(obj: AppContext, storage_class_name: str, number: int, type: ArchiveR
 @click.argument(
     "type",
     type=click.Choice([f.name for f in ArchiveRouteType], case_sensitive=False),
-    callback=lambda _, __, value: ArchiveRouteType[value.upper()] if value else None,
+    callback=enum_choice(ArchiveRouteType),
 )
 @click.option("--tape-pool", "--tp")
 @click.option("--comment", "-c")
@@ -53,7 +53,7 @@ def update(
     tape_pool: Optional[str],
     comment: Optional[str],
 ):
-    """Update a CTA archive route"""
+    """Update a CTA archive route."""
     obj.cta_client.archive_route.update(storage_class_name, number, type, tape_pool_name=tape_pool, comment=comment)
     print(f"ArchiveRoute({storage_class_name}, {number}, {type}) UPDATED")
 
@@ -61,7 +61,7 @@ def update(
 @archive_route.command("list", aliases=["ls"])
 @click.pass_obj
 def list_command(obj: AppContext):
-    """List archive routes in cta catalogue"""
+    """List archive routes in cta catalogue."""
     print_dataclasses(obj.cta_client.archive_route.list(), display_config=obj.config.display)
 
 
@@ -71,10 +71,10 @@ def list_command(obj: AppContext):
 @click.argument(
     "type",
     type=click.Choice([f.name for f in ArchiveRouteType], case_sensitive=False),
-    callback=lambda _, __, value: ArchiveRouteType[value.upper()] if value is not None else None,
+    callback=enum_choice(ArchiveRouteType),
 )
 @click.pass_obj
 def delete(obj: AppContext, storage_class_name: str, number: int, type: ArchiveRouteType):
-    """Remove a CTA archive route"""
+    """Remove a CTA archive route."""
     obj.cta_client.archive_route.delete(storage_class_name, number, type)
     print(f"ArchiveRoute({storage_class_name}, {number}, {type}) DELETED")

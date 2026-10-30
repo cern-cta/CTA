@@ -10,16 +10,15 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from typing import Any
 
-from typing_extensions import override
-
 from publish import publication_decision, release_key
+from typing_extensions import override
 
 
 class VersionTests(unittest.TestCase):

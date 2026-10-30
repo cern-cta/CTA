@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Final, Optional
 
+from typing_extensions import override
+
 from .metadata import Metadata
 
 
@@ -31,13 +33,16 @@ class LogicalLibrary:
     state_reason: Optional[str]
     metadata: Metadata
 
+    @override
     def __str__(self) -> str:
         return f"LogicalLibrary({self.name})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, LogicalLibrary):
             return False
         return self.name == other.name

@@ -102,7 +102,7 @@ class TestRepackRequestDaoCli:
         )
 
     @pytest.mark.parametrize("mock_wrapper", [{"stdout": slice(1)}], indirect=True)
-    def test_get_command(self, ref_obj):
+    def test_get_command(self, ref_obj: RepackRequest):
         return_obj = self.manager.get("test_vid")
         self.mock_run.assert_called_once_with(["cta-admin", "--jsonl", "repack", "ls", "--vid", "test_vid"])
         assert asdict(return_obj) == asdict(ref_obj)

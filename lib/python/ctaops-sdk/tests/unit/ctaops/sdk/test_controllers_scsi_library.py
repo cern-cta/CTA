@@ -9,8 +9,9 @@ patched on the controller instance with simple stubs.
 
 import json
 import subprocess
-from typing import Any
-from unittest.mock import MagicMock
+from collections.abc import Callable
+from typing import Any, Optional
+from unittest.mock import MagicMock, patch
 
 import pytest
 from ctaops.sdk.controllers.scsi.library import ScsiManagedLibraryController
@@ -23,7 +24,9 @@ from ctaops.sdk.exceptions import (
 from ctaops.sdk.repositories.protocols.drive import DriveLibraryLocation, LocatedNamedDrive
 
 
-def _make_sg_device(device_factory, *, serial="LIBSN", ctaops_name="T0-LIB0"):
+def _make_sg_device(
+    device_factory: Callable[..., MagicMock], *, serial: Optional[str] = "LIBSN", ctaops_name: str = "T0-LIB0"
+):
     return device_factory(
         sys_name="sg0",
         subsystem="scsi_generic",
@@ -37,7 +40,7 @@ def _make_sg_device(device_factory, *, serial="LIBSN", ctaops_name="T0-LIB0"):
 
 
 def _stub_drive_repo() -> MagicMock:
-    """A LocalLocatedNamedDriveRepository stub returning a single canned drive."""
+    """Return a repository stub containing a single canned drive."""
     repo = MagicMock(name="LocalLocatedNamedDriveRepository")
     canned = LocatedNamedDrive(
         serial_number="DRSN",
@@ -49,75 +52,87 @@ def _stub_drive_repo() -> MagicMock:
     return repo
 
 
-def _build_managed_controller(device_factory, *, drive_repo: "MagicMock | None" = None):
+def _build_managed_controller(device_factory: Callable[..., MagicMock], *, drive_repo: "MagicMock | None" = None):
     """Build a ScsiManagedLibraryController with internal repos stubbed."""
     sg = _make_sg_device(device_factory)
-    ctrl = ScsiManagedLibraryController(sg)
-    ctrl._drive_repo = drive_repo or _stub_drive_repo()
-    return ctrl
+    with patch(
+        "ctaops.sdk.controllers.scsi.library.LocalLocatedNamedDriveRepository",
+        return_value=drive_repo or _stub_drive_repo(),
+    ):
+        return ScsiManagedLibraryController(sg)
 
 
-def test_init_rejects_non_medium_changer(device_factory):
+def test_init_rejects_non_medium_changer(device_factory: Callable[..., MagicMock]):
     bad = device_factory(
         sys_name="sg0",
         subsystem="scsi_generic",
         properties={"SCSI_TYPE": "disk"},
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="not a valid tape library changer device"):
         ScsiManagedLibraryController(bad)
 
 
-def test_serial_number_returns_id_scsi_serial(device_factory):
+def test_serial_number_returns_id_scsi_serial(device_factory: Callable[..., MagicMock]):
     ctrl = _build_managed_controller(device_factory)
     assert ctrl.serial_number == "LIBSN"
 
 
-def test_serial_number_missing_raises(device_factory):
+def test_serial_number_missing_raises(device_factory: Callable[..., MagicMock]):
     sg = device_factory(
         sys_name="sg0",
         subsystem="scsi_generic",
         properties={"SCSI_TYPE": "medium changer"},
     )
     ctrl = ScsiManagedLibraryController(sg)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="ID_SCSI_SERIAL"):
         ctrl.serial_number  # noqa: B018
 
 
-def test_drive_is_free_parses_json(device_factory, monkeypatch):
+def test_drive_is_free_parses_json(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout=json.dumps([{"status": "free"}]))
 
     monkeypatch.setattr("ctaops.sdk.controllers.scsi.library.subprocess.run", fake_run)
     assert ctrl.drive_is_free(0) is True
 
 
-def test_drive_is_free_busy_returns_false(device_factory, monkeypatch):
+def test_drive_is_free_busy_returns_false(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout=json.dumps([{"status": "loaded"}]))
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(
-            args=a[0], returncode=0, stdout=json.dumps([{"status": "loaded"}])
-        ),
+        fake_run,
     )
     assert ctrl.drive_is_free(0) is False
 
 
-def test_drive_is_free_invalid_json_raises_value_error(device_factory, monkeypatch):
+def test_drive_is_free_invalid_json_raises_value_error(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout="<not-json>")
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="<not-json>"),
+        fake_run,
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Invalid response from cta-smc"):
         ctrl.drive_is_free(0)
 
 
-def test_drive_is_free_subprocess_error_wraps(device_factory, monkeypatch):
+def test_drive_is_free_subprocess_error_wraps(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     ctrl = _build_managed_controller(device_factory)
 
-    def boom(*a, **kw):
+    def boom(*a: Any, **kw: Any):
         raise subprocess.CalledProcessError(returncode=2, cmd=a[0])
 
     monkeypatch.setattr("ctaops.sdk.controllers.scsi.library.subprocess.run", boom)
@@ -125,12 +140,14 @@ def test_drive_is_free_subprocess_error_wraps(device_factory, monkeypatch):
         ctrl.drive_is_free(0)
 
 
-def test_import_tapes_invokes_cta_smc_without_shell(device_factory, monkeypatch):
+def test_import_tapes_invokes_cta_smc_without_shell(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     """Regression: --import must reach cta-smc as a real argv entry, not via shell=True."""
     ctrl = _build_managed_controller(device_factory)
     seen: dict[str, Any] = {}
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         seen["cmd"] = list(cmd)
         seen["shell"] = kwargs.get("shell", False)
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="")
@@ -141,10 +158,10 @@ def test_import_tapes_invokes_cta_smc_without_shell(device_factory, monkeypatch)
     assert seen["shell"] is False
 
 
-def test_import_tapes_subprocess_error_wraps(device_factory, monkeypatch):
+def test_import_tapes_subprocess_error_wraps(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
 
-    def boom(*a, **kw):
+    def boom(*a: Any, **kw: Any):
         raise subprocess.CalledProcessError(returncode=1, cmd=a[0])
 
     monkeypatch.setattr("ctaops.sdk.controllers.scsi.library.subprocess.run", boom)
@@ -152,11 +169,11 @@ def test_import_tapes_subprocess_error_wraps(device_factory, monkeypatch):
         ctrl.import_tapes()
 
 
-def test_export_tape_runs_cta_smc(device_factory, monkeypatch):
+def test_export_tape_runs_cta_smc(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
     seen: dict[str, Any] = {}
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         seen["cmd"] = list(cmd)
         return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="")
 
@@ -166,11 +183,11 @@ def test_export_tape_runs_cta_smc(device_factory, monkeypatch):
     assert "ABC123" in seen["cmd"]
 
 
-def test_label_tape_with_old_vid_and_force(device_factory, monkeypatch):
+def test_label_tape_with_old_vid_and_force(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
     seen: dict[str, Any] = {}
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: list[str], **kwargs: Any):
         seen["cmd"] = list(cmd)
         return subprocess.CompletedProcess(args=cmd, returncode=0)
 
@@ -178,15 +195,19 @@ def test_label_tape_with_old_vid_and_force(device_factory, monkeypatch):
     ctrl.label_tape(0, "NEW", old_vid="OLD", force=True)
     cmd = seen["cmd"]
     assert cmd[0] == "/usr/bin/cta-tape-label"
-    assert "--vid" in cmd and "NEW" in cmd
-    assert "--oldlabel" in cmd and "OLD" in cmd
+    assert "--vid" in cmd
+    assert "NEW" in cmd
+    assert "--oldlabel" in cmd
+    assert "OLD" in cmd
     assert "--force" in cmd
 
 
-def test_label_tape_subprocess_error_raises_label_error(device_factory, monkeypatch):
+def test_label_tape_subprocess_error_raises_label_error(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     ctrl = _build_managed_controller(device_factory)
 
-    def boom(*a, **kw):
+    def boom(*a: Any, **kw: Any):
         raise subprocess.CalledProcessError(returncode=1, cmd=a[0])
 
     monkeypatch.setattr("ctaops.sdk.controllers.scsi.library.subprocess.run", boom)
@@ -194,15 +215,17 @@ def test_label_tape_subprocess_error_raises_label_error(device_factory, monkeypa
         ctrl.label_tape(0, "NEW")
 
 
-def test_get_tape_location_drive(device_factory, monkeypatch):
+def test_get_tape_location_drive(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(
+            args=a[0], returncode=0, stdout=json.dumps([{"elementType": "drive", "elementAddress": "256"}])
+        )
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(
-            args=a[0],
-            returncode=0,
-            stdout=json.dumps([{"elementType": "drive", "elementAddress": "256"}]),
-        ),
+        fake_run,
     )
     loc = ctrl.get_tape_location("ABC123")
     assert loc.location == "DRIVE"
@@ -211,51 +234,65 @@ def test_get_tape_location_drive(device_factory, monkeypatch):
     assert loc.library_serial_number == "LIBSN"
 
 
-def test_get_tape_location_home(device_factory, monkeypatch):
+def test_get_tape_location_home(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(
+            args=a[0], returncode=0, stdout=json.dumps([{"elementType": "slot", "elementAddress": "12"}])
+        )
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(
-            args=a[0],
-            returncode=0,
-            stdout=json.dumps([{"elementType": "slot", "elementAddress": "12"}]),
-        ),
+        fake_run,
     )
     loc = ctrl.get_tape_location("ABC123")
     assert loc.location == "HOME"
 
 
-def test_get_tape_location_unknown_for_other_element_type(device_factory, monkeypatch):
+def test_get_tape_location_unknown_for_other_element_type(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(
+            args=a[0], returncode=0, stdout=json.dumps([{"elementType": "transport", "elementAddress": "12"}])
+        )
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(
-            args=a[0],
-            returncode=0,
-            stdout=json.dumps([{"elementType": "transport", "elementAddress": "12"}]),
-        ),
+        fake_run,
     )
     loc = ctrl.get_tape_location("ABC123")
     assert loc.location == "UNKNOWN"
 
 
-def test_get_tape_location_missing_raises_resource_not_found(device_factory, monkeypatch):
+def test_get_tape_location_missing_raises_resource_not_found(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout="[]")
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout="[]"),
+        fake_run,
     )
     with pytest.raises(ResourceNotFoundError):
         ctrl.get_tape_location("ABC123")
 
 
-def test_get_max_io_slots(device_factory, monkeypatch):
+def test_get_max_io_slots(device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout=json.dumps([{"port": {"count": "12"}}]))
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(
-            args=a[0], returncode=0, stdout=json.dumps([{"port": {"count": "12"}}])
-        ),
+        fake_run,
     )
     assert ctrl.get_max_io_slots() == 12
 
@@ -274,11 +311,17 @@ def test_get_max_io_slots(device_factory, monkeypatch):
         "<not-json>",  # malformed JSON
     ],
 )
-def test_get_max_io_slots_invalid_response_raises(device_factory, monkeypatch, stdout):
+def test_get_max_io_slots_invalid_response_raises(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch, stdout: str
+):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout=stdout)
+
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout=stdout),
+        fake_run,
     )
     with pytest.raises(LibraryOperationError) as excinfo:
         ctrl.get_max_io_slots()
@@ -287,23 +330,30 @@ def test_get_max_io_slots_invalid_response_raises(device_factory, monkeypatch, s
     assert repr(stdout) in str(excinfo.value) or "count" in str(excinfo.value)
 
 
-def test_drive_key_unknown_type_raises_type_error(device_factory):
+def test_drive_key_unknown_type_raises_type_error(device_factory: Callable[..., MagicMock]):
     ctrl = _build_managed_controller(device_factory)
     with pytest.raises(TypeError):
         ctrl._get_drive_metadata(1.5)  # type: ignore[arg-type]
 
 
-def test_unmount_no_op_when_drive_already_free(device_factory, monkeypatch):
+def test_unmount_no_op_when_drive_already_free(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     ctrl = _build_managed_controller(device_factory)
+
+    def fake_run(*a: Any, **kw: Any):
+        return subprocess.CompletedProcess(args=a[0], returncode=0, stdout=json.dumps([{"status": "free"}]))
 
     monkeypatch.setattr(
         "ctaops.sdk.controllers.scsi.library.subprocess.run",
-        lambda *a, **kw: subprocess.CompletedProcess(args=a[0], returncode=0, stdout=json.dumps([{"status": "free"}])),
+        fake_run,
     )
     ctrl.unmount(0)
 
 
-def test_mount_raises_drive_state_error_when_drive_busy_with_other_tape(device_factory, monkeypatch):
+def test_mount_raises_drive_state_error_when_drive_busy_with_other_tape(
+    device_factory: Callable[..., MagicMock], monkeypatch: pytest.MonkeyPatch
+):
     ctrl = _build_managed_controller(device_factory)
 
     # First call: super().drive_is_free → False (loaded)
@@ -317,7 +367,7 @@ def test_mount_raises_drive_state_error_when_drive_busy_with_other_tape(device_f
         ]
     )
 
-    def fake_run(*a, **kw):
+    def fake_run(*a: Any, **kw: Any):
         return subprocess.CompletedProcess(args=a[0], returncode=0, stdout=next(responses))
 
     fake_drive_controller = MagicMock()

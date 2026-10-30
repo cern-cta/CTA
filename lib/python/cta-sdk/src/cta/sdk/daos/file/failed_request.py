@@ -1,12 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import builtins
+from collections.abc import Iterator
 from dataclasses import replace
-from typing import Iterator, List, Optional
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import FailedRequestDao
 from cta.sdk.models import FailedRequest, FailedRequestSummary, MountType
+from typing_extensions import override
 
 
 class FailedRequestDaoFile(FailedRequestDao):
@@ -22,6 +25,7 @@ class FailedRequestDaoFile(FailedRequestDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def list(
         self,
         *,
@@ -41,10 +45,12 @@ class FailedRequestDaoFile(FailedRequestDao):
             # The CLI only returns failure logs when asked for them.
             yield failed_request if logs else replace(failed_request, logs="")
 
+    @override
     def delete(self, id: str, /) -> None:
         self._handler.delete(self.resource_type, id)
 
-    def summary(self) -> List[FailedRequestSummary]:
+    @override
+    def summary(self) -> builtins.list[FailedRequestSummary]:
         # `FailedRequest` carries no scheduler backend name, so unlike the CLI backend the
         # summary can only group by mount type and leaves scheduler_backend_name empty.
         summaries: dict[MountType, FailedRequestSummary] = {}

@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 
 import click
-
 from ctaops.cli.click_extension.aliases import ClickAliasedGroup
 from ctaops.cli.context import AppContext
 from ctaops.cli.display.printers import print_dataclasses
@@ -13,7 +12,7 @@ from ctaops.cli.display.printers import print_dataclasses
 
 @click.group(cls=ClickAliasedGroup, aliases=["rbtf"])
 def recycle_bin_tape_file():
-    """Inspect CTA files in the recycle bin"""
+    """Inspect CTA files in the recycle bin."""
 
 
 @recycle_bin_tape_file.command("list", aliases=["ls"])
@@ -35,7 +34,7 @@ def list_command(
     max_deletion_time: Optional[int],
     virtual_organisation: Optional[str],
 ):
-    """List CTA files in the recycle bin"""
+    """List CTA files in the recycle bin."""
     if not any([vid, virtual_organisation, disk_instance]):
         raise click.UsageError("You must specify one of: --vid, --disk-instance, or --virtual-organisation")
 
@@ -57,7 +56,7 @@ def list_command(
 @click.option("--vid", "-v", required=True)
 @click.pass_obj
 def get(obj: AppContext, archive_id: Optional[int], vid: str, disk_id: Optional[str], disk_instance: Optional[str]):
-    """Get CTA file in the recycle bin"""
+    """Get CTA file in the recycle bin."""
     if archive_id:
         print_dataclasses(
             obj.cta_client.recycle_bin_tape_file.get(archive_id, vid=vid), display_config=obj.config.display
@@ -76,7 +75,7 @@ def get(obj: AppContext, archive_id: Optional[int], vid: str, disk_id: Optional[
 @click.option("--disk-instance", type=str)
 @click.pass_obj
 def get_all_copies(obj: AppContext, archive_id: Optional[int], disk_id: Optional[str], disk_instance: Optional[str]):
-    """Get all copies of a CTA file in the recycle bin"""
+    """Get all copies of a CTA file in the recycle bin."""
     if archive_id:
         copies = obj.cta_client.recycle_bin_tape_file.get_all_copies(archive_id)
     elif disk_id and disk_instance:

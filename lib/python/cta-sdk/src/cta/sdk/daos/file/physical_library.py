@@ -1,12 +1,14 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Iterator, Optional
+from collections.abc import Iterator
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import PhysicalLibraryDao
 from cta.sdk.exceptions import BackendError
 from cta.sdk.models import LogicalLibrary, PhysicalLibrary, PhysicalLibraryState
+from typing_extensions import override
 
 
 class PhysicalLibraryDaoFile(PhysicalLibraryDao):
@@ -15,6 +17,7 @@ class PhysicalLibraryDaoFile(PhysicalLibraryDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         name: str,
@@ -50,9 +53,11 @@ class PhysicalLibraryDaoFile(PhysicalLibraryDao):
         )
         self._handler.create(physical_library)
 
+    @override
     def get(self, name: str, /) -> PhysicalLibrary:
         return self._handler.get(self.resource_type, name)
 
+    @override
     def delete(self, name: str, /) -> None:
         for ll in self._handler.iter(LogicalLibrary):
             if ll.physical_library_name == name:
@@ -64,6 +69,7 @@ class PhysicalLibraryDaoFile(PhysicalLibraryDao):
 
         self._handler.delete(self.resource_type, name)
 
+    @override
     def list(self, *, state: Optional[PhysicalLibraryState] = None) -> Iterator[PhysicalLibrary]:
         yield from (
             physical_library
@@ -71,6 +77,7 @@ class PhysicalLibraryDaoFile(PhysicalLibraryDao):
             if state is None or physical_library.state == state
         )
 
+    @override
     def update(
         self,
         name: str,
@@ -100,12 +107,14 @@ class PhysicalLibraryDaoFile(PhysicalLibraryDao):
 
             physical_library.metadata = self._handler.refresh_metadata(physical_library.metadata, comment=comment)
 
+    @override
     def disable(self, name: str, /, *, reason: str) -> None:
         with self._handler.update(self.resource_type, name) as physical_library:
             physical_library.state = PhysicalLibraryState.DISABLED
             physical_library.state_reason = reason
             physical_library.metadata = self._handler.refresh_metadata(physical_library.metadata)
 
+    @override
     def enable(self, name: str, /) -> None:
         with self._handler.update(self.resource_type, name) as physical_library:
             physical_library.state = PhysicalLibraryState.ENABLED

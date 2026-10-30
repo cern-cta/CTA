@@ -11,11 +11,10 @@ It also manages version detection for the Cli package.
 import importlib.util
 from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
 
 import click
 from cta.sdk.client.protocol import CtaClient
-
 from ctaops.cli.config import AppConfig
 
 if TYPE_CHECKING:
@@ -46,11 +45,14 @@ class AppContext:
     config: AppConfig
     cta_client: CtaClient
     workflow_client: Optional["WorkflowRpcClient"] = None
-    workflow_cmd_opts: Optional[dict] = None
+    workflow_cmd_opts: Optional[dict[str, Any]] = None
 
 
-def tapeserver_option(*option_args, **option_kwargs):
-    """Decorator for conditionally adding Click options based on tapeserver availability.
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def tapeserver_option(*option_args: str, **option_kwargs: Any) -> Callable[[F], F]:
+    """Conditionally add Click options based on tapeserver availability.
 
     This decorator allows Cli commands to optionally support tapeserver-specific options
     only when the ctaops.sdk package is installed. If the package is not available,
@@ -64,7 +66,7 @@ def tapeserver_option(*option_args, **option_kwargs):
         A decorator function that conditionally applies click.option decorator.
     """
 
-    def decorator(func):
+    def decorator(func: F) -> F:
         # Detect project name automatically from package metadata of func module
         if EXTRA_TPSRV:
             return click.option(*option_args, **option_kwargs)(func)

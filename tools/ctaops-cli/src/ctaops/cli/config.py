@@ -71,14 +71,16 @@ class BackendsConfig:
 
 @dataclass
 class TableColumnsConfig:
-    """Table column overrides.
+    """
+    Table column overrides.
 
     You can provide a list of fields to force-include and/or
     a list fields to force-exclude in the table output.
 
     Attributes:
         table_name: The name of the dataclass type in PascalCase
-        exclude_fields: A list of attributes to exclude from the table output (CTA sdk naming convention with . separation)
+        exclude_fields: A list of attributes to exclude from the table output (CTA sdk naming convention with .
+            separation)
     """
 
     table_name: str

@@ -4,6 +4,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from typing_extensions import override
+
 from .tape_file import TapeFile
 
 
@@ -21,5 +23,6 @@ class RecycleBinTapeFile(TapeFile):
     deletion_reason: str
     virtual_organisation_name: str
 
+    @override
     def __str__(self) -> str:
         return f"RecycleBinFile({self.archive_id},{self.vid},{self.fseq})"

@@ -31,6 +31,7 @@ from ctaops.sdk.repositories.local.drive import LocalLocatedNamedDriveRepository
 from ctaops.sdk.repositories.local.library import LocalNamedLibraryRepository
 from ctaops.sdk.repositories.protocols.drive import LocatedNamedDrive
 from pyudev import Context, Device
+from typing_extensions import override
 
 LOGGER = logging.getLogger("ctaops.sdk")
 
@@ -91,6 +92,7 @@ class ScsiLibraryController(LibraryController):
         self._context = context if context is not None else Context()
 
     @property
+    @override
     def serial_number(self) -> str:
         """SCSI serial number from the `ID_SCSI_SERIAL` udev property.
 
@@ -102,12 +104,15 @@ class ScsiLibraryController(LibraryController):
             raise ValueError(f"Device {self._sg_device} does not have an ID_SCSI_SERIAL property")
         return serial_number
 
+    @override
     def __repr__(self) -> str:
         return f"ScsiLibraryController(serial_number={self.serial_number})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.serial_number)
 
+    @override
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, ScsiLibraryController):
             return False
@@ -127,7 +132,7 @@ class ScsiLibraryController(LibraryController):
                 load the tape.
         """
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603 - fixed tool, argv only.
                 ["/usr/bin/cta-smc", "-m", "-V", vid, "-D", str(ordinal)],
                 stdout=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
                 stderr=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
@@ -154,7 +159,7 @@ class ScsiLibraryController(LibraryController):
                 unload the tape.
         """
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603 - fixed tool, argv only.
                 ["/usr/bin/cta-smc", "-d", "-D", str(ordinal)],
                 stdout=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
                 stderr=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
@@ -184,7 +189,7 @@ class ScsiLibraryController(LibraryController):
             ValueError: If the response cannot be parsed.
         """
         try:
-            cmd_call = subprocess.run(
+            cmd_call = subprocess.run(  # noqa: S603 - fixed tool, argv only.
                 [
                     "/usr/bin/cta-smc",
                     "--json",
@@ -207,14 +212,18 @@ class ScsiLibraryController(LibraryController):
         except (IndexError, KeyError, json.JSONDecodeError) as e:
             raise ValueError(f"Invalid response from cta-smc: {cmd_call.stdout}") from e
 
+    @override
     def drive_is_free(self, drive_key: DriveOrdinal) -> bool:
-        """See [LibraryController.drive_is_free][ctaops.sdk.controllers.protocols.library.LibraryController.drive_is_free].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.LibraryController.drive_is_free].
 
         Implementation: parses the `status` field of `cta-smc --json -q D <ordinal>`.
         """
         LOGGER.debug("Checking if drive %s is free", drive_key)
         try:
-            cmd_call = subprocess.run(
+            cmd_call = subprocess.run(  # noqa: S603 - fixed tool, argv only.
                 ["/usr/bin/cta-smc", "--json", "-q", "D", "-D", str(drive_key)],
                 stdout=subprocess.PIPE,
                 stderr=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
@@ -230,8 +239,12 @@ class ScsiLibraryController(LibraryController):
         except (IndexError, KeyError, json.JSONDecodeError) as e:
             raise ValueError(f"Invalid response from cta-smc: {cmd_call.stdout}") from e
 
+    @override
     def import_tapes(self) -> None:
-        """See [LibraryController.import_tapes][ctaops.sdk.controllers.protocols.library.LibraryController.import_tapes].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.LibraryController.import_tapes].
 
         Implementation: runs `cta-smc -i`.
         """
@@ -248,6 +261,7 @@ class ScsiLibraryController(LibraryController):
         except subprocess.SubprocessError as e:
             raise LibraryOperationError("Failed to import tapes inside library slots") from e
 
+    @override
     def export_tape(self, vid: str) -> None:
         """See [LibraryController.export_tape][ctaops.sdk.controllers.protocols.library.LibraryController.export_tape].
 
@@ -255,7 +269,7 @@ class ScsiLibraryController(LibraryController):
         """
         LOGGER.info("Exporting tape vid=%s from library %s", vid, self.serial_number)
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603 - fixed tool, argv only.
                 ["/usr/bin/cta-smc", "--json", "-e", "-V", vid],
                 stdout=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
                 stderr=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
@@ -266,8 +280,12 @@ class ScsiLibraryController(LibraryController):
         except subprocess.SubprocessError as e:
             raise LibraryOperationError(f"Failed to export tape {vid}") from e
 
+    @override
     def get_tape_location(self, vid: str) -> TapeLocation:
-        """See [LibraryController.get_tape_location][ctaops.sdk.controllers.protocols.library.LibraryController.get_tape_location].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.LibraryController.get_tape_location].
 
         Implementation: parses `cta-smc --json -q V -V <vid>` and maps the
         `elementType` field onto the
@@ -281,7 +299,7 @@ class ScsiLibraryController(LibraryController):
         """
         LOGGER.debug("Getting tape location for vid=%s in library %s", vid, self.serial_number)
         try:
-            cmd_call = subprocess.run(
+            cmd_call = subprocess.run(  # noqa: S603 - fixed tool, argv only.
                 ["/usr/bin/cta-smc", "--json", "-q", "V", "-V", vid],
                 stdout=subprocess.PIPE,
                 stderr=(None if LOGGER.level == logging.DEBUG else subprocess.DEVNULL),
@@ -312,8 +330,12 @@ class ScsiLibraryController(LibraryController):
         except (IndexError, KeyError, json.JSONDecodeError) as e:
             raise ValueError(f"Invalid response from cta-smc: {cmd_call.stdout}") from e
 
+    @override
     def get_max_io_slots(self) -> int:
-        """See [LibraryController.get_max_io_slots][ctaops.sdk.controllers.protocols.library.LibraryController.get_max_io_slots].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.LibraryController.get_max_io_slots].
 
         Implementation: parses `cta-smc --json -q L` and reads the
         `port.count` field, raising
@@ -352,6 +374,7 @@ class ScsiLibraryController(LibraryController):
                 f"cta-smc -q L returned non-integer port.count {port_section['count']!r}"
             ) from e
 
+    @override
     def mount(self, drive_key: DriveOrdinal, vid: str) -> Any:
         """See [LibraryController.mount][ctaops.sdk.controllers.protocols.library.LibraryController.mount].
 
@@ -368,7 +391,6 @@ class ScsiLibraryController(LibraryController):
             [MountedDriveController][ctaops.sdk.controllers.protocols.drive.MountedDriveController]
             for you.
         """
-
         if not self.drive_is_free(drive_key) and self._get_drive_vid(drive_key) == vid:
             LOGGER.info(
                 "Reusing existing mount of vid=%s on drive=%s (library=%s)",
@@ -384,6 +406,7 @@ class ScsiLibraryController(LibraryController):
 
         self._mount(drive_key, vid)
 
+    @override
     def unmount(self, drive_key: DriveOrdinal) -> None:
         """See [LibraryController.unmount][ctaops.sdk.controllers.protocols.library.LibraryController.unmount].
 
@@ -454,12 +477,16 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         self._drive_repo = LocalLocatedNamedDriveRepository(self._context)
 
     @property
+    @override
     def name(self) -> str:
         """Logical library name resolved through the infrastructure repository."""
         return LocalNamedLibraryRepository(self._context).get_library(self.serial_number).name
 
-    def _get_drive_metadata(self, drive_key: Union[DriveOrdinal, DriveName]) -> LocatedNamedDrive:
-        """Resolve a drive key (ordinal or name) into [LocatedNamedDrive][ctaops.sdk.repositories.protocols.drive.LocatedNamedDrive] metadata.
+    def _get_drive_metadata(self, drive_key: object) -> LocatedNamedDrive:
+        """
+        Resolve a drive key into library metadata.
+
+        Return [LocatedNamedDrive][ctaops.sdk.repositories.protocols.drive.LocatedNamedDrive] metadata.
 
         Args:
             drive_key: Drive ordinal (`int`) or logical name (`str`).
@@ -476,6 +503,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         else:
             raise TypeError(f"drive_key is of type {type(drive_key)} but should be one of following types (int,str)")
 
+    @override
     def label_tape(
         self,
         drive_key: Union[DriveOrdinal, DriveName],
@@ -483,12 +511,14 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         old_vid: Optional[str] = None,
         force: bool = False,
     ) -> None:
-        """See [ManagedLibraryController.label_tape][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.label_tape].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.label_tape].
 
         Implementation: invokes `cta-tape-label` against the resolved
         drive name, optionally with `--oldlabel` and/or `--force`.
         """
-
         LOGGER.info(
             "Labelling tape vid=%s on drive=%s (old_vid=%s, force=%s)",
             vid,
@@ -497,7 +527,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
             force,
         )
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603 - fixed tool, argv only.
                 ["/usr/bin/cta-tape-label", "--drive", self._get_drive_metadata(drive_key).name, "--vid", vid]
                 + (["--oldlabel", old_vid] if old_vid else [])
                 + (["--force"] if force else [])
@@ -510,15 +540,23 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         except subprocess.SubprocessError as e:
             raise TapeLabelError(f"Failed to label tape {vid}") from e
 
+    @override
     def drive_is_free(self, drive_key: Union[DriveOrdinal, DriveName]) -> bool:
-        """See [ManagedLibraryController.drive_is_free][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.drive_is_free].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.drive_is_free].
 
         Implementation: parses the `status` field of `cta-smc --json -q D <ordinal>`.
         """
         return super().drive_is_free(self._get_drive_metadata(drive_key).location.ordinal)
 
+    @override
     def mount(self, drive_key: Union[DriveOrdinal, DriveName], vid: str) -> ScsiMountedDriveController:
-        """See [ManagedLibraryController.mount][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.mount].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.mount].
 
         Implementation: if the drive already holds `vid` and is online, the
         existing mount is reused (no changer command is run); otherwise the
@@ -543,23 +581,28 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
                 drive_key,
                 self.serial_number,
             )
-            return ScsiMountedDriveController._from_drive_controller(
+            return ScsiMountedDriveController.from_drive_controller(
                 drive_controller, vid, (lambda: self.unmount(drive_key))
             )
 
         if not self.drive_is_free(drive_key):
             raise DriveStateError(
-                f"Drive {drive_key} is not free, a different tape is inside or a tape is in ejected state, no mount possible"
+                f"Drive {drive_key} is not free, a different tape is inside "
+                "or a tape is in ejected state, no mount possible"
             )
 
         LOGGER.info("Mounting tape vid=%s on drive=%s (library=%s)", vid, drive_key, self.serial_number)
         self._mount(drive.location.ordinal, vid)
-        return ScsiMountedDriveController._from_drive_controller(
+        return ScsiMountedDriveController.from_drive_controller(
             drive_controller, vid, (lambda: self.unmount(drive_key))
         )
 
+    @override
     def unmount(self, drive_key: Union[DriveOrdinal, DriveName]) -> None:
-        """See [ManagedLibraryController.unmount][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.unmount].
+        """
+        See the base implementation.
+
+        [Reference][ctaops.sdk.controllers.protocols.library.ManagedLibraryController.unmount].
 
         Implementation: no-op when the drive is already free; otherwise
         ejects the tape via the drive controller's
@@ -581,7 +624,8 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         cls,
         lib_ctrl: ScsiLibraryController,
     ) -> "ScsiManagedLibraryController":
-        """Upgrade a [ScsiLibraryController][ctaops.sdk.controllers.scsi.library.ScsiLibraryController] into a managed one.
+        """
+        Upgrade a [ScsiLibraryController][ctaops.sdk.controllers.scsi.library.ScsiLibraryController] into a managed one.
 
         Reuses the wrapped `sg_device` and pyudev `Context` so the resulting
         controller shares the udev snapshot of the source. Useful when a
@@ -601,5 +645,6 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
             context=lib_ctrl._context,
         )
 
+    @override
     def __repr__(self) -> str:
         return f"ScsiManagedLibraryController(serial_number={self.serial_number}, name={self.name})"

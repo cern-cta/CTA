@@ -9,7 +9,7 @@ class Unit:
 
 
 @pytest.mark.parametrize(
-    "tp,expected",
+    ("tp", "expected"),
     [
         (Annotated[Optional[int], "unit"], frozenset({int, type(None)})),
         (Annotated[int, Unit], frozenset({int, Unit})),
@@ -17,12 +17,12 @@ class Unit:
         (list[dict[str, Any]], frozenset({list})),
     ],
 )
-def test_nomalize_types(tp, expected):
+def test_nomalize_types(tp: Any, expected: frozenset[type]):
     assert normalize_types(tp) == expected
 
 
 @pytest.mark.parametrize(
-    "tp,expected",
+    ("tp", "expected"),
     [
         (Unit, None),
         (list[Unit], None),
@@ -31,7 +31,7 @@ def test_nomalize_types(tp, expected):
         (Optional[dict[str, Any]], dict[str, Any]),
     ],
 )
-def test_unwrap_optional_type(tp, expected):
+def test_unwrap_optional_type(tp: Any, expected: Any):
     from ctaops.utils.typing import unwrap_optional_type
 
     assert unwrap_optional_type(tp) == expected

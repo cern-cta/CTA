@@ -1,13 +1,15 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from itertools import chain
-from typing import Iterator, Optional
+from typing import Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import StorageClassDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, RecycleBinTapeFile, StorageClass, TapeFile, VirtualOrganisation
+from typing_extensions import override
 
 
 class StorageClassDaoFile(StorageClassDao):
@@ -16,6 +18,7 @@ class StorageClassDaoFile(StorageClassDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         name: str,
@@ -37,9 +40,11 @@ class StorageClassDaoFile(StorageClassDao):
         )
         self._handler.create(storage_class)
 
+    @override
     def get(self, name: str, /) -> StorageClass:
         return self._handler.get(self.resource_type, name)
 
+    @override
     def delete(self, name: str, /) -> None:
         for obj in chain(
             self._handler.iter(TapeFile),
@@ -54,9 +59,11 @@ class StorageClassDaoFile(StorageClassDao):
                 )
         self._handler.delete(self.resource_type, name)
 
+    @override
     def list(self) -> Iterator[StorageClass]:
         yield from self._handler.iter(self.resource_type)
 
+    @override
     def update(
         self,
         name: str,

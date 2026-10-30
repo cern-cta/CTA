@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Providers for SCSI-backed library controllers.
+"""
+Providers for SCSI-backed library controllers.
 
 A controller provider is the recommended entry point for callers: it
 enumerates every locally-visible medium changer and produces controller
@@ -12,7 +13,7 @@ exposed:
   — yields minimal
   [ScsiLibraryController][ctaops.sdk.controllers.scsi.library.ScsiLibraryController]
   instances (ordinal-only addressing, no logical-name resolution).
-* [ScsiManagedLibraryControllerProvider][ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider]
+* [Reference][ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider]
   — yields fully-wired
   [ScsiManagedLibraryController][ctaops.sdk.controllers.scsi.library.ScsiManagedLibraryController]
   instances. Each controller resolves drive/library metadata through
@@ -31,12 +32,14 @@ from ctaops.sdk.controllers.scsi.library import ScsiLibraryController, ScsiManag
 from ctaops.sdk.exceptions import ResourceNotFoundError
 from ctaops.sdk.repositories.local.drive import LocalLocatedNamedDriveRepository
 from pyudev import Context, Device
+from typing_extensions import override
 
 LOGGER = logging.getLogger("ctaops.sdk")
 
 
 class ScsiLibraryControllerProvider(LibraryControllerProvider):
-    """Build minimal SCSI-backed library controllers for local changers.
+    """
+    Build minimal SCSI-backed library controllers for local changers.
 
     Each call to `get_library_controller(...)` / `find_library_controller(...)`
     returns a
@@ -48,7 +51,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
     Note:
         This provider yields ordinal-only controllers. For day-to-day
         operations prefer
-        [ScsiManagedLibraryControllerProvider][ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider],
+        [Reference][ctaops.sdk.controller_providers.scsi.library.ScsiManagedLibraryControllerProvider],
         which yields managed controllers exposing logical-name resolution,
         context-managed `mount(...)`, and `label_tape(...)`.
 
@@ -83,6 +86,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
             if re.match(r"^sg[0-9]+$", device.sys_name)
         }
 
+    @override
     def find_library_controller(
         self,
         serial_number: str,
@@ -97,6 +101,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
             None,
         )
 
+    @override
     def get_library_controller(
         self,
         serial_number: str,
@@ -106,6 +111,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
         LOGGER.debug("Resolved library controller for serial=%s", serial_number)
         return library_controller
 
+    @override
     def find_library_controller_by_name(
         self,
         name: str,
@@ -120,6 +126,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
             None,
         )
 
+    @override
     def get_library_controller_by_name(
         self,
         name: str,
@@ -180,6 +187,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
             self._context, drive_name_key, drive_library_address_key, drive_library_ordinal_key
         )
 
+    @override
     def _list_media_changer_sg_devices(self) -> set[Device]:
         """Return the set of medium-changer `sgN` devices visible locally."""
         return {
@@ -188,6 +196,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
             if re.match(r"^sg[0-9]+$", device.sys_name)
         }
 
+    @override
     def find_library_controller(
         self,
         serial_number: str,
@@ -202,6 +211,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
             None,
         )
 
+    @override
     def get_library_controller(
         self,
         serial_number: str,
@@ -211,6 +221,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
         LOGGER.debug("Resolved library controller for serial=%s", serial_number)
         return library_controller
 
+    @override
     def find_library_controller_by_name(
         self,
         name: str,
@@ -225,6 +236,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
             None,
         )
 
+    @override
     def get_library_controller_by_name(
         self,
         name: str,
@@ -234,6 +246,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
         LOGGER.debug("Resolved library controller for name=%s", name)
         return library_controller
 
+    @override
     def get_library_controller_from_drive_name(
         self,
         drive_name: str,
@@ -247,6 +260,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
             self._drive_repo.get_drive_by_name(drive_name).location.library_serial_number
         )
 
+    @override
     def find_library_controller_from_drive_name(
         self,
         drive_name: str,

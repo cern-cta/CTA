@@ -7,7 +7,8 @@ exercise the SDK without root privileges or real tape hardware.
 """
 
 import subprocess
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any, Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -31,9 +32,9 @@ def make_device(
 
     properties = dict(properties or {})
     properties_mock = MagicMock(name=f"Properties({sys_name})")
-    properties_mock.get.side_effect = lambda key, default=None: properties.get(key, default)
-    properties_mock.__contains__.side_effect = lambda key: key in properties
-    properties_mock.__getitem__.side_effect = lambda key: properties[key]
+    properties_mock.get.side_effect = properties.get
+    properties_mock.__contains__.side_effect = properties.__contains__
+    properties_mock.__getitem__.side_effect = properties.__getitem__
     device.properties = properties_mock
     device._properties_dict = properties
     return device
@@ -44,7 +45,7 @@ def make_completed_process(
     returncode: int = 0,
     stdout: str = "",
     stderr: str = "",
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     return subprocess.CompletedProcess(args=list(args), returncode=returncode, stdout=stdout, stderr=stderr)
 
 

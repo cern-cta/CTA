@@ -9,8 +9,8 @@ import json
 import re
 from dataclasses import dataclass
 
-from release_version import CTAVersion, VersionError
 from git_repo import Git, GitError
+from release_version import CTAVersion, VersionError
 
 
 def has_release_heading(text: str, version: str) -> bool:

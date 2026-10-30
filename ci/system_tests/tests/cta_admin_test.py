@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.hosts import (
     CtaCliHost,
     CtaTapedHost,
@@ -14,7 +13,7 @@ from system_tests.helpers.hosts import (
     DiskInstanceHost,
     SchedulerPostgresHost,
 )
-
+from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.utils import (
     TempDiskInstanceSpace,
     TempLogicalLibrary,
@@ -28,7 +27,6 @@ from system_tests.helpers.utils import (
     canonicalize,
     wait_for_condition,
 )
-
 
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
 #

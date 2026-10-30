@@ -8,7 +8,8 @@ are mounted for user groups on specific disk instances. Group mount rules apply 
 to all members of a user group for consistent tape access behavior.
 """
 
-from typing import Iterator, Optional, Protocol
+from collections.abc import Iterator
+from typing import Optional, Protocol
 
 from cta.sdk.models import GroupMountRule
 

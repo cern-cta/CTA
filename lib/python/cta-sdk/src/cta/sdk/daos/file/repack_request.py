@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from collections.abc import Iterator
 from datetime import timedelta
-from typing import Iterator, Literal, Optional
+from typing import Literal, Optional
 
 from cta.sdk.daos.file._handler import CtaFileHandler
 from cta.sdk.daos.protocols import RepackRequestDao
@@ -13,17 +14,7 @@ from cta.sdk.models import (
     RepackStatistics,
     Tape,
 )
-
-
-def _no_statistics() -> RepackStatistics:
-    return RepackStatistics(
-        total_file_count=0,
-        total_byte_count=0,
-        transferred_file_count=0,
-        transferred_byte_count=0,
-        failed_file_count=0,
-        failed_byte_count=0,
-    )
+from typing_extensions import override
 
 
 class RepackRequestDaoFile(RepackRequestDao):
@@ -32,6 +23,7 @@ class RepackRequestDaoFile(RepackRequestDao):
     def __init__(self, file_handler: CtaFileHandler):
         self._handler = file_handler
 
+    @override
     def create(
         self,
         vid: str,
@@ -86,11 +78,14 @@ class RepackRequestDaoFile(RepackRequestDao):
         )
         self._handler.create(repack_request)
 
+    @override
     def get(self, vid: str, /) -> RepackRequest:
         return self._handler.get(self.resource_type, vid)
 
+    @override
     def delete(self, vid: str, /) -> None:
         self._handler.delete(self.resource_type, vid)
 
+    @override
     def list(self) -> Iterator[RepackRequest]:
         yield from self._handler.iter(self.resource_type)

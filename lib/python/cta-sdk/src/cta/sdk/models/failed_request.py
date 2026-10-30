@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Annotated, Final
 
 from cta.sdk.units import Byte
+from typing_extensions import override
 
 from .mount_type import MountType
 from .tape_file import TapeFile
@@ -34,13 +35,16 @@ class FailedRequest:
     total_retries: int
     logs: str
 
+    @override
     def __str__(self):
         return f"FailedRequest({self.id})"
 
+    @override
     def __hash__(self) -> int:
         return hash(self.id)
 
-    def __eq__(self, other):
+    @override
+    def __eq__(self, other: object):
         if not isinstance(other, FailedRequest):
             return False
         return self.id == other.id

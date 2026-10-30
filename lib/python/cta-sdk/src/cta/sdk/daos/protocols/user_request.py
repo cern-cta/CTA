@@ -8,9 +8,11 @@ which represent jobs queued for execution by the CTA scheduler. Provides methods
 summarize requests with support for grouping by various attributes.
 """
 
+import builtins
 from abc import ABC, abstractmethod
+from collections.abc import Iterator, Sequence
 from itertools import groupby
-from typing import Iterator, List, Literal, Optional, Sequence
+from typing import Literal, Optional
 
 from cta.sdk.models import (
     MountType,
@@ -65,7 +67,7 @@ class UserRequestDao(ABC):
         user_requests: Sequence[UserRequest],
         group_by: GroupBy,
         order_by: OrderBy = "queued_byte_count",
-    ) -> List[UserRequestSummary]:
+    ) -> builtins.list[UserRequestSummary]:
         """Generate a summary of requests grouped by specified criteria.
 
         This is a static utility method that aggregates request statistics and provides
