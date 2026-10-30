@@ -63,11 +63,13 @@ data:
 
     [experimental]
       telemetry_enabled = {{ .Values.conf.telemetry.enabled }}
+    {{- if .Values.conf.telemetry.enabled }}
 
 
     [telemetry]
       config_file = "/etc/cta/cta-otel.yaml"
       on_init_failure = "fatal"
+    {{- end }}
 
 
     [grpc]

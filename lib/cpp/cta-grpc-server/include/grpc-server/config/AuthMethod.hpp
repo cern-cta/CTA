@@ -15,7 +15,7 @@ namespace cta::grpc_server {
 using cta::common::FromString;
 
 /**
- * @brief Authentication methods supported by the CTA frontend
+ * @brief Authentication methods supported by the CTA frontend APIs
  */
 enum class AuthMethod { JWT, KERBEROS, MTLS };
 

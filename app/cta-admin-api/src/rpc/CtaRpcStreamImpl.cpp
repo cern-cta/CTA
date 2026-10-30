@@ -109,7 +109,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   }
 
   // proceed with command execution if no exception was thrown
-  return new CtaAdminServerWriteReactor(std::move(stream), std::move(requestLogger));
+  return new CtaAdminServerWriteReactor(std::move(stream), std::move(requestLogger), std::move(requestTracker));
 }
 
 }  // namespace cta::admin_api::rpc

@@ -9,6 +9,7 @@
 #include "telemetry/metrics/FrontendMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
+#include <utility>
 
 namespace cta::grpc_server {
 
@@ -22,7 +23,17 @@ RequestTracker::RequestTracker(std::string_view eventName, std::string_view requ
   });
 }
 
+RequestTracker::RequestTracker(RequestTracker&& other) noexcept
+    : m_timer(other.m_timer),
+      m_eventName(std::move(other.m_eventName)),
+      m_requesterName(std::move(other.m_requesterName)),
+      m_errorType(std::move(other.m_errorType)),
+      m_isActive(std::exchange(other.m_isActive, false)) {}
+
 RequestTracker::~RequestTracker() {
+  if (!m_isActive) {
+    return;
+  }
   cta::telemetry::metrics::ctaFrontendActiveRequests->Add(
     -1,
     {

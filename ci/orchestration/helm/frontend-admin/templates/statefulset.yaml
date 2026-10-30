@@ -146,9 +146,11 @@ spec:
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
         {{- end }}
+        {{- if .Values.conf.telemetry.enabled }}
         - name: frontend-config
           mountPath: /etc/cta/cta-otel.yaml
           subPath: cta-otel.yaml
+        {{- end }}
         - name: log-dir
           mountPath: /var/log/cta
         {{- include "common.extraVolumeMounts" . | nindent 8 }}

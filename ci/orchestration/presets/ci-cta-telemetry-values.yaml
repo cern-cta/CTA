@@ -8,38 +8,7 @@ frontend-wfe: &frontend
   conf:
     telemetry:
       enabled: true
-      retainInstanceIdOnRestart: false
-      metrics:
-        backend: "OTLP_HTTP"
-        exportInterval: 1000
-        exportTimeout: 500
-        otlp:
-          endpoint: "https://monit-otlp.cern.ch:4319"
-          auth:
-            basic:
-              username: it_sd_tab_ci
-              passwordSecret: monit-it-sd-tab-ci-pwd
-
-frontend-admin: *frontend
-
-taped:
-  conf:
-    telemetry:
-      enabled: true
-      retainInstanceIdOnRestart: true
-      metrics:
-        backend: "OTLP_HTTP"
-        exportInterval: 1000
-        exportTimeout: 500
-        otlp:
-          endpoint: "https://monit-otlp.cern.ch:4319"
-          auth:
-            basic:
-              username: it_sd_tab_ci
-              passwordSecret: monit-it-sd-tab-ci-pwd
-
-maintd: &runtimeTelemetry
-  extraEnv:
+  extraEnv: &otelEnv
     - name: OTEL_EXPORTER_CREDENTIALS
       valueFrom:
         secretKeyRef:
@@ -49,7 +18,7 @@ maintd: &runtimeTelemetry
   # Once all the services support declarative config
   # this will be moved to a global config for all services
   # The structure below follows the OpenTelemetry Declarative config format
-  telemetryConfig: |
+  telemetryConfig: &otelConfig |
     file_format: "1.0-rc.1"
     disabled: false
     resource:
@@ -74,5 +43,27 @@ maintd: &runtimeTelemetry
                 encoding: protobuf
                 temporality_preference: cumulative
                 default_histogram_aggregation: explicit_bucket_histogram
+
+frontend-admin: *frontend
+
+taped:
+  conf:
+    telemetry:
+      enabled: true
+      retainInstanceIdOnRestart: true
+      metrics:
+        backend: "OTLP_HTTP"
+        exportInterval: 1000
+        exportTimeout: 500
+        otlp:
+          endpoint: "https://monit-otlp.cern.ch:4319"
+          auth:
+            basic:
+              username: it_sd_tab_ci
+              passwordSecret: monit-it-sd-tab-ci-pwd
+
+maintd: &runtimeTelemetry
+  extraEnv: *otelEnv
+  telemetryConfig: *otelConfig
 
 rmcd: *runtimeTelemetry

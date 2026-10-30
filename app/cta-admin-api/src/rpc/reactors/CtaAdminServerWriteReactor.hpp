@@ -7,6 +7,7 @@
 
 #include "commands/stream/CtaAdminResponseStream.hpp"
 #include "grpc-server/server/RequestLogger.hpp"
+#include "grpc-server/server/RequestTracker.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <memory>
@@ -25,8 +26,10 @@ public:
   /// @param stream  The items to send, taken from the catalogue or the scheduler as the call progresses, along with
   ///                 the header to send before them
   /// @param requestLogger  Logger of the request, logs its outcome once the call is finished
+  /// @param requestTracker  Telemetry tracker of the request, records its duration once the reactor is deleted
   CtaAdminServerWriteReactor(std::unique_ptr<commands::stream::CtaAdminResponseStream> stream,
-                             grpc_server::RequestLogger requestLogger);
+                             grpc_server::RequestLogger requestLogger,
+                             grpc_server::RequestTracker requestTracker);
 
   void OnWriteDone(bool ok) override;
   void OnDone() override;
@@ -35,6 +38,8 @@ private:
   /// @brief Sends the next message: the header, then an item of the stream, then finishes the call
   void NextWrite();
 
+  /// Declared first so that it is destroyed last
+  grpc_server::RequestTracker m_requestTracker;
   bool m_isHeaderSent = false;
   cta::xrd::StreamResponse m_response;
   std::unique_ptr<commands::stream::CtaAdminResponseStream> m_stream;

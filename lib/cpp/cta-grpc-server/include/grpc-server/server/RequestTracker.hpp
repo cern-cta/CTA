@@ -15,7 +15,8 @@ namespace cta::grpc_server {
 /// @brief RAII helper recording telemetry for a single frontend request.
 ///
 /// Increments ctaFrontendActiveRequests on construction and decrements it on destruction, at which point
-/// the request duration is also recorded in ctaFrontendRequestDuration.
+/// the request duration is also recorded in ctaFrontendRequestDuration. The tracker can be moved, to follow a request
+/// which outlives the scope it was started in (e.g. a streaming RPC, handed over to its reactor).
 class RequestTracker {
 public:
   /// @brief Start tracking a request and increment the active request counter.
@@ -31,6 +32,11 @@ public:
   RequestTracker(const RequestTracker&) = delete;
   RequestTracker& operator=(const RequestTracker&) = delete;
 
+  /// @brief Take over the tracking of a request: the moved-from tracker no longer records anything
+  RequestTracker(RequestTracker&& other) noexcept;
+  /// Deleted: assigning to a live tracker would silently end its own request
+  RequestTracker& operator=(RequestTracker&&) = delete;
+
   /// @brief Mark the request as failed.
   ///
   /// @param errorType Error type attached to the duration metric when the tracker is destroyed
@@ -45,6 +51,8 @@ private:
   std::string m_requesterName;
   /// Error type attribute of the duration metric; unset on success
   std::optional<std::string> m_errorType;
+  /// False once moved from: the destructor then leaves the metrics alone
+  bool m_isActive = true;
 };
 
 }  // namespace cta::grpc_server

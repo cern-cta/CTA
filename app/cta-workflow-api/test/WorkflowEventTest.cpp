@@ -15,9 +15,9 @@ namespace unitTests {
 namespace {
 
 using cta::exception::PbException;
-using cta::frontend::proto_notifications::getArchiveFileId;
-using cta::frontend::proto_notifications::getRequester;
-using cta::frontend::proto_notifications::getRequestId;
+using cta::workflow_api::proto_notifications::getArchiveFileId;
+using cta::workflow_api::proto_notifications::getRequester;
+using cta::workflow_api::proto_notifications::getRequestId;
 
 cta::eos::Notification makeEvent() {
   cta::eos::Notification event;
