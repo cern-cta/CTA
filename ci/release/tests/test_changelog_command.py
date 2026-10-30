@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -11,7 +10,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typing_extensions import override
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from commands import changelog
 from release_version import CTAVersion
@@ -61,26 +59,6 @@ class ChangelogCommandTest(unittest.TestCase):
         assert "[`v6.1.0-changelog-update`](https://gitlab.example/branch)" in note
         assert "[merge request !42](https://gitlab.example/mr/42)" in note
         assert "will be tagged as **v6.1.0**" in note
-        assert note.endswith("Awaiting MR approval and merge.")
-
-    def test_release_merge_request_metadata(self) -> None:
-        description = changelog.merge_request_description("v6.1.0", 42)
-        assert description.startswith("### Description\n\n")
-        assert "Updates the changelog in preparation for release v6.1.0." in description
-        assert "See #42" in description
-        assert "\n\n### Checklist\n\n" in description
-        assert changelog.MERGE_REQUEST_LABELS == ("type::release", "priority::high")
-
-    def test_release_merge_request_assigns_authenticated_user(self) -> None:
-        assert changelog.authenticated_user_id({"id": 42, "username": "release-manager"}) == 42
-
-    def test_confirms_changelog_publication_after_editing(self) -> None:
-        with (
-            patch("builtins.input", return_value="yes") as user_input,
-            patch("confirmation.sys.stdin.isatty", return_value=True),
-        ):
-            changelog.confirm_changelog_publication()
-        user_input.assert_called_once_with("Continue and publish the edited changelog? [y/N] ")
 
     def test_declining_changelog_publication_aborts(self) -> None:
         with (

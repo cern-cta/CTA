@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -11,7 +10,6 @@ from unittest.mock import MagicMock
 import pytest
 from typing_extensions import override
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError

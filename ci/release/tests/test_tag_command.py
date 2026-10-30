@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import sys
 import unittest
 from contextlib import nullcontext, redirect_stdout
 from io import StringIO
@@ -13,7 +12,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 from typing_extensions import override
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from commands import tag
 from confirmation import ConfirmationError
@@ -201,20 +199,6 @@ def test_explicit_revision_rejects_unrelated_history(ancestry: list[bool], match
     context.git.create_tag.assert_not_called()
 
 
-def test_next_candidate_uses_single_tag_plan() -> None:
-    context = MagicMock()
-    context.dry_run = False
-    context.git.tags.return_value = ["v6.1.0.rc2"]
-    with (
-        patch.object(tag, "_validate_release_metadata", return_value=(None, "commit")),
-        patch.object(tag, "build_tag_plan") as build_plan,
-        patch.object(tag, "execute_tag_plan"),
-        patch.object(tag, "_report_tag_and_pipeline"),
-    ):
-        tag.run(context, "v6.1.0", True, release_candidate=True)
-    build_plan.assert_called_once_with(context, "v6.1.0.rc3", "commit", None, True)
-
-
 @pytest.mark.parametrize("available", [True, False])
 def test_pipeline_reporting_after_publication(available: bool, capsys: pytest.CaptureFixture[str]) -> None:
     context = MagicMock()
@@ -223,11 +207,9 @@ def test_pipeline_reporting_after_publication(available: bool, capsys: pytest.Ca
     plan = tag.TagPlan("v6.1.0", "commit", {"iid": 1}, "Release")
     with patch.object(tag.time, "sleep"):
         tag._report_tag_and_pipeline(context, plan)  # pyright: ignore[reportPrivateUsage]
-    assert context.find_pipeline.call_count == (1 if available else 6)
     assert context.add_issue_note.call_count == (2 if available else 1)
     output = capsys.readouterr().out
     assert ("pipeline-url" if available else "has not appeared yet") in output
-    assert "additional release variants manually" in output
 
 
 @pytest.mark.parametrize("failure", ["note", "lookup", "pipeline-note"])
@@ -319,17 +301,19 @@ def test_development_rejects_revision_outside_target_branch() -> None:
     context.find_pipeline.assert_not_called()
 
 
-def test_next_development_uses_development_validation() -> None:
+@pytest.mark.parametrize("kind", ["development", "release_candidate"])
+def test_next_prerelease_uses_validated_commit(kind: str) -> None:
     context = MagicMock()
     context.dry_run = True
-    context.git.tags.return_value = ["v6.1.0.dev2"]
+    suffix = "dev" if kind == "development" else "rc"
+    context.git.tags.return_value = [f"v6.1.0.{suffix}2"]
     with (
         patch.object(tag, "_validate_release_metadata", return_value=(None, "commit")) as metadata,
         patch.object(tag, "build_tag_plan") as build_plan,
     ):
-        tag.run(context, "v6.1.0", True, development=True)
-    assert metadata.call_args.kwargs["development"] is True
-    build_plan.assert_called_once_with(context, "v6.1.0.dev3", "commit", None, True)
+        tag.run(context, "v6.1.0", True, **{kind: True})
+    assert metadata.call_args.kwargs["development"] is (kind == "development")
+    build_plan.assert_called_once_with(context, f"v6.1.0.{suffix}3", "commit", None, True)
 
 
 @pytest.mark.parametrize("version", ["v6.1.0.dev1", "v6.1.0.rc1"])

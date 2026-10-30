@@ -64,23 +64,6 @@ def test_prerelease_construction() -> None:
         version.with_components(development=0)
 
 
-def test_rc_numbering_ignores_other_releases_and_dev_tags() -> None:
-    version = CTAVersion.parse("v6.1.0")
-    assert select_release_candidate(version, []) == 1
-    assert (
-        select_release_candidate(
-            version,
-            [
-                "v6.1.0.rc2",
-                "v6.1.0.dev9",
-                "v6.1.1.rc10",
-                "unrelated",
-            ],
-        )
-        == 3
-    )
-
-
 def test_previous_release_preserves_historical_ref_and_numeric_order() -> None:
     version = CTAVersion.parse("v6.1.0")
     tags = ["v5.9.99.0-1", "v5.11.0.1-1.pgall", "v5.11.0.0-2", "unrelated"]
@@ -95,20 +78,12 @@ def test_previous_release_excludes_prereleases_even_with_historical_suffixes() -
     assert previous_release(CTAVersion.parse("v6.1.0"), tags).text == "v5.10.0"
 
 
-def test_next_development_number() -> None:
+@pytest.mark.parametrize(
+    ("select", "suffix", "other"),
+    [(select_development, "dev", "rc"), (select_release_candidate, "rc", "dev")],
+)
+def test_prerelease_numbering(select, suffix: str, other: str) -> None:
     version = CTAVersion.parse("v6.1.0")
-    assert select_development(version, []) == 1
-    assert (
-        select_development(
-            version,
-            [
-                "v6.1.0.dev1",
-                "v6.1.0.dev3",
-                "v6.1.0.rc9",
-                "v6.1.1.dev8",
-                "v6.1.0.dev7.el9",
-                "unrelated",
-            ],
-        )
-        == 4
-    )
+    assert select(version, []) == 1
+    tags = [f"v6.1.0.{suffix}3", f"v6.1.0.{other}9", f"v6.1.1.{suffix}8", f"v6.1.0.{suffix}7.el9", "unrelated"]
+    assert select(version, tags) == 4
