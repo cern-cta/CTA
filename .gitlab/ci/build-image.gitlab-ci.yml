@@ -122,8 +122,8 @@ spec:
   script:
     - mkdir -p "$BUILDAH_TMPDIR"
     - export TMPDIR="$BUILDAH_TMPDIR"
-    - 'echo "CTA version: ${CTA_VERSION:?Missing CTA_VERSION}"'
-    - IMAGE_REF="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_VERSION}"
+    - 'echo "CTA version: ${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}"'
+    - IMAGE_REF="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_IMAGE_TAG}"
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"

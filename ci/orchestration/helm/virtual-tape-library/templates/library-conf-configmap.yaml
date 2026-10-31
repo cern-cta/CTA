@@ -1,0 +1,25 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-library-conf
+data:
+{{- range $i := until (int .Values.libraryCount) }}
+  library-{{ $i }}.toml: |
+    [library]
+    name             = "stress-lib-{{ $i }}"
+    changerTimeoutMs = {{ $.Values.library.changerTimeoutMs }}
+    {{- range $.Values.library.mediaTypes }}
+
+    [[library.mediaTypes]]
+    name           = {{ .name | quote }}
+    capacityBytes  = {{ .capacityBytes }}
+    vidPrefix      = "S{{ $i }}"
+    mountDelayMs   = {{ .mountDelayMs }}
+    maxWriteRateHz = {{ .maxWriteRateHz }}
+    count          = {{ .count }}
+    {{- end }}
+{{- end }}

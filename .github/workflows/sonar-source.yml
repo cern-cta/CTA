@@ -78,38 +78,30 @@ jobs:
       - name: Install CTA dependencies
         run: |
           echo "MAKEFLAGS=-j$(nproc)" >> $GITHUB_ENV
-          CTA_BUILD_ID="${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}"
           PLATFORM=$(jq -r .dev.defaultPlatform project.json)
           echo "PLATFORM=${PLATFORM}" >> "$GITHUB_ENV"
           cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
           ./ci/project-json/generate_versionlock.py --platform "${PLATFORM}" > /etc/yum/pluginconf.d/versionlock.list
-          source ci/utils/cta_version.sh
-          CTA_MAJOR_VERSION=$(read_cta_major_version project.json)
-          version_input="${CTA_MAJOR_VERSION}-${CTA_BUILD_ID}"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # Map GitHub metadata to the shared source-version helper's CI inputs.
+          export CI_PIPELINE_ID="$GITHUB_RUN_ID"
+          export CI_COMMIT_TAG=""
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            version_input="$GITHUB_REF_NAME"
-            # Release tags determine the scheduler and Oracle configuration.
-            SCHEDULER_TYPE=objectstore
-            ENABLE_ORACLE_SUPPORT=true
-            case "${GITHUB_REF_NAME##*.}" in
-              pgsched) SCHEDULER_TYPE=pgsched ;;
-              pgcat) ENABLE_ORACLE_SUPPORT=false ;;
-              pgall) SCHEDULER_TYPE=pgsched; ENABLE_ORACLE_SUPPORT=false ;;
-            esac
+            export CI_COMMIT_TAG="$GITHUB_REF_NAME"
           fi
-          CTA_VERSION=$(resolve_cta_version "$version_input" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+          CTA_VERSION_BASE=$(python3 ci/utils/cta_version.py)
+          CTA_PACKAGE_VERSION=$(python3 ci/utils/cta_version.py native "$CTA_VERSION_BASE" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
           CTA_USE_PGSCHED=OFF
           [[ "$SCHEDULER_TYPE" == "pgsched" ]] && CTA_USE_PGSCHED=ON
           CTA_WITH_ORACLE=OFF
           [[ "${ENABLE_ORACLE_SUPPORT,,}" == "true" ]] && CTA_WITH_ORACLE=ON
-          echo "CTA_VERSION=${CTA_VERSION}" >> "$GITHUB_ENV"
+          echo "CTA_PACKAGE_VERSION=${CTA_PACKAGE_VERSION}" >> "$GITHUB_ENV"
           echo "CTA_USE_PGSCHED=${CTA_USE_PGSCHED}" >> "$GITHUB_ENV"
           echo "CTA_WITH_ORACLE=${CTA_WITH_ORACLE}" >> "$GITHUB_ENV"
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive
           cmake -S . -B "build/${PLATFORM}" \
             -DCTA_BUILD_MODE:STRING=source-package \
-            -DCTA_VERSION:STRING="${CTA_VERSION}" \
+            -DCTA_VERSION:STRING="${CTA_PACKAGE_VERSION}" \
             -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
             -DCTA_WITH_ORACLE:BOOL="${CTA_WITH_ORACLE}" \
             -DCTA_RUN_UNIT_TESTS:BOOL=OFF
@@ -122,7 +114,7 @@ jobs:
           dnf builddep --nogpgcheck -y build/${PLATFORM}/RPM/SRPMS/*
           cmake -S . -B "build/${PLATFORM}" \
             -DCTA_BUILD_MODE:STRING=compile \
-            -DCTA_VERSION:STRING="${CTA_VERSION}" \
+            -DCTA_VERSION:STRING="${CTA_PACKAGE_VERSION}" \
             -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING="${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}" \
             -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
             -DCTA_WITH_ORACLE:BOOL="${CTA_WITH_ORACLE}" \

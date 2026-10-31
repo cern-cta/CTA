@@ -1,0 +1,22 @@
+{
+  "name": "tp_ci",
+  "virtual_organisation_name": "vo_ci",
+  "min_writable_tape_count": 1,
+  "encryption_key_name": null,
+  "supply_tape_pool_names": [],
+  "statistics": {
+    "tape_count": 2,
+    "file_count": 5,
+    "capacity": 100,
+    "usage": 40
+  },
+  "metadata": {
+    "creation_user_name": "cta_ci",
+    "creation_host_name": "ci-host",
+    "creation_time": "2024-01-01T09:00:00+00:00",
+    "update_user_name": "cta_ci",
+    "update_host_name": "ci-host",
+    "update_time": "2024-06-01T12:00:00+00:00",
+    "comment": "unit-test seed"
+  }
+}

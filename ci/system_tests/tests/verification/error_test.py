@@ -4,11 +4,12 @@
 import json
 from collections import Counter
 
+from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_env import TestEnv
 
 
 def test_no_coredumps(env: TestEnv) -> None:
-    hosts = [*env.cta_cli, *env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd]
+    hosts = [*env.cta_cli, *env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd, *env.cta_maintd]
     total_core_dumps_found = 0
     for host in hosts:
         core_dump_files = host.exec_with_output(
@@ -22,7 +23,7 @@ def test_no_coredumps(env: TestEnv) -> None:
 
 
 def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[str]) -> None:
-    hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd]
+    hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd, *env.cta_maintd]
     error_messages = []  # for summaries
     for host in hosts:
         # collect logs
@@ -63,3 +64,7 @@ def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[st
             total_non_whitelisted_errors += count
         print(f'{prefix} Count: {count}, Message: "{msg}"')
     assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"
+
+
+def test_no_unexpected_restarts(env: TestEnv, restart_expectations: RestartExpectations) -> None:
+    restart_expectations.verify()

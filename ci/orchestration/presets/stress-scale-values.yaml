@@ -1,0 +1,103 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Overlay for stress tests using virtual StressDrives instead of mhvtl/real hardware.
+# Works with any scheduler backend (objectstore or pgsched).
+# For pgsched, also apply stress-scale-values.yaml on top.
+#
+# Prerequisites
+# -------------
+# Deploy the virtual-tape-library chart first to create the PVC and populate it:
+#
+#   helm upgrade --install virtual-tape-library \
+#     ci/orchestration/helm/virtual-tape-library/ \
+#     -f <your-library-values.yaml>
+#
+# Usage:
+#
+#   helm upgrade --install cta ci/orchestration/helm/cta/ \
+#     -f presets/stress-cta-values.yaml \
+#     -f presets/stress-scale-values.yaml
+#
+# What this preset does
+# ---------------------
+#   - Tunes taped for virtual drives: small buffer pool, single disk thread,
+#     large fetch batches aligned to tape capacity, relaxed cache TTLs, and
+#     disabled underfill-driven dismounting.
+#   - Disables rmcd (no StatefulSet deployed; taped never contacts it for
+#     virtual drives, and /dev/smc does not exist on a node without mhvtl).
+#
+# Drive list and extraVolumes are generated dynamically by
+# create_instance.sh --no-hardware-drives; do not define drives here.
+#
+# No node affinity or hostPath volume is required: the PVC is managed by the
+# cluster storage class and can be accessed from any node.  On single-node
+# clusters (laptop, kind, k3s) the default ReadWriteOnce access mode is fine.
+# For multi-node clusters use a ReadWriteMany storage class in the
+# virtual-tape-library chart values.
+
+taped:
+  logging:
+    # Avoid verbose tape-operation logs dominating the small-file workload.
+    level: "WARNING"
+
+  scheduler:
+    # tapeCacheMaxAgeSecs: drives refresh tape status at most once per 60 s.
+    # A tape switch (ENOSPC -> new tape) clears the cache explicitly via
+    # clearStatisticsCache(), so mount latency after a tape boundary is unaffected.
+    tapeCacheMaxAgeSecs: 60
+    # retrieveQueueCacheMaxAgeSecs: 5 s guarantees drives discover the retrieve
+    # queue within 5 s of it becoming non-empty (critical for retrieve test correctness).
+    retrieveQueueCacheMaxAgeSecs: 5
+
+  transfers:
+    # bufferCount is per drive session (MigrationMemoryManager is instantiated
+    # inside DataTransferSession, not shared across drives).  With bufferSizeBytes=262144
+    # (256 KB helm default): 200 × 256 KB = 51.2 MB per drive, 5.1 GB for 100 drives.
+    # 200 gives ample pipeline depth: at 1000 files/sec per drive, diskIoThreads=1
+    # reads complete in 1-3 ms each, so 5-15 buffers are in flight at any time.
+    bufferCount: 200
+    # DiskReadThreadPool is created per drive session (not shared across drives).
+    # 1 thread per drive keeps XRootD connection count proportional to drive count,
+    # keeping EOS lightly loaded (T_query ~1 ms/file -> ~1000 files/sec/drive).
+    diskIoThreads: 1
+    archive:
+      # Batch size and tape capacity are co-designed to avoid partial-batch requeues.
+      # logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
+      # capacityBytes (virtual-tape-library/values.yaml) = 80 (VOL1) + 3 × 20000 × 496
+      #   = 29 760 080 bytes -> exactly 3 full batches/tape.
+      # ENOSPC fires on HDR1 of the first file of batch 4 -> zero partial-batch requeue
+      # at tape boundaries, so no files are unnecessarily re-queued to the scheduler.
+      # If you change this batch size you MUST update capacityBytes in
+      # virtual-tape-library/values.yaml to keep it an exact multiple of the new batch.
+      fetchMaxBytes: 80000000000
+      fetchMaxFiles: 20000
+      # Align flush granularity with the fetch batch so exactly one "update archive"
+      # DB query fires per 20 000-file fetch batch instead of one per 200 files.
+      flushMaxBytes: 80000000000
+      flushMaxFiles: 20000
+      underfill:
+        # startThresholdPercent=0 disables underfill-driven dismounting: in stress tests
+        # the frontend queueing rate is the bottleneck, so drives always appear underfilled
+        # between file batches.  Keeping drives mounted avoids unnecessary remount delays.
+        watchPeriodSecs: 300
+        minimumSamples: 3
+        startThresholdPercent: 0
+        recoveryThresholdPercent: 1
+    retrieve:
+      fetchMaxBytes: 80000000000
+      fetchMaxFiles: 20000
+
+# No tape library hardware present: disable rmcd entirely.
+# /dev/smc does not exist on a node without mhvtl; deploying rmcd would fail.
+rmcd:
+  enabled: false
+
+maintd:
+  routines:
+    # Repack is not used in scale tests; disable to avoid unnecessary DB polls
+    # and free scheduler connections for the active archive/retrieve workload.
+    repackExpand:
+      replicas: 0
+    repackReport:
+      replicas: 0

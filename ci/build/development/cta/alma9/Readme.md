@@ -59,7 +59,7 @@ cd CTA/
 git submodule update --init --recursive
 mkdir ../CTA_build
 cd ../CTA_build
-cmake3 -DCTA_VERSION=6-dev ../CTA
+cmake3 -DCTA_VERSION=6~dev1-1 ../CTA
 make -j 4
 ```
 
@@ -75,7 +75,7 @@ Building the RPMs follows a similar procedure:
 ```bash
 mkdir CTA_rpm
 cd CTA_rpm
-cmake3 -DCTA_BUILD_MODE=binary-package -DCTA_VERSION=6-dev ../CTA
+cmake3 -DCTA_BUILD_MODE=binary-package -DCTA_VERSION=6~dev1-1 ../CTA
 make cta_rpm
 ```
 

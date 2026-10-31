@@ -1,6 +1,6 @@
-<!-- Ensure the title of this ticket is the name of the release. E.g. `v6.X.Y.Z-R` -->
+<!-- Ensure the title of this ticket is the release title. E.g. `Release v6.1.0` -->
 
-* See [Releasing a new version of CTA](https://cta.docs.cern.ch/latest/dev/procedures/releases/)
+* See [Releasing a new version of CTA](https://cta.docs.cern.ch/latest/dev/contributing/maintainers/releases/)
 
 ## Release Requirements
 

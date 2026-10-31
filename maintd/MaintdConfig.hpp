@@ -18,8 +18,9 @@ struct DiskReportRoutineConfig final {
   bool enabled = true;
   uint32_t batch_size = 500;
   uint32_t soft_timeout_secs = 30;
+  uint32_t iter_sleep_ms = 0;
 
-  static constexpr std::size_t memberCount() { return 3; }
+  static constexpr std::size_t memberCount() { return 4; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;

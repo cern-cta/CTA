@@ -1,0 +1,16 @@
+{
+  "name": "space_ci",
+  "disk_instance_name": "instance_ci",
+  "free_space_url": "eos:ci",
+  "refresh_interval": 30.0,
+  "free_space": 5000000,
+  "metadata": {
+    "creation_user_name": "cta_ci",
+    "creation_host_name": "ci-host",
+    "creation_time": "2024-01-01T09:00:00+00:00",
+    "update_user_name": "cta_ci",
+    "update_host_name": "ci-host",
+    "update_time": "2024-06-01T12:00:00+00:00",
+    "comment": "unit-test seed"
+  }
+}

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
+
 from .remote_host import RemoteHost
 
 

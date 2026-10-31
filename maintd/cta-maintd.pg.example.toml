@@ -31,9 +31,9 @@
   max_cycle_duration_secs = 900
 
   # Routine that reports archive transfer success/failures to the disk system.
-  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 500 }
   # Routine that reports retrieve transfer success/failures to the disk system.
-  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 500 }
   # Routine that expands repack requests.
   repack_expand        = { enabled = true, max_to_expand = 2 }
   # Routine that handles the reporting of the requests created by repack requests.

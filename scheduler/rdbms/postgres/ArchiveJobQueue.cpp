@@ -879,30 +879,17 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
   return stmt.getNbAffectedRows();
 };
 
-rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
-                                                          std::list<ArchiveJobStatus> statusList,
-                                                          uint64_t limit) {
-  std::string sql = R"SQL(
+rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn, uint64_t limit) {
+  // Status literals are hardcoded so the query planner can match the narrow
+  // partial index IDX_ARCHIVE_ACTIVE_QUEUE_REPORTING_NEW, which only covers
+  // AJS_ToReportToUserForSuccess and AJS_ToReportToUserForFailure rows.
+  // Using bound parameters for status values would prevent the planner from
+  // proving the index predicate is satisfied, forcing a full index scan.
+  const char* const sql = R"SQL(
       WITH SET_SELECTION AS (
         SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE
-        WHERE STATUS = ANY(ARRAY[
-    )SQL";
-  // we can move this to new bindArray method for stmt
-  std::vector<std::string> statusVec;
-  std::vector<std::string> placeholderVec;
-  size_t j = 1;
-  for (const auto& jstatus : statusList) {
-    statusVec.emplace_back(to_string(jstatus));
-    std::string plch = std::string(":STATUS") + std::to_string(j);
-    placeholderVec.emplace_back(plch);
-    sql += plch;
-    if (&jstatus != &statusList.back()) {
-      sql += std::string(",");
-    }
-    j++;
-  }
-  sql += R"SQL(
-        ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
+        WHERE IS_REPORTING IS FALSE
+          AND STATUS IN ('AJS_ToReportToUserForSuccess', 'AJS_ToReportToUserForFailure')
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE ARCHIVE_ACTIVE_QUEUE SET
         IS_REPORTING = TRUE,
@@ -912,11 +899,6 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
       RETURNING ARCHIVE_ACTIVE_QUEUE.*
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  // we can move the array binding to new bindArray method for STMT
-  size_t sz = statusVec.size();
-  for (size_t i = 0; i < sz; ++i) {
-    stmt.bindString(placeholderVec[i], statusVec[i]);
-  }
   stmt.bindUint64(":LIMIT", limit);
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   return stmt.executeQuery();

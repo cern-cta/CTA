@@ -9,13 +9,12 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path, PurePosixPath
 import sys
+from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-
 
 REPOSITORY = Path(__file__).resolve().parent.parent
 API_URL = "https://sonarcloud.io/api/issues/search"

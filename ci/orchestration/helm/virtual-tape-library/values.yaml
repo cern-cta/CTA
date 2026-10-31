@@ -1,0 +1,89 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Configuration for one or more virtual (in-memory/on-disk) tape libraries used by
+# StressDrive scale tests.
+#
+# This chart creates:
+#   1. libraryCount PersistentVolumeClaims (one per library).
+#   2. A ConfigMap with one library.toml per library.
+#   3. libraryCount pre-population Jobs that write directory layouts into each PVC.
+#
+# Library names and VID prefixes are auto-derived from the library index:
+#   name      = "stress-lib-{i}"   (matches logicalLibraryName in create_instance.sh)
+#   vidPrefix = "S{i}"             (e.g. S0 → S00001..S00180, S1 → S10001..S10180)
+# VIDs are 6 chars: 2-char prefix + 4-digit index fits the ANSI tape label VSN field.
+#
+# After this chart is deployed, create_instance.sh --no-hardware-drives mounts
+# each library PVC into every taped pod via generated extraVolumes, with
+# mountPath = "/cta-stress-lib-{i}".
+#
+# Consistency requirements
+# ------------------------
+# setup_stress_drives_test.py reads each library.toml directly from the taped pod
+# and derives all catalogue registration parameters from it.
+# In CI, create_instance.sh always passes --set libraryCount=${num_libs} so this
+# default is overridden automatically; it only applies to manual helm invocations.
+
+# ---------------------------------------------------------------------------
+# Number of independent logical libraries to create.
+# Each library gets its own PVC, library.toml, and pre-population Job.
+# Drives are split across libraries by create_instance.sh --num-stress-libraries.
+# ---------------------------------------------------------------------------
+libraryCount: 2
+
+# ---------------------------------------------------------------------------
+# Shared library configuration (applied to every library).
+# Library name and vidPrefix are auto-derived from the index; do not set them here.
+# ---------------------------------------------------------------------------
+library:
+  # Maximum milliseconds to wait for the single changer robot to become free.
+  changerTimeoutMs: 30000
+
+  # Media type definitions — shared across all libraries.
+  # setup_stress_drives_test.py reads these and registers them in the CTA catalogue.
+  mediaTypes:
+    - name: STRESS28MB
+      # Capacity co-designed with archiveFetchBytesFiles in stress-scale-values.yaml
+      # to avoid partial-batch requeues at tape boundaries.
+      # With file_size=16: logical_bytes_per_file = 6×80 + 16 = 496 bytes/file.
+      # C = 80 (VOL1) + 3 × 20000 × 496 = 29 760 080 bytes ≈ 28.4 MB
+      # → 60 000 files/tape, exactly 3 full batches; ENOSPC fires at a batch boundary
+      # so no files are unnecessarily re-queued to the scheduler.
+      # If you change capacityBytes or the batch size in stress-scale-values.yaml,
+      # keep C - 80 an exact multiple of (batch_files × 496) to preserve this property.
+      capacityBytes: 29760080
+      mountDelayMs: 15000
+      maxWriteRateHz: 1000
+      # Tapes per library. 100 × 28.4 MB ≈ 2.84 GB per PVC.
+      # 10 M-file run needs 167 tapes total (10 M / 60 k files/tape); with 4 libraries
+      # each handles ~42 tapes; 100 gives headroom and ensures all drives in a library
+      # can always find a free tape slot.
+      count: 100
+
+# ---------------------------------------------------------------------------
+# PersistentVolumeClaim (one created per library, named <namePrefix>-{i})
+# ---------------------------------------------------------------------------
+pvc:
+  # Prefix for PVC names: cta-virtual-tape-library-0, cta-virtual-tape-library-1, ...
+  namePrefix: cta-virtual-tape-library
+
+  # Storage class. "" = cluster default, "-" = no storageClassName, any string = explicit.
+  storageClass: ""
+
+  # Optional: bind each PVC to a named PV. Set by create_instance.sh when fast-ssd
+  # PVs are available. volumeNames[i] binds PVC i to that PV.
+  volumeNames: []
+
+  size: 50Gi
+
+  accessModes:
+    - ReadWriteOnce
+
+# ---------------------------------------------------------------------------
+# Pre-population Job image
+# ---------------------------------------------------------------------------
+image:
+  repository: registry.cern.ch/docker.io/almalinux/9-minimal
+  tag: "9.7"
+  pullPolicy: IfNotPresent

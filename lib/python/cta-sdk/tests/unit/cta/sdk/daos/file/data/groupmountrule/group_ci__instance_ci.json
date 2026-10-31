@@ -1,0 +1,14 @@
+{
+  "group_name": "group_ci",
+  "disk_instance_name": "instance_ci",
+  "mount_policy_name": "mp_ci",
+  "metadata": {
+    "creation_user_name": "cta_ci",
+    "creation_host_name": "ci-host",
+    "creation_time": "2024-01-01T09:00:00+00:00",
+    "update_user_name": "cta_ci",
+    "update_host_name": "ci-host",
+    "update_time": "2024-06-01T12:00:00+00:00",
+    "comment": "unit-test seed"
+  }
+}

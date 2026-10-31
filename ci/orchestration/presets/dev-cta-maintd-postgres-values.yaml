@@ -38,4 +38,4 @@ maintd:
       batchSize: 1000
       ageForDeletionSecs: 1209600
 
-  # The remainder of the values are inherited from the default values.yaml
+# The remainder of the values are inherited from the default values.yaml

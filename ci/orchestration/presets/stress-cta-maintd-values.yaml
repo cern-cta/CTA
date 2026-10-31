@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Maintd telemetry overlay for stress/scale tests with virtual StressDrives.
+# Applied on top of dev-cta-telemetry-values.yaml when --no-hardware-drives
+# AND --local-telemetry are both active.
+#
+# Why the reader timeout must be increased for scale tests
+# ---------------------------------------------------------
+# Under 100-drive load the OTel collector handles 100+ concurrent OTLP HTTP
+# POSTs every 60 s.  Response times can exceed 100 ms (the dev default),
+# causing every maintd export to time out silently.  After 5 minutes of
+# dropped exports the Prometheus exporter expires the metric entirely,
+# producing 1-hour gaps in Grafana.
+# 1500 ms is still well within the 2000 ms export interval and matches the
+# 1000 ms HTTP-level timeout on the otlp_http exporter.
+
+maintd: &runtimeTelemetry
+  telemetryConfig: |
+    file_format: "1.1"
+    disabled: false
+    resource:
+      attributes:
+        - name: service.namespace
+          value: {{ .Release.Namespace }}
+          type: string
+      attributes_list: "${CTA_OTEL_RESOURCE_ATTRIBUTES}"
+      schema_url: https://opentelemetry.io/schemas/1.16.0
+
+    meter_provider:
+      readers:
+        - periodic:
+            interval: 2000
+            timeout: 1500
+            exporter:
+              otlp_http:
+                endpoint: http://otel-opentelemetry-collector:4318/v1/metrics
+                timeout: 1000
+                encoding: protobuf
+                temporality_preference: cumulative
+                default_histogram_aggregation: explicit_bucket_histogram
+
+rmcd: *runtimeTelemetry

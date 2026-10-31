@@ -75,7 +75,6 @@ transfers:
 
 telemetry:
   enabled: true
-
 # OpenTelemetry is entirely configured through declarative configuration.
 telemetryConfig: |
   file_format: "1.0-rc.1"
@@ -85,20 +84,6 @@ telemetryConfig: |
 keytab:
   secretName: eos-keytab
   subPath: eos.keytab
-
-# Script to execute in the main container before starting the taped services
-preRun:
-  enabled: false
-  script: |
-    #!/usr/bin/bash
-
-# Script to execute in the main container after the taped process exited
-postRun:
-  enabled: true
-  script: |
-    #!/usr/bin/bash
-    echo "Process crashed. Sleeping..."
-    sleep infinity
 
 # The following is an example format of drives
 #
@@ -112,9 +97,8 @@ postRun:
 #     logicalLibraryName: lib2
 #     controlPath: smc1
 drives: {}
-
 securityContext:
-  privileged: true # To get access to /dev/
+  privileged: true  # To get access to /dev/
 
 pod:
   extraSpec:

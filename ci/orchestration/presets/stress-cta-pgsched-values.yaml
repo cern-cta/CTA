@@ -1,5 +1,97 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Performance overlay for PostgreSQL-scheduler stress tests (10 M small files, 30 drives).
+#
+# ---------------------------------------------------------------------------
+# Pipeline
+# ---------------------------------------------------------------------------
+#
+#   Test script
+#     → EOS FSTs (5 replicas)        file creation & workflow trigger
+#     → EOS MGM / frontend-wfe       workflow event → pgsched archive INSERT
+#     → pgsched archive queue
+#     → taped (30 StressDrives)      fetch → EOS disk read → virtual tape write
+#     → pgsched disk report queue
+#     → maintd diskReportArchive     batch drain → EOS catalogue update
+#
+# ---------------------------------------------------------------------------
+# Observed throughput ceiling
+# ---------------------------------------------------------------------------
+#
+# Historically the end-to-end archive queuing rate has been observed at
+# ~1.3 kHz (files/sec from EOS workflow event to pgsched).  The bottleneck
+# appears to be the EOS MGM / frontend-wfe path rather than the CTA side.
+# Whether a 5th FST or other changes push this higher is to be determined
+# empirically — the CTA components below are sized to not be the bottleneck
+# up to at least 5 kHz, so the limiting factor should remain on the EOS side.
+#
+# At 1.3 kHz: 10 M files take ~2 h 8 min end-to-end.
+#
+# ---------------------------------------------------------------------------
+# Parameter sizing rationale
+# ---------------------------------------------------------------------------
+#
+# frontend-wfe schedulerdb.numberOfConnections = 15
+#   Each WFE connection is held for the duration of one pgsched INSERT
+#   (~5–10 ms with opportunistic batching).  At 1.3 kHz with 10 ms batching
+#   window: ~13 files/batch, ~100 INSERT batches/sec.  One connection handles
+#   100 batches/sec × 10 ms = 1 batch at a time → 2 connections would suffice,
+#   but 15 gives ample headroom for bursts and latency spikes.
+#
+# opportunisticBatchingWindowMs = 10 ms
+#   At 1.3 kHz: ~13 files accumulate per 10 ms window → each INSERT covers
+#   ~13 files, reducing DB round-trips by ~13×.  Increasing the window trades
+#   latency for fewer INSERTs; 10 ms is a good balance.
+#
+# taped nbDiskThreads — not set here (helm default 4 applies for mhvtl/real-hardware);
+#   overridden to 5 by stress-scale-values.yaml for StressDrives.
+#   DiskReadThreadPool is instantiated per drive session (not shared).  For
+#   mhvtl tests with few drives, the helm default of 4 threads/drive is adequate.
+#   For StressDrive tests with 30 drives a naive high value (e.g. 40) would give
+#   1200 concurrent XRootD connections, saturating the EOS FSTs (5 × 256 = 1280
+#   threads) and stalling reads to seconds.  5 threads give comfortable pipeline
+#   depth: reads complete in ~1–3 ms; the adaptive mirror (triggered at each
+#   HDR1 block) sleeps for the idle time between files, mirroring the ~23 ms
+#   inter-file arrival gap at the ~43 files/s/drive queue-limited rate.
+#
+# taped bufferCount = 10 000 (mhvtl/real-hardware); overridden to 500 for StressDrives
+#   MigrationMemoryManager is instantiated per DataTransferSession (not shared).
+#   With bufferSizeBytes = 256 KB (helm default): 10 000 × 256 KB = 2.56 GB/drive,
+#   suitable for mhvtl tests (1–5 drives, large files, deep pipeline needed).
+#   For 30 StressDrives with 16-byte files only 5–15 buffers are in flight per
+#   drive at a time; stress-scale-values.yaml overrides to 500
+#   (128 MB/drive, 3.8 GB for 30 drives).
+#
+# taped archiveFetchBytesFiles = 20 000 files (StressDrive; see stress-scale-values.yaml)
+#   logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
+#   Capacity 29 760 080 bytes = 80 + 3 × 20 000 × 496 → exactly 3 batches/tape.
+#   ENOSPC fires on HDR1 of batch 4 file 1 → zero partial-batch requeue at tape boundaries.
+#   At 100 files/s/drive one batch lasts ~200 s; DB poll frequency is low.
+#
+# taped schedulerNumberOfConnections = 2 per drive (set below).
+#   With 2 mhvtl drives: 4 total — well within budget.
+#   With 100 StressDrives: 200 total — pgbouncer required (see budget below).
+#
+# taped archiveDismountPolicy = "300, 3, 0, 1"
+#   startThreshold = 0 disables underfill-driven dismounts.  In stress tests
+#   the queue arrival rate is the bottleneck, not the drives, so drives will
+#   always appear "underfilled" between file batches.  Keeping drives mounted
+#   avoids unnecessary 5 s remount delays during queue draining.
+#
+# maintd diskReportArchive/Retrieve replicas = 1, batchSize = 20 000, iterSleepMs = 2 s
+#   The end-to-end archive rate is bottlenecked by the frontend at ~1.3 kHz.
+#   Within the 30 s burst: 30 s / (T_query + 2 s sleep) ≈ 12-15 iterations →
+#   12 × 20 000 = 240 000 files/burst → ~240 000 / 40 s = 6 kHz — well above 1.3 kHz.
+#   The 2 s sleep between report batches limits the XRootD request rate to EOS MGM,
+#   which is already under heavy load from 100 concurrent drive read sessions.
+#   Retrieve reporting is required: without it EOS never clears the tape-only
+#   flag and the Python retrieval test always sees 0 files retrieved.
+#
+# ---------------------------------------------------------------------------
+# PostgreSQL scheduler DB connection budget (max 150 connections)
+# (repeated in table form below for quick reference)
+# ---------------------------------------------------------------------------
 
 global:
   # Keep crash evidence in a pod volume for stress-run investigation
@@ -14,8 +106,8 @@ global:
 frontend-admin:
   conf:
     catalogue:
-      # Allow concurrent requests without a small catalogue connection pool limiting throughput.
-      numberOfConnections: 50
+      # Admin/repack commands are low-frequency; 10 connections is ample.
+      numberOfConnections: 10
     logger:
       # Reduce per-request logging overhead during sustained load.
       logLevel: "WARNING"
@@ -23,12 +115,13 @@ frontend-admin:
 frontend-wfe:
   conf:
     catalogue:
-      # Allow concurrent requests without a small catalogue connection pool limiting throughput.
-      numberOfConnections: 50
-    logger:
-      # Reduce per-request logging overhead during sustained load.
-      logLevel: "WARNING"
+      numberOfConnections: 10
     schedulerdb:
+      # Each WFE workflow event holds a schedulerdb connection for the archive INSERT (~5 ms).
+      # With 3 connections: throughput cap = 3 / 0.005 = ~600 files/sec — the observed 762 Hz
+      # ceiling.  With 5 FSTs and 1-2 kHz expected: 15 connections → ~3 kHz cap gives
+      # ample headroom; see connection budget below.
+      numberOfConnections: 15
       # Tuning only, applied whether or not batching ends up enabled: does NOT itself turn batching
       # on. That is controlled solely by the enable-opportunistic-batching pipeline input, via
       # presets/pgsched-opportunistic-batching-values.yaml -- this file used to also hardcode
@@ -39,7 +132,48 @@ frontend-wfe:
       # never hit it (the window ends most rounds first), so it mainly guards against a pathological
       # burst producing one unreasonably large bulk INSERT rather than shaping normal throughput.
       opportunisticBatchingMaxBatchSize: 1000
+    logger:
+      # Reduce per-request logging overhead during sustained load.
+      logLevel: "WARNING"
 
+# ---------------------------------------------------------------------------
+# PostgreSQL catalogue DB connection budget (max_connections on target postgres)
+# catalogue connections: nbConns is hardcoded to 1 in taped and maintd.
+# ---------------------------------------------------------------------------
+# Pod                              replicas  conn/pod  subtotal
+# frontend-admin (catalogue)            1       10        10
+# frontend-wfe   (catalogue)            1       10        10
+# maintd diskReportArchive              1        1         1
+# maintd diskReportRetrieve             1        1         1
+# maintd repackExpand                   0        1         0  (disabled)
+# maintd repackReport                   0        1         0  (disabled)
+# taped  50 drives × 1 conn/drive                        50
+# taped 100 drives × 1 conn/drive                       100
+# ---------------------------------------------------------------------------
+# Total (50 drives):                                      72
+# Total (100 drives):                                    122
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# PostgreSQL scheduler DB connection budget (max 150 connections)
+# ---------------------------------------------------------------------------
+# schedulerNumberOfConnections in taped is a PER-DRIVE pool: each DriveHandler
+# creates its own SchedulerDBInit.  Budget for taped = drives × conn/drive.
+# ---------------------------------------------------------------------------
+# Pod                              replicas  conn/pod  subtotal
+# frontend-wfe (schedulerdb)            1       15        15
+# frontend-admin (schedulerdb)          1        3         3
+# maintd diskReportArchive              1        3         3
+# maintd diskReportRetrieve             1        3         3
+# maintd repackExpand                   0        3         0  (disabled)
+# maintd repackReport                   0        3         0  (disabled)
+# taped  50 drives × 3 conn/drive                       150
+# taped 100 drives × 3 conn/drive                       300
+# ---------------------------------------------------------------------------
+# Total (50 drives):                                     174   (budget: 150 — pgbouncer required)
+# Total (100 drives):                                    324   (budget: 150 — pgbouncer required)
+# max drives without pgbouncer: (150 - 24 fixed) / 3 = 42
+# ---------------------------------------------------------------------------
 taped:
   transfers:
     # Keep enough files in flight to support the larger scheduler/reporting batches below.
@@ -50,7 +184,6 @@ taped:
   scheduler:
     # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
     numberOfConnections: 3
-
 maintd:
   logging:
     # Reduce routine logging overhead while retaining warnings and errors.
@@ -60,31 +193,30 @@ maintd:
     # should match the corresponding names in the maintd conf file
     # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
     # To disable a routine, set replicas to 0
-    # Parallel reporters and larger batches keep archive completion reporting from backing up.
+    # Sizing: see rationale comment at top of file.
     diskReportArchive:
-      replicas: 2
-      # Poll frequently to drain completed work; batch size and worker count are not a rate guarantee.
-      sleepIntervalSecs: 5
-      # Amortize database and reporting overhead across many small files.
-      batchSize: 4000
-      # Bound a reporting pass so workers can return to other queued work.
-      softTimeoutSecs: 30
-    # Apply the same reporting capacity to completed retrievals.
-    diskReportRetrieve:
-      replicas: 2
-      # Poll frequently to drain completed work; batch size and worker count are not a rate guarantee.
-      sleepIntervalSecs: 5
-      # Amortize database and reporting overhead across many small files.
-      batchSize: 4000
-      # Bound a reporting pass so workers can return to other queued work.
-      softTimeoutSecs: 30
-    # Keep repack expansion bounded rather than adding many concurrent requests.
-    repackExpand:
       replicas: 1
+      sleepIntervalSecs: 1
+      batchSize: 20000
+      softTimeoutSecs: 30
+      iterSleepMs: 2000
+    diskReportRetrieve:
+      replicas: 1
+      sleepIntervalSecs: 1
+      batchSize: 20000
+      softTimeoutSecs: 30
+      iterSleepMs: 2000
+    # Repack is not used in stress tests: zero replicas avoids unnecessary DB
+    # polls and frees scheduler connections for the active archive/retrieve workload.
+    repackExpand:
+      replicas: 0
       sleepIntervalSecs: 10
       maxToExpand: 2
-    # Retain a single periodic worker for repack reporting.
     repackReport:
-      replicas: 1
+      replicas: 0
       sleepIntervalSecs: 10
       softTimeoutSecs: 30
+    repackActiveQueueCleanup:
+      replicas: 0
+    repackPendingQueueCleanup:
+      replicas: 0

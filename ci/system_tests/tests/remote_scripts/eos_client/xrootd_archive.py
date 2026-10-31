@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import argparse
 import multiprocessing as mp
-from multiprocessing.queues import JoinableQueue
 import os
 import time
+from multiprocessing.queues import JoinableQueue
 from typing import Any
 
 
@@ -180,6 +180,7 @@ def main() -> None:
 
     # Wait for completion
     work_q.join()
+
     elapsed = time.time() - before
     rate = total_file_count / max(elapsed, 0.001)
 

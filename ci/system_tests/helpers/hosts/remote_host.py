@@ -39,14 +39,16 @@ class RemoteHost:
     ) -> asyncio.Future[ExecResult]:
         """Start a command asynchronously and return a future that can be awaited.
 
-        This allows concurrent monitoring while the process runs.
+        Uses exec_long_running when the connection supports it (avoids Kubernetes
+        WebSocket timeouts for commands that run for hours).
         """
         loop = asyncio.get_running_loop()
+        exec_fn = getattr(self.conn, "exec_long_running", self.conn.exec)
         return loop.run_in_executor(
             None,
-            self.exec,
+            exec_fn,
             command,
-            True,
+            True,  # capture_output
             throw_on_failure,
             print_command,
         )

@@ -87,7 +87,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       std::make_unique<DiskReportArchiveRoutine>(m_lc,
                                                  *m_scheduler,
                                                  m_config.routines.disk_report_archive.batch_size,
-                                                 m_config.routines.disk_report_archive.soft_timeout_secs));
+                                                 m_config.routines.disk_report_archive.soft_timeout_secs,
+                                                 m_config.routines.disk_report_archive.iter_sleep_ms));
   }
 
   // Add Disk Reporter for Retrieve
@@ -96,7 +97,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       std::make_unique<DiskReportRetrieveRoutine>(m_lc,
                                                   *m_scheduler,
                                                   m_config.routines.disk_report_retrieve.batch_size,
-                                                  m_config.routines.disk_report_retrieve.soft_timeout_secs));
+                                                  m_config.routines.disk_report_retrieve.soft_timeout_secs,
+                                                  m_config.routines.disk_report_retrieve.iter_sleep_ms));
   }
 
   // Add Repack Expansion

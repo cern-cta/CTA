@@ -15,7 +15,6 @@ from packaging.version import Version
 from system_tests.helpers.hosts import CtaCliHost, DiskClientHost, DiskInstanceHost, EosClientHost, EosMgmHost
 from system_tests.helpers.utils import find_line
 
-
 # =========================================================================
 #  Helpers
 # =========================================================================

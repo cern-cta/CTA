@@ -1,0 +1,45 @@
+backend = "CLI"
+cta_catalogue_conn_file = "/etc/cta/cta-catalogue.conf"
+
+[display]
+format = "table"  # table,json,raw
+chunk_size = 1000 # Number of objects to include in each chunk for display
+pretty_get = true
+
+[[display.columns]]
+table_name = "Drive"
+exclude_fields = ["logical_library_name"]
+
+[[display.columns]]
+table_name = "EnrichedDrive"
+exclude_fields = ["logical_library_name"]
+
+[logging]
+file_path = "/var/log/ctaops/ctaops-cli.log"
+level = "INFO"                               # DEBUG, INFO, WARNING, ERROR, CRITICAL
+rotation_max_size = 1_000_000_000
+rotation_keep_files = 5
+date_format = "%Y-%m-%d %H:%M:%S"
+
+[backends.CLI]
+exec_path = "/usr/bin/cta-admin"
+timeout = 60
+# sss_keytab_file = "/etc/cta/tape-local.keytab"
+# cta_conf_file = "/etc/cta/cta-cli.conf"
+
+[workflow]
+frontend_endpoint = "localhost:10956"
+disk_endpoint = "ctaeos"
+jwt_token_file = "/etc/cta/workflow-jwt-token"
+timeout = 20
+verify_cert = true
+
+# For self-signed test certs, set verify_cert=false and provide the server/CA PEM:
+# ca_cert_file = "/etc/cta/workflow-ca.pem"
+#
+# If the cert hostname does not match endpoint host, optionally set:
+# server_name_override = "cta-workflow.test"
+
+[tape_server]
+udev_properties_map = { "library_name_key" = "CTAOPS_NAME", "drive_name_key" = "CTAOPS_NAME", "drive_library_address_key" = "CTAOPS_LIBRARY_ADDRESS", "drive_library_ordinal_key" = "CTAOPS_LIBRARY_ORDINAL" }
+# for custom udev integration change this map (default map works with ctaops-udev RPM package)

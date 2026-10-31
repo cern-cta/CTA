@@ -1,0 +1,43 @@
+{
+  "vid": "V00009",
+  "media_type_name": "LTO8",
+  "vendor": "IBM",
+  "purchase_order": "PO-1",
+  "logical_library_name": "loglib_ci",
+  "physical_library_name": "physlib_ci",
+  "tape_pool_name": "tp_ci",
+  "virtual_organisation_name": "vo_ci",
+  "encryption_key_name": null,
+  "capacity": 12000000000000,
+  "format": "CTA",
+  "state": "active",
+  "state_reason": "",
+  "verification_status": null,
+  "statistics": {
+    "physical_usage": 1000,
+    "logical_usage": 800,
+    "is_dirty": false,
+    "last_fseq": 3,
+    "is_full": false,
+    "file_count": 3
+  },
+  "metadata": {
+    "creation_user_name": "cta_ci",
+    "creation_host_name": "ci-host",
+    "creation_time": "2024-01-01T09:00:00+00:00",
+    "update_user_name": "cta_ci",
+    "update_host_name": "ci-host",
+    "update_time": "2024-06-01T12:00:00+00:00",
+    "comment": "",
+    "label_time": "2024-01-01T09:00:00+00:00",
+    "label_drive_name": "drive_ci",
+    "last_write_time": "2024-06-01T12:00:00+00:00",
+    "last_write_drive_name": "drive_ci",
+    "last_read_time": "2024-06-01T12:00:00+00:00",
+    "last_read_drive_name": "drive_ci",
+    "update_state_time": "2024-06-01T12:00:00+00:00",
+    "update_state_info": "",
+    "write_mount_count": 5,
+    "read_mount_count": 2
+  }
+}

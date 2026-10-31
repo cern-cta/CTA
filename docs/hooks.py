@@ -3,13 +3,12 @@
 
 """Resolve repository inputs and generate the cta-admin manpage without compiling CTA."""
 
-from pathlib import Path
 import logging
 import re
 import shutil
 import subprocess
 import sys
-
+from pathlib import Path
 from typing import Any, Protocol
 
 from mkdocs.structure.pages import Page

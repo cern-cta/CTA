@@ -46,4 +46,4 @@ Changes to dependencies such as EOS, operating-system packages, and deployment c
 
 At CERN, releases progress through preproduction and QA before broader production deployment. Preproduction checks integration with physical tape hardware, monitoring, and operational configuration. QA introduces the change to a limited part of production before wider rollout.
 
-QA can interact with live catalogue and scheduler state, so it is not an isolated test environment. Deployment and rollback decisions belong to the operational procedure; see [CTA Upgrades](../../../../ops/run-and-maintain/upgrades/cta.md). Stable publication follows production validation, as described in [Release Procedure](../../../contributing/maintainers/releases.md#stable-promotion-and-announcements).
+QA can interact with live catalogue and scheduler state, so it is not an isolated test environment. Deployment and rollback decisions belong to the operational procedure; see [CTA Upgrades](../../../../ops/run-and-maintain/upgrades/cta.md). Stable publication follows production validation, as described in [Release Procedure](../../../contributing/maintainers/releases.md#publish-packages-and-images).

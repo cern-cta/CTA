@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-from system_tests.helpers.hosts import DCacheHost, DCacheClientHost
 from pathlib import Path
+
+from system_tests.helpers.hosts import DCacheClientHost, DCacheHost
 
 #####################################################################################################################
 # Tests

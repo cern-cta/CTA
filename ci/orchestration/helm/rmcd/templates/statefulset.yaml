@@ -70,8 +70,7 @@ spec:
             add:
               - SYS_RAWIO
         stdin: true
-        command: ["/bin/bash", "-c"]
-        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/rmcd.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        command: ["/scripts/rmcd.sh"]
         env:
         - name: MY_NAME
           value: {{ $rmcdName }}

@@ -5,6 +5,7 @@
 
 #include "DriveCleaner.hpp"
 
+#include "DataTransferConfig.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
@@ -14,6 +15,7 @@
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
+#include "taped/drive/StressDrive.hpp"
 #include "taped/file/HeaderChecker.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
 
@@ -305,6 +307,15 @@ void cta::tape::daemon::DriveCleaner::logAndClearTapeAlerts(drive::DriveInterfac
 
 std::unique_ptr<cta::tape::drive::DriveInterface>
 cta::tape::daemon::DriveCleaner::createDrive(System::virtualWrapper& sysWrapper) {
+  if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
+    auto drive =
+      std::make_unique<cta::tape::drive::StressDrive>(m_driveInfo.driveName,
+                                                      m_driveInfo.logicalLibrary,
+                                                      DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
+    drive->info = m_driveInfo;
+    return drive;
+  }
+
   SCSI::DeviceVector dv(sysWrapper);
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
 

@@ -62,3 +62,11 @@ path = [
 ]
 SPDX-FileCopyrightText = "2026 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Stable Python packages imported from cta-operations-utilities.
+# TODO: these need to get proper REUSE headers
+[[annotations]]
+path = ["lib/python/**", "tools/ctaops-cli/**", "tools/ctaops-udev/**", "uv.lock"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"

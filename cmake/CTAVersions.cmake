@@ -8,7 +8,7 @@ set(CTA_VERSION "" CACHE STRING "CTA version-release")
 if(NOT CTA_VERSION MATCHES "^[A-Za-z0-9._+~^]+-[A-Za-z0-9._+~^]+$")
   message(FATAL_ERROR
     "CTA_VERSION must contain two nonempty parts separated by exactly one hyphen, "
-    "using only letters, numbers, '.', '_', '+', '~', or '^'; for example 6-dev.")
+    "using only letters, numbers, '.', '_', '+', '~', or '^'; for example 6~dev1-1.")
 endif()
 
 set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0" CACHE STRING
@@ -30,6 +30,13 @@ set(CTA_SOMINOR 1)
 set(CTA_SOPATCH 0)
 
 if(CTA_BUILD_MODE STREQUAL "compile")
+  # Embed the package version in every C/C++ executable and shared library for systemd-coredump.
+  # Pass JSON as one linker argument: -Wl would split its commas.
+  # Spaces also make CMake quote the argument, preventing shell brace expansion.
+  set(CTA_ELF_PACKAGE_METADATA
+    "{ \"type\": \"${CTA_PACKAGE_FORMAT}\", \"name\": \"cta\", \"version\": \"${CTA_VERSION}\" }")
+  add_link_options("SHELL:-Xlinker '--package-metadata=${CTA_ELF_PACKAGE_METADATA}'")
+
   configure_file(
     ${PROJECT_SOURCE_DIR}/version.cpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/version.cpp

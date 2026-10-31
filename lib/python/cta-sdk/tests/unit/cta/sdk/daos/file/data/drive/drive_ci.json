@@ -1,0 +1,22 @@
+{
+  "name": "drive_ci",
+  "logical_library_name": "loglib_ci",
+  "host_name": "tpsrv01",
+  "desired_state": "down",
+  "state": "down",
+  "state_reason": "test",
+  "device_path": "/dev/nst0",
+  "physical_library_name": "physlib_ci",
+  "physical_library_slot": "1,2,3,4",
+  "tape_session": null,
+  "state_change_age": 0.0,
+  "config": {
+    "conf.MountTimeout": "600"
+  },
+  "metadata": {
+    "last_refresh_age": 12.0,
+    "cta_version": "5.0",
+    "scheduler_namespace": "ci",
+    "comment": "drive comment"
+  }
+}

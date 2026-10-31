@@ -134,6 +134,9 @@ public:
 
 /// @brief Common tape I/O and control contract for hardware drives and in-memory substitutes.
 ///
+/// Used by DriveGeneric (real SCSI drives), VirtualDrive (in-memory simulation base),
+/// FakeDrive (unit-test double with failure injection), and StressDrive (persistent
+/// virtual drive for stress tests).
 /// Operations may throw on device, system-call or unsupported-feature errors.
 /// Callers must serialize operations on a drive and stop all users before destroying it.
 class DriveInterface {

@@ -164,6 +164,7 @@ static constexpr const char* kDbDeleteRepackArchive = "delete repack archive";
 static constexpr const char* kDbSelectRepackArchiveToReport = "select repack archive to report";
 static constexpr const char* kDbUpdateRepackArchiveSuccess = "update repack archive success";
 static constexpr const char* kDbMoveArchiveToActive = "move archive to active";
+static constexpr const char* kDbUpdateMountLastFetch = "update mount_last_fetch";
 static constexpr const char* kDbDeleteMountLastFetchTimes = "delete mount_last_fetch_times";
 static constexpr const char* kDbUpdateInactiveReport = "update inactive report";
 static constexpr const char* kDbDeleteFailedQueues = "delete failed";

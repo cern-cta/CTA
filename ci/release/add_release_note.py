@@ -15,10 +15,10 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from cta_version import CTAVersion
 from gitlab_api import GitLabAPI
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
+from release_version import CTAVersion
 
 
 def release_version_for_tag(tag: str) -> str:
@@ -42,8 +42,13 @@ def add_release_note(
 ) -> None:
     """Find the release issue and append a note to this pipeline's discussion."""
     version = release_version_for_tag(tag)
+    build_version = os.environ.get("CTA_IMAGE_TAG", tag)
     context = ReleaseContext(Path.cwd(), config, api, dry_run=False)
     release_issues = context.find_release_issues(version)
+    # Prereleases may precede the release issue and changelog.
+    release = CTAVersion.parse(tag)
+    if not release_issues and (release.development or release.release_candidate):
+        return
     if len(release_issues) != 1:
         raise ReleaseWorkflowError(
             f"Expected one release issue titled {config.issue_title(version)!r}, found {len(release_issues)}"
@@ -59,7 +64,7 @@ def add_release_note(
             api.post(f"{discussions_endpoint}/{discussion['id']}/notes", json={"body": note})
             return
 
-    heading = f"### Release pipeline for `{tag}`\n\n[View pipeline]({pipeline_url})\n\n{note}\n\n{marker}"
+    heading = f"### Release pipeline for `{build_version}`\n\n[View pipeline]({pipeline_url})\n\n{note}\n\n{marker}"
     api.post(discussions_endpoint, json={"body": heading})
 
 

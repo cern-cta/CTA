@@ -5,8 +5,8 @@
 import json
 import re
 import shlex
-import uuid
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -14,7 +14,6 @@ import pytest
 
 from system_tests.helpers.hosts import EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig
-
 from system_tests.helpers.utils import find_line
 
 # =========================================================================

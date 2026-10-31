@@ -13,7 +13,7 @@ from system_tests.helpers.hosts import (
     DiskInstanceHost,
     SchedulerPostgresHost,
 )
-
+from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.utils import (
     TempDiskInstanceSpace,
     TempLogicalLibrary,
@@ -27,7 +27,6 @@ from system_tests.helpers.utils import (
     canonicalize,
     wait_for_condition,
 )
-
 
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
 #
@@ -386,7 +385,9 @@ def test_cta_admin_tape_pool(cta_cli: CtaCliHost, disk_instance_name: str) -> No
     assert ls_before == cta_cli.exec_with_output("cta-admin --json tp ls")
 
 
-def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
+def test_cta_admin_drive(
+    cta_cli: CtaCliHost, cta_taped: CtaTapedHost, restart_expectations: RestartExpectations
+) -> None:
     pl_name = "test_cta_admin_tape_pl1"
     ll_name = "test_cta_admin_tape_ll1"
     dr_name = cta_taped.drive_name
@@ -426,8 +427,7 @@ def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
         cta_cli.exec(f"cta-admin dr rm {dr_name}")
 
     # Restart taped for the drive in question to ensure it ends up back in the catalogue again
-    cta_taped.restart(wait_for_restart=True)
-    cta_cli.set_all_drives_up(wait=True)
+    cta_taped.restart(wait_for_restart=True)    cta_cli.set_all_drives_up(wait=True)
     # Since dr ls has things like "time since" in its output, we need to filter certain keys
     ls_after = cta_cli.exec_with_output("cta-admin --json dr ls")
     ignore_keys = ["driveStatusSince", "timeSinceLastUpdate"]

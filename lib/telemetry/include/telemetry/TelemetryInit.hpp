@@ -35,6 +35,16 @@ void initTelemetryConfig(const TelemetryConfig& config);
 void reinitTelemetry(cta::log::LogContext& lc);
 
 /**
+ * Like reinitTelemetry, but first sleeps for a hash-derived fraction of the
+ * configured export interval so that many instances (e.g. 100 drive pods) do
+ * not all export simultaneously.  No-op when the backend is NOOP.
+ *
+ * @param instanceId  A string unique to this instance (e.g. drive name).
+ *                    The sleep duration is hash(instanceId) % (exportInterval / 2).
+ */
+void reinitTelemetryWithJitter(const std::string& instanceId, cta::log::LogContext& lc);
+
+/**
  * Sets telemetry to NOOP and flushes any remaining metrics still in the buffer.
  */
 void shutdownTelemetry(cta::log::LogContext& lc);

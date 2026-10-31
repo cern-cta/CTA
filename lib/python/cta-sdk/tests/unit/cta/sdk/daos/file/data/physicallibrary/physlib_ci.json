@@ -1,0 +1,23 @@
+{
+  "name": "physlib_ci",
+  "manufacturer": "IBM",
+  "model": "TS4500",
+  "type": "LTO",
+  "gui_url": "http://gui",
+  "webcam_url": "http://cam",
+  "location": "B513",
+  "physical_cartridge_slots": 1000,
+  "available_cartridge_slots": 200,
+  "physical_drive_slots": 20,
+  "state": "enabled",
+  "state_reason": null,
+  "metadata": {
+    "creation_user_name": "cta_ci",
+    "creation_host_name": "ci-host",
+    "creation_time": "2024-01-01T09:00:00+00:00",
+    "update_user_name": "cta_ci",
+    "update_host_name": "ci-host",
+    "update_time": "2024-06-01T12:00:00+00:00",
+    "comment": "unit-test seed"
+  }
+}

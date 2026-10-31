@@ -7,10 +7,10 @@ from .cta_maintd_host import CtaMaintdHost
 from .cta_rmcd_host import CtaRmcdHost
 from .cta_taped_host import CtaTapedHost
 from .cta_workflow_api_host import CtaWorkflowApiHost
-from .disk.disk_client_host import DiskClientHost
-from .disk.disk_instance_host import DiskInstanceHost
 from .disk.dcache_client_host import DCacheClientHost
 from .disk.dcache_host import DCacheHost
+from .disk.disk_client_host import DiskClientHost
+from .disk.disk_instance_host import DiskInstanceHost
 from .disk.eos_client_host import EosClientHost
 from .disk.eos_constants import EOS_TAPE_FILESYSTEM_ID
 from .disk.eos_mgm_host import EosMgmHost

@@ -12,7 +12,6 @@ from typing import Any, Optional
 
 import pytest
 from _pytest.fixtures import SubRequest
-
 from system_tests.helpers.hosts import (
     CtaAdminApiHost,
     CtaCliHost,
@@ -20,14 +19,15 @@ from system_tests.helpers.hosts import (
     CtaRmcdHost,
     CtaTapedHost,
     CtaWorkflowApiHost,
-    DCacheHost,
     DCacheClientHost,
+    DCacheHost,
     DiskClientHost,
     DiskInstanceHost,
     EosClientHost,
     EosMgmHost,
     SchedulerPostgresHost,
 )
+from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
@@ -92,6 +92,12 @@ def make_tests_look_pretty(request: SubRequest) -> Iterator[None]:
 def error_whitelist() -> set[str]:
     """Mutable whitelist that individual test cases can add errors to."""
     return set()  # mutable whitelist shared between all tests
+
+
+@pytest.fixture(scope="session")
+def restart_expectations() -> RestartExpectations:
+    """Track unexpected restarts, with scoped allowances for intentional lifecycle operations."""
+    return RestartExpectations()
 
 
 @pytest.fixture(scope="session")
@@ -181,7 +187,9 @@ def connection_config(request: SubRequest) -> Optional[Path]:
 
 
 @pytest.fixture(scope="session")
-def env(connection_config: Optional[Path], namespace: Optional[str]) -> TestEnv:
+def env(
+    connection_config: Optional[Path], namespace: Optional[str], restart_expectations: RestartExpectations
+) -> TestEnv:
     """Give tests access to the different hosts (CLI, frontend, taped, and others)."""
     if namespace and connection_config:
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
@@ -193,9 +201,21 @@ def env(connection_config: Optional[Path], namespace: Optional[str]) -> TestEnv:
 
     if namespace is not None:
         # No connection configuration provided, so assume everything is running in a cluster
-        return TestEnv.from_namespace(namespace)
-    assert connection_config is not None
-    return TestEnv.from_config(connection_config)
+        environment = TestEnv.from_namespace(namespace)
+    else:
+        assert connection_config is not None
+        environment = TestEnv.from_config(connection_config)
+    restart_expectations.start(
+        [
+            *environment.cta_cli,
+            *environment.cta_admin_api,
+            *environment.cta_workflow_api,
+            *environment.cta_taped,
+            *environment.cta_rmcd,
+            *environment.cta_maintd,
+        ]
+    )
+    return environment
 
 
 # =========================================================================
@@ -283,3 +303,14 @@ def cta_cli(env: TestEnv) -> CtaCliHost:
 @pytest.fixture(scope="session")
 def disk_instance_name(disk_instance: DiskInstanceHost) -> str:
     return disk_instance.instance_name
+
+
+# =========================================================================
+#  Stress-drive fixtures
+# =========================================================================
+
+
+# stress_num_tapes, stress_vid_prefix, stress_logical_library, and
+# stress_tape_capacity_bytes have been removed.  All virtual-library
+# configuration is now read directly from library.conf on the taped pod
+# by setup_stress_drives_test.py via CtaTapedHost.read_stress_library_conf().

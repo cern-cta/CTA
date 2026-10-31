@@ -5,6 +5,7 @@
 
 #include "scheduler/rdbms/postgres/CommonQueueUtils.hpp"
 
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/NullDbValue.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
@@ -40,6 +41,7 @@ uint64_t updateMountQueueLastFetch(Transaction& txn, uint64_t mountId, bool isAc
   stmt.bindUint64(":MOUNT_ID", mountId);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateMountLastFetch);
   txn.setRowCountForTelemetry(nrows);
   return nrows;
 }

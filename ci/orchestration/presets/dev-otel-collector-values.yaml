@@ -16,8 +16,12 @@ config:
           endpoint: 0.0.0.0:4318
 
   processors:
-    batch:
-      timeout: 5s
+    # memory_limiter must be first in every pipeline: it sheds load before data
+    # reaches downstream processors.  500 MiB is generous for a single-node dev
+    # or scale-test deployment; adjust if the collector pod is OOM-killed.
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 500
 
   exporters:
     prometheus:
@@ -34,7 +38,7 @@ config:
         receivers:
           - otlp
         processors:
-          - batch
+          - memory_limiter
         exporters:
           - prometheus
 

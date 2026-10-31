@@ -30,9 +30,11 @@
 
   [tests.stress]
 
-    # For the actual stress test we currently have 40 directories with 50.000 files each
-    # mhvtl is mounted in-memory, so we keep the file size small and easily compressible (unique string + zero padding)
-    num_dirs          = 40
+    # Total number of files to archive. num_dirs is derived automatically as
+    # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
+    # files/dir limit.  Override per-run via the STRESS_TOTAL_FILES CI variable.
+    # mhvtl is mounted in-memory, so we keep the file size small and easily compressible.
+    total_files       = 2000000
     num_files_per_dir = 50000
     # file size in bytes
     file_size = 16
@@ -44,18 +46,39 @@
     write_files_in_chunks      = false
     check_copy_interval_sec    = 20
     check_archive_interval_sec = 10
-    # Stop waiting for archival after this many consecutive intervals without progress
-    max_no_progress_intervals = 3
+    # Stop waiting after this many consecutive 10-second intervals without progress.
+    # 3 = 30 s is adequate for archival (if no progress in 30 s the system is stalled).
+    # For retrieval the same value is reused; at test start the retrieve pipeline
+    # needs time to warm up (queue cache TTL 5 s + mount delay 5 s + first read),
+    # so use 6 intervals (60 s) to avoid false timeouts on a healthy system.
+    max_no_progress_intervals = 6
     # Maximum acceptable file loss percentage before proceeding to retrieval
     max_acceptable_loss_percent = 5.0
 
     [tests.stress.prequeue]
 
-      # If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
-      # This prevents drives from outpacing the queueing capabilities of EOS.
-      enabled                    = false
-      num_files_to_put_drives_up = 1000000
-      # timeout in seconds
-      timeout_to_put_drives_up_sec = 3600
-      # how often to count number of files when prequeueing
+      # If true, put drives down before archiving and only put them up after
+      # prequeue_fraction × total_files files are created.
+      enabled = false
+
+      # Fraction of total_files that must be queued before drives come up.
+      prequeue_fraction = 0.9
+
+      # Fraction of total_files that must be retrieve-queued before drives come
+      # up for the retrieve phase.  Drives are kept down here too when enabled=true.
+      # With enabled=false this value is read by stress_test.py but has no effect.
+      retrieve_prequeue_fraction = 0.1
+
+      # Expected EOS archive-queue throughput used to derive the drive-up
+      # timeout: timeout = (prequeue_fraction × total_files / eos_queue_rate_hz)
+      #                    × timeout_margin_factor
+      eos_queue_rate_hz     = 1000
+      timeout_margin_factor = 1.2
+
       check_interval_sec = 300
+
+    # Virtual stress-drive mode configuration (media types, VID prefixes,
+    # tape counts, capacities, logical library name) lives in library.toml
+    # on the shared virtual-tape-library PVC and is read at runtime by
+    # setup_stress_drives_test.py via CtaTapedHost.read_stress_library_conf().
+    # No manual duplication here is required or expected.

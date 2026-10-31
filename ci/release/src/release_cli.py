@@ -16,11 +16,11 @@ from pathlib import Path
 
 from commands import changelog, status, tag
 from confirmation import ConfirmationError, ask_yes_no
-from cta_version import VersionError
 from git_repo import GitError, discover_repository_root
 from gitlab_api import GitLabAPI, GitLabAPIError
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
+from release_version import VersionError
 
 # Default token file shared by various CTA CI scripts that need to make use of the GitLab API
 TOKEN_FILE = Path(pwd.getpwuid(os.getuid()).pw_dir) / ".config" / "cta" / "gitlab-api-token"
@@ -91,19 +91,19 @@ def create_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Release workflow:
   1. Synchronize the target branch and generate the changelog:
-       release changelog v6.12.0.0-1
+       release changelog v6.1.0
   2. Review and merge the changelog MR printed by the command.
   3. Tag the merged release:
-       release tag v6.12.0.0-1
+       release tag v6.1.0
   For a release from another branch, pass the same target to each command:
-       release changelog v6.12.0.0-1 --target-branch release/v6.11.23.0
-       release tag v6.12.0.0-1 --target-branch release/v6.11.23.0
+       release changelog v6.1.0 --target-branch release/v6.11.23
+       release tag v6.1.0 --target-branch release/v6.11.23
 
 Common alternatives:
   Inspect progress without changing anything:
-       release status v6.12.0.0-1
+       release status v6.1.0
   Preview a command, including all validations and planned mutations:
-       release --dry-run tag v6.12.0.0-1
+       release --dry-run tag v6.1.0
 Run "release COMMAND --help" for complete changelog, tag, and status scenarios.
 Global options such as --dry-run must precede COMMAND.""",
     )

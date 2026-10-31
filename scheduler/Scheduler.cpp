@@ -1293,8 +1293,24 @@ void Scheduler::sortAndGetTapesForMountInfo(
       }
     }
 
-    // Remove existing mounts not on the current scheduler DB
+    // Remove existing mounts not on the current scheduler DB.
+    // Before erasing them, record their tape VIDs in tapesInUse.
+    // These drives belong to a different scheduler backend and are excluded from the
+    // mount-scheduling loop below, so their VIDs would otherwise never reach tapesInUse.
+    // But the tape is physically loaded in the drive regardless of which scheduler
+    // manages it: it must not be selected for a new mount by this scheduler.
     auto schedulerBackendName = getSchedulerBackendName();
+    for (const auto& mount : mountInfo->existingOrNextMounts) {
+      if (mount.schedulerBackendName.has_value() && mount.schedulerBackendName != schedulerBackendName
+          && !mount.vid.empty()) {
+        tapesInUse.insert(mount.vid);
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", mount.vid)
+          .add("drive", mount.driveName)
+          .add("schedulerBackend", mount.schedulerBackendName.value());
+        lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): cross-scheduler tapeAlreadyInUse found.");
+      }
+    }
     std::list<std::string> ignoredDrives;
     mountInfo->existingOrNextMounts.erase(
       std::remove_if(mountInfo->existingOrNextMounts.begin(),
@@ -1925,7 +1941,10 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
                                        (int) cta::common::dataStructures::DriveStatus::Transferring,
                                        (int) cta::common::dataStructures::DriveStatus::Unloading,
                                        (int) cta::common::dataStructures::DriveStatus::Unmounting,
-                                       (int) cta::common::dataStructures::DriveStatus::DrainingToDisk};
+                                       (int) cta::common::dataStructures::DriveStatus::DrainingToDisk,
+                                       // CleaningUp must be included: the drive still holds the tape loaded,
+                                       // so the VID must appear in tapesInUse to prevent a second mount.
+                                       (int) cta::common::dataStructures::DriveStatus::CleaningUp};
   std::set<int> activeMountTypes = {(int) cta::common::dataStructures::MountType::ArchiveForUser,
                                     (int) cta::common::dataStructures::MountType::ArchiveForRepack,
                                     (int) cta::common::dataStructures::MountType::Retrieve,
@@ -1949,7 +1968,25 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
              "In Scheduler::getExistingAndNextMounts(): drive is missing SchedulerBackendName configuration.");
     }
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
-      if (driveState.mountType == common::dataStructures::MountType::NoMount) {
+      // WHY this carve-out exists:
+      // DriveHandler always calls reportDriveStatus(NoMount, CleaningUp) when entering the
+      // cleaner session (both crash-recovery and normal-shutdown paths in DriveHandler.cpp).
+      // MountType::NoMount is therefore the invariant for CleaningUp, but the tape is still
+      // physically loaded and the VID is still live in the DB (setDriveCleaningUp passes
+      // currentVid=nullopt, so the conditional-SQL update preserves the previous VID value).
+      // Without this carve-out the NoMount guard below would skip CleaningUp drives entirely,
+      // their VID would never reach tapesInUse, and a second scheduler could mount the same
+      // tape on a different drive simultaneously.
+      //
+      // WHY we did not introduce a dedicated MountType::CleaningUp instead:
+      // MountType is mirrored in protobuf definitions, DB schema (MOUNT_TYPE column), and all
+      // switch statements across the codebase; adding a new value there is a disproportionately
+      // large change for this fix.  It would also require plumbing the VID explicitly through
+      // the DriveHandler→reportDriveStatus call chain, because with a real mount type the DB
+      // would no longer preserve the VID via the conditional-SQL path.  A dedicated MountType
+      // is a valid future cleanup but belongs in its own branch.
+      if (driveState.mountType == common::dataStructures::MountType::NoMount
+          && driveState.driveStatus != common::dataStructures::DriveStatus::CleaningUp) {
         log::ScopedParamContainer(logContext)
           .add("driveName", driveState.driveName)
           .add("mountType", common::dataStructures::toCamelCaseString(driveState.mountType))
@@ -2191,6 +2228,26 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   // First, get the mount-related info from the DB
   utils::Timer timer;
   utils::Timer ttel;
+  uint64_t totalJobCount = 0;
+  auto recordGetNextMountTelemetry = [&]() {
+    auto tteltime = ttel.msecs();
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      tteltime,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount                                                    }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      totalJobCount,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount                                                    }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+  };
   double getMountInfoTime = 0;
   double queueTrimingTime = 0;
   double getTapeInfoTime = 0;
@@ -2202,7 +2259,6 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   double schedulerDbTime = 0;
   double checkLogicalAndPhysicalLibrariesTime = 0;
   double catalogueTime = 0;
-  uint64_t totalJobCount = 0;
 
   if (!checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc)) {
     return std::unique_ptr<TapeMount>();
@@ -2311,6 +2367,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("schedulerDbTime", schedulerDbTime)
               .add("catalogueTime", catalogueTime);
             lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (archive)");
+            recordGetNextMountTelemetry();
             return std::unique_ptr<TapeMount>(internalRet.release());
           } catch (const exception::LostDatabaseConnection&) {
             // Let the caller wait for backend recovery before attempting more candidates.
@@ -2394,6 +2451,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("schedulerDbTime", schedulerDbTime)
           .add("catalogueTime", catalogueTime);
         lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
+        recordGetNextMountTelemetry();
         return std::unique_ptr<TapeMount>(internalRet.release());
       } catch (const exception::LostDatabaseConnection&) {
         // Let the caller wait for backend recovery before attempting more candidates.
@@ -2409,21 +2467,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
-  auto tteltime = ttel.msecs();
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    tteltime,
-    {
-      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
-      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kMount   }
-  },
-    opentelemetry::context::RuntimeContext::GetCurrent());
-  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    totalJobCount,
-    {
-      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
-      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kMount   }
-  },
-    opentelemetry::context::RuntimeContext::GetCurrent());
+  recordGetNextMountTelemetry();
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
   catalogueTime = getTapeInfoTime + getTapeForWriteTime + checkLogicalAndPhysicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);

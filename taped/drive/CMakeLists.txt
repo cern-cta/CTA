@@ -10,6 +10,8 @@ add_library(ctatapeddrive
   EmptyDriveProbe.cpp
   EncryptionControl.cpp
   MountedTape.cpp
+  StressDrive.cpp
+  VirtualDrive.cpp
 )
 # Cleanup records session state without depending on the session orchestration library.
 target_link_libraries(ctatapeddrive
@@ -22,7 +24,6 @@ target_link_libraries(ctatapeddrive
   ctatapedsessionstate
   ctatelemetrytaped
 )
-
 add_executable(cta-test-tape-drive-read-write
   TapeDriveReadWriteTest.cpp)
 target_link_libraries(cta-test-tape-drive-read-write
@@ -40,8 +41,9 @@ add_library(ctatapeddriveunittests SHARED
   DriveCleanerTest.cpp
   EmptyDriveProbeTest.cpp
   MountedTapeTest.cpp
-)
-set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+  VirtualDriveTest.cpp
+  StressDriveTest.cpp
+)set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctatapeddriveunittests

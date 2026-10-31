@@ -1,0 +1,16 @@
+{
+  "name": "mp_ci",
+  "archive_priority": 250,
+  "min_archive_age": 14400.0,
+  "retrieve_priority": 150,
+  "min_retrieve_age": 14400.0,
+  "metadata": {
+    "creation_user_name": "cta_ci",
+    "creation_host_name": "ci-host",
+    "creation_time": "2024-01-01T09:00:00+00:00",
+    "update_user_name": "cta_ci",
+    "update_host_name": "ci-host",
+    "update_time": "2024-06-01T12:00:00+00:00",
+    "comment": "unit-test seed"
+  }
+}

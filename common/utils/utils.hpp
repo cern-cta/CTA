@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <chrono>
 #include <functional>
+#include <iosfwd>
 #include <list>
 #include <sstream>
 #include <stdint.h>
@@ -437,12 +438,22 @@ std::time_t getCurrentEpochTime();
 std::string getProcessName();
 
 /**
- * Read the content of a file to a string, throwing an error in case it doesn't exist
+ * Read the exact bytes of a file into a string.
  *
  * @param filename The path to the file
  * @return A std::string with the contents of the file
+ * @throws std::runtime_error If the file cannot be opened or read completely.
  */
 std::string readFileAsString(const std::string& filename);
+
+/**
+ * Read the remaining bytes of a stream into a string.
+ *
+ * @param input The stream to read from its current position until EOF.
+ * @return A std::string with the remaining contents of the stream.
+ * @throws std::runtime_error If reading fails.
+ */
+std::string readStreamAsString(std::istream& input);
 
 /**
  * Periodically executes the condition() function every checkIntervalMsec milliseconds.

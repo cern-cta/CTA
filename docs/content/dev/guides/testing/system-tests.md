@@ -28,7 +28,9 @@ For a regular suite, `cta-dev` includes:
 setup -> selected suite -> verification -> teardown
 ```
 
-Setup prepares the catalogue, tapes, and disk-system resources. Verification checks for unexpected errors and core dumps; teardown cleans test resources. Deployment and test preparation aim to establish a known starting state rather than relying only on cleanup from a previous run.
+Setup prepares the catalogue, tapes, and disk-system resources.
+Verification checks for unexpected errors, core dumps, and restarts.
+Teardown cleans test resources.
 
 The configuration in `ci/system_tests/pytest.ini` stops execution at the first failure (`-x`). Verification and teardown are ordinary tests in this sequence, so they may not run after a failure. Inspect the retained state before cleaning it up.
 
@@ -48,6 +50,29 @@ cta-dev test client --teardown-first
 ```
 
 On a normal run, this moves teardown before setup; it does not add a second teardown at the end. Run `cta-dev test teardown` afterwards if you need final cleanup.
+
+## Service lifecycle tests
+
+Run `cta-dev test lifecycle` to check runtime files, log rotation, and graceful shutdown and recovery.
+Restart tests require Kubernetes and interrupt services; run them without concurrent transfer tests.
+The SIGTERM check signals the daemon inside its pod and verifies a clean container restart, rather than pod deletion.
+
+## Expected restarts
+
+Verification rejects unexpected CTA container restarts and pod replacements since the environment fixture started.
+Declare intentional changes with the `restart_expectations` fixture:
+
+```python
+with restart_expectations.expect_container_restarts(daemon, count=1):
+    # Signal the daemon and wait for recovery.
+    ...
+
+with restart_expectations.expect_pod_replacement(daemon):
+    daemon.restart(wait_for_restart=True)
+```
+
+These Kubernetes-only checks require the exact expected change and reject unrelated restarts.
+Teardown uses `reset_after_teardown()` to establish a fresh baseline after deliberate cleanup.
 
 ## Select tests
 

@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -1266,6 +1267,141 @@ per_user = { alice = "5", bob = 10, "svc-account" = 1 }
   } catch (...) {
     FAIL() << "Expected cta::exception::UserError";
   }
+}
+
+class ConfigResolution : public ::testing::Test {
+protected:
+  static constexpr const char* variable = "CTA_CONFIG_LOADER_TEST_VALUE";
+
+  void SetUp() override {
+    if (const char* previous = std::getenv(variable)) {
+      m_previous = previous;
+    }
+    ASSERT_EQ(::unsetenv(variable), 0);
+  }
+
+  void TearDown() override {
+    EXPECT_EQ(m_previous ? ::setenv(variable, m_previous->c_str(), 1) : ::unsetenv(variable), 0);
+  }
+
+private:
+  std::optional<std::string> m_previous;
+};
+
+TEST_F(ConfigResolution, PreservesOriginalAndExpandsByDefault) {
+  ASSERT_EQ(::setenv(variable, "42", 1), 0);
+  const std::string original = "# comment\r\nmandatory = ${CTA_CONFIG_LOADER_TEST_VALUE}\r\n";
+  const auto document = cta::runtime::resolveToml(original, "example.toml");
+  EXPECT_EQ(document.sourcePath, "example.toml");
+  EXPECT_EQ(document.original, original);
+  EXPECT_EQ(document.resolved, "# comment\r\nmandatory = 42\r\n");
+  EXPECT_EQ(cta::runtime::loadFromTomlString<MyConfig>(document.resolved, document.sourcePath).mandatory, 42);
+}
+
+TEST_F(ConfigResolution, DisabledExpansionPreservesEvenInvalidReferences) {
+  const std::string original = "${1INVALID} $$ ${CTA_CONFIG_LOADER_TEST_VALUE}";
+  const auto document = cta::runtime::resolveToml(original, "example.toml", false, true);
+  EXPECT_EQ(document.original, original);
+  EXPECT_EQ(document.resolved, original);
+}
+
+TEST_F(ConfigResolution, MissingPolicyAndErrorsIncludeSource) {
+  EXPECT_EQ(cta::runtime::resolveToml("${CTA_CONFIG_LOADER_TEST_VALUE}", "example.toml").resolved, "");
+  EXPECT_EQ(cta::runtime::resolveToml("${CTA_CONFIG_LOADER_TEST_VALUE:-7}", "example.toml", true, true).resolved, "7");
+  for (const auto* input : {"${CTA_CONFIG_LOADER_TEST_VALUE}", "${1INVALID}"}) {
+    try {
+      cta::runtime::resolveToml(input, "example.toml", true, true);
+      FAIL() << "Expected substitution error";
+    } catch (const cta::exception::UserError& error) {
+      EXPECT_NE(error.getMessageValue().find("example.toml"), std::string::npos);
+    }
+  }
+}
+
+TEST_F(ConfigResolution, ResolvesWholeDocumentWithoutParsingIt) {
+  ASSERT_EQ(::setenv(variable, "name", 1), 0);
+  const auto document =
+    cta::runtime::resolveToml("# ${CTA_CONFIG_LOADER_TEST_VALUE}\n${CTA_CONFIG_LOADER_TEST_VALUE} = not valid TOML",
+                              "example.toml");
+  EXPECT_EQ(document.resolved, "# name\nname = not valid TOML");
+}
+
+TEST_F(ConfigResolution, FileReadPreservesBytesAndOwnsSnapshot) {
+  ASSERT_EQ(::setenv(variable, "42", 1), 0);
+  const std::string original = "# " + std::string(20000, 'x') + "\r\nmandatory = ${CTA_CONFIG_LOADER_TEST_VALUE}\r\n";
+  TempFile file(original, ".toml");
+  const auto document = cta::runtime::readTomlFile(file.path());
+  file.stringFill("mandatory = 99");
+  ASSERT_EQ(::setenv(variable, "99", 1), 0);
+  EXPECT_EQ(document.sourcePath, file.path());
+  EXPECT_EQ(document.original, original);
+  EXPECT_EQ(cta::runtime::loadFromTomlString<MyConfig>(document.resolved, document.sourcePath).mandatory, 42);
+}
+
+TEST_F(ConfigResolution, EmptyFilesAndFileReadErrors) {
+  TempFile file("", ".toml");
+  const auto document = cta::runtime::readTomlFile(file.path());
+  EXPECT_TRUE(document.original.empty());
+  EXPECT_TRUE(document.resolved.empty());
+  const auto missing = file.path() + ".missing";
+  EXPECT_THROW(cta::runtime::readTomlFile(missing), cta::exception::UserError);
+  EXPECT_THROW(cta::runtime::readTomlFile("/tmp"), cta::exception::UserError);
+}
+
+TEST_F(ConfigResolution, FileLoaderCanDisableExpansion) {
+  ASSERT_EQ(::setenv(variable, "expanded", 1), 0);
+  TempFile file("mandatory = 7\ndefault_value = '${CTA_CONFIG_LOADER_TEST_VALUE} $$ ${1INVALID}'", ".toml");
+  EXPECT_EQ(cta::runtime::loadFromToml<MyConfig>(file.path(), false, false, true).default_value,
+            "${CTA_CONFIG_LOADER_TEST_VALUE} $$ ${1INVALID}");
+}
+
+TEST_F(ConfigResolution, FileLoaderExpandsByDefault) {
+  ASSERT_EQ(::setenv(variable, "42", 1), 0);
+  TempFile file("mandatory = ${CTA_CONFIG_LOADER_TEST_VALUE}", ".toml");
+  EXPECT_EQ(cta::runtime::loadFromToml<MyConfig>(file.path()).mandatory, 42);
+}
+
+TEST_F(ConfigResolution, FileLoaderForwardsMissingVariablePolicy) {
+  TempFile file("mandatory = 7\ndefault_value = '${CTA_CONFIG_LOADER_TEST_VALUE}'", ".toml");
+  EXPECT_EQ(cta::runtime::loadFromToml<MyConfig>(file.path()).default_value, "");
+  EXPECT_THROW(cta::runtime::loadFromToml<MyConfig>(file.path(), false, true, true), cta::exception::UserError);
+  file.stringFill("mandatory = ${CTA_CONFIG_LOADER_TEST_VALUE:-7}");
+  EXPECT_EQ(cta::runtime::loadFromToml<MyConfig>(file.path(), false, true, true).mandatory, 7);
+}
+
+TEST_F(ConfigResolution, TextLoaderDoesNotExpandResolvedTextAgain) {
+  ASSERT_EQ(::setenv(variable, "${1INVALID} $$", 1), 0);
+  const auto document =
+    cta::runtime::resolveToml("mandatory = 7\ndefault_value = '${CTA_CONFIG_LOADER_TEST_VALUE}'", "example.toml");
+  EXPECT_EQ(cta::runtime::loadFromTomlString<MyConfig>(document.resolved, document.sourcePath).default_value,
+            "${1INVALID} $$");
+}
+
+TEST(ConfigLoader, TextLoaderPreservesStrictnessAndValidation) {
+  EXPECT_EQ(cta::runtime::loadFromTomlString<MyConfig>("mandatory = 7", "memory.toml").mandatory, 7);
+  EXPECT_THROW(cta::runtime::loadFromTomlString<MyConfig>("mandatory = 7", "memory.toml", true),
+               cta::exception::UserError);
+  EXPECT_THROW(cta::runtime::loadFromTomlString<ValidatedConfig>("value = 0", "memory.toml"),
+               cta::exception::UserError);
+}
+
+TEST(ConfigLoader, TextLoaderErrorsIncludeSource) {
+  for (const auto* input : {"mandatory = ", "mandatory = 'wrong type'"}) {
+    try {
+      cta::runtime::loadFromTomlString<MyConfig>(input, "memory.toml");
+      FAIL() << "Expected configuration error";
+    } catch (const cta::exception::UserError& error) {
+      EXPECT_NE(error.getMessageValue().find("memory.toml"), std::string::npos);
+    }
+  }
+}
+
+TEST(ConfigLoader, TextLoaderHonorsStringViewBounds) {
+  const std::string input = "xmandatory = 7y";
+  EXPECT_EQ(
+    cta::runtime::loadFromTomlString<MyConfig>(std::string_view(input).substr(1, input.size() - 2), "memory.toml")
+      .mandatory,
+    7);
 }
 
 }  // namespace unitTests

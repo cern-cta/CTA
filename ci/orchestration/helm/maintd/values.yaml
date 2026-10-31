@@ -18,11 +18,13 @@ routines:
     sleepIntervalSecs: 1
     batchSize: 500
     softTimeoutSecs: 30
+    iterSleepMs: 0
   diskReportRetrieve:
     replicas: 2
     sleepIntervalSecs: 1
     batchSize: 500
     softTimeoutSecs: 30
+    iterSleepMs: 0
   repackExpand:
     replicas: 1
     sleepIntervalSecs: 1
@@ -43,7 +45,7 @@ scheduler:
 # OpenTelemetry is entirely configured through declarative configuration
 # Simply put the config verbatim here under telemetryConfig:
 telemetryConfig: |
-  file_format: "1.0-rc.1"
+  file_format: "1.1"
   disabled: true
 
 # SSS keytab to communicate to the disk buffer
@@ -51,21 +53,9 @@ keytab:
   secretName: eos-keytab
   subPath: eos.keytab
 
-preRun:
-  enabled: false
-  script: |
-    #!/usr/bin/bash
-
-postRun:
-  enabled: true
-  script: |
-    #!/usr/bin/bash
-    echo "Process crashed. Sleeping..."
-    sleep infinity
-
 pod:
   extraSpec:
-    terminationGracePeriodSeconds: 1
+    terminationGracePeriodSeconds: 60
 
 extraEnv:
 

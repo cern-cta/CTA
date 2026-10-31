@@ -70,8 +70,8 @@ conf:
     retainInstanceIdOnRestart: false
     metrics:
       backend: "NOOP"
-      exportInterval: 1000
-      exportTimeout: 500
+      exportInterval: 15000
+      exportTimeout: 12000
       otlp:
         endpoint: ""
         auth:
@@ -80,20 +80,6 @@ conf:
             passwordSecret: ""
       file:
         endpoint: ""
-
-# Script to execute in the main container before starting the frontend service
-preRun:
-  enabled: false
-  script: |
-    #!/usr/bin/bash
-
-# Script to execute in the main container after frontend exited
-postRun:
-  enabled: true
-  script: |
-    #!/usr/bin/bash
-    echo "Process crashed. Sleeping..."
-    sleep infinity
 
 pod:
   extraSpec:

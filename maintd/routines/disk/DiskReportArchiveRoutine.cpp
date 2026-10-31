@@ -10,19 +10,25 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/Scheduler.hpp"
 
+#include <chrono>
+#include <thread>
+
 namespace cta::maintd {
 
 DiskReportArchiveRoutine::DiskReportArchiveRoutine(cta::log::LogContext& lc,
                                                    cta::Scheduler& scheduler,
                                                    int batchSize,
-                                                   int softTimeout)
+                                                   int softTimeout,
+                                                   int iterSleepMs)
     : m_lc(lc),
       m_scheduler(scheduler),
       m_batchSize(batchSize),
-      m_softTimeout(softTimeout) {
+      m_softTimeout(softTimeout),
+      m_iterSleepMs(iterSleepMs) {
   log::ScopedParamContainer params(m_lc);
   params.add("softTimeout", softTimeout);
   params.add("batchSize", batchSize);
+  params.add("iterSleepMs", iterSleepMs);
   m_lc.log(cta::log::INFO, "In DiskReportArchiveRoutine: Created DiskReportArchiveRoutine");
 }
 
@@ -51,6 +57,9 @@ void DiskReportArchiveRoutine::execute() {
     timings.insertAndReset("reportArchiveJobsTime", t2);
     timings.addToLog(params);
     m_lc.log(cta::log::DEBUG, "In DiskReportArchiveRoutine::execute(): did one round of archive reports.");
+    if (m_iterSleepMs > 0) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(m_iterSleepMs));
+    }
   }
 
   if (numberOfBatchReported > 0) {

@@ -1,0 +1,3 @@
+src/cta/sdk/client/grpc/protobuf_generated/*_pb2.py
+src/cta/sdk/client/grpc/protobuf_generated/*_pb2.pyi
+src/cta/sdk/client/grpc/protobuf_generated/*_pb2_grpc.py

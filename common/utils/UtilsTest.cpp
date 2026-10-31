@@ -6,9 +6,12 @@
 #include "common/utils/utils.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "tests/TempFile.hpp"
 
 #include <gtest/gtest.h>
 #include <set>
+#include <stdexcept>
+#include <streambuf>
 
 namespace unitTests {
 
@@ -18,6 +21,62 @@ protected:
 
   virtual void TearDown() {}
 };
+
+TEST_F(cta_UtilsTest, readFileAsString_preservesEmbeddedNulls) {
+  std::string contents(17000, 'x');
+  for (const auto offset : {0, 8191, 8192, 16383, 16999}) {
+    contents[offset] = '\0';
+  }
+  TempFile file(contents, ".bin");
+
+  EXPECT_EQ(cta::utils::readFileAsString(file.path()), contents);
+}
+
+TEST_F(cta_UtilsTest, readFileAsString_handlesBufferBoundaries) {
+  for (const auto size : {0, 1, 8191, 8192, 8193, 16383, 16384, 16385}) {
+    SCOPED_TRACE(size);
+    std::string contents(size, 'x');
+    for (std::size_t i = 0; i < contents.size(); ++i) {
+      contents[i] = static_cast<char>('a' + i % 26);
+    }
+    TempFile file(contents, ".bin");
+
+    EXPECT_EQ(cta::utils::readFileAsString(file.path()), contents);
+  }
+}
+
+TEST_F(cta_UtilsTest, readFileAsString_rejectsMissingFiles) {
+  TempFile file;
+  EXPECT_THROW(cta::utils::readFileAsString(file.path() + "/missing"), std::runtime_error);
+}
+
+TEST_F(cta_UtilsTest, readFileAsString_rejectsReadErrors) {
+  EXPECT_THROW(cta::utils::readFileAsString("/tmp"), std::runtime_error);
+}
+
+TEST_F(cta_UtilsTest, readStreamAsString_rejectsErrorsAfterPartialProgress) {
+  class FailingBuffer : public std::streambuf {
+  public:
+    FailingBuffer() { setg(m_contents.data(), m_contents.data(), m_contents.data() + m_contents.size()); }
+
+    std::size_t bytesRead() const { return static_cast<std::size_t>(gptr() - eback()); }
+
+  protected:
+    int_type underflow() override { throw std::runtime_error("Injected read failure"); }
+
+  private:
+    // Deliver complete chunks and part of the next chunk before failing.
+    std::string m_contents = std::string(20000, 'x');
+  } buffer;
+
+  std::istream input(&buffer);
+  std::string result = "unchanged";
+
+  EXPECT_THROW(result = cta::utils::readStreamAsString(input), std::runtime_error);
+  EXPECT_EQ(buffer.bytesRead(), 20000u);
+  EXPECT_TRUE(input.bad());
+  EXPECT_EQ(result, "unchanged");
+}
 
 TEST_F(cta_UtilsTest, readSingleLineConfig_ignoresBlankAndCommentLines) {
   std::stringstream input;

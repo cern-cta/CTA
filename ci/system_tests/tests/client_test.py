@@ -13,7 +13,6 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Union, cast
-from _pytest.fixtures import SubRequest
 
 import fastjsonschema
 import pytest
@@ -1546,7 +1545,6 @@ class TestRuntimeDeployment:
 
         # A restart must not masquerade as successful in-process log rotation.
         assert daemon.exec_with_output(pid_command).strip() == pid
-
     def test_log_schema_correctness(self, env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
         # Collect the schema and logs from every CTA service that participates in this deployment
         hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
