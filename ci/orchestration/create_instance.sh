@@ -560,6 +560,9 @@ create_instance() {
   else
     extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
   fi
+  if [[ "${no_hardware_drives}" == "true" ]] && [[ "$local_telemetry" == "true" ]]; then
+    extra_cta_chart_flags+=" --values presets/stress-cta-maintd-values.yaml"
+  fi
   if [[ "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "
   fi
