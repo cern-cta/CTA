@@ -229,18 +229,50 @@ async def test_generate_and_copy_files(
     stop_monitoring = asyncio.Event()
 
     async def monitor_copy_and_put_drives_up() -> None:
-        """Monitor file count and put drives up when threshold reached (for prequeue mode)."""
+        """Monitor file count and put drives up when threshold reached (for prequeue mode).
+
+        count_files_in_namespace uses K8s WebSocket exec calls.  Under 100-drive load
+        the K8s API stalls connections (TCP ETIMEDOUT, ~60–120 s) causing the call to
+        raise.  Without a try/except the exception is stored in the asyncio Task and
+        re-raised when the task is awaited in the finally block after archive completes,
+        collapsing the test even though archival itself finished successfully.
+        """
         nonlocal drives_up
+        _consecutive_failures = 0
         while not stop_monitoring.is_set():
-            num_files_so_far = eos_client.count_files_in_namespace(
-                eos_host=mgm_ip,
-                dest_dir=test_dir,
-                num_dirs=stress_params.num_dirs,
-                count_procs=5,
-            )
-            # num_files_so_far = int(
-            #     mgm.exec_with_output(f"eos find -f {test_dir} | wc -l")
-            # )
+            try:
+                num_files_so_far = eos_client.count_files_in_namespace(
+                    eos_host=mgm_ip,
+                    dest_dir=test_dir,
+                    num_dirs=stress_params.num_dirs,
+                    count_procs=5,
+                )
+                _consecutive_failures = 0
+            except Exception as e:
+                # Counting files is best-effort: a failure is not fatal — the timeout
+                # safety net puts drives up, and after drives are up the monitor is
+                # only tracking progress.
+
+                _consecutive_failures += 1
+                print(
+                    f"\t[copy monitor] K8s API error counting files "
+                    f"({type(e).__name__}; failure {_consecutive_failures}/5)",
+                    flush=True,
+                )
+                if not drives_up and time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
+                    print("\tTimeout reached — putting drives UP", flush=True)
+                    cta_cli.set_all_drives_up(wait=False)
+                    drives_up = True
+                if _consecutive_failures >= 5 and drives_up:
+                    print(
+                        "\t[copy monitor] Stopping file monitor: drives already up, K8s API unresponsive",
+                        flush=True,
+                    )
+                    break
+                with contextlib.suppress(asyncio.TimeoutError):
+                    await asyncio.wait_for(stop_monitoring.wait(), stress_params.check_copy_interval_sec)
+                continue
+
             print(f"\t[copy monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
 
             if not drives_up:

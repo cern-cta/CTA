@@ -169,70 +169,6 @@ spec:
       type: number
       default: 2
 
-    num-stress-libraries:
-      description: |-
-        Number of independent logical libraries for the stress-test job.
-        Drives are split evenly across libraries; each library gets its own PVC.
-        Has no effect when use-stress-drives is false.
-      type: number
-      default: 1
-
-    num-stress-files:
-      description: |-
-        Total number of files to archive in the stress-test job.
-        Can also be overridden per job run via the STRESS_TOTAL_FILES CI variable.
-      type: number
-      default: 2000000
-
-    num-scale-drives:
-      description: |-
-        Number of virtual drives for the stress-scale-test job (always uses StressDrives).
-        Can also be overridden per job run via the NUM_STRESS_DRIVES CI variable.
-      type: number
-      default: 100
-
-    num-scale-libraries:
-      description: |-
-        Number of independent logical libraries for the stress-scale-test job.
-        Can also be overridden per job run via the NUM_STRESS_LIBRARIES CI variable.
-      type: number
-      default: 4
-
-    num-scale-files:
-      description: |-
-        Total number of files to archive in the stress-scale-test job.
-        Can also be overridden per job run via the STRESS_TOTAL_FILES CI variable.
-        If you substantially increase this value, verify the tape count
-        (library.mediaTypes[0].count in fake-tape-library/values.yaml) is sufficient
-        to hold all files (60 000 files/tape with the default capacity).
-      type: number
-      default: 10000000
-
-    stress-prequeue-enabled:
-      description: |-
-        Whether to hold drives down until enough files are queued before starting transfers.
-        Overrides the prequeue.enabled key in the test config TOML.
-        Can also be overridden per job run via the STRESS_PREQUEUE_ENABLED CI variable (true/false).
-      type: boolean
-      default: true
-
-    stress-prequeue-fraction:
-      description: |-
-        Fraction of total files that must be archive-queued before drives come up (e.g. 0.9).
-        Overrides the prequeue.prequeue_fraction key in the test config TOML.
-        Can also be overridden per job run via the STRESS_PREQUEUE_FRACTION CI variable.
-      type: number
-      default: 0.9
-
-    stress-retrieve-prequeue-fraction:
-      description: |-
-        Fraction of total files that must be retrieve-queued before drives come up (e.g. 0.1).
-        Keep low to bound the EOS WFE leaf directory and avoid scanner throughput collapse.
-        Overrides the prequeue.retrieve_prequeue_fraction key in the test config TOML.
-        Can also be overridden per job run via the STRESS_RETRIEVE_PREQUEUE_FRACTION CI variable.
-      type: number
-      default: 0.1
-
     use-pgbouncer:
       description: |-
         Route catalogue and scheduler DB connections through PgBouncer.
@@ -442,10 +378,6 @@ include:
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
       use-stress-drives: $[[ inputs.use-stress-drives ]]
       num-stress-drives: $[[ inputs.num-stress-drives ]]
-      num-stress-libraries: $[[ inputs.num-stress-libraries ]]
-      num-scale-drives: $[[ inputs.num-scale-drives ]]
-      num-scale-libraries: $[[ inputs.num-scale-libraries ]]
-      num-scale-files: $[[ inputs.num-scale-files ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
@@ -501,14 +433,6 @@ include:
       enable-opportunistic-batching: $[[ inputs.enable-opportunistic-batching ]]
       use-stress-drives: $[[ inputs.use-stress-drives ]]
       num-stress-drives: $[[ inputs.num-stress-drives ]]
-      num-stress-libraries: $[[ inputs.num-stress-libraries ]]
-      num-stress-files: $[[ inputs.num-stress-files ]]
-      num-scale-drives: $[[ inputs.num-scale-drives ]]
-      num-scale-libraries: $[[ inputs.num-scale-libraries ]]
-      num-scale-files: $[[ inputs.num-scale-files ]]
-      stress-prequeue-enabled: $[[ inputs.stress-prequeue-enabled ]]
-      stress-prequeue-fraction: $[[ inputs.stress-prequeue-fraction ]]
-      stress-retrieve-prequeue-fraction: $[[ inputs.stress-retrieve-prequeue-fraction ]]
       use-pgbouncer: $[[ inputs.use-pgbouncer ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:

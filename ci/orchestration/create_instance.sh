@@ -555,8 +555,20 @@ create_instance() {
   else
     extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
   fi
+  # stress-cta-maintd-values.yaml raises the maintd OTel reader timeout 100 ms → 1500 ms.
+  # Only for --local-telemetry: the file has a hardcoded local-collector endpoint
+  # (http://otel-opentelemetry-collector:4318) — applying it with --publish-telemetry
+  # would override the MONIT endpoint set by ci-cta-telemetry-values.yaml, redirecting
+  # maintd metrics to a collector that does not exist in the scale-test namespace.
   if [[ "${no_hardware_drives}" == "true" ]] && [[ "$local_telemetry" == "true" ]]; then
     extra_cta_chart_flags+=" --values presets/stress-cta-maintd-values.yaml"
+  fi
+  # stress-cta-taped-values.yaml slows each taped pod's export interval 1 s → 15 s
+  # (matching the Prometheus scrape cycle).  100 pods × 1 s/pod = 100 req/s saturates
+  # the MONIT endpoint (or the local collector) and causes metric drops; 15 s → ~7 req/s.
+  # This file only sets interval/timeout — no endpoint — so it is safe for both modes.
+  if [[ "${no_hardware_drives}" == "true" ]] && { [[ "$local_telemetry" == "true" ]] || [[ "$publish_telemetry" == "true" ]]; }; then
+    extra_cta_chart_flags+=" --values presets/stress-cta-taped-values.yaml"
   fi
   if [[ "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "

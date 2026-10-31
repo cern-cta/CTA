@@ -21,30 +21,6 @@ spec:
     num-stress-drives:
       type: number
       default: 2
-    num-stress-libraries:
-      type: number
-      default: 1
-    num-stress-files:
-      type: number
-      default: 2000000
-    num-scale-drives:
-      type: number
-      default: 100
-    num-scale-libraries:
-      type: number
-      default: 4
-    num-scale-files:
-      type: number
-      default: 10000000
-    stress-prequeue-enabled:
-      type: boolean
-      default: true
-    stress-prequeue-fraction:
-      type: number
-      default: 0.9
-    stress-retrieve-prequeue-fraction:
-      type: number
-      default: 0.1
     use-pgbouncer:
       type: boolean
       default: false
@@ -93,7 +69,7 @@ spec:
     # setup_stress_drives_test.py is auto-collected by conftest.py (tests/setup/ scan) and auto-skips
     # when no stress-mode taped pods are found, so this is a no-op when use-stress-drives=false.
     if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
-      EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --no-hardware-drives --max-drives $[[ inputs.num-stress-drives ]] --num-stress-libraries $[[ inputs.num-stress-libraries ]]"
+      EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --no-hardware-drives --max-drives $[[ inputs.num-stress-drives ]] --num-stress-libraries ${NUM_STRESS_LIBRARIES:-1}"
     fi
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
@@ -382,12 +358,14 @@ stress-test:
       else
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-      # CI variables (STRESS_TOTAL_FILES, STRESS_PREQUEUE_ENABLED, STRESS_PREQUEUE_FRACTION)
-      # override the pipeline inputs when re-running the job manually with custom values.
-      EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES:-$[[ inputs.num-stress-files ]]}"
-      EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED:-$[[ inputs.stress-prequeue-enabled ]]}"
-      EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION:-$[[ inputs.stress-prequeue-fraction ]]}"
-      EXTRA_PYTEST_ARGS+=" --stress-retrieve-prequeue-fraction ${STRESS_RETRIEVE_PREQUEUE_FRACTION:-$[[ inputs.stress-retrieve-prequeue-fraction ]]}"
+      # File count and prequeue settings come from the test config TOML.
+      # For pgsched, test_pgsched_params.toml has total_files=10M (scale test default);
+      # hardcode 2M for the non-scale stress test.  objectstore uses test_params.toml (2M).
+      # CI variables allow per-run overrides via "Play with variables".
+      EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES:-2000000}"
+      [[ -n "${STRESS_PREQUEUE_ENABLED}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED}"
+      [[ -n "${STRESS_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION}"
+      [[ -n "${STRESS_RETRIEVE_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-retrieve-prequeue-fraction ${STRESS_RETRIEVE_PREQUEUE_FRACTION}"
     - |
       # Virtual stress-drive mode: no mhvtl or SCSI hardware needed.
       # --no-hardware-drives deploys the fake-tape-library PVC chart and generates
@@ -398,7 +376,7 @@ stress-test:
       if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
         # stress-scale-values.yaml works for all scheduler backends.
         STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-scale-values.yaml"
-        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-stress-drives ]]} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-$[[ inputs.num-stress-libraries ]]}"
+        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-stress-drives ]]} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-1}"
       fi
     # Set up stress test
     - cd ci/orchestration/
@@ -503,15 +481,15 @@ stress-scale-test:
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-pgbouncer-values.yaml
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-pgbouncer-values.yaml
       fi
-      # Scale test always uses StressDrives; drive/library/file counts come from
-      # pipeline inputs (defaults: 100 drives, 4 libraries, 10 M files).
-      # NUM_STRESS_DRIVES, NUM_STRESS_LIBRARIES, STRESS_TOTAL_FILES CI variables
-      # override the inputs when replaying via the GitLab "Play with variables" dialog.
-      EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-scale-drives ]]} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-$[[ inputs.num-scale-libraries ]]}"
-      EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES:-$[[ inputs.num-scale-files ]]}"
-      EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED:-$[[ inputs.stress-prequeue-enabled ]]}"
-      EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION:-$[[ inputs.stress-prequeue-fraction ]]}"
-      EXTRA_PYTEST_ARGS+=" --stress-retrieve-prequeue-fraction ${STRESS_RETRIEVE_PREQUEUE_FRACTION:-$[[ inputs.stress-retrieve-prequeue-fraction ]]}"
+      # Scale test always uses StressDrives: 100 drives, 4 libraries.
+      # Override per-run via NUM_STRESS_DRIVES / NUM_STRESS_LIBRARIES CI variables.
+      EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-100} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-4}"
+      # File count and prequeue settings come from test_pgsched_params.toml.
+      # CI variables allow per-run overrides via "Play with variables".
+      [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"
+      [[ -n "${STRESS_PREQUEUE_ENABLED}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED}"
+      [[ -n "${STRESS_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION}"
+      [[ -n "${STRESS_RETRIEVE_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-retrieve-prequeue-fraction ${STRESS_RETRIEVE_PREQUEUE_FRACTION}"
     - cd ci/orchestration/
     - ./create_instance.sh --namespace ${NAMESPACE}
                            --reset-catalogue

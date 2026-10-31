@@ -21,7 +21,7 @@
 
     # Total number of files to archive.  num_dirs is derived automatically as
     # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
-    # files/dir limit.  Override at CI trigger time via the num-stress-files input.
+    # files/dir limit.  Override per-run via the STRESS_TOTAL_FILES CI variable.
     # File size is kept at 16 bytes; the effective tape footprint is 496 bytes/file
     # (6 ANSI label blocks × 80 bytes + 16-byte data payload), giving ~4.7 GB total on
     # tape for the full 10 M run — trivially small on the fast-ssd PVC.

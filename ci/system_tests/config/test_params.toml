@@ -32,7 +32,7 @@
 
     # Total number of files to archive. num_dirs is derived automatically as
     # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
-    # files/dir limit.  Override at CI trigger time via the num-stress-files input.
+    # files/dir limit.  Override per-run via the STRESS_TOTAL_FILES CI variable.
     # mhvtl is mounted in-memory, so we keep the file size small and easily compressible.
     total_files       = 2000000
     num_files_per_dir = 50000
@@ -63,6 +63,11 @@
 
       # Fraction of total_files that must be queued before drives come up.
       prequeue_fraction = 0.9
+
+      # Fraction of total_files that must be retrieve-queued before drives come
+      # up for the retrieve phase.  Drives are kept down here too when enabled=true.
+      # With enabled=false this value is read by stress_test.py but has no effect.
+      retrieve_prequeue_fraction = 0.1
 
       # Expected EOS archive-queue throughput used to derive the drive-up
       # timeout: timeout = (prequeue_fraction × total_files / eos_queue_rate_hz)

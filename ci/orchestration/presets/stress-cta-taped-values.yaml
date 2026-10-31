@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Taped telemetry overlay for stress/scale tests with 100 virtual StressDrives.
+# Applied on top of dev-cta-telemetry-values.yaml or ci-cta-telemetry-values.yaml
+# when --no-hardware-drives AND telemetry (--local-telemetry or --publish-telemetry)
+# are both active.
+#
+# Why exportInterval must be increased for scale tests
+# ----------------------------------------------------
+# With 100 taped pods each exporting every 1 s, the OTel collector (local) or the
+# CERN MONIT endpoint (published) receives ~100 OTLP HTTP POSTs per second.
+# Under this load, responses frequently exceed the 500 ms exportTimeout, causing
+# the OTel SDK to time out the export.  The metric is then dropped for that
+# interval.  If exports fail for a full Prometheus scrape cycle (15 s), Grafana
+# shows a gap.
+#
+# Setting exportInterval = 15 s (matching the Prometheus scrape cycle) reduces
+# the collector load to ~7 req/s and ensures each scrape window contains exactly
+# one fresh export per pod.  No data is lost: OTel cumulative counters carry the
+# full lifetime value, so a skipped 1-s sub-window is never missed.
+#
+# OTel SDK constraint: exportTimeout MUST be < exportInterval.  With interval 15 s
+# we set timeout 14 s, giving the remote endpoint up to 14 s to respond before the
+# SDK gives up — far more lenient than the 500 ms default.
+#
+# Relationship with ci-cta-telemetry-values.yaml
+# -----------------------------------------------
+# That file explicitly sets exportInterval: 1000 and exportTimeout: 500 with the
+# comment "exportTimeout must accompany exportInterval — omitting it leaves the
+# stress preset's 14 s timeout in place".  This file IS that stress preset; it is
+# applied AFTER ci-cta-telemetry-values.yaml in extra_cta_chart_flags so its
+# values win.
+
+taped:
+  conf:
+    telemetry:
+      metrics:
+        exportInterval: 15000
+        exportTimeout: 14000
