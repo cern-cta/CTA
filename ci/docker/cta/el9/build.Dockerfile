@@ -10,6 +10,7 @@ ARG SCCACHE_VERSION="=0.18.0"
 
 # GCC Toolset ships the TSan linker library separately from the compiler.
 RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock && \
+    dnf config-manager --disable "epel-cisco-openh264*" && \
     dnf install -y gcc-toolset-14-gcc-c++ gcc-toolset-14-libtsan-devel cmake3 rpm-build dnf-utils make ninja-build \
         systemd-devel clang-tools-extra corrosion && \
     dnf clean all --enablerepo=\*
