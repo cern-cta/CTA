@@ -114,11 +114,6 @@ EOF
     extra_flags+=("--set" "pvc.storageClass=-")
   fi
   extra_flags+=("--set" "libraryCount=${num_libs}")
-  # Use the same cta-tools image as the scheduler/catalogue reset jobs — it is
-  # pulled onto the node early in the deployment and carries all shell utilities
-  # needed by the prepopulate script (sh, awk, mkdir, touch).
-  extra_flags+=("--set" "image.repository=${cta_image_registry}/cta/ctageneric/cta-tools")
-  extra_flags+=("--set" "image.tag=${cta_image_tag}")
   helm upgrade --install virtual-tape-library helm/virtual-tape-library \
     --namespace "${namespace}" \
     --wait --wait-for-jobs --timeout 10m \
