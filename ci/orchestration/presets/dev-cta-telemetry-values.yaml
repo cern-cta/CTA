@@ -28,7 +28,7 @@ taped:
         otlp:
           endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
-maintd:
+maintd: &runtimeTelemetry
   # Once all the services support declarative config
   # this will be moved to a global config for all services
   # The structure below follows the OpenTelemetry Declarative config format
@@ -55,3 +55,5 @@ maintd:
                 encoding: protobuf
                 temporality_preference: cumulative
                 default_histogram_aggregation: explicit_bucket_histogram
+
+rmcd: *runtimeTelemetry

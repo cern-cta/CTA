@@ -1,6 +1,6 @@
 ---
 date: 2026-02-18
-section: 1cta
+section: 1
 title: CTA-MAINTD
 header: The CERN Tape Archive (CTA)
 ---

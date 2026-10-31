@@ -14,6 +14,10 @@ TODO: Document device discovery, permissions, the RMC endpoint, and the tape dae
 
 Use [Service Runtime](service-runtime.md) for shared runtime settings and [Health Checks and Alerts](../../run-and-maintain/monitoring/health-and-alerts.md) for probing.
 
+## Telemetry
+
+For supported rmcd metrics and instructions to enable publishing, see [Monitoring metrics](../../run-and-maintain/monitoring/metrics.md#declarative-configuration).
+Telemetry is experimental and disabled by default.
 
 ## Example configuration
 

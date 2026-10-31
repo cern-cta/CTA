@@ -17,6 +17,18 @@
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest AS cern-ca
 
 # =========================================================================
+# GRPC HEALTH PROBE
+# =========================================================================
+# hadolint ignore=DL3007
+FROM docker.io/almalinux/9-minimal:latest AS grpc-health-probe
+
+# Download once for frontend readiness checks and tools-image diagnostics.
+RUN curl -fL --proto "=https" --proto-redir "=https" \
+    https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.59/grpc_health_probe-linux-amd64 \
+    -o /grpc-health-probe && \
+    chmod 0755 /grpc-health-probe
+
+# =========================================================================
 # 1. REPO BUILDER
 # Used to feed the RPMs to the other stages
 # =========================================================================
@@ -71,7 +83,8 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     printf '%s\n' '[main]' 'keepcache=True' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
     # Add the CERN root CAs to the system trust store before accessing package repositories
     update-ca-trust && \
-    # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience, procps-ng for some other utilities used in tests)
+    # Basic utilities: tar for kubectl cp, jq for tests and convenience,
+    # and procps-ng for process utilities used in tests.
     # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
     # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
     microdnf install -y tar jq sudo procps-ng && \
@@ -109,7 +122,7 @@ RUN setcap \
     cap_sys_rawio=+ep /usr/bin/cta-tape-label
 
 USER cta
-CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--stdout"]
+CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict"]
 
 # =========================================================================
 #  SERVICE cta-rmcd
@@ -150,6 +163,8 @@ CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.
 # Once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
 FROM base AS cta-frontend
 
+COPY --from=grpc-health-probe /grpc-health-probe /usr/local/bin/grpc-health-probe
+
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
@@ -167,20 +182,24 @@ CMD ["/usr/bin/cta-frontend-grpc"]
 # =========================================================================
 FROM base AS cta-tools
 
+COPY --from=grpc-health-probe /grpc-health-probe /usr/local/bin/grpc-health-probe
+
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
-# One reason why this image is huge:
-# - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod.
-#   Once this assumption is removed from the system tests, we can migrate the client pod to use the
-#   official EOS image and we don't need it here anymore
-# Keep EPEL configured after cleanup so client tests can install their GFAL dependencies.
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    /usr/local/bin/build-service.sh "cta-admin cta-catalogue-utils cta-scheduler-utils \
-      krb5-workstation cta-test-immutable-file eos-client xrootd-client \
-      python3-xrootd epel-release bc"
+    /usr/local/bin/build-service.sh "cta-admin cta-catalogue-utils cta-scheduler-utils cta-tools-rs \
+      krb5-workstation bc"
+
+RUN cat <<'EOF' >> /etc/bashrc
+
+# load auto-completion for cta-* commands
+if [ -f /usr/share/bash-completion/completions/cta-* ]; then
+    source /usr/share/bash-completion/completions/cta-*
+fi
+EOF
 
 ENTRYPOINT ["/bin/bash"]
 

@@ -8,6 +8,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>

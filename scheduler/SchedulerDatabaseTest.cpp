@@ -761,7 +761,6 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
 
       rr.archiveFileID = id + 1;
       rr.creationLog = {"user", "host", creationTime};
-      rr.lifecycleTimings.creation_time = creationTime;
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -795,19 +794,11 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
     auto rjb = rm->getNextJobBatch(10, 20 * 1000, lc);
     //Files with successful fetch should be popped
     ASSERT_EQ(10, rjb.size());
-    //jobs retain their creation time after being popped - lifecycleTimings are not used for postgres scheduler at all
-    for (auto& rj : rjb) {
-      ASSERT_EQ(creationTime, rj->retrieveRequest.lifecycleTimings.creation_time);
-    }
-    //requeing and repopping the jobs does not change the creation time
+    //requeing and repopping the jobs does not change the size
     rm->requeueJobBatch(rjb, lc);
     rjb = rm->getNextJobBatch(10, 20 * 1000, lc);
     //Files with successful fetch should be popped
     ASSERT_EQ(10, rjb.size());
-    //jobs retain their creation time after being popped
-    for (auto& rj : rjb) {
-      ASSERT_EQ(creationTime, rj->retrieveRequest.lifecycleTimings.creation_time);
-    }
   }
 }
 

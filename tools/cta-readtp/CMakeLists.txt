@@ -12,6 +12,7 @@ add_executable(cta-readtp
 
 target_link_libraries(cta-readtp
   ctacommon
+  ctatapedutils
   ctatapeddrive
   ctamediachanger
   ctacatalogue

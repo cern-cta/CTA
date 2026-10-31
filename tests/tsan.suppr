@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Oracle 23.1 client lock-order cycles observed during schema enumeration.
+deadlock:kpugattr0
+
+# This test intentionally unlocks an unlocked error-checking mutex to verify the exception.
+mutex:unitTests::cta_threading_Mutex_properly_throws_exceptions_Test::TestBody

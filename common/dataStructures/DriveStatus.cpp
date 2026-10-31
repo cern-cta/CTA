@@ -5,6 +5,7 @@
 
 #include "common/dataStructures/DriveStatus.hpp"
 
+#include <cstdint>
 #include <sstream>
 
 std::string cta::common::dataStructures::toString(cta::common::dataStructures::DriveStatus type) {

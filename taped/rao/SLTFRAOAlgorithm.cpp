@@ -16,6 +16,10 @@ namespace cta::tape::rao {
 
 std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   std::vector<uint64_t> ret;
+  // The recall injector can request ordering after draining the batch.
+  if (jobs.empty()) {
+    return ret;
+  }
   //Determine all the files position
   cta::utils::Timer t;
   cta::utils::Timer totalTimer;

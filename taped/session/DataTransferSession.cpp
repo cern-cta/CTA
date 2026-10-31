@@ -31,7 +31,6 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
-#include <google/protobuf/stubs/common.h>
 #include <memory>
 #include <string>
 
@@ -105,8 +104,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
                                         lc);
 
           // We wait a bit before polling the scheduler again.
-          // TODO: parametrize the duration?
-          sleep(5);
+          sleep(m_dataTransferConfig.driveStatePollIntervalSecs);
         } else {
           lc.log(cta::log::DEBUG, "Desired drive state is UP.");
           break;
@@ -687,12 +685,5 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& hea
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-cta::tape::daemon::DataTransferSession::~DataTransferSession() noexcept {
-  try {
-    google::protobuf::ShutdownProtobufLibrary();
-  } catch (...) {
-    m_log(cta::log::ERR,
-          "google::protobuf::ShutdownProtobufLibrary() threw an"
-          " unexpected exception");
-  }
-}
+// Protobuf state belongs to the process and must remain available to later sessions.
+cta::tape::daemon::DataTransferSession::~DataTransferSession() noexcept = default;

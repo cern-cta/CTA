@@ -22,10 +22,10 @@ target_link_libraries(ctatelemetry
 
 install(TARGETS ctatelemetry DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES cta-otel.example.yaml
-  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-lib-telemetry/examples
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-foreach(component frontend maintd objectstore rdbms scheduler taped)
+foreach(component frontend maintd objectstore rdbms rmcd scheduler taped)
   string(SUBSTRING "${component}" 0 1 component_initial)
   string(TOUPPER "${component_initial}" component_initial)
   string(SUBSTRING "${component}" 1 -1 component_rest)

@@ -22,6 +22,7 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/system/Wrapper.hpp"
 #include "tests/TempFile.hpp"
+#include "tests/TestingArchiveJob.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -37,16 +38,6 @@ public:
                          cta::common::dataStructures::ArchiveFile(),
                          1,
                          cta::PositioningMethod::ByBlock) {}
-};
-
-class TestingArchiveJob : public cta::ArchiveJob {
-public:
-  TestingArchiveJob()
-      : cta::ArchiveJob(nullptr,
-                        *(static_cast<cta::catalogue::Catalogue*>(nullptr)),
-                        cta::common::dataStructures::ArchiveFile(),
-                        "",
-                        cta::common::dataStructures::TapeFile()) {}
 };
 
 class ctaTapeFileTest : public ::testing::TestWithParam<cta::common::dataStructures::Label::Format> {
@@ -372,7 +363,7 @@ TEST(ctaDirectoryTests, directoryFailCreate) {
 TEST(ctaDirectoryTests, directoryGetFilesName) {
   std::string dirTestPath = "/tmp/directoryGetFilesNames";
   std::string rmCommand = "rm -rf " + dirTestPath;
-  ::system(rmCommand.c_str());
+  ASSERT_EQ(0, ::system(rmCommand.c_str()));
   cta::disk::LocalDirectory dir(dirTestPath);
   ASSERT_NO_THROW(dir.mkdir());
   char filePath[] = "/tmp/directoryGetFilesNames/fileXXXXXX";

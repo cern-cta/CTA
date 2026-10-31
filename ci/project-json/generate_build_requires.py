@@ -23,11 +23,16 @@ if platform not in project_json["platforms"]:
     print(f"Error: invalid platform '{platform}'. Supported options are: {valid_platforms}", file=sys.stderr)
     sys.exit(1)
 
+package_format = "deb" if platform.startswith(("debian", "ubuntu")) else "rpm"
+
 packages = project_json["platforms"][platform]["buildRequires"]
 
+requirements = []
 for package, version in packages.items():
-    if package in project_json["packageGroups"]:
-        for package_name in project_json["packageGroups"][package]:
-            print(f"BuildRequires: {package_name} {version}")
-    else:
-        print(f"BuildRequires: {package} {version}")
+    for name in project_json["packageGroups"].get(package, [package]):
+        if package_format == "deb":
+            requirements.append(f"{name} ({version})" if version else name)
+        else:
+            requirements.append(f"BuildRequires: {name} {version}".rstrip())
+
+print((",\n " if package_format == "deb" else "\n").join(requirements))

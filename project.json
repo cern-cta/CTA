@@ -1,5 +1,6 @@
 {
   "name": "CTA",
+  "majorVersion": 6,
   "summary": "CERN Tape Archive",
   "description":
     "The CERN Tape Archive (CTA) is the open-source archival storage system for the custodial copy of all physics data at CERN.",
@@ -9,15 +10,14 @@
     15
   ],
   "dev": {
-    "cppVersion": "c++20",
+    "cppVersion": "c++23",
     "defaultPlatform": "el9",
     "defaultBuildType": "RelWithDebInfo",
     "ctaImageRegistry": "gitlab-registry.cern.ch",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
-    "eosImageTag": "5.3.36.el9",
-    "eosServerChartVersion": "0.10.6",
-    "dCacheChartVersion": "0.1.0",
-    "dCacheImageTag": "94471db7"
+    "eosImageTag": "5.5.4.el9",
+    "dCacheImageRepository": "gitlab.desy.de:5555/dcache/dcache",
+    "dCacheImageTag": "cta-2fe4facc"
   },
   "packageGroups": {
     "group-ceph": [
@@ -185,12 +185,113 @@
         "cpp-httplib-devel": "",
         "libcurl-devel": "",
         "valgrind-devel": "",
+        "libasan": "",
+        "libubsan": "",
+        "libtsan": "",
         "group-grpc": "",
         "postgresql-devel": "",
         "krb5-devel": "",
         "libtirpc-devel": "",
         "redhat-rpm-config": "",
         "pandoc": ""
+      }
+    },
+    "el10": {
+      "versionlock": {
+        "group-ceph": "2:18.2.1-4.el10",
+        "group-xrootd": "1:5.8.4-1.el10",
+        "group-oracle-instantclient": "23.26.3.0.0-1.el10",
+        "opentelemetry-cpp": "1:1.26.0-1.el10"
+      },
+      "runRequires": {
+        "xrootd": ">= 1:5.7.1",
+        "oracle-instantclient": ">= 23.0",
+        "rados": "= 2:18.2.1",
+        "valgrind": ">= 3.8.1",
+        "gtest": ">= 1.11.0",
+        "opentelemetry-cpp": "= 1:1.26.0"
+      },
+      "buildRequires": {
+        "opentelemetry-cpp": "= 1:1.26.0",
+        "group-xrootd-devel": ">= 1:5.7.1-1",
+        "group-protobuf": ">= 3.3.1",
+        "group-ceph-devel": "= 2:18.2.1",
+        "oracle-instantclient-devel": ">= 23.0",
+        "gtest-devel": ">= 1.11.0",
+        "sqlite-devel": ">= 3.6",
+        "libcap-devel": ">= 2.16",
+        "binutils-devel": ">= 2.20",
+        "cryptopp-devel": ">= 5.6.2",
+        "libuuid-devel": ">= 2.17",
+        "json-c-devel": ">= 0.11",
+        "libattr-devel": ">= 2.4.44",
+        "cmake": ">= 3.19",
+        "openssl-devel": ">= 1.0.1",
+        "tomlplusplus-devel": "",
+        "cpp-httplib-devel": "",
+        "libcurl-devel": "",
+        "valgrind-devel": "",
+        "libasan": "",
+        "libubsan": "",
+        "libtsan": "",
+        "group-grpc": "",
+        "libpq-devel": "",
+        "krb5-devel": "",
+        "libtirpc-devel": "",
+        "redhat-rpm-config": "",
+        "pandoc": ""
+      }
+    },
+    "debian13": {
+      "versionlock": {
+        "opentelemetry-cpp": "1:1.26.0-1.debian13"
+      },
+      "runRequires": {
+        "opentelemetry-cpp": "= 1:1.26.0-1.debian13"
+      },
+      "buildRequires": {
+        "debhelper": ">= 13.25",
+        "debhelper-compat": "= 13",
+        "cmake": "",
+        "ninja-build": "",
+        "pkgconf": "",
+        "git": "",
+        "curl": "",
+        "ca-certificates": "",
+        "python3": "",
+        "corrosion": "",
+        "libsystemd-dev": "",
+        "libxrootd-dev": "",
+        "libxrootd-client-dev": "",
+        "libprotobuf-dev": "",
+        "protobuf-compiler": "",
+        "libgrpc++-dev": "",
+        "protobuf-compiler-grpc": "",
+        "libgtest-dev": "",
+        "libgmock-dev": "",
+        "libsqlite3-dev": "",
+        "libcap-dev": "",
+        "binutils-dev": "",
+        "libcrypto++-dev": "",
+        "uuid-dev": "",
+        "libjson-c-dev": "",
+        "libattr1-dev": "",
+        "libssl-dev": "",
+        "libtomlplusplus-dev": "",
+        "libcpp-httplib-dev": "",
+        "libcurl4-openssl-dev": "",
+        "valgrind": "",
+        "libasan8": "",
+        "libubsan1": "",
+        "libtsan2": "",
+        "libpq-dev": "",
+        "postgresql": "",
+        "libkrb5-dev": "",
+        "libtirpc-dev": "",
+        "pandoc": "",
+        "libclang-dev": "",
+        "zlib1g-dev": "",
+        "opentelemetry-cpp": "= 1:1.26.0-1.debian13"
       }
     }
   }

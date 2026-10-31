@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+apiVersion: v2
+name: cta-dcache
+description: dCache and its backing services for CTA integration tests.
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: dcache
+    version: 0.1.0
+    repository: https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test

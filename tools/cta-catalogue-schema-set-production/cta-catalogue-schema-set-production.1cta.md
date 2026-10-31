@@ -1,6 +1,6 @@
 ---
 date: 2024-07-18
-section: 1cta
+section: 1
 title: CTA-CATALOGUE-SCHEMA-SET-PRODUCTION
 header: The CERN Tape Archive (CTA)
 ---
@@ -60,7 +60,7 @@ cta-catalogue-set-production /etc/cta/cta-catalogue.conf
 
 # SEE ALSO
 
-**cta-catalogue-schema-drop**(1cta)
+**cta-catalogue-schema-drop**(1)
 
 CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 

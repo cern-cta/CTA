@@ -5,10 +5,20 @@
 #  Build configuration
 # =========================================================================
 
-%define ctaRelease @CTA_RELEASE@
+# Release history is maintained in CHANGELOG.md.
+%global source_date_epoch_from_changelog 0
+
+%define ctaRelease @CTA_RPM_RELEASE@
 
 %define usePgsched @PACKAGE_USE_PGSCHED@
 %define occiSupport @PACKAGE_WITH_ORACLE@
+
+# EL10 ships CMake under its unversioned command name.
+%if 0%{?rhel} >= 10
+%define ctaCmake cmake
+%else
+%define ctaCmake cmake3
+%endif
 
 # Every package in the project.json buildRequires section has a corresponding
 # variable containing its version constraint.
@@ -18,13 +28,6 @@
 %define radosVersionConstraint @RADOS_VERSION_CONSTRAINT@
 %define gtestDevelVersionConstraint @GTEST_VERSION_CONSTRAINT@
 %define opentelemetryCppVersionConstraint @OPENTELEMETRY_CPP_VERSION_CONSTRAINT@
-
-# Omit the distribution suffix from source RPMs when requested.
-%if 0%{?neutralpackage:1} > 0
-%define mydist %{nil}
-%else
-%define mydist %{?dist}
-%endif
 
 %if !@PACKAGE_BUILD_DEBUG_PACKAGES@
 %define debug_package %{nil}
@@ -43,8 +46,8 @@
 
 Name: cta
 Summary: @PROJECT_SUMMARY@
-Version: @CTA_VERSION@
-Release: %{ctaRelease}%{mydist}
+Version: @CTA_RPM_VERSION@
+Release: %{ctaRelease}
 Source0: %{name}-%{version}-%{ctaRelease}.tar.zst
 Source1: cta.conf
 URL: https://gitlab.cern.ch/cta/CTA
@@ -70,56 +73,48 @@ CERN Tape Archive (CTA) is a scalable tape storage system for archival data.
 # =========================================================================
 
 %prep
-%autosetup -D -n %{name}-%{version}-%{ctaRelease}
+# Keep compiler paths stable across package versions so sccache can reuse objects.
+# Preserve existing build outputs for incremental local builds.
+%setup -q -D -c -T -n %{name}
+tar --extract --file "%{SOURCE0}" --strip-components=1
+%autopatch -p0
 
 %build
 mkdir -p build
 cd build
-cmake3 -G "@CMAKE_GENERATOR@" .. \
+%{ctaCmake} -G "@CMAKE_GENERATOR@" .. \
   -DCMAKE_BUILD_TYPE:STRING=@CMAKE_BUILD_TYPE@ \
   -DCMAKE_INSTALL_PREFIX:PATH=/usr \
   -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system \
-  -DCTA_VERSION:STRING=%{version} \
+  -DCTA_VERSION:STRING=%{version}-%{ctaRelease} \
   -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
-  -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ \
-  -DCTA_PACKAGE_MODE:STRING=none \
+  -DENABLE_SCCACHE:BOOL=@ENABLE_SCCACHE@ \
+  -DCTA_BUILD_MODE:STRING=compile \
   -DCTA_RUN_UNIT_TESTS:BOOL=@CTA_RUN_UNIT_TESTS@ \
   -DCTA_BUILD_DEBUG_PACKAGES:BOOL=@CTA_BUILD_DEBUG_PACKAGES@ \
   -DCTA_BUILD_TEST_PACKAGES:BOOL=@CTA_BUILD_TEST_PACKAGES@ \
   -DJOBS_COUNT:STRING=@JOBS_COUNT@ \
-  -DVCS_VERSION=%{ctaRelease} \
   -DCTA_USE_PGSCHED:BOOL=@CTA_USE_PGSCHED@ \
   -DCTA_USE_EXTRA_TELEMETRY:BOOL=@CTA_USE_EXTRA_TELEMETRY@ \
   -DCTA_WITH_ORACLE:BOOL=@CTA_WITH_ORACLE@ \
   -DCTA_SHOW_CONFIGURATION_SUMMARY:BOOL=ON \
-  -DENABLE_ADDRESS_SANITIZER:BOOL=@ENABLE_ADDRESS_SANITIZER@
+  -DCTA_SANITIZERS:STRING=@CTA_SANITIZERS@
 cmake --build . --parallel @JOBS_COUNT@
 
 %install
 %{__rm} -rf %{buildroot}
 
+# The build stage already compiled everything; install directly without running Ninja or Make again.
 cd build
 DESTDIR=%{buildroot} \
   EXPORTMAN=%{buildroot}%{_mandir} \
-  cmake --build . --target install --parallel @JOBS_COUNT@
-
-%if !@PACKAGE_BUILD_TEST_PACKAGES@
-# CMake installs test files even when the cta-tests package is disabled.
-# Remove them from the staging directory to avoid RPM's "Installed (but unpackaged) file(s) found" error.
-# This still keeps the binaries around for the test execution; it's just the installed payload we are skipping.
-# The arguably cleaner (future?) solution to this would be to not install them at all in the first place if this option is disabled.
-rm -f %{buildroot}%{_libdir}/libcta*unittests*.so* \
-  %{buildroot}%{_libdir}/libcta-taped-integration-tests.so* \
-  %{buildroot}%{_bindir}/cta-unit-tests \
-  %{buildroot}%{_bindir}/cta-unit-tests-* \
-  %{buildroot}%{_bindir}/cta-unit-and-integration-tests.sh \
-  %{buildroot}%{_bindir}/cta-integration-tests
-rm -rf %{buildroot}%{_datadir}/cta/tests
-%endif
+  cmake --install .
 
 %check
 cd build
-cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
+# Shared CI runners deny LeakSanitizer thread attachment (EPERM).
+# Disable leak scanning only for config checks; ASan/UBSan and unit-test leak checks remain enabled.
+ASAN_OPTIONS="${ASAN_OPTIONS:+${ASAN_OPTIONS}:}detect_leaks=0" cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
 %if @PACKAGE_RUN_UNIT_TESTS@
 cmake --build . --target cta-unit-tests-short --parallel @JOBS_COUNT@
 %endif
@@ -164,9 +159,8 @@ Provides the daemon that manages tape drives and tape I/O for CTA.
 %{_libdir}/libctatapedrao.so.*
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
 %{_bindir}/cta-taped
-%doc %{_docdir}/cta/cta-taped.example.conf
+%doc %{_docdir}/cta/cta-taped.example.toml
 %{_mandir}/man1/cta-taped.1*
-%config(noreplace) %{_sysconfdir}/sysconfig/cta-taped
 %{_unitdir}/cta-taped.service
 
 %post -n cta-taped
@@ -198,7 +192,7 @@ Provides the daemon that performs background maintenance tasks for CTA.
 %endif
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-maintd
 %{_bindir}/cta-maintd
-%doc %{_docdir}/cta/cta-maintd.example.toml
+%doc %{_docdir}/cta-maintd/examples/cta-maintd.example.toml
 %{_mandir}/man1/cta-maintd.1*
 %{_unitdir}/cta-maintd.service
 
@@ -230,9 +224,9 @@ Provides the gRPC frontend for admin and workflow commands to CTA.
 %{_bindir}/cta-frontend-grpc
 %{_unitdir}/cta-frontend-grpc.service
 %config(noreplace) %{_sysconfdir}/sysconfig/cta-frontend-grpc
-%doc %{_docdir}/cta/cta-frontend.example.conf
-%doc %{_docdir}/cta/cta-frontend-grpc.example.toml
-%doc %{_docdir}/cta/jwt-revoke-list.example.toml
+%doc %{_docdir}/cta-frontend-grpc/examples/cta-frontend.example.conf
+%doc %{_docdir}/cta-frontend-grpc/examples/cta-frontend-grpc.example.toml
+%doc %{_docdir}/cta-frontend-grpc/examples/jwt-revoke-list.example.toml
 %{_mandir}/man1/cta-frontend-grpc.1*
 
 %post -n cta-frontend-grpc
@@ -259,7 +253,7 @@ Provides the Remote Media Changer daemon used by CTA to control tape libraries.
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
 %{_mandir}/man1/cta-rmcd.1*
 %{_bindir}/cta-rmcd
-%doc %{_docdir}/cta/cta-rmcd.example.toml
+%doc %{_docdir}/cta-rmcd/examples/cta-rmcd.example.toml
 %{_unitdir}/cta-rmcd.service
 
 %post -n cta-rmcd
@@ -282,7 +276,8 @@ Provides common shared libraries used by CTA components.
 %files -n cta-lib-common
 %license COPYING
 %{_libdir}/libctacommon.so.*
-%{_libdir}/libctatapedaemoncommon.so.*
+%{_libdir}/libctaprotobuf.so.*
+%{_libdir}/libctascsi.so.*
 
 %package -n cta-lib-telemetry
 Summary: CERN Tape Archive telemetry libraries
@@ -298,9 +293,10 @@ Provides shared libraries and instrumentation for CTA telemetry.
 %{_libdir}/libctatelemetrymaintd.so.*
 %{_libdir}/libctatelemetryobjectstore.so.*
 %{_libdir}/libctatelemetryrdbms.so.*
+%{_libdir}/libctatelemetryrmcd.so.*
 %{_libdir}/libctatelemetryscheduler.so.*
 %{_libdir}/libctatelemetrytaped.so.*
-%doc %{_docdir}/cta/cta-otel.example.yaml
+%doc %{_docdir}/cta-lib-telemetry/examples/cta-otel.example.yaml
 
 %package -n cta-lib-runtime
 Summary: CERN Tape Archive application runtime library
@@ -371,7 +367,7 @@ Provides shared libraries for accessing the CTA catalogue.
 %{_libdir}/libctardbmswrapper.so.*
 %{_libdir}/libctaschemachecker.so.*
 %{_libdir}/libctastatistics.so.*
-%doc %{_docdir}/cta/cta-catalogue.example.conf
+%doc %{_docdir}/cta-lib-catalogue/examples/cta-catalogue.example.conf
 
 %package -n cta-lib-scheduler
 Summary: CERN Tape Archive scheduler libraries
@@ -394,7 +390,7 @@ Provides shared libraries for CTA scheduling and disk access.
 %{_libdir}/libctaobjectstore.so.*
 %endif
 %{_libdir}/libctadisk.so.*
-%doc %{_docdir}/cta/cta-scheduler.example.conf
+%doc %{_docdir}/cta-lib-scheduler/examples/cta-scheduler.example.conf
 
 # =========================================================================
 #  Tools
@@ -411,7 +407,7 @@ Provides command-line tools for administering CTA.
 %license COPYING
 %{_bindir}/cta-admin
 %{_mandir}/man1/cta-admin.1*
-%doc %{_docdir}/cta/cta-admin.example.conf
+%doc %{_docdir}/cta-admin/examples/cta-admin.example.conf
 
 %if "%{usePgsched}" == "0"
 %package -n cta-scheduler-utils
@@ -450,7 +446,9 @@ Provides scripts and command-line utilities for administering the CTA catalogue.
 %{_bindir}/cta-catalogue-schema-verify
 %{_bindir}/cta-database-poll
 %{_bindir}/cta-statistics-save
+%{_mandir}/man1/cta-statistics-save.1*
 %{_bindir}/cta-statistics-update
+%{_mandir}/man1/cta-statistics-update.1*
 %{_mandir}/man1/cta-catalogue-admin-user-create.1*
 %{_mandir}/man1/cta-catalogue-schema-create.1*
 %{_mandir}/man1/cta-catalogue-schema-drop.1*
@@ -467,7 +465,9 @@ Provides scripts and command-line utilities for administering the CTA scheduler 
 %files -n cta-scheduler-utils
 %license COPYING
 %{_bindir}/cta-scheduler-schema-create
+%{_mandir}/man1/cta-scheduler-schema-create.1*
 %{_bindir}/cta-scheduler-schema-drop
+%{_mandir}/man1/cta-scheduler-schema-drop.1*
 %endif
 
 %package -n cta-smc
@@ -513,11 +513,19 @@ namespace used for CTA disk buffers.
 %files -n cta-eosdf
 %license COPYING
 %{_bindir}/cta-eosdf.sh
+%{_mandir}/man1/cta-eosdf.sh.1*
 
-# =========================================================================
-#  Packaging
-# =========================================================================
-
+%package -n cta-tools-rs
+Summary: Rust CLI tools for CTA
+%description -n cta-tools-rs
+Provides CTA's Rust-based CLI tools
+%files -n cta-tools-rs
+%license COPYING
+%{_bindir}/cta-eos-restore-files
+%{_datadir}/bash-completion/completions/cta-eos-restore-files
+%{_datadir}/zsh/site-functions/_cta-eos-restore-files
+%{_datadir}/fish/vendor_completions.d/cta-eos-restore-files.fish
+%{_mandir}/*/cta-eos-restore-files*
 %package -n cta-release
 Summary: CERN Tape Archive repository configuration
 Requires: python3-dnf-plugin-versionlock
@@ -559,7 +567,6 @@ Requires: postgresql-server
 Provides CTA unit and integration tests.
 %files -n cta-tests
 %license COPYING
-%{_libdir}/libcta-taped-integration-tests.so*
 %{_bindir}/cta-unit-tests-rdbms
 %if "%{occiSupport}" == "1"
 %{_bindir}/cta-unit-tests-rdbms-oracle.sh
@@ -567,12 +574,10 @@ Provides CTA unit and integration tests.
 %{_bindir}/cta-unit-tests
 %{_bindir}/cta-unit-tests-multiprocess
 %{_bindir}/cta-unit-tests-valgrind.sh
-%{_bindir}/cta-unit-and-integration-tests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
 %{_libdir}/libctaruntimeunittests.so*
 %{_libdir}/libctaprotobufunittests.so*
-%{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
@@ -597,7 +602,6 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*
-%{_bindir}/cta-integration-tests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %{_datadir}/cta/tests/*.suppr
 %{_datadir}/cta/tests/parallelTestsMakefile
@@ -612,16 +616,6 @@ Provides command-line tools for testing tapes written in external formats.
 %license COPYING
 %{_bindir}/cta-test-osm-reader
 %{_bindir}/cta-test-enstore-large-reader
-
-%package -n cta-test-immutable-file
-Summary: CERN Tape Archive immutable file test tool
-Requires: cta-lib-common = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
-%description -n cta-test-immutable-file
-Provides a command-line tool for testing immutable files with CTA.
-%files -n cta-test-immutable-file
-%license COPYING
-%{_bindir}/cta-test-immutable-file
 
 # =========================================================================
 #  Development
@@ -646,12 +640,14 @@ Provides unversioned linker names for developing applications with CTA shared li
 %files -n cta-devel
 %license COPYING
 %{_libdir}/libctacommon.so
-%{_libdir}/libctatapedaemoncommon.so
+%{_libdir}/libctaprotobuf.so
+%{_libdir}/libctascsi.so
 %{_libdir}/libctatelemetry.so
 %{_libdir}/libctatelemetryfrontend.so
 %{_libdir}/libctatelemetrymaintd.so
 %{_libdir}/libctatelemetryobjectstore.so
 %{_libdir}/libctatelemetryrdbms.so
+%{_libdir}/libctatelemetryrmcd.so
 %{_libdir}/libctatelemetryscheduler.so
 %{_libdir}/libctatelemetrytaped.so
 %{_libdir}/libctaruntime.so

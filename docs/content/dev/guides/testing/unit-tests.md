@@ -38,7 +38,7 @@ For an existing configured build, invoke a run target inside the build environme
 cmake --build <build-directory> --target cta-unit-tests-short
 ```
 
-Dynamic-analysis targets additionally require Valgrind. Use the definitions in `tests/CMakeLists.txt` for the complete target list and filters. The separate `cta-integration-tests` executable is not included in `cta-unit-tests-short`.
+Dynamic-analysis targets additionally require Valgrind. Use the definitions in `tests/CMakeLists.txt` for the complete target list and filters.
 
 ## Select individual C++ tests
 

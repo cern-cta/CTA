@@ -9,6 +9,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/SchemaVersion.hpp"
+#include "common/OperationModeMethodFilter.hpp"
 #include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/Logger.hpp"
@@ -221,6 +222,10 @@ int main(const int argc, char* const* const argv) {
   tlsOptions.watch_identity_key_cert_pairs();
   creds = TlsServerCredentials(tlsOptions);
 
+  // Reject the RPC methods which do not belong to this frontend's operation mode before they reach any handler
+  creds->SetAuthMetadataProcessor(
+    std::make_shared<cta::frontend::grpc::common::OperationModeMethodFilter>(frontendService->getOperationMode()));
+
   // enable health checking, needed by CI
   grpc::EnableDefaultHealthCheckService(true);
   // add reflection
@@ -285,6 +290,12 @@ int main(const int argc, char* const* const argv) {
 
   lc.log(cta::log::INFO, "Listening on socket address: " + serverAddress);
   server->Wait();
+  // server->Wait() returns only after every in-flight RPC handler has exited — that is the
+  // "join callers" step of the "stop → join callers → destroy" shutdown contract. Stop the
+  // batchers now so their destructors run with no threads inside enqueueAndWait().
+#ifdef CTA_PGSCHED
+  frontendService->getBatchingLayer().stop();
+#endif
   lc.logEvent(log::INFO, "Exiting cta-frontend-grpc", semconv::log::EventNameValues::kProgramExiting);
   if (cacheRefreshThread.has_value()) {
     // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,

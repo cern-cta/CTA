@@ -28,7 +28,7 @@ struct RepackInfo {
   uint64_t repackReqId = 0;
   std::string vid;
   std::string repackBufferBaseURL;
-  enum class Type { MoveAndAddCopies, AddCopiesOnly, MoveOnly, Undefined } type;
+  enum class Type { MoveAndAddCopies, AddCopiesOnly, MoveOnly, Undefined } type = Type::Undefined;
   enum class Status {
     // Values matching the cta.proto values
     Pending = 1,
@@ -38,30 +38,30 @@ struct RepackInfo {
     Complete = 5,
     Failed = 6,
     Undefined = 999
-  } status;
-  uint64_t totalFilesOnTapeAtStart;
-  uint64_t totalBytesOnTapeAtStart;
-  bool allFilesSelectedAtStart;
-  uint64_t totalFilesToArchive;
-  uint64_t totalBytesToArchive;
-  uint64_t totalFilesToRetrieve;
-  uint64_t totalBytesToRetrieve;
-  uint64_t failedFilesToArchive;
-  uint64_t failedBytesToArchive;
-  uint64_t failedFilesToRetrieve;
-  uint64_t failedBytesToRetrieve;
-  uint64_t lastExpandedFseq;
-  uint64_t userProvidedFiles;
-  uint64_t retrievedFiles;
-  uint64_t retrievedBytes;
-  uint64_t archivedFiles;
-  uint64_t archivedBytes;
-  uint64_t maxFilesToSelect;
+  } status = Status::Undefined;
+  uint64_t totalFilesOnTapeAtStart = 0;
+  uint64_t totalBytesOnTapeAtStart = 0;
+  bool allFilesSelectedAtStart = false;
+  uint64_t totalFilesToArchive = 0;
+  uint64_t totalBytesToArchive = 0;
+  uint64_t totalFilesToRetrieve = 0;
+  uint64_t totalBytesToRetrieve = 0;
+  uint64_t failedFilesToArchive = 0;
+  uint64_t failedBytesToArchive = 0;
+  uint64_t failedFilesToRetrieve = 0;
+  uint64_t failedBytesToRetrieve = 0;
+  uint64_t lastExpandedFseq = 0;
+  uint64_t userProvidedFiles = 0;
+  uint64_t retrievedFiles = 0;
+  uint64_t retrievedBytes = 0;
+  uint64_t archivedFiles = 0;
+  uint64_t archivedBytes = 0;
+  uint64_t maxFilesToSelect = 0;
   uint64_t failedToCreateArchiveReq = 0;
   std::string storageClass;
-  bool isExpandFinished;
-  bool isExpandStarted;
-  bool noRecall;
+  bool isExpandFinished = false;
+  bool isExpandStarted = false;
+  bool noRecall = false;
   EntryLog creationLog;
   time_t repackFinishedTime = 0;
   RepackDestinationInfo::List destinationInfos;

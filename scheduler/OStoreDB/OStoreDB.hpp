@@ -389,6 +389,11 @@ public:
                            const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
                            log::LogContext& logContext) override;
 
+  std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                        log::LogContext& lc) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  }
+
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
   std::list<cta::common::dataStructures::ArchiveJob>
@@ -413,7 +418,7 @@ public:
 
   rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
                                 common::dataStructures::QueueType queueType,
-                                const std::optional<std::string>& tapePoolName = nullptr,
+                                const std::optional<std::string>& tapePoolName = std::nullopt,
                                 bool repack = false) const override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }
@@ -422,7 +427,7 @@ public:
 
   rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
                                  common::dataStructures::QueueType queueType,
-                                 const std::optional<std::string>& vid = nullptr,
+                                 const std::optional<std::string>& vid = std::nullopt,
                                  bool repack = false) const override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }
@@ -445,7 +450,11 @@ public:
   std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
   void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override;
 
-  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) override {
+  /** Not implemented for the objectstore backend — re-routing is handled directly in queueRetrieve. */
+  void cleanRetrieveQueueForVid(const std::string& vid,
+                                const std::set<std::string>& activeVids,
+                                const std::set<std::string>& disabledVids,
+                                log::LogContext& logContext) override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   };
 
@@ -464,6 +473,12 @@ public:
                 const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                 const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override;
+
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  }
+
   void cancelRetrieve(const std::string& instanceName,
                       const cta::common::dataStructures::CancelRetrieveRequest& rqst,
                       log::LogContext& lc) override;

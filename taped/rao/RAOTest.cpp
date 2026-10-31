@@ -345,5 +345,8 @@ TEST_F(RAOTest, RAOSLTFAlgorithm) {
   std::vector<uint64_t> raoOrder = sltfRAOAlgorithm->performRAO(jobs);
   std::vector<uint64_t> expectedRAOOrder = {4, 6, 5, 3, 2, 7, 0, 1};
   ASSERT_EQ(expectedRAOOrder, raoOrder);
+
+  jobs.clear();
+  ASSERT_TRUE(sltfRAOAlgorithm->performRAO(jobs).empty());
 }
 }  // namespace unitTests

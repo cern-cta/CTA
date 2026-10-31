@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/lib/*/libctacommon.so.*
+usr/lib/*/libctaprotobuf.so.*
+usr/lib/*/libctascsi.so.*
+usr/lib/*/libctamediachanger.so.*
+usr/lib/*/libctaruntime.so.*
+usr/lib/*/libctatapedrao.so.*

@@ -87,6 +87,10 @@ public:
                            const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
                            log::LogContext& logContext) override;
 
+  // The following queueing is used for opportunistic batching of incomung user archive requests
+  std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                        log::LogContext& lc) override;
+
   /*
    * Unless otherwise specified, all of the methods that follow are currently just throwing an exception
    * as they are not required for the basic PGSCHED DB Archival functionality
@@ -98,7 +102,7 @@ public:
 
   rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
                                 common::dataStructures::QueueType queueType,
-                                const std::optional<std::string>& tapePoolName = nullptr,
+                                const std::optional<std::string>& tapePoolName = std::nullopt,
                                 bool repack = false) const override;
 
   std::unique_ptr<IArchiveJobQueueItor>
@@ -143,22 +147,18 @@ public:
   };
 
   /**
-   * Cleans up retrieve jobs for the specified Tape VID in the scheduler database.
-   *
-   * This method checks the `RETRIEVE_ERROR_REPORT_URL` column for each job in the
-   * `RETRIEVE_PENDING_QUEUE` associated with the given VID.
-   *
-   * - If the `RETRIEVE_ERROR_REPORT_URL` is **not NULL and not empty**, the job is moved to the
-   *   `RETRIEVE_ACTIVE_QUEUE` with its status updated to `RJS_ToReportToUserForFailure`,
-   *   indicating that a failure report should be sent to the user.
-   *
-   * - If the `RETRIEVE_ERROR_REPORT_URL` is **NULL or empty**, the job is considered to not require
-   *   reporting and is **deleted** from the `RETRIEVE_PENDING_QUEUE`.
-   *
-   * @param vid         The volume identifier for which pending retrieve jobs should be processed.
-   * @param logContext  The logging context for recording operation details.
+   * Re-route or discard all pending retrieve jobs for the given tape VID.
+   * Delegates to handlePendingRetrieveJobsAfterTapeStateChange inside a scheduler DB transaction.
+   * Jobs with no usable alternate AND no RETRIEVE_ERROR_REPORT_URL are silently deleted.
+   * @param vid          VID of the tape whose pending jobs should be processed.
+   * @param activeVids   VIDs of ACTIVE tapes — preferred re-routing targets.
+   * @param disabledVids VIDs of DISABLED tapes — used only when no ACTIVE alternate exists.
+   * @param logContext   Logging context.
    */
-  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) override;
+  void cleanRetrieveQueueForVid(const std::string& vid,
+                                const std::set<std::string>& activeVids,
+                                const std::set<std::string>& disabledVids,
+                                log::LogContext& logContext) override;
 
   std::list<RetrieveQueueStatistics>
   getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
@@ -169,6 +169,9 @@ public:
                 const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                 const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override;
+
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override;
 
   void clearStatisticsCache(const std::string& vid) override;
 
@@ -202,7 +205,7 @@ public:
 
   rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
                                  common::dataStructures::QueueType queueType,
-                                 const std::optional<std::string>& vid = nullptr,
+                                 const std::optional<std::string>& vid = std::nullopt,
                                  bool repack = false) const override;
 
   std::unique_ptr<IRetrieveJobQueueItor>

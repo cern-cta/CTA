@@ -37,6 +37,7 @@ class TagCommandTest(unittest.TestCase):
         with (
             patch.object(self.context.git, "validate_target_branch"),
             patch.object(self.context.git, "resolve_remote_branch", return_value="newer-tip"),
+            patch.object(self.context.git, "run", return_value='{"majorVersion": 6}') as git_run,
             patch.object(self.context.git, "is_ancestor", return_value=True) as is_ancestor,
             patch.object(
                 tag,
@@ -49,6 +50,7 @@ class TagCommandTest(unittest.TestCase):
             redirect_stdout(StringIO()) as output,
         ):
             tag.run(self.context, "v6.12.0.0-1", skip_confirmation=True)
+        git_run.assert_called_once_with(["show", "merge-commit:project.json"])
         is_ancestor.assert_called_once_with("merge-commit", "newer-tip")
         assert "Merged changelog commit to tag for v6.12.0.0-1: merge-commit" in output.getvalue()
 
@@ -77,6 +79,7 @@ class TagCommandTest(unittest.TestCase):
                 "inspect_release_context",
                 return_value=({"iid": 1}, {"state": "merged"}, "merge-commit", []),
             ),
+            patch.object(self.context.git, "run", return_value='{"majorVersion": 6}') as git_run,
             patch.object(self.context.git, "is_ancestor", return_value=True),
             patch.object(self.context, "find_pipeline", return_value=pipeline),
             patch("confirmation.sys.stdin.isatty", return_value=True),
@@ -88,6 +91,7 @@ class TagCommandTest(unittest.TestCase):
                 "branch-tip",
                 skip_confirmation=False,
             )
+        git_run.assert_called_once_with(["show", "merge-commit:project.json"])
         assert issue == {"iid": 1}
         assert commit == "merge-commit"
         user_input.assert_called_once()

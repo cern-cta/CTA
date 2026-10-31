@@ -16,13 +16,3 @@ cli:
         cta_admin_auth_method: krb5
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt.pem
-
-client:
-  useGrpc: true
-  conf:
-    cta:
-      endpoint: cta-frontend-admin:10956
-      grpc:
-        cta_admin_auth_method: krb5
-        tls:
-          chain_cert_path: /etc/grpc-certs/ca.crt.pem

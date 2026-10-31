@@ -106,7 +106,19 @@ LocalWriteFile::LocalWriteFile(const std::string& path) {
 }
 
 void LocalWriteFile::write(const void* data, const size_t size) {
-  ::write(m_fd, (void*) data, size);
+  // A successful write may consume only part of the buffer.
+  size_t written = 0;
+  while (written < size) {
+    const auto count = ::write(m_fd, static_cast<const char*>(data) + written, size - written);
+    if (count < 0 && errno == EINTR) {
+      continue;
+    }
+    cta::exception::Errnum::throwOnMinusOne(count, "LocalWriteFile::write failed on " + m_URL);
+    if (count == 0) {
+      throw cta::exception::Exception("LocalWriteFile::write made no progress on " + m_URL);
+    }
+    written += static_cast<size_t>(count);
+  }
 }
 
 void LocalWriteFile::close() {

@@ -5,8 +5,35 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
+
+from cta_version import CTAVersion, VersionError
+from git_repo import Git, GitError
+
+
+def read_major_version(git: Git, revision: str) -> int:
+    """Read release policy from the selected commit, ignoring the working tree."""
+    project_file = f"{revision}:project.json"
+    try:
+        project = json.loads(git.run(["show", project_file]))
+    except (GitError, ValueError) as error:
+        raise VersionError(f"Could not read majorVersion from {project_file}: {error}") from error
+    major_version = project.get("majorVersion") if isinstance(project, dict) else None
+    if type(major_version) is not int or major_version < 1:
+        raise VersionError(f"Invalid or missing majorVersion in {project_file}; expected a positive integer")
+    return major_version
+
+
+def validate_major_version(git: Git, revision: str, version: str) -> None:
+    """Require a new release to belong to the configured major version."""
+    release_version = CTAVersion.parse(version, require_base=True)
+    major_version = read_major_version(git, revision)
+    if release_version.xrootd != major_version:
+        raise VersionError(
+            f"Release {release_version.text} does not match majorVersion {major_version!r} in {revision}:project.json"
+        )
 
 
 @dataclass(frozen=True)

@@ -33,9 +33,12 @@ class VersionTest(unittest.TestCase):
         assert version.variant is None
 
     def test_rejects_invalid_versions(self) -> None:
-        for value in ("6.10.11.0-1", "v4.10.11.0-1", "v6.1.2-3", "v6.1.2.3-4.rc-1"):
+        for value in ("6.10.11.0-1", "v0.10.11.0-1", "v6.1.2-3", "v6.1.2.3-4.rc-1"):
             with self.subTest(value=value), pytest.raises(VersionError):
                 CTAVersion.parse(value)
+
+    def test_parses_historical_major_version(self) -> None:
+        assert CTAVersion.parse("v4.10.11.0-1").xrootd == 4
 
     def test_suffix_does_not_change_numeric_core(self) -> None:
         assert CTAVersion.parse("v6.10.11.0-1").core == CTAVersion.parse("v6.10.11.0-1.rc1").core
@@ -70,7 +73,7 @@ class VersionTest(unittest.TestCase):
     def test_malformed_version_includes_expected_format_and_example(self) -> None:
         with pytest.raises(VersionError) as error:
             CTAVersion.parse("6.12.0-1", require_base=True)
-        assert "v6.<major>.<minor>.<patch>-<package>" in str(error.value)
+        assert "v<major>.N.N.N-<package>" in str(error.value)
         assert "v6.12.0.0-1" in str(error.value)
 
     def test_variants_are_deduplicated_and_canonically_ordered(self) -> None:

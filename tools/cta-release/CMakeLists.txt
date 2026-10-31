@@ -61,7 +61,7 @@ execute_process(
 string(REPLACE "\n" ";" RESULTS ${RESULT})
 
 foreach(PNAME ${RESULTS})
-    string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${PLATFORM}.*\n")
+    string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}.*\n")
 endforeach()
 
 execute_process(

@@ -30,10 +30,10 @@ _ctadev() {
     local build_opts="
         --reset
         --clean-build-dirs
-        --disable-ccache
+        --disable-sccache
         --enable-unit-tests
         --force-install
-        --enable-address-sanitizer
+        --sanitizers
         --extra-telemetry
         --build-generator
         --cmake-build-type
@@ -53,6 +53,7 @@ _ctadev() {
         --publish-telemetry
         --eos-image-repository
         --eos-image-tag
+        --dcache-image-repository
         --catalogue-config
         --scheduler-config
         --cta-config
@@ -65,6 +66,10 @@ _ctadev() {
     # Complete values for options that expect one.
     #
     case "$prev" in
+        --sanitizers)
+            COMPREPLY=( $(compgen -W "none address undefined address,undefined thread" -- "$cur") )
+            return
+            ;;
         --scheduler-type)
             COMPREPLY=( $(compgen -W "objectstore pgsched" -- "$cur") )
             return
@@ -82,7 +87,7 @@ _ctadev() {
             return
             ;;
         --platform)
-            COMPREPLY=( $(compgen -W "el9" -- "$cur") )
+            COMPREPLY=( $(compgen -W "$(jq -r '.platforms | keys[]' "${project_root}/project.json")" -- "$cur") )
             return
             ;;
         --namespace)
@@ -94,7 +99,7 @@ _ctadev() {
                 -- "$cur") )
             return
             ;;
-        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--spawn-options)
+        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--dcache-image-repository|--spawn-options)
             return
             ;;
         --catalogue-config|--scheduler-config|--cta-config|--eos-config)

@@ -91,9 +91,9 @@ while IFS= read -r container_id; do
   [[ -z "$container_id" ]] || existing_build_containers["$container_id"]=1
 done <<< "$initial_build_containers"
 
-# Use registries.conf to configure proxy for image pulling.
+# Use the registry proxy and allow independent stages within each build to run concurrently.
 build_command=(setsid env REGISTRIES_CONFIG_PATH="${project_root}/ci/docker/registries.conf"
-  podman build)
+  podman build --jobs=4)
 
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"

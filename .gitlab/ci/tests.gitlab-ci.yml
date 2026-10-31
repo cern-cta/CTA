@@ -7,8 +7,11 @@ spec:
       type: string
     enable-internal-repos:
       type: boolean
-    enable-valgrind:
-      type: boolean
+    analysis:
+      description: "C/C++ analysis mode: Valgrind or compiler sanitizers."
+      type: string
+      options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
+      default: "none"
 ---
 
 .setup-cta-install: &setup-cta-install
@@ -24,12 +27,43 @@ spec:
     fi
   - dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo
 
+.cpp-test:
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - *setup-cta-install
+    - mkdir -p test-results test-logs
+    - |
+      # Load targeted suppressions and include both stacks for potential deadlocks.
+      if [[ "$[[ inputs.analysis ]]" == "thread" ]]; then
+        export TSAN_OPTIONS="${TSAN_OPTIONS:+${TSAN_OPTIONS}:}second_deadlock_stack=1:suppressions=${CI_PROJECT_DIR}/tests/tsan.suppr"
+      fi
+    - |
+      set -o pipefail
+      test_status=0
+      # Record failures without skipping later tests or database cleanup.
+      run_cpp_test() {
+        local name="$1"
+        shift
+        GTEST_OUTPUT="xml:${CI_PROJECT_DIR}/test-results/${name}.xml" \
+          "$@" 2>&1 | tee "test-logs/${name}.log" || test_status=1
+      }
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths:
+      - test-results/
+      - test-logs/
+    reports:
+      junit: test-results/*.xml
+
 unit-test-python:
   stage: test
   needs:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
     - changes:
         - "**/*.py"
         - '**/*requirements.txt'
@@ -55,16 +89,52 @@ unit-test-python:
     reports:
       junit: python-ci-unit-tests.xml
 
+unit-test-rust:
+  stage: test
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
+    - changes:
+        - "**/*.rs"
+        - "**/Cargo.toml"
+      when: on_success
+  image:
+    name: $IMAGE_LINT # At a future point in time this should reference a better scoped image
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "recursive"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+  script:
+    - |
+      cargo llvm-cov nextest --config-file .cargo/nextest.toml --profile ci --cobertura --output-path cobertura.xml &&
+      cargo llvm-cov report --summary-only
+  artifacts:
+    when: always
+    reports:
+      junit: target/nextest/ci/junit.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: cobertura.xml
+  coverage: '/^TOTAL.*\s(\d+\.\d+)%/'
+
 test-cta-valgrind:
   stage: test
   needs:
     - job: check-merge-train-duplicate
       optional: true
-    - job: build-cta-rpms
+    - job: build-cta
   rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: '"$[[ inputs.enable-valgrind ]]" == "true"'
+    - if: '"$[[ inputs.analysis ]]" != "none" && "$[[ inputs.analysis ]]" != "valgrind"'
+      when: never
+    - if: '"$[[ inputs.analysis ]]" == "valgrind"'
       when: on_success
     - when: manual
       allow_failure: true
@@ -76,68 +146,43 @@ test-cta-valgrind:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unit-and-integration-tests.sh
-
-integration-test-cta:
-  # Sometimes flaky due to "resource unavailable" error
-  retry: 1
-  stage: test
-  needs:
-    - job: check-merge-train-duplicate
-      optional: true
-    - job: build-cta-rpms
-  rules:
-    - when: on_success
-  image: $IMAGE_TEST
-  variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
-    CTAREPODIR: /tmp/repo
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
-  script:
-    - /usr/bin/cta-integration-tests
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
+    - /usr/bin/cta-unit-tests-valgrind.sh
 
 unit-test-cta:
+  extends: .cpp-test
   stage: test
   needs:
     - job: check-merge-train-duplicate
       optional: true
-    - job: build-cta-rpms
+    - job: build-cta
   rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
   script:
-    - /usr/bin/cta-unit-tests-multiprocess
-    - /usr/bin/cta-unit-tests
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
+    - run_cpp_test cta-unit-tests-multiprocess /usr/bin/cta-unit-tests-multiprocess
+    - run_cpp_test cta-unit-tests /usr/bin/cta-unit-tests
+    - exit "$test_status"
 
 unit-test-postgresql:
+  extends: .cpp-test
   stage: test
   needs:
     - job: check-merge-train-duplicate
       optional: true
-    - job: build-cta-rpms
+    - job: build-cta
   rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
   script:
     - dnf -y install cta-catalogue-utils
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
@@ -152,30 +197,32 @@ unit-test-postgresql:
     - chown -R postgres:postgres /var/run/postgresql/
     - runuser -u postgres -- initdb -D ${POSTGRESQL_DATA_DIR}
     - runuser -u postgres -- pg_ctl start -w -t 10 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
-    - runuser -u postgres -- createdb cta
     - runuser -u postgres -- createuser -E cta
+    # Database ownership permits schema creation with PostgreSQL 15+ defaults.
+    - runuser -u postgres -- createdb --owner=cta cta
     - CTA_CATALOGUE_CONF=$(mktemp)
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if $[[ inputs.enable-valgrind ]]; then
-        valgrind /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+      if [[ "$[[ inputs.analysis ]]" == "valgrind" ]]; then
+        run_cpp_test cta-unit-tests-rdbms valgrind /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       else
-        /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+        run_cpp_test cta-unit-tests-rdbms /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
+    - exit "$test_status"
 
 unit-test-oracle:
+  extends: .cpp-test
   stage: test
   needs:
     - job: check-merge-train-duplicate
       optional: true
-    - job: build-cta-rpms
+    - job: build-cta
   rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
     - if: '$ENABLE_ORACLE_SUPPORT == "false"'
       when: never
     - when: on_success
@@ -187,9 +234,6 @@ unit-test-oracle:
     ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
     # Note that this expects the full url; not a shortname relying on tnsnames
     ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
   script:
     - dnf -y install cta-catalogue-utils
     - CTA_CATALOGUE_CONF=$(mktemp)
@@ -198,39 +242,42 @@ unit-test-oracle:
     - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if $[[ inputs.enable-valgrind ]]; then
-        valgrind /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+      if [[ "$[[ inputs.analysis ]]" == "valgrind" ]]; then
+        run_cpp_test cta-unit-tests-rdbms valgrind /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       else
-        /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+        run_cpp_test cta-unit-tests-rdbms /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       fi
+    - exit "$test_status"
   # Adding this resource group ensures only a single instance of this job can run at any given time
   # This is necessary as the job uses a single account on a centralized database.
   resource_group: oracle-centralized-db-cta-dev04
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
 
-test-cta-release:
+test-cta-rpm-install:
   stage: test
   needs:
     - job: check-merge-train-duplicate
       optional: true
-    - job: build-cta-rpms
+    - job: build-cta
   rules:
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
     - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH == "main"'
       when: on_success
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/cta-release/**/*
         - project.json
-        - packaging/rpm/cta.spec.in
+        - packaging/**/*
+        - "**/CMakeLists.txt"
+        - cmake/**/*
+        - ci/checks/check_installed_layout.sh
+        - .gitlab/ci/tests.gitlab-ci.yml
       when: on_success
     - when: manual
       allow_failure: true
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
-    GIT_STRATEGY: none  # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   script:
     - mkdir -p ${CTAREPODIR}
@@ -249,6 +296,7 @@ test-cta-release:
                                   cta-readtp
                                   cta-rmcd
                                   cta-smc
+                                  cta-tools-rs
                                   eos-server
                                   eos-client
     - |
@@ -257,9 +305,78 @@ test-cta-release:
       fi
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
+    - bash ci/checks/check_installed_layout.sh rpm
   artifacts:
     when: always
     paths:
       - checkpkg-output.json
     reports:
       metrics: metrics.txt
+
+
+test-cta-debian-install:
+  stage: test
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: build-cta
+      artifacts: true
+  rules:
+    - if: '"$[[ inputs.platform ]]" != "debian13" || $CUSTOM_CTA_IMAGE_TAG != ""'
+      when: never
+    - when: on_success
+  image: $IMAGE_TEST
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    DEBIAN_FRONTEND: noninteractive
+  script:
+    - |
+      shopt -s nullglob
+      packages=(./build/$[[ inputs.platform ]]/DEB/*.deb ./build/$[[ inputs.platform ]]/DEB/*.ddeb)
+      if (( ${#packages[@]} == 0 )); then
+        echo "No Debian binary packages found in build/$[[ inputs.platform ]]/DEB" >&2
+        exit 1
+      fi
+      # Install local artifacts and resolve their dependencies from the configured repositories.
+      apt-get update
+      apt-get install -y "${packages[@]}"
+      apt-get check
+      for package in "${packages[@]}"; do
+        name=$(dpkg-deb --field "$package" Package)
+        version=$(dpkg-deb --field "$package" Version)
+        test "$(dpkg-query --show --showformat='${Status} ${Version}' "$name")" = "install ok installed $version"
+      done
+    - bash ci/checks/check_installed_layout.sh deb
+
+
+# Uses lintian to test Debian package compliance
+test-cta-debian-compliance:
+  stage: test
+  needs:
+    - job: build-cta
+      artifacts: true
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '"$[[ inputs.platform ]]" != "debian13" || $CUSTOM_CTA_IMAGE_TAG != ""'
+      when: never
+    - when: on_success
+  image: $IMAGE_LINTIAN
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  script:
+    - |
+      set -o pipefail
+      shopt -s nullglob
+      packages=(build/$[[ inputs.platform ]]/DEB/*.deb build/$[[ inputs.platform ]]/DEB/*.ddeb)
+      if (( ${#packages[@]} == 0 )); then
+        echo "No Debian binary packages found in build/$[[ inputs.platform ]]/DEB" >&2
+        exit 1
+      fi
+      # Report warnings without failing while packaging improvements are in progress.
+      lintian --allow-root --fail-on error --color never "${packages[@]}" 2>&1 | tee lintian.log
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - lintian.log

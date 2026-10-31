@@ -1,0 +1,216 @@
+<!--
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+
+<style>
+    :root {
+        --cta-bar-height: 32px;
+        --cta-bar-background: #fff;
+        --cta-bar-border: #ddd;
+        --cta-bar-color: #777;
+        --cta-bar-hover: #000;
+        --cta-bar-brand: #000;
+        scroll-padding-top: var(--cta-bar-height);
+    }
+
+    :root[data-theme="dark"],
+    :root[data-theme="ayu"] {
+        --cta-bar-color: #ddd;
+        --cta-bar-hover: #c0c0c0;
+        --cta-bar-brand: #fff;
+    }
+
+    :root[data-theme="dark"] {
+        --cta-bar-background: #353535;
+        --cta-bar-border: #4e4e4e;
+    }
+
+    :root[data-theme="ayu"] {
+        --cta-bar-background: #0f1419;
+        --cta-bar-border: #424c57;
+    }
+
+    body.rustdoc {
+        flex-wrap: wrap;
+    }
+
+    .cta-topbar {
+        flex: 0 0 100%;
+        position: sticky;
+        top: 0;
+        z-index: 200;
+        display: flex;
+        font: 12.8px "Fira Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: var(--cta-bar-color);
+        background-color: var(--cta-bar-background);
+        border-bottom: 1px solid var(--cta-bar-border);
+    }
+
+    .cta-topbar a {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-sizing: border-box;
+        padding: 6.4px 16px;
+        white-space: nowrap;
+        text-decoration: none;
+        color: var(--cta-bar-color);
+    }
+
+    .cta-topbar a:hover {
+        color: var(--cta-bar-hover);
+    }
+
+    .cta-topbar a:focus-visible {
+        outline: none;
+        color: var(--cta-bar-background);
+        background-color: var(--cta-bar-color);
+    }
+
+    .cta-topbar .cta-brand {
+        font-size: 16px;
+        color: var(--cta-bar-brand);
+    }
+
+    .cta-topbar .cta-brand svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .cta-topbar ul {
+        display: flex;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .cta-topbar li {
+        align-self: stretch;
+        align-content: center;
+        border-left: 1px solid var(--cta-bar-border);
+    }
+
+    .cta-topbar .cta-crate a {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cta-topbar svg {
+        width: 1em;
+        height: 1em;
+        flex: none;
+        fill: currentColor;
+    }
+
+    .cta-topbar .cta-spacer {
+        flex-grow: 1;
+    }
+
+    /* Full CTA logo above the crate name in rustdoc's sidebar. */
+    .cta-sidebar-logo img {
+        width: 100%;
+        max-width: 168px;
+        height: auto;
+    }
+
+    /* Keep rustdoc's sticky sidebar below the bar (docs.rs does the same). */
+    @media (min-width: 701px) {
+        .rustdoc .sidebar {
+            top: var(--cta-bar-height);
+            height: calc(100vh - var(--cta-bar-height));
+        }
+
+        .sidebar-resizer {
+            top: var(--cta-bar-height);
+        }
+    }
+
+    @media (max-width: 700px) {
+        rustdoc-topbar,
+        .mobile-topbar {
+            top: var(--cta-bar-height);
+        }
+
+        .rustdoc .sidebar {
+            top: calc(var(--topbar-height) + var(--cta-bar-height));
+            height: calc(100vh - var(--topbar-height) - var(--cta-bar-height));
+        }
+
+        .cta-topbar .cta-links {
+            display: none;
+        }
+    }
+</style>
+
+<nav class="cta-topbar" aria-label="CTA project links">
+    <a class="cta-brand" href="https://cta.docs.cern.ch/" aria-label="CTA Documentation">
+        <!-- mini tape-reel icon -->
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+            <g fill="none" stroke="currentColor">
+                <circle cx="16" cy="16" r="11.5" stroke-width="2" />
+                <circle cx="16" cy="16" r="3.5" stroke-width="2" />
+            </g>
+            <g fill="currentColor" transform="rotate(45 16 16)">
+                <path id="cta-reel-spoke" d="M13.4 6.3h5.2l-1 5.2h-3.2z" />
+                <use href="#cta-reel-spoke" transform="rotate(90 16 16)" />
+                <use href="#cta-reel-spoke" transform="rotate(180 16 16)" />
+                <use href="#cta-reel-spoke" transform="rotate(270 16 16)" />
+            </g>
+        </svg>
+        <span>CTA</span>
+    </a>
+    <ul>
+        <li class="cta-crate">
+            <a id="cta-topbar-crate" href="#">
+                <!-- cube icon -->
+                <svg viewBox="0 0 512 512" aria-hidden="true">
+                    <path d="M234.5 5.7c13.9-5 29.1-5 43.1 0l192 68.6C495 83.4 512 107.5 512 134.6v242.8c0 27.1-17 51.2-42.5 60.3l-192 68.6c-13.9 5-29.1 5-43.1 0l-192-68.6C17 428.6 0 404.5 0 377.4V134.6c0-27.1 17-51.2 42.5-60.3l192-68.6zM256 66 82.3 128 256 190l173.7-62L256 66zm32 368.6 160-57.1v-188L288 246.6v188z" />
+                </svg>
+                <span id="cta-topbar-crate-name">Rust API</span>
+            </a>
+        </li>
+    </ul>
+    <span class="cta-spacer"></span>
+    <ul class="cta-links">
+        <li><a href="https://cta.docs.cern.ch/">Documentation</a></li>
+        <li><a href="https://cta.web.cern.ch/">Website</a></li>
+        <li><a href="https://gitlab.cern.ch/cta/CTA">Repository</a></li>
+    </ul>
+</nav>
+
+<script>
+    (function () {
+        // rustdoc pages live at different depths; data-root-path points at api/rust/.
+        var vars = document.querySelector('meta[name="rustdoc-vars"]');
+        var root = (vars && vars.dataset.rootPath) || "./";
+        var logoSrc = root + "../../assets/images/cta-logo.png";
+
+        // The sidebar is parsed after this header, so wait for it.
+        document.addEventListener("DOMContentLoaded", function () {
+            var crateBlock = document.querySelector(".sidebar .sidebar-crate");
+            if (!crateBlock || crateBlock.querySelector(".logo-container")) {
+                return; // no sidebar, or a crate already sets #![doc(html_logo_url)]
+            }
+            var logo = document.createElement("a");
+            logo.className = "logo-container cta-sidebar-logo";
+            logo.href = "https://cta.docs.cern.ch/";
+            var img = document.createElement("img");
+            img.src = logoSrc;
+            img.alt = "CERN Tape Archive";
+            logo.appendChild(img);
+            crateBlock.insertBefore(logo, crateBlock.firstChild);
+        });
+
+        var link = document.getElementById("cta-topbar-crate");
+        var current = vars && vars.dataset.currentCrate;
+        if (current) {
+            document.getElementById("cta-topbar-crate-name").textContent = current;
+            link.href = root + current + "/index.html";
+        } else {
+            link.href = root + "index.html";
+        }
+    })();
+</script>

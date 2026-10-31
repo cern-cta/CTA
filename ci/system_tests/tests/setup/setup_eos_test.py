@@ -125,7 +125,7 @@ def test_create_cta_directory(
 
 
 # Identities and numeric IDs are defined in setup_eos_test.py
-# - ctaadmin2 is the CTA administrator used by client-side CTA commands (see client_helper.sh and test_add_admins)
+# - ctaadmin2 is the CTA administrator used by client-side CTA commands (see test_add_admins)
 #   This admin should eventually be removed as the client pod will no longer be able to run CTA admin commands directly
 # - eosadmin1 is an EOS sudo user used for namespace administration, token generation, and privileged eviction
 # - poweruser1 has explicit read/write/prepare/delete rights and is used for staging, releasing, and cleanup

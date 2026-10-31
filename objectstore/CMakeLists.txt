@@ -10,6 +10,12 @@ set (CTAProtoFiles
 set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
+  # GCC 14 + ASan flags protobuf's adjacent-field copies as overflows.
+  # Keep the warning visible without failing generated-code builds; normal builds retain -Werror.
+  set_property(SOURCE ${CTAProtoSources} APPEND PROPERTY COMPILE_OPTIONS -Wno-error=stringop-overflow)
+endif()
+
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED
   ${CTAProtoSources}
@@ -92,5 +98,7 @@ set_property(TARGET ctaobjectstoreunittests PROPERTY   VERSION "${CTA_LIBVERSION
 target_link_libraries(ctaobjectstoreunittests
   rados ctacommon gtest ctaobjectstore)
 if(NOT CTA_USE_PGSCHED)
-  install(TARGETS ctaobjectstoreunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  if(CTA_BUILD_TEST_PACKAGES)
+    install(TARGETS ctaobjectstoreunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  endif()
 endif()

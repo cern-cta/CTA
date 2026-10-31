@@ -18,8 +18,6 @@ set (COMMON_LIB_SRC_FILES
   checksum/ChecksumBlob.cpp
   checksum/CRC.cpp
   config/Config.cpp
-  config/ConfigurationFile.cpp
-  config/SourcedParameter.cpp
   dataStructures/CreationLog.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
@@ -120,10 +118,16 @@ add_library (ctacommon SHARED
 set_property(TARGET ctacommon PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+if(CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
+  target_sources(ctacommon PRIVATE SanitizerSuppressions.cpp)
+endif()
+
 install (TARGETS ctacommon DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
+# Keep version globals in this shared library; propagating the static archive duplicates their destructors.
 target_link_libraries (ctacommon
-  ctaversioninfo
+  PRIVATE ctaversioninfo
+  PUBLIC
   uuid
   cap
   json-c
@@ -136,8 +140,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   auth/jwt/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
-  config/ConfigurationFileTests.cpp
-  config/SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp
@@ -183,6 +185,8 @@ target_include_directories(ctaauth PUBLIC ${CMAKE_SOURCE_DIR}/common/jwt-cpp/inc
 target_link_libraries(ctaauth PRIVATE curl OpenSSL::Crypto)
 target_link_libraries(ctacommonunittests ctaauth)
 
-install(TARGETS ctacommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctacommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 add_executable(mutexLtrace process/threading/MutexLtrace.cpp)
 target_link_libraries(mutexLtrace ctacommon)

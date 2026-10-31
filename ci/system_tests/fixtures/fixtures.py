@@ -20,6 +20,8 @@ from system_tests.helpers.hosts import (
     CtaRmcdHost,
     CtaTapedHost,
     CtaWorkflowApiHost,
+    DCacheHost,
+    DCacheClientHost,
     DiskClientHost,
     DiskInstanceHost,
     EosClientHost,
@@ -128,13 +130,12 @@ def postgres_scheduler_enabled(cta_cli: CtaCliHost) -> bool:
 
 
 @pytest.fixture(scope="session")
-def cta_storage_class() -> str:
-    return "cta_storage_class"
+def cta_storage_class(disk_instance: DiskInstanceHost) -> str:
+    return disk_instance.storage_class
 
 
 @pytest.fixture(scope="session")
 def cta_default_tape_pool() -> str:
-    # For now; don't change, because the populate_catalogue.sh script does not use this value (yet)
     return "ctasystest"
 
 
@@ -221,6 +222,20 @@ def eos_mgm(env: TestEnv) -> EosMgmHost:
     if not env.eos_mgm:
         pytest.skip("This test requires an EOS deployment")
     return env.eos_mgm[0]
+
+
+@pytest.fixture(scope="session")
+def dcache(env: TestEnv) -> DCacheHost:
+    if not env.dcache:
+        pytest.skip("This test requires a dCache deployment")
+    return env.dcache[0]
+
+
+@pytest.fixture(scope="session")
+def dcache_client(env: TestEnv) -> DCacheClientHost:
+    if not env.dcache_client:
+        pytest.skip("This test requires at least one dCache client")
+    return env.dcache_client[0]
 
 
 @pytest.fixture(scope="session")

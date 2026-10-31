@@ -31,15 +31,8 @@ int main(int argc, char** argv) {
 
   const int ret = RUN_ALL_TESTS();
 
-  // Close standard in, out and error so that valgrind can be used with the
-  // following command-line to track open file-descriptors:
-  //
-  //     valgrind --track-fds=yes
-  close(0);
-  close(1);
-  close(2);
-
-  // The unit tests used SQLite and so it should shutodwn in order to release
+  // Keep standard streams open so shutdown failures remain visible.
+  // The unit tests used SQLite and so it should shut down in order to release
   // its resources
   if (SQLITE_OK != sqlite3_shutdown()) {
     std::cerr << "Failed to shutdown SQLite" << std::endl;

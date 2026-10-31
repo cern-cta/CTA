@@ -31,6 +31,12 @@ listenScope: any # set to localhost or any other string to ensure it listens on 
 logging:
   level: "INFO"
 
+# OpenTelemetry is entirely configured through declarative configuration
+# Simply put the config verbatim here under telemetryConfig:
+telemetryConfig: |
+  file_format: "1.0-rc.1"
+  disabled: true
+
 server:
   port: 5014
 

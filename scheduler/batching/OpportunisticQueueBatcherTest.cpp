@@ -1,0 +1,581 @@
+/*
+ * SPDX-FileCopyrightText: 2026 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "scheduler/batching/OpportunisticQueueBatcher.hpp"
+
+#include "common/log/DummyLogger.hpp"
+#include "common/log/LogContext.hpp"
+
+#include <atomic>
+#include <gtest/gtest.h>
+#include <stdexcept>
+#include <thread>
+
+namespace unitTests {
+
+using namespace std::chrono_literals;
+
+namespace {
+
+// Minimal ItemType: only what OpportunisticQueueBatcher itself requires (a public
+// std::promise<ResultType> member), plus a payload to verify batching actually happened.
+struct TestItem {
+  int value = 0;
+  std::promise<int> promise;
+};
+
+// Launches `count` threads that all spin-wait on a plain atomic barrier before calling `fn(i)`, so
+// their calls land close enough together to reliably share a batching window, then joins all of
+// them before returning. Deliberately not condition-variable-based: a busy-poll on an atomic can't
+// lose a wakeup, so there is nothing here for a barrier bug to hide in.
+void runConcurrently(int count, const std::function<void(int)>& fn) {
+  std::atomic<int> readyCount {0};
+  std::atomic<bool> go {false};
+
+  std::vector<std::thread> threads;
+  threads.reserve(count);
+  for (int i = 0; i < count; ++i) {
+    threads.emplace_back([&, i] {
+      ++readyCount;
+      while (!go.load(std::memory_order_acquire)) {
+        std::this_thread::yield();
+      }
+      fn(i);
+    });
+  }
+
+  while (readyCount.load(std::memory_order_acquire) < count) {
+    std::this_thread::yield();
+  }
+  go.store(true, std::memory_order_release);
+
+  for (auto& t : threads) {
+    t.join();
+  }
+}
+
+}  // namespace
+
+class OpportunisticQueueBatcherTest : public ::testing::Test {
+protected:
+  cta::log::DummyLogger m_dummyLog {"dummy", "OpportunisticQueueBatcherTest"};
+};
+
+TEST_F(OpportunisticQueueBatcherTest, singleCallerGetsItsOwnResult) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  int batchesSeen = 0;
+  int lastBatchSize = 0;
+  OpportunisticQueueBatcher<TestItem, int> batcher(100ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    ++batchesSeen;
+    lastBatchSize = static_cast<int>(batch.size());
+    for (auto& item : batch) {
+      item.promise.set_value(item.value * 2);
+    }
+  });
+
+  TestItem item;
+  item.value = 21;
+  const int result = batcher.enqueueAndWait(std::move(item), lc);
+
+  ASSERT_EQ(42, result);
+  ASSERT_EQ(1, batchesSeen);
+  ASSERT_EQ(1, lastBatchSize);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, concurrentCallersAreBatchedTogether) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  constexpr int nbCallers = 8;
+  std::atomic<int> resolveBatchCalls {0};
+  std::atomic<int> maxBatchSizeSeen {0};
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(100ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    ++resolveBatchCalls;
+    int expected = maxBatchSizeSeen.load();
+    while (static_cast<int>(batch.size()) > expected
+           && !maxBatchSizeSeen.compare_exchange_weak(expected, static_cast<int>(batch.size()))) {}
+    for (auto& item : batch) {
+      item.promise.set_value(item.value * 2);
+    }
+  });
+
+  std::vector<int> results(nbCallers, -1);
+  runConcurrently(nbCallers, [&](int i) {
+    log::LogContext threadLc(m_dummyLog);
+    TestItem item;
+    item.value = i;
+    results[i] = batcher.enqueueAndWait(std::move(item), threadLc);
+  });
+
+  // All callers got their own, individually correct result.
+  for (int i = 0; i < nbCallers; ++i) {
+    ASSERT_EQ(i * 2, results[i]);
+  }
+  // resolveBatch ran far fewer times than there were callers: they were genuinely batched together,
+  // not each waiting for its own separate round.
+  ASSERT_LT(resolveBatchCalls.load(), nbCallers);
+  ASSERT_GT(maxBatchSizeSeen.load(), 1);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, capEndsTheWaitEarly) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  constexpr int cap = 6;
+  OpportunisticQueueBatcher<TestItem, int> batcher(
+    2s,  // deliberately long: if the cap did not cut the wait short, this test would take ~2s
+    cap,
+    [&](std::vector<TestItem>& batch, log::LogContext&) {
+      for (auto& item : batch) {
+        item.promise.set_value(item.value);
+      }
+    });
+
+  const auto start = std::chrono::steady_clock::now();
+  runConcurrently(cap, [&](int i) {
+    log::LogContext threadLc(m_dummyLog);
+    TestItem item;
+    item.value = i;
+    batcher.enqueueAndWait(std::move(item), threadLc);
+  });
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+
+  ASSERT_LT(elapsed, 1s);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, windowClosesTheBatchWhenCapIsNotReached) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  const auto window = 150ms;
+  OpportunisticQueueBatcher<TestItem, int> batcher(window,
+                                                   1000,  // cap far larger than what will ever be submitted
+                                                   [&](std::vector<TestItem>& batch, log::LogContext&) {
+                                                     for (auto& item : batch) {
+                                                       item.promise.set_value(item.value);
+                                                     }
+                                                   });
+
+  const auto start = std::chrono::steady_clock::now();
+  TestItem item;
+  item.value = 7;
+  const int result = batcher.enqueueAndWait(std::move(item), lc);
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+
+  ASSERT_EQ(7, result);
+  // The leader had to wait out (most of) the window before processing a batch of just itself.
+  ASSERT_GE(elapsed, window / 2);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, exceptionOnPromiseIsRethrownToCaller) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(50ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      try {
+        throw std::runtime_error("stage-2 failure");
+      } catch (...) {
+        item.promise.set_exception(std::current_exception());
+      }
+    }
+  });
+
+  TestItem item;
+  item.value = 1;
+  ASSERT_THROW(batcher.enqueueAndWait(std::move(item), lc), std::runtime_error);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, resolveBatchThrowingPropagatesToAllConcurrentCallersWithoutDeadlocking) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  constexpr int nbCallers = 5;
+  std::atomic<int> resolveBatchCalls {0};
+  OpportunisticQueueBatcher<TestItem, int> batcher(100ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    // Simulates a bug in resolveBatch itself (as opposed to exceptionOnPromiseIsRethrownToCaller
+    // above, where resolveBatch behaves correctly and catches its own exception): it fails to honour
+    // its contract of resolving every item's promise itself, and instead lets an exception escape.
+    // This must be caught by enqueueAndWait()'s own fallback (see OpportunisticQueueBatcher.hpp) --
+    // otherwise every follower already asleep on m_cv, and every future caller, would be left
+    // permanently blocked. Only the first round throws, so a normal second round below can confirm
+    // the batcher is still usable afterwards.
+    if (resolveBatchCalls++ == 0) {
+      throw std::runtime_error("resolveBatch itself failed");
+    }
+    for (auto& item : batch) {
+      item.promise.set_value(item.value * 2);
+    }
+  });
+
+  std::vector<std::exception_ptr> errors(nbCallers);
+  runConcurrently(nbCallers, [&](int i) {
+    log::LogContext threadLc(m_dummyLog);
+    TestItem item;
+    item.value = i;
+    try {
+      batcher.enqueueAndWait(std::move(item), threadLc);
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  for (int i = 0; i < nbCallers; ++i) {
+    ASSERT_TRUE(errors[i]) << "caller " << i << " should have received the exception resolveBatch let escape";
+    ASSERT_THROW(std::rethrow_exception(errors[i]), std::runtime_error);
+  }
+
+  // The batcher must not be left in a stuck state (m_leaderInProgress never reset) by the round
+  // above: a plain follow-up call must still succeed normally.
+  TestItem item;
+  item.value = 99;
+  ASSERT_EQ(198, batcher.enqueueAndWait(std::move(item), lc));
+}
+
+TEST_F(OpportunisticQueueBatcherTest, followersAreReleasedBeforeAfterReleaseFinishes) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  const auto afterReleaseDelay = 300ms;
+  std::atomic<bool> afterReleaseStarted {false};
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(
+    100ms,
+    1000,
+    [&](std::vector<TestItem>& batch, log::LogContext&) {
+      for (auto& item : batch) {
+        item.promise.set_value(item.value);
+      }
+    },
+    [&](std::vector<TestItem>&, log::LogContext&) {
+      afterReleaseStarted = true;
+      std::this_thread::sleep_for(afterReleaseDelay);
+    });
+
+  std::atomic<bool> followerReturned {false};
+  std::chrono::steady_clock::duration followerElapsed {};
+
+  std::thread leaderThread([&] {
+    log::LogContext leaderLc(m_dummyLog);
+    TestItem item;
+    item.value = 1;
+    batcher.enqueueAndWait(std::move(item), leaderLc);
+  });
+
+  // Give the first thread time to become leader and enter its window wait, then submit a follower.
+  std::this_thread::sleep_for(20ms);
+  const auto start = std::chrono::steady_clock::now();
+  {
+    log::LogContext followerLc(m_dummyLog);
+    TestItem item;
+    item.value = 2;
+    batcher.enqueueAndWait(std::move(item), followerLc);
+  }
+  followerElapsed = std::chrono::steady_clock::now() - start;
+  followerReturned = true;
+
+  leaderThread.join();
+
+  // The follower's own enqueueAndWait() must not include afterRelease's delay: it only had to wait
+  // out (part of) the 100ms window plus resolveBatch's own (near-instant) work, not the leader's
+  // subsequent 300ms afterRelease call.
+  ASSERT_TRUE(afterReleaseStarted.load());
+  ASSERT_LT(followerElapsed, afterReleaseDelay);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, sequentialRoundsDoNotDeadlock) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(20ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      item.promise.set_value(item.value);
+    }
+  });
+
+  for (int round = 0; round < 5; ++round) {
+    log::LogContext roundLc(m_dummyLog);
+    TestItem item;
+    item.value = round;
+    ASSERT_EQ(round, batcher.enqueueAndWait(std::move(item), roundLc));
+  }
+}
+
+TEST_F(OpportunisticQueueBatcherTest, failWholeBatchSetsExceptionOnEveryItemAndCountsPerItem) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  std::vector<TestItem> items(3);
+  std::vector<std::future<int>> futures;
+  for (auto& item : items) {
+    futures.push_back(item.promise.get_future());
+  }
+
+  uint64_t failedCount = 0;
+  try {
+    throw std::runtime_error("bulk insert failed");
+  } catch (...) {
+    cta::failWholeBatch(items,
+                        lc,
+                        std::string("bulk insert failed"),
+                        "test: failing this batch",
+                        failedCount,
+                        [](const TestItem&) -> uint64_t { return 3; });
+  }
+
+  ASSERT_EQ(9u, failedCount);  // 3 items * 3 per item
+  for (auto& f : futures) {
+    ASSERT_THROW(f.get(), std::runtime_error);
+  }
+}
+
+TEST_F(OpportunisticQueueBatcherTest, stopMakesNewCallersThrow) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(100ms, 1000, [](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      item.promise.set_value(item.value);
+    }
+  });
+
+  batcher.stop();
+
+  TestItem item;
+  item.value = 1;
+  ASSERT_THROW(batcher.enqueueAndWait(std::move(item), lc), std::runtime_error);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, stopUnblocksParkedWaiters) {
+  using namespace cta;
+
+  // 10-second window and large cap: neither thread will complete naturally within the test's timescale.
+  OpportunisticQueueBatcher<TestItem, int> batcher(10s, 1000, [](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      item.promise.set_value(item.value);
+    }
+  });
+
+  std::exception_ptr leaderError;
+  std::exception_ptr followerError;
+
+  // Thread 1: becomes leader and parks inside the window wait.
+  std::thread leaderThread([&] {
+    log::LogContext lc(m_dummyLog);
+    TestItem item;
+    item.value = 1;
+    try {
+      batcher.enqueueAndWait(std::move(item), lc);
+    } catch (...) {
+      leaderError = std::current_exception();
+    }
+  });
+
+  // Give the leader time to enter the window wait before submitting the follower.
+  std::this_thread::sleep_for(50ms);
+
+  // Thread 2: finds a leader already in progress and parks in the election loop.
+  std::thread followerThread([&] {
+    log::LogContext lc(m_dummyLog);
+    TestItem item;
+    item.value = 2;
+    try {
+      batcher.enqueueAndWait(std::move(item), lc);
+    } catch (...) {
+      followerError = std::current_exception();
+    }
+  });
+
+  // Give the follower time to park on the cv before stopping the batcher.
+  std::this_thread::sleep_for(50ms);
+
+  const auto stopStart = std::chrono::steady_clock::now();
+  batcher.stop();
+  leaderThread.join();
+  followerThread.join();
+
+  // stop() must have exited the leader's 10-second window early — both threads should unblock well
+  // within 1 second.
+  ASSERT_LT(std::chrono::steady_clock::now() - stopStart, 1s);
+
+  ASSERT_TRUE(leaderError != nullptr);
+  ASSERT_THROW(std::rethrow_exception(leaderError), std::runtime_error);
+  ASSERT_TRUE(followerError != nullptr);
+  ASSERT_THROW(std::rethrow_exception(followerError), std::runtime_error);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, leaderItemAlwaysResolvedUnderOverflow) {
+  // Regression test: when m_pendingBatch holds more than cap items, the leader takes only the first
+  // cap from the front.  A leader whose own item falls beyond that front slice must not hang: it
+  // re-enters the election loop after afterRelease and leads (or follows) subsequent rounds until
+  // its own promise is resolved.
+  //
+  // We exercise this with many concurrent callers and a small cap so that sustained overflow is
+  // likely across multiple rounds.  Every item must resolve; a hang manifests as a test timeout.
+  using namespace cta;
+
+  constexpr size_t cap = 2;
+  constexpr int concurrentCallers = 20;
+  constexpr int rounds = 5;
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(5ms, cap, [](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      item.promise.set_value(item.value * 2);
+    }
+  });
+
+  for (int round = 0; round < rounds; ++round) {
+    std::vector<int> results(concurrentCallers, -1);
+    runConcurrently(concurrentCallers, [&](int i) {
+      log::LogContext threadLc(m_dummyLog);
+      TestItem item;
+      item.value = i;
+      results[i] = batcher.enqueueAndWait(std::move(item), threadLc);
+    });
+    for (int i = 0; i < concurrentCallers; ++i) {
+      ASSERT_EQ(i * 2, results[i]) << "round " << round << " caller " << i;
+    }
+  }
+}
+
+TEST_F(OpportunisticQueueBatcherTest, batchSizeNeverExceedsCapUnderOverflow) {
+  // Verifies the overflow split: when more items are pending than cap allows, each resolveBatch
+  // call receives at most cap items.  Also confirms all items are eventually resolved.
+  using namespace cta;
+
+  constexpr size_t cap = 3;
+  constexpr int totalCallers = 15;
+
+  std::atomic<int> maxBatchSeen {0};
+  std::atomic<int> totalResolved {0};
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(5ms, cap, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    int expected = maxBatchSeen.load();
+    while (static_cast<int>(batch.size()) > expected
+           && !maxBatchSeen.compare_exchange_weak(expected, static_cast<int>(batch.size()))) {}
+    for (auto& item : batch) {
+      item.promise.set_value(item.value);
+      ++totalResolved;
+    }
+  });
+
+  runConcurrently(totalCallers, [&](int i) {
+    log::LogContext threadLc(m_dummyLog);
+    TestItem item;
+    item.value = i;
+    batcher.enqueueAndWait(std::move(item), threadLc);
+  });
+
+  ASSERT_LE(maxBatchSeen.load(), static_cast<int>(cap));
+  ASSERT_EQ(totalCallers, totalResolved.load());
+}
+
+TEST_F(OpportunisticQueueBatcherTest, stopDrainsRemainingItemsAfterOverflowRound) {
+  // Covers stop() firing while a re-entering leader still has its own item in m_pendingBatch.
+  // The slow afterRelease gives stop() a window to drain the queue while the leader is outside
+  // the lock.  The leader must unblock (not hang), and remaining items must receive the
+  // "batcher stopped" exception rather than being silently lost.
+  using namespace cta;
+
+  constexpr size_t cap = 2;
+  constexpr int totalCallers = 6;
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(
+    5ms,
+    cap,
+    [](std::vector<TestItem>& batch, log::LogContext&) {
+      for (auto& item : batch) {
+        item.promise.set_value(item.value);
+      }
+    },
+    // afterRelease is slow enough that stop() can fire while a re-entering leader is here.
+    [](std::vector<TestItem>&, log::LogContext&) { std::this_thread::sleep_for(30ms); });
+
+  std::vector<std::exception_ptr> errors(totalCallers);
+  std::vector<int> results(totalCallers, -1);
+
+  std::thread stopThread([&] {
+    std::this_thread::sleep_for(20ms);  // let at least one overflow round start
+    batcher.stop();
+  });
+
+  runConcurrently(totalCallers, [&](int i) {
+    log::LogContext threadLc(m_dummyLog);
+    TestItem item;
+    item.value = i;
+    try {
+      results[i] = batcher.enqueueAndWait(std::move(item), threadLc);
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  stopThread.join();
+
+  // Every caller must have either a result or a "batcher stopped" exception — none must hang.
+  for (int i = 0; i < totalCallers; ++i) {
+    const bool hasResult = (results[i] != -1);
+    const bool hasStopped = (errors[i] != nullptr);
+    ASSERT_TRUE(hasResult || hasStopped) << "caller " << i << " neither resolved nor received stop exception";
+    if (hasStopped) {
+      ASSERT_THROW(std::rethrow_exception(errors[i]), std::runtime_error);
+    }
+  }
+}
+
+TEST_F(OpportunisticQueueBatcherTest, resolveBatchThrowsDuringReentryRoundDoesNotDeadlock) {
+  // resolveBatchThrowingPropagatesToAllConcurrentCallersWithoutDeadlocking uses a large cap so
+  // there is never overflow and the leader always resolves its own item in the first round.  This
+  // test uses cap=2 with many callers so overflow is likely, meaning the leader may be in a
+  // re-entry round (processing items that are not its own) when resolveBatch throws.  In that
+  // round the fallback catch resolves the batch items with the exception, but the leader's own
+  // item is not in that batch and remains unresolved.  The leader must loop back, win the next
+  // round, and eventually resolve — no deadlock.
+  using namespace cta;
+
+  constexpr size_t cap = 2;
+  constexpr int totalCallers = 10;
+
+  std::atomic<int> resolveCallCount {0};
+  OpportunisticQueueBatcher<TestItem, int> batcher(5ms, cap, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    // Throw on the first call only; subsequent calls resolve normally.
+    if (resolveCallCount.fetch_add(1) == 0) {
+      throw std::runtime_error("resolveBatch failure during re-entry");
+    }
+    for (auto& item : batch) {
+      item.promise.set_value(item.value * 2);
+    }
+  });
+
+  std::vector<std::exception_ptr> errors(totalCallers);
+  std::vector<int> results(totalCallers, -1);
+
+  runConcurrently(totalCallers, [&](int i) {
+    log::LogContext threadLc(m_dummyLog);
+    TestItem item;
+    item.value = i;
+    try {
+      results[i] = batcher.enqueueAndWait(std::move(item), threadLc);
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  // Every caller must have resolved (value or exception) — no hangs.
+  for (int i = 0; i < totalCallers; ++i) {
+    ASSERT_TRUE(results[i] != -1 || errors[i] != nullptr) << "caller " << i << " never resolved";
+  }
+
+  // The batcher must still be usable after the throw.
+  log::LogContext lc(m_dummyLog);
+  TestItem item;
+  item.value = 7;
+  ASSERT_EQ(14, batcher.enqueueAndWait(std::move(item), lc));
+}
+
+}  // namespace unitTests

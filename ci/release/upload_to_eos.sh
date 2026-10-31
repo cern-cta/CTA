@@ -26,7 +26,7 @@ usage() {
   echo "  --local-source-dir <dir>         :    Local directory that will be uploaded to the provided --eos-target-dir."
   echo "  --eos-source-dir   <dir>         :    EOS directory that will be copied to the provided --eos-target-dir. Must be used with --cta-version."
   echo "  --eos-target-dir   <dir>         :    Final EOS repository directory where RPMs will be uploaded."
-  echo "  --cta-version      <cta_version> :    CTA release tag, with or without its leading v."
+  echo "  --cta-version      <cta_version> :    Exact RPM version-release (e.g. 6.12.0.0-1.pgall.el9)."
   echo
   exit 1
 }
@@ -137,10 +137,6 @@ upload_to_eos() {
     exit 1
   fi
 
-  if [[ -n "${cta_version}" ]]; then
-    cta_version=${cta_version#v}
-  fi
-
   # Source directory names are discarded to prevent accidental nested repository layouts.
   repository_dir="${eos_target_dir}"
 
@@ -176,7 +172,22 @@ upload_to_eos() {
       exit 1
     fi
 
-    mapfile -t rpm_paths < <(printf '%s\n' "${source_listing}" | grep -F -- "${cta_version}." | grep -E '\.rpm$' || true)
+    # Compare the literal version-release and architecture, not a version substring.
+    while IFS= read -r rpm_path; do
+      if [[ "${rpm_path##*/}" == cta-*-"${cta_version}".x86_64.rpm ]]; then
+        rpm_paths+=("$rpm_path")
+      fi
+    done <<< "$source_listing"
+  fi
+
+  # Local CI artifacts must also belong to the requested build before any are uploaded.
+  if [[ -n "$local_source_dir" && -n "$cta_version" ]]; then
+    for rpm_path in "${rpm_paths[@]}"; do
+      if [[ "${rpm_path##*/}" != cta-*-"${cta_version}".x86_64.rpm ]]; then
+        log_error "ERROR: RPM does not match CTA ${cta_version}: ${rpm_path}"
+        exit 1
+      fi
+    done
   fi
 
   if [[ ${#rpm_paths[@]} -eq 0 ]]; then

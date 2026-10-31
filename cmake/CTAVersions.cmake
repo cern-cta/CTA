@@ -1,9 +1,16 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Version inputs are explicit CMake cache variables.
-set(CTA_VERSION 0 CACHE STRING "CTA version")
-set(CTA_RELEASE 1 CACHE STRING "CTA package release")
+set(CTA_VERSION "" CACHE STRING "CTA version-release")
+
+# For e.g. RPMs we need to distinguish between the version and the release.
+# For that reason, we require there to be at least one hyphen in the version string.
+if(NOT CTA_VERSION MATCHES "^[A-Za-z0-9._+~^]+-[A-Za-z0-9._+~^]+$")
+  message(FATAL_ERROR
+    "CTA_VERSION must contain two nonempty parts separated by exactly one hyphen, "
+    "using only letters, numbers, '.', '_', '+', '~', or '^'; for example 6-dev.")
+endif()
+
 set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0" CACHE STRING
   "XRootD SSI protobuf interface version")
 
@@ -22,24 +29,21 @@ set(CTA_SOMAJOR ${CTA_SOVERSION})
 set(CTA_SOMINOR 1)
 set(CTA_SOPATCH 0)
 
-# Change the release number if VCS version is provided
-if(DEFINED VCS_VERSION)
-  set(CTA_RELEASE ${VCS_VERSION})
+if(CTA_BUILD_MODE STREQUAL "compile")
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/version.cpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+    @ONLY
+  )
+
+  # Share generated version information between compiled targets.
+  add_library(ctaversioninfo STATIC
+    ${PROJECT_SOURCE_DIR}/version.hpp
+    ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+  )
+
+  target_include_directories(ctaversioninfo PUBLIC ${PROJECT_SOURCE_DIR})
 endif()
-
-configure_file(
-  ${PROJECT_SOURCE_DIR}/version.cpp.in
-  ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-  @ONLY
-)
-
-# Create a library target for versioning so that we can link against it where needed instead of manually adding the cpp file everywhere
-add_library(ctaversioninfo STATIC
-  ${PROJECT_SOURCE_DIR}/version.hpp
-  ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-)
-
-target_include_directories(ctaversioninfo PUBLIC ${PROJECT_SOURCE_DIR})
 
 # Shared library versioning
 set(CTA_LIBVERSION ${CTA_SOMAJOR}.${CTA_SOMINOR}.${CTA_SOPATCH})

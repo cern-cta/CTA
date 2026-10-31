@@ -9,7 +9,10 @@
 #include "OsmXdrStructure.hpp"
 #include "common/exception/Exception.hpp"
 
-#include <cstring>    // memeset
+#include <cstdlib>
+#include <cstring>  // memeset
+#include <memory>
+#include <new>
 #include <rpc/xdr.h>  // xdrmem_create for decode_legato
 #include <string>     // std::string to_string
 
@@ -85,23 +88,27 @@ void cta::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime,
     throw cta::exception::Exception(std::string("The size of the Version is greater than LIMITS::LABELVERSIONLEN"));
   }
 
-  constexpr int NSR_LENGTH = 64;
   unsigned int uiDataLen = 0;
-  xdr::Chunk chunk;
   xdr::Record record;
   xdr::VolLabel volLabel;
-  char* pcVolLabel = new char[LIMITS::MMAXCHK];
+  // XDR frees owned buffers with free(), so use matching allocations.
+  std::unique_ptr<char, decltype(&std::free)> pcVolLabel(static_cast<char*>(std::malloc(LIMITS::MMAXCHK)), &std::free);
+  if (!pcVolLabel) {
+    throw std::bad_alloc();
+  }
   XDR xdr;  // xdr handler
 
-  xdrmem_create(&xdr, pcVolLabel, LIMITS::MMAXCHK, XDR_ENCODE);
+  xdrmem_create(&xdr, pcVolLabel.get(), LIMITS::MMAXCHK, XDR_ENCODE);
 
   volLabel.m_ulMagic = LIMITS::MVOLMAGIC;
   volLabel.m_ulCreateTime = ulCreateTime;
   volLabel.m_ulExpireTime = ulExpireTime;
   volLabel.m_ulRecSize = ulRecSize;  // LIMITS::MAXMRECSIZE
   volLabel.m_ulVolId = ulVolId;
-  volLabel.m_pcVolName = new char[NSR_LENGTH];
-  strncpy(volLabel.m_pcVolName, strVolName.c_str(), LIMITS::VOLNAMELEN + 1);
+  volLabel.m_pcVolName = strdup(strVolName.c_str());
+  if (!volLabel.m_pcVolName) {
+    throw std::bad_alloc();
+  }
 
   if (!volLabel.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error encoding vollabel"));
@@ -111,18 +118,21 @@ void cta::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime,
 
   xdr_destroy(&xdr);
 
-  record.m_RChunk.m_pChunk = new xdr::Chunk();
+  record.m_RChunk.m_pChunk = static_cast<xdr::Chunk*>(std::calloc(1, sizeof(xdr::Chunk)));
+  if (!record.m_RChunk.m_pChunk) {
+    throw std::bad_alloc();
+  }
+  record.m_RChunk.m_ulChunkLen = 1;
   record.m_RChunk.m_pChunk->m_ulSsid = 0;
   record.m_RChunk.m_pChunk->mc_ulLow = 0;
   record.m_RChunk.m_pChunk->m_data.m_uiDataLen = uiDataLen;
-  record.m_RChunk.m_pChunk->m_data.m_pcDataVal = pcVolLabel;  // LIMITS::MMAXCHK
+  record.m_RChunk.m_pChunk->m_data.m_pcDataVal = pcVolLabel.release();
 
   memset(record.m_tcHandler, 0x20, sizeof(record.m_tcHandler));
   record.m_ulVolid = volLabel.m_ulVolId;
   record.m_ulFn = 0;
   record.m_ulRn = 0;
   record.m_ulLen = 0;  // set this to 0 now, it will be corrected later
-  record.m_RChunk.m_ulChunkLen = 1;
 
   xdrmem_create(&xdr, rawLabel(), LIMITS::MAXMRECSIZE, XDR_ENCODE);
   if (!record.decode(&xdr)) {

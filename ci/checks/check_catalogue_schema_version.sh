@@ -60,22 +60,23 @@ CTA_PROJECT_NUM_SUPPORTED_VERSIONS=$(jq '.supportedCatalogueVersions | length' $
 
 #### Start checks ####
 
-echo "Checking..."
+error=""
+log_task "Checking catalogue schema versions"
 # Always check that the CTA catalogue schema version is the same in both the main CTA project and the 'cta-catalogue-schema' submodule
-echo -n "- CTA catalogue schema version is the same in the project.json and 'cta-catalogue-schema' submodule: "
+log_task "Checking catalogue schema version matches project.json and the submodule"
 if [[ "$CTA_PROJECT_CATALOGUE_VERSION" != "${CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION}.${CTA_SUB_REPO__CATALOGUE_MINOR_VERSION}" ]]; then
   error="${error}CTA catalogue schema version is not the same in the project.json and the 'cta-catalogue-schema' submodule.
          ${CTA_PROJECT_CATALOGUE_VERSION} vs ${CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION}.${CTA_SUB_REPO__CATALOGUE_MINOR_VERSION}\n"
-  echo "FAIL"
+  log_error "FAIL"
 else
-  echo "OK"
+  log_success "OK"
 fi
-echo -n "- CTA catalogue schema version is part of supported catalogue versions: "
+log_task "Checking catalogue schema version is supported"
 if ! echo "${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS}" | grep -q -w "$CTA_PROJECT_CATALOGUE_MAJOR_VERSION"; then
   error="${error}The CTA catalogue schema version must be part of the supportedCatalogueVersions.\n"
-  echo "FAIL"
+  log_error "FAIL"
 else
-  echo "OK"
+  log_success "OK"
 fi
 
 # [Optional] Check that the 'cta-catalogue-schema' submodule version is tagged
@@ -86,12 +87,12 @@ if [[ "$check_catalogue_submodule_tags" -eq "1" ]]; then
     git fetch --tags --force
     git tag
   )
-  echo -n "- CTA catalogue schema version is tagged in the 'cta-catalogue-schema' submodule commit: "
+  log_task "Checking catalogue schema version has a submodule tag"
   if [[ 0 == $(echo $CTA_SUB_REPO__TAGS | grep $CTA_PROJECT_CATALOGUE_VERSION | wc -l) ]]; then
     error="${error}The 'cta-catalogue-schema' submodule commit does not contain a tag for CTA catalogue schema version ${CTA_PROJECT_CATALOGUE_VERSION}.\n"
-    echo "FAIL"
+    log_error "FAIL"
   else
-    echo "OK"
+    log_success "OK"
   fi
 fi
 
@@ -100,46 +101,46 @@ fi
 # - 'supportedCatalogueVersions' lists the versions that can be migrated to the current catalogue version.
 # - 'CTA_PROJECT_PREV_CATALOGUE_VERSIONS' values must be smaller than 'CTA_PROJECT_CATALOGUE_MAJOR_VERSION'
 if [[ "$CTA_PROJECT_NUM_SUPPORTED_VERSIONS" -gt "1" ]]; then
-  echo "- CTA release is pivot (multiple catalogue versions supported): ${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS}"
-  echo "- All previous supported releases are less than the current version: "
+  log_task "CTA release is pivot (multiple catalogue versions supported): ${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS}"
+  log_task "Checking previous supported releases are older than the current version"
   for PREV_VERSION in $CTA_PROJECT_PREV_CATALOGUE_VERSIONS; do
     if [[ "$(printf '%s\n' "$PREV_VERSION" "$CTA_PROJECT_CATALOGUE_VERSION" | sort -V | head -n1)" != "$PREV_VERSION" ]]; then
       error="${error}Previous CTA catalogue schema version ${PREV_VERSION} is greater than current version ${CTA_PROJECT_CATALOGUE_VERSION}.\n"
-      echo "  - FAIL(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
+      log_error "FAIL(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
     else
-      echo "  - OK(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
+      log_success "OK(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
     fi
   done
 else
-  echo "- CTA release is not pivot (single catalogue version supported): ${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS}"
+  log_task "CTA release is not pivot (single catalogue version supported): ${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS}"
 fi
 
 # Validate that there are migration scripts between all versions
 CURR_VERSION=${CTA_PROJECT_CATALOGUE_MAJOR_VERSION}
-echo "- If schema migration scripts exist: "
+log_task "Checking schema migration scripts exist"
 for PREV_VERSION in $CTA_PROJECT_PREV_CATALOGUE_VERSIONS; do
   migration_script_name_1="${PREV_VERSION}to${CURR_VERSION}.sql"
   migration_script_name_2="${PREV_VERSION}.0to${CURR_VERSION}.0.sql"
   migration_scripts_dir="${project_root}/catalogue/cta-catalogue-schema/migrations/liquibase"
   if [[ ! -f "${migration_scripts_dir}/oracle/${migration_script_name_1}" ]] && [[ ! -f "${migration_scripts_dir}/oracle/${migration_script_name_2}" ]]; then
     error="${error}Missing oracle migration script from CTA catalogue schema version ${PREV_VERSION} to ${CURR_VERSION}.\n"
-    echo "  - Oracle(${PREV_VERSION}->${CURR_VERSION}): FAIL"
+    log_error "Oracle(${PREV_VERSION}->${CURR_VERSION}): FAIL"
   else
-    echo "  - Oracle(${PREV_VERSION}->${CURR_VERSION}): OK"
+    log_success "Oracle(${PREV_VERSION}->${CURR_VERSION}): OK"
   fi
   if [[ ! -f "${migration_scripts_dir}/postgres/${migration_script_name_1}" ]] && [[ ! -f "${migration_scripts_dir}/postgres/${migration_script_name_2}" ]]; then
     error="${error}Missing postgres migration script from CTA catalogue schema version ${PREV_VERSION} to ${CURR_VERSION}.\n"
-    echo "  - Postgres(${PREV_VERSION}->${CURR_VERSION}): FAIL"
+    log_error "Postgres(${PREV_VERSION}->${CURR_VERSION}): FAIL"
   else
-    echo "  - Postgres(${PREV_VERSION}->${CURR_VERSION}): OK"
+    log_success "Postgres(${PREV_VERSION}->${CURR_VERSION}): OK"
   fi
 done
 
 # Fail if there were error...
 if [[ -n "${error}" ]]; then
-  log_error "$(printf 'Errors:\n%s' "${error}")"
+  log_error "$(printf 'Errors:\n%b' "${error}")"
   exit 1
 fi
 
-echo "Success: All checks succeeded!"
+log_success "SUCCESS: All catalogue schema checks passed"
 exit 0

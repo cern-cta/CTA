@@ -28,7 +28,6 @@ usage() {
   echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
   echo "      --eos-config <file>:            Values file to use for the EOS chart."
-  echo "      --setup-enabled <true|false>:   Whether to run the setup scripts or not."
   echo
   exit 1
 }
@@ -41,9 +40,6 @@ check_helm_installed() {
 }
 
 deploy() {
-  project_json_path="../../project.json"
-  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
-  setup_enabled=true
   eos_config="presets/eos/auth-jwt.yaml"
 
   # Parse command line arguments
@@ -62,9 +58,6 @@ deploy() {
       --eos-config)
         eos_config="$2"
         shift ;;
-      --setup-enabled)
-        setup_enabled="$2"
-        shift ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;
@@ -81,28 +74,22 @@ deploy() {
   fi
 
 
-  helm_flags=""
+  helm_flags=(--values "$eos_config")
   if [[ -n "$eos_image_repository" ]]; then
-    helm_flags+=" --set global.repository=${eos_image_repository}"
+    helm_flags+=(--set-string "server.global.repository=${eos_image_repository}")
   fi
   if [[ -n "$eos_image_tag" ]]; then
-    helm_flags+=" --set global.tag=${eos_image_tag}"
-  fi
-  if [[ -n "$eos_image_tag" ]]; then
-    helm_flags+=" --values presets/dev-eos-common.yaml --values ${eos_config}"
+    helm_flags+=(--set-string "server.global.tag=${eos_image_tag}")
   fi
 
-  log_run helm upgrade --install eos oci://registry.cern.ch/eos/charts/server --version ${eos_server_chart_version} \
-                      --namespace ${namespace} \
+  # Dependency update can take a few seconds to do a quick check to see if we can skip it
+  if ! helm dependency list helm/eos | grep -q '[[:space:]]ok[[:space:]]*$'; then
+    log_run helm dependency update helm/eos --skip-refresh
+  fi
+  log_run helm upgrade --install eos helm/eos \
+                      --namespace "$namespace" \
                       --wait --timeout 5m \
-                      --reuse-values \
-                      ${helm_flags}
-
-  if [[ "$setup_enabled" == "true" ]]; then
-    EOS_MGM_POD=eos-mgm-0
-    kubectl cp --namespace "${namespace}" ./setup/configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
-    kubectl exec --namespace "${namespace}" ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"
-  fi
+                      "${helm_flags[@]}"
 }
 
 check_helm_installed

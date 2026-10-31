@@ -792,7 +792,7 @@ mediatype (mt)
     nominal capacity of each media type, which is used to estimate the total capacity of tape pools.
 
     Optionally, specify the parameters for software Recommended Access Order (LTO-8 or older tape
-    technology only). See **cta-taped(1cta)** for details.
+    technology only). See **cta-taped(1)** for details.
   */
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD},
    {opt_mediatype_alias,

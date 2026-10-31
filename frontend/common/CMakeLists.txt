@@ -58,4 +58,6 @@ target_link_libraries(ctafrontendcommonconfigunittests ctaruntime)
 set_property(TARGET ctafrontendcommonconfigunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctafrontendcommonconfigunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctafrontendcommonconfigunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctafrontendcommonconfigunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

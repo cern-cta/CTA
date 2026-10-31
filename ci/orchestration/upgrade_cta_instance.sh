@@ -42,11 +42,7 @@ check_helm_installed() {
 }
 
 update_local_cta_chart_dependencies() {
-  # This is a hack to ensure we don't waste 30 seconds updating local dependencies
-  # Once helm dependency update gets some performance improvements this can be removed
-  TEMP_HELM_HOME=$(mktemp -d)
-  add_trap 'rm -rf "$TEMP_HELM_HOME"' EXIT
-  export HELM_CONFIG_HOME="$TEMP_HELM_HOME"
+  # Local dependencies need no remote repositories; skip both index loading and refreshes.
 
   echo "Updating chart dependencies"
   charts=(
@@ -54,18 +50,17 @@ update_local_cta_chart_dependencies() {
     "auth"
     "catalogue"
     "scheduler"
-    "client"
     "cli"
-    "frontend"
+    "frontend-wfe"
+    "frontend-admin"
     "taped"
     "rmcd"
     "maintd"
     "cta"
   )
   for chart in "${charts[@]}"; do
-    helm dependency update helm/"$chart" > /dev/null
+    helm dependency update helm/"$chart" --skip-refresh --repository-config /dev/null > /dev/null
   done
-  unset HELM_CONFIG_HOME
 }
 
 upgrade_instance() {
@@ -136,12 +131,7 @@ upgrade_instance() {
 
 }
 
-setup_system() {
-  ./setup/init_kerberos.sh -n ${namespace}
-}
-
 check_helm_installed
 upgrade_instance "$@"
-setup_system
 echo "CTA instance in ${namespace} successfully upgraded:"
 kubectl --namespace ${namespace} get pods

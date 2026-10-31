@@ -7,7 +7,6 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
-#include "catalogue/DriveConfig.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/TapePool.hpp"
 #include "common/Constants.hpp"
@@ -143,6 +142,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       + request.diskFileInfo.path);
   }
 
+  // File-by-file scheme (objectstore always; pgsched when batching is disabled in FrontendBatchingLayer).
   const auto queueCriteria =
     m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, request.storageClass, request.requester);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
@@ -204,6 +204,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   using utils::midEllipsis;
   using utils::postEllipsis;
   utils::Timer t;
+
   // Get the queue criteria
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
 
@@ -266,6 +267,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     .add("diskFileGid", request.diskFileInfo.gid)
     .add("dstURL", request.dstURL)
     .add("errorReportURL", request.errorReportURL)
+    // Creation host and usernname are logged only, not used for scheduling.
     .add("creationHost", request.creationLog.host)
     .add("creationTime", request.creationLog.time)
     .add("creationUser", request.creationLog.username)
@@ -1049,15 +1051,31 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
 }
 
 //------------------------------------------------------------------------------
-// reportDriveConfig
+// reportSchedulerBackendName
 //------------------------------------------------------------------------------
-void Scheduler::reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) {
+void Scheduler::reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) {
   utils::Timer t;
-  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, tapedConfig.driveName.value());
+  // Temporary for backward compatibility. Should be removed in the next catalogue upgrade as it should be a dedicated column
+  // in the drive state table
+  constexpr const char* schedulerBackendNameKey = "SchedulerBackendName";
+  auto driveConfig = m_catalogue.DriveConfig()->getTapeDriveConfig(driveName, schedulerBackendNameKey);
+  if (driveConfig) {
+    m_catalogue.DriveConfig()->modifyTapeDriveConfig(driveName,
+                                                     "general",
+                                                     schedulerBackendNameKey,
+                                                     m_schedulerBackendName,
+                                                     "TOML config file");
+  } else {
+    m_catalogue.DriveConfig()->createTapeDriveConfig(driveName,
+                                                     "general",
+                                                     schedulerBackendNameKey,
+                                                     m_schedulerBackendName,
+                                                     "TOML config file");
+  }
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
-  spc.add("drive", tapedConfig.driveName.value()).add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::reportDriveConfig(): success.");
+  spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::reportSchedulerBackendName(): success.");
 }
 
 //------------------------------------------------------------------------------
@@ -2709,6 +2727,20 @@ std::vector<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAn
   return ret;
 }
 
+std::pair<std::set<std::string>, std::set<std::string>> Scheduler::buildRetrieveCapableVids() const {
+  catalogue::TapeSearchCriteria criteria;
+  std::set<std::string> activeVids, disabledVids;
+  criteria.state = common::dataStructures::Tape::ACTIVE;
+  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) {
+    activeVids.insert(t.vid);
+  }
+  criteria.state = common::dataStructures::Tape::DISABLED;
+  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) {
+    disabledVids.insert(t.vid);
+  }
+  return {activeVids, disabledVids};
+}
+
 void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log::LogContext& logContext) {
   cta::common::dataStructures::Tape tapeDataRefreshed;
   cta::common::dataStructures::SecurityIdentity admin;
@@ -2885,7 +2917,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 #ifndef CTA_PGSCHED
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        auto [activeVids, disabledVids] = buildRetrieveCapableVids();
+        m_db.cleanRetrieveQueueForVid(vid, activeVids, disabledVids, logContext);
         updateTapeStateFromPending(vid, logContext);
 #endif
       }
@@ -2908,8 +2941,9 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-        // PGSCHED TO-DO wee need to check the REPACKING RETRIEVE TABLE not the RETRIEVE TABLE HERE !!!
-        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        // PGSCHED TO-DO: also handle REPACK_RETRIEVE_PENDING_QUEUE for repack jobs on this tape
+        auto [activeVids, disabledVids] = buildRetrieveCapableVids();
+        m_db.cleanRetrieveQueueForVid(vid, activeVids, disabledVids, logContext);
         updateTapeStateFromPending(vid, logContext);
 #endif
       }
@@ -2934,7 +2968,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 #ifndef CTA_PGSCHED
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        auto [activeVids, disabledVids] = buildRetrieveCapableVids();
+        m_db.cleanRetrieveQueueForVid(vid, activeVids, disabledVids, logContext);
         updateTapeStateFromPending(vid, logContext);
 #endif
       }
@@ -3352,6 +3387,10 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
 
 cta::catalogue::Catalogue& Scheduler::getCatalogue() {
   return m_catalogue;
+}
+
+SchedulerDatabase& Scheduler::getDb() {
+  return m_db;
 }
 
 }  // namespace cta

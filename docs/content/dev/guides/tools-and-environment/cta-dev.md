@@ -16,7 +16,7 @@ Each stage can be run independently. The combined commands cover the common end-
 
 | Command | Stages | Typical use |
 | --- | --- | --- |
-| `build` | Build RPMs | Compile after changing source code. |
+| `build` | Build RPM or Debian packages | Compile after changing source code. |
 | `images` | Build images | Repackage existing RPMs into service images. |
 | `deploy` | Deploy | Replace the development instance with existing images. |
 | `test` | Test | Run [system tests](../testing/system-tests.md) against the deployed instance. |
@@ -69,21 +69,33 @@ Command-line options override `ci/.cta-dev.env`, which overrides the built-in de
 
 ### Custom versions and image tags
 
-Most development builds should use the default version and tag (`6-dev`). When a distinct version is needed, pass the
-complete value with `--cta-version`. For example, this sets package version `6`, release suffix `local-test`, and image tag `6-local-test`:
+Most development builds should use the default version and tag (`6-dev`).
+When a distinct version is needed, pass the complete value with `--cta-version`.
+For example, this sets package version `6`, package release `local.test`, and image tag `6-local.test`:
 
 ```bash
-cta-dev up --cta-version 6-local-test
+cta-dev up --cta-version 6-local.test
 ```
 
 This labels the build from your checkout; it does not select a Git tag or change the source revision.
-
-Use `<version>-<suffix>`: the version contains numbers and dots; the suffix contains lowercase letters, numbers, dots, and hyphens. When running `build`, `images`, and `deploy` separately, pass the
-same version to every stage.
+The value is used unchanged, without adding variant or platform suffixes.
+Use `<version>-<release>` with exactly one separating hyphen and two nonempty fields containing letters, numbers, `.`, `_`, `+`, `~`, or `^`.
+CI and release tooling enforce their naming conventions separately.
+When running `build`, `images`, and `deploy` separately, pass the same version to every stage.
 
 ## Build options
 
-The default build uses the objectstore scheduler and disables Oracle catalogue support.
+| Platform | Scheduler and Oracle support | Package output |
+| --- | --- | --- |
+| EL9 / EL10 | Objectstore by default; PostgreSQL optional. Oracle disabled by default, optional. | `build/<platform>/RPM/` |
+| Debian 13 | PostgreSQL only, selected automatically; no Oracle support. | `build/debian13/DEB/` |
+
+Select the platform when building:
+
+```sh
+cta-dev build --platform el10
+cta-dev build --platform debian13
+```
 
 | Option | Use |
 | --- | --- |
@@ -93,12 +105,15 @@ The default build uses the objectstore scheduler and disables Oracle catalogue s
 | `--cta-version <version>` | Set the package version and image tag; the default is `6-dev`. |
 | `--enable-unit-tests` | Run unit tests during the package build. |
 | `--cmake-build-type Debug` | Select a debug build. |
-| `--enable-address-sanitizer` | Build with AddressSanitizer. |
-| `--disable-ccache` | Bypass the compilation cache. |
+| `--sanitizers <mode>` | Select `none` (default), `address`, `undefined`, `address,undefined`, or `thread`. |
+| `--disable-sccache` | Bypass the compilation cache. |
 
 Keep platform, scheduler, Oracle support, and version choices consistent between stages. Unit-test, CMake, sanitizer, and cache options apply to `build` and combined commands such as `up` and `all`. Run `cta-dev <command> --help` for the complete option list.
 
 `cta-dev` automatically selects package repositories, using CERN internal repositories when configured and reachable and public repositories otherwise. Use `--use-public-repos` to override this selection.
+
+Use `--sanitizers address,undefined --enable-unit-tests` to build and test with AddressSanitizer and UndefinedBehaviorSanitizer.
+Run `--sanitizers thread --enable-unit-tests` separately; ThreadSanitizer cannot be combined with AddressSanitizer.
 
 ## Deployment options
 
@@ -181,7 +196,9 @@ Use [Working with Development Pods](development-pods.md) to inspect services and
 
 ## Incremental builds and recovery
 
-Compilation runs in a persistent container specific to the worktree and platform. Packages and intermediate files remain in `build/<platform>/` in the checkout. The recorded configuration and build-success state determine whether the next build can reuse its CMake configuration.
+Compilation runs in a persistent container specific to the worktree and platform.
+Packages and intermediate files remain in `build/<platform>/` in the checkout.
+Build configuration and success state are recorded separately for each platform in `build/.cta-dev-state/<platform>.json`, so switching platforms preserves incremental builds.
 
 - An unchanged configuration after a successful build reuses the output and skips CMake configuration.
 - Changing the scheduler, Oracle support, or build generator cleans the platform's build directory and regenerates source packages.

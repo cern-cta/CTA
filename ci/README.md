@@ -18,6 +18,7 @@ This directory contains all the files necessary for development and automation w
 * `cta-dev.bash-completion`: Script for auto-completion of `cta-dev`. Used during `cta-dev install`.
 * `cta-dev.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See `./cta-dev.sh --help`.
 * `ci-download-artifacts.sh`: Downloads and extracts the artifacts of a single GitLab pipeline job.
+* `ci-download-sonarcloud-issues.py`: Downloads SonarCloud issues and component/rule metadata as JSON using Python 3 (no extra dependencies).
 
 ## Useful links
 

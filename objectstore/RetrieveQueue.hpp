@@ -34,6 +34,9 @@ public:
   void getPayloadFromHeader() override;
 
 private:
+  // Keep the base overload visible without exposing initialization without a queue identifier.
+  using ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize;
+
   // Validates all summaries are in accordance with each other.
   bool checkMapsAndShardsCoherency();
 

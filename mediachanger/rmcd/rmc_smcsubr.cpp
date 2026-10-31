@@ -664,15 +664,15 @@ int smc_dismount(const int rpfd,
       return RBT_OK;
     }
 
+    nb_element_status_reads++;
     drive_not_unloaded = (0 == (drive_element_info.state & 0x8));
     if (drive_not_unloaded) {
       rmc_usrmsg(lc, rpfd, func, "read_elem_status of %s on drive %d detected Drive Not Unloaded\n", vid, drvord);
-    }
 
-    nb_element_status_reads++;
-
-    if (nb_element_status_reads < max_element_status_reads) {
-      sleep(dismount_status_read_delay);
+      // Wait only when another status check will follow.
+      if (nb_element_status_reads < max_element_status_reads) {
+        sleep(dismount_status_read_delay);
+      }
     }
   }
   if (drive_not_unloaded) {

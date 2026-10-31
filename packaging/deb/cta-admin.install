@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/bin/cta-admin
+usr/share/man/man1/cta-admin.1
+usr/share/doc/cta-admin/examples/cta-admin.example.conf

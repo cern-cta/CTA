@@ -62,6 +62,11 @@ public:
     return m_SchedDB->queueArchive(instanceName, request, criteria, logContext);
   }
 
+  std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                        log::LogContext& lc) override {
+    return m_SchedDB->queueArchive(batch, lc);
+  };
+
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity,
                              const std::string& remoteFile) override {
     m_SchedDB->deleteRetrieveRequest(cliIdentity, remoteFile);
@@ -88,14 +93,14 @@ public:
 
   rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
                                 common::dataStructures::QueueType queueType,
-                                const std::optional<std::string>& tapePoolName = nullptr,
+                                const std::optional<std::string>& tapePoolName = std::nullopt,
                                 bool repack = false) const override {
     return m_SchedDB->getArchiveJobRows(conn, queueType, tapePoolName, repack);
   }
 
   rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
                                  common::dataStructures::QueueType queueType,
-                                 const std::optional<std::string>& vid = nullptr,
+                                 const std::optional<std::string>& vid = std::nullopt,
                                  bool repack = false) const override {
     return m_SchedDB->getRetrieveJobRows(conn, queueType, vid, repack);
   }
@@ -151,8 +156,12 @@ public:
     m_SchedDB->setRetrieveQueueCleanupFlag(vid, val, lc);
   }
 
-  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& lc) override {
-    m_SchedDB->cleanRetrieveQueueForVid(vid, lc);
+  /** Delegates to the underlying SchedulerDatabase implementation. */
+  void cleanRetrieveQueueForVid(const std::string& vid,
+                                const std::set<std::string>& activeVids,
+                                const std::set<std::string>& disabledVids,
+                                log::LogContext& lc) override {
+    m_SchedDB->cleanRetrieveQueueForVid(vid, activeVids, disabledVids, lc);
   }
 
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested,
@@ -258,6 +267,11 @@ public:
                 const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override {
     return m_SchedDB->queueRetrieve(rqst, criteria, diskSystemName, logContext);
+  }
+
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override {
+    return m_SchedDB->queueRetrieve(batch, lc);
   }
 
   void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) override {

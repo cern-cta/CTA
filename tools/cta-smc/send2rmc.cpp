@@ -43,7 +43,7 @@ int send2rmc(const char* const host,
   sin.sin_family = AF_INET;
   sin.sin_port = htons(port);
   if (host && *host) {
-    strncpy(rmchost, host, CA_MAXHOSTNAMELEN + 1);
+    strncpy(rmchost, host, CA_MAXHOSTNAMELEN);
     rmchost[CA_MAXHOSTNAMELEN] = '\0';
   } else {
     gethostname(rmchost, CA_MAXHOSTNAMELEN + 1);

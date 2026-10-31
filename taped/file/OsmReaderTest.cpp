@@ -10,6 +10,7 @@
 #include "ReadSessionFactory.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -18,6 +19,12 @@
 #include "taped/session/CleanerSession.hpp"
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
+
+#ifdef CTA_PGSCHED
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
+#else
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#endif
 
 #include <gtest/gtest.h>
 #include <string>
@@ -154,6 +161,13 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummylogger);
   cta::common::dataStructures::DriveInfo driveInfo(m_devName, "0.0.0.0", "TestLogicalLibrary", m_nstDev, "dummy");
 
+  // The cleaner needs a valid scheduler even though successful cleaning does not access its database.
+#ifdef CTA_PGSCHED
+  cta::RelationalDBTestFactory factory;
+#else
+  cta::OStoreDBFactory<cta::objectstore::BackendVFS> factory;
+#endif
+  m_db = factory.create(m_catalogue);
   auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
 
   cta::tape::daemon::CleanerSession

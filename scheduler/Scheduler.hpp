@@ -31,15 +31,19 @@
 #include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
+#include "disk/DiskSystem.hpp"
 #include "scheduler/IScheduler.hpp"
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/daemon/common/TapedConfiguration.hpp"
 
+#include <chrono>
+#include <future>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -78,8 +82,6 @@ public:
             const std::string& schedulerBackendName,
             const uint64_t minFilesToWarrantAMount = 5,
             const uint64_t minBytesToWarrantAMount = 2000000);
-  // TODO: we have out the mount policy parameters here temporarily we will
-  // remove them once we know where to put them
 
   /**
    * Destructor.
@@ -93,12 +95,9 @@ public:
   void ping(log::LogContext& lc) override;
 
   /**
-   * Get scheduler backend instance name
-   * passed to m_schedulerBackendName via init method from
-   * "cta.scheduler_backend_name" frontend
-   * or "general SchedulerBackendName" taped configuration file
+   * Get the configured scheduler backend instance name.
    *
-   * @return name of the scheduler backend instance name specified by the operator in the cfg file
+   * @return Scheduler backend instance name.
    */
   const std::string& getSchedulerBackendName() const { return m_schedulerBackendName; }
 
@@ -258,10 +257,10 @@ public:
                              log::LogContext& lc) override;
 
   /**
-   * Reports the configuration of the drive to the objectstore.
-   * @param tapedConfig the config of the drive to report to the objectstore.
+   * Reports the scheduler backend name for the drive to the catalogue.
+   * @param tapeDriveName The name of the drive to update.
    */
-  void reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
+  void reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) override;
 
   /**
    * Returns the status of a specific drive
@@ -468,6 +467,14 @@ public:
   void updateTapeStateFromPending(const std::string& queueVid, cta::log::LogContext& logContext);
 
   /**
+   * Query the catalogue for all tapes capable of serving retrieve requests.
+   * Results are used to prioritise re-routing targets when a tape state changes:
+   * ACTIVE tapes are preferred; DISABLED tapes are the fallback.
+   * @return pair of {activeVids, disabledVids} queried live from the catalogue (no cache).
+   */
+  std::pair<std::set<std::string>, std::set<std::string>> buildRetrieveCapableVids() const;
+
+  /**
   * Modify the state of the specified tape. Intermediate states may be temporarily applied
   * until the final desired state is achieved.
   * @param admin, the person or the system who modified the state of the tape
@@ -576,6 +583,7 @@ public:
   double getRepackRequestExpansionTimeLimit() const;
 
   cta::catalogue::Catalogue& getCatalogue();
+  SchedulerDatabase& getDb();
 
 private:
   /**
@@ -593,7 +601,6 @@ private:
   const uint64_t m_minBytesToWarrantAMount;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
-
   /**
    * Forbidden tape state transitions when connected to a repack-only Scheduler DB
    */

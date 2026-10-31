@@ -40,7 +40,9 @@ target_link_libraries(ctamaintdunittests
 )
 set_property(TARGET ctamaintdunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctamaintdunittests PROPERTY VERSION "${CTA_LIBVERSION}")
-install(TARGETS ctamaintdunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctamaintdunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 add_executable (cta-maintd cta-maintd.cpp)
 target_link_libraries(cta-maintd ctamaintd ctaruntime)
@@ -66,11 +68,11 @@ install (TARGETS cta-maintd DESTINATION ${CMAKE_INSTALL_BINDIR})
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintd.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 if(NOT CTA_USE_PGSCHED)
   install (FILES cta-maintd.example.toml
-    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-maintd/examples
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 else()
   install (FILES cta-maintd.pg.example.toml
-    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-maintd/examples
     RENAME cta-maintd.example.toml
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 endif()

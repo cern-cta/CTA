@@ -31,7 +31,10 @@ static constexpr const char* kDbOperationName = "db.operation.name";
 static constexpr const char* kDbNamespace = "db.namespace";
 static constexpr const char* kDbQuerySummary = "db.query.summary";
 
+static constexpr const char* kRpcMethod = "rpc.method";
+
 // Non-standard -- CTA-specific
+static constexpr const char* kCtaRmcdScsiCommandName = "cta.rmcd.scsi.command.name";
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
 static constexpr const char* kSchedulerOperationWorkflow = "cta.scheduler.operation.workflow";

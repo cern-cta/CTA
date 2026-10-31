@@ -58,7 +58,7 @@ void TapeSessionReporter::waitThreads() {
 //reportState
 //------------------------------------------------------------------------------
 void TapeSessionReporter::reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type) {
-  m_fifo.push(new ReportStateChange(state, type));
+  m_fifo.push(std::make_unique<ReportStateChange>(state, type));
 }
 
 //------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ void TapeSessionReporter::reportState(cta::tape::session::SessionState state, ct
 //------------------------------------------------------------------------------
 void TapeSessionReporter::run() {
   while (true) {
-    std::unique_ptr<Report> currentReport(m_fifo.pop());
+    auto currentReport = m_fifo.pop();
     if (nullptr == currentReport) {
       break;
     }

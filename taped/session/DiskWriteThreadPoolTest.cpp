@@ -146,7 +146,7 @@ struct MockRecallReportPacker : public RecallReportPacker {
 };
 
 struct MockTaskInjector : public RecallTaskInjector {
-  MOCK_METHOD3(requestInjection, void(int maxFiles, int maxBlocks, bool lastCall));
+  MOCK_METHOD(void, requestInjection, (bool lastCall), (override));
 };
 
 TEST(cta_tape_daemon, DiskWriteThreadPoolTest) {

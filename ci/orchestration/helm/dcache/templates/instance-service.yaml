@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Use the CTA disk instance name to reach the WebDAV and REST doors.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.dcache.dcache.plugins.cta.instance | quote }}
+spec:
+  type: ExternalName
+  externalName: {{ .Release.Name }}-door-svc.{{ .Release.Namespace }}.svc.cluster.local

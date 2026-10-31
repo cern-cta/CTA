@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "name",
+    "majorVersion",
     "description",
     "summary",
     "license",
@@ -17,6 +18,11 @@
     "name": {
       "type": "string",
       "minLength": 1
+    },
+    "majorVersion": {
+      "description": "Major version used for build-version defaults and new releases.",
+      "type": "integer",
+      "minimum": 1
     },
     "summary": {
       "type": "string",
@@ -45,11 +51,10 @@
       "required": [
         "cppVersion",
         "defaultBuildType",
-        "eosServerChartVersion",
         "eosImageTag",
         "eosImageRepository",
         "ctaImageRegistry",
-        "dCacheChartVersion",
+        "dCacheImageRepository",
         "dCacheImageTag",
         "defaultPlatform"
       ],
@@ -73,11 +78,6 @@
             "MinSizeRel"
           ]
         },
-        "eosServerChartVersion": {
-          "description": "Version of the EOS server Helm chart to use in CI.",
-          "type": "string",
-          "minLength": 1
-        },
         "eosImageRepository": {
           "description": "EOS image repository to use in CI.",
           "type": "string",
@@ -93,8 +93,8 @@
           "type": "string",
           "minLength": 1
         },
-        "dCacheChartVersion": {
-          "description": "Version of the dCache Helm chart to use in CI.",
+        "dCacheImageRepository": {
+          "description": "dCache image repository to use in CI.",
           "type": "string",
           "minLength": 1
         },
@@ -108,7 +108,9 @@
           "type": "string",
           "minLength": 1,
           "enum": [
-            "el9"
+            "el9",
+            "el10",
+            "debian13"
           ]
         }
       },
@@ -137,7 +139,7 @@
         ],
         "properties": {
           "versionlock": {
-            "description": "These values are used to generate a versionlock.list file.",
+            "description": "Exact package versions for platform-specific dependency installation.",
             "type": "object",
             "additionalProperties": {
               "type": "string",
@@ -153,8 +155,7 @@
             }
           },
           "buildRequires": {
-            "description":
-              "These values are used to generate a list of BuildRequires items that are put in the packaging/rpm/cta.spec.in file.",
+            "description": "Build dependencies used for RPM BuildRequires or Debian Build-Depends.",
             "type": "object",
             "additionalProperties": {
               "type": "string"

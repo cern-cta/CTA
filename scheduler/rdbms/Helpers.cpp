@@ -30,22 +30,17 @@ cta::threading::Mutex Helpers::g_retrieveQueueStatisticsMutex;
 //------------------------------------------------------------------------------
 std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime, std::less<>> Helpers::g_retrieveQueueStatistics;
 
-std::string Helpers::selectBestVid4Retrieve(const std::set<std::string, std::less<>>& candidateVids,
-                                            cta::catalogue::Catalogue& catalogue,
-                                            rdbms::Conn& conn,
-                                            bool isRepack) {
-  // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
-  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
-
-  // We will build the retrieve stats of the disabled vids here, as a fallback
-  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStatsFallback;
-
-  // Take the global lock
+void Helpers::warmTapeStatusCache(const std::set<std::string, std::less<>>& vids,
+                                  cta::catalogue::Catalogue& catalogue) {
   cta::threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
+  warmTapeStatusCacheLocked(vids, catalogue);
+}
 
+void Helpers::warmTapeStatusCacheLocked(const std::set<std::string, std::less<>>& vids,
+                                        cta::catalogue::Catalogue& catalogue) {
   // Ensure the tape status cache contains all the entries we need
   try {
-    for (auto& v : candidateVids) {
+    for (auto& v : vids) {
       // throw std::out_of_range() if cache item not found or if it is stale
       auto timeSinceLastUpdate =
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - g_tapeStatuses.at(v).updateTime;
@@ -65,12 +60,111 @@ std::string Helpers::selectBestVid4Retrieve(const std::set<std::string, std::les
       }
     }
     // Add in all the entries we need for this batch of candidates
-    auto tapeStatuses = catalogue.Tape()->getTapesByVid(candidateVids);
+    auto tapeStatuses = catalogue.Tape()->getTapesByVid(vids);
     for (const auto& [tv, ts] : tapeStatuses) {
       g_tapeStatuses[tv].tapeStatus = ts;
       g_tapeStatuses[tv].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     }
   }
+}
+
+// Called once per opportunistic-batching round (RelationalDB.cpp) before the per-item
+// selectBestVid4Retrieve() calls. Collects every candidate vid from the whole batch and fetches
+// their queue statistics in a single bulk DB query, replacing what would otherwise be one
+// individual query per stale vid per item. Only vids whose cache entry is missing or older than
+// g_retrieveQueueCacheMaxAge are fetched; fresh entries are left untouched and cost nothing here.
+// Writes complete entries (stats + timestamp + tape status) so selectBestVid4Retrieve() finds them
+// fresh and skips its own per-vid fallback fetches entirely.
+void Helpers::warmRetrieveQueueStatisticsCache(const std::set<std::string, std::less<>>& vids, rdbms::Conn& conn) {
+  if (vids.empty()) {
+    return;
+  }
+
+  std::set<std::string, std::less<>> missingOrStale;
+  {
+    threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
+    const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    for (const auto& v : vids) {
+      auto it = g_retrieveQueueStatistics.find(v);
+      if (it == g_retrieveQueueStatistics.end() || it->second.updating
+          || (now - it->second.updateTime) >= g_retrieveQueueCacheMaxAge) {
+        missingOrStale.insert(v);
+      }
+    }
+  }
+  if (missingOrStale.empty()) {
+    return;
+  }
+
+  // Deliberately not tracked via the updating/updateFuture machinery selectBestVid4Retrieve() uses
+  // for its own single-vid refreshes: this is a batch-only fast path, and coordinating it with that
+  // machinery for what would only ever be a rare simultaneous request for the same vid from another
+  // caller isn't worth the complexity -- worst case, both fetch it and whichever write lands last
+  // wins, same as any other cache race.
+  struct FetchedStats {
+    uint64_t files;
+    uint64_t bytes;
+    uint64_t priority;
+  };
+
+  std::map<std::string, FetchedStats, std::less<>> fetched;
+  auto summaryRows = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectVids(missingOrStale, conn);
+  while (summaryRows.next()) {
+    cta::schedulerdb::postgres::RetrieveJobSummaryRow rjs(summaryRows);
+    fetched[rjs.vid] = {rjs.jobsCount, rjs.jobsTotalSize, rjs.priority};
+  }
+
+  // Write complete, refreshed entries in a single lock acquisition. updateRetrieveQueueStatisticsCache()
+  // deliberately preserves existing timestamps and tape status on update — leaving stale entries
+  // still stale after the bulk fetch, so selectBestVid4Retrieve() would redo a per-vid DB query for
+  // each of them anyway. Write directly here to publish a fully fresh entry: stats + timestamp +
+  // tape status. warmTapeStatusCache() ran just before us (in RelationalDB.cpp's batch resolve path),
+  // so g_tapeStatuses already has current values for all candidate vids.
+  threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  for (const auto& v : missingOrStale) {
+    auto& entry = g_retrieveQueueStatistics[v];
+    auto it = fetched.find(v);
+    if (it != fetched.end()) {
+      entry.stats.filesQueued = it->second.files;
+      entry.stats.bytesQueued = it->second.bytes;
+      entry.stats.currentPriority = it->second.priority;
+    } else {
+      // A vid with no queued jobs simply has no row in the result: cache it as zeroed (same fallback
+      // as getRetrieveQueueStatistics()'s single-vid path) rather than leaving it missing, which would
+      // just make selectBestVid4Retrieve() redo this fetch itself right afterwards.
+      entry.stats.filesQueued = 0;
+      entry.stats.bytesQueued = 0;
+      entry.stats.currentPriority = 0;
+    }
+    entry.stats.vid = v;
+    entry.updating = false;
+    entry.updateTime = now;
+    auto tapeIt = g_tapeStatuses.find(v);
+    if (tapeIt != g_tapeStatuses.end()) {
+      entry.tapeStatus = tapeIt->second.tapeStatus;
+    } else {
+      entry.tapeStatus.state = common::dataStructures::Tape::ACTIVE;
+      entry.tapeStatus.full = false;
+    }
+    logUpdateCacheIfNeeded(true, entry);
+  }
+}
+
+std::string Helpers::selectBestVid4Retrieve(const std::set<std::string, std::less<>>& candidateVids,
+                                            cta::catalogue::Catalogue& catalogue,
+                                            rdbms::Conn& conn,
+                                            bool isRepack) {
+  // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
+  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
+
+  // We will build the retrieve stats of the disabled vids here, as a fallback
+  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStatsFallback;
+
+  // Take the global lock
+  cta::threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
+
+  warmTapeStatusCacheLocked(candidateVids, catalogue);
 
   // Find the vids to be fetched (if any)
   for (auto& v : candidateVids) {
@@ -265,6 +359,12 @@ void Helpers::logUpdateCacheIfNeeded([[maybe_unused]] const bool entryCreation,
 #endif  // HELPERS_CACHE_UPDATE_LOGGING
 }
 
+// Single-vid fallback used by selectBestVid4Retrieve() when a cache entry is missing or stale.
+// Issues one DB query per vid, returns the live stats, and records them in the cache as a
+// side-effect via updateRetrieveQueueStatisticsCache(). The caller (selectBestVid4Retrieve())
+// immediately overwrites that entry with a fully fresh one (stats + timestamp + tape status), so
+// the incomplete write from updateRetrieveQueueStatisticsCache() is harmless here — it exists only
+// to avoid a second lookup if another concurrent caller races in for the same vid.
 std::list<SchedulerDatabase::RetrieveQueueStatistics>
 Helpers::getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                                     const std::set<std::string, std::less<>>& vidsToConsider,
@@ -319,6 +419,12 @@ void Helpers::setRetrieveQueueCacheMaxAgeSecs(int cacheMaxAgeSecs) {
 //------------------------------------------------------------------------------
 // Helpers::updateRetrieveQueueStatisticsCache()
 //------------------------------------------------------------------------------
+// Stats-only cache writer: updates filesQueued/bytesQueued/currentPriority for an existing entry,
+// or creates a new one. Deliberately does NOT update updateTime or tapeStatus: it is called from
+// getRetrieveQueueStatistics() as a side-effect during a single-vid fetch, and the real caller
+// (selectBestVid4Retrieve()) always overwrites the full entry immediately after with a fresh
+// timestamp and tape status. Do NOT use this from warmRetrieveQueueStatisticsCache(): preserving
+// the old timestamp leaves stale entries still stale, defeating the bulk warm entirely.
 void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid,
                                                  uint64_t files,
                                                  uint64_t bytes,

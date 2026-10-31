@@ -53,6 +53,40 @@ Package repositories are selected automatically. For scheduler, Oracle support, 
 
 The default platform is selected in `project.json` (currently `el9`). For that platform, RPMs are written to `build/el9/RPM/RPMS/x86_64/`. Stop after `build` if you only need packages.
 
+## Direct CMake configuration
+
+`cta-dev build` manages the build environment and packaging automatically.
+For direct CMake use, run the commands below from the repository root with the required dependencies already installed.
+
+RPM builds configure CMake twice: once to prepare packaging, then inside the RPM builder to compile CTA with the selected options.
+Separating these steps avoids configuring compilation twice and lets source packages declare build dependencies before those dependencies are installed.
+
+| `CTA_BUILD_MODE` | Purpose |
+| --- | --- |
+| `compile` (default) | Compile CTA executables, libraries, tests, and generated files |
+| `source-package` | Prepare source-package targets without configuring compilation |
+| `binary-package` | Prepare source- and binary-package targets; the RPM recipe handles compilation |
+
+**Compile directly:**
+
+```bash
+cmake -S . -B build/direct -DCTA_VERSION=6-dev
+cmake --build build/direct --parallel
+```
+
+**Build RPMs:**
+
+```bash
+cmake -S . -B build/packages \
+  -DCTA_BUILD_MODE=binary-package \
+  -DCTA_VERSION=6-dev
+cmake --build build/packages --target cta_rpm
+```
+
+RPMs are written under `build/packages/RPM/RPMS/`.
+For source RPMs only, configure with `source-package` and build the `cta_srpm` target.
+Add feature options such as `-DCTA_WITH_ORACLE=OFF` to either configuration command as needed.
+
 ## Build container images (optional)
 
 Build service images from the RPMs, using the same version and build variant:

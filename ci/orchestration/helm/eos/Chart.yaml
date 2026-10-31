@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+apiVersion: v2
+name: cta-eos
+description: EOS and its backing services for CTA integration tests.
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: server
+    version: 0.10.6
+    repository: oci://registry.cern.ch/eos/charts

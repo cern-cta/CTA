@@ -78,33 +78,31 @@ add_library(cta-unit-test-helper
 target_link_libraries(ctaruntimeunittests PRIVATE cta-unit-test-helper)
 target_link_libraries(ctacommonunittests cta-unit-test-helper)
 
-add_executable(cta-integration-tests
-  integration_tests.cpp)
+# Tests register through shared-library initializers, without direct symbol references.
+# Keep these libraries when the distribution enables --as-needed by default.
+foreach(test_runner cta-unit-tests cta-unit-tests-rdbms cta-unit-tests-multiprocess)
+  target_link_options(${test_runner} PRIVATE "LINKER:--no-as-needed")
+endforeach()
 
-target_link_libraries(cta-integration-tests
-  cta-taped-integration-tests
-  gtest
-  pthread)
+if(CTA_BUILD_TEST_PACKAGES)
+  install(
+    TARGETS
+      cta-unit-tests-rdbms
+      cta-unit-tests
+      cta-unit-tests-multiprocess
+    DESTINATION
+      ${CMAKE_INSTALL_BINDIR})
+endif()
 
-add_executable(cta-test-immutable-file
-  ImmutableFileTest.cpp
-  ImmutableFileTestMain.cpp
-  ImmutableFileTestCmdLineArgs.cpp)
+# Define dynamic-analysis options before expanding the runner templates.
+set(VALGRIND valgrind)
+set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --error-exitcode=1 --max-threads=1000)
+set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr)
+string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
 
-set_property (TARGET cta-test-immutable-file APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
-
-target_link_libraries(cta-test-immutable-file
-  ctacommon XrdCl)
-
-install(
-  TARGETS
-    cta-unit-tests-rdbms
-    cta-unit-tests
-    cta-unit-tests-multiprocess
-    cta-integration-tests
-    cta-test-immutable-file
-  DESTINATION
-    ${CMAKE_INSTALL_BINDIR})
+set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=10000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
+set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr)
+string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
 
 configure_file(cta-unit-tests-valgrind.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh)
 configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)
@@ -114,25 +112,19 @@ if(CTA_WITH_ORACLE)
   configure_file(cta-unit-tests-rdbms-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh @ONLY)
 endif ()
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh cta-unit-and-integration-tests.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
+if(CTA_BUILD_TEST_PACKAGES)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
+endif()
 
-if(CTA_WITH_ORACLE)
+if(CTA_WITH_ORACLE AND CTA_BUILD_TEST_PACKAGES)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
   install(FILES cta-unit-tests-rdbms-oracle.suppr DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
-endif ()
+endif()
 
 # Test runner and dynamic-analysis targets.
 configure_file(valgrind.suppr valgrind.suppr COPYONLY)
 configure_file(helgrind.suppr helgrind.suppr COPYONLY)
-set(VALGRIND valgrind)
-set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --error-exitcode=1 --max-threads=1000)
-set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr)
-string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
-
-set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=10000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
-set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr)
-string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
 
 
 add_custom_target(cta-unit-tests-full
@@ -168,9 +160,10 @@ add_custom_target(cta-unit-tests-helgrind
 add_custom_target(cta-unit-tests-short
   $<TARGET_FILE:cta-unit-tests>
   COMMAND $<TARGET_FILE:cta-unit-tests-multiprocess>
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target cta-rust-tests
 
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess
-  COMMENT "Running unit tests" VERBATIM)
+  DEPENDS cta-unit-tests cta-unit-tests-multiprocess cta-rust-tests
+  COMMENT "Running C++ and Rust unit tests" VERBATIM)
 
 add_custom_target(cta-unit-tests-helgrind-base
   echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*

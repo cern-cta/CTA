@@ -47,27 +47,3 @@ cli:
       - name: grpc-certs
         secret:
           secretName: ca-crt-pem
-
-client:
-  useGrpc: true
-  conf:
-    # set by more specific config
-
-  extraEnv:
-    - name: GRPC_SETUP_JWT
-      value: "true"
-
-  extraVolumes:
-    volumeMounts:
-      - name: grid-security
-        mountPath: /etc/grid-security
-        readOnly: false
-      - name: grpc-certs
-        mountPath: /etc/grpc-certs
-        readOnly: true
-    volumes:
-      - name: grid-security
-        emptyDir: {}
-      - name: grpc-certs
-        secret:
-          secretName: ca-crt-pem

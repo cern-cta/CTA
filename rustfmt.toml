@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+reorder_imports = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Crate"

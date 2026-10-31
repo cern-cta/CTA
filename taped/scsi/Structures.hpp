@@ -583,57 +583,32 @@ public:
   // bytes 4-n
   unsigned char parameterValue[8];  // parameters have variable length
 
-  /**
-       * Gets the parameter value
-       *
-       * @return The value  of the log sense parameter as uint64_t.
-       *         If we have a parameter length more than 8 bytes the returning
-       *         value is not determined.
-       */
+  // Decode a big-endian parameter; values wider than 64 bits cannot be represented.
   inline uint64_t getU64Value() const {
-    union {
-      unsigned char tmp[8];
-      uint64_t val64;
-    } u;
-
-    u.tmp[0] = (header.parameterLength > 0) ? parameterValue[0] : 0;
-    u.tmp[1] = (header.parameterLength > 1) ? parameterValue[1] : 0;
-    u.tmp[2] = (header.parameterLength > 2) ? parameterValue[2] : 0;
-    u.tmp[3] = (header.parameterLength > 3) ? parameterValue[3] : 0;
-    u.tmp[4] = (header.parameterLength > 4) ? parameterValue[4] : 0;
-    u.tmp[5] = (header.parameterLength > 5) ? parameterValue[5] : 0;
-    u.tmp[6] = (header.parameterLength > 6) ? parameterValue[6] : 0;
-    u.tmp[7] = (header.parameterLength > 7) ? parameterValue[7] : 0;
-
-    u.val64 = be64toh(u.val64);
-
-    return u.val64 >> (64 - (header.parameterLength << 3));
-  }
-
-  /**
-       * Gets the parameter value
-       *
-       * If the parameter value is longer than 8 bytes, the return value is undefined.
-       * Redefined to use memcpy as union type-punning is deprecated.
-       *
-       * @return    The value of the log sense parameter as int64_t
-       */
-  inline int64_t getS64Value() const {
-    std::byte tmp[8];
-
-    for (int i = 0; i < 8; ++i) {
-      tmp[i] = static_cast<std::byte>(header.parameterLength > i ? parameterValue[i] : 0);
+    if (header.parameterLength > sizeof(parameterValue)) {
+      throw cta::exception::Exception("SCSI log sense parameter exceeds 64 bits");
     }
 
-    uint64_t val64U;
-    int64_t val64S;
+    uint64_t value = 0;
+    for (unsigned int i = 0; i < header.parameterLength; ++i) {
+      value = (value << 8) | parameterValue[i];
+    }
+    return value;
+  }
 
-    std::memcpy(&val64U, &tmp, sizeof(uint64_t));
-    val64U = be64toh(val64U);
-    std::memcpy(&val64S, &val64U, sizeof(int64_t));
+  inline int64_t getS64Value() const {
+    uint64_t value = getU64Value();
+    if (header.parameterLength == 0) {
+      return 0;
+    }
 
-    return val64S < 0 ? -(-val64S >> (64 - (header.parameterLength << 3))) :
-                        (val64S >> (64 - (header.parameterLength << 3)));
+    // Sign-extend short values without shifting by 64 or negating INT64_MIN.
+    if (header.parameterLength < sizeof(value) && (parameterValue[0] & 0x80)) {
+      value |= UINT64_MAX << (header.parameterLength * 8);
+    }
+    int64_t result;
+    std::memcpy(&result, &value, sizeof(result));
+    return result;
   }
 };
 

@@ -45,6 +45,9 @@ public:
   void commit() override;
 
 private:
+  // Keep the base overload visible without exposing initialization without a queue identifier.
+  using ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::initialize;
+
   // Validates all summaries are in accordance with each other.
   bool checkMapsAndShardsCoherency();
 

@@ -62,7 +62,9 @@ target_link_libraries(ctatapedfileunittests
 set_property(TARGET ctatapedfileunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctatapedfileunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctatapedfileunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 add_executable(cta-test-osm-reader
   OsmReaderTest.cpp)
@@ -74,8 +76,6 @@ target_link_libraries(cta-test-osm-reader
   gtest
 )
 
-install(TARGETS cta-test-osm-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
-
 add_executable(cta-test-enstore-large-reader
   EnstoreLargeReaderTest.cpp)
 
@@ -86,4 +86,7 @@ target_link_libraries(cta-test-enstore-large-reader
   gtest
 )
 
-install(TARGETS cta-test-enstore-large-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
+# RPMs retain a separate reader package; Debian includes these in the optional tests package.
+if(CTA_BUILD_TEST_PACKAGES OR CTA_PACKAGE_FORMAT STREQUAL "rpm")
+  install(TARGETS cta-test-osm-reader cta-test-enstore-large-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

@@ -1,6 +1,6 @@
 ---
 date: 2024-07-18
-section: 1cta
+section: 1
 title: CTA-CATALOGUE-ADMIN-USER-CREATE
 header: The CERN Tape Archive (CTA)
 ---
@@ -64,7 +64,7 @@ cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf \--username ctaadmin
 
 # SEE ALSO
 
-**cta-admin**(1cta)
+**cta-admin**(1)
 
 CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 

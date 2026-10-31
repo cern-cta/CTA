@@ -4,7 +4,7 @@
 
 add_subdirectory(cta-catalogue-schema)
 
-include_directories (${POSTGRES_INCLUDE_DIRS})
+include_directories (${PostgreSQL_INCLUDE_DIRS})
 
 if(CTA_WITH_ORACLE)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
@@ -19,7 +19,6 @@ set(CATALOGUE_LIB_SRC_FILES
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
-  DriveConfig.cpp
   dummy/DummyAdminUserCatalogue.cpp
   dummy/DummyArchiveFileCatalogue.cpp
   dummy/DummyArchiveRouteCatalogue.cpp
@@ -112,7 +111,7 @@ set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctacatalogue PRIVATE
   CTA_ABI_SOVERSION="${CTA_SOVERSION}"
-  VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+  VERSION_API="${CTA_VERSION}")
 
 install (TARGETS ctacatalogue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
@@ -145,7 +144,7 @@ if(CTA_WITH_ORACLE)
   set_property(TARGET ctacatalogueocci PROPERTY SOVERSION "${CTA_SOVERSION}")
   set_property(TARGET ctacatalogueocci PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-  target_compile_definitions(ctacatalogueocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+  target_compile_definitions(ctacatalogueocci PRIVATE VERSION_API="${CTA_VERSION}")
 
   target_link_libraries (ctacatalogueocci
     ctardbmsocci ctacatalogue
@@ -175,7 +174,7 @@ add_library (ctacataloguesqlite SHARED
 set_property(TARGET ctacataloguesqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguesqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue)
 
@@ -192,7 +191,7 @@ add_library (ctacatalogueinmemory SHARED
 set_property(TARGET ctacatalogueinmemory PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogueinmemory PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSION}")
 target_link_libraries (ctacatalogueinmemory ctacataloguesqlite)
 
 install(TARGETS ctacatalogueinmemory DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -218,7 +217,7 @@ add_library (ctacataloguepostgres SHARED
 set_property(TARGET ctacataloguepostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguepostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacataloguepostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacataloguepostgres PRIVATE VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctacataloguepostgres
   ctardbmspostgres ctacatalogue
@@ -299,7 +298,6 @@ set(CATALOGUE_MODULES_TESTS_SRC_FILES
   tests/modules/DiskInstanceCatalogueTest.cpp
   tests/modules/DiskInstanceSpaceCatalogueTest.cpp
   tests/modules/DiskSystemCatalogueTest.cpp
-  tests/modules/DriveConfigCatalogueTest.cpp
   tests/modules/DriveStateCatalogueTest.cpp
   tests/modules/FileRecycleLogCatalogueTest.cpp
   tests/modules/LogicalLibraryCatalogueTest.cpp
@@ -337,7 +335,9 @@ target_compile_options(ctainmemorycatalogueunittests PRIVATE -fno-var-tracking-a
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue ctadisk ctacatalogueinmemory)
 
-install (TARGETS ctainmemorycatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install (TARGETS ctainmemorycatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 set (DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   ${CATALOGUE_MODULES_TESTS_SRC_FILES}
@@ -356,10 +356,12 @@ target_compile_options(ctadbconfigcatalogueunittests PRIVATE -fno-var-tracking-a
 target_link_libraries (ctadbconfigcatalogueunittests
   ctacatalogue)
 
-install (TARGETS ctadbconfigcatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install (TARGETS ctadbconfigcatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 install (FILES cta-catalogue.example.conf
-  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-lib-catalogue/examples
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES

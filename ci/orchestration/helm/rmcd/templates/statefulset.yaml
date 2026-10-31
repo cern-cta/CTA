@@ -94,6 +94,9 @@ spec:
         - name: cta-rmcd-config
           mountPath: /etc/cta/cta-rmcd.toml
           subPath: cta-rmcd.toml
+        - name: opentelemetry-config
+          mountPath: /etc/cta/cta-otel.yaml
+          subPath: cta-otel.yaml
         - name: smcdev
           mountPath: /dev/smc
         - name: log-dir
@@ -111,6 +114,9 @@ spec:
       - name: cta-rmcd-config
         configMap:
           name: cta-rmcd-conf
+      - name: opentelemetry-config
+        configMap:
+          name: cta-rmcd-otel-conf
       - name: log-dir
         emptyDir: {}
       {{ include "common.extraVolumes" . | nindent 6 }}

@@ -230,7 +230,8 @@ TEST(cta_tape_AULFile, setDateTest) {
   const size_t lengthOfStr = 6;
   char str[lengthOfStr];
   cta::tape::tapeFile::setDate(str);
-  const std::string buff(str);
+  // Tape date fields contain six bytes without a null terminator.
+  const std::string buff(str, lengthOfStr);
   ASSERT_EQ(buff.length(), lengthOfStr);
   // 22088 is the date at 29/03/2022
   ASSERT_GT(stoi(buff), 22088);

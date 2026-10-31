@@ -34,6 +34,9 @@ set (CTA_SCHEDULER_OS_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 include_directories (${CMAKE_BINARY_DIR}/scheduler)
 
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+  batching/FrontendBatchingLayer.cpp
+  batching/OpportunisticArchiveBatchQueueing.cpp
+  batching/OpportunisticRetrieveBatchQueueing.cpp
   rdbms/RelationalDB.cpp
   rdbms/ArchiveMount.cpp
   rdbms/ArchiveRdbJob.cpp
@@ -62,7 +65,7 @@ if(NOT CTA_USE_PGSCHED)
     target_link_libraries (ctascheduler ctacommon ctaprotobufconversions ctaobjectstore ctadisk ctatelemetryscheduler)
 else()
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
-    target_link_libraries (ctascheduler ctaschedulerschema ctacommon ctaprotobufconversions ctadisk cryptopp
+    target_link_libraries (ctascheduler ctaschedulerschema ctardbmspostgres ctacommon ctaprotobufconversions ctadisk cryptopp
       ctatelemetryscheduler)
 endif()
 
@@ -73,11 +76,11 @@ install (TARGETS ctascheduler DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(NOT CTA_USE_PGSCHED)
   install (FILES cta-scheduler.example.conf
-    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-lib-scheduler/examples
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 else()
   install (FILES cta-scheduler.pg.example.conf
-    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-lib-scheduler/examples
     RENAME cta-scheduler.example.conf
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 endif()
@@ -87,12 +90,14 @@ if(NOT CTA_USE_PGSCHED)
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     SchedulerTest.cpp
-    OStoreDB/OStoreDBTest.cpp)
+    OStoreDB/OStoreDBTest.cpp
+    OStoreDB/OStoreDBInitTest.cpp)
 else()
   add_library (ctaschedulerunittests SHARED
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     RelationalDBSchedulerTest.cpp
+    batching/OpportunisticQueueBatcherTest.cpp
     rdbms/RelationalDBTest.cpp)
 endif()
 
@@ -101,4 +106,6 @@ target_link_libraries (ctaschedulerunittests ctascheduler)
 set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctaschedulerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctaschedulerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

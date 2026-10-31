@@ -44,6 +44,29 @@ public:
 
   static void flushStatisticsCacheForVid(const std::string& vid);
 
+  /**
+   * Ensures the tape status cache holds a fresh entry for every vid in `vids`, fetching whichever
+   * are missing/stale from the catalogue in a single batched call, rather than one call per vid.
+   * selectBestVid4Retrieve() already does this internally for its own (typically small, per-file)
+   * candidate set. Callers about to make many selectBestVid4Retrieve() calls at once for possibly
+   * many different files (e.g. opportunistic retrieve batching) should call this once up front with
+   * the union of every file's candidate vids, to fetch cold vids in one catalogue round trip instead
+   * of one per cold vid encountered lazily across those calls.
+   */
+  static void warmTapeStatusCache(const std::set<std::string, std::less<>>& vids, cta::catalogue::Catalogue& catalogue);
+
+  /**
+   * Opportunistic-batching only: ensures the retrieve-queue-statistics cache holds a fresh entry for
+   * every vid in `vids`, fetching whichever are missing/stale in a single bulk query rather than one
+   * query per vid -- the cost selectBestVid4Retrieve() pays internally, one vid at a time by
+   * deliberate design (see its own comment), when a single leader thread has to resolve several
+   * opportunistically-batched retrieve requests for different, cold tapes in a row. Call once per
+   * batch with the union of every item's candidate vids, alongside warmTapeStatusCache(), before
+   * calling selectBestVid4Retrieve() per item -- leaves selectBestVid4Retrieve() and
+   * getRetrieveQueueStatistics() themselves, and every other caller of the cache, untouched.
+   */
+  static void warmRetrieveQueueStatisticsCache(const std::set<std::string, std::less<>>& vids, cta::rdbms::Conn& conn);
+
   static void setTapeCacheMaxAgeSecs(int cacheMaxAgeSecs);
   static void setRetrieveQueueCacheMaxAgeSecs(int cacheMaxAgeSecs);
 
@@ -81,6 +104,11 @@ private:
   static void logUpdateCacheIfNeeded(const bool entryCreation,
                                      const RetrieveQueueStatisticsWithTime& tapeStatistic,
                                      std::string_view message = "");
+
+  // Actual logic behind warmTapeStatusCache(), assuming g_retrieveQueueStatisticsMutex is already
+  // held by the caller (used internally by selectBestVid4Retrieve(), which holds it for longer).
+  static void warmTapeStatusCacheLocked(const std::set<std::string, std::less<>>& vids,
+                                        cta::catalogue::Catalogue& catalogue);
 };
 
 }  // namespace cta::schedulerdb

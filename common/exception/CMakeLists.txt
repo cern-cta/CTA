@@ -6,4 +6,6 @@ add_library (ctaexceptionunittests SHARED
 set_property(TARGET ctaexceptionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaexceptionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctaexceptionunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctaexceptionunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

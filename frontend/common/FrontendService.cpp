@@ -358,8 +358,48 @@ FrontendService::FrontendService(const std::string& configFilename,
   }
 
   m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
+
   // Initialise the Scheduler
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName);
+
+#ifdef CTA_PGSCHED
+  // Read and log opportunistic-batching config, then wire up the batching layer in front of the
+  // scheduler for archive/retrieve queueing. Defaults to disabled until proven solid in production.
+  auto opportunisticBatchingEnabled =
+    config.getOptionValueBool("cta.schedulerdb.opportunistic_batching_enabled").value_or(false);
+  auto opportunisticBatchingWindowMs =
+    config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_window_ms").value_or(10);
+  auto opportunisticBatchingMaxBatchSize =
+    config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_max_batch_size").value_or(1000);
+  {
+    std::vector<log::Param> params;
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "opportunistic_batching_enabled");
+    params.emplace_back("value", opportunisticBatchingEnabled ? "true" : "false");
+    log(log::INFO, "Configuration entry", params);
+  }
+  {
+    std::vector<log::Param> params;
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "opportunistic_batching_window_ms");
+    params.emplace_back("value", std::to_string(opportunisticBatchingWindowMs));
+    log(log::INFO, "Configuration entry", params);
+  }
+  {
+    std::vector<log::Param> params;
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "opportunistic_batching_max_batch_size");
+    params.emplace_back("value", std::to_string(opportunisticBatchingMaxBatchSize));
+    log(log::INFO, "Configuration entry", params);
+  }
+  m_batchingLayer = std::make_unique<cta::FrontendBatchingLayer>(*m_scheduler,
+                                                                 opportunisticBatchingEnabled,
+                                                                 opportunisticBatchingWindowMs,
+                                                                 opportunisticBatchingMaxBatchSize);
+#endif
 
   // Initialise the Frontend
   auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");

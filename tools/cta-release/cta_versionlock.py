@@ -6,7 +6,6 @@
 import argparse
 import json
 import os
-import re
 import sys
 from typing import Callable, TypedDict
 
@@ -83,19 +82,23 @@ def split_filename(filename: str) -> tuple[str, str, str, str, str]:
     Raises:
         ValueError: If the filename does not match the expected RPM format.
     """
-    # Note that dnf versionlock has the epoch after the name, instead of before: https://dnf-plugins-core.readthedocs.io/en/latest/versionlock.html
-    regex = r"^(?P<name>.+)-((?P<epoch>[0-9]+):)?(?P<version>[^-]+)-(?P<release>[^-]+(?:\.[^-.]+)*)\.(?P<arch>[^-.]+)$"
-    match = re.match(regex, filename)
-    if match:
-        return (
-            match.group("name"),
-            match.group("version"),
-            match.group("release"),
-            match.group("epoch") or "0",
-            match.group("arch"),
-        )
-    else:
-        raise ValueError(f"Filename {filename} does not match expected RPM format")
+    error = f"Filename {filename} does not match expected RPM format"
+
+    # Split from the right to preserve hyphens in names and dots in releases.
+    package, separator, arch = filename.rpartition(".")
+    parts = package.rsplit("-", 2)
+    if not separator or not arch or "-" in arch or len(parts) != 3 or not all(parts):
+        raise ValueError(error)
+    name, version, release = parts
+
+    # DNF versionlock places the optional epoch immediately before the version.
+    epoch = "0"
+    if ":" in version:
+        epoch, version = version.split(":", 1)
+        if not epoch.isascii() or not epoch.isdecimal() or not version or ":" in version:
+            raise ValueError(error)
+
+    return name, version, release, epoch, arch
 
 
 def read_version_lock_file(versionlock_file: str) -> dict[str, Version]:
@@ -352,4 +355,5 @@ def main() -> None:
         sys.exit(1)
 
 
-main()
+if __name__ == "__main__":
+    main()

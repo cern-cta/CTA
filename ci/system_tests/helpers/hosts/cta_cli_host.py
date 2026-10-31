@@ -122,6 +122,20 @@ class CtaCliHost(RemoteHost):
         if wait:
             self.wait_for_tape_state(vid, state)
 
+    def transition_tape_state(self, vid: str, state: str, *, cache_delay_secs: float = 1) -> None:
+        """Change state through REPACKING when either endpoint is REPACKING_DISABLED."""
+        tape_list = json.loads(self.exec_with_output(f"cta-admin --json tape ls --vid '{vid}'"))
+        if len(tape_list) != 1:
+            raise RuntimeError(f"Expected exactly one tape for VID {vid}, found {len(tape_list)}")
+
+        current_state = tape_list[0]["state"]
+        if current_state == "REPACKING_DISABLED" or state == "REPACKING_DISABLED":
+            self.modify_tape_state(vid, "REPACKING")
+            time.sleep(cache_delay_secs)
+
+        self.modify_tape_state(vid, state)
+        time.sleep(cache_delay_secs)
+
     def remove_repack_request(self, vid: str, throw_on_failure: bool = True) -> None:
         print(f"Removing repack request for {vid}")
         self.exec(f"cta-admin repack rm --vid {vid}", throw_on_failure=throw_on_failure)
@@ -155,6 +169,24 @@ class CtaCliHost(RemoteHost):
             if queue["vid"] == vid:
                 return int(queue["queuedFiles"])
         return 0
+
+    def wait_for_queue_file_counts(self, expected_file_counts: dict[str, int], *, wait_timeout_secs: int = 20) -> None:
+        """Wait until one showqueues snapshot has the expected file counts for every supplied VID."""
+        actual_file_counts: dict[str, int] = {}
+        with Timeout(wait_timeout_secs) as timeout:
+            while not timeout.expired:
+                queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
+                actual_file_counts = {
+                    vid: sum(int(queue["queuedFiles"]) for queue in queues if queue["vid"] == vid)
+                    for vid in expected_file_counts
+                }
+                if actual_file_counts == expected_file_counts:
+                    return
+                time.sleep(1)
+        raise TimeoutError(
+            f"Queues did not reach the expected file counts within {wait_timeout_secs} seconds. "
+            f"Expected: {expected_file_counts}; actual: {actual_file_counts}"
+        )
 
     def wait_for_repack_request_launch(self, vid: str, wait_timeout_secs: int = 30) -> None:
         print(f"Waiting for the launch of the repack request on VID {vid}...")

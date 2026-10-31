@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+  name                    = "cta-client"
+  description             = "High-level client library for the CTA frontend gRPC API"
+  version.workspace       = true
+  edition.workspace       = true
+  authors.workspace       = true
+  license.workspace       = true
+  repository.workspace    = true
+  homepage.workspace      = true
+  documentation.workspace = true
+  keywords.workspace      = true
+  categories.workspace    = true
+  publish.workspace       = true
+
+[lints]
+  workspace = true
+
+[dependencies]
+  bon          = { workspace = true }
+  cta-grpc-common = { workspace = true }
+  chrono       = { workspace = true, features = ["serde"] }
+  cta-protobuf = { workspace = true }
+  tonic        = { workspace = true, features = ["tls-native-roots", "tls-ring"] }
+  tokio-stream = { workspace = true }
+  thiserror    = { workspace = true }
+  log          = { workspace = true }
+  serde        = { workspace = true, features = ["derive"] }
+  url          = { workspace = true }
+  strum        = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+  tokio          = { workspace = true, features = ["macros", "rt"] }
+  prost          = { workspace = true }
+  tonic-prost    = { workspace = true }
+  bytes          = { workspace = true }
+  http-body      = { workspace = true }
+  http-body-util = { workspace = true }

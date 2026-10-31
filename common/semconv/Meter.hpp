@@ -17,4 +17,6 @@ static constexpr const char* kCtaObjectstore = "cta.objectstore";
 static constexpr const char* kCtaTaped = "cta.taped";
 static constexpr const char* kCtaMaintd = "cta.maintd";
 
+static constexpr const char* kCtaRmcd = "cta.rmcd";
+
 }  // namespace cta::semconv::meter

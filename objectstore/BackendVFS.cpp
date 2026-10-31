@@ -38,13 +38,9 @@ namespace cta::objectstore {
 BackendVFS::BackendVFS(int line, const char* file) : m_deleteOnExit(true) {
   // Create the directory for storage
   char tplt[] = "/tmp/jobStoreVFSXXXXXX";
-  mkdtemp(tplt);
-  // If template is an empty string, we failed, otherwise, we're fine.
-  if (*tplt) {
-    m_root = tplt;
-  } else {
-    throw cta::exception::Errnum("Failed to create temporary directory");
-  }
+  char* directory = mkdtemp(tplt);
+  cta::exception::Errnum::throwOnNull(directory, "Failed to create temporary directory");
+  m_root = directory;
 #ifdef LOW_LEVEL_TRACING
   std::cout << "In BackendVFS::BackendVFS(): created object store " << m_root << " " << std::hex << this << file << ":"
             << line << std::endl;

@@ -863,7 +863,7 @@ TEST_F(cta_UtilsTest, DISABLED_currentTime) {
    * so it would be complex to automate.
    * Just run with: "cta-unit-tests --gtest_filter=*currentTime --gtest_also_run_disabled_tests" */
   using namespace cta::utils;
-  ::system("date \"+%h %e %H:%M:%S.%N\" ");
+  ASSERT_EQ(0, ::system("date \"+%h %e %H:%M:%S.%N\" "));
   std::cout << getCurrentLocalTime() << std::endl;
 }
 

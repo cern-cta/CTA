@@ -13,6 +13,7 @@
 #include "common/log/StringLogger.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/TapeMountDummy.hpp"
+#include "tests/TestingArchiveJob.hpp"
 
 #include <cmath>
 #include <ext/stdio_filebuf.h>
@@ -20,16 +21,6 @@
 #include <gtest/gtest.h>
 
 namespace unitTests {
-
-class TestingArchiveJob : public cta::ArchiveJob {
-public:
-  TestingArchiveJob()
-      : cta::ArchiveJob(nullptr,
-                        *((cta::catalogue::Catalogue*) nullptr),
-                        cta::common::dataStructures::ArchiveFile(),
-                        "",
-                        cta::common::dataStructures::TapeFile()) {}
-};
 
 using namespace cta::tape::daemon;
 using namespace cta::disk;

@@ -34,7 +34,6 @@ readonly available_tests=(
 )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
-readonly build_state_file="${project_root}/.cta-dev-build-state.json"
 readonly debug_profile_file="${project_root}/ci/orchestration/debug/cta-debug-profile.yaml"
 
 readonly local_image_registry="localhost"
@@ -42,27 +41,27 @@ ci_image_registry=$(jq -r .dev.ctaImageRegistry "${project_root}/project.json")
 readonly ci_image_registry
 
 # Global
+source "${script_dir}/utils/cta_version.sh"
+CTA_MAJOR_VERSION=$(read_cta_major_version "${project_root}/project.json")
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-scheduler_type="objectstore"
+scheduler_type=""
 oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
 # A single <version>-<suffix> string used by the package build and as the image tag.
-cta_version="6-dev"
-cta_version_base=""
-cta_version_suffix=""
+cta_version="${CTA_MAJOR_VERSION}-dev"
 cta_image_tag=""
 
 # Build
 build_container_restarted=false
 reset=false
 clean_build_dirs=false
-enable_ccache=true
+enable_sccache=true
 skip_debug_packages=true
 skip_unit_tests=true
 force_install=false
-enable_address_sanitizer=false
+sanitizers="none"
 extra_telemetry=false
 build_generator="Ninja"
 cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
@@ -73,6 +72,7 @@ enable_debug_image=false
 # Deploy
 cta_image_registry=""
 dcache_enabled=false
+dcache_image_repository=""
 eos_enabled=true
 local_telemetry=false
 publish_telemetry=false
@@ -82,7 +82,7 @@ catalogue_config="presets/dev-catalogue-postgres-values.yaml"
 scheduler_config=""
 cta_config=""
 eos_config=""
-extra_spawn_options=(--no-setup)
+extra_spawn_options=()
 
 stage_names=()
 stage_durations=()
@@ -90,14 +90,6 @@ namespace_deletion_pid=""
 namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
-
-# Check whether a CTA version is accepted by the package backends.
-cta_version_is_valid() {
-  [[ "$1" =~ ^[0-9][0-9.]*-[a-z0-9][a-z0-9.-]*$ ]]
-}
-
-# Validated in both the environment file and the command line.
-readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 6-dev)"
 
 # Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
@@ -168,8 +160,6 @@ load_cta_dev_env() {
         cmake_build_type=$value
         ;;
       CTA_DEV_CTA_VERSION)
-        cta_version_is_valid "$value" || \
-          die "Invalid value for ${key} in ${env_file}:${line_number}: ${cta_version_format_hint}."
         cta_version=$value
         ;;
       CTA_DEV_NAMESPACE)
@@ -196,7 +186,7 @@ Global options:
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build packages and images with Oracle support.
       --cta-version <version>        CTA version as <version>-<suffix>, defaults to '$cta_version'.
-                                     It is also the CTA image tag.
+                                     Used unchanged for package versions and the CTA image tag.
       --use-public-repos             Force public package repositories. By default, CERN internal
                                      repos are used when they are reachable.
 EOF
@@ -273,9 +263,9 @@ Options:
                                     ["Unix Makefiles", "Ninja"].
       --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
                                     or MinSizeRel.
-      --disable-ccache              Disable ccache.
+      --disable-sccache             Disable sccache.
       --enable-unit-tests           Run compiled unit tests without packaging them.
-      --enable-address-sanitizer    Enable AddressSanitizer.
+      --sanitizers <mode>           none, address, undefined, address,undefined, or thread.
       --force-install               Force source package installation.
 
 $(global_options_help)
@@ -342,27 +332,28 @@ Usage:
   $(basename "$0") deploy [options]
 
 Options:
-      --namespace <ns>             Kubernetes namespace.
-                                   Defaults to dev.
-      --catalogue-config <path>    Catalogue values file.
-      --scheduler-config <path>    Scheduler values file.
-      --cta-config <paths>         Additional CTA Helm values.
-                                   Comma-separated list.
-      --eos-config <path>          EOS Helm values.
-      --eos-image-repository <r>   EOS image repository.
-      --eos-image-tag <tag>        EOS image tag.
-      --cta-image-tag <tag>        Deploy the images with this tag instead of
-                                   the ones built locally for the CTA version,
-                                   for example an image tag built by the CI.
-                                   Cannot be combined with --cta-version.
-      --cta-image-registry <reg>   Registry to deploy the CTA images from.
-                                   Defaults to ${local_image_registry}, or to
-                                   ${ci_image_registry} when --cta-image-tag
-                                   is given.
-      --spawn-options <options>    Additional deployment options.
-      --with-dcache                Deploy dCache instead of EOS.
-      --local-telemetry            Deploy a local telemetry stack.
-      --publish-telemetry          Publish telemetry to the configured backend.
+      --namespace <ns>              Kubernetes namespace.
+                                    Defaults to dev.
+      --catalogue-config <path>     Catalogue values file.
+      --scheduler-config <path>     Scheduler values file.
+      --cta-config <paths>          Additional CTA Helm values.
+                                    Comma-separated list.
+      --eos-config <path>           EOS Helm values.
+      --eos-image-repository <r>    EOS image repository.
+      --eos-image-tag <tag>         EOS image tag.
+      --cta-image-tag <tag>         Deploy the images with this tag instead of
+                                    the ones built locally for the CTA version,
+                                    for example an image tag built by the CI.
+                                    Cannot be combined with --cta-version.
+      --cta-image-registry <reg>    Registry to deploy the CTA images from.
+                                    Defaults to ${local_image_registry}, or to
+                                    ${ci_image_registry} when --cta-image-tag
+                                    is given.
+      --dcache-image-repository <r> dCache image repository.
+      --spawn-options <options>     Additional deployment options.
+      --with-dcache                 Deploy dCache instead of EOS.
+      --local-telemetry             Deploy a local telemetry stack.
+      --publish-telemetry           Publish telemetry to the configured backend.
 
 $(global_options_help)
 
@@ -525,9 +516,9 @@ parse_options() {
         require_command "$1" "$command" build up debug all
         clean_build_dirs=true
         ;;
-      --disable-ccache)
+      --disable-sccache)
         require_command "$1" "$command" build up debug all
-        enable_ccache=false
+        enable_sccache=false
         ;;
       --enable-unit-tests)
         require_command "$1" "$command" build up debug all
@@ -537,9 +528,11 @@ parse_options() {
         require_command "$1" "$command" build up debug all
         force_install=true
         ;;
-      --enable-address-sanitizer)
+      --sanitizers)
         require_command "$1" "$command" build up debug all
-        enable_address_sanitizer=true
+        [[ $# -gt 1 ]] || unsupported_argument "--sanitizers requires a mode"
+        sanitizers="$2"
+        shift
         ;;
       --extra-telemetry)
         require_command "$1" "$command" build up debug all
@@ -600,6 +593,11 @@ parse_options() {
         eos_image_tag="$2"
         shift
         ;;
+      --dcache-image-repository)
+        require_command "$1" "$command" deploy up debug all
+        dcache_image_repository="$2"
+        shift
+        ;;
       --catalogue-config)
         require_command "$1" "$command" deploy up debug all
         catalogue_config="$2"
@@ -644,6 +642,36 @@ parse_options() {
     unsupported_argument "--cmake-build-type is \"$cmake_build_type\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   fi
 
+  jq -e --arg platform "$platform" '.platforms | has($platform)' "${project_root}/project.json" >/dev/null || \
+    unsupported_argument "Unsupported platform '${platform}'."
+
+  # Resolve defaults after both the environment file and command-line overrides.
+  if [[ -z "$scheduler_type" ]]; then
+    case "$platform" in
+      debian13) scheduler_type=pgsched ;;
+      *) scheduler_type=objectstore ;;
+    esac
+  fi
+
+  if [[ "$platform" == debian13 ]]; then
+    [[ "$scheduler_type" == pgsched && "$oracle_support" == false ]] || \
+      unsupported_argument "Debian 13 requires --scheduler-type pgsched and Oracle support disabled."
+    enable_internal_repos=false
+    internal_repos_forced_public=true
+
+    # Debian runtime images are not available yet; fail before starting a package build.
+    case "$command" in
+      images|up|debug|all)
+        unsupported_argument "Debian 13 currently supports package builds only; use 'cta-dev build --platform debian13'."
+        ;;
+    esac
+  fi
+
+  case "$sanitizers" in
+    none|address|undefined|address,undefined|thread) ;;
+    *) unsupported_argument "--sanitizers must be none, address, undefined, address,undefined, or thread" ;;
+  esac
+
   if [[ "$scheduler_type" != "objectstore" ]] && [[ "$scheduler_type" != "pgsched" ]]; then
     unsupported_argument "--scheduler-type is \"$scheduler_type\" but must be one of [objectstore, pgsched]."
   fi
@@ -651,12 +679,6 @@ parse_options() {
   if [[ $cta_version_provided == true && $cta_image_tag_provided == true ]]; then
     unsupported_argument "--cta-version and --cta-image-tag cannot be combined: the CTA version already determines the image tag. Pass --cta-version to deploy a locally built version, or --cta-image-tag to deploy an image built elsewhere."
   fi
-
-  cta_version_is_valid "$cta_version" || \
-    unsupported_argument "--cta-version is \"$cta_version\" but ${cta_version_format_hint}."
-  # Only the part before the first hyphen may contain digits and dots, so this split is unambiguous.
-  cta_version_base="${cta_version%%-*}"
-  cta_version_suffix="${cta_version#*-}"
 
   if [[ $cta_image_tag_provided == true ]]; then
     cta_image_tag_is_valid "$cta_image_tag" || \
@@ -684,6 +706,9 @@ detect_internal_repos() {
 
   local probe_url
   case "$platform" in
+    el10)
+      probe_url="https://cta-public-repo.web.cern.ch/testing/cta-6/el10/cta-dependencies/x86_64/repodata/repomd.xml"
+      ;;
     el9)
       probe_url="https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/others/el9/x86_64/repodata/repomd.xml"
       ;;
@@ -710,8 +735,9 @@ package_directory() {
   local -r package_kind="$1"
 
   case "${platform}:${package_kind}" in
-    el9:source) echo "RPM/SRPMS" ;;
-    el9:binary) echo "RPM/RPMS/x86_64" ;;
+    el9:source|el10:source) echo "RPM/SRPMS" ;;
+    el9:binary|el10:binary) echo "RPM/RPMS/x86_64" ;;
+    debian13:source|debian13:binary) echo "DEB" ;;
     *) die "No ${package_kind} package directory is configured for platform '${platform}'." ;;
   esac
 }
@@ -777,22 +803,21 @@ create_build_configuration() {
     --argjson oracleSupport "$oracle_support" \
     --arg buildGenerator "$build_generator" \
     --arg cmakeBuildType "$cmake_build_type" \
-    --argjson enableCcache "$enable_ccache" \
+    --argjson enableSccache "$enable_sccache" \
     --argjson buildTestPackages "$enable_debug_image" \
     --argjson skipDebugPackages "$skip_debug_packages" \
     --argjson skipUnitTests "$skip_unit_tests" \
-    --argjson enableAddressSanitizer "$enable_address_sanitizer" \
+    --arg sanitizers "$sanitizers" \
     --argjson extraTelemetry "$extra_telemetry" \
-    --arg ctaVersion "$cta_version_base" \
-    --arg ctaVersionSuffix "$cta_version_suffix" \
+    --arg ctaVersion "$cta_version" \
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
     '{platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
-      enableCcache: $enableCcache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
-      runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
-      extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion, ctaVersionSuffix: $ctaVersionSuffix,
+      enableSccache: $enableSccache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
+      sanitizers: $sanitizers, runUnitTests: ($skipUnitTests | not),
+      extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion,
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
 }
 
@@ -800,9 +825,12 @@ create_build_configuration() {
 write_build_state() {
   local -r configuration_json="$1"
   local -r build_successful="$2"
+  local -r state_directory="${project_root}/build/.cta-dev-state"
+  local -r build_state_file="${state_directory}/${platform}.json"
   local temporary_state_file
 
-  temporary_state_file=$(mktemp "${project_root}/.cta-dev-build-state.json.XXXXXX")
+  mkdir -p "$state_directory"
+  temporary_state_file=$(mktemp "${build_state_file}.XXXXXX")
   jq -cn \
     --argjson configuration "$configuration_json" \
     --argjson buildSuccessful "$build_successful" \
@@ -826,6 +854,8 @@ build_cta() {
     return 1
   fi
   readonly xrootd_ssi_version
+  local -r build_state_file="${project_root}/build/.cta-dev-state/${platform}.json"
+  local -r legacy_build_state_file="${project_root}/.cta-dev-build-state.json"
   local -r build_image_name="cta-build-image-${platform}"
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
   local -r mount_basedir="/shared/CTA"
@@ -851,11 +881,22 @@ build_cta() {
 
   [[ -d "${project_root}/build/${platform}" ]] && build_output_exists=true
 
-  if [[ -f "$build_state_file" ]]; then
-    previous_build_state_json=$(jq -ce '
+  # Import legacy state only for its recorded platform; a newer platform file always takes precedence.
+  local state_source="$build_state_file"
+  if [[ ! -e "$build_state_file" && -f "$legacy_build_state_file" ]]; then
+    state_source="$legacy_build_state_file"
+  fi
+  if [[ -f "$state_source" ]]; then
+    previous_build_state_json=$(jq -ce --arg platform "$platform" '
       select((.configuration | type == "object")
-        and (.buildSuccessful | type == "boolean"))' "$build_state_file" 2>/dev/null) \
+        and (.configuration.platform == $platform)
+        and (.buildSuccessful | type == "boolean"))' "$state_source" 2>/dev/null) \
       || previous_build_state_json=""
+  fi
+  if [[ -n $previous_build_state_json && $state_source == "$legacy_build_state_file" ]]; then
+    write_build_state "$(jq -c '.configuration' <<<"$previous_build_state_json")" \
+      "$(jq -r '.buildSuccessful' <<<"$previous_build_state_json")"
+    rm -f "$legacy_build_state_file"
   fi
 
   if [[ -n $previous_build_state_json ]]; then
@@ -902,13 +943,12 @@ build_cta() {
           automatic_clean_build_dirs=true
           ;;
         cmakeBuildType) log_warn "CMake build type changed: ${old_value} -> ${new_value}" ;;
-        enableCcache) log_warn "Ccache setting changed: ${old_value} -> ${new_value}" ;;
+        enableSccache) log_warn "Sccache setting changed: ${old_value} -> ${new_value}" ;;
         buildTestPackages) log_warn "Test package setting changed: ${old_value} -> ${new_value}" ;;
         buildDebugPackages) log_warn "Debug package setting changed: ${old_value} -> ${new_value}" ;;
         runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
-        enableAddressSanitizer) log_warn "AddressSanitizer setting changed: ${old_value} -> ${new_value}" ;;
+        sanitizers) log_warn "Sanitizer mode changed: ${old_value} -> ${new_value}" ;;
         ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
-        ctaVersionSuffix) log_warn "CTA version suffix changed: ${old_value} -> ${new_value}" ;;
         xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
@@ -918,8 +958,8 @@ build_cta() {
       esac
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
-       "enableCcache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
-       "ctaVersion", "ctaVersionSuffix", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
+       "enableSccache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "sanitizers",
+       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' <<<"$previous_configuration_json")
@@ -951,8 +991,6 @@ build_cta() {
   if [[ $clean_build_dirs == true ]]; then
     rebuild_source_packages=true
     reinstall_source_packages=true
-    log_task "Removing build directories..."
-    rm -rf -- "${project_root}/build/${platform}"
   fi
 
   # Remove the project-specific container if reset is requested.
@@ -1031,18 +1069,22 @@ build_cta() {
       --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
     )
   fi
+  # Let the package builder clean both build output and generated packaging state inside the container.
+  [[ $clean_build_dirs == true ]] && build_package_flags+=(--clean-build-dir)
   [[ $enable_debug_image == false ]] && build_package_flags+=(--skip-test-packages)
   [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
   [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)
-  [[ $enable_ccache == true ]] && build_package_flags+=(--enable-ccache)
+  [[ $enable_sccache == true ]] && build_package_flags+=(--enable-sccache)
   [[ $enable_internal_repos == true ]] && build_package_flags+=(--enable-internal-repos)
-  [[ $enable_address_sanitizer == true ]] && build_package_flags+=(--enable-address-sanitizer)
+  build_package_flags+=(--sanitizers "$sanitizers")
   [[ $extra_telemetry == true ]] && build_package_flags+=(--extra-telemetry)
+  # Refresh older outer caches once to select packaging without compiling CTA.
   if [[ $state_matches_configuration == true \
       && $previous_build_successful == true \
       && $rebuild_source_packages == false \
       && -f "${project_root}/build/${platform}/CMakeCache.txt" \
-      && $clean_build_dirs == false ]]; then
+      && $clean_build_dirs == false ]] \
+      && grep -qx 'CTA_BUILD_MODE:STRING=binary-package' "${project_root}/build/${platform}/CMakeCache.txt"; then
     build_package_flags+=(--skip-cmake)
   fi
 
@@ -1055,8 +1097,7 @@ build_cta() {
     --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
     --create-build-dir \
-    --cta-version "${cta_version_base}" \
-    --cta-version-suffix "${cta_version_suffix}" \
+    --cta-version "${cta_version}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
     --oracle-support "${oracle_support}" \
@@ -1148,7 +1189,9 @@ cleanup_background_namespace_deletion() {
   if [[ -n $namespace_deletion_pid ]]; then
     wait "$namespace_deletion_pid" >/dev/null 2>&1 || true
   fi
-  [[ -n $namespace_deletion_log ]] && rm -f -- "$namespace_deletion_log"
+  if [[ -n $namespace_deletion_log ]]; then
+    rm -f -- "$namespace_deletion_log"
+  fi
 }
 
 # Start deleting the previous deployment in the background while the build runs.
@@ -1193,6 +1236,7 @@ deploy_cta() {
   cd "${project_root}/ci/orchestration"
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
+  [[ -n $dcache_image_repository ]] && extra_spawn_options+=(--dcache-image-repository "$dcache_image_repository")
   [[ -n $eos_config ]] && extra_spawn_options+=(--eos-config "$eos_config")
   [[ -n $cta_config ]] && extra_spawn_options+=(--cta-config "$cta_config")
   [[ $local_telemetry == true ]] && extra_spawn_options+=(--local-telemetry)
@@ -1214,6 +1258,16 @@ deploy_cta() {
     --reset-catalogue \
     --reset-scheduler \
     "${extra_spawn_options[@]}"
+
+  if [[ $local_telemetry == true ]]; then
+    # Prometheus is exposed through a local port-forward, not a public endpoint.
+    echo
+    echo "Local telemetry dashboard (Prometheus): http://localhost:9090/query"
+    echo "Start port forwarding in another terminal:"
+    echo "  kubectl --namespace ${namespace} port-forward svc/prometheus-server 9090:80"
+    echo "If running on a remote development machine, also run on your workstation:"
+    echo "  ssh -N -L 9090:localhost:9090 <user>@<dev-machine>"
+  fi
 }
 
 # Select and run a system test in the installed Python environment.

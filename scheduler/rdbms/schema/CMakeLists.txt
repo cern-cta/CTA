@@ -1,9 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-
-include_directories (${POSTGRES_INCLUDE_DIRS})
-
 #
 # Compiled protocol buffers (for ChecksumBlob)
 #

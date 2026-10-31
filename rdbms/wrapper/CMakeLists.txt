@@ -4,7 +4,6 @@
 add_compile_options(-Wshadow)
 
 find_package (sqlite REQUIRED)
-include_directories (${POSTGRES_INCLUDE_DIRS})
 
 if(CTA_WITH_ORACLE)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
@@ -57,7 +56,7 @@ add_library (ctardbmssqlite SHARED
 set_property(TARGET ctardbmssqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmssqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctardbmssqlite ctardbms ctacommon ctapluginmanager
   ${SQLITE_LIBRARIES})
@@ -70,10 +69,10 @@ add_library (ctardbmspostgres SHARED
 set_property(TARGET ctardbmspostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctardbmspostgres ctardbms ctacommon ctapluginmanager
-  ${POSTGRES_LIBRARIES})
+  PostgreSQL::PostgreSQL)
 
 install(TARGETS ctardbmspostgres DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
@@ -84,7 +83,7 @@ if(CTA_WITH_ORACLE)
   set_property(TARGET ctardbmsocci PROPERTY SOVERSION "${CTA_SOVERSION}")
   set_property(TARGET ctardbmsocci PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-  target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+  target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_VERSION}")
 
   target_link_libraries (ctardbmsocci ctardbms ctacommon ctapluginmanager
     ${ORACLE-INSTANTCLIENT_LIBRARIES})
@@ -99,7 +98,7 @@ set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctardbmswrapper PRIVATE
   CTA_ABI_SOVERSION="${CTA_SOVERSION}"
-  VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+  VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctardbmswrapper
   ctacommon
@@ -135,4 +134,6 @@ if(CTA_WITH_ORACLE)
   target_link_libraries (ctardbmswrapperunittests ctardbmsocci)
 endif()
 
-install(TARGETS ctardbmswrapperunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctardbmswrapperunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
