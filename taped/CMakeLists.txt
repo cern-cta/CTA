@@ -14,8 +14,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
   foreach(mock_source IN ITEMS
       scsi/DeviceTest.cpp
       drive/DriveTest.cpp
-      system/Wrapper.cpp
-      daemon/DriveHandlerTests.cpp)
+      system/Wrapper.cpp)
     get_filename_component(mock_directory "${mock_source}" DIRECTORY)
     set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${mock_source}"
       DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${mock_directory}"
