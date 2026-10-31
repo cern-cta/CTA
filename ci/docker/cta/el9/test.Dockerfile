@@ -4,5 +4,5 @@
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 RUN dnf install -y createrepo epel-release almalinux-release-devel postgresql-server && \
-    dnf config-manager --disable "epel-cisco-openh264*" && \
+    sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/epel-cisco-openh264.repo && \
     dnf clean all --enablerepo=\*

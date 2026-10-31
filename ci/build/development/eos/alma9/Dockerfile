@@ -14,7 +14,7 @@ RUN mkdir -p shared;
 RUN set -ex; \
     dnf -y update; \
     dnf -y install epel-release almalinux-release-devel; \
-    dnf config-manager --disable "epel-cisco-openh264*"; \
+    sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/epel-cisco-openh264.repo; \
     dnf -y install git vim rsync cmake3 dnf-utils ccache openssh-server; \
     dnf -y group install "Development Tools";
 
