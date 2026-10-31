@@ -17,7 +17,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/drive/DriveGeneric.hpp"
 #include "taped/drive/DriveInterface.hpp"
-#include "taped/session/EncryptionControl.hpp"
+#include "taped/drive/EncryptionControl.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
 #include <memory>

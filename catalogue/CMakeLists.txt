@@ -116,6 +116,7 @@ target_compile_definitions(ctacatalogue PRIVATE
 install (TARGETS ctacatalogue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
+  ctatelemetry
   ctacommon
   ctapluginmanager
   ctaprotobufconversions
@@ -317,6 +318,7 @@ set(CATALOGUE_MODULES_TESTS_SRC_FILES
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   ${CATALOGUE_MODULES_TESTS_SRC_FILES}
+  TapeDrivesCatalogueStateTest.cpp
   TapeItemWrittenPointerTest.cpp
   SqliteCatalogueSchema.cpp
   tests/CatalogueTestUtils.cpp

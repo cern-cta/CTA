@@ -276,8 +276,6 @@ Provides common shared libraries used by CTA components.
 %files -n cta-lib-common
 %license COPYING
 %{_libdir}/libctacommon.so.*
-%{_libdir}/libctaprotobuf.so.*
-%{_libdir}/libctascsi.so.*
 
 %package -n cta-lib-telemetry
 Summary: CERN Tape Archive telemetry libraries
@@ -592,17 +590,16 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*
 %{_libdir}/libctaschedulerunittests.so*
+%{_libdir}/libctatapedunittests.so*
 %{_libdir}/libctatapedsessionunittests.so*
 %{_libdir}/libctatapeddriveunittests.so*
 %{_libdir}/libctatapedfileunittests.so*
 %{_libdir}/libctascsiunittests.so*
-%{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
 %{_libdir}/libctamaintdunittests.so*
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*
-%{_libdir}/libctadaemonunittests-multiprocess.so*
 %{_datadir}/cta/tests/*.suppr
 %{_datadir}/cta/tests/parallelTestsMakefile
 %endif
@@ -640,8 +637,6 @@ Provides unversioned linker names for developing applications with CTA shared li
 %files -n cta-devel
 %license COPYING
 %{_libdir}/libctacommon.so
-%{_libdir}/libctaprotobuf.so
-%{_libdir}/libctascsi.so
 %{_libdir}/libctatelemetry.so
 %{_libdir}/libctatelemetryfrontend.so
 %{_libdir}/libctatelemetrymaintd.so

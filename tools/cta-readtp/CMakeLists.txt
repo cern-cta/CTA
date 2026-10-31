@@ -14,6 +14,10 @@ target_link_libraries(cta-readtp
   ctacommon
   ctatapedutils
   ctatapeddrive
+  ctatapedfile
+  ctatapedsession
+  ctascheduler
+  ctadisk
   ctamediachanger
   ctacatalogue
   ctascsi

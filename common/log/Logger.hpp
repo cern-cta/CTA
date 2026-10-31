@@ -87,14 +87,6 @@ public:
   virtual ~Logger() = 0;
 
   /**
-   * Prepares the logger object for a call to fork()
-   *
-   * No further calls to operator() should be made after calling this
-   * method until the call to fork() has completed.
-   */
-  virtual void prepareForFork() = 0;
-
-  /**
    * Refresh the underlying logger setup
    */
   virtual void refresh() = 0;

@@ -13,9 +13,12 @@
 #include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/Timer.hpp"
+#include "telemetry/metrics/DriveState.hpp"
 #include "version.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <list>
 
 namespace cta {
@@ -28,6 +31,7 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
                                                      const common::dataStructures::DriveStatus& status,
                                                      const common::dataStructures::SecurityIdentity& identity,
                                                      log::LogContext& lc) const {
+  telemetry::metrics::setDriveStatus(status);
   auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, identity);
   auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   if (auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName); it != driveNames.end()) {
@@ -64,11 +68,66 @@ void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogCon
   }
 }
 
+common::dataStructures::DesiredDriveState
+TapeDrivesCatalogueState::getDesiredDriveState(const std::string& driveName) const {
+  const auto optionalDriveState = m_catalogue.DriveState()->getTapeDrive(driveName);
+  if (!optionalDriveState.has_value()) {
+    throw TapeDrivesCatalogueState::NoSuchDrive("In TapeDrivesCatalogueState::getDesiredDriveState(): no such drive: "
+                                                + driveName);
+  }
+  const auto& driveState = optionalDriveState.value();
+
+  common::dataStructures::DesiredDriveState desiredDriveState;
+  desiredDriveState.up = driveState.desiredUp;
+  desiredDriveState.forceDown = driveState.desiredForceDown;
+  desiredDriveState.reason = driveState.reasonUpDown;
+  desiredDriveState.comment = driveState.userComment;
+  return desiredDriveState;
+}
+
+void TapeDrivesCatalogueState::reportSchedulerBackendName(const std::string& driveName,
+                                                          const std::string& backendName,
+                                                          log::LogContext& lc) const {
+  utils::Timer t;
+  // Temporary for backward compatibility. Should be removed in the next catalogue upgrade as it should be a dedicated column
+  // in the drive state table
+  constexpr const char* schedulerBackendNameKey = "SchedulerBackendName";
+  auto driveConfig = m_catalogue.DriveConfig()->getTapeDriveConfig(driveName, schedulerBackendNameKey);
+  if (driveConfig) {
+    m_catalogue.DriveConfig()->modifyTapeDriveConfig(driveName,
+                                                     "general",
+                                                     schedulerBackendNameKey,
+                                                     backendName,
+                                                     "TOML config file");
+  } else {
+    m_catalogue.DriveConfig()->createTapeDriveConfig(driveName,
+                                                     "general",
+                                                     schedulerBackendNameKey,
+                                                     backendName,
+                                                     "TOML config file");
+  }
+  auto schedulerDbTime = t.secs();
+  log::ScopedParamContainer spc(lc);
+  spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "Successfully reported the scheduler backend name of drive in the catalogue.");
+}
+
+void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+                                                 common::dataStructures::MountType mountType,
+                                                 common::dataStructures::DriveStatus status,
+                                                 log::LogContext& lc) const {
+  reportDriveStatus(driveInfo,
+                    mountType,
+                    status,
+                    std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
+                    lc);
+}
+
 void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
                                                     const common::dataStructures::DesiredDriveState& desiredState,
                                                     [[maybe_unused]] log::LogContext& lc) const {
   log::ScopedParamContainer spc(lc);
-  spc.add("drive_name", drive)
+  spc.add("tapeDrive", drive)
     .add("up", desiredState.up ? "up" : "down")
     .add("force", desiredState.forceDown ? "yes" : "no")
     .add("reason", desiredState.reason.value_or(""))
@@ -82,6 +141,34 @@ void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
   } else {
     m_catalogue.DriveState()->setDesiredTapeDriveStateComment(drive, desiredState.comment.value());
   }
+}
+
+void TapeDrivesCatalogueState::requestDriveDown(const std::string& driveName,
+                                                common::dataStructures::DriveDownReason reason,
+                                                log::LogContext& lc,
+                                                std::string_view detail) const {
+  using namespace common::dataStructures;
+  const auto current = m_catalogue.DriveState()->getTapeDrive(driveName);
+  if (!current) {
+    throw NoSuchDrive("Cannot request Down for missing drive: " + driveName);
+  }
+
+  DesiredDriveState desired;
+  if (!current->desiredUp && current->reasonUpDown
+      && !current->reasonUpDown->empty()
+      // For better diagnostics, allow overwriting startup/shutdown reason
+      && classifyPersistedDriveReason(*current->reasonUpDown) == PersistedDriveReasonKind::Other) {
+    // Omit the update so a newer reason is not overwritten with the observed value.
+    desired.reason.reset();
+  } else {
+    desired.reason = formatDriveDownReason(reason, detail);
+  }
+
+  // Note that there is a very small change for a race condition here as the lookup for the reason
+  // and the update are not one atomic operation
+  // However, this would only happen if the operator happens to change the reason as this method is called
+  // and the only result is that the reason the operator put in is not preserved; not the end of the world
+  setDesiredDriveState(driveName, desired, lc);
 }
 
 void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
@@ -127,6 +214,7 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
 void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                                                  const ReportDriveStatusInputs& inputs,
                                                  log::LogContext& lc) const {
+  telemetry::metrics::setDriveStatus(inputs.status);
   common::dataStructures::TapeDrive driveState;
   // Set the parameters that we always set
   driveState.driveName = driveInfo.driveName;
@@ -139,7 +227,7 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
       setDriveDown(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Up:
-      setDriveUpOrMaybeDown(driveState, inputs);
+      setDriveUp(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Probing:
       setDriveProbing(driveState, inputs);
@@ -206,8 +294,6 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive& d
   driveState.mountType = common::dataStructures::MountType::NoMount;
   driveState.nextMountType = common::dataStructures::MountType::NoMount;
   driveState.driveStatus = common::dataStructures::DriveStatus::Down;
-  driveState.desiredUp = false;
-  driveState.desiredForceDown = false;
   driveState.currentVid = "";
   driveState.currentTapePool = "";
   driveState.currentVo = "";
@@ -217,10 +303,8 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive& d
   }
 }
 
-void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::TapeDrive& driveState,
-                                                     const ReportDriveStatusInputs& inputs) const {
-  // Decide whether we should be up or down
-  auto targetStatus = common::dataStructures::DriveStatus::Up;
+void TapeDrivesCatalogueState::setDriveUp(common::dataStructures::TapeDrive& driveState,
+                                          const ReportDriveStatusInputs& inputs) const {
   // If we are changing state, then all should be reset.
   driveState.sessionId = std::nullopt;
   driveState.bytesTransferedInSession = std::nullopt;
@@ -238,7 +322,7 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   driveState.shutdownTime = std::nullopt;
   driveState.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveState.host, inputs.reportTime);
   driveState.mountType = common::dataStructures::MountType::NoMount;
-  driveState.driveStatus = targetStatus;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Up;
   driveState.currentVid = "";
   driveState.currentTapePool = "";
   driveState.currentVo = "";

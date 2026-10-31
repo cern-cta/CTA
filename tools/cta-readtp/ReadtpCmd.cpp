@@ -23,12 +23,12 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/TapedConfig.hpp"
 #include "taped/TapedUtils.hpp"
+#include "taped/drive/EncryptionControl.hpp"
 #include "taped/file/FileReaderFactory.hpp"
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"
 #include "taped/file/Structures.hpp"
-#include "taped/session/EncryptionControl.hpp"
-#include "taped/session/Payload.hpp"
+#include "taped/session/pipeline/Payload.hpp"
 
 namespace cta::tape::readtp {
 
@@ -96,11 +96,8 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
 
   // Read taped config file
-  if (!cmdLineArgs.m_unitName) {
-    m_log(cta::log::INFO, "Drive name not specified, choosing first matching config file.");
-  }
+  m_log(cta::log::INFO, "Drive name not specified, choosing first config file found.");
   auto configFilePath = cta::taped::utils::getFirstTapedConfigPath(cmdLineArgs.m_unitName);
-  m_log(cta::log::INFO, "Using taped configuration file: " + configFilePath);
   auto tapedConfig = runtime::loadFromToml<cta::tape::daemon::TapedConfig>(configFilePath, false);
 
   // Configure drive

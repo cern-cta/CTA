@@ -16,7 +16,6 @@ set (CTA_UNIT_TEST_LIBS
   ctaruntimeunittests
   ctaprotobufunittests
   ctafrontendcommonconfigunittests
-  ctadaemonunittests
   ctaexceptionunittests
   ctamediachangerunittests
   ctamaintdunittests
@@ -26,6 +25,7 @@ set (CTA_UNIT_TEST_LIBS
   ctardbmsunittests
   ctardbmswrapperunittests
   ctaschedulerunittests
+  ctatapedunittests
   ctatapedsessionunittests
   ctatapeddriveunittests
   ctatapedfileunittests
@@ -43,7 +43,7 @@ if(NOT CTA_USE_PGSCHED)
     ctaobjectstoreunittests)
 endif()
 
-target_link_libraries(cta-unit-tests ${CTA_UNIT_TEST_LIBS})
+target_link_libraries(cta-unit-tests ${CTA_UNIT_TEST_LIBS} ${PROTOBUF3_LIBRARIES})
 
 add_executable(cta-unit-tests-rdbms
   GlobalCatalogueFactoryForUnitTests.cpp
@@ -66,12 +66,17 @@ add_executable(cta-unit-tests-multiprocess
   SubprocessTests.cpp)
 
 target_link_libraries(cta-unit-tests-multiprocess
-  ctadaemonunittests-multiprocess
   ctacommon
+  ${PROTOBUF3_LIBRARIES}
   gtest
   gmock
   pthread
   sqlite3)
+
+if(CTA_USE_PGSCHED)
+  # The temporary PostgreSQL test environment uses the RDBMS and scheduler schema libraries.
+  target_link_libraries(cta-unit-tests-multiprocess ctardbms ctaschedulerschema)
+endif()
 
 add_library(cta-unit-test-helper
   TempFile.cpp TempDirectory.cpp)
@@ -84,12 +89,23 @@ foreach(test_runner cta-unit-tests cta-unit-tests-rdbms cta-unit-tests-multiproc
   target_link_options(${test_runner} PRIVATE "LINKER:--no-as-needed")
 endforeach()
 
+add_executable(cta-test-immutable-file
+  ImmutableFileTest.cpp
+  ImmutableFileTestMain.cpp
+  ImmutableFileTestCmdLineArgs.cpp)
+
+set_property (TARGET cta-test-immutable-file APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
+
+target_link_libraries(cta-test-immutable-file
+  ctacommon XrdCl)
+
 if(CTA_BUILD_TEST_PACKAGES)
   install(
     TARGETS
       cta-unit-tests-rdbms
       cta-unit-tests
       cta-unit-tests-multiprocess
+      cta-test-immutable-file
     DESTINATION
       ${CMAKE_INSTALL_BINDIR})
 endif()
@@ -189,8 +205,8 @@ add_custom_target(cta-unit-tests-helgrind-object-store-db
   COMMENT "Running unit tests with race conditions detection (Object store DB section)" VERBATIM)
 
 add_custom_target(cta-unit-tests-helgrind-data-transfer
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/TapeSessionTest*
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/TapeSessionTest*
 
   DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Data transfer section)" VERBATIM)

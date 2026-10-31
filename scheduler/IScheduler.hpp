@@ -5,12 +5,16 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveStatus.hpp"
+#include "common/dataStructures/MountType.hpp"
+
 #include <string>
 
 namespace cta {
 
 namespace common::dataStructures {
 struct DriveInfo;
+struct SecurityIdentity;
 class DesiredDriveState;
 }  // namespace common::dataStructures
 

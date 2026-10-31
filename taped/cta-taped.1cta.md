@@ -27,6 +27,29 @@ The drive and its CTA logical library are selected in the process configuration.
 CTA supports SCSI-compatible tape libraries.
 The **cta-rmcd** daemon must be reachable by **cta-taped** for physical mount and unmount operations.
 
+# DRIVE LIFECYCLE
+
+A drive whose reported and desired states are both Down is left untouched, including device probes and robot operations.
+At startup, desired Down keeps the drive Down; desired Up is preserved and authorizes preparation cleaning regardless of the previous reported state.
+This allows recovery after a crash without discarding a pending operator up request.
+A drive without a catalogue entry starts Down.
+
+Preparation publishes Starting before accessing hardware and checks desired state again after cleaning.
+An operator down request during preparation or an active session is honoured after hardware cleanup finishes.
+Reported Down marks the end of hardware activity; a subsequent up request authorizes another preparation attempt.
+Ordinary session completion and handled failures eject the cartridge when the drive and robot permit it.
+A successful eject does not necessarily make the drive reusable: configuration-reset failures can still require Down.
+
+Controlled exits attempt both reported Down and desired Down once drive identity has been validated, including failures before startup becomes ready.
+They preserve existing operator or failure reasons and return failure if down publication fails.
+Shutdown does not perform additional hardware cleanup or wait indefinitely for database recovery.
+Configuration failures before catalogue access and failures to validate drive ownership cannot guarantee down publication.
+
+SIGTERM and SIGINT (Ctrl-C) request an exit between scheduling iterations or polling attempts.
+An active tape session finishes before exit; sleeps and blocking operations are not interrupted.
+Full graceful shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.
+Crashes, allocation or logging failures, stuck cartridges, and robot communication failures can prevent cleanup or state publication.
+
 # OPTIONS
 
 -l, --log-file *PATH*
@@ -89,11 +112,6 @@ logical_library_name
 
 :   Name of the existing CTA logical library to which the drive belongs.
 
-ready_timeout_secs *(default: 120)*
-
-:   Maximum time that the drive process may remain in the readiness-checking state without making progress.
-On expiry, the drive process is killed and restarted, but the drive remains Up.
-
 ## [catalogue]
 
 config_file
@@ -123,6 +141,9 @@ retrieve_queue_cache_max_age_secs *(default: 10)*
 
 ## [mounts]
 
+Session timeout checks affect liveness only; they do not terminate or recover sessions.
+Preparing, Finalizing and controller operations remain unchecked.
+
 minimum_queued_bytes *(default: 500000000000)*
 
 :   Minimum queued bytes required before the scheduler considers an archive or retrieve queue large enough to mount.
@@ -134,11 +155,6 @@ minimum_queued_files *(default: 10000)*
 :   Minimum queued files required before the scheduler considers an archive or retrieve queue large enough to mount.
 This is combined with **minimum_queued_bytes** using OR semantics.
 
-scheduling_timeout_secs *(default: 300)*
-
-:   Maximum time that the drive process may remain in the scheduling state without reporting progress.
-On expiry, the drive process is killed and restarted, but the drive remains Up.
-
 get_next_mount_timeout_secs *(default: 900)*
 
 :   Maximum time allowed for selecting the next mount.
@@ -146,26 +162,47 @@ On expiry, a warning is logged and the request is retried.
 
 idle_scheduling_interval_secs *(default: 10)*
 
-:   Delay before retrying after the scheduler reports that no mount is available.
+:   Delay before retrying when no mount is available or scheduling fails.
+Also applied after a failed tape session if the drive remains reusable.
+Successful sessions do not incur this delay.
 
 drive_state_poll_interval_secs *(default: 5)*
 
-:   Delay before polling the desired drive state again while the drive is Down.
-Lower values make **cta-taped** react faster when an operator sets the drive Up but increase scheduler polling.
+:   Delay before polling the catalogue for the desired drive state again while the drive is Down.
+Lower values make **cta-taped** react faster when an operator sets the drive Up but increase catalogue polling.
+
+logical_library_poll_interval_secs *(default: 5)*
+
+:   Delay before checking again for a logical library that does not yet exist.
 
 mount_timeout_secs *(default: 600)*
 
-:   Maximum time that the drive process may remain in the overall mounting state, including the RMCD request and physical tape-load readiness check.
-On expiry, the drive process is killed and a cleaner session attempts recovery.
+:   Maximum time in Mounting before liveness becomes unhealthy.
 
 tape_load_timeout_secs *(default: 300)*
 
-:   Maximum time allowed for the physical drive to load the tape and become ready after the RMCD mount request returns.
+:   Maximum time in Loading before liveness becomes unhealthy.
+Also limits the existing physical drive readiness wait, whose failure starts cleanup.
+
+tape_unload_timeout_secs *(default: 900)*
+
+:   Maximum time in Unloading before liveness becomes unhealthy.
+Must be positive and nonzero.
 
 unmount_timeout_secs *(default: 900)*
 
-:   Maximum time allowed for RMCD to return an unloaded tape to its library slot.
-This limit starts after the drive has finished rewinding and ejecting the tape.
+:   Maximum time in Unmounting before liveness becomes unhealthy.
+
+preparing_timeout_secs *(default: 900)*
+
+:   Maximum time in Preparing before liveness becomes unhealthy, for transfers and drive cleanup.
+Must be positive and nonzero.
+
+finalizing_timeout_secs *(default: 900)*
+
+:   Maximum time in Finalizing before liveness becomes unhealthy, including final statistics publication.
+Must be positive and nonzero.
+These timeouts affect health reporting only; they do not cancel operations or release hardware.
 
 ## [transfers]
 
@@ -182,10 +219,17 @@ disk_io_threads *(default: 10)*
 
 :   Number of disk I/O workers and therefore the maximum number of transfers that can perform disk I/O concurrently.
 
+stats_report_interval_secs *(default: 15)*
+
+:   Interval in seconds between periodic tape-session statistics reports to the scheduler and logs.
+Must be greater than zero.
+Final statistics are reported when the session finishes, without waiting for this interval.
+
 no_block_move_timeout_secs *(default: 1800)*
 
-:   Interval after which a file with no tape-block movement is logged as stuck.
-This setting controls reporting and does not terminate the transfer.
+:   Maximum inactivity in Transferring before liveness becomes unhealthy.
+Measured from the later of state entry and last block movement; reporter activity does not count.
+Also preserves the existing stuck-file warning interval.
 
 ## [transfers.archive]
 
@@ -244,7 +288,7 @@ fetch_max_files *(default: 5000)*
 
 drain_to_disk_timeout_secs *(default: 1800)*
 
-:   Maximum total time allowed to finish writing retrieved data to disk after the tape is unmounted.
+:   Maximum time in DrainingToDisk before liveness becomes unhealthy.
 
 external_free_disk_space_script *(default: /usr/bin/cta-eosdf.sh)*
 
