@@ -7,6 +7,13 @@ add_library(ctatapedscheduler
 )
 target_link_libraries(ctatapedscheduler PUBLIC ctacommon ctaruntime ctascheduler)
 
+add_subdirectory(scsi)
+add_subdirectory(system)
+add_subdirectory(file)
+add_subdirectory(rao)
+add_subdirectory(drive)
+add_subdirectory(session)
+
 # EL9's packaged GoogleTest 1.11 leaves matcher buffer storage uninitialized, triggering GCC 14 warnings.
 # Suppress them only in affected mock users; other warnings remain errors.
 # Remove when EL9 provides a fixed GoogleTest package and these files build without the suppression (or when we remove EL9).
@@ -21,13 +28,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_G
       APPEND PROPERTY COMPILE_OPTIONS -Wno-uninitialized -Wno-maybe-uninitialized)
   endforeach()
 endif()
-
-add_subdirectory(scsi)
-add_subdirectory(system)
-add_subdirectory(file)
-add_subdirectory(rao)
-add_subdirectory(drive)
-add_subdirectory(session)
 
 add_library(ctatapedutils
   TapedUtils.cpp

@@ -43,7 +43,8 @@ add_library(ctatapeddriveunittests SHARED
   MountedTapeTest.cpp
   VirtualDriveTest.cpp
   StressDriveTest.cpp
-)set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+)
+set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctatapeddriveunittests
