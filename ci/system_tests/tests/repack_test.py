@@ -1282,6 +1282,10 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
         # Expected log noise from failed XRootD writes and terminated mount sessions.
         error_whitelist.add("Notified client of end session with error")
         error_whitelist.add("Failed to open file for write")
+        error_whitelist.add("File writing to disk failed")
+        error_whitelist.add("Task failed: counting another error for this session")
+        error_whitelist.add("In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.")
+        error_whitelist.add("End of recall session with error(s)")
 
         # Wait for the tape drive to finish its mount (all transfer attempts done).
         cta_cli.wait_for_drives_to_stop_transferring(timeout=120)
