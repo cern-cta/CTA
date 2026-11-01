@@ -1220,6 +1220,129 @@ def test_repack_move_and_add_copies(
     cta_cli.reclaim_tape(vid_to_repack)
 
 
+def test_archive_for_retrieve_failure_repack(
+    eos_client: EosClientHost,
+    disk_instance_name: str,
+    repack_params: RepackParams,
+    test_dir: Path,
+) -> None:
+    """Archive a small set of files so the retrieve-failure repack regression test has a fresh tape."""
+    eos_client.generate_and_archive_files(
+        disk_instance_name,
+        test_dir / "archive_retrieve_failure_repack",
+        file_count=3,
+        file_size_kb=repack_params.file_size_kb,
+        parallelism=repack_params.process_count,
+    )
+
+
+def test_repack_job_stuck_running_when_all_retrieves_fail(
+    cta_cli: CtaCliHost,
+    eos_mgm: EosMgmHost,
+    repack_buffer_dir: Path,
+    repack_mp_name: str,
+    disk_instance_name: str,
+    error_whitelist: set[str],
+) -> None:
+    """Regression test for the bug where a repack job stays 'Running' forever when all
+    retrieve transfers fail (e.g. disk buffer fills up mid-session).
+
+    Root cause: updateRepackRequestFailuresBatch(isRetrieve=True) increments
+    FAILED_TO_RETRIEVE_FILES but never advances any archive-side counter.  The
+    completeness check requires
+        archivedFiles + failedArchiveFiles + failedCreateArchiveReq >= totalArchiveFiles
+    which can never be satisfied for the files that failed to retrieve.
+
+    Fix site: scheduler/rdbms/postgres/RepackRequestTracker.cpp —
+    when isRetrieve=True the function must also increment FAILED_TO_CREATE_ARCHIVE_REQ
+    by the same count so the archive-side completeness term closes.
+
+    This test currently FAILS at the final assert (status is 'Running' not 'Failed'),
+    proving the bug is present.  It will pass once the fix is applied.
+    """
+    vid = cta_cli.get_first_vid_containing_files()
+
+    cta_cli.modify_tape_state(vid, "REPACKING")
+    cta_cli.remove_repack_request(vid)
+    cta_cli.exec(f"cta-admin tape ch --vid {vid} --full true")
+
+    # Delete the buffer before submitting so every write attempt during retrieve fails.
+    # cta-admin repack add does not validate the buffer URL at submission time — only actual
+    # writes to the buffer (during the retrieve mount) do.  The expansion routine only creates
+    # DB records and never writes to the buffer, so expansion proceeds normally.
+    print(f"Removing repack buffer {repack_buffer_dir} to simulate disk-full during retrieve")
+    eos_mgm.exec(f"eos rm -r {repack_buffer_dir}")
+
+    print(f"Submitting move-only repack for VID {vid}")
+    cta_cli.exec(
+        f"cta-admin repack add --mountpolicy {repack_mp_name} --vid {vid} "
+        f"--bufferurl root://{disk_instance_name}/{repack_buffer_dir} -m"
+    )
+
+    # Wait for full expansion so all retrieve subrequests are created in the DB.
+    cta_cli.wait_for_repack_request_expansion(vid, wait_timeout_secs=60)
+
+    # Expected log noise from failed XRootD writes and terminated mount sessions.
+    error_whitelist.add("Notified client of end session with error")
+    error_whitelist.add("Failed to open file for write")
+
+    try:
+        # Wait for the tape drive to finish its mount (all transfer attempts done).
+        cta_cli.wait_for_drives_to_stop_transferring(timeout=120)
+
+        # Wait for the retrieve queue to drain (all jobs are in ToReportToRepackForFailure state).
+        cta_cli.wait_for_queue_to_empty(vid, wait_timeout_secs=60)
+
+        # Poll until cta-maintd processes the failure reports and updates the repack request,
+        # or until the timeout expires.  With the bug the job never leaves 'Running'.
+        repack_json: list[dict] = []
+        with Timeout(60) as t:
+            while not t.expired:
+                try:
+                    repack_json = json.loads(
+                        cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid}")
+                    )
+                    if repack_json and repack_json[0].get("status") != "Running":
+                        break
+                except (json.JSONDecodeError, IndexError):
+                    pass
+                time.sleep(2)
+
+        assert repack_json, f"No repack request found for VID {vid}"
+        repack = repack_json[0]
+        status = repack.get("status")
+        failed_to_retrieve = repack.get("failedToRetrieveFiles", 0)
+        # totalFilesToRetrieve is set by the expansion routine and is authoritative;
+        # avoid nbMasterFiles which is a cumulative counter never decremented by repack.
+        total_to_retrieve = repack.get("totalFilesToRetrieve", 0)
+
+        print(f"Repack final state for VID {vid}:")
+        print(f"  status:               {status}")
+        print(f"  totalFilesToRetrieve: {total_to_retrieve}")
+        print(f"  failedToRetrieveFiles:{failed_to_retrieve}")
+        print(f"  filesLeftToArchive:   {repack.get('filesLeftToArchive', 0)}")
+        print(f"  totalFailedFiles:     {repack.get('totalFailedFiles', 0)}")
+
+        assert failed_to_retrieve == total_to_retrieve, (
+            f"Expected all {total_to_retrieve} retrieve jobs to fail after deleting the buffer, "
+            f"but only {failed_to_retrieve} were counted as failed.  "
+            f"The buffer may not have been absent for the entire mount session."
+        )
+
+        # This assertion proves the bug: with the current code status remains 'Running'.
+        assert status == "Failed", (
+            f"Repack for VID {vid} must transition to 'Failed' once all {total_to_retrieve} "
+            f"retrieve transfers fail, but status is '{status}'.  "
+            f"Bug: updateRepackRequestFailuresBatch(isRetrieve=True) never increments "
+            f"FAILED_TO_CREATE_ARCHIVE_REQ, so the archive-side completeness check "
+            f"(archivedFiles + failedArchiveFiles + failedCreateArchiveReq >= totalArchiveFiles) "
+            f"can never be satisfied."
+        )
+    finally:
+        cta_cli.remove_repack_request(vid)
+        cta_cli.modify_tape_state(vid, "ACTIVE")
+
+
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
     error_whitelist.add("Aborting recall mount startup: empty mount")
     error_whitelist.add("Notified client of end session with error")
