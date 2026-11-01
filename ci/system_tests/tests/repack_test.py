@@ -7,7 +7,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 import pytest
 
@@ -1290,13 +1290,11 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
 
         # Poll until cta-maintd processes the failure reports and updates the repack request,
         # or until the timeout expires.  With the bug the job never leaves 'Running'.
-        repack_json: list[dict] = []
+        repack_json: list[dict[str, Any]] = []
         with Timeout(60) as t:
             while not t.expired:
                 try:
-                    repack_json = json.loads(
-                        cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid}")
-                    )
+                    repack_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid}"))
                     if repack_json and repack_json[0].get("status") != "Running":
                         break
                 except (json.JSONDecodeError, IndexError):
