@@ -126,6 +126,8 @@ TEST(ApplicationDeathTest, BrokenPipeReturnsErrorWithoutTerminating) {
     },
     testing::ExitedWithCode(EXIT_SUCCESS),
     "");
+}
+
 struct RuntimeDirectoryConfig {
   cta::runtime::LoggingConfig logging;
   std::string value;
