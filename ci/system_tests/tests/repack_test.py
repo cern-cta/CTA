@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
+import contextlib
 import json
 import time
 import uuid
@@ -1338,10 +1339,8 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
         cta_cli.remove_repack_request(vid)
         cta_cli.modify_tape_state(vid, "ACTIVE")
         # Restore write permission so the fixture teardown can remove the VID subdir.
-        try:
+        with contextlib.suppress(Exception):
             eos_mgm.exec(f"eos chmod 777 {repack_buffer_dir}/{vid}")
-        except Exception:
-            pass
 
 
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
