@@ -1241,8 +1241,7 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
     disk_instance_name: str,
     error_whitelist: set[str],
 ) -> None:
-    """Regression test: a repack job must transition to 'Failed' when all retrieve
-    transfers fail (e.g. disk buffer fills up mid-session).
+    """Regression: repack must transition to 'Failed' when all retrieve transfers fail.
 
     Root cause (fixed): updateRepackRequestFailuresBatch(isRetrieve=True) was not
     incrementing FAILED_TO_CREATE_ARCHIVE_REQ, so the archive-side completeness check
