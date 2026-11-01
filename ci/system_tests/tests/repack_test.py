@@ -1244,34 +1244,23 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
     disk_instance_name: str,
     error_whitelist: set[str],
 ) -> None:
-    """Regression test for the bug where a repack job stays 'Running' forever when all
-    retrieve transfers fail (e.g. disk buffer fills up mid-session).
+    """Regression test: a repack job must transition to 'Failed' when all retrieve
+    transfers fail (e.g. disk buffer fills up mid-session).
 
-    Root cause: updateRepackRequestFailuresBatch(isRetrieve=True) increments
-    FAILED_TO_RETRIEVE_FILES but never advances any archive-side counter.  The
-    completeness check requires
+    Root cause (fixed): updateRepackRequestFailuresBatch(isRetrieve=True) was not
+    incrementing FAILED_TO_CREATE_ARCHIVE_REQ, so the archive-side completeness check
         archivedFiles + failedArchiveFiles + failedCreateArchiveReq >= totalArchiveFiles
-    which can never be satisfied for the files that failed to retrieve.
+    could never be satisfied, leaving the repack stuck in 'Running' forever.
 
-    Fix site: scheduler/rdbms/postgres/RepackRequestTracker.cpp —
-    when isRetrieve=True the function must also increment FAILED_TO_CREATE_ARCHIVE_REQ
+    Fix: scheduler/rdbms/postgres/RepackRequestTracker.cpp —
+    when isRetrieve=True the function now also increments FAILED_TO_CREATE_ARCHIVE_REQ
     by the same count so the archive-side completeness term closes.
-
-    This test currently FAILS at the final assert (status is 'Running' not 'Failed'),
-    proving the bug is present.  It will pass once the fix is applied.
     """
     vid = cta_cli.get_first_vid_containing_files()
 
     cta_cli.modify_tape_state(vid, "REPACKING")
     cta_cli.remove_repack_request(vid)
     cta_cli.exec(f"cta-admin tape ch --vid {vid} --full true")
-
-    # Delete the buffer before submitting so every write attempt during retrieve fails.
-    # cta-admin repack add does not validate the buffer URL at submission time — only actual
-    # writes to the buffer (during the retrieve mount) do.  The expansion routine only creates
-    # DB records and never writes to the buffer, so expansion proceeds normally.
-    print(f"Removing repack buffer {repack_buffer_dir} to simulate disk-full during retrieve")
-    eos_mgm.exec(f"eos rm -r {repack_buffer_dir}")
 
     print(f"Submitting move-only repack for VID {vid}")
     cta_cli.exec(
@@ -1280,7 +1269,13 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
     )
 
     # Wait for full expansion so all retrieve subrequests are created in the DB.
+    # Expansion creates the VID subdirectory inside repack_buffer_dir; we must let it finish
+    # before removing that directory so that every subsequent write during the retrieve mount
+    # fails, simulating a disk-full condition.
     cta_cli.wait_for_repack_request_expansion(vid, wait_timeout_secs=60)
+
+    print(f"Removing VID subdir {repack_buffer_dir}/{vid} to simulate disk-full during retrieve")
+    eos_mgm.exec(f"eos rm -r {repack_buffer_dir}/{vid}")
 
     # Expected log noise from failed XRootD writes and terminated mount sessions.
     error_whitelist.add("Notified client of end session with error")
@@ -1329,14 +1324,13 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
             f"The buffer may not have been absent for the entire mount session."
         )
 
-        # This assertion proves the bug: with the current code status remains 'Running'.
         assert status == "Failed", (
             f"Repack for VID {vid} must transition to 'Failed' once all {total_to_retrieve} "
             f"retrieve transfers fail, but status is '{status}'.  "
-            f"Bug: updateRepackRequestFailuresBatch(isRetrieve=True) never increments "
-            f"FAILED_TO_CREATE_ARCHIVE_REQ, so the archive-side completeness check "
+            f"Regression: updateRepackRequestFailuresBatch(isRetrieve=True) must increment "
+            f"FAILED_TO_CREATE_ARCHIVE_REQ so the archive-side completeness check "
             f"(archivedFiles + failedArchiveFiles + failedCreateArchiveReq >= totalArchiveFiles) "
-            f"can never be satisfied."
+            f"can be satisfied."
         )
     finally:
         cta_cli.remove_repack_request(vid)
