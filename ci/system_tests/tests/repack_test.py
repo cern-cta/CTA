@@ -1262,30 +1262,30 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
     cta_cli.remove_repack_request(vid)
     cta_cli.exec(f"cta-admin tape ch --vid {vid} --full true")
 
-    # Pre-create the VID subdirectory as read-only (mode 555) before submitting the repack.
-    # Expansion calls dir->exist(); since it returns True for a pre-existing directory it just
-    # lists the files there (empty) rather than trying to create it.  Every subsequent write
-    # attempt during the retrieve mount then fails with a permission error, regardless of how
-    # quickly taped starts — eliminating the race condition that exists when deleting the
-    # directory after expansion.
-    print(f"Pre-creating read-only VID subdir {repack_buffer_dir}/{vid} to block retrieve writes")
-    eos_mgm.exec(f"eos mkdir {repack_buffer_dir}/{vid}")
-    eos_mgm.exec(f"eos chmod 555 {repack_buffer_dir}/{vid}")
-
-    print(f"Submitting move-only repack for VID {vid}")
-    cta_cli.exec(
-        f"cta-admin repack add --mountpolicy {repack_mp_name} --vid {vid} "
-        f"--bufferurl root://{disk_instance_name}/{repack_buffer_dir} -m"
-    )
-
-    # Wait for full expansion so all retrieve subrequests are created in the DB.
-    cta_cli.wait_for_repack_request_expansion(vid, wait_timeout_secs=60)
-
-    # Expected log noise from failed XRootD writes and terminated mount sessions.
-    error_whitelist.add("Notified client of end session with error")
-    error_whitelist.add("Failed to open file for write")
-
     try:
+        # Pre-create the VID subdirectory as read-only (mode 555) before submitting the repack.
+        # Expansion calls dir->exist(); since it returns True for a pre-existing directory it just
+        # lists the files there (empty) rather than trying to create it.  Every subsequent write
+        # attempt during the retrieve mount then fails with a permission error, regardless of how
+        # quickly taped starts — eliminating the race condition that exists when deleting the
+        # directory after expansion.
+        print(f"Pre-creating read-only VID subdir {repack_buffer_dir}/{vid} to block retrieve writes")
+        eos_mgm.exec(f"eos mkdir {repack_buffer_dir}/{vid}")
+        eos_mgm.exec(f"eos chmod 555 {repack_buffer_dir}/{vid}")
+
+        print(f"Submitting move-only repack for VID {vid}")
+        cta_cli.exec(
+            f"cta-admin repack add --mountpolicy {repack_mp_name} --vid {vid} "
+            f"--bufferurl root://{disk_instance_name}/{repack_buffer_dir} -m"
+        )
+
+        # Wait for full expansion so all retrieve subrequests are created in the DB.
+        cta_cli.wait_for_repack_request_expansion(vid, wait_timeout_secs=60)
+
+        # Expected log noise from failed XRootD writes and terminated mount sessions.
+        error_whitelist.add("Notified client of end session with error")
+        error_whitelist.add("Failed to open file for write")
+
         # Wait for the tape drive to finish its mount (all transfer attempts done).
         cta_cli.wait_for_drives_to_stop_transferring(timeout=120)
 
@@ -1337,6 +1337,11 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
     finally:
         cta_cli.remove_repack_request(vid)
         cta_cli.modify_tape_state(vid, "ACTIVE")
+        # Restore write permission so the fixture teardown can remove the VID subdir.
+        try:
+            eos_mgm.exec(f"eos chmod 777 {repack_buffer_dir}/{vid}")
+        except Exception:
+            pass
 
 
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
