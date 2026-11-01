@@ -180,14 +180,12 @@ def _submit_repack_request(
         with Timeout(repack_timeout_secs) as t:
             is_sleeping = False
             while not is_sleeping and not t.expired:
-                try:
+                with contextlib.suppress(json.JSONDecodeError, KeyError, TypeError):
                     queues = json.loads(cta_cli.exec_with_output("cta-admin --json sq"))
                     # Check if our target VID is currently sleeping for space
                     is_sleeping = any(
                         q.get("vid") == vid_to_repack and q.get("sleepingForSpace") is True for q in queues
                     )
-                except (json.JSONDecodeError, KeyError, TypeError):
-                    pass
 
                 if not is_sleeping:
                     print(
@@ -209,15 +207,13 @@ def _submit_repack_request(
     with Timeout(repack_timeout_secs) as t:
         is_finished = False
         while not is_finished and not t.expired:
-            try:
+            with contextlib.suppress(json.JSONDecodeError, IndexError, KeyError):
                 repack_ls_json = json.loads(
                     cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}")
                 )
                 if repack_ls_json and len(repack_ls_json) > 0:
                     status = repack_ls_json[0].get("status")
                     is_finished = status in ["Complete", "Failed"]
-            except (json.JSONDecodeError, IndexError, KeyError):
-                pass
 
             if not is_finished:
                 print(
@@ -1298,12 +1294,10 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
         repack_json: list[dict[str, Any]] = []
         with Timeout(60) as t:
             while not t.expired:
-                try:
+                with contextlib.suppress(json.JSONDecodeError, IndexError):
                     repack_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid}"))
                     if repack_json and repack_json[0].get("status") != "Running":
                         break
-                except (json.JSONDecodeError, IndexError):
-                    pass
                 time.sleep(2)
 
         assert repack_json, f"No repack request found for VID {vid}"
