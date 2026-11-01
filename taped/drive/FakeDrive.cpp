@@ -159,6 +159,10 @@ void FakeDrive::clearFailurePoints() {
   m_failurePoints.clear();
 }
 
+void FakeDrive::setTapeAlertCodes(std::vector<uint16_t> codes) {
+  m_tapeAlertCodes = std::move(codes);
+}
+
 void FakeDrive::throwIfFailurePoint(FailurePoint failurePoint) const {
   if (m_failurePoints.contains(failurePoint)) {
     throw cta::exception::Exception("Configured FakeDrive failure");

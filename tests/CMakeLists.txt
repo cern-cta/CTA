@@ -89,23 +89,12 @@ foreach(test_runner cta-unit-tests cta-unit-tests-rdbms cta-unit-tests-multiproc
   target_link_options(${test_runner} PRIVATE "LINKER:--no-as-needed")
 endforeach()
 
-add_executable(cta-test-immutable-file
-  ImmutableFileTest.cpp
-  ImmutableFileTestMain.cpp
-  ImmutableFileTestCmdLineArgs.cpp)
-
-set_property (TARGET cta-test-immutable-file APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
-
-target_link_libraries(cta-test-immutable-file
-  ctacommon XrdCl)
-
 if(CTA_BUILD_TEST_PACKAGES)
   install(
     TARGETS
       cta-unit-tests-rdbms
       cta-unit-tests
       cta-unit-tests-multiprocess
-      cta-test-immutable-file
     DESTINATION
       ${CMAKE_INSTALL_BINDIR})
 endif()

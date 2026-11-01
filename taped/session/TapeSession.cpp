@@ -20,7 +20,9 @@
 #include "common/utils/ScopeExit.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
+#include "taped/drive/StressDrive.hpp"
 #include "taped/rao/RAOParams.hpp"
+#include "taped/session/DataTransferConfig.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/session/archive/DiskReadThreadPool.hpp"
@@ -432,6 +434,28 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
 std::unique_ptr<cta::tape::drive::DriveInterface>
 cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, ExecutionState& state) {
   constexpr auto reason = common::dataStructures::DriveDownReason::SessionDriveAccessFailed;
+
+  // Virtual drive (virtual://<base_dir>): bypass SCSI scanning and use StressDrive.
+  if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
+    try {
+      auto drive = std::make_unique<cta::tape::drive::StressDrive>(
+        m_driveInfo.driveName,
+        m_driveInfo.logicalLibrary,
+        DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
+      drive->info = m_driveInfo;
+      return drive;
+    } catch (...) {
+      std::string detail = "StressDrive creation failed: ";
+      detail += cta::exception::currentExceptionMessage();
+      state.result.downReason = reason;
+      state.result.downDetail = detail;
+      state.result.driveReusable = false;
+      logContext.log(common::dataStructures::driveDownReasonSeverity(reason),
+                     common::dataStructures::formatDriveDownReason(reason, detail));
+      throw;
+    }
+  }
+
   std::string_view stage = "Drive discovery failed";
   try {
     cta::tape::SCSI::DeviceVector devices(m_sysWrapper);
