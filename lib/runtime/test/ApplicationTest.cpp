@@ -15,7 +15,8 @@
 #include <fstream>
 #include <functional>
 #include <gtest/gtest.h>
-#include <httplib.h>#include <iterator>
+#include <httplib.h>
+#include <iterator>
 #include <stdexcept>
 #include <thread>
 #include <unistd.h>
