@@ -187,10 +187,10 @@ global:
 
 The examples above describe sections of the same configuration file; combine their `global` settings rather than defining duplicate YAML keys. Adapt paths, identities, and hardware mappings to the deployment.
 
-## ctaops configuration
+## cta configuration
 
-[ctaops](ctaops.md) uses `/etc/ctaops/ctaops-cli.toml`, separately from the legacy YAML configuration above.
-See its [installation guide](ctaops.md#installation) and [configuration example](ctaops.md#reference-configuration-file).
+[cta](cta.md) uses `/etc/cta/cta-cli.toml`, separately from the legacy YAML configuration above.
+See its [installation guide](cta.md#installation) and [configuration example](cta.md#reference-configuration-file).
 
 ## Developing operator tools
 

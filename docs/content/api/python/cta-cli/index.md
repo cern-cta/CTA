@@ -1,6 +1,6 @@
-# ctaops-cli
+# cta-cli
 
-::: ctaops.cli
+::: cta.cli
     options:
         members: false
         show_root_heading: false

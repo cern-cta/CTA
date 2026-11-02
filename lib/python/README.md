@@ -19,7 +19,7 @@ uv run --no-sync pytest
 uv run --no-sync ruff check .
 uv run --no-sync ruff format . --check
 uv run --no-sync pyright --pythonpath .venv/bin/python
-uv run --no-sync ctaops --help
+uv run --no-sync cta --help
 uv build --all-packages --out-dir build/python
 ```
 

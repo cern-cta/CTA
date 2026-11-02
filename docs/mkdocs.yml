@@ -68,7 +68,7 @@ plugins:
             - ../lib/python/cta-sdk/src
             - ../lib/python/ctaops-sdk/src
             - ../lib/python/ctaops-utils/src
-            - ../tools/ctaops-cli/src
+            - ../tools/cta-cli/src
           inventories:
             - https://docs.python.org/3.9/objects.inv
           options:
@@ -275,8 +275,8 @@ nav:
       - "Tools & Reference":
           - "Tool Index": ops/tools/index.md
           # Install separately packaged tools and configure shared runtime settings; library APIs belong in Development.
-          - "ctaops": ops/tools/ctaops.md
-          - "ctaops Usage": ops/tools/ctaops-usage.md
+          - "cta": ops/tools/cta.md
+          - "cta Usage": ops/tools/cta-usage.md
           - "Installation & Shared Configuration": ops/tools/installation-and-configuration.md
           # Reference general management commands; put task sequences in Administration.
           - "Administration":
@@ -378,7 +378,7 @@ nav:
               - "ctaops-utils":
                   - "Overview": dev/guides/python/ctaops-utils/index.md
                   - "Usage": dev/guides/python/ctaops-utils/api-usage.md
-              - "Extending ctaops": dev/guides/python/ctaops-cli.md
+              - "Extending cta": dev/guides/python/cta-cli.md
           # Select, write, and run tests before learning pipeline mechanics; CI administration belongs to maintainers.
           - "Testing & CI":
               - "Testing CTA": dev/guides/testing/index.md
@@ -489,10 +489,10 @@ nav:
               - api/python/ctaops-sdk/reference/infrastructure-repository.md
           - ctaops-utils:
               - api/python/ctaops-utils/reference.md
-          - ctaops-cli:
-              - api/python/ctaops-cli/index.md
-              - api/python/ctaops-cli/reference/commands.md
-              - api/python/ctaops-cli/reference/config.md
-              - api/python/ctaops-cli/reference/display.md
-              - api/python/ctaops-cli/reference/entrypoint.md
-              - api/python/ctaops-cli/reference/models.md
+          - cta-cli:
+              - api/python/cta-cli/index.md
+              - api/python/cta-cli/reference/commands.md
+              - api/python/cta-cli/reference/config.md
+              - api/python/cta-cli/reference/display.md
+              - api/python/cta-cli/reference/entrypoint.md
+              - api/python/cta-cli/reference/models.md

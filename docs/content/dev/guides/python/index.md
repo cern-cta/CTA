@@ -1,15 +1,15 @@
 # Python Libraries and Tools
 
-CTA's Python workspace contains libraries for scripting CTA and operating tape hardware, plus the `ctaops` command-line tool.
+CTA's Python workspace contains libraries for scripting CTA and operating tape hardware, plus the `cta` command-line tool.
 
 | Package | Source directory | Purpose |
 | --- | --- | --- |
 | [cta-sdk](cta-sdk/index.md) | `lib/python/cta-sdk` | Typed CTA client, resource models and backend interfaces. |
 | [ctaops-sdk](ctaops-sdk/index.md) | `lib/python/ctaops-sdk` | Local tape-drive and library discovery and control. |
 | [ctaops-utils](ctaops-utils/index.md) | `lib/python/ctaops-utils` | Configuration, logging and dataclass utilities. |
-| [ctaops-cli](../../../ops/tools/ctaops.md) | `tools/ctaops-cli` | Operator commands built on these libraries. |
+| [cta-cli](../../../ops/tools/cta.md) | `tools/cta-cli` | Operator commands built on these libraries. |
 
-See the [Python API reference](../../../api/python/index.md) for classes and functions, [Extending ctaops](ctaops-cli.md) to add commands, and [ctaops-udev](../../../ops/deploy-and-configure/deployment/ctaops-udev.md) for hardware discovery setup.
+See the [Python API reference](../../../api/python/index.md) for classes and functions, [Extending cta](cta-cli.md) to add commands, and [ctaops-udev](../../../ops/deploy-and-configure/deployment/ctaops-udev.md) for hardware discovery setup.
 
 ## Development environment
 
@@ -18,7 +18,7 @@ Run from the repository root:
 ```bash
 git submodule update --init lib/protobuf/external/xrootd-ssi-protobuf-interface
 uv sync --locked --all-packages --all-extras --all-groups --python 3.12
-uv run --no-sync ctaops --help
+uv run --no-sync cta --help
 ```
 
 Dependencies and tool configuration are managed by the root `pyproject.toml` and `uv.lock`. Package versions come from CTA Git tags; SDK builds generate protobuf bindings from the submodule.

@@ -1,6 +1,6 @@
-# ctaops
+# cta
 
-`ctaops` is the command-line interface provided by `ctaops-cli` for managing CTA resources and local tape hardware.
+`cta` is the command-line interface provided by `cta-cli` for managing CTA resources and local tape hardware.
 It uses [`cta-sdk`](../../dev/guides/python/cta-sdk/index.md) to communicate with CTA and the optional [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) for tape-server operations.
 
 Commands support table, JSON, and raw output, with configuration supplied through TOML files and command-line options.
@@ -9,13 +9,13 @@ Commands support table, JSON, and raw output, with configuration supplied throug
 
 !!! abstract "Base install"
     ```bash
-    python3 -m pip install ctaops-cli \
+    python3 -m pip install cta-cli \
         --extra-index-url https://cta-public-repo.web.cern.ch/cta-operations/stable/pypi/simple/
     ```
 
 !!! abstract "Install with tape-server extra"
     ```bash
-    python3 -m pip install 'ctaops-cli[tapeserver]' \
+    python3 -m pip install 'cta-cli[tapeserver]' \
         --extra-index-url https://cta-public-repo.web.cern.ch/cta-operations/stable/pypi/simple/
     ```
 
@@ -31,12 +31,12 @@ See the [system requirements](../../dev/guides/python/ctaops-sdk/index.md#system
 
 ## Configuration
 
-`ctaops-cli` reads configuration from the following sources, in order of decreasing precedence:
+`cta-cli` reads configuration from the following sources, in order of decreasing precedence:
 
 1. Command-line flags (e.g. `--format`, `--log-level`).
 2. Environment variables (e.g. `CTAXrdSecSSSKT` to override the keytab path).
-3. The TOML file pointed at by `--config-file` / `-C`, defaulting to `/etc/ctaops/ctaops-cli.toml`.
-4. Built-in defaults (see [AppConfig](../../api/python/ctaops-cli/reference/config.md#ctaops.cli.config.AppConfig)).
+3. The TOML file pointed at by `--config-file` / `-C`, defaulting to `/etc/cta/cta-cli.toml`.
+4. Built-in defaults (see [AppConfig](../../api/python/cta-cli/reference/config.md#cta.cli.config.AppConfig)).
 
 ### Reference configuration file
 
@@ -44,12 +44,12 @@ An example file is shipped with the package; you can dump it from the install di
 
 !!! example "Print the bundled example config"
     ```bash
-    python3 -c "import importlib.resources, ctaops.cli; \
-        print(importlib.resources.files('ctaops.cli').joinpath('ctaops-cli.example.toml').read_text())"
+    python3 -c "import importlib.resources, cta.cli; \
+        print(importlib.resources.files('cta.cli').joinpath('cta-cli.example.toml').read_text())"
     ```
 
 ```toml
---8<-- "tools/ctaops-cli/src/ctaops/cli/ctaops-cli.example.toml"
+--8<-- "tools/cta-cli/src/cta/cli/cta-cli.example.toml"
 ```
 
 The bundled example currently uses `rotation_max_size` and `rotation_keep_files`; use `max_log_file_size` and `keep_file_count` for the current logging configuration.
@@ -62,7 +62,7 @@ The bundled example currently uses `rotation_max_size` and `rotation_keep_files`
 
 ## Usage
 
-See [Command Examples](ctaops-usage.md) for daily operator tasks.
+See [Command Examples](cta-usage.md) for daily operator tasks.
 
 
 ## License

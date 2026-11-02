@@ -2,8 +2,8 @@
 
 The CLI's root group, version detection, and the `ClickAliasedGroup` extension.
 
-::: ctaops.cli.main
+::: cta.cli.main
 
-::: ctaops.cli.context
+::: cta.cli.context
 
-::: ctaops.cli.click_extension.aliases
+::: cta.cli.click_extension.aliases

@@ -34,7 +34,7 @@
 
     [project.urls]
         Source              = "https://gitlab.cern.ch/cta/CTA/"
-        Documentation       = "https://cta.docs.cern.ch/"
+        Documentation       = "https://cta.docs.cern.ch/latest/ops/tools/cta/"
         "CTA Documentation" = "https://cta.docs.cern.ch/"
 
     [project.scripts]

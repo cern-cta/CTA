@@ -1,5 +1,5 @@
 # Models
 
-::: ctaops.cli.models
+::: cta.cli.models
     options:
       show_submodules: true
