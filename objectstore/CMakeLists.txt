@@ -9,6 +9,8 @@ set (CTAProtoFiles
 
 set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
+add_custom_target(ctaobjectstore-generated-headers DEPENDS ${CTAProtoHeaders})
+add_dependencies(cta-generated-headers ctaobjectstore-generated-headers)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
   # GCC 14 + ASan flags protobuf's adjacent-field copies as overflows.

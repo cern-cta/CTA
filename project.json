@@ -212,7 +212,7 @@
       "buildRequires": {
         "debhelper": ">= 13.25",
         "debhelper-compat": "= 13",
-        "cmake": "",
+        "cmake": ">= 3.23",
         "ninja-build": "",
         "pkgconf": "",
         "git": "",

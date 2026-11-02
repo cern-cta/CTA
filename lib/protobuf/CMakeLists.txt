@@ -21,6 +21,9 @@ set_source_files_properties(
   ${GrpcSourcesCtaFrontend} ${GrpcHeadersCtaFrontend}
   PROPERTIES GENERATED TRUE)
 
+add_custom_target(ctaprotobuf-generated-headers DEPENDS ${ProtoHeadersCtaFrontend} ${GrpcHeadersCtaFrontend})
+add_dependencies(cta-generated-headers ctaprotobuf-generated-headers)
+
 # Generated CTA protobuf message types shared by clients and servers
 add_library(ctaprotobuf SHARED ${ProtoSourcesCtaFrontend})
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")

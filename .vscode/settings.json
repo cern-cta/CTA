@@ -1,10 +1,12 @@
 // Basic VS Code settings
 {
-  "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/compile_commands.json",
-  "cmake.configureOnOpen": true,
-  "cmake.configureSettings": {
-    "CTA_VERSION": "6-dev"
+  "sonarlint.connectedMode.project": {
+    "connectionId": "cern-cta",
+    "projectKey": "cern-cta_CTA"
   },
+  "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/vscode-el10/compile_commands.json",
+  "cmake.configureOnOpen": true,
+  "cmake.useCMakePresets": "always",
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "C_Cpp.files.exclude": {
     "**/build": true

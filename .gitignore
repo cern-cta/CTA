@@ -81,10 +81,9 @@ Pipfile.lock
 
 # --- Miscellaneous ignores ---
 
-# IDE configs (shared project settings and recommended extensions are committed)
+# IDE configs (shared project settings are committed)
 .vscode/*
 !.vscode/settings.json
-!.vscode/extensions.json
 
 # Logs and temporary files
 *.log
