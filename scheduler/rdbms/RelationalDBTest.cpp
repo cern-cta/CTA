@@ -6,6 +6,7 @@
 #include "scheduler/rdbms/RelationalDB.hpp"
 
 #include "catalogue/dummy/DummyCatalogue.hpp"
+#include "catalogue/TapeForWriting.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
@@ -511,6 +512,43 @@ TEST_P(RelationalDBTest, createRetrieveMountSetsNextMountTypeBeforeLockRelease) 
   ASSERT_TRUE(optDrive.has_value());
   ASSERT_EQ(common::dataStructures::MountType::Retrieve, optDrive->nextMountType);
   ASSERT_EQ("vidA", optDrive->nextVid.value_or(""));
+}
+
+// Regression test: createArchiveMount() must write nextMountType to the catalogue
+// BEFORE releasing the per-library advisory lock (symmetric to the retrieve case).
+TEST_P(RelationalDBTest, createArchiveMountSetsNextMountTypeBeforeLockRelease) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+
+  queueArchiveJob(getDb(), lc, 111, "tapePoolA", "A", 1000);
+  getDb().waitSubthreadsComplete();
+
+  auto mountInfo = getDb().getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  const auto& potentialMount = mountInfo->potentialMounts.front();
+  ASSERT_EQ(common::dataStructures::MountType::ArchiveForUser, potentialMount.type);
+  ASSERT_EQ("tapePoolA", potentialMount.tapePool);
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "vidB";
+  tape.tapePool = potentialMount.tapePool;
+  tape.vo = "vo";
+  tape.mediaType = "T10k";
+  tape.vendor = "Oracle";
+  tape.capacityInBytes = 1'000'000'000ULL;
+  tape.labelFormat = common::dataStructures::Label::Format::CTA;
+
+  mountInfo->createArchiveMount(potentialMount, tape, "drive", "library", "host");
+
+  // After createArchiveMount() the catalogue drive state must already reflect the
+  // pending mount — this is the invariant that closes the VO-limit race window.
+  auto& catalogue = getDb().getCatalogue();
+  const auto optDrive = catalogue.DriveState()->getTapeDrive("drive");
+  ASSERT_TRUE(optDrive.has_value());
+  ASSERT_EQ(common::dataStructures::MountType::ArchiveForUser, optDrive->nextMountType);
+  ASSERT_EQ("vidB", optDrive->nextVid.value_or(""));
 }
 
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
