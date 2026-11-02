@@ -46,7 +46,6 @@ global:
       - name: coredumps
         mountPath: /var/log/tmp
 
-
   securityContext:
-    allowPrivilegeEscalation: False
-    privileged: False
+    allowPrivilegeEscalation: false
+    privileged: false

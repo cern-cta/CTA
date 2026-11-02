@@ -40,7 +40,6 @@ resource:
   # If omitted or null, no schema URL is used.
   schema_url: https://opentelemetry.io/schemas/1.16.0
 
-
 # Configure meter provider.
 # If omitted, a noop meter provider is used.
 meter_provider:

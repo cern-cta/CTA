@@ -35,7 +35,7 @@ rules:
 
   truthy:
     allowed-values: ["true", "false"]
-    check-keys: true
+    check-keys: false
     level: error
 
   braces:
@@ -52,6 +52,7 @@ rules:
 
 ignore: |
   .git/
+  .venv/
   build_*/
   ci/orchestration/helm/**/templates
   common/jwt-cpp/

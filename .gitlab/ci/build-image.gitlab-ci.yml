@@ -57,9 +57,10 @@ spec:
         echo "Destination registry credentials are not configured"
         exit 1
       fi
-    - echo "$DEST_REGISTRY_PASSWORD" | buildah login
-        -u "$DEST_REGISTRY_USERNAME"
-        --password-stdin
+    - |
+      echo "$DEST_REGISTRY_PASSWORD" | buildah login \
+        -u "$DEST_REGISTRY_USERNAME" \
+        --password-stdin \
         "$DOCKER_IMAGE_REGISTRY"
     # Oracle packages are not allowed in public images. Refuse to publish an image containing any.
     - |

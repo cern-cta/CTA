@@ -8,7 +8,6 @@ spec:
     platform:
       type: string
 ---
-
 check-merge-train-duplicate:
   stage: .pre
   needs: []
@@ -91,9 +90,10 @@ modify-project-json:
       fi
     - echo "Updating EOS image tag to $trimmed_eos_image_tag"
     - tmp_file=$(mktemp)
-    - jq --arg new_eos_image_tag "$trimmed_eos_image_tag"
-          '.dev.eosImageTag = $new_eos_image_tag'
-          "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
+    - |
+      jq --arg new_eos_image_tag "$trimmed_eos_image_tag" \
+        '.dev.eosImageTag = $new_eos_image_tag' \
+        "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
     # Done
     - echo "File content after replacement"
     - cat "${project_json_file}" | jq
@@ -102,7 +102,6 @@ modify-project-json:
       - project.json
     reports:
       dotenv: pipeline.env
-
 
 generate-pipeline-images-tag:
   stage: .pre

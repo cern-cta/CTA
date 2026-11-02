@@ -93,17 +93,18 @@ build-cta:
       if [[ "$ENABLE_SBOM_GENERATION" == "true" ]]; then
         BUILD_OPTIONS+=" --sbom-path ${CI_PROJECT_DIR}/sboms"
       fi
-    - ./ci/build/build_packages.sh all --build-dir build
-      --build-generator "$[[ inputs.build-generator ]]"
-      --create-build-dir
-      --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
-      --xrootd-ssi-version ${XRD_SSI_VERSION}
-      --scheduler-type ${SCHEDULER_TYPE}
-      --oracle-support ${ENABLE_ORACLE_SUPPORT}
-      --cmake-build-type "${CMAKE_BUILD_TYPE}"
-      --jobs "$(nproc)"
-      --skip-unit-tests
-      ${BUILD_OPTIONS}
+    - |
+      ./ci/build/build_packages.sh all --build-dir build \
+        --build-generator "$[[ inputs.build-generator ]]" \
+        --create-build-dir \
+        --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}" \
+        --xrootd-ssi-version ${XRD_SSI_VERSION} \
+        --scheduler-type ${SCHEDULER_TYPE} \
+        --oracle-support ${ENABLE_ORACLE_SUPPORT} \
+        --cmake-build-type "${CMAKE_BUILD_TYPE}" \
+        --jobs "$(nproc)" \
+        --skip-unit-tests \
+        ${BUILD_OPTIONS}
   after_script:
     - if [[ "$ENABLE_SCCACHE" == "true" ]]; then sccache --stop-server; fi
   artifacts:
