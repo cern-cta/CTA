@@ -1290,3 +1290,7 @@ def test_cta_admin_failedrequest_ls_error_reporting(
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
     error_whitelist.add("In Scheduler::getDesiredDriveState(): no such drive")
     error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+    # test_cta_admin_failedrequest_rm_invalid_object_id intentionally sends malformed object IDs;
+    # the server's catch-all handler logs at ERR level before returning "Error processing gRPC Admin request".
+    error_whitelist.add("Sync admin command failed")
+    error_whitelist.add("Streaming admin command failed")
