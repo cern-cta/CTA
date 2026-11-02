@@ -117,7 +117,8 @@ spec:
     - ./delete_old_namespaces.sh
     - create_start=$(date +%s)
     - |
-      ./create_instance.sh --namespace ${NAMESPACE} \
+      ./create_instance.sh \
+        --namespace ${NAMESPACE} \
         --reset-catalogue \
         --reset-scheduler \
         --cta-image-tag ${IMAGE_TAG} \
@@ -133,7 +134,8 @@ spec:
     # Note that we skip --teardown as the whole namespace will be deleted anyway
     # GitLab can reorder separate stdout and stderr streams: https://gitlab.com/gitlab-org/gitlab/-/issues/440824
     - |
-      pytest ${PYTESTS} --namespace ${NAMESPACE} \
+      pytest ${PYTESTS} \
+        --namespace ${NAMESPACE} \
         --setup \
         --verification \
         --color=yes \
@@ -355,7 +357,8 @@ stress-test:
     # We don't clean up old namespace so this will fail (deliberately) when another namespace still exist
     # This is because we check for the libraries in use before we start
     - |
-      ./create_instance.sh --namespace ${NAMESPACE} \
+      ./create_instance.sh \
+        --namespace ${NAMESPACE} \
         --reset-catalogue \
         --reset-scheduler \
         --publish-telemetry \
@@ -371,7 +374,8 @@ stress-test:
     - mkdir -p "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}"
     # GitLab can reorder separate stdout and stderr streams: https://gitlab.com/gitlab-org/gitlab/-/issues/440824
     - |
-      pytest tests/stress_test.py --namespace ${NAMESPACE} \
+      pytest tests/stress_test.py \
+        --namespace ${NAMESPACE} \
         --setup \
         --color=yes \
         ${EXTRA_PYTEST_ARGS} \
@@ -386,7 +390,8 @@ stress-test:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
     - |
-      ./delete_instance.sh --namespace ${NAMESPACE} \
+      ./delete_instance.sh \
+        --namespace ${NAMESPACE} \
         --collect-logs "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pods" \
         --force-delete-cluster-resources
     - |
