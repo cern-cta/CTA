@@ -64,6 +64,7 @@ class TestRuntimeDeployment:
         "daemon_fixture",
         [
             pytest.param("cta_maintd", id="maintd"),
+            pytest.param("cta_taped", id="taped"),
             pytest.param("cta_rmcd", id="rmcd"),
         ],
     )

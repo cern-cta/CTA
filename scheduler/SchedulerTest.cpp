@@ -8516,14 +8516,14 @@ TEST_P(SchedulerTest, tapesInUsePreventsDoubleMountWhenDriveIsCleaningUp) {
   // Register tape_drive (the candidate drive) as Up.
   {
     cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   // The tape (s_vid) is in a CleaningUp drive: getNextMount must not select it.
@@ -8616,14 +8616,14 @@ TEST_P(SchedulerTest, tapesInUsePreventsDoubleMountFromCrossSchedulerDrive) {
   // Register tape_drive (our scheduler) as Up.
   {
     cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   // The only tape (s_vid) is mounted on a cross-scheduler drive: getNextMount
@@ -8708,10 +8708,10 @@ TEST_P(SchedulerTest, tapesInUsePreventsDoubleMountWhenSameSchedulerDriveIsClean
   // creates it with "VLSTK10"; getNextMount uses s_libraryName to filter).
   {
     cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   // drive0 (same scheduler) is CleaningUp with s_vid loaded.
@@ -8786,10 +8786,10 @@ TEST_P(SchedulerTest, tapesInUsePreventsDoubleMountWhenCrossSchedulerDriveIsClea
   // creates it with "VLSTK10"; getNextMount uses s_libraryName to filter).
   {
     cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   // cross_sched_drive (different scheduler) is CleaningUp with s_vid loaded.
@@ -8861,10 +8861,10 @@ TEST_P(SchedulerTest, tapesReleasedAfterCleaningUpNoMountDriveGoesDown) {
 
   {
     cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   // Phase 1: s_vid is blocked while drive0 is CleaningUp.
@@ -8961,10 +8961,10 @@ TEST_P(SchedulerTest, cleaningUpNoMountDriveDoesNotBlockDifferentTape) {
 
   {
     cta::common::dataStructures::DriveInfo driveInfo = {"tape_drive", "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   // s_vid is blocked (CleaningUp), but s_vid2 is free — the scheduler must select it.
