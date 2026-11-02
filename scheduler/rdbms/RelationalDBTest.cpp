@@ -612,6 +612,36 @@ TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
   ASSERT_EQ(0u, relationalDb.deleteExpiredDiskSystemSleepEntries(lc));
 }
 
+// Regression test: createRetrieveMount() must write nextMountType to the catalogue
+// BEFORE releasing the per-library advisory lock, so that a concurrent scheduler
+// reading drive state while the lock is held sees the mount as pending and cannot
+// over-schedule beyond the VO readMaxDrives limit.
+TEST_P(RelationalDBTest, createRetrieveMountSetsNextMountTypeBeforeLockRelease) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+
+  queueRetrieveJob(getDb(), lc, 333, "vidA", "A", 3000);
+  getDb().waitSubthreadsComplete();
+
+  auto mountInfo = getDb().getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  const auto& potentialMount = mountInfo->potentialMounts.front();
+  ASSERT_EQ(common::dataStructures::MountType::Retrieve, potentialMount.type);
+  ASSERT_EQ("vidA", potentialMount.vid);
+
+  mountInfo->createRetrieveMount(potentialMount, "drive", "library", "host");
+
+  // After createRetrieveMount() the catalogue drive state must already reflect the
+  // pending mount — this is the invariant that closes the VO-limit race window.
+  auto& catalogue = getDb().getCatalogue();
+  const auto optDrive = catalogue.DriveState()->getTapeDrive("drive");
+  ASSERT_TRUE(optDrive.has_value());
+  ASSERT_EQ(common::dataStructures::MountType::Retrieve, optDrive->nextMountType);
+  ASSERT_EQ("vidA", optDrive->nextVid.value_or(""));
+}
+
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 INSTANTIATE_TEST_CASE_P(RelationalDBTest,
                         RelationalDBTest,
