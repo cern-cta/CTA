@@ -8,7 +8,9 @@ This page is specific to the EOS integration. Configure the [Workflow Frontend](
 
 ## Installation
 
-Install EOS packages only on the hosts that need the EOS server or client. Core CTA installation is documented [separately](../deployment/installation/index.md).
+CTA is tested in CI with the EOS Docker image tagged `{{ eos_image_tag }}`, selected by `dev.eosImageTag` in `project.json` for this CTA revision.
+
+Follow the official [EOS installation guide](https://eos-docs.web.cern.ch/quickstart.html) to configure the repositories and install EOS. Install EOS packages only on the hosts that need the EOS server or client. Core CTA installation is documented [separately](../deployment/installation/index.md).
 
 ## Configuration
 

@@ -6,6 +6,7 @@ site_dir: ../build/docs/site
 strict: true
 
 watch:
+  - ../project.json
   - ../CHANGELOG.md
   - includes
   - ../tools
