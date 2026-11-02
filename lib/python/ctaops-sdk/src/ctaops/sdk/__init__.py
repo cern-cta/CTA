@@ -37,7 +37,7 @@ implementations:
   [ScsiDriveControllerProvider][ctaops.sdk.controller_providers.scsi.drive.ScsiDriveControllerProvider].
 
 Logging is emitted under the `ctaops.sdk` logger; configure it like any
-other [logging][] logger to see subprocess invocations and state
+other [logger][logging.Logger] to see subprocess invocations and state
 transitions.
 
 Example:
