@@ -401,6 +401,7 @@ include:
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
+      analysis: $[[ inputs.analysis ]]
       admin-api-authentication: $[[ inputs.admin-api-authentication ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
