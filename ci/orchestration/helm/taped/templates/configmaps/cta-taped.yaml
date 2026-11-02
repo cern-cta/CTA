@@ -66,7 +66,7 @@ data:
 
     [drive.lifecycle.startup]
       preserve_desired_up = {{ $.Values.drive.lifecycle.startup.preserveDesiredUp }}
-      resume_after_clean_shutdown = {{ $.Values.drive.lifecycle.startup.resumeAfterCleanShutdown }}
+      auto_up = {{ $.Values.drive.lifecycle.startup.autoUp }}
 
     [mounts]
       minimum_queued_bytes = {{ int64 $.Values.mounts.minimumQueuedBytes }}

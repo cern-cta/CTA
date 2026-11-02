@@ -199,8 +199,8 @@ TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Preparing drive for recovery."));
 }
 
-TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotResumeAfterCleanShutdown) {
-  config.drive.lifecycle.startup.resume_after_clean_shutdown = true;
+TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotAutoUp) {
+  config.drive.lifecycle.startup.auto_up = true;
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->userComment = "Inspect drive";

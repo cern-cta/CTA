@@ -23,10 +23,10 @@ Optional details may be appended to these reasons to describe the underlying pro
 | `[cta-taped] Drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
 | `[cta-taped] Drive cleanup failed` | Drive cleanup fails. For example, the daemon cannot access or reset the drive, unload the tape, or return it to the library. |
 | `[cta-taped] Drive reuse unsafe` | A tape session ends without confirming that another tape can safely be mounted, but no specific access or cleanup failure is available to report. This is a fallback; known drive-access and cleanup failures produce the corresponding reasons above. |
-| `[cta-taped] Unexpected failure` | An unexpected fatal error in the daemon or drive session prevents the daemon from running further tape sessions and causes it to exit. This is not a clean shutdown. |
+| `[cta-taped] Unexpected failure` | An unexpected fatal error in the daemon or drive session prevents the daemon from running further tape sessions and causes it to exit. This failure reason prevents automatic Up at the next startup. |
 
 An existing operator or failure reason is preserved instead of being replaced by startup or shutdown messages.
-With automatic desired `Up` disabled, a previous clean-shutdown reason is replaced by the startup reason when the daemon starts again.
+With `drive.lifecycle.startup.auto_up` disabled, a previous daemon-shutdown reason is replaced by the startup reason when the daemon starts again.
 The configurable policy is described under [Drive startup and preparation](../deploy-and-configure/configuration/tape-daemon.md#drive-startup-and-preparation).
 The current unsafe-worker failure path exits immediately without publishing a reason or changing drive state.
 

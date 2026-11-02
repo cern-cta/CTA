@@ -24,7 +24,7 @@ DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
     return decision;
   }
 
-  // Recovery takes precedence over resume_after_clean_shutdown, including when recovery is disabled.
+  // Recovery takes precedence over auto_up, including when recovery is disabled.
   if (previous->desiredUp) {
     return {.action = config.preserve_desired_up ? Action::RecoverExistingUp : Action::RequireOperatorUp};
   }
@@ -36,7 +36,7 @@ DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
 
   if (desired.reason && classifyPersistedDriveReason(*desired.reason) == PersistedDriveReasonKind::CleanShutdown) {
     desired.reason = formatDriveDownReason(DriveDownReason::Startup);
-    desired.up = config.resume_after_clean_shutdown;
+    desired.up = config.auto_up;
   }
   return decision;
 }

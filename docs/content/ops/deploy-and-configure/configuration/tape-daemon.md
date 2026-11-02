@@ -26,10 +26,11 @@ The catalogue state found before registration selects which setting applies:
 | --- | --- | --- | --- |
 | No drive entry | `drive.lifecycle.registration.desired_up` | Request desired `Up`. | Register desired `Down`; wait for an operator Up request. |
 | Existing desired `Up` | `drive.lifecycle.startup.preserve_desired_up` | Preserve desired `Up`. | Set desired `Down`; require a new operator Up request. |
-| Existing desired `Down`, with a clean-shutdown reason | `drive.lifecycle.startup.resume_after_clean_shutdown` | Request desired `Up`. | Remain desired `Down`. |
-| Existing desired `Down`, with no reason, or an operator or failure reason | None | Preserve desired `Down` and its reason, regardless of these settings. | Same. |
+| Existing desired `Down`, with an operator, failure, absent, empty or unrecognized reason | None | Preserve desired `Down` and its reason, regardless of these settings. | Same. |
+| Existing desired `Down`, recorded as caused only by the daemon stopping | `drive.lifecycle.startup.auto_up` | Request desired `Up`. | Remain desired `Down`. |
 
-- `drive.lifecycle.startup.resume_after_clean_shutdown` does not override disabled recovery or activate newly registered drives.
+- `drive.lifecycle.startup.auto_up` does not override disabled recovery or activate newly registered drives.
+- Daemon shutdown preserves operator and failure Down reasons; exiting normally does not make these drives eligible for automatic Up.
 - Existing drives follow the startup policy even if registration recreates their catalogue entry.
 - Registration reports `Down`; desired `Up` permits preparation, but does not mean the drive is ready for work.
 - When recovery is disabled for an existing desired-Up drive, the down reason records that an operator Up request is required.

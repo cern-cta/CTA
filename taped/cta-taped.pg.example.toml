@@ -56,12 +56,12 @@
   # If omitted, false is used.
   preserve_desired_up = false
 
-  # When the desired state is Down, attempt to bring the drive Up only when its recorded Down reason
-  # indicates a clean shutdown.
-  # New drives follow drive.lifecycle.registration.desired_up.
-  # Drives with no recorded reason, or marked Down by operators or failures, remain Down.
+  # Automatically request Up for eligible existing Down drives when cta-taped starts.
+  # Only drives recorded as Down because the daemon was stopping are eligible.
+  # Drives marked Down by an operator or failure remain Down.
+  # Drive preparation must succeed before tape work begins.
   # If omitted, false is used.
-  resume_after_clean_shutdown = false
+  auto_up = false
 
 
 [catalogue]

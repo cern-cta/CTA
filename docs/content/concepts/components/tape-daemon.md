@@ -135,8 +135,8 @@ flowchart TB
         matchesQ{"Do the host and logical library match?"}
         previousUpQ{"Is the existing desired state Up?"}
         recoverQ{"Is startup recovery enabled?"}
-        reasonQ{"Does the reason record a clean shutdown?"}
-        resumeAfterCleanShutdownQ{"Is resume after clean shutdown enabled?"}
+        reasonQ{"Was the drive put Down only because<br/>the daemon was stopping?"}
+        autoUpQ{"Is automatic Up enabled?"}
         registrationUpQ{"Auto-activate<br/>new drives?"}
         desiredUp["Desired Up"]
         desiredDown["Desired Down<br/>Record startup reason"]
@@ -152,10 +152,10 @@ flowchart TB
         previousUpQ -- No --> reasonQ
         recoverQ -- Yes --> desiredUp
         recoverQ -- No --> desiredDown
-        reasonQ -- Yes --> resumeAfterCleanShutdownQ
+        reasonQ -- Yes --> autoUpQ
         reasonQ -- No --> preserveDown
-        resumeAfterCleanShutdownQ -- Yes --> desiredUp
-        resumeAfterCleanShutdownQ -- No --> desiredDown
+        autoUpQ -- Yes --> desiredUp
+        autoUpQ -- No --> desiredDown
         desiredUp --> registered
         desiredDown --> registered
         preserveDown --> registered
@@ -186,9 +186,13 @@ Initial desired state depends on the catalogue state found before registration:
 | State found before registration | Startup decision |
 | --- | --- |
 | No existing drive entry | Request desired `Up` only when automatic activation on first registration is enabled. |
-| Existing desired `Down` with a clean-shutdown reason | Eligible for automatic startup of an existing drive. |
-| Existing desired `Down` with an absent, empty, operator or failure reason | Preserve desired `Down` and its reason. |
+| Existing desired `Down` with an operator, failure, absent, empty or unrecognized reason | Preserve desired `Down` and its reason. |
+| Existing desired `Down` recorded as caused only by the daemon stopping | Eligible for automatic startup of an existing drive. |
 | Existing desired `Up` | Preserve it only when startup recovery is enabled. |
+
+For existing desired-Down drives, automatic Up applies only when the recorded reason says the drive was put Down because the daemon was stopping. This may happen when e.g. the drive receives a SIGTERM request and gracefully shuts down.
+Shutdown preserves an existing operator or failure Down reason, so a drive left Down for maintenance or a hardware failure remains Down even if the daemon subsequently exits normally.
+An absent, empty or unrecognized reason also leaves the drive Down.
 
 Recovery, automatic startup, and first-registration activation are separate policies.
 During recovery, registration reports `Down` while preserving desired `Up`.
@@ -204,15 +208,19 @@ It starts the next drive session when desired `Up` is set.
 
 The daemon is intended to run indefinitely.
 Finishing a tape session, having no eligible work, or setting desired `Down` does not stop the daemon; it continues running and waits for work or desired `Up`.
-An orderly shutdown begins when the process receives a stop request, such as `SIGTERM` during a service stop or restart.
+Shutdown is requested when the process receives a stop request, such as `SIGTERM` during a service stop or restart.
 Startup failures and fatal runtime failures can also end the process; those cases are covered under [Failure scenarios](#failure-scenarios).
 
-For an orderly shutdown:
+When shutdown is requested:
 
-1. Request that scheduling stop. If drive registration completed, set desired `Down` while preserving an existing specific operator or failure reason.
-2. Allow an active tape session to finish transferring files, unmount its cartridge, and finish outstanding disk writes and reporting. Then end the drive session, relinquishing hardware ownership and reporting `Down`.
-3. Record a clean shutdown reason unless an existing operator or failure reason must be preserved.
+1. Request that scheduling stop. If drive registration completed, set desired `Down` with the reason `[cta-taped] Daemon shutting down`, preserving any existing specific operator or failure reason.
+2. Wait for the active tape session, including its attempts to unmount the cartridge and finish outstanding disk writes and reporting. Then end the drive session, relinquishing hardware ownership and reporting `Down`.
+3. Publish desired and reported `Down` before exit, again preserving any specific operator or failure reason.
 4. Exit, leaving the catalogue entry available to explain the drive's state.
+
+Daemon shutdown preserves existing operator or failure Down reasons.
+Exiting normally does not, by itself, make a drive eligible for automatic Up at the next startup.
+The daemon-shutdown reason can be recorded before the active session finishes; it does not prove that shutdown completed or that the cartridge was removed.
 
 Shutdown relies on tape session completion to release an active cartridge mount; it does not perform an additional physical cleanup after the drive session ends.
 The division of responsibility is explained under [Cleanup guarantees](#cleanup-guarantees).
@@ -423,15 +431,17 @@ The detailed scenario-by-scenario behavior and recovery actions are in [Tape dae
 
 ### Recovery after a crash
 
-An abrupt crash cannot publish shutdown state, so the last recorded desired state remains unchanged unless another actor changes it.
+After an abrupt crash, the last successfully recorded desired state and Down reason remain unless another actor changes them.
+If shutdown was requested before the crash, the daemon may already have recorded desired `Down` and the daemon-shutdown reason.
+That reason does not establish that shutdown completed.
 Reported state can be stale and a cartridge may remain loaded.
 Once the old process has ended, a new daemon run follows the normal [startup behavior](#daemon-lifetime).
 Recovery of an existing desired `Up` takes precedence over automatic startup of a previously desired-Down drive.
 
 Every new drive session prepares the drive again.
 If initial cleanup is disabled, a remaining cartridge prevents the emptiness probe from succeeding.
-A handled fatal failure or orderly shutdown can instead record desired `Down` before exiting.
-A specific failure reason is preserved; a clean-shutdown reason can permit automatic startup when configured.
+A handled fatal failure or requested shutdown can instead record desired `Down` before exiting.
+A specific failure reason is preserved; the daemon-shutdown reason can permit automatic Up when configured.
 Recovering the drive does not establish that interrupted file transfers completed successfully.
 
 The settings and defaults are described in [Drive startup and preparation](../../ops/deploy-and-configure/configuration/tape-daemon.md#drive-startup-and-preparation).

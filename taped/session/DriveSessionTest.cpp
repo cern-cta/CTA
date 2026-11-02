@@ -509,7 +509,7 @@ TEST_F(DriveSessionTest, EmptyProbeDoesNotResetDriveConfiguration) {
 
 TEST_F(DriveSessionTest, LoadedDriveRequiresEjectOnUpEvenWithStartupRecoveryEnabled) {
   config.drive.lifecycle.startup.preserve_desired_up = true;
-  config.drive.lifecycle.startup.resume_after_clean_shutdown = true;
+  config.drive.lifecycle.startup.auto_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setTapeInPlace(true);
   session->run(stop.get_token());

@@ -27,8 +27,8 @@ struct DriveRegistrationConfig final {
 struct DriveStartupConfig final {
   /// Preserve an existing desired Up state at startup; recovering a loaded drive also requires eject_on_up.
   bool preserve_desired_up = false;
-  /// Bring desired Down drives Up only when their recorded reason indicates a clean shutdown.
-  bool resume_after_clean_shutdown = false;
+  /// Automatically request Up for eligible existing Down drives; operator and failure Down reasons prevent activation.
+  bool auto_up = false;
 
   static constexpr std::size_t memberCount() { return 2; }
 

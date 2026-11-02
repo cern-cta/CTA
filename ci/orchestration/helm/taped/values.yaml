@@ -18,7 +18,7 @@ drive:
       desiredUp: false
     startup:
       preserveDesiredUp: false
-      resumeAfterCleanShutdown: false
+      autoUp: false
 
 scheduler:
   tapeCacheMaxAgeSecs: 1
