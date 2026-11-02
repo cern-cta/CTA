@@ -85,8 +85,7 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     // This closes the race window where a concurrent scheduler for the same logical library
     // could see zero next-mounts, compute the VO active-mount count as below the limit, and
     // schedule a second mount — violating readMaxDrives / writeMaxDrives.
-    if (auto optDrive = m_RelationalDB.m_catalogue.DriveState()->getTapeDrive(driveName);
-        optDrive.has_value()) {
+    if (auto optDrive = m_RelationalDB.m_catalogue.DriveState()->getTapeDrive(driveName); optDrive.has_value()) {
       auto drive = optDrive.value();
       drive.nextMountType = mount.type;
       drive.nextVid = tape.vid;
@@ -134,8 +133,7 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
     // This closes the race window where a concurrent scheduler for the same logical library
     // could see zero next-mounts, compute the VO active-mount count as below the limit, and
     // schedule a second mount — violating readMaxDrives / writeMaxDrives.
-    if (auto optDrive = m_RelationalDB.m_catalogue.DriveState()->getTapeDrive(driveName);
-        optDrive.has_value()) {
+    if (auto optDrive = m_RelationalDB.m_catalogue.DriveState()->getTapeDrive(driveName); optDrive.has_value()) {
       auto drive = optDrive.value();
       drive.nextMountType = mount.type;
       drive.nextVid = mount.vid;
