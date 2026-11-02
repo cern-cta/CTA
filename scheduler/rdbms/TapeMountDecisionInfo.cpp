@@ -91,6 +91,9 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
       drive.nextVid = tape.vid;
       drive.nextTapePool = tape.tapePool;
       drive.nextVo = tape.vo;
+      if (!drive.lastModificationLog.has_value()) {
+        drive.lastModificationLog = common::dataStructures::EntryLog("NO_USER", drive.host, ::time(nullptr));
+      }
       m_RelationalDB.m_catalogue.DriveState()->updateTapeDriveStatus(drive);
     }
 
@@ -139,6 +142,9 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
       drive.nextVid = mount.vid;
       drive.nextTapePool = mount.tapePool;
       drive.nextVo = mount.vo;
+      if (!drive.lastModificationLog.has_value()) {
+        drive.lastModificationLog = common::dataStructures::EntryLog("NO_USER", drive.host, ::time(nullptr));
+      }
       m_RelationalDB.m_catalogue.DriveState()->updateTapeDriveStatus(drive);
     }
     commit();
