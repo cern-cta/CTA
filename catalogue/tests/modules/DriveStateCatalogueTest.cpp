@@ -1644,4 +1644,191 @@ TEST_P(cta_catalogue_DriveStateTest, getTapeDriveWithoutPhysicalLibrary) {
   m_catalogue->LogicalLibrary()->deleteLogicalLibrary(tapeDrive.logicalLibrary);
 }
 
+// --- NEXT_* column persistence tests (pgsched VO mount-limit race fix) -------
+//
+// updateTapeDriveStatus() has two cases:
+//   Case 1: status unchanged — NEXT_* written only if nextMountType != NoMount
+//   Case 2: status changing  — NEXT_* hardcoded to NO_MOUNT/NULL
+//
+// The tests below cover every combination relevant to the fix.
+
+// Case 1, positive path: a direct call with nextMountType set to a real type
+// must persist all four NEXT_* columns.
+TEST_P(cta_catalogue_DriveStateTest, nextMountTypeWrittenWhenSetInCase1) {
+  const std::string driveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(driveName);
+  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
+
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  auto drive = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  drive.nextMountType = cta::common::dataStructures::MountType::Retrieve;
+  drive.nextVid = "VID001";
+  drive.nextTapePool = "pool1";
+  drive.nextVo = "vo1";
+  drive.lastModificationLog = cta::common::dataStructures::EntryLog("admin_user_name", "admin_host", now);
+  m_catalogue->DriveState()->updateTapeDriveStatus(drive);
+
+  const auto stored = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, stored.nextMountType);
+  ASSERT_EQ("VID001", stored.nextVid.value_or(""));
+  ASSERT_EQ("pool1",  stored.nextTapePool.value_or(""));
+  ASSERT_EQ("vo1",    stored.nextVo.value_or(""));
+
+  m_catalogue->DriveState()->deleteTapeDrive(driveName);
+}
+
+// Case 1, negative path (key regression): after NEXT_* is set by the scheduler,
+// a routine status report from TapeDrivesCatalogueState (status unchanged, fresh
+// struct with nextMountType=NoMount) must NOT wipe the pending-mount marker.
+TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedByRoutineStatusUpdateInCase1) {
+  const std::string driveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(driveName);
+  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
+
+  // Simulate TapeMountDecisionInfo: set NEXT_* before releasing advisory lock.
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  auto drive = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  drive.nextMountType = cta::common::dataStructures::MountType::Retrieve;
+  drive.nextVid = "VID001";
+  drive.nextTapePool = "pool1";
+  drive.nextVo = "vo1";
+  drive.lastModificationLog = cta::common::dataStructures::EntryLog("admin_user_name", "admin_host", now);
+  m_catalogue->DriveState()->updateTapeDriveStatus(drive);
+
+  // Simulate TapeDrivesCatalogueState::updateDriveStatus() -- same Up status,
+  // fresh struct leaves nextMountType at its default (NoMount).
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = driveName;
+  driveInfo.host = tapeDrive.host;
+  driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
+  cta::ReportDriveStatusInputs inputs;
+  inputs.status     = cta::common::dataStructures::DriveStatus::Up;
+  inputs.mountType  = cta::common::dataStructures::MountType::NoMount;
+  inputs.reportTime = now;
+  {
+    cta::log::LogContext dummyLc(m_dummyLog);
+    cta::TapeDrivesCatalogueState state(*m_catalogue);
+    state.updateDriveStatus(driveInfo, inputs, dummyLc);
+  }
+
+  // NEXT_* must be unchanged — the routine update must not wipe the marker.
+  const auto stored = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, stored.nextMountType);
+  ASSERT_EQ("VID001", stored.nextVid.value_or(""));
+  ASSERT_EQ("pool1",  stored.nextTapePool.value_or(""));
+  ASSERT_EQ("vo1",    stored.nextVo.value_or(""));
+
+  m_catalogue->DriveState()->deleteTapeDrive(driveName);
+}
+
+// Case 1, Transferring variant: bytes/files stats updates from a Transferring
+// drive (status unchanged, nextMountType=NoMount) must also preserve NEXT_*.
+TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedDuringTransferringStatsUpdate) {
+  const std::string driveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(driveName);
+  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Transferring;
+  tapeDrive.sessionStartTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
+
+  // Set NEXT_* while drive is Transferring.
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  auto drive = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  drive.nextMountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  drive.nextVid = "VID002";
+  drive.nextTapePool = "pool2";
+  drive.nextVo = "vo2";
+  // Case 1 Transferring path binds these three fields directly; they must be non-nullopt.
+  drive.transferStartTime = now;
+  drive.bytesTransferedInSession = 0;
+  drive.filesTransferedInSession = 0;
+  drive.lastModificationLog = cta::common::dataStructures::EntryLog("admin_user_name", "admin_host", now);
+  m_catalogue->DriveState()->updateTapeDriveStatus(drive);
+
+  // Simulate a periodic bytes/files stats report (Transferring->Transferring).
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = driveName;
+  driveInfo.host = tapeDrive.host;
+  driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
+  cta::ReportDriveStatusInputs inputs;
+  inputs.status           = cta::common::dataStructures::DriveStatus::Transferring;
+  inputs.mountType        = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.reportTime       = now;
+  inputs.byteTransferred  = 1024 * 1024;
+  inputs.filesTransferred = 10;
+  inputs.vid              = "VID002";
+  inputs.tapepool         = "pool2";
+  inputs.vo               = "vo2";
+  inputs.mountSessionId   = 1;
+  {
+    cta::log::LogContext dummyLc(m_dummyLog);
+    cta::TapeDrivesCatalogueState state(*m_catalogue);
+    state.updateDriveStatus(driveInfo, inputs, dummyLc);
+  }
+
+  // NEXT_* must survive the stats update.
+  const auto stored = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, stored.nextMountType);
+  ASSERT_EQ("VID002", stored.nextVid.value_or(""));
+  ASSERT_EQ("pool2",  stored.nextTapePool.value_or(""));
+  ASSERT_EQ("vo2",    stored.nextVo.value_or(""));
+
+  m_catalogue->DriveState()->deleteTapeDrive(driveName);
+}
+
+// Case 2: any status transition must clear NEXT_* to prevent double-counting.
+// When taped reports Starting, the drive enters Pass 1 of
+// getExistingAndNextMounts(); if NEXT_* were left set, Pass 2 would also count
+// the same mount, inflating the apparent VO load.
+TEST_P(cta_catalogue_DriveStateTest, nextMountTypeClearedOnStatusTransitionInCase2) {
+  const std::string driveName = "VDSTK11";
+  auto tapeDrive = getTapeDriveWithMandatoryElements(driveName);
+  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
+
+  // Set NEXT_* (drive is Up, Case 1 writes it).
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  auto drive = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  drive.nextMountType = cta::common::dataStructures::MountType::Retrieve;
+  drive.nextVid = "VID001";
+  drive.nextTapePool = "pool1";
+  drive.nextVo = "vo1";
+  drive.lastModificationLog = cta::common::dataStructures::EntryLog("admin_user_name", "admin_host", now);
+  m_catalogue->DriveState()->updateTapeDriveStatus(drive);
+
+  // Sanity check: NEXT_* is set before the transition.
+  ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,
+            m_catalogue->DriveState()->getTapeDrive(driveName).value().nextMountType);
+
+  // Simulate taped reporting Starting (Up->Starting, status change triggers Case 2).
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = driveName;
+  driveInfo.host = tapeDrive.host;
+  driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
+  cta::ReportDriveStatusInputs inputs;
+  inputs.status         = cta::common::dataStructures::DriveStatus::Starting;
+  inputs.mountType      = cta::common::dataStructures::MountType::Retrieve;
+  inputs.reportTime     = now;
+  inputs.mountSessionId = 42;
+  inputs.vid            = "VID001";
+  inputs.tapepool       = "pool1";
+  inputs.vo             = "vo1";
+  {
+    cta::log::LogContext dummyLc(m_dummyLog);
+    cta::TapeDrivesCatalogueState state(*m_catalogue);
+    state.updateDriveStatus(driveInfo, inputs, dummyLc);
+  }
+
+  // NEXT_* must be cleared: the drive is now counted via driveStatus (Pass 1),
+  // not via NEXT_MOUNT_TYPE (Pass 2).
+  const auto stored = m_catalogue->DriveState()->getTapeDrive(driveName).value();
+  ASSERT_EQ(cta::common::dataStructures::MountType::NoMount, stored.nextMountType);
+  ASSERT_FALSE(stored.nextVid.has_value());
+  ASSERT_FALSE(stored.nextTapePool.has_value());
+  ASSERT_FALSE(stored.nextVo.has_value());
+
+  m_catalogue->DriveState()->deleteTapeDrive(driveName);
+}
+
 }  // namespace unitTests
