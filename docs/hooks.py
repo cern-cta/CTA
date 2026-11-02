@@ -3,6 +3,7 @@
 
 """Resolve repository inputs and generate the cta-admin manpage without compiling CTA."""
 
+import json
 import logging
 import re
 import shutil
@@ -83,13 +84,16 @@ def on_post_build(config: MkDocsConfig) -> None:
 
 
 def on_page_markdown(markdown: str, config: MkDocsConfig, **kwargs: Any) -> str:
-    """Load whole-page manuals without exposing their Pandoc metadata as text."""
+    """Resolve the CI EOS image tag and load manuals without Pandoc metadata."""
+    root = Path(config.config_file_path).resolve().parent.parent
+    if "{{ eos_image_tag }}" in markdown:
+        project = json.loads((root / "project.json").read_text(encoding="utf-8"))
+        markdown = markdown.replace("{{ eos_image_tag }}", project["dev"]["eosImageTag"])
     # Strip manual metadata before inclusion so fields such as the date and
     # manual section do not appear as page text.
     match = re.fullmatch(r"\s*--8<--\s*\n([^\n]+\.1cta\.md)\s*\n--8<--\s*", markdown)
     if not match:
         return markdown
-    root = Path(config.config_file_path).resolve().parent.parent
     manual = (root / match.group(1).strip()).read_text(encoding="utf-8")
     return re.sub(r"\A---\r?\n.*?\r?\n---(?:\r?\n|\Z)", "", manual, count=1, flags=re.DOTALL)
 

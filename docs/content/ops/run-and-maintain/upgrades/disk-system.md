@@ -13,12 +13,10 @@ The following guidance applies to an EOS tape-buffer instance.
 
 #### Mix and match tested versions
 
-!!! danger
-    CTA software is only tested in CTA Continuous Integration against a few specific EOS versions. CTA workflow can break if mixing any EOS software against any CTA version.
+CTA is tested in CI with the EOS Docker image tagged `{{ eos_image_tag }}`, selected by `dev.eosImageTag` in `project.json` for this CTA revision. See [EOS installation](../../deploy-and-configure/integrations/eos.md#installation) for the upstream installation guide.
 
-Once the CTA version has been chosen, please refer to the CTA provided versionlock file to understand which EOS software should be deployed along with the target CTA version.
-
-Install `cta-release` for the selected CTA release to obtain its dependency version locks, or inspect `project.json` at the corresponding repository tag. EOS compatibility is independent of the documentation version selector.
+!!! warning
+    Other EOS versions may break CTA workflows. Validate the EOS/CTA combination in a test instance before upgrading production.
 
 !!! tip
     Rollout a specific EOS version to all your EOS tape buffer instances starting with a test instance, followed by less critical EOS tape buffer instances (repack, backup,...).
