@@ -19,13 +19,14 @@ using Action = DriveStartupDecision::Action;
 
 TEST(DriveStartupPolicyTest, NewDriveUsesRegistrationPolicyRegardlessOfStartupSettings) {
   for (const bool recover : {false, true}) {
-    for (const bool autoUp : {false, true}) {
+    for (const bool resumeAfterCleanShutdown : {false, true}) {
       SCOPED_TRACE(recover);
-      SCOPED_TRACE(autoUp);
+      SCOPED_TRACE(resumeAfterCleanShutdown);
       for (const bool registrationUp : {false, true}) {
         SCOPED_TRACE(registrationUp);
-        const DriveStartupConfig config {.recover_existing_up = recover, .auto_up = autoUp};
-        const auto decision = decideDriveStartup(config, {.auto_up = registrationUp}, std::nullopt);
+        const DriveStartupConfig config {.preserve_desired_up = recover,
+                                         .resume_after_clean_shutdown = resumeAfterCleanShutdown};
+        const auto decision = decideDriveStartup(config, {.desired_up = registrationUp}, std::nullopt);
 
         EXPECT_EQ(Action::Register, decision.action);
         EXPECT_EQ(registrationUp, decision.desiredState.up);
@@ -38,7 +39,7 @@ TEST(DriveStartupPolicyTest, NewDriveUsesRegistrationPolicyRegardlessOfStartupSe
   }
 }
 
-TEST(DriveStartupPolicyTest, ExistingUpUsesRecoverySettingBeforeAutoUp) {
+TEST(DriveStartupPolicyTest, ExistingUpUsesPreserveDesiredUpBeforeResumeAfterCleanShutdown) {
   std::optional<TapeDrive> previous {TapeDrive {}};
   previous->desiredUp = true;
   previous->reasonUpDown = "Operator requested Up";
@@ -46,18 +47,22 @@ TEST(DriveStartupPolicyTest, ExistingUpUsesRecoverySettingBeforeAutoUp) {
 
   for (const auto status : {DriveStatus::Down, DriveStatus::Transferring}) {
     previous->driveStatus = status;
-    for (const bool autoUp : {false, true}) {
+    for (const bool resumeAfterCleanShutdown : {false, true}) {
       SCOPED_TRACE(static_cast<int>(status));
-      SCOPED_TRACE(autoUp);
+      SCOPED_TRACE(resumeAfterCleanShutdown);
       for (const bool registrationUp : {false, true}) {
         SCOPED_TRACE(registrationUp);
         EXPECT_EQ(
           Action::RecoverExistingUp,
-          decideDriveStartup({.recover_existing_up = true, .auto_up = autoUp}, {.auto_up = registrationUp}, previous)
+          decideDriveStartup({.preserve_desired_up = true, .resume_after_clean_shutdown = resumeAfterCleanShutdown},
+                             {.desired_up = registrationUp},
+                             previous)
             .action);
         EXPECT_EQ(
           Action::RequireOperatorUp,
-          decideDriveStartup({.recover_existing_up = false, .auto_up = autoUp}, {.auto_up = registrationUp}, previous)
+          decideDriveStartup({.preserve_desired_up = false, .resume_after_clean_shutdown = resumeAfterCleanShutdown},
+                             {.desired_up = registrationUp},
+                             previous)
             .action);
       }
     }
@@ -70,8 +75,8 @@ TEST(DriveStartupPolicyTest, ExistingUpUsesRecoverySettingBeforeAutoUp) {
 TEST(DriveStartupPolicyTest, ExistingDownPreservesSpecificReasonsAndComments) {
   struct Case {
     std::optional<std::string> reason;
-    std::string expectedReason;
-    // Expected desired Up with auto_up disabled and enabled, respectively.
+    std::optional<std::string> expectedReason;
+    // Expected desired Up with resume_after_clean_shutdown disabled and enabled, respectively.
     std::array<bool, 2> expectedUp;
   };
 
@@ -81,8 +86,8 @@ TEST(DriveStartupPolicyTest, ExistingDownPreservesSpecificReasonsAndComments) {
     {"[cta-taped] Daemon shutting down: SIGTERM",                                         startupReason,                              {false, true} },
     {"[cta-taped] Daemon started",                                                        "[cta-taped] Daemon started",               {false, false}},
     {"[cta-taped] Daemon shutting down",                                                  startupReason,                              {false, true} },
-    {std::nullopt,                                                                        startupReason,                              {false, true} },
-    {"",                                                                                  startupReason,                              {false, true} },
+    {std::nullopt,                                                                        std::nullopt,                               {false, false}},
+    {"",                                                                                  "",                                         {false, false}},
     {"[cta-taped] INFO Shutdown",                                                         "[cta-taped] INFO Shutdown",                {false, false}},
     {"Maintenance",                                                                       "Maintenance",                              {false, false}},
     {"[cta-taped] ERR Drive cleanup failed",                                              "[cta-taped] ERR Drive cleanup failed",     {false, false}},
@@ -95,20 +100,22 @@ TEST(DriveStartupPolicyTest, ExistingDownPreservesSpecificReasonsAndComments) {
   for (const auto& test : cases) {
     SCOPED_TRACE(test.reason.value_or("absent"));
     for (const bool recover : {false, true}) {
-      for (size_t autoUp = 0; autoUp < test.expectedUp.size(); ++autoUp) {
+      for (size_t resumeAfterCleanShutdown = 0; resumeAfterCleanShutdown < test.expectedUp.size();
+           ++resumeAfterCleanShutdown) {
         SCOPED_TRACE(recover);
-        SCOPED_TRACE(autoUp);
+        SCOPED_TRACE(resumeAfterCleanShutdown);
         std::optional<TapeDrive> previous {TapeDrive {}};
         previous->desiredUp = false;
         previous->reasonUpDown = test.reason;
         previous->userComment = "Operator comment";
-        const DriveStartupConfig config {.recover_existing_up = recover, .auto_up = autoUp != 0};
+        const DriveStartupConfig config {.preserve_desired_up = recover,
+                                         .resume_after_clean_shutdown = resumeAfterCleanShutdown != 0};
         for (const bool registrationUp : {false, true}) {
           SCOPED_TRACE(registrationUp);
-          const auto decision = decideDriveStartup(config, {.auto_up = registrationUp}, previous);
+          const auto decision = decideDriveStartup(config, {.desired_up = registrationUp}, previous);
 
           EXPECT_EQ(Action::Register, decision.action);
-          EXPECT_EQ(test.expectedUp[autoUp], decision.desiredState.up);
+          EXPECT_EQ(test.expectedUp[resumeAfterCleanShutdown], decision.desiredState.up);
           EXPECT_FALSE(decision.desiredState.forceDown);
           EXPECT_EQ(test.expectedReason, decision.desiredState.reason);
           EXPECT_EQ("Operator comment", decision.desiredState.comment);

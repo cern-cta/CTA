@@ -148,7 +148,9 @@ protected:
 
   bool probeOnly() { return session->probeDrive(); }
 
-  bool prepare() { return config.drive.clean_on_up ? session->cleanDriveForStartup() : session->probeDrive(); }
+  bool prepare() {
+    return config.drive.lifecycle.eject_on_up ? session->cleanDriveForStartup() : session->probeDrive();
+  }
 
   std::shared_ptr<const TapeSessionTracker> activeTracker() { return session->m_activeTracker.load(); }
 
@@ -432,7 +434,7 @@ TEST_F(DriveSessionTest, RecoveryTrackingFinishesAfterPublicationFailure) {
 }
 
 TEST_F(DriveSessionTest, InitialCleanupPublishesUpOnlyAfterHardwareIsPrepared) {
-  config.drive.clean_on_up = true;
+  config.drive.lifecycle.eject_on_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setTapeInPlace(true);
   std::shared_ptr<const TapeSessionTracker> cleanup;
@@ -456,7 +458,7 @@ TEST_F(DriveSessionTest, InitialCleanupPublishesUpOnlyAfterHardwareIsPrepared) {
 }
 
 TEST_F(DriveSessionTest, CleanupPublicationFailureFinishesFailedSessionWithoutHardwareAccess) {
-  config.drive.clean_on_up = true;
+  config.drive.lifecycle.eject_on_up = true;
   std::shared_ptr<const TapeSessionTracker> cleanup;
   driveState().onReport = [&](DriveStatus status) {
     if (status == DriveStatus::Starting) {
@@ -475,7 +477,7 @@ TEST_F(DriveSessionTest, CleanupPublicationFailureFinishesFailedSessionWithoutHa
 }
 
 TEST_F(DriveSessionTest, DownDuringCleanupPreservesActivityUntilOwnershipEnds) {
-  config.drive.clean_on_up = true;
+  config.drive.lifecycle.eject_on_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setTapeInPlace(true);
   driveState().onReport = [&](DriveStatus status) {
@@ -505,9 +507,9 @@ TEST_F(DriveSessionTest, EmptyProbeDoesNotResetDriveConfiguration) {
   EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
 }
 
-TEST_F(DriveSessionTest, LoadedDriveRequiresCleanOnUpEvenWithStartupRecoveryEnabled) {
-  config.drive.startup.recover_existing_up = true;
-  config.drive.startup.auto_up = true;
+TEST_F(DriveSessionTest, LoadedDriveRequiresEjectOnUpEvenWithStartupRecoveryEnabled) {
+  config.drive.lifecycle.startup.preserve_desired_up = true;
+  config.drive.lifecycle.startup.resume_after_clean_shutdown = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setTapeInPlace(true);
   session->run(stop.get_token());
@@ -520,8 +522,8 @@ TEST_F(DriveSessionTest, LoadedDriveRequiresCleanOnUpEvenWithStartupRecoveryEnab
   EXPECT_FALSE(canUseHardware());
 }
 
-TEST_F(DriveSessionTest, LoadedDriveCanBePreparedWhenCleanOnUpIsEnabled) {
-  config.drive.clean_on_up = true;
+TEST_F(DriveSessionTest, LoadedDriveCanBePreparedWhenEjectOnUpIsEnabled) {
+  config.drive.lifecycle.eject_on_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setTapeInPlace(true);
   EXPECT_TRUE(prepare());
@@ -541,7 +543,7 @@ TEST_F(DriveSessionTest, ProbeFailureReturnsDownWithoutRecovery) {
   EXPECT_TRUE(session->isLive());
 }
 
-TEST_F(DriveSessionTest, ActiveRecoveryStillCleansLoadedDriveWithCleanOnUpDisabled) {
+TEST_F(DriveSessionTest, ActiveRecoveryStillCleansLoadedDriveWithEjectOnUpDisabled) {
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setTapeInPlace(true);
   EXPECT_TRUE(recover());
@@ -625,7 +627,7 @@ TEST_F(DriveSessionTest, DownBeforeProbeReleasesDrivePreventsUpPublication) {
 }
 
 TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwnershipIsReleased) {
-  config.drive.clean_on_up = true;
+  config.drive.lifecycle.eject_on_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
   unsigned int desiredAttempts = 0;
@@ -650,7 +652,7 @@ TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwn
 }
 
 TEST_F(DriveSessionTest, CleanupReportedDownFailurePropagatesAfterOwnershipIsReleased) {
-  config.drive.clean_on_up = true;
+  config.drive.lifecycle.eject_on_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
   unsigned int downAttempts = 0;

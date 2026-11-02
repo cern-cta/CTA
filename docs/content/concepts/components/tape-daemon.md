@@ -135,8 +135,8 @@ flowchart TB
         matchesQ{"Do the host and logical library match?"}
         previousUpQ{"Is the existing desired state Up?"}
         recoverQ{"Is startup recovery enabled?"}
-        reasonQ{"Is the reason empty or a clean shutdown?"}
-        autoUpQ{"Is automatic startup enabled?"}
+        reasonQ{"Does the reason record a clean shutdown?"}
+        resumeAfterCleanShutdownQ{"Is resume after clean shutdown enabled?"}
         registrationUpQ{"Auto-activate<br/>new drives?"}
         desiredUp["Desired Up"]
         desiredDown["Desired Down<br/>Record startup reason"]
@@ -152,10 +152,10 @@ flowchart TB
         previousUpQ -- No --> reasonQ
         recoverQ -- Yes --> desiredUp
         recoverQ -- No --> desiredDown
-        reasonQ -- Yes --> autoUpQ
+        reasonQ -- Yes --> resumeAfterCleanShutdownQ
         reasonQ -- No --> preserveDown
-        autoUpQ -- Yes --> desiredUp
-        autoUpQ -- No --> desiredDown
+        resumeAfterCleanShutdownQ -- Yes --> desiredUp
+        resumeAfterCleanShutdownQ -- No --> desiredDown
         desiredUp --> registered
         desiredDown --> registered
         preserveDown --> registered
@@ -186,8 +186,8 @@ Initial desired state depends on the catalogue state found before registration:
 | State found before registration | Startup decision |
 | --- | --- |
 | No existing drive entry | Request desired `Up` only when automatic activation on first registration is enabled. |
-| Existing desired `Down` with an absent, empty, or clean-shutdown reason | Eligible for automatic startup of an existing drive. |
-| Existing desired `Down` with an operator or failure reason | Preserve desired `Down` and its reason. |
+| Existing desired `Down` with a clean-shutdown reason | Eligible for automatic startup of an existing drive. |
+| Existing desired `Down` with an absent, empty, operator or failure reason | Preserve desired `Down` and its reason. |
 | Existing desired `Up` | Preserve it only when startup recovery is enabled. |
 
 Recovery, automatic startup, and first-registration activation are separate policies.

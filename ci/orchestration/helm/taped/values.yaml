@@ -10,14 +10,15 @@ logging:
   level: "INFO"
 
 drive:
-  # Match the drive cleaning and startup defaults in cta-taped.example.toml.
-  cleanOnUp: false
-  # First registration is separate from restarting an existing drive.
-  registration:
-    autoUp: false
-  startup:
-    recoverExistingUp: false
-    autoUp: false
+  # Match the drive lifecycle defaults in cta-taped.example.toml.
+  lifecycle:
+    ejectOnUp: false
+    # First registration is separate from restarting an existing drive.
+    registration:
+      desiredUp: false
+    startup:
+      preserveDesiredUp: false
+      resumeAfterCleanShutdown: false
 
 scheduler:
   tapeCacheMaxAgeSecs: 1

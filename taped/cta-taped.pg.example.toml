@@ -31,35 +31,37 @@
   # This value is required and has no useful default.
   logical_library_name = "example-library"
 
+[drive.lifecycle]
   # Automatically eject any cartridge in the drive when the drive transitions from Down to Up.
   # When false, only empty drives are allowed to go Up. The drive will put itself Down if it finds a cartridge 
   # in the drive, requiring an operator to eject the cartridge and put the drive Up again.
   # If omitted, false is used.
-  clean_on_up = false
+  eject_on_up = false
 
 # First registration means that no catalogue entry exists for this drive name.
-[drive.registration]
-  # Automatically request desired Up for a newly registered drive.
-  # When false, register it desired Down and wait for an operator Up request.
-  # Existing drives follow drive.startup instead, even if their entries are recreated.
+[drive.lifecycle.registration]
+  # Set the desired state to Up when this drive is first registered.
+  # When false, set the desired state to Down and wait for an operator Up request.
+  # Existing drives follow drive.lifecycle.startup instead, even if their entries are recreated.
   # If omitted, false is used.
-  auto_up = false
+  desired_up = false
 
 # These options select which existing drives may start automatically when cta-taped starts.
 # They inspect the desired state saved in the catalogue.
-[drive.startup]
+[drive.lifecycle.startup]
   # When the desired state is Up, preserve it and attempt to bring the drive Up.
   # This can resume operation after a crash or honour an Up request made before startup.
   # When false, set the drive Down and require a new operator Up request.
-  # Recovering a drive containing a cartridge also requires drive.clean_on_up = true.
+  # Starting a drive that contains a cartridge also requires drive.lifecycle.eject_on_up = true.
   # If omitted, false is used.
-  recover_existing_up = false
+  preserve_desired_up = false
 
-  # When the desired state is Down, attempt to bring the drive Up after a clean shutdown, or if it is 
-  # Down without a recorded reason. New drives follow drive.registration.auto_up.
-  # Drives marked Down by operators or failures remain Down.
+  # When the desired state is Down, attempt to bring the drive Up only when its recorded Down reason
+  # indicates a clean shutdown.
+  # New drives follow drive.lifecycle.registration.desired_up.
+  # Drives with no recorded reason, or marked Down by operators or failures, remain Down.
   # If omitted, false is used.
-  auto_up = false
+  resume_after_clean_shutdown = false
 
 
 [catalogue]

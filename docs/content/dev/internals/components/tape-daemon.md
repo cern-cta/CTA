@@ -24,7 +24,7 @@ Transfer code works through scheduler mount and job interfaces; backend-specific
 
 Tape-session cleanup establishes reuse after a normal transfer.
 Do not add physical cleanup to drive-session destruction or daemon shutdown: hardware ownership may already have ended.
-If a tape session throws without returning an outcome, recovery runs under the existing drive ownership before another mount is allowed, independently of `drive.clean_on_up`.
+If a tape session throws without returning an outcome, recovery runs under the existing drive ownership before another mount is allowed, independently of `drive.lifecycle.eject_on_up`.
 
 `DriveCleaner` can borrow an already-open drive.
 It reports cleanup results and progress; the enclosing drive session owns the final `Down` publication.

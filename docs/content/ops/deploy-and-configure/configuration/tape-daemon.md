@@ -19,30 +19,31 @@ See [Tape Server Setup](../deployment/tape-servers.md) for host and hardware pre
 
 ### Choose when drives come Up
 
+Configure preparation and startup policies under `[drive.lifecycle]`.
 The catalogue state found before registration selects which setting applies:
 
 | Catalogue state | Setting | When `true` | When `false` |
 | --- | --- | --- | --- |
-| No drive entry | `drive.registration.auto_up` | Request desired `Up`. | Register desired `Down`; wait for an operator Up request. |
-| Existing desired `Up` | `drive.startup.recover_existing_up` | Preserve desired `Up`. | Set desired `Down`; require a new operator Up request. |
-| Existing desired `Down`, with no reason or a clean-shutdown reason | `drive.startup.auto_up` | Request desired `Up`. | Remain desired `Down`. |
-| Existing desired `Down`, with an operator or failure reason | None | Preserve desired `Down` and its reason, regardless of these settings. | Same. |
+| No drive entry | `drive.lifecycle.registration.desired_up` | Request desired `Up`. | Register desired `Down`; wait for an operator Up request. |
+| Existing desired `Up` | `drive.lifecycle.startup.preserve_desired_up` | Preserve desired `Up`. | Set desired `Down`; require a new operator Up request. |
+| Existing desired `Down`, with a clean-shutdown reason | `drive.lifecycle.startup.resume_after_clean_shutdown` | Request desired `Up`. | Remain desired `Down`. |
+| Existing desired `Down`, with no reason, or an operator or failure reason | None | Preserve desired `Down` and its reason, regardless of these settings. | Same. |
 
-- `drive.startup.auto_up` does not override disabled recovery or activate newly registered drives.
+- `drive.lifecycle.startup.resume_after_clean_shutdown` does not override disabled recovery or activate newly registered drives.
 - Existing drives follow the startup policy even if registration recreates their catalogue entry.
 - Registration reports `Down`; desired `Up` permits preparation, but does not mean the drive is ready for work.
 - When recovery is disabled for an existing desired-Up drive, the down reason records that an operator Up request is required.
 
 ### Choose how to prepare the drive
 
-Set `drive.clean_on_up` to control preparation on every Down-to-Up transition.
+Set `drive.lifecycle.eject_on_up` to control preparation on every Down-to-Up transition.
 
 | Value | Preparation | Operator action on failure |
 | --- | --- | --- |
 | `false` | Check that the drive is empty, without changing drive configuration. A cartridge or failed probe puts the drive Down. | Remove any remaining cartridge or resolve the probe failure, then request Up again. |
 | `true` | Remove any cartridge and reset drive configuration as necessary, even if the daemon did not mount the cartridge or know its identity. Failed cleanup puts the drive Down. | Resolve the cleanup failure, then request Up again. |
 
-**Automatic recovery with a cartridge still loaded requires both `drive.startup.recover_existing_up = true` and `drive.clean_on_up = true`.**
+**Automatic recovery with a cartridge still loaded requires both `drive.lifecycle.startup.preserve_desired_up = true` and `drive.lifecycle.eject_on_up = true`.**
 
 This setting controls initial preparation only.
 Recovery cleanup after an unexpected tape-session failure still runs while the daemon owns the drive.

@@ -15,7 +15,7 @@ namespace cta::tape::daemon {
 /// Opt-in automatic activation on first registration in the catalogue.
 struct DriveRegistrationConfig final {
   /// Automatically request desired Up on first registration; otherwise register desired Down.
-  bool auto_up = false;
+  bool desired_up = false;
 
   static constexpr std::size_t memberCount() { return 1; }
 
@@ -25,16 +25,35 @@ struct DriveRegistrationConfig final {
 
 /// Opt-in automatic startup of drives already present in the catalogue.
 struct DriveStartupConfig final {
-  /// Preserve an existing desired Up state at startup; recovering a loaded drive also requires clean_on_up.
-  bool recover_existing_up = false;
-  /// Bring desired Down drives Up after clean shutdown or when no Down reason exists.
-  /// Operator- and failure-induced Down states are preserved.
-  bool auto_up = false;
+  /// Preserve an existing desired Up state at startup; recovering a loaded drive also requires eject_on_up.
+  bool preserve_desired_up = false;
+  /// Bring desired Down drives Up only when their recorded reason indicates a clean shutdown.
+  bool resume_after_clean_shutdown = false;
 
   static constexpr std::size_t memberCount() { return 2; }
 
   /// Accept all combinations of startup flags.
   cta::runtime::ValidationResult validate() const { return {}; }
+};
+
+/// Preparation policy shared by registration, startup and operator-requested Up transitions.
+struct DriveLifecycleConfig final {
+  /// Eject any cartridge on transition from Down to Up; otherwise a loaded drive returns to Down.
+  bool eject_on_up = false;
+  /// Automatic startup policy for drives already registered in the catalogue.
+  DriveStartupConfig startup;
+  /// Desired-state policy for first registration in the catalogue.
+  DriveRegistrationConfig registration;
+
+  static constexpr std::size_t memberCount() { return 3; }
+
+  /// Collect validation errors from startup and registration policies.
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("startup", startup.validate());
+    result.merge("registration", registration.validate());
+    return result;
+  }
 };
 
 /// Drive identity, device paths and preparation policy.
@@ -48,14 +67,10 @@ struct DriveConfig final {
   /// Name of the existing catalogue logical library containing this drive.
   std::string logical_library_name = "";
 
-  /// Eject any cartridge on transition from Down to Up; otherwise a loaded drive returns to Down.
-  bool clean_on_up = false;
-  /// Automatic startup policy for drives already registered in the catalogue.
-  DriveStartupConfig startup;
-  /// Desired-state policy for first registration in the catalogue.
-  DriveRegistrationConfig registration;
+  /// Preparation and desired-state policies for drive lifecycle transitions.
+  DriveLifecycleConfig lifecycle;
 
-  static constexpr std::size_t memberCount() { return 7; }
+  static constexpr std::size_t memberCount() { return 5; }
 
   /// Collect missing drive identity and path errors, including startup and registration validation.
   cta::runtime::ValidationResult validate() const {
@@ -72,8 +87,7 @@ struct DriveConfig final {
     if (logical_library_name.empty()) {
       result.addError("logical_library_name", "cannot be empty");
     }
-    result.merge("startup", startup.validate());
-    result.merge("registration", registration.validate());
+    result.merge("lifecycle", lifecycle.validate());
     return result;
   }
 };

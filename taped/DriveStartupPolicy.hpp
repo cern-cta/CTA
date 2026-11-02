@@ -25,9 +25,10 @@ struct DriveStartupDecision {
 
 /// @brief Decide whether to register the drive, resume an existing Up request or require a new operator request.
 ///
-/// An existing Up request takes precedence over auto_up; resume it only when recover_existing_up is enabled.
-/// A missing catalogue entry uses registration.auto_up, independently of the startup settings.
-/// Existing desired-Down entries use config.auto_up only with an empty or clean-shutdown reason.
+/// Preserve an existing Up request only when preserve_desired_up is enabled.
+/// This takes precedence over resume_after_clean_shutdown.
+/// A missing catalogue entry uses registration.desired_up, independently of the startup settings.
+/// Existing desired-Down entries use config.resume_after_clean_shutdown only with a recorded clean-shutdown reason.
 /// Retain existing comments and other Down reasons even when recreating an existing catalogue entry.
 DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
                                         const DriveRegistrationConfig& registration,

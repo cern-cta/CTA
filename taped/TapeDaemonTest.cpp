@@ -156,7 +156,7 @@ protected:
 };
 
 TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
-  config.drive.startup.recover_existing_up = true;
+  config.drive.lifecycle.startup.preserve_desired_up = true;
   testing::InSequence sequence;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->desiredUp = true;
@@ -173,7 +173,7 @@ TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
 }
 
 TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
-  config.drive.startup.recover_existing_up = true;
+  config.drive.lifecycle.startup.preserve_desired_up = true;
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->reasonUpDown = "Operator requested Up";
@@ -199,8 +199,8 @@ TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Preparing drive for recovery."));
 }
 
-TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotFallThroughToAutoUp) {
-  config.drive.startup.auto_up = true;
+TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotResumeAfterCleanShutdown) {
+  config.drive.lifecycle.startup.resume_after_clean_shutdown = true;
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->userComment = "Inspect drive";
@@ -235,7 +235,7 @@ TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotFallThroughToAuto
 
 TEST_F(TapeDaemonTest, NewDrivePublishesAutomaticUpDecision) {
   previousDrive.reset();
-  config.drive.registration.auto_up = true;
+  config.drive.lifecycle.registration.desired_up = true;
   testing::InSequence sequence;
   EXPECT_CALL(driveState(), createTapeDrive(_)).WillOnce(Invoke([&](const TapeDrive& published) {
     EXPECT_FALSE(daemon->isReady());

@@ -19,14 +19,14 @@ DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
   // Only first registration uses the registration policy; existing entries use startup policy.
   if (!previous) {
     DriveStartupDecision decision;
-    decision.desiredState.up = registration.auto_up;
+    decision.desiredState.up = registration.desired_up;
     decision.desiredState.reason = formatDriveDownReason(DriveDownReason::Startup);
     return decision;
   }
 
-  // Recovery takes precedence over auto_up, including when recovery is disabled.
+  // Recovery takes precedence over resume_after_clean_shutdown, including when recovery is disabled.
   if (previous->desiredUp) {
-    return {.action = config.recover_existing_up ? Action::RecoverExistingUp : Action::RequireOperatorUp};
+    return {.action = config.preserve_desired_up ? Action::RecoverExistingUp : Action::RequireOperatorUp};
   }
 
   DriveStartupDecision decision;
@@ -34,10 +34,9 @@ DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
   desired.reason = previous->reasonUpDown;
   desired.comment = previous->userComment;
 
-  if (!desired.reason || desired.reason->empty()
-      || classifyPersistedDriveReason(*desired.reason) == PersistedDriveReasonKind::CleanShutdown) {
+  if (desired.reason && classifyPersistedDriveReason(*desired.reason) == PersistedDriveReasonKind::CleanShutdown) {
     desired.reason = formatDriveDownReason(DriveDownReason::Startup);
-    desired.up = config.auto_up;
+    desired.up = config.resume_after_clean_shutdown;
   }
   return decision;
 }

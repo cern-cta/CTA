@@ -233,12 +233,13 @@ bool TapeDaemon::registerDrive() {
   if (previous && previous->desiredUp) {
     log::ScopedParamContainer params(m_lc);
     params.add("driveStatus", common::dataStructures::TapeDrive::stateToString(previous->driveStatus))
-      .add("startupRecoveryEnabled", m_config.drive.startup.recover_existing_up);
+      .add("startupRecoveryEnabled", m_config.drive.lifecycle.startup.preserve_desired_up);
     m_lc.logEvent(log::WARNING,
                   "Drive found with desired Up at startup.",
                   semconv::log::EventNameValues::kDriveDesiredUpAtStartup);
   }
-  const auto decision = decideDriveStartup(m_config.drive.startup, m_config.drive.registration, previous);
+  const auto decision =
+    decideDriveStartup(m_config.drive.lifecycle.startup, m_config.drive.lifecycle.registration, previous);
   using namespace common::dataStructures;
   using Action = DriveStartupDecision::Action;
   std::string message;

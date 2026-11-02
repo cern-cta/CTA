@@ -18,8 +18,8 @@ Optional details may be appended to these reasons to describe the underlying pro
 | --- | --- |
 | `[cta-taped] Daemon started` | Daemon started and put itself Down at startup. |
 | `[cta-taped] Daemon shutting down` | The daemon receives a stop request or exits normally, and no existing operator or failure reason needs to be preserved. |
-| `[cta-taped] Tape detected in drive` | During the Down-to-Up transition, the drive probe found a tape. Drive cleaning on Up (`drive.clean_on_up`) was disabled, so the daemon did not attempt to remove it. |
-| `[cta-taped] Drive probe failed` | During the Down-to-Up transition with drive cleaning disabled (`drive.clean_on_up`), discovering, opening, or probing the drive fails before the daemon can confirm it is empty. |
+| `[cta-taped] Tape detected in drive` | During the Down-to-Up transition, the drive probe found a tape. Drive cleaning on Up (`drive.lifecycle.eject_on_up`) was disabled, so the daemon did not attempt to remove it. |
+| `[cta-taped] Drive probe failed` | During the Down-to-Up transition with drive cleaning disabled (`drive.lifecycle.eject_on_up`), discovering, opening, or probing the drive fails before the daemon can confirm it is empty. |
 | `[cta-taped] Drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
 | `[cta-taped] Drive cleanup failed` | Drive cleanup fails. For example, the daemon cannot access or reset the drive, unload the tape, or return it to the library. |
 | `[cta-taped] Drive reuse unsafe` | A tape session ends without confirming that another tape can safely be mounted, but no specific access or cleanup failure is available to report. This is a fallback; known drive-access and cleanup failures produce the corresponding reasons above. |

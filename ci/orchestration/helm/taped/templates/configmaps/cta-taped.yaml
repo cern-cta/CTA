@@ -58,14 +58,15 @@ data:
       device = {{ .device | quote }}
       control_path = {{ .controlPath | quote }}
       logical_library_name = {{ .logicalLibraryName | quote }}
-      clean_on_up = {{ $.Values.drive.cleanOnUp }}
+    [drive.lifecycle]
+      eject_on_up = {{ $.Values.drive.lifecycle.ejectOnUp }}
 
-    [drive.registration]
-      auto_up = {{ $.Values.drive.registration.autoUp }}
+    [drive.lifecycle.registration]
+      desired_up = {{ $.Values.drive.lifecycle.registration.desiredUp }}
 
-    [drive.startup]
-      recover_existing_up = {{ $.Values.drive.startup.recoverExistingUp }}
-      auto_up = {{ $.Values.drive.startup.autoUp }}
+    [drive.lifecycle.startup]
+      preserve_desired_up = {{ $.Values.drive.lifecycle.startup.preserveDesiredUp }}
+      resume_after_clean_shutdown = {{ $.Values.drive.lifecycle.startup.resumeAfterCleanShutdown }}
 
     [mounts]
       minimum_queued_bytes = {{ int64 $.Values.mounts.minimumQueuedBytes }}

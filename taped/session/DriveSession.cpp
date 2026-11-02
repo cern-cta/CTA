@@ -146,7 +146,7 @@ void DriveSession::run(std::stop_token stopToken) {
   if (!stopToken.stop_requested()) {
     try {
       // Clean the drive (if configured to do so; otherwise exit and report Down when there is already a tape there)
-      const bool prepared = m_config.drive.clean_on_up ? cleanDriveForStartup() : probeDrive();
+      const bool prepared = m_config.drive.lifecycle.eject_on_up ? cleanDriveForStartup() : probeDrive();
       if (!prepared) {
         releaseAndReportDown();
         return;
