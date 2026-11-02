@@ -16,9 +16,7 @@ The following guidance applies to an EOS tape-buffer instance.
 !!! danger
     CTA software is only tested in CTA Continuous Integration against a few specific EOS versions. CTA workflow can break if mixing any EOS software against any CTA version.
 
-Once the CTA version has been chosen, please refer to the CTA provided versionlock file to understand which EOS software should be deployed along with the target CTA version.
-
-Install `cta-release` for the selected CTA release to obtain its dependency version locks, or inspect `project.json` at the corresponding repository tag. EOS compatibility is independent of the documentation version selector.
+TODO: version compatibility matrix
 
 !!! tip
     Rollout a specific EOS version to all your EOS tape buffer instances starting with a test instance, followed by less critical EOS tape buffer instances (repack, backup,...).
