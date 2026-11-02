@@ -13,6 +13,7 @@
 #include "rdbms/wrapper/ConnFactory.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 
+#include <atomic>
 #include <list>
 #include <memory>
 
@@ -104,7 +105,7 @@ private:
   /**
    * The number of database connections currently on loan.
    */
-  uint64_t m_nbConnsOnLoan = 0;
+  std::atomic<uint64_t> m_nbConnsOnLoan = 0;
 
   /**
    * Mutex used to serialize access to the database connections within the pool.
