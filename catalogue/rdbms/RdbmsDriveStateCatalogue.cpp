@@ -765,7 +765,36 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(
 bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   const std::string driveStatusStr = common::dataStructures::TapeDrive::stateToString(tapeDrive.driveStatus);
 
-  // Case 1 : Drive status stays the same
+  // Case 1: drive status is UNCHANGED — update host, library, optional transfer
+  // stats, and (conditionally) the pending-mount marker.
+  //
+  // Why NEXT_* columns exist:
+  //   getExistingAndNextMounts() (Scheduler.cpp) counts active mounts in two
+  //   passes. Pass 1 counts drives whose driveStatus is in {Starting, Mounting,
+  //   Transferring, …} — drive status alone is sufficient once taped has
+  //   reported Starting. Pass 2 counts drives where NEXT_MOUNT_TYPE != NO_MOUNT,
+  //   covering the race window between scheduler commit (per-library advisory
+  //   lock released, drive still Up) and taped calling reportDriveStatus(Starting)
+  //   (seconds to minutes later). Without NEXT_*, a concurrent scheduler for the
+  //   same logical library — serialised by the advisory lock so it reads
+  //   DRIVE_STATE only after this commit — would see the drive as Up with no
+  //   pending mount, under-count active VO mounts, and schedule a second mount
+  //   in violation of readMaxDrives/writeMaxDrives. Schedulers for a different
+  //   library (a different advisory lock, running concurrently) benefit too:
+  //   NEXT_* is written on a separate autocommit connection before the lock is
+  //   released, so any concurrent reader that executes its DRIVE_STATE fetch
+  //   after that point will also see the pending mount.
+  //
+  // Why the NEXT_* update is conditional on nextMountType != NoMount:
+  //   TapeDrivesCatalogueState helpers (setDriveStarting, setDriveTransfering,
+  //   …) build a fresh TapeDrive struct and leave nextMountType at its default
+  //   value (NoMount). If NEXT_* were updated unconditionally, every periodic
+  //   status report — e.g. a Transferring drive reporting bytes — would wipe
+  //   the pending-mount marker written by TapeMountDecisionInfo, collapsing the
+  //   protection back to the pre-fix state. Only TapeMountDecisionInfo::
+  //   createArchiveMount / createRetrieveMount explicitly sets nextMountType to
+  //   a real mount type before calling here, so the condition selects exactly
+  //   the right callers with no interface changes required.
   std::string sql = R"SQL(
     UPDATE DRIVE_STATE SET
       HOST = :HOST,
@@ -777,6 +806,14 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,
       FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,
       SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :REPORT_TIME - SESSION_START_TIME END,
+    )SQL";
+  }
+  if (tapeDrive.nextMountType != common::dataStructures::MountType::NoMount) {
+    sql += R"SQL(
+      NEXT_MOUNT_TYPE = :NEXT_MOUNT_TYPE,
+      NEXT_VID = :NEXT_VID,
+      NEXT_TAPE_POOL = :NEXT_TAPE_POOL,
+      NEXT_VO = :NEXT_VO,
     )SQL";
   }
   sql += R"SQL(
@@ -802,6 +839,12 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     stmt.bindUint64(":BYTES_TRANSFERED_IN_SESSION", tapeDrive.bytesTransferedInSession.value());
     stmt.bindUint64(":FILES_TRANSFERED_IN_SESSION", tapeDrive.filesTransferedInSession.value());
     stmt.bindUint64(":REPORT_TIME", tapeDrive.transferStartTime.value());
+  }
+  if (tapeDrive.nextMountType != common::dataStructures::MountType::NoMount) {
+    stmt.bindString(":NEXT_MOUNT_TYPE", common::dataStructures::toString(tapeDrive.nextMountType));
+    stmt.bindString(":NEXT_VID", tapeDrive.nextVid.value_or(""));
+    stmt.bindString(":NEXT_TAPE_POOL", tapeDrive.nextTapePool.value_or(""));
+    stmt.bindString(":NEXT_VO", tapeDrive.nextVo.value_or(""));
   }
   stmt.executeNonQuery();
 
@@ -896,6 +939,21 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       USER_COMMENT = :USER_COMMENT,
     )SQL";
   }
+  // Always clear the pending-mount marker on any status transition.
+  //
+  // When taped reports Starting (Up→Starting), the drive enters Pass 1 of
+  // getExistingAndNextMounts() (counted via driveStatus). If NEXT_* were left
+  // set, the same mount would be counted twice — once via NEXT_MOUNT_TYPE and
+  // once via MOUNT_TYPE — doubling the apparent VO load and preventing further
+  // legitimate mounts. Hardcoding NO_MOUNT/NULL here avoids touching
+  // TapeDrivesCatalogueState::setDriveStarting() and every other transition
+  // helper; any status change automatically clears the marker.
+  sql += R"SQL(
+    NEXT_MOUNT_TYPE = 'NO_MOUNT',
+    NEXT_VID = NULL,
+    NEXT_TAPE_POOL = NULL,
+    NEXT_VO = NULL,
+  )SQL";
   // Remove last ',' character
   sql.erase(sql.find_last_of(','), 1);
   sql += R"SQL(
