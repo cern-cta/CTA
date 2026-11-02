@@ -5,8 +5,8 @@
 
 #include "scheduler/rdbms/RelationalDB.hpp"
 
-#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/TapeForWriting.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
