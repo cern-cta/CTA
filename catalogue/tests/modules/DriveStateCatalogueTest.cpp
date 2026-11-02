@@ -1672,8 +1672,8 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypeWrittenWhenSetInCase1) {
   const auto stored = m_catalogue->DriveState()->getTapeDrive(driveName).value();
   ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, stored.nextMountType);
   ASSERT_EQ("VID001", stored.nextVid.value_or(""));
-  ASSERT_EQ("pool1",  stored.nextTapePool.value_or(""));
-  ASSERT_EQ("vo1",    stored.nextVo.value_or(""));
+  ASSERT_EQ("pool1", stored.nextTapePool.value_or(""));
+  ASSERT_EQ("vo1", stored.nextVo.value_or(""));
 
   m_catalogue->DriveState()->deleteTapeDrive(driveName);
 }
@@ -1704,8 +1704,8 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedByRoutineStatusUpdate
   driveInfo.host = tapeDrive.host;
   driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
   cta::ReportDriveStatusInputs inputs;
-  inputs.status     = cta::common::dataStructures::DriveStatus::Up;
-  inputs.mountType  = cta::common::dataStructures::MountType::NoMount;
+  inputs.status = cta::common::dataStructures::DriveStatus::Up;
+  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
   inputs.reportTime = now;
   {
     cta::log::LogContext dummyLc(m_dummyLog);
@@ -1717,8 +1717,8 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedByRoutineStatusUpdate
   const auto stored = m_catalogue->DriveState()->getTapeDrive(driveName).value();
   ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, stored.nextMountType);
   ASSERT_EQ("VID001", stored.nextVid.value_or(""));
-  ASSERT_EQ("pool1",  stored.nextTapePool.value_or(""));
-  ASSERT_EQ("vo1",    stored.nextVo.value_or(""));
+  ASSERT_EQ("pool1", stored.nextTapePool.value_or(""));
+  ASSERT_EQ("vo1", stored.nextVo.value_or(""));
 
   m_catalogue->DriveState()->deleteTapeDrive(driveName);
 }
@@ -1752,15 +1752,15 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedDuringTransferringSta
   driveInfo.host = tapeDrive.host;
   driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
   cta::ReportDriveStatusInputs inputs;
-  inputs.status           = cta::common::dataStructures::DriveStatus::Transferring;
-  inputs.mountType        = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime       = now;
-  inputs.byteTransferred  = 1024 * 1024;
+  inputs.status = cta::common::dataStructures::DriveStatus::Transferring;
+  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.reportTime = now;
+  inputs.byteTransferred = 1024 * 1024;
   inputs.filesTransferred = 10;
-  inputs.vid              = "VID002";
-  inputs.tapepool         = "pool2";
-  inputs.vo               = "vo2";
-  inputs.mountSessionId   = 1;
+  inputs.vid = "VID002";
+  inputs.tapepool = "pool2";
+  inputs.vo = "vo2";
+  inputs.mountSessionId = 1;
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState state(*m_catalogue);
@@ -1771,8 +1771,8 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedDuringTransferringSta
   const auto stored = m_catalogue->DriveState()->getTapeDrive(driveName).value();
   ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, stored.nextMountType);
   ASSERT_EQ("VID002", stored.nextVid.value_or(""));
-  ASSERT_EQ("pool2",  stored.nextTapePool.value_or(""));
-  ASSERT_EQ("vo2",    stored.nextVo.value_or(""));
+  ASSERT_EQ("pool2", stored.nextTapePool.value_or(""));
+  ASSERT_EQ("vo2", stored.nextVo.value_or(""));
 
   m_catalogue->DriveState()->deleteTapeDrive(driveName);
 }
@@ -1807,13 +1807,13 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypeClearedOnStatusTransitionInCas
   driveInfo.host = tapeDrive.host;
   driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
   cta::ReportDriveStatusInputs inputs;
-  inputs.status         = cta::common::dataStructures::DriveStatus::Starting;
-  inputs.mountType      = cta::common::dataStructures::MountType::Retrieve;
-  inputs.reportTime     = now;
+  inputs.status = cta::common::dataStructures::DriveStatus::Starting;
+  inputs.mountType = cta::common::dataStructures::MountType::Retrieve;
+  inputs.reportTime = now;
   inputs.mountSessionId = 42;
-  inputs.vid            = "VID001";
-  inputs.tapepool       = "pool1";
-  inputs.vo             = "vo1";
+  inputs.vid = "VID001";
+  inputs.tapepool = "pool1";
+  inputs.vo = "vo1";
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState state(*m_catalogue);
