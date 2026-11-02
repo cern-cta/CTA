@@ -765,36 +765,41 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(
 bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   const std::string driveStatusStr = common::dataStructures::TapeDrive::stateToString(tapeDrive.driveStatus);
 
-  // Case 1: drive status is UNCHANGED — update host, library, optional transfer
-  // stats, and (conditionally) the pending-mount marker.
+  // Case 1 (relevant for pgsched only): drive status is UNCHANGED — update
+  // host, library, optional transfer stats, and (conditionally) the pending-
+  // mount marker.
   //
-  // Why NEXT_* columns exist:
+  // Why pgsched only:
+  //   pgsched uses a per-library PostgreSQL advisory lock, so schedulers for
+  //   different logical libraries hold different locks and run in parallel.
+  //   OStoreDB instead uses a single global lock that serialises all scheduling
+  //   decisions; additionally, OStoreDB::TapeMountDecisionInfo::createArchiveMount
+  //   and createRetrieveMount do not call updateTapeDriveStatus at all, so the
+  //   NEXT_* logic below is never reached from the OStoreDB path.
+  //
+  // The race (pgsched):
   //   getExistingAndNextMounts() (Scheduler.cpp) counts active mounts in two
-  //   passes. Pass 1 counts drives whose driveStatus is in {Starting, Mounting,
-  //   Transferring, …} — drive status alone is sufficient once taped has
-  //   reported Starting. Pass 2 counts drives where NEXT_MOUNT_TYPE != NO_MOUNT,
-  //   covering the race window between scheduler commit (per-library advisory
-  //   lock released, drive still Up) and taped calling reportDriveStatus(Starting)
-  //   (seconds to minutes later). Without NEXT_*, a concurrent scheduler for the
-  //   same logical library — serialised by the advisory lock so it reads
-  //   DRIVE_STATE only after this commit — would see the drive as Up with no
-  //   pending mount, under-count active VO mounts, and schedule a second mount
-  //   in violation of readMaxDrives/writeMaxDrives. Schedulers for a different
-  //   library (a different advisory lock, running concurrently) benefit too:
-  //   NEXT_* is written on a separate autocommit connection before the lock is
-  //   released, so any concurrent reader that executes its DRIVE_STATE fetch
-  //   after that point will also see the pending mount.
+  //   passes. Pass 1 covers drives in {Starting, Mounting, Transferring, …} via
+  //   driveStatus — correct once taped has reported Starting. Pass 2 covers
+  //   drives where NEXT_MOUNT_TYPE != NO_MOUNT — this fills the window between
+  //   the scheduler committing a mount (advisory lock released, drive still Up)
+  //   and taped calling reportDriveStatus(Starting) seconds to minutes later.
+  //   Without NEXT_*, any scheduler that reads DRIVE_STATE in that window sees
+  //   the drive as Up with no pending mount, under-counts VO active mounts, and
+  //   may schedule a second mount, violating readMaxDrives / writeMaxDrives.
+  //   NEXT_* is written on a separate autocommit catalogue connection before
+  //   commit() releases the advisory lock, so same-library schedulers (which
+  //   wait for the lock) and concurrent different-library schedulers (which read
+  //   DRIVE_STATE independently) both see the marker.
   //
-  // Why the NEXT_* update is conditional on nextMountType != NoMount:
+  // Why conditional on nextMountType != NoMount:
   //   TapeDrivesCatalogueState helpers (setDriveStarting, setDriveTransfering,
   //   …) build a fresh TapeDrive struct and leave nextMountType at its default
-  //   value (NoMount). If NEXT_* were updated unconditionally, every periodic
-  //   status report — e.g. a Transferring drive reporting bytes — would wipe
-  //   the pending-mount marker written by TapeMountDecisionInfo, collapsing the
-  //   protection back to the pre-fix state. Only TapeMountDecisionInfo::
-  //   createArchiveMount / createRetrieveMount explicitly sets nextMountType to
-  //   a real mount type before calling here, so the condition selects exactly
-  //   the right callers with no interface changes required.
+  //   (NoMount). Updating NEXT_* unconditionally would wipe the marker on every
+  //   routine status report (e.g. Transferring bytes update), defeating the fix.
+  //   Only TapeMountDecisionInfo::createArchiveMount / createRetrieveMount
+  //   explicitly set nextMountType to a real type, so the condition reaches
+  //   exactly the right callers without any interface changes.
   std::string sql = R"SQL(
     UPDATE DRIVE_STATE SET
       HOST = :HOST,
