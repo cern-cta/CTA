@@ -338,7 +338,8 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
 
     isRetrieve ? "trk.FAILED_TO_ARCHIVE_FILES" : "trk.FAILED_TO_ARCHIVE_FILES + agg.FAILED_FILES_INC",
 
-    "trk.FAILED_TO_CREATE_ARCHIVE_REQ",
+    // A retrieve failure means the archive request can never be created for that file.
+    isRetrieve ? "trk.FAILED_TO_CREATE_ARCHIVE_REQ + agg.FAILED_FILES_INC" : "trk.FAILED_TO_CREATE_ARCHIVE_REQ",
     "trk.TOTAL_FILES_TO_ARCHIVE"};
   sql += R"SQL(
     CALC AS (
@@ -353,6 +354,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
         trk.FAILED_TO_RETRIEVE_BYTES + agg.FAILED_BYTES_INC AS NEW_FAILED_TO_RETRIEVE_BYTES,
         trk.FAILED_TO_ARCHIVE_FILES AS NEW_FAILED_TO_ARCHIVE_FILES,
         trk.FAILED_TO_ARCHIVE_BYTES AS NEW_FAILED_TO_ARCHIVE_BYTES,
+        trk.FAILED_TO_CREATE_ARCHIVE_REQ + agg.FAILED_FILES_INC AS NEW_FAILED_TO_CREATE_ARCHIVE_REQ,
     )SQL";
   } else {
     sql += R"SQL(
@@ -360,6 +362,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
         trk.FAILED_TO_RETRIEVE_BYTES AS NEW_FAILED_TO_RETRIEVE_BYTES,
         trk.FAILED_TO_ARCHIVE_FILES + agg.FAILED_FILES_INC AS NEW_FAILED_TO_ARCHIVE_FILES,
         trk.FAILED_TO_ARCHIVE_BYTES + agg.FAILED_BYTES_INC AS NEW_FAILED_TO_ARCHIVE_BYTES,
+        trk.FAILED_TO_CREATE_ARCHIVE_REQ AS NEW_FAILED_TO_CREATE_ARCHIVE_REQ,
     )SQL";
   }
   sql += repackRequestIsCompleteSql(statusInputs) + " AS NEW_IS_COMPLETE,";
@@ -379,6 +382,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
        FAILED_TO_RETRIEVE_BYTES = calc.NEW_FAILED_TO_RETRIEVE_BYTES,
        FAILED_TO_ARCHIVE_FILES = calc.NEW_FAILED_TO_ARCHIVE_FILES,
        FAILED_TO_ARCHIVE_BYTES = calc.NEW_FAILED_TO_ARCHIVE_BYTES,
+       FAILED_TO_CREATE_ARCHIVE_REQ = calc.NEW_FAILED_TO_CREATE_ARCHIVE_REQ,
        STATUS = calc.NEW_STATUS,
        IS_COMPLETE = calc.NEW_IS_COMPLETE,
        REPACK_FINISHED_TIME =
