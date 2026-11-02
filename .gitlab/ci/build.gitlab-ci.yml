@@ -14,15 +14,7 @@ spec:
     analysis:
       description: "C/C++ analysis mode: Valgrind or compiler sanitizers."
       type: string
-      options:
-        [
-          "none",
-          "valgrind",
-          "address",
-          "undefined",
-          "address,undefined",
-          "thread",
-        ]
+      options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
       default: "none"
     compile-with-extra-telemetry:
       type: boolean

@@ -4,10 +4,51 @@
 extends: default
 
 rules:
+  document-start: disable
+
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
   line-length:
     max: 200
-  document-start: disable
-  truthy: disable
+    level: error
+
+  comments: disable
+
+  trailing-spaces: enable
+
+  empty-lines:
+    max: 1
+    max-start: 0
+    max-end: 0
+
+  new-lines:
+    type: unix
+
+  new-line-at-end-of-file: enable
+
+  key-duplicates: enable
+
+  empty-values: enable
+
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: true
+    level: error
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+
+  document-end: disable
+
+  key-ordering: disable
 
 ignore: |
   .git/
