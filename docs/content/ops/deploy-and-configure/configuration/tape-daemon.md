@@ -18,11 +18,11 @@ TODO: Document connections to the [catalogue](catalogue.md) and [scheduler backe
 
 ## Example configuration
 
-???+ example "cta-taped.example.conf"
+???+ example "cta-taped.example.toml"
 
     ```toml
     --8<--
-    taped/daemon/cta-taped.example.conf
+    taped/cta-taped.example.toml
     --8<--
     ```
 

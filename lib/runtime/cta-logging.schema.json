@@ -81,6 +81,11 @@
       "type": "string",
       "description": "Human-readable log message describing the event."
     },
+    "drive_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "CTA name of the tape drive associated with the service instance."
+    },
     "event_name": {
       "type": "string",
       "enum": [
@@ -95,6 +100,23 @@
   },
   "additionalProperties": true,
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "program": {
+            "const": "cta-taped"
+          }
+        },
+        "required": [
+          "program"
+        ]
+      },
+      "then": {
+        "required": [
+          "drive_name"
+        ]
+      }
+    },
     {
       "if": {
         "properties": {

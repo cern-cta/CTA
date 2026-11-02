@@ -82,17 +82,9 @@ target_link_libraries(ctaruntimeunittests PRIVATE cta-unit-test-helper)
 target_link_libraries(ctacommonunittests cta-unit-test-helper)
 target_link_libraries(cta-grpc-server-unit-tests cta-unit-test-helper)
 
-add_executable(cta-integration-tests
-  integration_tests.cpp)
-
-target_link_libraries(cta-integration-tests
-  cta-taped-integration-tests
-  gtest
-  pthread)
-
 # Tests register through shared-library initializers, without direct symbol references.
 # Keep these libraries when the distribution enables --as-needed by default.
-foreach(test_runner cta-unit-tests cta-unit-tests-rdbms cta-unit-tests-multiprocess cta-integration-tests)
+foreach(test_runner cta-unit-tests cta-unit-tests-rdbms cta-unit-tests-multiprocess)
   target_link_options(${test_runner} PRIVATE "LINKER:--no-as-needed")
 endforeach()
 
@@ -102,7 +94,6 @@ if(CTA_BUILD_TEST_PACKAGES)
       cta-unit-tests-rdbms
       cta-unit-tests
       cta-unit-tests-multiprocess
-      cta-integration-tests
     DESTINATION
       ${CMAKE_INSTALL_BINDIR})
 endif()
@@ -126,7 +117,7 @@ if(CTA_WITH_ORACLE)
 endif ()
 
 if(CTA_BUILD_TEST_PACKAGES)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh cta-unit-and-integration-tests.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
   install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
 endif()
 

@@ -6,5 +6,4 @@ usr/lib/*/libctaprotobuf.so.*
 usr/lib/*/libctascsi.so.*
 usr/lib/*/libctamediachanger.so.*
 usr/lib/*/libctaruntime.so.*
-usr/lib/*/libctatapedaemoncommon.so.*
 usr/lib/*/libctatapedrao.so.*

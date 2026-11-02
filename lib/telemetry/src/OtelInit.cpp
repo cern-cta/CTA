@@ -20,6 +20,7 @@
 #include <opentelemetry/sdk/configuration/metrics_builders.h>
 #include <opentelemetry/sdk/configuration/registry.h>
 #include <opentelemetry/sdk/configuration/yaml_configuration_parser.h>
+#include <optional>
 
 namespace cta::telemetry {
 

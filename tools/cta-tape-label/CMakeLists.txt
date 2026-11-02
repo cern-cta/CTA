@@ -12,6 +12,7 @@ endif()
 
 target_link_libraries (cta-tape-label
   ctacommon
+  ctatapedutils
   ctatapeddrive
   ctamediachanger
   ctacatalogue
