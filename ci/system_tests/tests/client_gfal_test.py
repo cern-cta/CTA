@@ -351,6 +351,8 @@ def test_xrootd_activity_ends_up_in_eos_report(eos_client: EosClientHost, eos_mg
 
 def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:
     error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+    # Transient disk read failures during large archive batches; files are retried and all succeed.
+    error_expectations.allow_message("Exception while reading a file")
     # Temporary allowance for transient HTTPS upload size mismatches (CI job 85791354).
     error_expectations.expect(
         {
