@@ -65,7 +65,8 @@ std::optional<std::string> setDriveDown(const SyncCmdContext& ctx, const AdminCm
   if (utils::trimString(reason).empty()) {
     throw exception::UserError("You must provide a reason in order to set the drive down");
   }
-  const common::dataStructures::DriveDownRequest request {.reason = reason, .force = opts.hasFlag(OptionBoolean::FORCE)};
+  const common::dataStructures::DriveDownRequest request {.reason = reason,
+                                                          .force = opts.hasFlag(OptionBoolean::FORCE)};
   return applyToDrives(ctx,
                        '^' + opts.getRequired(OptionString::DRIVE) + '$',
                        request.force ? "Down (forced)" : "Down",
@@ -78,10 +79,9 @@ std::optional<std::string> changeDrive(const SyncCmdContext& ctx, const AdminCmd
     throw exception::UserError("You must provide a comment to change it.");
   }
 
-  return applyToDrives(ctx,
-                       '^' + opts.getRequired(OptionString::DRIVE) + '$',
-                       "a new comment",
-                       [&](const auto& name) { ctx.scheduler.setDriveComment(name, comment, ctx.lc); });
+  return applyToDrives(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', "a new comment", [&](const auto& name) {
+    ctx.scheduler.setDriveComment(name, comment, ctx.lc);
+  });
 }
 
 std::optional<std::string> removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
