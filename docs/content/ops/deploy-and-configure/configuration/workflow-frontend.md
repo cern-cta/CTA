@@ -29,14 +29,12 @@ grpc.jwks.uri file:///etc/cta/jwks.json
 
 ## Example configuration
 
-The current source tree supplies a shared `cta-frontend` example for both APIs. Select the operation mode and authentication settings for this API as shown above; separate service examples can replace this include when the implementation is split.
-
-???+ example "cta-frontend.example.conf"
+???+ example "cta-workflow-api.example.toml"
 
     ```toml
     --8<--
-    frontend/grpc/cta-frontend.example.conf
+    app/cta-workflow-api/cta-workflow-api.example.toml
     --8<--
     ```
 
-See [Authentication Configuration](authentication.md) and the [current command reference](../../tools/service-manuals/cta-frontend.md) for additional options.
+See [Authentication Configuration](authentication.md) and the [cta-workflow-api command reference](../../tools/service-manuals/cta-workflow-api.md) for additional options.

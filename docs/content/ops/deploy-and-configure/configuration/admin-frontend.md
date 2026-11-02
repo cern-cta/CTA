@@ -42,14 +42,12 @@ The configuration file is consulted first in order to determine which authentica
 
 ## Example configuration
 
-The current source tree supplies a shared `cta-frontend` example for both APIs. Select the operation mode and authentication settings for this API as shown above; separate service examples can replace this include when the implementation is split.
-
-???+ example "cta-frontend.example.conf"
+???+ example "cta-admin-api.example.toml"
 
     ```toml
     --8<--
-    frontend/grpc/cta-frontend.example.conf
+    app/cta-admin-api/cta-admin-api.example.toml
     --8<--
     ```
 
-See [Authentication Configuration](authentication.md) and the [current command reference](../../tools/service-manuals/cta-frontend.md) for additional options.
+See [Authentication Configuration](authentication.md) and the [cta-admin-api command reference](../../tools/service-manuals/cta-admin-api.md) for additional options.

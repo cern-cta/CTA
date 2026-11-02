@@ -3,7 +3,7 @@
 
 image:
   registry: gitlab-registry.cern.ch
-  repository: cta/ctageneric/cta-frontend
+  repository: cta/ctageneric/cta-workflow-api
   tag: latest
 
 # Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
@@ -17,12 +17,8 @@ conf:
 
   catalogue:
     numberOfConnections: 10
-    # Reduced value for test environment
-    missingFileCopiesMinAgeSecs: 5
-    recycleLogQuarantineSecs: 2678400
 
   frontend:
-    archiveFileMaxSizeGb: 1000
     zeroLengthFilesForbidden: true
     zeroLengthFilesForbiddenVoExceptionList: ""
     # repackBufferUrl
@@ -36,11 +32,13 @@ conf:
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
     # Only takes effect with the postgres scheduler (pgsched); ignored by the objectstore
-    # scheduler, which always queues one request at a time regardless of this value.
-    opportunisticBatchingEnabled: false
-    # Only meaningful when opportunisticBatchingEnabled is true: see cta-frontend.example.conf.
-    opportunisticBatchingWindowMs: 10
-    opportunisticBatchingMaxBatchSize: 1000
+    # scheduler, which always queues one request at a time regardless of these values.
+    opportunisticBatching:
+      # Experimental: rendered as opportunistic_batching_enabled under [experimental].
+      enabled: false
+      # Only meaningful when enabled is true: see cta-workflow-api.pg.example.toml.
+      windowMs: 10
+      maxBatchSize: 1000
 
   logger:
     logLevel: "DEBUG"
@@ -68,19 +66,12 @@ conf:
 
   telemetry:
     enabled: false
-    retainInstanceIdOnRestart: false
-    metrics:
-      backend: "NOOP"
-      exportInterval: 1000
-      exportTimeout: 500
-      otlp:
-        endpoint: ""
-        auth:
-          basic:
-            username: ""
-            passwordSecret: ""
-      file:
-        endpoint: ""
+
+# OpenTelemetry is entirely configured through declarative configuration
+# Simply put the config verbatim here under telemetryConfig (only used when conf.telemetry.enabled is true):
+telemetryConfig: |
+  file_format: "1.0-rc.1"
+  disabled: true
 
 pod:
   extraSpec:

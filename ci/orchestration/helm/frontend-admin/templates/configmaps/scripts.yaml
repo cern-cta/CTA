@@ -8,5 +8,5 @@ kind: ConfigMap
 metadata:
   name: cta-frontend-admin-scripts
 data:
-  ctafrontend-grpc.sh: |
-{{ .Files.Get "scripts/ctafrontend-grpc.sh" | indent 4 }}
+  cta-admin-api.sh: |
+{{ .Files.Get "scripts/cta-admin-api.sh" | indent 4 }}

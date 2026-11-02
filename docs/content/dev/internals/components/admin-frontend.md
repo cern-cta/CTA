@@ -8,27 +8,28 @@ Command dispatch and authentication for administrative clients. Operator setting
 
 ## Admin request dispatch
 
+Both kinds of admin commands are received by the `cta-admin-api` module, which authenticates the request
+(see [Authentication dependencies](#authentication-dependencies)) and then serves it according to how its result goes back to `cta-admin`:
 
-Processing the request message is done by the `process` method of the class `AdminCmd` in the case of non-streaming commands or the `AdminCmdStream` class in the case of streaming commands.
-Non-streaming admin commands are implemented as methods of the `CtaAdmin` class while streaming admin commands are implemented as methods of `CtaAdminStream`.
-<!-- Streaming admin commands all inherit from the class `XrdCtaStream` class. Their implementations are found in the respective header file in the `xroot_plugins` directory. -->
-
+- **Commands answered with a single response** (`add`, `ch`, `rm`, `up`, `down`, ...) are received by `CtaRpcSyncImpl`.
+  The `process` method of `SyncCmd` (`commands/sync/`) looks up the handler of the `<cmd, subcmd>` pair in the `SyncCmdRegistry`
+  and runs it. The handlers are grouped by domain in `commands/sync/handlers/`, and receive a `SyncCmdContext` with the catalogue,
+  scheduler and configuration values they need.
+- **Commands streaming their result** (`ls`, `showqueues`) are received by `CtaRpcStreamImpl`. The `StreamFactory`
+  (`commands/stream/`) builds the `CtaAdminResponseStream` of the `<cmd, subcmd>` pair, which the
+  `CtaAdminServerWriteReactor` then writes to the client item by item. The commands listing a plain list of items use a
+  `VectorResponseStream` with a converter per item type (`commands/stream/converters/`), the others have a stream
+  class of their own (`commands/stream/tapes/` and `commands/stream/scheduling/`).
 
 ```mermaid
-classDiagram
-class AdminCmd {
-  xrd::Response process()
-  void processAdmin_Add(xrd::Response &response)
-  void processAdmin_Ch(xrd::Response &response)
-}
-
-class AdminCmdStream {
-  xrd::Response process()
-  void processAdmin_Ls(xrd::Response &response)
-  void processArchiveRoute_Ls(xrd::Response &response)
-}
-
-AdminCmd <|-- AdminCmdStream
+flowchart LR
+  A[cta-admin] -->|rpc CtaRpc.Admin| B[CtaRpcSyncImpl]
+  A -->|rpc CtaRpcStream.GenericAdminStream| C[CtaRpcStreamImpl]
+  B --> D[SyncCmd::process]
+  D --> E["handlers (add, ch, rm, ...)"]
+  C --> G["createStream()"]
+  G --> H[StreamFactory]
+  H --> I[CtaAdminServerWriteReactor]
 ```
 
 <!-- void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream) -->
@@ -81,7 +82,7 @@ token using `gss_accept_sec_context()` against its service keytab.
 4. (Multi-Round) Negotiation: GSSAPI context establishment may require multiple round-trips. If the server returns `is_complete=false` with a challenge, the client must process that challenge
 with `gss_init_sec_context()` and send the resulting token back. This continues until `is_complete=true`.
 5. Receive Session Token: Upon successful authentication, the server extracts the client principal name from the security context and generates a nonce/session token. This nonce is stored
-server-side (in TokenStorage) mapped to the authenticated username, and returned to the client.
+server-side (in TokenStore) mapped to the authenticated username, and returned to the client.
 6. Execute Command: The client includes the session token in the gRPC metadata using the `"Authorization: Negotiate"` header and calls the Admin rpc to execute the requested command. The
 server validates that the token exists in token storage, confirms that the associated username exists in the admin database, removes the session token from its storage and proceeds with command execution.
 

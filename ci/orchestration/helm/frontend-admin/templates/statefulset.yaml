@@ -60,7 +60,7 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        command: ["/scripts/ctafrontend-grpc.sh"]
+        command: ["/scripts/cta-admin-api.sh"]
         readinessProbe:
           exec:
             command:
@@ -121,11 +121,8 @@ spec:
           mountPath: /objectstore
         {{- end }}
         - name: frontend-config
-          mountPath: /etc/cta/cta-frontend.conf
-          subPath: cta-frontend.conf
-        - name: frontend-config
-          mountPath: /etc/cta/cta-frontend-grpc.toml
-          subPath: cta-frontend-grpc.toml
+          mountPath: /etc/cta/cta-admin-api.toml
+          subPath: cta-admin-api.toml
         {{- if has "jwt" .Values.conf.auth.methods }}
         - name: jwks-json
           mountPath: /etc/cta/jwks.json
@@ -148,10 +145,10 @@ spec:
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
         {{- end }}
-        {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-        - name: otlp-basic-auth-pwd
-          mountPath: /etc/cta/otlp-basic-auth-pwd.conf
-          subPath: otlp-basic-auth-pwd.conf
+        {{- if .Values.conf.telemetry.enabled }}
+        - name: frontend-config
+          mountPath: /etc/cta/cta-otel.yaml
+          subPath: cta-otel.yaml
         {{- end }}
         - name: log-dir
           mountPath: /var/log/cta
@@ -203,11 +200,6 @@ spec:
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
-      {{- end }}
-      {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      - name: otlp-basic-auth-pwd
-        secret:
-          secretName: {{ .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       {{- end }}
       - name: log-dir
         emptyDir: {}

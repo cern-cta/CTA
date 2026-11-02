@@ -12,6 +12,7 @@ namespace unitTests {
 
 TEST(ValidationResult, DefaultsToSuccess) {
   EXPECT_TRUE(cta::runtime::ValidationResult {}.ok());
+  EXPECT_TRUE(cta::runtime::ValidationResult::OK.ok());
 }
 
 TEST(ValidationResult, MergesPrefixesAndSortsErrors) {

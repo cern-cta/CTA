@@ -38,31 +38,44 @@ struct ExperimentalConfig final {
 
   static constexpr std::size_t memberCount() { return 1; }
 
-  ValidationResult validate() const { return {}; }
+  ValidationResult validate() const { return ValidationResult::OK; }
 };
 
-/**
- * @brief Catalogue config.
- */
-struct CatalogueConfig final {
+/// @brief Marker for a config section without a `client` sub-table.
+struct NoClientConfig final {
+  static constexpr std::size_t memberCount() { return 0; }
+
+  ValidationResult validate() const { return ValidationResult::OK; }
+};
+
+/// @brief Catalogue config.
+/// @tparam ClientConfig Application-specific options of the catalogue client, read from `[catalogue.client]`.
+template<typename ClientConfig = NoClientConfig>
+struct BasicCatalogueConfig final {
   std::string config_file = "/etc/cta/cta-catalogue.conf";
 
-  static constexpr std::size_t memberCount() { return 1; }
+  ClientConfig client;
+
+  static constexpr std::size_t memberCount() { return 2; }
 
   ValidationResult validate() const {
     ValidationResult result;
     if (config_file.empty()) {
       result.addError("config_file", "cannot be empty");
     }
+    result.merge("client", client.validate());
     return result;
   }
 };
 
-/**
- * @brief Scheduler config.
- */
-struct SchedulerConfig final {
-  // This value should eventually be handled by auto-discovery and not be provided by users
+/// By default, no client config required
+using CatalogueConfig = BasicCatalogueConfig<>;
+
+/// @brief Scheduler config.
+/// @tparam ClientConfig Application-specific options of the scheduler client, read from `[scheduler.client]`.
+template<typename ClientConfig = NoClientConfig>
+struct BasicSchedulerConfig final {
+  /// This value should eventually be handled by auto-discovery and not be provided by users
   std::string backend_name = "";
 
   std::string config_file = "/etc/cta/cta-scheduler.conf";
@@ -70,16 +83,21 @@ struct SchedulerConfig final {
   uint32_t tape_cache_max_age_secs = 600;
   uint32_t retrieve_queue_cache_max_age_secs = 10;
 
+  ClientConfig client;
+
 #ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 4; }
+  static constexpr std::size_t memberCount() { return 5; }
 #else
   uint32_t number_of_connections = 3;
 
-  static constexpr std::size_t memberCount() { return 5; }
+  static constexpr std::size_t memberCount() { return 6; }
 #endif
 
   ValidationResult validate() const {
     ValidationResult result;
+    if (backend_name.empty()) {
+      result.addError("backend_name", "cannot be empty");
+    }
     if (config_file.empty()) {
       result.addError("config_file", "cannot be empty");
     }
@@ -94,9 +112,13 @@ struct SchedulerConfig final {
       result.addError("number_of_connections", "must be greater than zero");
     }
 #endif
+    result.merge("client", client.validate());
     return result;
   }
 };
+
+/// By default, no client config required
+using SchedulerConfig = BasicSchedulerConfig<>;
 
 /**
  * @brief Logging config.

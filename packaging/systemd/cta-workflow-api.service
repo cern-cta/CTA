@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[Unit]
+Description=Workflow gRPC API for CERN Tape Archive (CTA)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=exec
+User=cta
+Group=tape
+
+RuntimeDirectory=cta/workflow-api
+RuntimeDirectoryMode=0750
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+
+ExecStart=/usr/bin/cta-workflow-api  --log-file /var/log/cta/cta-workflow-api.log --config-strict --config /etc/cta/cta-workflow-api.toml --runtime-dir /run/cta/workflow-api
+
+LimitCORE=infinity
+LimitNOFILE=65535
+OOMScoreAdjust=-10
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

@@ -12,7 +12,6 @@ namespace unitTests {
 TEST(CommonConfig, DefaultValuesAreValid) {
   EXPECT_TRUE(cta::runtime::ExperimentalConfig {}.validate().ok());
   EXPECT_TRUE(cta::runtime::CatalogueConfig {}.validate().ok());
-  EXPECT_TRUE(cta::runtime::SchedulerConfig {}.validate().ok());
   EXPECT_TRUE(cta::runtime::LoggingConfig {}.validate().ok());
   EXPECT_TRUE(cta::runtime::TelemetryConfig {}.validate().ok());
   EXPECT_TRUE(cta::runtime::HealthServerConfig {}.validate().ok());
@@ -33,8 +32,17 @@ TEST(CommonConfig, RejectsEmptyRequiredString) {
   EXPECT_FALSE(config.validate().ok());
 }
 
+TEST(CommonConfig, SchedulerConfigRequiresBackendName) {
+  cta::runtime::SchedulerConfig config;
+  EXPECT_FALSE(config.validate().ok());
+
+  config.backend_name = "vfsTest";
+  EXPECT_TRUE(config.validate().ok());
+}
+
 TEST(CommonConfig, RejectsNonPositiveValue) {
   cta::runtime::SchedulerConfig config;
+  config.backend_name = "vfsTest";
   config.tape_cache_max_age_secs = 0;
 
   EXPECT_FALSE(config.validate().ok());
