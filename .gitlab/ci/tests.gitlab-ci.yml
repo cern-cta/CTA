@@ -314,8 +314,6 @@ test-cta-rpm-install:
                                   cta-smc
                                   cta-tools-rs
                                   ctaops-udev
-                                  eos-server
-                                  eos-client
     - |
       if $ENABLE_ORACLE_SUPPORT; then
         dnf install --nogpgcheck -y cta-lib-catalogue-occi
