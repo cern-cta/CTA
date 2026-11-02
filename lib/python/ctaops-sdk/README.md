@@ -1,4 +1,5 @@
-# ctaops-sdk Documentation
+# ctaops-sdk
 
-Please refer to the docs directory for [ctaops-sdk documentation](/docs/pages/ctaops-sdk/index.md)
-or directly to [ctaops docs website](https://ctaops.docs.cern.ch/ctaops-sdk/).
+See the [library guide](../../../docs/content/dev/guides/python/ctaops-sdk/index.md), [usage examples](../../../docs/content/dev/guides/python/ctaops-sdk/api-usage.md), and [published API reference](https://cta.docs.cern.ch/latest/api/python/ctaops-sdk/).
+
+See the [Python workspace](../README.md) for local development.

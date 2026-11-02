@@ -73,10 +73,7 @@ def on_pre_build(config: MkDocsConfig) -> None:
 def on_post_build(config: MkDocsConfig) -> None:
     root = Path(config.config_file_path).resolve().parent.parent
     source = root / "build/docs/generated/api/rust"
-
-    site_dir = Path(config["site_dir"])
-    destination = site_dir / "api/rust"
-    log.debug("Moving generated Rust docs to %s", destination)
+    destination = Path(config["site_dir"]) / "api/rust"
     if destination.exists():
         shutil.rmtree(destination)
     shutil.move(source, destination)

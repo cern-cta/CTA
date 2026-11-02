@@ -15,6 +15,7 @@ watch:
   - ../taped
   - ../maintd
   - ../mediachanger/rmcd
+  - ../lib/python
   - ../lib/telemetry
 
 site_name: CTA Documentation
@@ -43,6 +44,8 @@ markdown_extensions:
       check_paths: true
       auto_append:
         - docs/includes/abbreviations.md
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.details
   - pymdownx.superfences:
       custom_fences:
@@ -57,6 +60,27 @@ hooks:
 
 plugins:
   - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - ../lib/python/cta-sdk/src
+            - ../lib/python/ctaops-sdk/src
+            - ../lib/python/ctaops-utils/src
+            - ../tools/ctaops-cli/src
+          inventories:
+            - https://docs.python.org/3.9/objects.inv
+          options:
+            allow_inspection: false
+            show_if_no_docstring: true
+            docstring_style: google
+            docstring_options:
+              warn_unknown_params: false
+              warn_missing_types: false
+            show_root_heading: true
+            show_root_full_path: true
+            show_symbol_type_toc: true
 
 theme:
   name: material
@@ -183,6 +207,7 @@ nav:
               - 'Tape Server Setup': ops/deploy-and-configure/deployment/tape-servers.md
               # Bind stable hardware identities to non-rewinding paths; runtime settings belong in Configuration.
               - 'Stable Drive Identities & udev': ops/deploy-and-configure/deployment/udev-rules.md
+              - 'ctaops-udev Setup': ops/deploy-and-configure/deployment/ctaops-udev.md
               - 'Initialisation & Verification': ops/deploy-and-configure/deployment/initialisation.md
           # Explain settings, prerequisites, and examples; managing live resources belongs in Administration.
           - 'Configuration':
@@ -247,7 +272,9 @@ nav:
       # Provide command lookup, syntax, and tool-specific usage; link to end-to-end operational procedures.
       - 'Tools & Reference':
           - 'Tool Index': ops/tools/index.md
-          # Install separately packaged tools and configure shared runtime settings; library APIs belong upstream.
+          # Install separately packaged tools and configure shared runtime settings; library APIs belong in Development.
+          - 'ctaops': ops/tools/ctaops.md
+          - 'ctaops Usage': ops/tools/ctaops-usage.md
           - 'Installation & Shared Configuration': ops/tools/installation-and-configuration.md
           # Reference general management commands; put task sequences in Administration.
           - 'Administration':
@@ -337,6 +364,18 @@ nav:
               - 'Debugging': dev/guides/tools-and-environment/debugging.md
               - 'Pre-commit Hooks': dev/guides/tools-and-environment/pre-commit.md
               - 'Building Images & Packages': dev/guides/tools-and-environment/building-images-and-packages.md
+          - 'Python Libraries & Tools':
+              - 'Overview': dev/guides/python/index.md
+              - 'cta-sdk':
+                  - 'Overview': dev/guides/python/cta-sdk/index.md
+                  - 'Usage': dev/guides/python/cta-sdk/api-usage.md
+              - 'ctaops-sdk':
+                  - 'Overview': dev/guides/python/ctaops-sdk/index.md
+                  - 'Usage': dev/guides/python/ctaops-sdk/api-usage.md
+              - 'ctaops-utils':
+                  - 'Overview': dev/guides/python/ctaops-utils/index.md
+                  - 'Usage': dev/guides/python/ctaops-utils/api-usage.md
+              - 'Extending ctaops': dev/guides/python/ctaops-cli.md
           # Select, write, and run tests before learning pipeline mechanics; CI administration belongs to maintainers.
           - 'Testing & CI':
               - 'Testing CTA': dev/guides/testing/index.md
@@ -426,4 +465,31 @@ nav:
               - 'Readiness & Liveness': dev/internals/health-checks.md
   # Render the release history from CHANGELOG.md; upgrade instructions belong in Operations > Upgrades.
   - 'Changelog': changelog.md
-  - 'Reference': dev/internals/reference.md
+  - 'Reference':
+      - 'Overview': dev/internals/reference.md
+      - 'Python API':
+          - Overview: api/python/index.md
+          - cta-sdk:
+              - api/python/cta-sdk/index.md
+              - api/python/cta-sdk/reference/client.md
+              - api/python/cta-sdk/reference/daos.md
+              - api/python/cta-sdk/reference/exceptions.md
+              - api/python/cta-sdk/reference/factory.md
+              - api/python/cta-sdk/reference/models.md
+              - api/python/cta-sdk/reference/units.md
+              - api/python/cta-sdk/reference/workflow.md
+          - ctaops-sdk:
+              - api/python/ctaops-sdk/index.md
+              - api/python/ctaops-sdk/reference/controller-providers.md
+              - api/python/ctaops-sdk/reference/controllers.md
+              - api/python/ctaops-sdk/reference/exceptions.md
+              - api/python/ctaops-sdk/reference/infrastructure-repository.md
+          - ctaops-utils:
+              - api/python/ctaops-utils/reference.md
+          - ctaops-cli:
+              - api/python/ctaops-cli/index.md
+              - api/python/ctaops-cli/reference/commands.md
+              - api/python/ctaops-cli/reference/config.md
+              - api/python/ctaops-cli/reference/display.md
+              - api/python/ctaops-cli/reference/entrypoint.md
+              - api/python/ctaops-cli/reference/models.md

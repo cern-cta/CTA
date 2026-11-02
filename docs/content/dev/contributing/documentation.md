@@ -6,9 +6,15 @@ The CTA documentation is published at <https://cta.docs.cern.ch/>. Update docume
 
 Most pages live under `docs/content/`. Some reference pages include manuals or example configurations from elsewhere in the repository; check the page’s include directive and edit the original source rather than duplicating it.
 
+The Python API reference is generated from source docstrings using module directives in `docs/content/api/python/`.
+
 The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary contributions, follow [Changelog Entries](changelog.md) to prepare commit metadata; maintainers generate the changelog during release preparation.
 
 ## Preview locally
+
+Install the Rust toolchain specified by `rust-toolchain.toml` as well as Python 3.9 or later.
+The build generates the Rust and Python API references automatically.
+The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
 
 From the repository root:
 
