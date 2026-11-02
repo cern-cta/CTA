@@ -7,6 +7,7 @@
 
 #include "DriveStartupPolicy.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "common/Constants.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/ExceptionLogging.hpp"
@@ -275,7 +276,7 @@ bool TapeDaemon::registerDrive() {
   {
     utils::Timer timer;
     // Store backend identity as configuration until the drive-state schema has a dedicated column.
-    constexpr const char* backendNameKey = "SchedulerBackendName";
+    const auto& backendNameKey = SCHEDULER_NAME_CONFIG_KEY;
     auto& driveConfig = *m_catalogue.DriveConfig();
     if (driveConfig.getTapeDriveConfig(m_driveInfo.driveName, backendNameKey)) {
       driveConfig.modifyTapeDriveConfig(m_driveInfo.driveName,

@@ -79,8 +79,6 @@ TapeReadSingleThread::TapeThreadFinalizer::~TapeThreadFinalizer() {
     m_this.logSCSIMetrics();
   } catch (...) {}
 
-  std::string cleanupError;
-
   if (m_mountedTape) {
     m_mountedTape->cleanup();
   }
@@ -91,16 +89,10 @@ TapeReadSingleThread::TapeThreadFinalizer::~TapeThreadFinalizer() {
     m_this.m_driveReusable = m_cleanupResult->driveReusable();
     if (!m_this.m_driveReusable) {
       m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
-      cleanupError = m_cleanupResult->errorMessage;
+      // The enclosing DriveSession publishes terminal Down after all workers have stopped.
+      m_this.m_cleanupError = m_cleanupResult->errorMessage;
     }
   }
-
-  m_timer.reset();
-  if (!m_this.m_driveReusable) {
-    // The enclosing DriveSession publishes terminal Down after all workers have stopped.
-    m_this.m_cleanupError = std::move(cleanupError);
-  }
-  m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(utils::Timer::resetCounter)});
 }
 
 //------------------------------------------------------------------------------
