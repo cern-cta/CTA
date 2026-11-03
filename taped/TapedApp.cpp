@@ -50,14 +50,14 @@ void TapedApp::stop() {
   }
 }
 
-std::map<std::string, std::string> TapedApp::getStaticLogAttributes(const TapedConfig& config) const {
+std::map<std::string, std::string> TapedApp::getStaticLogAttributes(const TapedConfig& config) {
   return {
     {"tapeDrive",      config.drive.name                },
     {"logicalLibrary", config.drive.logical_library_name}  // The casing is just for backward compatibility
   };
 }
 
-std::map<std::string, std::string> TapedApp::getStaticTelemetryAttributes(const TapedConfig& config) const {
+std::map<std::string, std::string> TapedApp::getStaticTelemetryAttributes(const TapedConfig& config) {
   return {
     {cta::semconv::attr::kTapeDriveName,          config.drive.name                },
     {cta::semconv::attr::kTapeLibraryLogicalName, config.drive.logical_library_name}

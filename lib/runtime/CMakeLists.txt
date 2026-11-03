@@ -29,6 +29,7 @@ install(TARGETS ctaruntime DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_library(ctaruntimeunittests SHARED
   test/ApplicationTest.cpp
+  test/SafeRunTest.cpp
   test/cli/ArgParserTest.cpp
   test/config/CommonConfigTest.cpp
   test/config/ConfigLoaderTest.cpp

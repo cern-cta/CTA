@@ -15,57 +15,78 @@
 #include <functional>
 #include <iostream>
 #include <type_traits>
+#include <unistd.h>
 
 namespace cta::runtime {
 
+namespace detail {
+
+inline void reportDiagnosticFailure() noexcept {
+  // Bypass streams and allocation. Ignore write errors; the caller still returns EXIT_FAILURE.
+  constexpr char message[] = "FATAL: Application failed; unable to report exception details.\n";
+  [[maybe_unused]] const auto written = ::write(STDERR_FILENO, message, sizeof(message) - 1);
+}
+
+}  // namespace detail
+
 /**
- * Wraps the provided function in a try/catch and reports exceptions to stderr.
+ * Reports exceptions to stderr and returns EXIT_FAILURE, even if preparing or writing the diagnostic throws.
  */
 template<typename F>
   requires std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, int>
-int safeRun(F&& func) {
+int safeRun(F&& func) noexcept {
   try {
-    return func();
-  } catch (const exception::UserError& ex) {
-    std::cerr << "FATAL:\n" << ex.getMessage().str() << std::endl;
-  } catch (const exception::Exception& ex) {
-    std::cerr << "FATAL: Caught an unexpected CTA exception:\n" << ex.getMessage().str() << std::endl;
-  } catch (const std::exception& ex) {
-    std::cerr << "FATAL: Caught an unexpected exception:\n" << ex.what() << std::endl;
+    try {
+      return func();
+    } catch (const exception::UserError& ex) {
+      std::cerr << "FATAL:\n" << ex.getMessage().str() << std::endl;
+    } catch (const exception::Exception& ex) {
+      std::cerr << "FATAL: Caught an unexpected CTA exception:\n" << ex.getMessage().str() << std::endl;
+    } catch (const std::exception& ex) {
+      std::cerr << "FATAL: Caught an unexpected exception:\n" << ex.what() << std::endl;
+    } catch (...) {
+      std::cerr << "FATAL: Caught an unexpected and unknown exception." << std::endl;
+    }
   } catch (...) {
-    std::cerr << "FATAL: Caught an unexpected and unknown exception." << std::endl;
+    // In extremely rare cases, reporting could fail. Do another best effort attempt of writing to stderr
+    detail::reportDiagnosticFailure();
   }
   return EXIT_FAILURE;
 }
 
 /**
- * Wraps the provided function in a try/catch and reports exceptions to the logging system.
+ * Reports exceptions to the logger and returns EXIT_FAILURE, even if preparing the diagnostic throws.
  */
 template<typename F>
   requires std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, int>
-int safeRunWithLog(log::Logger& log, F&& func) {
+int safeRunWithLog(log::Logger& log, F&& func) noexcept {
   try {
-    return func();
-  } catch (const exception::UserError& ex) {
-    log(log::CRIT,
-        "Fatal user error",
-        {
-          {semconv::log::exceptionMessage, ex.getMessage().str()}
-    });
-  } catch (const exception::Exception& ex) {
-    log(log::CRIT,
-        "Fatal unexpected CTA exception",
-        {
-          {semconv::log::exceptionMessage, ex.getMessage().str()}
-    });
-  } catch (const std::exception& ex) {
-    log(log::CRIT,
-        "Fatal unexpected exception",
-        {
-          {semconv::log::exceptionMessage, ex.what()}
-    });
+    try {
+      return func();
+    } catch (const exception::UserError& ex) {
+      log(log::CRIT,
+          "Fatal user error",
+          {
+            {semconv::log::exceptionMessage, ex.getMessage().str()}
+      });
+    } catch (const exception::Exception& ex) {
+      log(log::CRIT,
+          "Fatal unexpected CTA exception",
+          {
+            {semconv::log::exceptionMessage, ex.getMessage().str()}
+      });
+    } catch (const std::exception& ex) {
+      log(log::CRIT,
+          "Fatal unexpected exception",
+          {
+            {semconv::log::exceptionMessage, ex.what()}
+      });
+    } catch (...) {
+      log(log::CRIT, "Fatal unknown exception", {});
+    }
   } catch (...) {
-    log(log::CRIT, "Fatal unknown exception", {});
+    // In extremely rare cases, reporting could fail. Do another best effort attempt of writing to stderr
+    detail::reportDiagnosticFailure();
   }
   return EXIT_FAILURE;
 }

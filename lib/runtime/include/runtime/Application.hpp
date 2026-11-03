@@ -15,7 +15,6 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/FileUtils.hpp"
-#include "common/utils/ScopeExit.hpp"
 #include "common/utils/utils.hpp"
 #include "config/CommonConfig.hpp"
 #include "config/ConfigLoader.hpp"
@@ -91,15 +90,13 @@ concept HasLoggingConfig =
   requires(const TConfig& cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.logging)>, LoggingConfig>; };
 
 template<class TApp, class TConfig>
-concept HasStaticLogAttributes = requires(const TApp& app, const TConfig& cfg) {
-  requires std::same_as<std::remove_cvref_t<decltype(app.getStaticLogAttributes(cfg))>,
-                        std::map<std::string, std::string>>;
+concept HasStaticLogAttributes = requires(const TConfig& cfg) {
+  { TApp::getStaticLogAttributes(cfg) } -> std::same_as<std::map<std::string, std::string>>;
 };
 
 template<class TApp, class TConfig>
-concept HasStaticTelemetryAttributes = requires(const TApp& app, const TConfig& cfg) {
-  requires std::same_as<std::remove_cvref_t<decltype(app.getStaticTelemetryAttributes(cfg))>,
-                        std::map<std::string, std::string>>;
+concept HasStaticTelemetryAttributes = requires(const TConfig& cfg) {
+  { TApp::getStaticTelemetryAttributes(cfg) } -> std::same_as<std::map<std::string, std::string>>;
 };
 
 template<class T>
@@ -200,8 +197,8 @@ public:
    * @return int Return code.
    */
   int run(const int argc, char** const argv) {
-    if (!m_app) {
-      throw exception::Exception("Application cannot run again after shutdown");
+    if (std::exchange(m_runAttempted, true)) {
+      throw exception::Exception("Application::run() may only be called once");
     }
 
     // Parse commandline opts
@@ -231,25 +228,6 @@ public:
     }
 
     auto config = runtime::loadFromTomlString<TConfig>(document.resolved, document.sourcePath, cliOptions.configStrict);
-    // Local ownership keeps the logger alive until every cleanup guard has finished.
-    std::unique_ptr<log::Logger> logPtr;
-    // Registered first so that destruction order does not destroy the logger before its consumers are destroyed
-    const utils::ScopeExit loggingCleanup([this, &logPtr] {
-      if (logPtr) {
-        (*logPtr)(log::INFO,
-                  "Stopped " + m_appName,
-                  {
-                    {semconv::log::eventName, semconv::log::EventNameValues::kProgramStopped}
-        });
-      }
-    });
-    // Destroy config consumers before destroying the config.
-    const utils::ScopeExit telemetryCleanup([this, &logPtr] {
-      if (logPtr) {
-        cleanupTelemetry(*logPtr);
-      }
-    });
-    const utils::ScopeExit appCleanup([this] { m_app.reset(); });
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;
@@ -279,7 +257,7 @@ public:
       utils::copyFile("/usr/share/cta/" + loggingSchemaName, cliOptions.runtimeDir + "/" + loggingSchemaName, true);
     }
 
-    logPtr = initLogger(config, cliOptions);
+    auto logPtr = initLogger(config, cliOptions);
     cta::log::Logger& log = *logPtr;
 
     log(log::INFO,
@@ -288,7 +266,23 @@ public:
           {semconv::log::eventName, semconv::log::EventNameValues::kProgramStarting}
     });
 
-    // Keep callbacks alive through fatal-error reporting, then stop them before destroying the app.
+    const int result = runWithLogger(config, cliOptions, log);
+
+    // Callback threads are joined before app destruction; telemetry outlives application resources.
+    m_app.reset();
+    cleanupTelemetry(log);
+
+    log(log::INFO,
+        "Stopped " + m_appName,
+        {
+          {semconv::log::eventName, semconv::log::EventNameValues::kProgramStopped}
+    });
+    return result;
+  }
+
+private:
+  int runWithLogger(const TConfig& config, const TOpts& cliOptions, log::Logger& log) noexcept {
+    // Keep callbacks alive through fatal-error reporting, then stop them before returning to the caller.
     std::unique_ptr<SignalReactor> signalReactor;
     std::unique_ptr<HealthServer> healthServer;
 
@@ -334,7 +328,6 @@ public:
     });
   }
 
-private:
   // OpenTelemetry cleanup is idempotent, so attempt it even after partial initialization.
   void cleanupTelemetry(log::Logger& log) noexcept {
     log::LogContext lc(log);
@@ -380,7 +373,7 @@ private:
       logAttributes[key] = value;
     }
     if constexpr (HasStaticLogAttributes<TApp, TConfig>) {
-      for (const auto& [key, value] : m_app->getStaticLogAttributes(config)) {
+      for (const auto& [key, value] : TApp::getStaticLogAttributes(config)) {
         logAttributes[key] = value;
       }
     }
@@ -432,7 +425,7 @@ private:
 
     std::map<std::string, std::string> customAttributes;
     if constexpr (HasStaticTelemetryAttributes<TApp, TConfig>) {
-      customAttributes = m_app->getStaticTelemetryAttributes(config);
+      customAttributes = TApp::getStaticTelemetryAttributes(config);
     }
 
     const std::set<std::string> reservedAttributes = {cta::semconv::attr::kServiceName,
@@ -498,6 +491,7 @@ private:
   const std::string m_appName;
 
   ArgParser<TOpts> m_argParser;
+  bool m_runAttempted = false;
   // The actual application class
   // We construct it immediately, but making it optional allows us to control when it is destroyed
   // One possible future improvement could be to have this simply be a local variable in run

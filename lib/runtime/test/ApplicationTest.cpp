@@ -104,6 +104,18 @@ format = "json"
   ASSERT_EQ(rc, EXIT_SUCCESS);
 }
 
+TEST(Application, RejectsSecondRunAfterEarlySuccess) {
+  using namespace cta;
+  for (const auto* option : {"--help", "--version", "--config-check"}) {
+    SCOPED_TRACE(option);
+    TempFile config("[logging]\nlevel = \"INFO\"\nformat = \"json\"\n", ".toml");
+    runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions> app("cta-test", "");
+    Argv args({"cta-test", "--config", config.path(), option});
+    EXPECT_EQ(EXIT_SUCCESS, app.run(args.count, args.data()));
+    EXPECT_THROW(app.run(args.count, args.data()), exception::Exception);
+  }
+}
+
 struct RuntimeDirectoryConfig {
   cta::runtime::LoggingConfig logging;
   std::string value;
@@ -504,8 +516,34 @@ struct LifecycleConfig {
   }
 };
 
+// Attribute hooks are optional, but supported hooks are static and return owning values.
+struct StaticAttributeHooks {
+  static std::map<std::string, std::string> getStaticLogAttributes(const LifecycleConfig&);
+  static std::map<std::string, std::string> getStaticTelemetryAttributes(const LifecycleConfig&);
+};
+
+struct InstanceAttributeHooks {
+  std::map<std::string, std::string> getStaticLogAttributes(const LifecycleConfig&) const;
+  std::map<std::string, std::string> getStaticTelemetryAttributes(const LifecycleConfig&) const;
+};
+
+struct BorrowedAttributeHooks {
+  static const std::map<std::string, std::string>& getStaticLogAttributes(const LifecycleConfig&);
+  static const std::map<std::string, std::string>& getStaticTelemetryAttributes(const LifecycleConfig&);
+};
+
+static_assert(cta::runtime::HasStaticLogAttributes<StaticAttributeHooks, LifecycleConfig>);
+static_assert(cta::runtime::HasStaticTelemetryAttributes<StaticAttributeHooks, LifecycleConfig>);
+static_assert(!cta::runtime::HasStaticLogAttributes<InstanceAttributeHooks, LifecycleConfig>);
+static_assert(!cta::runtime::HasStaticTelemetryAttributes<InstanceAttributeHooks, LifecycleConfig>);
+static_assert(!cta::runtime::HasStaticLogAttributes<BorrowedAttributeHooks, LifecycleConfig>);
+static_assert(!cta::runtime::HasStaticTelemetryAttributes<BorrowedAttributeHooks, LifecycleConfig>);
+static_assert(!cta::runtime::HasStaticLogAttributes<TestApp, LifecycleConfig>);
+static_assert(!cta::runtime::HasStaticTelemetryAttributes<TestApp, LifecycleConfig>);
+
 struct LifecycleState {
   unsigned destructions = 0;
+  unsigned runs = 0;
   bool throwFromRun = false;
   bool throwFromLogAttributes = false;
   bool exerciseCallbacks = false;
@@ -538,8 +576,7 @@ public:
     }
   }
 
-  std::map<std::string, std::string> getStaticLogAttributes(const LifecycleConfig& config) const {
-    m_config = &config;
+  static std::map<std::string, std::string> getStaticLogAttributes(const LifecycleConfig&) {
     if (state->throwFromLogAttributes) {
       throw std::runtime_error("Static log attributes failed");
     }
@@ -563,6 +600,8 @@ public:
   bool isLive() const { return true; }
 
   int run(const LifecycleConfig& config, cta::log::Logger& log) {
+    ++state->runs;
+    m_config = &config;
     m_log = &log;
     if (state->exerciseCallbacks) {
       httplib::Client client(*config.health_server.host, *config.health_server.port);
@@ -584,7 +623,7 @@ public:
   }
 
 private:
-  mutable const LifecycleConfig* m_config = nullptr;
+  const LifecycleConfig* m_config = nullptr;
   cta::log::Logger* m_log = nullptr;
 };
 
@@ -665,7 +704,7 @@ TEST(Application, LifecycleEventsRespectSeverityFiltering) {
   LifecycleApp::state = nullptr;
 }
 
-TEST(Application, LoggerInitializationFailureStillDestroysAppBeforeConfig) {
+TEST(Application, StaticLogAttributeFailureDefersAppDestructionUntilWrapperDestruction) {
   using namespace cta;
   LifecycleState state;
   state.throwFromLogAttributes = true;
@@ -675,13 +714,17 @@ TEST(Application, LoggerInitializationFailureStillDestroysAppBeforeConfig) {
     runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
     Argv args({"cta-test", "--config", config.path()});
     EXPECT_THROW(app.run(args.count, args.data()), std::runtime_error);
-    EXPECT_EQ(1, state.destructions);
+    EXPECT_EQ(0, state.destructions);
+    state.throwFromLogAttributes = false;
+    EXPECT_THROW(app.run(args.count, args.data()), exception::Exception);
+    EXPECT_EQ(0, state.runs);
   }
   EXPECT_EQ(1, state.destructions);
+  EXPECT_EQ(0, state.runs);
   LifecycleApp::state = nullptr;
 }
 
-TEST(Application, InitializationFailureDestroysAppBeforeConfigLeavesScope) {
+TEST(Application, InitializationFailureCleansUpBeforeStoppedEvent) {
   using namespace cta;
   LifecycleState state;
   LifecycleApp::state = &state;

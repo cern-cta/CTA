@@ -122,9 +122,9 @@ public:
   bool isLive() const; // Since there is a health_server config, it MUST have an isLive() function
   bool isReady() const; // Since there is a health_server config, it MUST have an isReady() function
   // Optional program-owned OpenTelemetry resource attributes.
-  std::map<std::string, std::string> getStaticTelemetryAttributes(const CustomConfig& config) const;
+  static std::map<std::string, std::string> getStaticTelemetryAttributes(const CustomConfig& config);
   // Optional program-owned attributes added to every log record.
-  std::map<std::string, std::string> getStaticLogAttributes(const CustomConfig& config) const;
+  static std::map<std::string, std::string> getStaticLogAttributes(const CustomConfig& config);
 };
 
 int main(const int argc, char** const argv) {
@@ -136,12 +136,15 @@ int main(const int argc, char** const argv) {
 }
 ```
 
-Program-owned telemetry resource attributes can be returned by the optional `getStaticTelemetryAttributes()` application method.
+Program-owned telemetry resource attributes can be returned by the optional `getStaticTelemetryAttributes()` static application method.
 Operator-configured resource attributes belong in the declarative OpenTelemetry configuration file.
 For temporary backward compatibility, the runtime replaces hyphens in the application name with dots for `service.name`.
 Runtime identity attributes such as `service.name`, `service.version`, `service.instance.id`, `host.name`, and the scheduler namespace are reserved.
 Attribute keys and values cannot contain commas, equals signs, carriage returns, or line feeds because they are serialized into `CTA_OTEL_RESOURCE_ATTRIBUTES`.
-Program-owned attributes added to every log record can be returned by the optional `getStaticLogAttributes()` application method.
+Program-owned attributes added to every log record can be returned by the optional `getStaticLogAttributes()` static application method.
+Both hooks extract attributes from configuration and return an owning map by value.
+They must not retain configuration references or pointers, including in global or static storage.
+Applications receive configuration for execution through `run()`; the attribute hooks do not initialize application state.
 
 ## Custom command-line options
 
@@ -200,6 +203,9 @@ int main(const int argc, char** const argv) {
 
 
 ## Lifecycle and runtime state
+
+Each `Application` instance accepts one call to `run()`, including invocations that fail during setup or exit after help, version, or configuration checking.
+Create a new instance for another invocation.
 
 `lib/runtime/include/runtime/Application.hpp` owns the startup sequence and shared services. It parses the command line, loads and validates configuration, initializes logging and signals, and starts configured health and telemetry services before calling the application's `run()` method. `--config-check` exits after validation without starting the application.
 
