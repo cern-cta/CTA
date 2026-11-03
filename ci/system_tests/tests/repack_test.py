@@ -1286,30 +1286,25 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
         error_whitelist.add("In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.")
         error_whitelist.add("End of recall session with error(s)")
 
-        # Wait for the tape drive to finish its mount (all transfer attempts done).
-        cta_cli.wait_for_drives_to_stop_transferring(timeout=120)
-
-        # Wait for the retrieve queue to drain (all jobs are in ToReportToRepackForFailure state).
-        cta_cli.wait_for_queue_to_empty(vid, wait_timeout_secs=60)
-
-        # Poll until cta-maintd processes the failure reports and updates the repack request,
-        # or until the timeout expires.  With the bug the job never leaves 'Running'.
+        # Wait for transfers and failure reporting to finish, including mount startup.
+        # Idle drives and an empty queue do not imply completion: jobs may already be assigned to a mount.
+        # Starting is not terminal; with the regression the request never leaves Running.
         repack_json: list[dict[str, Any]] = []
-        with Timeout(60) as t:
+        with Timeout(240) as t:
             while not t.expired:
                 with contextlib.suppress(json.JSONDecodeError, IndexError):
                     repack_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid}"))
-                    if repack_json and repack_json[0].get("status") != "Running":
+                    if repack_json and repack_json[0].get("status") in ("Complete", "Failed"):
                         break
                 time.sleep(2)
 
         assert repack_json, f"No repack request found for VID {vid}"
         repack = repack_json[0]
         status = repack.get("status")
-        failed_to_retrieve = repack.get("failedToRetrieveFiles", 0)
+        failed_to_retrieve = int(repack["failedToRetrieveFiles"])
         # totalFilesToRetrieve is set by the expansion routine and is authoritative;
         # avoid nbMasterFiles which is a cumulative counter never decremented by repack.
-        total_to_retrieve = repack.get("totalFilesToRetrieve", 0)
+        total_to_retrieve = int(repack["totalFilesToRetrieve"])
 
         print(f"Repack final state for VID {vid}:")
         print(f"  status:               {status}")
@@ -1318,10 +1313,10 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
         print(f"  filesLeftToArchive:   {repack.get('filesLeftToArchive', 0)}")
         print(f"  totalFailedFiles:     {repack.get('totalFailedFiles', 0)}")
 
+        assert total_to_retrieve > 0, f"No retrieve jobs were created for VID {vid}"
         assert failed_to_retrieve == total_to_retrieve, (
-            f"Expected all {total_to_retrieve} retrieve jobs to fail after deleting the buffer, "
-            f"but only {failed_to_retrieve} were counted as failed.  "
-            f"The buffer may not have been absent for the entire mount session."
+            f"Expected all {total_to_retrieve} retrieve jobs to fail with a read-only buffer, "
+            f"but only {failed_to_retrieve} were counted as failed (status: {status})."
         )
 
         assert status == "Failed", (
