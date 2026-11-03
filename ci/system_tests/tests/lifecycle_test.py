@@ -117,6 +117,7 @@ class TestGracefulRestart:
         ("daemon_fixture", "program"),
         [
             ("cta_maintd", "cta-maintd"),
+            ("cta_taped", "cta-taped"),
             ("cta_rmcd", "cta-rmcd"),
             ("cta_admin_api", "cta-admin-api"),
             ("cta_workflow_api", "cta-workflow-api"),

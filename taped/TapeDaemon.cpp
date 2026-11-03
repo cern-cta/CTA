@@ -83,13 +83,11 @@ int TapeDaemon::run() {
   try {
     // An absent logical library can appear later; wait to avoid transient scheduling errors.
     waitForLogicalLibrary();
-    if (!m_stopSource.stop_requested()) {
-      m_lc.logger()(cta::log::INFO,
-                    "Started cta-taped",
-                    {
-                      {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
-      });
-    }
+    m_lc.logger()(cta::log::INFO,
+                  "Started cta-taped",
+                  {
+                    {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+    });
     while (!m_stopSource.stop_requested()) {
       // Only spawn drive sessions when we're Up
       waitUntilDriveIsRequestedUp();

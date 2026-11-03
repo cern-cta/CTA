@@ -403,7 +403,7 @@ TEST_F(TapeDaemonTest, StopBeforeRegistrationSkipsWaitingAndExitsNormally) {
                                                    testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
   EXPECT_EQ(0, daemon->run());
   EXPECT_FALSE(daemon->isReady());
-  expectLifecycleEvents(false);
+  expectLifecycleEvents(true);
 }
 
 TEST_F(TapeDaemonTest, StartedPrecedesWorkAndStoppingPrecedesShutdownPublication) {
