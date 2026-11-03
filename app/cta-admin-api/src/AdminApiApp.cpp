@@ -98,10 +98,22 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   // wait until `.stop()` is called
   {
     std::unique_lock lock(m_mutex);
+    // A stop requested during initialization must not be reported as a completed startup.
+    if (!m_stopRequested) {
+      log(cta::log::INFO,
+          "Started cta-admin-api",
+          {
+            {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+      });
+    }
     m_stopCv.wait(lock, [this] { return m_stopRequested; });
   }
 
-  lc.log(cta::log::INFO, "Stopping cta-admin-api");
+  log(cta::log::INFO,
+      "Stopping cta-admin-api",
+      {
+        {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+  });
   server->Shutdown();
   server->Wait();
   return 0;

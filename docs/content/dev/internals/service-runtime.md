@@ -204,7 +204,10 @@ int main(const int argc, char** const argv) {
 `lib/runtime/include/runtime/Application.hpp` owns the startup sequence and shared services. It parses the command line, loads and validates configuration, initializes logging and signals, and starts configured health and telemetry services before calling the application's `run()` method. `--config-check` exits after validation without starting the application.
 
 The runtime emits `program_starting` immediately after configuring the logger and `program_stopped` after stopping callbacks, destroying the application, and cleaning up telemetry.
+Applications also emit `program_started` after initialization and `program_stopping` when entering their shutdown path.
 These are ordinary INFO records and follow the configured log level.
+Successful service lifecycles emit each event once in the order starting, started, stopping, stopped.
+Startup failures do not emit started; stopping is only emitted if execution reaches an application shutdown path.
 When INFO logging is enabled, they bound the runtime's log stream, including handled startup failures and application exceptions.
 Pre-logger failures and help/version/config-check invocations do not emit lifecycle records; abrupt termination such as SIGKILL cannot emit a final record.
 A failed request handled by `/health/live` emits `liveness_probe_failed` at ERROR level, including when the application's liveness check throws.

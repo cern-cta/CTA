@@ -210,11 +210,21 @@ int rmc_main(const std::string& robot,
     close(s);
     return 1;
   }
-  listen(s, 5);
+  if (listen(s, 5) < 0) {
+    lc.log(cta::log::CRIT, "Failed to listen on request socket");
+    close(s);
+    return EXIT_FAILURE;
+  }
 
   struct pollfd pfd;
   pfd.fd = s;
   pfd.events = POLLIN;
+
+  lc.logger()(cta::log::INFO,
+              "Started cta-rmcd",
+              {
+                {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+  });
 
   /* main loop */
   while (!stopToken.stop_requested()) {
@@ -234,6 +244,11 @@ int rmc_main(const std::string& robot,
     handle_connection(lc, s, &pfd);
   }
 
+  lc.logger()(cta::log::INFO,
+              "Stopping cta-rmcd",
+              {
+                {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+  });
   close(s);
   return EXIT_SUCCESS;
 }

@@ -71,21 +71,33 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
     throw exception::UserError("No routines enabled.");
   }
   m_running = true;
-  lc.log(log::DEBUG, "In RoutineRunner::run(): New run started.");
+  lc.logger()(cta::log::INFO,
+              "Started cta-maintd",
+              {
+                {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+  });
   while (m_running) {
     m_executionStartTime = nowSecs();
     lc.log(log::DEBUG, "In RoutineRunner::run(): Executing all routines.");
     for (const auto& routine : m_routines) {
       safeRunRoutine(*routine, lc);
       if (!m_running) {
-        lc.log(log::INFO, "In RoutineRunner::run(): Stop requested.");
+        lc.logger()(cta::log::INFO,
+                    "Stopping cta-maintd",
+                    {
+                      {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+        });
         return;
       }
     }
     m_sleepStartTime = nowSecs();
     std::this_thread::sleep_for(std::chrono::seconds(m_config.cycle_sleep_interval_secs));
   }
-  lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
+  lc.logger()(cta::log::INFO,
+              "Stopping cta-maintd",
+              {
+                {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+  });
   return;
 }
 

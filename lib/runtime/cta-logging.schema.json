@@ -91,6 +91,8 @@
       "type": "string",
       "enum": [
         "program_starting",
+        "program_started",
+        "program_stopping",
         "program_stopped",
         "liveness_probe_failed",
         "tape_session_finished",

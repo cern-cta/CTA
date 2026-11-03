@@ -25,6 +25,8 @@ static constexpr const char* errorMessage = "error_message";
 static constexpr const char* eventName = "event_name";
 
 namespace EventNameValues {
+static constexpr const char* kProgramStarted = "program_started";
+static constexpr const char* kProgramStopping = "program_stopping";
 static constexpr const char* kProgramStarting = "program_starting";
 static constexpr const char* kLivenessProbeFailed = "liveness_probe_failed";
 static constexpr const char* kProgramStopped = "program_stopped";

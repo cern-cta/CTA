@@ -83,6 +83,13 @@ int TapeDaemon::run() {
   try {
     // An absent logical library can appear later; wait to avoid transient scheduling errors.
     waitForLogicalLibrary();
+    if (!m_stopSource.stop_requested()) {
+      m_lc.logger()(cta::log::INFO,
+                    "Started cta-taped",
+                    {
+                      {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+      });
+    }
     while (!m_stopSource.stop_requested()) {
       // Only spawn drive sessions when we're Up
       waitUntilDriveIsRequestedUp();
@@ -112,6 +119,11 @@ int TapeDaemon::run() {
 }
 
 int TapeDaemon::shutdown(ExitCause cause, bool putDriveDown, std::string_view exceptionMsg) {
+  m_lc.logger()(cta::log::INFO,
+                "Stopping cta-taped",
+                {
+                  {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+  });
   using common::dataStructures::DriveDownReason;
   auto reason = DriveDownReason::Shutdown;
   int exitCode = cause == ExitCause::Normal ? 0 : 1;

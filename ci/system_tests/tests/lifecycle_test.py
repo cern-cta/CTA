@@ -113,9 +113,17 @@ class TestGracefulRestart:
     Allow normal client retries and session draining.
     """
 
-    @pytest.mark.parametrize("daemon_fixture", ["cta_maintd", "cta_rmcd"], ids=["maintd", "rmcd"])
+    @pytest.mark.parametrize(
+        ("daemon_fixture", "program"),
+        [
+            ("cta_maintd", "cta-maintd"),
+            ("cta_rmcd", "cta-rmcd"),
+            ("cta_admin_api", "cta-admin-api"),
+            ("cta_workflow_api", "cta-workflow-api"),
+        ],
+    )
     def test_sigterm_exits_cleanly_and_restarts(
-        self, request: SubRequest, daemon_fixture: str, restart_expectations: RestartExpectations
+        self, request: SubRequest, daemon_fixture: str, program: str, restart_expectations: RestartExpectations
     ) -> None:
         daemon = request.getfixturevalue(daemon_fixture)
         connection = daemon.conn
@@ -127,8 +135,7 @@ class TestGracefulRestart:
         assert before.container_id
         assert before.ready
         # The launcher must replace itself so Kubernetes signals the daemon directly.
-        pid = daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}")
-        assert pid == "1", f"Expected {daemon.process_name} as PID 1, got {pid!r}"
+        assert daemon.exec_with_output("basename $(readlink /proc/1/exe)") == program
 
         # The log volume survives a container restart. Snapshot complete records before sending SIGTERM.
         log_file = shlex.quote(str(daemon.log_file_path))
@@ -144,10 +151,29 @@ class TestGracefulRestart:
                 assert termination.container_id == before.container_id
                 assert termination.exit_code == 0, f"Unclean SIGTERM exit: {termination}"
                 assert not termination.signal, f"Daemon was terminated by a signal: {termination}"
-                assert daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}") == "1"
-                records = daemon.exec_with_output(f"cat {log_file}").splitlines()
+                assert daemon.exec_with_output("basename $(readlink /proc/1/exe)") == program
+                # Readiness can precede application startup completion (notably for rmcd).
+                deadline = time.monotonic() + 120
+                while True:
+                    records = daemon.exec_with_output(f"cat {log_file}").splitlines()
+                    new_events = [json.loads(line).get("event_name") for line in records[len(previous_records) :]]
+                    if "program_started" in new_events:
+                        break
+                    assert time.monotonic() < deadline, f"{program} did not finish startup"
+                    time.sleep(0.1)
                 assert records[: len(previous_records)] == previous_records, "Logs changed during restart"
                 events = [json.loads(line).get("event_name") for line in records[len(previous_records) :]]
+                lifecycle_events = [
+                    event
+                    for event in events
+                    if event in {"program_starting", "program_started", "program_stopping", "program_stopped"}
+                ]
+                assert lifecycle_events == [
+                    "program_stopping",
+                    "program_stopped",
+                    "program_starting",
+                    "program_started",
+                ]
                 assert events.count("program_stopped") == 1
                 assert events.count("program_starting") == 1
                 # No record may appear between the old process's final log and the new process's first log.
