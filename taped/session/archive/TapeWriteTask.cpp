@@ -322,7 +322,7 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
 // getFreeBlock
 //------------------------------------------------------------------------------
 MemBlock* TapeWriteTask::getFreeBlock() {
-  return m_fifo.getFreeBlock();
+  return m_memManager.acquireBlock(m_fifo);
 }
 
 //------------------------------------------------------------------------------

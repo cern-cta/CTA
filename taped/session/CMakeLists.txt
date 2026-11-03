@@ -55,6 +55,7 @@ add_library(ctatapedsessionunittests SHARED
   TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp
 
+  archive/MigrationMemoryManagerTest.cpp
   archive/DiskReadTaskTest.cpp
   archive/MigrationReportPackerTest.cpp
 

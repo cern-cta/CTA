@@ -9,6 +9,8 @@
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
 
+#include <atomic>
+
 namespace cta::tape::daemon {
 
 class TapeWriteTask;
@@ -63,6 +65,9 @@ public:
    */
   void releaseBlock(MemBlock* mb);
 
+  // Acquire a reader's block from its pipeline and account for its capacity.
+  MemBlock* acquireBlock(DataPipeline& pipeline);
+
   /**
    * Function used to specify that there are no more clients for this memory manager.
    * See the definition of endOfClients below.
@@ -76,7 +81,7 @@ public:
   size_t getTotalMemoryAllocated() const;
 
   /**
-   * Finds the number of bytes in use by looking how many blocks are in use.
+   * Capacity of blocks acquired by readers and not yet released.
    * @return the number of bytes in use
    */
   size_t getTotalMemoryUsed() const;
@@ -101,6 +106,9 @@ private:
    * Total amount of memory allocated
    */
   size_t m_totalMemoryAllocated = 0;
+
+  // Excludes empty blocks prefetched into client pipelines.
+  std::atomic<size_t> m_blocksInUse {0};
 
   /**
    * Container for the free blocks

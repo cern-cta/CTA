@@ -144,10 +144,21 @@ void MigrationMemoryManager::finish() {
 }
 
 //------------------------------------------------------------------------------
+// MigrationMemoryManager::acquireBlock
+//------------------------------------------------------------------------------
+MemBlock* MigrationMemoryManager::acquireBlock(DataPipeline& pipeline) {
+  auto* block = pipeline.getFreeBlock();
+  // Count only successful acquisitions, not empty blocks waiting in the pipeline.
+  m_blocksInUse.fetch_add(1, std::memory_order_relaxed);
+  return block;
+}
+
+//------------------------------------------------------------------------------
 // MigrationMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::releaseBlock(MemBlock* mb) {
   mb->reset();
+  m_blocksInUse.fetch_sub(1, std::memory_order_relaxed);
   m_freeBlocks.push(mb);
 }
 
@@ -162,7 +173,7 @@ size_t MigrationMemoryManager::getTotalMemoryAllocated() const {
 // MigrationMemoryManager::getTotalMemoryUsed
 //------------------------------------------------------------------------------
 size_t MigrationMemoryManager::getTotalMemoryUsed() const {
-  return m_totalMemoryAllocated - (m_freeBlocks.size() * m_blockCapacity);
+  return m_blocksInUse.load(std::memory_order_relaxed) * m_blockCapacity;
 }
 
 //------------------------------------------------------------------------------
