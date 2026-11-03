@@ -124,6 +124,26 @@ TEST_F(cta_ChecksumBlobTest, hasChecksum) {
   EXPECT_TRUE(checksums.hasChecksum(ADLER32));
 }
 
+TEST_F(cta_ChecksumBlobTest, max_serialized_size_fits_catalogue_column) {
+  using namespace cta::checksum;
+
+  // Oracle stores the serialized blob in CHECKSUM_BLOB RAW(200) (ARCHIVE_FILE and FILE_RECYCLE_LOG tables).
+  // If this fails after adding a checksum type, the catalogue schema must be updated first.
+  ChecksumBlob blob;
+  blob.insert(NONE, "");
+  blob.insert(ADLER32, std::string(4, '\xff'));
+  blob.insert(CRC32, std::string(4, '\xff'));
+  blob.insert(CRC32C, std::string(4, '\xff'));
+  blob.insert(MD5, std::string(16, '\xff'));
+  blob.insert(SHA1, std::string(20, '\xff'));
+  blob.insert(CRC64, std::string(8, '\xff'));
+  blob.insert(SHA256, std::string(32, '\xff'));
+  blob.insert(XXHASH64, std::string(8, '\xff'));
+  blob.insert(BLAKE3, std::string(32, '\xff'));
+  blob.insert(HWH64, std::string(8, '\xff'));
+  ASSERT_LE(blob.serialize().size(), 200U);
+}
+
 TEST_F(cta_ChecksumBlobTest, hex_to_byte_array) {
   using namespace cta::checksum;
 
