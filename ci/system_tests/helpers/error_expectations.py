@@ -29,7 +29,10 @@ class ErrorExpectations:
         """Reject unexpected errors, excess occurrences and missing expected errors."""
         counts = [0] * len(self._expected)
         unexpected: Counter[str] = Counter()
+        summary: Counter[tuple[str, str]] = Counter()
         for entry in entries:
+            message = str(entry.get("message", ""))
+            status = "allowed"
             matching = [
                 i
                 for i, (fields, _) in enumerate(self._expected)
@@ -40,13 +43,25 @@ class ErrorExpectations:
             if counted:
                 available = [i for i in counted if (limit := self._expected[i][1]) is not None and counts[i] < limit]
                 counts[available[0] if available else counted[0]] += 1
+                status = "expected" if available else "FAIL: excess"
             elif matching:
                 counts[matching[0]] += 1
-            elif not any(pattern in str(entry.get("message", "")) for pattern in self._allowed_messages):
+            elif not any(pattern in message for pattern in self._allowed_messages):
                 unexpected[str(dict(entry))] += 1
+                status = "FAIL: unexpected"
+            summary[status, message] += 1
+
+        # Group by outcome and message so timestamps and host details do not obscure the result.
+        print("\nSummary of logged error messages:")
+        for (status, message), count in summary.most_common():
+            print(f'  [{status}] Count: {count}, Message: "{message}"')
+        if not summary:
+            print("  No logged errors.")
 
         problems = [f"Unexpected error ({count} occurrences): {entry}" for entry, count in unexpected.items()]
         for (fields, expected_count), actual_count in zip(self._expected, counts):
             if expected_count is not None and actual_count != expected_count:
-                problems.append(f"Expected {expected_count} occurrences, found {actual_count}: {fields}")
+                problem = f"Expected {expected_count} occurrences, found {actual_count}: {fields}"
+                print(f"  [FAIL: count mismatch] {problem}")
+                problems.append(problem)
         assert not problems, "\n".join(problems)
