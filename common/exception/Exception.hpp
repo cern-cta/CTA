@@ -113,8 +113,8 @@ protected:
 };
 
 /// Extract a diagnostic from the exception currently being handled.
-/// @pre Called from an active exception handler; otherwise std::terminate is invoked.
 /// @return CTA message without its backtrace, standard exception message, or an unknown-exception fallback.
+/// Returns "No active exception" when called outside an active exception handler.
 std::string currentExceptionMessage();
 
 }  // namespace cta::exception

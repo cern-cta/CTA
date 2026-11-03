@@ -82,10 +82,11 @@ const DriveCleaner::CleanupResult& MountedTape::cleanup() noexcept {
     return *m_cleanupResult;
   }
   m_finished = true;
+  // Keep a result available for the exception handler if cleaning throws.
   m_cleanupResult.emplace();
 
   try {
-    *m_cleanupResult = m_cleaner.cleanDrive(m_drive);
+    m_cleanupResult = m_cleaner.cleanDrive(m_drive);
   } catch (...) {
     m_cleanupResult->unexpectedFailure = true;
     try {

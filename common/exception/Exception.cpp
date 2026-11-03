@@ -49,15 +49,21 @@ void Exception::setWhat(std::string_view what) {
 }
 
 std::string currentExceptionMessage() {
+  const auto exception = std::current_exception();
+  if (!exception) {
+    return "No active exception";
+  }
+
   try {
-    throw;
+    std::rethrow_exception(exception);
   } catch (const Exception& ex) {
     return ex.getMessageValue();
   } catch (const std::exception& ex) {
     return ex.what();
   } catch (...) {
-    return "Caught an unknown exception";
+    // Non-standard exceptions use the fallback below.
   }
+  return "Caught an unknown exception";
 }
 
 }  // namespace cta::exception
