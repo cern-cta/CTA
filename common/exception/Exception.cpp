@@ -61,8 +61,9 @@ std::string currentExceptionMessage() {
   } catch (const std::exception& ex) {
     return ex.what();
   } catch (...) {
-    return "Caught an unknown exception";
+    // Non-standard exceptions use the fallback below.
   }
+  return "Caught an unknown exception";
 }
 
 }  // namespace cta::exception
