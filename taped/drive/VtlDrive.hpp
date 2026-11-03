@@ -16,7 +16,7 @@
 namespace cta::tape::drive {
 
 /**
- * Stress-test tape drive: a FakeDrive whose tape content is persisted to a
+ * Virtual Tape Library drive: a VirtualDrive whose tape content is persisted to a
  * file on a shared volume between mount/dismount cycles.  This allows multiple
  * drives — in the same taped process or in different taped processes on the
  * same host — to share virtual tapes by VID, exactly as a physical tape library
@@ -34,37 +34,37 @@ namespace cta::tape::drive {
  * Lifecycle:
  *   1. MediaChangerFacade::mountTapeReadWrite(vid) acquires the changer lock
  *      and renames VID.tape: slots/ → changer/ → drives/<driveName>/.
- *   2. DataTransferSession calls waitUntilReady(): StressDrive scans
+ *   2. DataTransferSession calls waitUntilReady(): VtlDrive scans
  *      drives/<driveName>/ for a *.tape file, derives the VID from its stem,
  *      reads the tape capacity from library.toml, then loads the binary
- *      block stream from the file into m_tape (the inherited FakeDrive
+ *      block stream from the file into m_tape (the inherited VirtualDrive
  *      in-memory block vector).  An empty file means a blank tape.
- *   3. The full transfer runs via FakeDrive's in-memory block I/O.
- *   4. DataTransferSession calls unloadTape(): StressDrive serialises m_tape
- *      back to the same file, then delegates to FakeDrive::unloadTape().
+ *   3. The full transfer runs via VirtualDrive's in-memory block I/O.
+ *   4. DataTransferSession calls unloadTape(): VtlDrive serialises m_tape
+ *      back to the same file, then delegates to VirtualDrive::unloadTape().
  *   5. MediaChangerFacade::dismountTape(vid) acquires the changer lock and
  *      renames VID.tape: drives/<driveName>/ → changer/ → slots/.
  *
  * The drive is registered in the CTA catalogue with DriveDevice = "virtual://<base_dir>",
  * e.g. "virtual:///cta-stress-lib".  DataTransferSession::findDrive() detects the
- * "virtual://" prefix and creates a StressDrive; the path component is the library root.
+ * "virtual://" prefix and creates a VtlDrive; the path component is the library root.
  */
-class StressDrive : public VirtualDrive {
+class VtlDrive : public VirtualDrive {
 public:
   /**
    * @param driveName          Drive name as registered in the CTA catalogue
    *                           (e.g. "STRESS0003").
    * @param logicalLibraryName Logical library this drive belongs to; used to
    *                           construct all paths under baseDir.
-   * @param baseDir            Root of the stress-test shared volume
+   * @param baseDir            Root of the virtual-tape-library shared volume
    *                           (e.g. /dev/shm/cta-stress).
    *
    * The constructor reads baseDir/config/<logicalLibraryName>/library.toml to
    * obtain the mount-delay for this drive and the VID-prefix → capacity map
    * for all media types in the library.
    */
-  StressDrive(std::string driveName, std::string logicalLibraryName, std::filesystem::path baseDir);
-  ~StressDrive() override = default;
+  VtlDrive(std::string driveName, std::string logicalLibraryName, std::filesystem::path baseDir);
+  ~VtlDrive() override = default;
 
   /**
    * Simulates tape loading:
@@ -80,14 +80,14 @@ public:
   void waitUntilReady(uint32_t timeoutSecond) override;
 
   /**
-   * Serialises the current m_tape state back to the *.tape file in the drive
-   * directory, then delegates to FakeDrive::unloadTape() to mark the tape as
+   * Serialises the current m_tape state back to the *.tape file via an atomic
+   * tmp-rename, then delegates to VirtualDrive::unloadTape() to mark the tape as
    * absent.  Saving is skipped if no tape was ever loaded in this session.
    */
   void unloadTape() override;
 
   // The following five methods throw NotImplementedException in VirtualDrive but
-  // are called by taped during normal transfer sessions.  Stress overrides
+  // are called by taped during normal transfer sessions.  VtlDrive overrides
   // return sensible no-op values so the rest of the session logic proceeds.
   driveStatus getDriveStatus() override;
   void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0) override;

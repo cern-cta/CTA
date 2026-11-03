@@ -41,7 +41,7 @@ The standard stress test requires `mhvtl` virtual tape hardware and a dedicated 
 
 ### Why VirtualDrive instead of mhVTL
 
-| Property | mhVTL | VirtualDrive / StressDrive |
+| Property | mhVTL | VirtualDrive / VtlDrive |
 | --- | --- | --- |
 | Backend | SCSI target (kernel) | Filesystem directory (PVC) |
 | Tiny-file latency | High (SCSI + driver) | Minimal (direct file I/O) |
@@ -52,7 +52,7 @@ The standard stress test requires `mhvtl` virtual tape hardware and a dedicated 
 
 ### How it works
 
-`StressDrive` is a subclass of `VirtualDrive` that persists tape content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
+`VtlDrive` is a subclass of `VirtualDrive` that persists tape content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
 
 Each library has its own PVC mounted at `/cta-stress-lib-{i}` (library index `i`). `stressBaseDir` for a drive is derived automatically from its `DriveDevice` URI (`virtual:///cta-stress-lib-{i}`), so no manual config key is needed. The shared directory layout under each `stressBaseDir`:
 
@@ -68,10 +68,10 @@ contents/<lib>/drives/<drv>/VID.tape   — tape mounted in this drive
 The full lifecycle per archive or retrieve session:
 
 1. `MediaChangerFacade::mountTapeReadWrite(vid)` acquires the single changer lock (`changer/.lock` via `O_CREAT|O_EXCL`) and atomically renames `slots/VID.tape → changer/VID.tape → drives/<drv>/VID.tape`, then releases the lock.
-2. `DataTransferSession::findDrive()` detects `DriveDevice = virtual://` and instantiates a `StressDrive`.
-3. `StressDrive::waitUntilReady()` scans `drives/<drv>/` for the mounted `*.tape` file, derives the VID from its filename stem, looks up the tape capacity from `library.toml`, then loads the binary block stream into the in-memory block vector (`m_tape`). An empty file (blank tape) synthesises an ANSI VOL1 label.
+2. `DataTransferSession::findDrive()` detects `DriveDevice = virtual://` and instantiates a `VtlDrive`.
+3. `VtlDrive::waitUntilReady()` scans `drives/<drv>/` for the mounted `*.tape` file, derives the VID from its filename stem, looks up the tape capacity from `library.toml`, then loads the binary block stream into the in-memory block vector (`m_tape`). An empty file (blank tape) synthesises an ANSI VOL1 label.
 4. The transfer session runs entirely in memory via `VirtualDrive`'s block I/O — no filesystem I/O during the data transfer itself.
-5. `StressDrive::unloadTape()` serialises `m_tape` back to the `*.tape` file via an atomic tmp-rename, then clears the in-memory state.
+5. `VtlDrive::unloadTape()` serialises `m_tape` back to the `*.tape` file via an atomic tmp-rename, then clears the in-memory state.
 6. `MediaChangerFacade::dismountTape(vid)` acquires the changer lock and atomically renames `drives/<drv>/VID.tape → changer/VID.tape → slots/VID.tape`.
 
 The changer lock ensures that only one tape is ever in transit at a time across all drives and all `taped` pods sharing the PVC — exactly as a real tape library serialises robot-arm movements.
@@ -99,7 +99,7 @@ maxWriteRateHz = 1000       # file-rate ceiling per drive; 0 = write at RAM spee
 count          = 180        # virtual tapes: S00001..S00180
 ```
 
-The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `StressDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
+The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `VtlDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
 
 `setup_stress_drives_test.py` reads each library's `library.toml` from the pod (via `CtaTapedHost.read_stress_library_conf()`, which parses it with `tomllib`) to obtain media type names, capacities, VID prefixes, and tape counts. No separate `test_params.toml` entries are needed.
 

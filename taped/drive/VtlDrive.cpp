@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "StressDrive.hpp"
+#include "VtlDrive.hpp"
 
 #include "common/exception/Exception.hpp"
 
@@ -27,7 +27,7 @@ namespace cta::tape::drive {
 // The format is little-endian on all platforms where CTA runs (x86-64).
 // An empty file (size 0) means a blank (never-archived) tape.
 
-StressDrive::StressDrive(std::string driveName, std::string logicalLibraryName, std::filesystem::path baseDir)
+VtlDrive::VtlDrive(std::string driveName, std::string logicalLibraryName, std::filesystem::path baseDir)
     : VirtualDrive(std::numeric_limits<uint64_t>::max()),
       m_driveName(std::move(driveName)),
       m_logicalLibrary(std::move(logicalLibraryName)),
@@ -35,7 +35,7 @@ StressDrive::StressDrive(std::string driveName, std::string logicalLibraryName, 
       m_rng(std::hash<std::string> {}(m_driveName)
             ^ static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())) {
   // VirtualDrive defaults m_tapeInPlace to true (for convenience), but a
-  // StressDrive starts with an empty slot: no tape is loaded until the media
+  // VtlDrive starts with an empty slot: no tape is loaded until the media
   // changer mounts one and waitUntilReady() is called.
   m_tapeInPlace = false;
   // Pre-allocate for large stress-test tapes (~320 k files at 470 bytes each).
@@ -43,7 +43,7 @@ StressDrive::StressDrive(std::string driveName, std::string logicalLibraryName, 
   parseLibraryConf();
 }
 
-void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
+void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   // TapeCleaning::~TapeCleaning() calls waitUntilReady() after the write
   // session to prepare for dismount.  Guard against that re-entry: if a tape
   // is already loaded (m_currentTapePath is set), the drive is already ready
@@ -59,14 +59,14 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   for (const auto& entry : std::filesystem::directory_iterator(driveDir)) {
     if (entry.path().extension() == ".tape") {
       if (!tapeFile.empty()) {
-        throw cta::exception::Exception("StressDrive::waitUntilReady: multiple .tape files in " + driveDir.string()
+        throw cta::exception::Exception("VtlDrive::waitUntilReady: multiple .tape files in " + driveDir.string()
                                         + " — only one tape can be mounted at a time");
       }
       tapeFile = entry.path();
     }
   }
   if (tapeFile.empty()) {
-    throw cta::exception::Exception("StressDrive::waitUntilReady: no tape mounted on drive \"" + m_driveName
+    throw cta::exception::Exception("VtlDrive::waitUntilReady: no tape mounted on drive \"" + m_driveName
                                     + "\" — no *.tape file found in " + driveDir.string()
                                     + "; MediaChangerFacade::mountTape* must be called before waitUntilReady");
   }
@@ -139,7 +139,7 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   setTapeInPlace(true);
 }
 
-void StressDrive::unloadTape() {
+void VtlDrive::unloadTape() {
   if (!m_currentTapePath.empty()) {
     saveTape();
     m_currentTapePath.clear();
@@ -147,7 +147,7 @@ void StressDrive::unloadTape() {
   VirtualDrive::unloadTape();
 }
 
-void StressDrive::writeBlock(const void* data, size_t count) {
+void VtlDrive::writeBlock(const void* data, size_t count) {
   // Adaptive-mirror throttle: sleeps once per file at HDR1 for
   //   max(minInterval, elapsed)
   // where minInterval = 1s/maxWriteRateHz and elapsed = wall time since the
@@ -167,13 +167,13 @@ void StressDrive::writeBlock(const void* data, size_t count) {
   VirtualDrive::writeBlock(data, count);
 }
 
-void StressDrive::saveTape() const {
+void VtlDrive::saveTape() const {
   const auto tmpPath = std::filesystem::path(m_currentTapePath.string() + ".tmp");
 
   {
     std::ofstream f(tmpPath, std::ios::binary | std::ios::trunc);
     if (!f) {
-      throw cta::exception::Exception("StressDrive::saveTape: cannot open " + tmpPath.string() + " for writing");
+      throw cta::exception::Exception("VtlDrive::saveTape: cannot open " + tmpPath.string() + " for writing");
     }
 
     const auto write32 = [&](uint32_t v) { f.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
@@ -194,7 +194,7 @@ void StressDrive::saveTape() const {
     f.flush();
     if (!f) {
       std::filesystem::remove(tmpPath);
-      throw cta::exception::Exception("StressDrive::saveTape: I/O error writing " + tmpPath.string()
+      throw cta::exception::Exception("VtlDrive::saveTape: I/O error writing " + tmpPath.string()
                                       + " (disk full? check shared volume space)");
     }
   }
@@ -202,7 +202,7 @@ void StressDrive::saveTape() const {
   std::filesystem::rename(tmpPath, m_currentTapePath);
 }
 
-void StressDrive::loadTape(const std::filesystem::path& tapePath) {
+void VtlDrive::loadTape(const std::filesystem::path& tapePath) {
   m_tape.clear();
 
   if (std::filesystem::file_size(tapePath) == 0) {
@@ -213,18 +213,18 @@ void StressDrive::loadTape(const std::filesystem::path& tapePath) {
 
   std::ifstream f(tapePath, std::ios::binary);
   if (!f) {
-    throw cta::exception::Exception("StressDrive::loadTape: cannot open " + tapePath.string() + " for reading");
+    throw cta::exception::Exception("VtlDrive::loadTape: cannot open " + tapePath.string() + " for reading");
   }
 
   uint32_t magic = 0, version = 0;
   f.read(reinterpret_cast<char*>(&magic), sizeof(magic));
   f.read(reinterpret_cast<char*>(&version), sizeof(version));
   if (!f || magic != k_magic) {
-    throw cta::exception::Exception("StressDrive::loadTape: " + tapePath.string() + " has wrong magic (got "
+    throw cta::exception::Exception("VtlDrive::loadTape: " + tapePath.string() + " has wrong magic (got "
                                     + std::to_string(magic) + ", expected " + std::to_string(k_magic) + ")");
   }
   if (version != k_version) {
-    throw cta::exception::Exception("StressDrive::loadTape: " + tapePath.string() + " has unsupported version "
+    throw cta::exception::Exception("VtlDrive::loadTape: " + tapePath.string() + " has unsupported version "
                                     + std::to_string(version));
   }
 
@@ -239,25 +239,25 @@ void StressDrive::loadTape(const std::filesystem::path& tapePath) {
       block.data.resize(sz);
       f.read(block.data.data(), static_cast<std::streamsize>(sz));
       if (!f) {
-        throw cta::exception::Exception("StressDrive::loadTape: truncated block in " + tapePath.string());
+        throw cta::exception::Exception("VtlDrive::loadTape: truncated block in " + tapePath.string());
       }
     }
     f.read(reinterpret_cast<char*>(&block.remainingSpaceAfter), sizeof(block.remainingSpaceAfter));
     if (!f) {
-      throw cta::exception::Exception("StressDrive::loadTape: truncated block in " + tapePath.string());
+      throw cta::exception::Exception("VtlDrive::loadTape: truncated block in " + tapePath.string());
     }
     m_tape.push_back(std::move(block));
   }
 }
 
-void StressDrive::parseLibraryConf() {
+void VtlDrive::parseLibraryConf() {
   const auto confPath = m_baseDir / "config" / m_logicalLibrary / "library.toml";
 
   toml::table tbl;
   try {
     tbl = toml::parse_file(confPath.string());
   } catch (const toml::parse_error& e) {
-    throw cta::exception::Exception("StressDrive: failed to parse " + confPath.string() + ": "
+    throw cta::exception::Exception("VtlDrive: failed to parse " + confPath.string() + ": "
                                     + std::string(e.description()));
   }
 
@@ -289,7 +289,7 @@ void StressDrive::parseLibraryConf() {
   }
 }
 
-StressDrive::MediaTypeInfo StressDrive::infoForVid(const std::string& vid) const {
+VtlDrive::MediaTypeInfo VtlDrive::infoForVid(const std::string& vid) const {
   // Longest-prefix match so overlapping prefixes (e.g. "S" and "ST") resolve correctly.
   std::string bestPrefix;
   MediaTypeInfo best;
@@ -302,7 +302,7 @@ StressDrive::MediaTypeInfo StressDrive::infoForVid(const std::string& vid) const
   return best;
 }
 
-cta::tape::drive::driveStatus StressDrive::getDriveStatus() {
+cta::tape::drive::driveStatus VtlDrive::getDriveStatus() {
   driveStatus st;
   st.ready = true;
   st.writeProtection = false;
@@ -312,15 +312,15 @@ cta::tape::drive::driveStatus StressDrive::getDriveStatus() {
   return st;
 }
 
-void StressDrive::setDensityAndCompression(bool /*compression*/, unsigned char /*densityCode*/) {
+void VtlDrive::setDensityAndCompression(bool /*compression*/, unsigned char /*densityCode*/) {
   // No physical density setting on a virtual tape; silently ignored.
 }
 
-void StressDrive::setSTBufferWrite(bool /*bufWrite*/) {
+void VtlDrive::setSTBufferWrite(bool /*bufWrite*/) {
   // ST buffer control is a SCSI detail irrelevant to a virtual tape; ignored.
 }
 
-cta::tape::drive::LBPInfo StressDrive::getLBPInfo() {
+cta::tape::drive::LBPInfo VtlDrive::getLBPInfo() {
   LBPInfo info;
   info.method = 0;
   info.methodLength = 0;
@@ -329,11 +329,11 @@ cta::tape::drive::LBPInfo StressDrive::getLBPInfo() {
   return info;
 }
 
-std::string StressDrive::getSerialNumber() {
-  return "STRESS-" + m_driveName;
+std::string VtlDrive::getSerialNumber() {
+  return "VTL-" + m_driveName;
 }
 
-cta::tape::drive::deviceInfo StressDrive::getDeviceInfo() {
+cta::tape::drive::deviceInfo VtlDrive::getDeviceInfo() {
   // VirtualDrive leaves serialNumber empty; UTL1::verifyCommon() verifies it
   // matches the value written at archive time, so it must be non-empty.
   // Capped at 12 chars to fit UHL1/UTL1 field width without silent truncation.

@@ -23,7 +23,7 @@ namespace cta::tape::drive {
  * tape.  Subclasses add specialised behaviour on top:
  *
  *   FakeDrive   — adds configurable failure injection for unit tests.
- *   StressDrive — adds on-disk persistence so tapes survive mount/dismount
+ *   VtlDrive    — adds on-disk persistence so tapes survive mount/dismount
  *                 cycles and can be shared between drive instances.
  *
  * Methods that have no meaningful implementation at this level

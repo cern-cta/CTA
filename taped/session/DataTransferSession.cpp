@@ -27,7 +27,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
-#include "taped/drive/StressDrive.hpp"
+#include "taped/drive/VtlDrive.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
@@ -625,7 +625,7 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
   // Virtual drive: bypass SCSI scanning; base dir is the path in the "virtual://" URI.
   if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
     try {
-      auto drive = std::make_unique<cta::tape::drive::StressDrive>(
+      auto drive = std::make_unique<cta::tape::drive::VtlDrive>(
         m_driveInfo.driveName,
         m_driveInfo.logicalLibrary,
         DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));

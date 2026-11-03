@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "StressDrive.hpp"
+#include "VtlDrive.hpp"
 
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
@@ -43,7 +43,7 @@ void writeLibraryConf(const fs::path& baseDir,
 
 }  // namespace
 
-class StressDriveTest : public ::testing::Test {
+class VtlDriveTest : public ::testing::Test {
 protected:
   fs::path m_baseDir;
   const std::string m_lib = "test-lib";
@@ -53,7 +53,7 @@ protected:
   static constexpr uint64_t k_defaultCapacity = 1024 * 1024;
 
   void SetUp() override {
-    m_baseDir = fs::temp_directory_path() / ("stress-drive-test-" + std::to_string(::getpid()));
+    m_baseDir = fs::temp_directory_path() / ("vtl-drive-test-" + std::to_string(::getpid()));
     fs::create_directories(m_baseDir);
     writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity);
     fs::create_directories(slotsDir());
@@ -64,9 +64,7 @@ protected:
   void TearDown() override { fs::remove_all(m_baseDir); }
 
   fs::path driveDir() const { return m_baseDir / "contents" / m_lib / "drives" / m_drive; }
-
   fs::path slotsDir() const { return m_baseDir / "contents" / m_lib / "slots"; }
-
   fs::path changerDir() const { return m_baseDir / "contents" / m_lib / "changer"; }
 
   // Place an empty (blank) tape file in the drive directory, simulating a
@@ -74,29 +72,29 @@ protected:
   void mountBlankTape(const std::string& vid) const { std::ofstream(driveDir() / (vid + ".tape"), std::ios::binary); }
 };
 
-TEST_F(StressDriveTest, ConstructionParsesLibraryConf) {
-  EXPECT_NO_THROW(StressDrive(m_drive, m_lib, m_baseDir));
+TEST_F(VtlDriveTest, ConstructionParsesLibraryConf) {
+  EXPECT_NO_THROW(VtlDrive(m_drive, m_lib, m_baseDir));
 }
 
-TEST_F(StressDriveTest, ConstructionThrowsIfConfMissing) {
+TEST_F(VtlDriveTest, ConstructionThrowsIfConfMissing) {
   const fs::path badBase = m_baseDir / "nonexistent";
   fs::create_directories(badBase / "contents" / m_lib / "drives" / m_drive);
-  EXPECT_THROW(StressDrive(m_drive, m_lib, badBase), cta::exception::Exception);
+  EXPECT_THROW(VtlDrive(m_drive, m_lib, badBase), cta::exception::Exception);
 }
 
-TEST_F(StressDriveTest, NoTapeInPlaceAfterConstruction) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, NoTapeInPlaceAfterConstruction) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   EXPECT_FALSE(drv.hasTapeInPlace());
 }
 
-TEST_F(StressDriveTest, WaitUntilReady_ThrowsIfNoTapeFile) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, WaitUntilReady_ThrowsIfNoTapeFile) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   // drive directory is empty → no *.tape file
   EXPECT_THROW(drv.waitUntilReady(30), cta::exception::Exception);
 }
 
-TEST_F(StressDriveTest, WaitUntilReady_LoadsBlankTapeWithSyntheticVOL1) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, WaitUntilReady_LoadsBlankTapeWithSyntheticVOL1) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   mountBlankTape("ST0001");
 
   EXPECT_NO_THROW(drv.waitUntilReady(30));
@@ -107,8 +105,8 @@ TEST_F(StressDriveTest, WaitUntilReady_LoadsBlankTapeWithSyntheticVOL1) {
   EXPECT_EQ(0u, drv.getPositionInfo().currentPosition);
 }
 
-TEST_F(StressDriveTest, WaitUntilReady_ReentryGuardIsNoop) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, WaitUntilReady_ReentryGuardIsNoop) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   mountBlankTape("ST0001");
   drv.waitUntilReady(30);
 
@@ -117,20 +115,20 @@ TEST_F(StressDriveTest, WaitUntilReady_ReentryGuardIsNoop) {
   EXPECT_TRUE(drv.hasTapeInPlace());
 }
 
-TEST_F(StressDriveTest, UnloadTape_SkipsSaveIfNothingMounted) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, UnloadTape_SkipsSaveIfNothingMounted) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   // unloadTape() without a prior waitUntilReady() must not throw.
   EXPECT_NO_THROW(drv.unloadTape());
   EXPECT_FALSE(drv.hasTapeInPlace());
 }
 
-TEST_F(StressDriveTest, DataPersistsAcrossMountCycle) {
+TEST_F(VtlDriveTest, DataPersistsAcrossMountCycle) {
   const std::string vid = "ST0002";
   mountBlankTape(vid);
 
   // First session: skip VOL1, write a payload block, then save.
   {
-    StressDrive drv(m_drive, m_lib, m_baseDir);
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
     drv.waitUntilReady(30);  // position = 0, tape = [VOL1(80)]
 
     char vol1buf[80] = {};
@@ -146,7 +144,7 @@ TEST_F(StressDriveTest, DataPersistsAcrossMountCycle) {
 
   // Second session: reload and verify the payload survives.
   {
-    StressDrive drv2(m_drive, m_lib, m_baseDir);
+    VtlDrive drv2(m_drive, m_lib, m_baseDir);
     drv2.waitUntilReady(30);  // position = 0, tape = [VOL1, payload]
     EXPECT_FALSE(drv2.isTapeBlank());
 
@@ -159,13 +157,13 @@ TEST_F(StressDriveTest, DataPersistsAcrossMountCycle) {
   }
 }
 
-TEST_F(StressDriveTest, MediaTypeCapacityIsApplied) {
+TEST_F(VtlDriveTest, MediaTypeCapacityIsApplied) {
   // Overwrite config with a tiny capacity so ENOSPC fires after VOL1.
   // VOL1 = 80 bytes; remaining = 100 - 80 = 20 bytes; writing 25 bytes → ENOSPC.
   writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, 100);
   mountBlankTape("ST0003");
 
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   drv.waitUntilReady(30);  // position = 0, VOL1 at tape[0], remainingSpaceAfter = 20
 
   char vol1buf[80] = {};
@@ -181,13 +179,13 @@ TEST_F(StressDriveTest, MediaTypeCapacityIsApplied) {
   }
 }
 
-TEST_F(StressDriveTest, GetSerialNumber_IncludesDriveName) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, GetSerialNumber_IncludesDriveName) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   EXPECT_NE(std::string::npos, drv.getSerialNumber().find("STRESS0001"));
 }
 
-TEST_F(StressDriveTest, GetDriveStatus_ReadyAfterMount) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, GetDriveStatus_ReadyAfterMount) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   mountBlankTape("ST0004");
   drv.waitUntilReady(30);
 
@@ -197,21 +195,21 @@ TEST_F(StressDriveTest, GetDriveStatus_ReadyAfterMount) {
   EXPECT_TRUE(st.bot);
 }
 
-TEST_F(StressDriveTest, GetDeviceInfo_SerialNumberMatchesDriveName) {
-  StressDrive drv(m_drive, m_lib, m_baseDir);
+TEST_F(VtlDriveTest, GetDeviceInfo_SerialNumberMatchesDriveName) {
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
   // getDeviceInfo() overrides serialNumber with driveName (capped at 12 chars).
   const auto info = drv.getDeviceInfo();
   EXPECT_FALSE(info.serialNumber.empty());
   EXPECT_EQ(m_drive.substr(0, 12), info.serialNumber);
 }
 
-TEST_F(StressDriveTest, MultipleBlocksAndFilemarksRoundTrip) {
+TEST_F(VtlDriveTest, MultipleBlocksAndFilemarksRoundTrip) {
   const std::string vid = "ST0005";
   mountBlankTape(vid);
 
   // Write [VOL1 | HDR1 | data | FM | HDR1 | data | FM] and reload.
   {
-    StressDrive drv(m_drive, m_lib, m_baseDir);
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
     drv.waitUntilReady(30);  // position = 0, tape = [VOL1(80)]
 
     char vol1buf[80] = {};
@@ -229,7 +227,7 @@ TEST_F(StressDriveTest, MultipleBlocksAndFilemarksRoundTrip) {
   }
 
   {
-    StressDrive drv2(m_drive, m_lib, m_baseDir);
+    VtlDrive drv2(m_drive, m_lib, m_baseDir);
     drv2.waitUntilReady(30);  // position = 0, tape = [VOL1 | HDR1 | data | FM | ...]
 
     char vol1buf[80] = {};

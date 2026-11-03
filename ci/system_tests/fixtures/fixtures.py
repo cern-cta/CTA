@@ -309,8 +309,3 @@ def disk_instance_name(disk_instance: DiskInstanceHost) -> str:
 #  Stress-drive fixtures
 # =========================================================================
 
-
-# stress_num_tapes, stress_vid_prefix, stress_logical_library, and
-# stress_tape_capacity_bytes have been removed.  All virtual-library
-# configuration is now read directly from library.conf on the taped pod
-# by setup_stress_drives_test.py via CtaTapedHost.read_stress_library_conf().

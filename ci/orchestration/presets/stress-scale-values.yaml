@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Overlay for stress tests using virtual StressDrives instead of mhvtl/real hardware.
+# Overlay for stress tests using virtual VtlDrives instead of mhvtl/real hardware.
 # Works with any scheduler backend (objectstore or pgsched).
 # For pgsched, also apply stress-scale-values.yaml on top.
 #

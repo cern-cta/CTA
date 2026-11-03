@@ -11,7 +11,7 @@
 #     → EOS FSTs (5 replicas)        file creation & workflow trigger
 #     → EOS MGM / frontend-wfe       workflow event → pgsched archive INSERT
 #     → pgsched archive queue
-#     → taped (30 StressDrives)      fetch → EOS disk read → virtual tape write
+#     → taped (30 VtlDrives)      fetch → EOS disk read → virtual tape write
 #     → pgsched disk report queue
 #     → maintd diskReportArchive     batch drain → EOS catalogue update
 #
@@ -45,25 +45,25 @@
 #   latency for fewer INSERTs; 10 ms is a good balance.
 #
 # taped nbDiskThreads — not set here (helm default 4 applies for mhvtl/real-hardware);
-#   overridden to 5 by stress-scale-values.yaml for StressDrives.
+#   overridden to 5 by stress-scale-values.yaml for VtlDrives.
 #   DiskReadThreadPool is instantiated per drive session (not shared).  For
 #   mhvtl tests with few drives, the helm default of 4 threads/drive is adequate.
-#   For StressDrive tests with 30 drives a naive high value (e.g. 40) would give
+#   For VtlDrive tests with 30 drives a naive high value (e.g. 40) would give
 #   1200 concurrent XRootD connections, saturating the EOS FSTs (5 × 256 = 1280
 #   threads) and stalling reads to seconds.  5 threads give comfortable pipeline
 #   depth: reads complete in ~1–3 ms; the adaptive mirror (triggered at each
 #   HDR1 block) sleeps for the idle time between files, mirroring the ~23 ms
 #   inter-file arrival gap at the ~43 files/s/drive queue-limited rate.
 #
-# taped bufferCount = 10 000 (mhvtl/real-hardware); overridden to 500 for StressDrives
+# taped bufferCount = 10 000 (mhvtl/real-hardware); overridden to 500 for VtlDrives
 #   MigrationMemoryManager is instantiated per DataTransferSession (not shared).
 #   With bufferSizeBytes = 256 KB (helm default): 10 000 × 256 KB = 2.56 GB/drive,
 #   suitable for mhvtl tests (1–5 drives, large files, deep pipeline needed).
-#   For 30 StressDrives with 16-byte files only 5–15 buffers are in flight per
+#   For 30 VtlDrives with 16-byte files only 5–15 buffers are in flight per
 #   drive at a time; stress-scale-values.yaml overrides to 500
 #   (128 MB/drive, 3.8 GB for 30 drives).
 #
-# taped archiveFetchBytesFiles = 20 000 files (StressDrive; see stress-scale-values.yaml)
+# taped archiveFetchBytesFiles = 20 000 files (VtlDrive; see stress-scale-values.yaml)
 #   logical_bytes_per_file = 6×80 + file_size; for file_size=16: 496 bytes/file.
 #   Capacity 29 760 080 bytes = 80 + 3 × 20 000 × 496 → exactly 3 batches/tape.
 #   ENOSPC fires on HDR1 of batch 4 file 1 → zero partial-batch requeue at tape boundaries.
@@ -71,7 +71,7 @@
 #
 # taped schedulerNumberOfConnections = 2 per drive (set below).
 #   With 2 mhvtl drives: 4 total — well within budget.
-#   With 100 StressDrives: 200 total — pgbouncer required (see budget below).
+#   With 100 VtlDrives: 200 total — pgbouncer required (see budget below).
 #
 # taped archiveDismountPolicy = "300, 3, 0, 1"
 #   startThreshold = 0 disables underfill-driven dismounts.  In stress tests
@@ -106,7 +106,7 @@ taped:
         exportTimeout: 50000
     taped:
       # Per-session buffer pool (MigrationMemoryManager): 10 000 × 256 KB = 2.56 GB/drive.
-      # Overridden to 200 by stress-scale-values.yaml for StressDrives.
+      # Overridden to 200 by stress-scale-values.yaml for VtlDrives.
       bufferCount: 10000
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
@@ -178,7 +178,7 @@ frontend-wfe:
 # ---------------------------------------------------------------------------
 # schedulerNumberOfConnections in taped is a PER-DRIVE pool: each DriveHandler
 # creates its own SchedulerDBInit.  Budget for taped = drives × conn/drive.
-# Both mhvtl and StressDrive tests use 2 conn/drive (set in this file).
+# Both mhvtl and VtlDrive tests use 2 conn/drive (set in this file).
 # ---------------------------------------------------------------------------
 # Pod                              replicas  conn/pod  subtotal
 # frontend-wfe (schedulerdb)            1       15        15

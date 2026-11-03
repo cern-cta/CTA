@@ -10,7 +10,7 @@
 #include "common/process/ProcessCap.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
-#include "taped/drive/StressDrive.hpp"
+#include "taped/drive/VtlDrive.hpp"
 #include "taped/file/HeaderChecker.hpp"
 
 #include <exception>
@@ -296,7 +296,7 @@ void cta::tape::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterf
 std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::CleanerSession::createDrive() {
   if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
     auto drive =
-      std::make_unique<cta::tape::drive::StressDrive>(m_driveInfo.driveName,
+      std::make_unique<cta::tape::drive::VtlDrive>(m_driveInfo.driveName,
                                                       m_driveInfo.logicalLibrary,
                                                       DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
     drive->info = m_driveInfo;

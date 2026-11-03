@@ -6,6 +6,8 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "mediachanger/DmcProxy.hpp"
+#include "mediachanger/MediaChangerProxy.hpp"
 
 #include <cerrno>
 #include <chrono>
@@ -19,6 +21,16 @@
 
 namespace cta::mediachanger {
 
+class MediaChangerFacadeImpl {
+public:
+  virtual void mountTapeReadOnly(const std::string& vid, const LibrarySlot& slot) = 0;
+  virtual void mountTapeReadWrite(const std::string& vid, const LibrarySlot& slot) = 0;
+  virtual void dismountTape(const std::string& vid, const LibrarySlot& slot) = 0;
+  virtual ~MediaChangerFacadeImpl() = default;
+};
+
+}  // namespace cta::mediachanger
+
 namespace {
 
 // RAII guard for the single-changer robot lock (changer/.lock).
@@ -29,9 +41,7 @@ struct ChangerGuard {
 
   ChangerGuard(const std::filesystem::path& changerDir, int timeoutMs) : lockPath(changerDir / ".lock") {
     constexpr int kRetryMs = 50;
-
     for (int waited = 0;; waited += kRetryMs) {
-      // O_CREAT|O_EXCL is atomic on POSIX: exactly one caller wins.
       int fd = ::open(lockPath.c_str(), O_CREAT | O_EXCL | O_WRONLY, 0644);
       if (fd >= 0) {
         ::close(fd);
@@ -60,157 +70,190 @@ struct ChangerGuard {
   ChangerGuard& operator=(const ChangerGuard&) = delete;
 };
 
-}  // namespace
+// Production implementation: routes between RmcProxy (SCSI changer daemon) and
+// DmcProxy (operator console prompt) based on the library slot type.
+struct HardwareChangerImpl final : cta::mediachanger::MediaChangerFacadeImpl {
+  HardwareChangerImpl(const cta::mediachanger::RmcProxy& rmcProxy, cta::log::Logger& log)
+      : m_rmcProxy(rmcProxy), m_dmcProxy(log) {}
+
+  void mountTapeReadOnly(const std::string& vid, const cta::mediachanger::LibrarySlot& slot) override {
+    try {
+      getProxy(slot).mountTapeReadOnly(vid, slot);
+    } catch (cta::exception::Exception& ne) {
+      cta::exception::Exception ex;
+      ex.getMessage() << "Failed to mount tape for read-only access: vid=" << vid << " slot=" << slot.str() << ": "
+                      << ne.getMessage().str();
+      throw ex;
+    }
+  }
+
+  void mountTapeReadWrite(const std::string& vid, const cta::mediachanger::LibrarySlot& slot) override {
+    try {
+      getProxy(slot).mountTapeReadWrite(vid, slot);
+    } catch (cta::exception::Exception& ne) {
+      cta::exception::Exception ex;
+      ex.getMessage() << "Failed to mount tape for read/write access: vid=" << vid << " slot=" << slot.str() << ": "
+                      << ne.getMessage().str();
+      throw ex;
+    }
+  }
+
+  void dismountTape(const std::string& vid, const cta::mediachanger::LibrarySlot& slot) override {
+    try {
+      getProxy(slot).dismountTape(vid, slot);
+    } catch (cta::exception::Exception& ne) {
+      cta::exception::Exception ex;
+      ex.getMessage() << "Failed to dismount tape: vid=" << vid << " slot=" << slot.str() << ": "
+                      << ne.getMessage().str();
+      throw ex;
+    }
+  }
+
+private:
+  cta::mediachanger::MediaChangerProxy& getProxy(const cta::mediachanger::LibrarySlot& slot) {
+    if (slot.isDummy()) return m_dmcProxy;
+    return m_rmcProxy;
+  }
+
+  cta::mediachanger::RmcProxy m_rmcProxy;
+  cta::mediachanger::DmcProxy m_dmcProxy;
+};
+
+// Virtual-drive implementation: simulates a single-robot-arm tape changer via
+// filesystem renames on a shared volume. Used for stress/scale testing without
+// real tape hardware.
+//
+// Directory layout (all under baseDir):
+//   config/<lib>/library.toml            — library/mediatype configuration
+//   contents/<lib>/slots/VID.tape        — tape at rest in a slot
+//   contents/<lib>/changer/VID.tape      — tape in transit (robot holds it)
+//   contents/<lib>/changer/.lock         — robot-busy flag (O_CREAT|O_EXCL)
+//   contents/<lib>/drives/<drv>/         — empty directory = no tape loaded
+//   contents/<lib>/drives/<drv>/VID.tape — tape mounted in this drive
+//
+// Mount path:    slots/ → changer/ → drives/<drv>/
+// Dismount path: drives/<drv>/ → changer/ → slots/
+//
+// Only one tape is ever in changer/ at a time; concurrent calls spin-wait on
+// .lock with a configurable timeout before throwing.
+struct VirtualChangerImpl final : cta::mediachanger::MediaChangerFacadeImpl {
+  VirtualChangerImpl(std::string driveName,
+             std::string logicalLibrary,
+             std::filesystem::path baseDir,
+             cta::log::Logger& /*log*/)
+      : m_driveName(std::move(driveName)),
+        m_logicalLibrary(std::move(logicalLibrary)),
+        m_baseDir(std::move(baseDir)) {
+    const auto contentsBase = m_baseDir / "contents" / m_logicalLibrary;
+    std::filesystem::create_directories(contentsBase / "drives" / m_driveName);
+    std::filesystem::create_directories(contentsBase / "changer");
+
+    const auto confPath = m_baseDir / "config" / m_logicalLibrary / "library.toml";
+    if (std::filesystem::exists(confPath)) {
+      const auto tbl = toml::parse_file(confPath.string());
+      if (auto v = tbl["library"]["changerTimeoutMs"].value<int>()) {
+        m_changerTimeoutMs = *v;
+      }
+    }
+  }
+
+  void mountTapeReadOnly(const std::string& vid, const cta::mediachanger::LibrarySlot& /*slot*/) override {
+    mountTape(vid, false);
+  }
+
+  void mountTapeReadWrite(const std::string& vid, const cta::mediachanger::LibrarySlot& /*slot*/) override {
+    mountTape(vid, true);
+  }
+
+  void dismountTape(const std::string& vid, const cta::mediachanger::LibrarySlot& /*slot*/) override {
+    const auto contentsBase = m_baseDir / "contents" / m_logicalLibrary;
+    const auto drivePath = contentsBase / "drives" / m_driveName / (vid + ".tape");
+    const auto changerDir = contentsBase / "changer";
+    const auto changerTape = changerDir / (vid + ".tape");
+    const auto slotPath = contentsBase / "slots" / (vid + ".tape");
+
+    if (!std::filesystem::exists(drivePath)) return;
+
+    const ChangerGuard guard(changerDir, m_changerTimeoutMs);
+    std::filesystem::rename(drivePath, changerTape);  // drives/<drv>/ → changer/
+    std::filesystem::rename(changerTape, slotPath);   // changer/ → slots/
+  }
+
+private:
+  void mountTape(const std::string& vid, bool readWrite) {
+    const auto contentsBase = m_baseDir / "contents" / m_logicalLibrary;
+    const auto slotPath = contentsBase / "slots" / (vid + ".tape");
+    const auto changerDir = contentsBase / "changer";
+    const auto changerTape = changerDir / (vid + ".tape");
+    const auto drivePath = contentsBase / "drives" / m_driveName / (vid + ".tape");
+
+    if (!std::filesystem::exists(slotPath)) {
+      if (readWrite) {
+        // First archive on this VID: create an empty tape file in the slot.
+        std::ofstream(slotPath, std::ios::binary).close();
+      } else {
+        throw cta::exception::Exception("StressMediaChanger: tape not found for retrieve: VID=" + vid + " expected at "
+                                        + slotPath.string() + " — has this tape been archived yet?");
+      }
+    }
+
+    const ChangerGuard guard(changerDir, m_changerTimeoutMs);
+    std::filesystem::rename(slotPath, changerTape);   // slots/  → changer/
+    std::filesystem::rename(changerTape, drivePath);  // changer/ → drives/<drv>/
+  }
+
+  std::string m_driveName;
+  std::string m_logicalLibrary;
+  std::filesystem::path m_baseDir;
+  int m_changerTimeoutMs = 30'000;
+};
+
+}  // anonymous namespace
+
+namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor (normal mode)
 //------------------------------------------------------------------------------
 MediaChangerFacade::MediaChangerFacade(const RmcProxy& rmcProxy, log::Logger& log)
-    : m_stressMode(false),
-      m_rmcProxy(rmcProxy),
-      m_dmcProxy(log) {}
+    : m_impl(std::make_unique<HardwareChangerImpl>(rmcProxy, log)) {}
 
 //------------------------------------------------------------------------------
-// constructor (stress mode)
+// constructor (virtual-drive mode)
 //------------------------------------------------------------------------------
 MediaChangerFacade::MediaChangerFacade(std::string driveName,
                                        std::string logicalLibraryName,
                                        std::filesystem::path stressBaseDir,
                                        log::Logger& log)
-    : m_stressMode(true),
-      m_stressDriveName(std::move(driveName)),
-      m_stressLogicalLibrary(std::move(logicalLibraryName)),
-      m_stressBaseDir(std::move(stressBaseDir)),
-      m_dmcProxy(log) {
-  // Ensure per-drive and changer directories exist.
-  const auto contentsBase = m_stressBaseDir / "contents" / m_stressLogicalLibrary;
-  std::filesystem::create_directories(contentsBase / "drives" / m_stressDriveName);
-  std::filesystem::create_directories(contentsBase / "changer");
+    : m_impl(std::make_unique<VirtualChangerImpl>(std::move(driveName),
+                                          std::move(logicalLibraryName),
+                                          std::move(stressBaseDir),
+                                          log)) {}
 
-  // Read changerTimeoutMs from library.toml; fall back to 30 s if absent.
-  const auto confPath = m_stressBaseDir / "config" / m_stressLogicalLibrary / "library.toml";
-  if (std::filesystem::exists(confPath)) {
-    const auto tbl = toml::parse_file(confPath.string());
-    if (auto v = tbl["library"]["changerTimeoutMs"].value<int>()) {
-      m_changerTimeoutMs = *v;
-    }
-  }
-}
+//------------------------------------------------------------------------------
+// destructor — defined here so unique_ptr can see the complete MediaChangerFacadeImpl type
+//------------------------------------------------------------------------------
+MediaChangerFacade::~MediaChangerFacade() = default;
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void MediaChangerFacade::mountTapeReadOnly(const std::string& vid, const LibrarySlot& slot) {
-  if (m_stressMode) {
-    stressMountTape(vid, false);
-    return;
-  }
-  try {
-    return getProxy(slot).mountTapeReadOnly(vid, slot);
-  } catch (cta::exception::Exception& ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to mount tape for read-only access: vid=" << vid << " slot=" << slot.str() << ": "
-                    << ne.getMessage().str();
-    throw ex;
-  }
+  m_impl->mountTapeReadOnly(vid, slot);
 }
 
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void MediaChangerFacade::mountTapeReadWrite(const std::string& vid, const LibrarySlot& slot) {
-  if (m_stressMode) {
-    stressMountTape(vid, true);
-    return;
-  }
-  try {
-    return getProxy(slot).mountTapeReadWrite(vid, slot);
-  } catch (cta::exception::Exception& ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to mount tape for read/write access: vid=" << vid << " slot=" << slot.str() << ": "
-                    << ne.getMessage().str();
-    throw ex;
-  }
+  m_impl->mountTapeReadWrite(vid, slot);
 }
 
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
 void MediaChangerFacade::dismountTape(const std::string& vid, const LibrarySlot& slot) {
-  if (m_stressMode) {
-    stressDismountTape(vid);
-    return;
-  }
-  try {
-    return getProxy(slot).dismountTape(vid, slot);
-  } catch (cta::exception::Exception& ne) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to dismount tape: vid=" << vid << " slot=" << slot.str() << ": "
-                    << ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getProxy
-//------------------------------------------------------------------------------
-MediaChangerProxy& MediaChangerFacade::getProxy(const LibrarySlot& slot) {
-  if (slot.isDummy()) {
-    return m_dmcProxy;
-  }
-  return m_rmcProxy;
-}
-
-//------------------------------------------------------------------------------
-// stressMountTape
-//------------------------------------------------------------------------------
-void MediaChangerFacade::stressMountTape(const std::string& vid, bool readWrite) {
-  const auto contentsBase = m_stressBaseDir / "contents" / m_stressLogicalLibrary;
-  const auto slotPath = contentsBase / "slots" / (vid + ".tape");
-  const auto changerDir = contentsBase / "changer";
-  const auto changerTape = changerDir / (vid + ".tape");
-  const auto drivePath = contentsBase / "drives" / m_stressDriveName / (vid + ".tape");
-
-  if (!std::filesystem::exists(slotPath)) {
-    if (readWrite) {
-      // First archive on this VID: create an empty tape file in the slot.
-      std::ofstream(slotPath, std::ios::binary).close();
-    } else {
-      throw cta::exception::Exception("StressMediaChanger: tape not found for retrieve: VID=" + vid + " expected at "
-                                      + slotPath.string() + " — has this tape been archived yet?");
-    }
-  }
-
-  // Acquire the single changer robot.  Only one tape may be in transit at a
-  // time (slots/ → changer/ → drives/<drv>/), matching production behaviour
-  // where a single robot arm serialises all mount requests.
-  {
-    const ChangerGuard guard(changerDir, m_changerTimeoutMs);
-    std::filesystem::rename(slotPath, changerTape);   // slots/  → changer/
-    std::filesystem::rename(changerTape, drivePath);  // changer/ → drives/<drv>/
-  }
-}
-
-//------------------------------------------------------------------------------
-// stressDismountTape
-//------------------------------------------------------------------------------
-void MediaChangerFacade::stressDismountTape(const std::string& vid) {
-  const auto contentsBase = m_stressBaseDir / "contents" / m_stressLogicalLibrary;
-  const auto drivePath = contentsBase / "drives" / m_stressDriveName / (vid + ".tape");
-  const auto changerDir = contentsBase / "changer";
-  const auto changerTape = changerDir / (vid + ".tape");
-  const auto slotPath = contentsBase / "slots" / (vid + ".tape");
-
-  // If the tape file is gone (e.g. process crashed after unloadTape), skip.
-  if (!std::filesystem::exists(drivePath)) {
-    return;
-  }
-
-  {
-    const ChangerGuard guard(changerDir, m_changerTimeoutMs);
-    std::filesystem::rename(drivePath, changerTape);  // drives/<drv>/ → changer/
-    std::filesystem::rename(changerTape, slotPath);   // changer/ → slots/
-  }
+  m_impl->dismountTape(vid, slot);
 }
 
 }  // namespace cta::mediachanger

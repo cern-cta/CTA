@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Configuration for one or more virtual (in-memory/on-disk) tape libraries used by
-# StressDrive scale tests.
+# VtlDrive scale tests.
 #
 # This chart creates:
 #   1. libraryCount PersistentVolumeClaims (one per library).

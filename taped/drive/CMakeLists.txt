@@ -5,7 +5,7 @@
 set(CTATAPEDDRIVE_LIBRARY_SRCS
   DriveGeneric.cpp
   FakeDrive.cpp
-  StressDrive.cpp
+  VtlDrive.cpp
   VirtualDrive.cpp)
 
 add_library(ctatapeddrive ${CTATAPEDDRIVE_LIBRARY_SRCS})
@@ -26,7 +26,7 @@ target_link_libraries(cta-test-tape-drive-read-write
 add_library(ctatapeddriveunittests SHARED
   DriveTest.cpp
   VirtualDriveTest.cpp
-  StressDriveTest.cpp)
+  VtlDriveTest.cpp)
 set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 

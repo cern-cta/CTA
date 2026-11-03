@@ -219,7 +219,7 @@ struct TapedConfiguration {
   // Virtual-drive mode (scale testing without real SCSI hardware or mhvtl)
   //
   // Register drives in the CTA catalogue with DriveDevice = "virtual://<base_dir>",
-  // e.g. "virtual:///cta-stress-lib".  The URI prefix selects StressDrive +
+  // e.g. "virtual:///cta-stress-lib".  The URI prefix selects VtlDrive +
   // NullMediaChangerFacade; the path component is the shared library root.
   // No StressMode or StressBaseDir config keys are required.
   //----------------------------------------------------------------------------

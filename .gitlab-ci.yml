@@ -156,7 +156,7 @@ spec:
 
     use-stress-drives:
       description: |-
-        Run the stress test with virtual StressDrives instead of mhvtl tape hardware.
+        Run the stress test with virtual VtlDrives instead of mhvtl tape hardware.
         Drives are pure in-process software objects backed by a shared PVC directory;
         no SCSI devices, kernel modules, or rmcd are needed.
       type: boolean

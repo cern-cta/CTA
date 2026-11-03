@@ -481,7 +481,7 @@ stress-scale-test:
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-pgbouncer-values.yaml
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-pgbouncer-values.yaml
       fi
-      # Scale test always uses StressDrives: 100 drives, 4 libraries.
+      # Scale test always uses VtlDrives: 100 drives, 4 libraries.
       # Override per-run via NUM_STRESS_DRIVES / NUM_STRESS_LIBRARIES CI variables.
       EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-100} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-4}"
       # File count and prequeue settings come from test_pgsched_params.toml.

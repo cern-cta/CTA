@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Prometheus overlay for stress/scale tests with virtual StressDrives.
+# Prometheus overlay for stress/scale tests with virtual VtlDrives.
 # Applied on top of dev-prometheus-values.yaml when --no-hardware-drives is used.
 #
 # Why scrape_timeout must be increased for scale tests

@@ -8,7 +8,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 #   - Creates the directory layout and blank tape files under /data
 #
 # Layout created under each PVC root:
-#   config/stress-lib-{i}/library.toml      — StressDrive configuration
+#   config/stress-lib-{i}/library.toml      — VtlDrive configuration
 #   contents/stress-lib-{i}/slots/          — VID.tape files (blank = never written)
 #   contents/stress-lib-{i}/changer/        — tape in transit; .lock = robot busy
 #   contents/stress-lib-{i}/drives/         — per-drive subdirs created by taped

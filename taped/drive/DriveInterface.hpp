@@ -180,8 +180,8 @@ public:
 
 /**
  * Abstract class used by DriveGeneric (real SCSI drives), VirtualDrive (in-memory simulation
- * base), FakeDrive (unit-test double with failure injection), and StressDrive (persistent
- * virtual drive for stress tests).
+ * base), FakeDrive (unit-test double with failure injection), and VtlDrive (persistent
+ * virtual drive for stress/scale testing).
  */
 class DriveInterface {
 public:

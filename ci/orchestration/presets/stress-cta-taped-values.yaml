@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Taped telemetry overlay for stress/scale tests with 100 virtual StressDrives.
+# Taped telemetry overlay for stress/scale tests with 100 virtual VtlDrives.
 # Applied on top of dev-cta-telemetry-values.yaml or ci-cta-telemetry-values.yaml
 # when --no-hardware-drives AND telemetry (--local-telemetry or --publish-telemetry)
 # are both active.
