@@ -203,23 +203,15 @@ int main(const int argc, char** const argv) {
 
 `lib/runtime/include/runtime/Application.hpp` owns the startup sequence and shared services. It parses the command line, loads and validates configuration, initializes logging and signals, and starts configured health and telemetry services before calling the application's `run()` method. `--config-check` exits after validation without starting the application.
 
-The runtime emits `program_starting` immediately after configuring the logger and `program_stopped` after stopping callbacks, destroying the application, and cleaning up telemetry.
-Applications also emit `program_started` after initialization and `program_stopping` when entering their shutdown path.
-These are ordinary INFO records and follow the configured log level.
-Successful service lifecycles emit each event once in the order starting, started, stopping, stopped.
-Startup failures do not emit started; stopping is only emitted if execution reaches an application shutdown path.
-When INFO logging is enabled, they bound the runtime's log stream, including handled startup failures and application exceptions.
-Pre-logger failures and help/version/config-check invocations do not emit lifecycle records; abrupt termination such as SIGKILL cannot emit a final record.
-A failed request handled by `/health/live` emits `liveness_probe_failed` at ERROR level, including when the application's liveness check throws.
-Connection failures and client-side timeouts cannot be reported by this endpoint.
+The runtime emits `program_starting` as its first message and `program_stopped` as its last message.
+Applications emit `program_started` after successful initialization and `program_stopping` when entering their shutdown path.
+Abrupt termination such as SIGKILL cannot emit `program_stopped`.
 
 The signal reactor invokes `stop()` on `SIGTERM`; the application must arrange for its work to finish and `run()` to return. `SIGHUP` refreshes the log file descriptor without reloading configuration. Register additional application signal handlers with `Application::addSignalFunction()`.
 
 When `--runtime-dir` is supplied, the runtime records configuration and process metadata there.
 `Application` reads and expands the main configuration once, saves the original and resolved text, and parses the same resolved buffer.
 This keeps the snapshots consistent with what was loaded and avoids repeated expansion. See [runtime-directory configuration](../../ops/deploy-and-configure/configuration/service-runtime.md#runtime-directory).
-
-The runtime keeps the health server and telemetry alive during application execution, including fatal-error reporting. Adding `health_server` to the configuration requires `isLive()` and `isReady()` methods. See [Readiness and Liveness](health-checks.md), [Telemetry Internals](telemetry.md), and the [C++ instrumentation guide](../guides/instrumentation/cpp.md).
 
 ## Running a runtime-based application with systemd
 
