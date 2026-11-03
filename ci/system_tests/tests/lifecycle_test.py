@@ -163,30 +163,28 @@ class TestGracefulRestart:
                 assert termination.exit_code == 0, f"Unclean SIGTERM exit: {termination}"
                 assert not termination.signal, f"Daemon was terminated by a signal: {termination}"
                 assert_daemon_is_pid_one()
-                # Readiness can precede application startup completion (notably for rmcd).
-                deadline = time.monotonic() + 120
-                while True:
-                    records = daemon.exec_with_output(f"cat {log_file}").splitlines()
-                    new_events = [json.loads(line).get("event_name") for line in records[len(previous_records) :]]
-                    if "program_started" in new_events:
-                        break
-                    assert time.monotonic() < deadline, f"{program} did not finish startup"
-                    time.sleep(0.1)
-                assert records[: len(previous_records)] == previous_records, "Logs changed during restart"
-                events = [json.loads(line).get("event_name") for line in records[len(previous_records) :]]
-                lifecycle_events = [
-                    event
-                    for event in events
-                    if event in {"program_starting", "program_started", "program_stopping", "program_stopped"}
-                ]
-                assert lifecycle_events == [
+                expected_events = [
                     "program_stopping",
                     "program_stopped",
                     "program_starting",
                     "program_started",
                 ]
-                assert events.count("program_stopped") == 1
-                assert events.count("program_starting") == 1
+                # Readiness can precede application startup completion (notably for rmcd).
+                deadline = time.monotonic() + 120
+                while True:
+                    records = daemon.exec_with_output(f"cat {log_file}").splitlines()
+                    assert records[: len(previous_records)] == previous_records, "Logs changed during restart"
+                    events = [json.loads(line).get("event_name") for line in records[len(previous_records) :]]
+                    lifecycle_events = [event for event in events if event in expected_events]
+                    # Fail immediately on duplicates or out-of-order transitions; wait only for missing events.
+                    assert lifecycle_events == expected_events[: len(lifecycle_events)], lifecycle_events
+                    if lifecycle_events == expected_events:
+                        break
+                    assert time.monotonic() < deadline, (
+                        f"{program} did not complete its restart lifecycle: {lifecycle_events!r}"
+                    )
+                    time.sleep(0.5)
+
                 # No record may appear between the old process's final log and the new process's first log.
                 assert events.index("program_starting") == events.index("program_stopped") + 1
 
