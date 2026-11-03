@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "common/config/Config.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <functional>

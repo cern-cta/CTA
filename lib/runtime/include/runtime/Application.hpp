@@ -280,14 +280,8 @@ public:
     m_signalReactorBuilder.addSignalFunction(SIGINT, [this]() { m_app->stop(); });
     // Block SIGPIPE before spawning workers so broken writes return errors instead of terminating the process.
     m_signalReactorBuilder.addSignalFunction(SIGPIPE, []() {});
-    // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
-    // Eventually SIGUSR1 will be deprecated
+    // SIGHUP reopens the log file descriptor without reloading configuration.
     m_signalReactorBuilder.addSignalFunction(SIGHUP, [this]() {
-      if (m_logPtr) {
-        m_logPtr->refresh();
-      }
-    });
-    m_signalReactorBuilder.addSignalFunction(SIGUSR1, [this]() {
       if (m_logPtr) {
         m_logPtr->refresh();
       }

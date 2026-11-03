@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "common/config/Config.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/utils/StringConversions.hpp"
 
 #include <optional>
 #include <string_view>
@@ -53,7 +53,7 @@ public:
 
 /// @brief Parses the "mode" of the [admin] TOML table
 template<>
-struct cta::common::FromString<cta::admin_api::AdminCmdMode> {
+struct cta::utils::FromString<cta::admin_api::AdminCmdMode> {
   static std::optional<cta::admin_api::AdminCmdMode> tryFrom(std::string_view text) {
     using enum cta::admin_api::AdminCmdMode;
     if (text == "all") {

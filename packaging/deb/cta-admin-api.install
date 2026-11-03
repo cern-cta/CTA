@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+etc/logrotate.d/cta-admin-api
 usr/bin/cta-admin-api
 usr/lib/systemd/system/cta-admin-api.service
 usr/share/man/man1/cta-admin-api.1

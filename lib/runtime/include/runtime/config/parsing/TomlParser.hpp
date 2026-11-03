@@ -7,8 +7,8 @@
 
 #include "ParseResult.hpp"
 #include "Reflection.hpp"
-#include "common/config/Config.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/utils/StringConversions.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace cta::runtime::parsing {
 
@@ -71,9 +72,9 @@ template<class T>
 concept TomlValueConvertible =
   requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
 
-/// Types parsed from a TOML string through a cta::common::FromString specialization (typically enums)
+/// Types parsed from a TOML string through a cta::utils::FromString specialization (typically enums)
 template<class T>
-concept FromStringParsable = cta::common::HasFromString<std::remove_cvref_t<T>>;
+concept FromStringParsable = cta::utils::HasFromString<std::remove_cvref_t<T>>;
 
 /// Empty configs, such as NoClientConfig, have special handling
 template<class T>
@@ -223,7 +224,7 @@ ParseResult parseNode(T& out,
   return ParseResult::success();
 }
 
-/// Parse a TOML string into a type providing a cta::common::FromString specialization.
+/// Parse a TOML string into a type providing a cta::utils::FromString specialization.
 template<FromStringParsable T>
 ParseResult parseNode(T& out,
                       std::string_view fieldName,
@@ -233,7 +234,7 @@ ParseResult parseNode(T& out,
   if (!str) {
     return ParseResult::error("Field '" + std::string(fieldName) + "' must be a string.");
   }
-  auto val = cta::common::FromString<std::remove_cvref_t<T>>::tryFrom(str->get());
+  auto val = cta::utils::FromString<std::remove_cvref_t<T>>::tryFrom(str->get());
   if (!val) {
     return ParseResult::error("Field '" + std::string(fieldName) + "' has an unsupported value '" + str->get() + "'.");
   }
