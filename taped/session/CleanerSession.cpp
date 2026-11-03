@@ -5,12 +5,11 @@
 
 #include "CleanerSession.hpp"
 
-#include "DataTransferConfig.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
-#include "taped/drive/VtlDrive.hpp"
+#include "taped/drive/DriveInterface.hpp"
 #include "taped/file/HeaderChecker.hpp"
 
 #include <exception>
@@ -294,27 +293,16 @@ void cta::tape::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterf
 // createDrive
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::CleanerSession::createDrive() {
-  if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
-    auto drive =
-      std::make_unique<cta::tape::drive::VtlDrive>(m_driveInfo.driveName,
-                                                      m_driveInfo.logicalLibrary,
-                                                      DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
-    drive->info = m_driveInfo;
-    return drive;
-  }
-
-  SCSI::DeviceVector dv(m_sysWrapper);
-  SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
-
-  // Instantiate the drive object
-  std::unique_ptr<cta::tape::drive::DriveInterface> drive(drive::createDrive(driveInfo, m_sysWrapper));
-
-  if (nullptr == drive.get()) {
+  auto drive = drive::createDrive(m_driveInfo.devFilename,
+                                  m_driveInfo.driveName,
+                                  m_driveInfo.logicalLibrary,
+                                  m_sysWrapper);
+  if (!drive) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
   }
-
+  drive->info = m_driveInfo;
   return drive;
 }
 

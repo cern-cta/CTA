@@ -259,13 +259,26 @@ public:
 };
 
 /**
- * Factory function that allocated the proper drive type, based on device info
+ * Factory function that allocates the proper drive type, based on device info
  * @param di deviceInfo, as found in a DeviceVector.
  * @param sw reference to the system wrapper.
  * @return pointer to the newly allocated drive object
  */
-
 std::unique_ptr<DriveInterface> createDrive(const SCSI::DeviceInfo& di, System::virtualWrapper& sw);
+
+/**
+ * Factory overload that selects the drive type from the device URI.
+ * Creates a VtlDrive for "virtual://<base_dir>" URIs (scale/stress testing without
+ * real SCSI hardware), or a DriveGeneric for all other device paths.
+ * @param devFilename Device path or "virtual://<base_dir>" URI from the CTA catalogue.
+ * @param driveName   Drive name as registered in the catalogue.
+ * @param logicalLibrary Logical library this drive belongs to.
+ * @param sw          System wrapper (unused for VtlDrive; required for SCSI scanning).
+ */
+std::unique_ptr<DriveInterface> createDrive(const std::string& devFilename,
+                                             const std::string& driveName,
+                                             const std::string& logicalLibrary,
+                                             System::virtualWrapper& sw);
 
 std::string getSerialNumber(const int& fd, System::virtualWrapper& sw);
 

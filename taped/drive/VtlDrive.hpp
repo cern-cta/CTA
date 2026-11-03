@@ -46,8 +46,8 @@ namespace cta::tape::drive {
  *      renames VID.tape: drives/<driveName>/ → changer/ → slots/.
  *
  * The drive is registered in the CTA catalogue with DriveDevice = "virtual://<base_dir>",
- * e.g. "virtual:///cta-stress-lib".  DataTransferSession::findDrive() detects the
- * "virtual://" prefix and creates a VtlDrive; the path component is the library root.
+ * e.g. "virtual:///cta-stress-lib".  drive::createDrive() detects the "virtual://"
+ * prefix and creates a VtlDrive; the path component is the library root.
  */
 class VtlDrive : public VirtualDrive {
 public:

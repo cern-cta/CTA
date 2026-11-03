@@ -27,7 +27,6 @@
 #include "common/semconv/Attributes.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
-#include "taped/drive/VtlDrive.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
@@ -622,54 +621,21 @@ cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::
  */
 cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
                                                                                     cta::TapeMount* mount) {
-  // Virtual drive: bypass SCSI scanning; base dir is the path in the "virtual://" URI.
-  if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
-    try {
-      auto drive = std::make_unique<cta::tape::drive::VtlDrive>(
-        m_driveInfo.driveName,
-        m_driveInfo.logicalLibrary,
-        DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename));
-      drive->info = m_driveInfo;
-      return drive.release();
-    } catch (cta::exception::Exception& ex) {
-      putDriveDown("Failed to create VtlDrive", mount, logContext);
-      return nullptr;
-    }
-  }
-
-  // Find the drive in the system's SCSI devices
-  cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
-  cta::tape::SCSI::DeviceInfo driveInfo;
   try {
-    driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
-  } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown("Drive not found on this path", mount, logContext);
-    return nullptr;
-  } catch (cta::exception::Exception&) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown("Error looking for path to tape drive", mount, logContext);
-    return nullptr;
-  } catch (...) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown("Unexpected exception while looking for drive", mount, logContext);
-    return nullptr;
-  }
-  try {
-    auto drive = cta::tape::drive::createDrive(driveInfo, m_sysWrapper);
-    if (drive) {
-      drive->info = m_driveInfo;
-    }
+    auto drive = cta::tape::drive::createDrive(m_driveInfo.devFilename,
+                                               m_driveInfo.driveName,
+                                               m_driveInfo.logicalLibrary,
+                                               m_sysWrapper);
+    drive->info = m_driveInfo;
     return drive.release();
-  } catch (cta::exception::Exception&) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown("Error opening tape drive", mount, logContext);
-    return nullptr;
+  } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
+    putDriveDown("Drive not found on this path", mount, logContext);
+  } catch (cta::exception::Exception& ex) {
+    putDriveDown(ex.getMessage().str(), mount, logContext);
   } catch (...) {
-    // We could not find this drive in the system's SCSI devices
     putDriveDown("Unexpected exception while opening drive", mount, logContext);
-    return nullptr;
   }
+  return nullptr;
 }
 
 //------------------------------------------------------------------------------
