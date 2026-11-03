@@ -51,7 +51,7 @@ data:
       sss_keytab_path = "/etc/cta/cta-taped.sss.keytab.grp"
 
     [experimental]
-      telemetry_enabled = {{ $.Values.telemetry.enabled }}
+      telemetry_enabled = true
 
     [drive]
       name = {{ .name | quote }}

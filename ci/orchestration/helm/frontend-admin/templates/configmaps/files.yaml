@@ -62,14 +62,12 @@ data:
 
 
     [experimental]
-      telemetry_enabled = {{ .Values.conf.telemetry.enabled }}
-    {{- if .Values.conf.telemetry.enabled }}
+      telemetry_enabled = true
 
 
     [telemetry]
       config_file = "/etc/cta/cta-otel.yaml"
       on_init_failure = "fatal"
-    {{- end }}
 
 
     [grpc]
@@ -107,7 +105,5 @@ data:
       reason = {{ .reason | quote }}
       revoked_at = {{ .revokedAt }}
     {{- end }}
-  {{- if .Values.conf.telemetry.enabled }}
   cta-otel.yaml: |-
 {{ tpl .Values.telemetryConfig . | nindent 4 }}
-  {{- end }}

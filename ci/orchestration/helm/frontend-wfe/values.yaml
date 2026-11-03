@@ -64,13 +64,10 @@ conf:
           dcache:
             - "dcache"
 
-  telemetry:
-    enabled: false
-
 # OpenTelemetry is entirely configured through declarative configuration
-# Simply put the config verbatim here under telemetryConfig (only used when conf.telemetry.enabled is true):
+# Simply put the config verbatim here under telemetryConfig:
 telemetryConfig: |
-  file_format: "1.0-rc.1"
+  file_format: "1.1"
   disabled: true
 
 pod:
