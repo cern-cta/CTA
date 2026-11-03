@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
-from collections import Counter
 
+from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_env import TestEnv
 
@@ -22,9 +22,9 @@ def test_no_coredumps(env: TestEnv) -> None:
     assert total_core_dumps_found == 0, "core dumps were found"
 
 
-def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[str]) -> None:
+def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_expectations: ErrorExpectations) -> None:
     hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd, *env.cta_maintd]
-    error_messages = []  # for summaries
+    entries = []
     for host in hosts:
         # collect logs
         cmd = f"""grep -aE '\\"log_level\\": *\\"(ERROR|CRITICAL)\\"' {host.log_file_path} || true"""
@@ -42,28 +42,9 @@ def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[st
             if not msg:
                 raise RuntimeError(f'Found error message with missing "message" field in {host.name}')
 
-            error_messages.append(msg)
+            entries.append(entry)
 
-    # No errors found :D
-    if not error_messages:
-        return
-
-    # For each message, how often did it occur
-    error_counts: dict[str, int] = Counter(error_messages)
-
-    # Evaluate against whitelist and collect violations
-    total_non_whitelisted_errors = 0
-    print("\nSummary of logged error messages:")
-    for msg, count in sorted(error_counts.items(), key=lambda x: -x[1]):
-        whitelist_prefix = "(whitelisted)"
-        prefix = " " * len(whitelist_prefix)
-        # Check if we can pattern match the message based on a pattern in the whitelist
-        if any(pattern in msg for pattern in error_whitelist):
-            prefix = whitelist_prefix
-        else:
-            total_non_whitelisted_errors += count
-        print(f'{prefix} Count: {count}, Message: "{msg}"')
-    assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"
+    error_expectations.verify(entries)
 
 
 def test_no_unexpected_restarts(env: TestEnv, restart_expectations: RestartExpectations) -> None:

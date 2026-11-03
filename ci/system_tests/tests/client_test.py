@@ -18,6 +18,7 @@ import fastjsonschema
 import pytest
 
 from system_tests.helpers.connections.remote_connection import ExecResult
+from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.hosts import (
     EOS_TAPE_FILESYSTEM_ID,
     CtaCliHost,
@@ -1574,24 +1575,28 @@ class TestRuntimeDeployment:
         print(f"Coverage complete: All {len(expected_events)} defined event types were tested.")
 
 
-def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
+def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:
     # Register errors deliberately produced by the destructive and failure-path scenarios above
-    error_whitelist.add("Task failed: counting another error for this session")
-    error_whitelist.add("In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.")
-    error_whitelist.add("File writing to disk failed")
-    error_whitelist.add(
+    error_expectations.allow_message("Task failed: counting another error for this session")
+    error_expectations.allow_message(
+        "In RecallReportPacker::ReportError::execute(): failing retrieve job after exception."
+    )
+    error_expectations.allow_message("File writing to disk failed")
+    error_expectations.allow_message(
         "Received an exception when trying to get archive file by id. Ignoring request to delete archive file."
     )
-    error_whitelist.add("In Scheduler::reportRetrieveJobsBatch(): failed to report.")
-    error_whitelist.add("In Scheduler::reportArchiveJobsBatch(): failed to report.")
-    error_whitelist.add(
+    error_expectations.allow_message("In Scheduler::reportRetrieveJobsBatch(): failed to report.")
+    error_expectations.allow_message("In Scheduler::reportArchiveJobsBatch(): failed to report.")
+    error_expectations.allow_message(
         "In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeue the "
         "request. Failing all jobs."
     )
-    error_whitelist.add("End of recall session with error(s)")
-    error_whitelist.add(
+    error_expectations.allow_message("End of recall session with error(s)")
+    error_expectations.allow_message(
         "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, "
         "diskSystem and mountId do not match."
     )
-    error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
-    error_whitelist.add("In Agent::deleteAndUnregisterSelf: agent still owns objects. Here is a part of the list.")
+    error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+    error_expectations.allow_message(
+        "In Agent::deleteAndUnregisterSelf: agent still owns objects. Here is a part of the list."
+    )

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.hosts import (
     CtaCliHost,
     CtaTapedHost,
@@ -1081,10 +1082,19 @@ def test_cta_admin_failedrequest_rm_invalid_object_id(cta_cli: CtaCliHost, postg
     ls_before = cta_cli.exec_with_output("cta-admin --json fr ls")
 
     # An object ID naming no queue must be rejected rather than deleting something else
-    for object_id in ("notanobjectid", "x:12345", "a:notanumber", "12345"):
-        with pytest.raises(RuntimeError):
+    invalid_ids = ["notanobjectid", "x:12345", "12345"]
+    # Exercise every queue prefix, including partial parses, signs and overflow.
+    invalid_ids.extend(
+        f"{prefix}:{suffix}"
+        for prefix in ("a", "r", "ra", "rr")
+        for suffix in ("", "notanumber", "123junk", "-1", "+1", "18446744073709551616")
+    )
+    for object_id in invalid_ids:
+        with pytest.raises(RuntimeError) as error:
             print(f"Expected failure after removing a failed request with object ID '{object_id}':")
             cta_cli.exec(f"cta-admin fr rm -o {object_id}")
+        assert "failed with exit code 2" in str(error.value)
+        assert f"Invalid failed request object ID: {object_id}" in str(error.value)
 
     assert cta_cli.exec_with_output("cta-admin --json fr ls") == ls_before
 
@@ -1232,7 +1242,10 @@ def test_cta_admin_failedrequest_with_failed_jobs(
 
 
 def test_cta_admin_failedrequest_ls_error_reporting(
-    cta_cli: CtaCliHost, scheduler_postgres: SchedulerPostgresHost, postgres_scheduler_enabled: bool
+    cta_cli: CtaCliHost,
+    scheduler_postgres: SchedulerPostgresHost,
+    postgres_scheduler_enabled: bool,
+    error_expectations: ErrorExpectations,
 ) -> None:
     """Check that a failing `fr ls` reports its error message and exits with the right code.
 
@@ -1248,6 +1261,17 @@ def test_cta_admin_failedrequest_ls_error_reporting(
     """
     if not postgres_scheduler_enabled:
         pytest.skip("Both scenarios below are specific to the postgres scheduler")
+
+    # Only the deliberately corrupt row should produce an internal server error.
+    error_expectations.expect(
+        {
+            "program": "cta-admin-api",
+            "message": "Streaming admin command failed",
+            "command": "failedrequest",
+            "subcommand": "ls",
+            "reason": "Column JOB_ID contains the value -1 which is not a valid unsigned integer",
+        }
+    )
 
     # A UserError, rejected by FailedRequestLsResponseStream's constructor before any row is
     # streamed: --log and --summary are mutually exclusive. Delivered as a gRPC INVALID_ARGUMENT
@@ -1284,6 +1308,6 @@ def test_cta_admin_failedrequest_ls_error_reporting(
     cta_cli.exec("cta-admin fr ls")
 
 
-def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
-    error_whitelist.add("In Scheduler::getDesiredDriveState(): no such drive")
-    error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:
+    error_expectations.allow_message("In Scheduler::getDesiredDriveState(): no such drive")
+    error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")

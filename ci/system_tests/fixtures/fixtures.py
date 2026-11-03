@@ -12,6 +12,7 @@ from typing import Any, Optional
 
 import pytest
 from _pytest.fixtures import SubRequest
+from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.hosts import (
     CtaAdminApiHost,
     CtaCliHost,
@@ -89,9 +90,9 @@ def make_tests_look_pretty(request: SubRequest) -> Iterator[None]:
 
 
 @pytest.fixture(scope="session")
-def error_whitelist() -> set[str]:
-    """Mutable whitelist that individual test cases can add errors to."""
-    return set()  # mutable whitelist shared between all tests
+def error_expectations() -> ErrorExpectations:
+    """Track counted error expectations and unlimited allowances across the suite."""
+    return ErrorExpectations()
 
 
 @pytest.fixture(scope="session")

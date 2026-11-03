@@ -12,6 +12,7 @@ from typing import Annotated, Any, Optional
 
 import pytest
 
+from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.utils import Timeout
@@ -1239,7 +1240,7 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
     repack_buffer_dir: Path,
     repack_mp_name: str,
     disk_instance_name: str,
-    error_whitelist: set[str],
+    error_expectations: ErrorExpectations,
 ) -> None:
     """Regression: repack must transition to 'Failed' when all retrieve transfers fail.
 
@@ -1279,12 +1280,14 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
         cta_cli.wait_for_repack_request_expansion(vid, wait_timeout_secs=60)
 
         # Expected log noise from failed XRootD writes and terminated mount sessions.
-        error_whitelist.add("Notified client of end session with error")
-        error_whitelist.add("Failed to open file for write")
-        error_whitelist.add("File writing to disk failed")
-        error_whitelist.add("Task failed: counting another error for this session")
-        error_whitelist.add("In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.")
-        error_whitelist.add("End of recall session with error(s)")
+        error_expectations.allow_message("Notified client of end session with error")
+        error_expectations.allow_message("Failed to open file for write")
+        error_expectations.allow_message("File writing to disk failed")
+        error_expectations.allow_message("Task failed: counting another error for this session")
+        error_expectations.allow_message(
+            "In RecallReportPacker::ReportError::execute(): failing retrieve job after exception."
+        )
+        error_expectations.allow_message("End of recall session with error(s)")
 
         # Wait for transfers and failure reporting to finish, including mount startup.
         # Idle drives and an empty queue do not imply completion: jobs may already be assigned to a mount.
@@ -1335,10 +1338,10 @@ def test_repack_job_stuck_running_when_all_retrieves_fail(
             eos_mgm.exec(f"eos chmod 777 {repack_buffer_dir}/{vid}")
 
 
-def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
-    error_whitelist.add("Aborting recall mount startup: empty mount")
-    error_whitelist.add("Notified client of end session with error")
-    error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:
+    error_expectations.allow_message("Aborting recall mount startup: empty mount")
+    error_expectations.allow_message("Notified client of end session with error")
+    error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
     # Rest of the error is "root://ctaeos//eos/ctaeos/repack/ULT101/ directory" However, we just do a partial match to
     # prevent having to specify the exact dir
-    error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://")
+    error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://")
