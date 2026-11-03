@@ -163,16 +163,7 @@ public:
     m_argParser.withDescription(description);
   }
 
-  ~Application() {
-    if (m_logPtr) {
-      cta::log::Logger& log = *m_logPtr;
-      log(log::INFO,
-          "Exiting " + m_appName,
-          {
-            {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramExiting}
-      });
-    }
-  }
+  ~Application() = default;
 
   /**
    * @brief Add support for additional signals to the application.
@@ -240,8 +231,24 @@ public:
     }
 
     auto config = runtime::loadFromTomlString<TConfig>(document.resolved, document.sourcePath, cliOptions.configStrict);
+    // Local ownership keeps the logger alive until every cleanup guard has finished.
+    std::unique_ptr<log::Logger> logPtr;
+    // Registered first so that destruction order does not destroy the logger before its consumers are destroyed
+    const utils::ScopeExit loggingCleanup([this, &logPtr] {
+      if (logPtr) {
+        (*logPtr)(log::INFO,
+                  "Stopped " + m_appName,
+                  {
+                    {semconv::log::eventName, semconv::log::EventNameValues::kProgramStopped}
+        });
+      }
+    });
     // Destroy config consumers before destroying the config.
-    const utils::ScopeExit telemetryCleanup([this] { cleanupTelemetry(); });
+    const utils::ScopeExit telemetryCleanup([this, &logPtr] {
+      if (logPtr) {
+        cleanupTelemetry(*logPtr);
+      }
+    });
     const utils::ScopeExit appCleanup([this] { m_app.reset(); });
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
@@ -272,49 +279,43 @@ public:
       utils::copyFile("/usr/share/cta/" + loggingSchemaName, cliOptions.runtimeDir + "/" + loggingSchemaName, true);
     }
 
-    m_logPtr = initLogger(config, cliOptions);
+    logPtr = initLogger(config, cliOptions);
+    cta::log::Logger& log = *logPtr;
 
-    // We need to start the reactor builder here as we may want to register custom signals.
-    // It is also for that reason that we don't build the actual SignalReactor just yet.
-    m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app->stop(); });
-    m_signalReactorBuilder.addSignalFunction(SIGINT, [this]() { m_app->stop(); });
-    // Block SIGPIPE before spawning workers so broken writes return errors instead of terminating the process.
-    m_signalReactorBuilder.addSignalFunction(SIGPIPE, []() {});
-    // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
-    // Eventually SIGUSR1 will be deprecated
-    m_signalReactorBuilder.addSignalFunction(SIGHUP, [this]() {
-      if (m_logPtr) {
-        m_logPtr->refresh();
-      }
+    log(log::INFO,
+        "Starting " + m_appName,
+        {
+          {semconv::log::eventName, semconv::log::EventNameValues::kProgramStarting}
     });
-    m_signalReactorBuilder.addSignalFunction(SIGUSR1, [this]() {
-      if (m_logPtr) {
-        m_logPtr->refresh();
-      }
-    });
-    // Both the signal and health server must outlive the app run
-    // Note that they live outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
-    auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
+
+    // Keep callbacks alive through fatal-error reporting, then stop them before destroying the app.
+    std::unique_ptr<SignalReactor> signalReactor;
     std::unique_ptr<HealthServer> healthServer;
 
-    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer, &signalReactor]() {
-      cta::log::Logger& log = *m_logPtr;
-      log(log::INFO,
-          "Starting " + m_appName,
-          {
-            {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarting}
-      });
+    return safeRunWithLog(log, [this, &log, &config, &cliOptions, &signalReactor, &healthServer]() {
+      // We need to start the reactor builder here as we may want to register custom signals.
+      // It is also for that reason that we don't build the actual SignalReactor just yet.
+      m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app->stop(); });
+      m_signalReactorBuilder.addSignalFunction(SIGINT, [this]() { m_app->stop(); });
+      // Block SIGPIPE before spawning workers so broken writes return errors instead of terminating the process.
+      m_signalReactorBuilder.addSignalFunction(SIGPIPE, []() {});
+      // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
+      // Eventually SIGUSR1 will be deprecated
+      m_signalReactorBuilder.addSignalFunction(SIGHUP, [&log]() { log.refresh(); });
+      m_signalReactorBuilder.addSignalFunction(SIGUSR1, [&log]() { log.refresh(); });
+      // Direct construction from the builder's result supports the non-movable reactor.
+      signalReactor.reset(new SignalReactor(m_signalReactorBuilder.build(log)));
 
-      signalReactor.start();
+      signalReactor->start();
       // We dynamically add/init the relevant parts depending on what is in the config type.
       if constexpr (HasHealthServerConfig<TConfig>) {
         static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
                       "Config has health_server, but app type lacks isReady()/isLive() methods");
-        healthServer = initHealthServer(config, cliOptions);
+        healthServer = initHealthServer(config, cliOptions, log);
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {
-        initTelemetry(config);
+        initTelemetry(config, log);
       }
 
       if constexpr (HasXRootDConfig<TConfig>) {
@@ -335,11 +336,7 @@ public:
 
 private:
   // OpenTelemetry cleanup is idempotent, so attempt it even after partial initialization.
-  void cleanupTelemetry() noexcept {
-    if (!m_logPtr) {
-      return;
-    }
-    auto& log = *m_logPtr;
+  void cleanupTelemetry(log::Logger& log) noexcept {
     log::LogContext lc(log);
     try {
       cta::telemetry::cleanupOpenTelemetry(lc);
@@ -391,7 +388,7 @@ private:
     return logPtr;
   }
 
-  std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions) {
+  std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions, log::Logger& log) {
     if (config.health_server.enabled) {
       std::string host;
       uint16_t port;
@@ -412,7 +409,7 @@ private:
       }
 
       auto healthServer = std::make_unique<HealthServer>(
-        *m_logPtr,
+        log,
         host,
         port,
         [this]() { return m_app->isReady(); },
@@ -423,7 +420,7 @@ private:
     return nullptr;
   }
 
-  void initTelemetry(const TConfig& config) {
+  void initTelemetry(const TConfig& config, log::Logger& log) {
     if (!config.experimental.telemetry_enabled || config.telemetry.config_file.empty()) {
       return;
     }
@@ -431,7 +428,7 @@ private:
       throw exception::UserError("Unsupported value for telemetry.on_init_failure: '" + config.telemetry.on_init_failure
                                  + "'. Must be one of [fatal, warn].");
     }
-    log::LogContext lc(*m_logPtr);
+    log::LogContext lc(log);
 
     std::map<std::string, std::string> customAttributes;
     if constexpr (HasStaticTelemetryAttributes<TApp, TConfig>) {
@@ -499,7 +496,6 @@ private:
   }
 
   const std::string m_appName;
-  std::unique_ptr<log::Logger> m_logPtr;
 
   ArgParser<TOpts> m_argParser;
   // The actual application class

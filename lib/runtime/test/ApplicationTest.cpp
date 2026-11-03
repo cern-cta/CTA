@@ -23,6 +23,23 @@
 
 namespace unitTests {
 
+// Check the entire log stream, including cleanup records, rather than only lifecycle events.
+void expectLifecycleBoundaries(const std::string& path) {
+  std::ifstream input(path);
+  std::vector<std::string> lines;
+  for (std::string line; std::getline(input, line);) {
+    lines.push_back(line);
+  }
+  ASSERT_GE(lines.size(), 2);
+  EXPECT_NE(std::string::npos, lines.front().find("program_starting"));
+  EXPECT_NE(std::string::npos, lines.back().find("program_stopped"));
+  for (const auto* event : {"program_starting", "program_stopped"}) {
+    EXPECT_EQ(1, std::count_if(lines.begin(), lines.end(), [event](const auto& line) {
+                return line.find(event) != std::string::npos;
+              }));
+  }
+}
+
 TEST(Application, LegacyTelemetryServiceNameUsesDots) {
   EXPECT_EQ("cta.maintd", cta::runtime::legacyTelemetryServiceName("cta-maintd"));
   EXPECT_EQ("cta.maintd", cta::runtime::legacyTelemetryServiceName("cta.maintd"));
@@ -441,13 +458,14 @@ TEST_P(ApplicationShutdownSignalTest, RequestsOrderlyShutdown) {
 
   TempFile f(R"toml(
 [logging]
-level = "WARNING"
+level = "INFO"
 format = "json"
 )toml",
              ".toml");
 
   const std::string appName = "cta-test";
-  Argv args({appName, "--config", f.path()});
+  TempFile logs;
+  Argv args({appName, "--config", f.path(), "--log-file", logs.path()});
   runtime::Application<TestStoppableApp, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
   std::atomic<int> signalResult = -1;
   std::jthread signalSender([&]() {
@@ -464,6 +482,7 @@ format = "json"
 
   EXPECT_EQ(0, signalResult);
   EXPECT_EQ(EXIT_SUCCESS, rc);
+  expectLifecycleBoundaries(logs.path());
 }
 
 INSTANTIATE_TEST_SUITE_P(Application, ApplicationShutdownSignalTest, testing::Values(SIGTERM, SIGINT));
@@ -605,11 +624,45 @@ TEST(Application, DestroysAppBeforeTelemetryAndAfterCallbacks) {
     EXPECT_NE(std::string::npos, destroyed);
     EXPECT_NE(std::string::npos, telemetryStopped);
     EXPECT_LT(destroyed, telemetryStopped);
+    expectLifecycleBoundaries(logs.path());
     if (throwFromRun) {
       EXPECT_LT(output.find("Fatal unexpected exception"), destroyed);
     }
     LifecycleApp::state = nullptr;
   }
+}
+
+TEST(Application, SignalSetupFailureIsLoggedBetweenLifecycleBoundaries) {
+  using namespace cta;
+  TempFile logs;
+  TempFile config("[logging]\nlevel = \"INFO\"\nformat = \"json\"\n", ".toml");
+  runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions> app("cta-test", "");
+  // Duplicate registration fails before the reactor is constructed or application execution begins.
+  app.addSignalFunction(SIGTERM, &TestApp::stop);
+  Argv args({"cta-test", "--config", config.path(), "--log-file", logs.path()});
+  EXPECT_EQ(EXIT_FAILURE, app.run(args.count, args.data()));
+  expectLifecycleBoundaries(logs.path());
+  std::ifstream input(logs.path());
+  const std::string output((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+  EXPECT_NE(std::string::npos, output.find("Fatal unexpected CTA exception"));
+}
+
+TEST(Application, LifecycleEventsRespectSeverityFiltering) {
+  using namespace cta;
+  LifecycleState state;
+  LifecycleApp::state = &state;
+  TempFile logs;
+  TempFile config("[logging]\nlevel = \"EMERG\"\nformat = \"json\"\n", ".toml");
+  {
+    runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
+    Argv args({"cta-test", "--config", config.path(), "--log-file", logs.path()});
+    EXPECT_EQ(EXIT_SUCCESS, app.run(args.count, args.data()));
+    EXPECT_EQ(1, state.destructions);
+  }
+  std::ifstream input(logs.path());
+  const std::string output((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+  EXPECT_TRUE(output.empty());
+  LifecycleApp::state = nullptr;
 }
 
 TEST(Application, LoggerInitializationFailureStillDestroysAppBeforeConfig) {
@@ -632,19 +685,21 @@ TEST(Application, InitializationFailureDestroysAppBeforeConfigLeavesScope) {
   using namespace cta;
   LifecycleState state;
   LifecycleApp::state = &state;
+  TempFile logs;
   TempFile invalidTelemetry("not valid SDK configuration: [", ".yaml");
-  TempFile config("[logging]\nlevel = \"WARNING\"\nformat = \"json\"\n"
+  TempFile config("[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
                   "[experimental]\ntelemetry_enabled = true\n"
                   "[telemetry]\non_init_failure = \"fatal\"\nconfig_file = \""
                     + invalidTelemetry.path() + "\"\n",
                   ".toml");
   {
     runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
-    Argv args({"cta-test", "--config", config.path()});
+    Argv args({"cta-test", "--config", config.path(), "--log-file", logs.path()});
     EXPECT_EQ(EXIT_FAILURE, app.run(args.count, args.data()));
     EXPECT_EQ(1, state.destructions);
   }
   EXPECT_EQ(1, state.destructions);
+  expectLifecycleBoundaries(logs.path());
   LifecycleApp::state = nullptr;
 }
 

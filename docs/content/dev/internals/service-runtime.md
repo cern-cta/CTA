@@ -203,6 +203,13 @@ int main(const int argc, char** const argv) {
 
 `lib/runtime/include/runtime/Application.hpp` owns the startup sequence and shared services. It parses the command line, loads and validates configuration, initializes logging and signals, and starts configured health and telemetry services before calling the application's `run()` method. `--config-check` exits after validation without starting the application.
 
+The runtime emits `program_starting` immediately after configuring the logger and `program_stopped` after stopping callbacks, destroying the application, and cleaning up telemetry.
+These are ordinary INFO records and follow the configured log level.
+When INFO logging is enabled, they bound the runtime's log stream, including handled startup failures and application exceptions.
+Pre-logger failures and help/version/config-check invocations do not emit lifecycle records; abrupt termination such as SIGKILL cannot emit a final record.
+A failed request handled by `/health/live` emits `liveness_probe_failed` at ERROR level, including when the application's liveness check throws.
+Connection failures and client-side timeouts cannot be reported by this endpoint.
+
 The signal reactor invokes `stop()` on `SIGTERM`; the application must arrange for its work to finish and `run()` to return. `SIGHUP` refreshes the log file descriptor without reloading configuration. Register additional application signal handlers with `Application::addSignalFunction()`.
 
 When `--runtime-dir` is supplied, the runtime records configuration and process metadata there.

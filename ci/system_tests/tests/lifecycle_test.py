@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import shlex
 import time
 import uuid
@@ -129,6 +130,10 @@ class TestGracefulRestart:
         pid = daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}")
         assert pid == "1", f"Expected {daemon.process_name} as PID 1, got {pid!r}"
 
+        # The log volume survives a container restart. Snapshot complete records before sending SIGTERM.
+        log_file = shlex.quote(str(daemon.log_file_path))
+        previous_records = daemon.exec_with_output(f"cat {log_file}").splitlines()
+
         try:
             with restart_expectations.expect_container_restarts(daemon):
                 # Detach the sender so the exec connection closes before container shutdown.
@@ -140,6 +145,14 @@ class TestGracefulRestart:
                 assert termination.exit_code == 0, f"Unclean SIGTERM exit: {termination}"
                 assert not termination.signal, f"Daemon was terminated by a signal: {termination}"
                 assert daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}") == "1"
+                records = daemon.exec_with_output(f"cat {log_file}").splitlines()
+                assert records[: len(previous_records)] == previous_records, "Logs changed during restart"
+                events = [json.loads(line).get("event_name") for line in records[len(previous_records) :]]
+                assert events.count("program_stopped") == 1
+                assert events.count("program_starting") == 1
+                # No record may appear between the old process's final log and the new process's first log.
+                assert events.index("program_starting") == events.index("program_stopped") + 1
+
                 if daemon_fixture == "cta_rmcd":
                     # Readiness alone does not prove the restarted media changer can serve requests.
                     daemon.list_tapes_in_library()
