@@ -24,15 +24,24 @@ DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
     return decision;
   }
 
-  // Recovery takes precedence over auto_up, including when recovery is disabled.
-  if (previous->desiredUp) {
-    return {.action = config.preserve_desired_up ? Action::RecoverExistingUp : Action::RequireOperatorUp};
-  }
-
   DriveStartupDecision decision;
   auto& desired = decision.desiredState;
+  desired.forceDown = previous->desiredForceDown;
   desired.reason = previous->reasonUpDown;
   desired.comment = previous->userComment;
+
+  // Recovery takes precedence over auto_up, including when recovery is disabled.
+  if (previous->desiredUp) {
+    if (config.preserve_desired_up) {
+      decision.action = Action::RecoverExistingUp;
+      desired.up = true;
+    } else {
+      decision.action = Action::RequireOperatorUp;
+      desired.forceDown = false;
+      desired.reason = formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled);
+    }
+    return decision;
+  }
 
   if (desired.reason && classifyPersistedDriveReason(*desired.reason) == PersistedDriveReasonKind::CleanShutdown) {
     desired.reason = formatDriveDownReason(DriveDownReason::Startup);

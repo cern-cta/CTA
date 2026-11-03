@@ -173,7 +173,7 @@ flowchart TB
 
 #### On startup
 
-1. Register the configured drive name, which identifies its catalogue entry. Create an entry if none exists; for an existing entry, require its host and logical library to match the daemon configuration.
+1. Register the configured drive name, which identifies its catalogue entry. For an existing entry, require its host and logical library to match the daemon configuration. The entry is then (re)created so its version, device and library slot reflect the running daemon, carrying over the desired state chosen below.
 2. Decide whether to request desired `Up` automatically, using the catalogue state found before registration as described below.
 3. Wait for the configured logical library to exist before starting drive sessions. Scheduling requires this entry, but the catalogue allows a drive to reference a library that does not yet exist.
 

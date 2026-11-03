@@ -162,8 +162,8 @@ TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
   previousDrive->desiredUp = true;
 
   EXPECT_CALL(driveState(),
-              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
-                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))))
+              createTapeDrive(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                             testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))))
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
@@ -177,14 +177,26 @@ TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->reasonUpDown = "Operator requested Up";
+  previousDrive->userComment = "Inspect drive";
+  previousDrive->ctaVersion = "stale-version";
+  previousDrive->devFileName = "/dev/stale";
+  previousDrive->rawLibrarySlot = "stale-slot";
+  config.drive.device = "/dev/nst0";
+  config.drive.control_path = "smc0";
+  daemon = std::make_unique<TapeDaemon>(config, logger, *catalogue, *context);
   testing::InSequence sequence;
 
-  EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
-  // Truly matches every drive while avoiding GCC 14 warnings in gMock's wildcard matcher.
-  EXPECT_CALL(driveState(), createTapeDrive(testing::Truly([](const TapeDrive&) { return true; }))).Times(0);
-  EXPECT_CALL(driveState(),
-              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
-                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
+  // The entry is recreated so installation details from the previous daemon are not kept.
+  EXPECT_CALL(driveState(), createTapeDrive(_)).WillOnce(Invoke([](const TapeDrive& published) {
+    EXPECT_EQ(MountType::NoMount, published.mountType);
+    EXPECT_EQ(DriveStatus::Down, published.driveStatus);
+    EXPECT_TRUE(published.desiredUp);
+    EXPECT_EQ("Operator requested Up", published.reasonUpDown);
+    EXPECT_EQ("Inspect drive", published.userComment);
+    EXPECT_NE("stale-version", published.ctaVersion);
+    EXPECT_EQ("/dev/nst0", published.devFileName);
+    EXPECT_EQ("smc0", published.rawLibrarySlot);
+  }));
   EXPECT_CALL(driveConfig(),
               createTapeDriveConfig("drive",
                                     "general",
@@ -193,32 +205,27 @@ TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
                                     "TOML config file"));
   EXPECT_TRUE(registerDrive());
   EXPECT_TRUE(daemon->isReady());
-  EXPECT_TRUE(previousDrive->desiredUp);
-  EXPECT_EQ("Operator requested Up", previousDrive->reasonUpDown);
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("startupRecoveryEnabled=\"1\""));
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Preparing drive for recovery."));
 }
 
-TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotAutoUp) {
+TEST_F(TapeDaemonTest, DisabledRecoveryRecreatesEntryDownAndDoesNotAutoUp) {
   config.drive.lifecycle.startup.auto_up = true;
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->userComment = "Inspect drive";
+  testing::InSequence sequence;
 
-  EXPECT_CALL(driveState(), createTapeDrive(testing::Truly([](const TapeDrive&) { return true; }))).Times(0);
-  EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _))
-    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired) {
-      EXPECT_FALSE(desired.up);
-      EXPECT_FALSE(desired.comment);
-      ASSERT_TRUE(desired.reason);
-      EXPECT_THAT(desired.reason,
-                  testing::Optional(testing::MatchesRegex(
-                    R"(\[cta-taped\] Daemon started: desired Up detected, but startup recovery is disabled)")));
-      previousDrive->desiredUp = desired.up;
-    }));
-  EXPECT_CALL(driveState(),
-              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
-                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
+  EXPECT_CALL(driveState(), createTapeDrive(_)).WillOnce(Invoke([](const TapeDrive& published) {
+    EXPECT_EQ(MountType::NoMount, published.mountType);
+    EXPECT_EQ(DriveStatus::Down, published.driveStatus);
+    EXPECT_FALSE(published.desiredUp);
+    EXPECT_FALSE(published.desiredForceDown);
+    EXPECT_EQ("Inspect drive", published.userComment);
+    EXPECT_THAT(published.reasonUpDown,
+                testing::Optional(testing::MatchesRegex(
+                  R"(\[cta-taped\] Daemon started: desired Up detected, but startup recovery is disabled)")));
+  }));
   EXPECT_CALL(driveConfig(),
               createTapeDriveConfig("drive",
                                     "general",
@@ -226,8 +233,6 @@ TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotAutoUp) {
                                     config.scheduler.backend_name,
                                     "TOML config file"));
   EXPECT_TRUE(registerDrive());
-  EXPECT_FALSE(previousDrive->desiredUp);
-  EXPECT_EQ("Inspect drive", previousDrive->userComment);
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("drive_desired_up_at_startup"));
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("startupRecoveryEnabled=\"0\""));
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("operator Up required"));

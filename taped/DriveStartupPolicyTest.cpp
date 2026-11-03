@@ -51,15 +51,25 @@ TEST(DriveStartupPolicyTest, ExistingUpUsesPreserveDesiredUpBeforeAutoUp) {
       SCOPED_TRACE(autoUp);
       for (const bool registrationUp : {false, true}) {
         SCOPED_TRACE(registrationUp);
-        EXPECT_EQ(
-          Action::RecoverExistingUp,
-          decideDriveStartup({.preserve_desired_up = true, .auto_up = autoUp}, {.desired_up = registrationUp}, previous)
-            .action);
-        EXPECT_EQ(Action::RequireOperatorUp,
-                  decideDriveStartup({.preserve_desired_up = false, .auto_up = autoUp},
-                                     {.desired_up = registrationUp},
-                                     previous)
-                    .action);
+        const auto recovered = decideDriveStartup({.preserve_desired_up = true, .auto_up = autoUp},
+                                                  {.desired_up = registrationUp},
+                                                  previous);
+        EXPECT_EQ(Action::RecoverExistingUp, recovered.action);
+        EXPECT_TRUE(recovered.desiredState.up);
+        EXPECT_FALSE(recovered.desiredState.forceDown);
+        EXPECT_EQ("Operator requested Up", recovered.desiredState.reason);
+        EXPECT_EQ("Inspect drive", recovered.desiredState.comment);
+
+        const auto required = decideDriveStartup({.preserve_desired_up = false, .auto_up = autoUp},
+                                                 {.desired_up = registrationUp},
+                                                 previous);
+        EXPECT_EQ(Action::RequireOperatorUp, required.action);
+        EXPECT_FALSE(required.desiredState.up);
+        EXPECT_FALSE(required.desiredState.forceDown);
+        EXPECT_EQ(common::dataStructures::formatDriveDownReason(
+                    common::dataStructures::DriveDownReason::StartupRecoveryDisabled),
+                  required.desiredState.reason);
+        EXPECT_EQ("Inspect drive", required.desiredState.comment);
       }
     }
   }
@@ -117,6 +127,23 @@ TEST(DriveStartupPolicyTest, ExistingDownPreservesSpecificReasonsAndComments) {
         }
       }
     }
+  }
+}
+
+TEST(DriveStartupPolicyTest, ExistingDownPreservesForceDown) {
+  std::optional<TapeDrive> previous {TapeDrive {}};
+  previous->desiredUp = false;
+  previous->desiredForceDown = true;
+  previous->reasonUpDown = "Maintenance";
+
+  for (const bool autoUp : {false, true}) {
+    SCOPED_TRACE(autoUp);
+    const auto decision = decideDriveStartup({.preserve_desired_up = true, .auto_up = autoUp}, {}, previous);
+
+    EXPECT_EQ(Action::Register, decision.action);
+    EXPECT_FALSE(decision.desiredState.up);
+    EXPECT_TRUE(decision.desiredState.forceDown);
+    EXPECT_EQ("Maintenance", decision.desiredState.reason);
   }
 }
 

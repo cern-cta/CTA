@@ -19,7 +19,7 @@ struct DriveStartupDecision {
   enum class Action { Register, RecoverExistingUp, RequireOperatorUp };
   Action action = Action::Register;
 
-  /// Initial operator intent for Register; recovery actions retain the existing catalogue entry.
+  /// Desired state written when the catalogue entry is (re)created at startup.
   common::dataStructures::DesiredDriveState desiredState {};
 };
 
@@ -29,7 +29,7 @@ struct DriveStartupDecision {
 /// This takes precedence over auto_up.
 /// A missing catalogue entry uses registration.desired_up, independently of the startup settings.
 /// Existing desired-Down entries use config.auto_up only with the recorded daemon-shutdown reason.
-/// Retain existing comments and other Down reasons even when recreating an existing catalogue entry.
+/// Retain existing comments, force flags and other Down reasons when recreating an existing catalogue entry.
 DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
                                         const DriveRegistrationConfig& registration,
                                         const std::optional<common::dataStructures::TapeDrive>& previous);

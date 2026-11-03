@@ -243,33 +243,25 @@ bool TapeDaemon::registerDrive() {
     decideDriveStartup(m_config.drive.lifecycle.startup, m_config.drive.lifecycle.registration, previous);
   using namespace common::dataStructures;
   using Action = DriveStartupDecision::Action;
+  // Always recreate the entry so version, device, library slot and host are refreshed.
+  driveStateCatalogue.createTapeDriveStatus(m_driveInfo,
+                                            decision.desiredState,
+                                            MountType::NoMount,
+                                            DriveStatus::Down,
+                                            SecurityIdentity {},
+                                            m_lc);
   std::string message;
-
   switch (decision.action) {
     case Action::RecoverExistingUp:
-      // Preserve operator intent while drive preparation establishes readiness for tape work.
-      driveStateCatalogue.reportDriveState(m_driveInfo, {.state = ReportedDriveState::Down}, m_lc);
       message = "Reset reported drive status to Down. Preparing drive for recovery.";
       break;
     case Action::RequireOperatorUp:
-      driveStateCatalogue.requestDriveDown(m_driveInfo.driveName,
-                                           DriveDownRequest::forDaemon(DriveDownReason::StartupRecoveryDisabled),
-                                           m_lc);
-      driveStateCatalogue.reportDriveState(m_driveInfo, {.state = ReportedDriveState::Down}, m_lc);
       message = "Startup recovery disabled. Set drive Down; operator Up required.";
       break;
-    case Action::Register: {
-      const SecurityIdentity securityIdentity;
-      driveStateCatalogue.createTapeDriveStatus(m_driveInfo,
-                                                decision.desiredState,
-                                                MountType::NoMount,
-                                                DriveStatus::Down,
-                                                securityIdentity,
-                                                m_lc);
+    case Action::Register:
       message = "Drive registered with reported status down and desired state "
                 + std::string(decision.desiredState.up ? "up." : "down.");
       break;
-    }
   }
 
   // Readiness is published only after registration and backend publication both succeed.
