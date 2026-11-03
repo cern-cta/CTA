@@ -11,6 +11,7 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/ExceptionLogging.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/semconv/Logging.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
@@ -21,6 +22,7 @@
 #include <exception>
 #include <memory>
 #include <optional>
+#include <string>
 #include <unistd.h>
 
 namespace cta::tape::daemon {
@@ -84,7 +86,7 @@ int TapeDaemon::run() {
     // An absent logical library can appear later; wait to avoid transient scheduling errors.
     waitForLogicalLibrary();
     m_lc.logger()(cta::log::INFO,
-                  "Started cta-taped",
+                  std::string("Started ") + cta::semconv::attr::ServiceNameValues::kCtaTaped,
                   {
                     {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
     });
@@ -118,7 +120,7 @@ int TapeDaemon::run() {
 
 int TapeDaemon::shutdown(ExitCause cause, bool putDriveDown, std::string_view exceptionMsg) {
   m_lc.logger()(cta::log::INFO,
-                "Stopping cta-taped",
+                std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaTaped,
                 {
                   {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
   });

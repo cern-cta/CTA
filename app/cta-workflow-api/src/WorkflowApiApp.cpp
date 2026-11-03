@@ -8,10 +8,13 @@
 #include "CtaRpcWfeImpl.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/LogLevel.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "grpc-server/auth/jwt/JwtAuthFactory.hpp"
 #include "grpc-server/server/ServerBuilderHelper.hpp"
 #include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "service-resources/ServiceResources.hpp"
+
+#include <string>
 
 namespace cta::workflow_api {
 
@@ -25,7 +28,7 @@ void WorkflowApiApp::stop() {
 
 int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-  lc.log(cta::log::INFO, "Starting cta-workflow-api");
+  lc.log(cta::log::INFO, std::string("Starting ") + cta::semconv::attr::ServiceNameValues::kCtaWorkflowApi);
 
   // Catalogue, Scheduler DB
   service_resources::ServiceResources serviceResources(
@@ -79,7 +82,7 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   lc.log(cta::log::INFO, "Listening on socket address: " + serverBuilderHelper.serverAddress());
 
   log(cta::log::INFO,
-      "Started cta-workflow-api",
+      std::string("Started ") + cta::semconv::attr::ServiceNameValues::kCtaWorkflowApi,
       {
         {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
   });
@@ -90,7 +93,7 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   }
 
   log(cta::log::INFO,
-      "Stopping cta-workflow-api",
+      std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaWorkflowApi,
       {
         {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
   });

@@ -221,7 +221,7 @@ int rmc_main(const std::string& robot,
   pfd.events = POLLIN;
 
   lc.logger()(cta::log::INFO,
-              "Started cta-rmcd",
+              std::string("Started ") + cta::semconv::attr::ServiceNameValues::kCtaRmcd,
               {
                 {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
   });
@@ -245,7 +245,7 @@ int rmc_main(const std::string& robot,
   }
 
   lc.logger()(cta::log::INFO,
-              "Stopping cta-rmcd",
+              std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaRmcd,
               {
                 {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
   });

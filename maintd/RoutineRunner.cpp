@@ -15,6 +15,7 @@
 #include <chrono>
 #include <opentelemetry/context/runtime_context.h>
 #include <signal.h>
+#include <string>
 #include <sys/prctl.h>
 #include <thread>
 
@@ -72,7 +73,7 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
   }
   m_running = true;
   lc.logger()(cta::log::INFO,
-              "Started cta-maintd",
+              std::string("Started ") + cta::semconv::attr::ServiceNameValues::kCtaMaintd,
               {
                 {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
   });
@@ -83,7 +84,7 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
       safeRunRoutine(*routine, lc);
       if (!m_running) {
         lc.logger()(cta::log::INFO,
-                    "Stopping cta-maintd",
+                    std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaMaintd,
                     {
                       {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
         });
@@ -94,7 +95,7 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
     std::this_thread::sleep_for(std::chrono::seconds(m_config.cycle_sleep_interval_secs));
   }
   lc.logger()(cta::log::INFO,
-              "Stopping cta-maintd",
+              std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaMaintd,
               {
                 {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
   });
