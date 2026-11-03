@@ -28,7 +28,6 @@ void WorkflowApiApp::stop() {
 
 int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-  lc.log(cta::log::INFO, std::string("Starting ") + cta::semconv::attr::ServiceNameValues::kCtaWorkflowApi);
 
   // Catalogue, Scheduler DB
   service_resources::ServiceResources serviceResources(

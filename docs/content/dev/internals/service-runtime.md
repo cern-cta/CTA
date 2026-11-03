@@ -141,10 +141,9 @@ Operator-configured resource attributes belong in the declarative OpenTelemetry 
 For temporary backward compatibility, the runtime replaces hyphens in the application name with dots for `service.name`.
 Runtime identity attributes such as `service.name`, `service.version`, `service.instance.id`, `host.name`, and the scheduler namespace are reserved.
 Attribute keys and values cannot contain commas, equals signs, carriage returns, or line feeds because they are serialized into `CTA_OTEL_RESOURCE_ATTRIBUTES`.
+
 Program-owned attributes added to every log record can be returned by the optional `getStaticLogAttributes()` static application method.
 Both hooks extract attributes from configuration and return an owning map by value.
-They must not retain configuration references or pointers, including in global or static storage.
-Applications receive configuration for execution through `run()`; the attribute hooks do not initialize application state.
 
 ## Custom command-line options
 

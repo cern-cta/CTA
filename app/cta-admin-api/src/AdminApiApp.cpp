@@ -33,7 +33,6 @@ void AdminApiApp::stop() {
 
 int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-  lc.log(cta::log::INFO, std::string("Starting ") + cta::semconv::attr::ServiceNameValues::kCtaAdminApi);
 
   // Catalogue, Scheduler DB
   service_resources::ServiceResources serviceResources(

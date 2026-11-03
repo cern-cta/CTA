@@ -135,8 +135,18 @@ class TestGracefulRestart:
         before = connection.container_snapshot()
         assert before.container_id
         assert before.ready
+
+        def assert_daemon_is_pid_one() -> None:
+            # /proc/1/exe requires ptrace access; taped also changes its process name.
+            # Check argv[0] directly so a shell launcher cannot masquerade as the daemon.
+            command_line = daemon.exec_with_output("cat /proc/1/cmdline")
+            executable = command_line.split("\0", 1)[0]
+            assert executable.rsplit("/", 1)[-1] == program, (
+                f"Expected {program} as PID 1, got command line {command_line!r}"
+            )
+
         # The launcher must replace itself so Kubernetes signals the daemon directly.
-        assert daemon.exec_with_output("basename $(readlink /proc/1/exe)") == program
+        assert_daemon_is_pid_one()
 
         # The log volume survives a container restart. Snapshot complete records before sending SIGTERM.
         log_file = shlex.quote(str(daemon.log_file_path))
@@ -152,7 +162,7 @@ class TestGracefulRestart:
                 assert termination.container_id == before.container_id
                 assert termination.exit_code == 0, f"Unclean SIGTERM exit: {termination}"
                 assert not termination.signal, f"Daemon was terminated by a signal: {termination}"
-                assert daemon.exec_with_output("basename $(readlink /proc/1/exe)") == program
+                assert_daemon_is_pid_one()
                 # Readiness can precede application startup completion (notably for rmcd).
                 deadline = time.monotonic() + 120
                 while True:
