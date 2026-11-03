@@ -85,7 +85,7 @@ Use the `[transfers.encryption]` section of the [annotated example](#example-con
 
    See [Service Runtime](service-runtime.md#strict-config-checking) for strict-checking requirements.
    Configuration checking exits without starting the daemon; it does not verify database connectivity or hardware operation.
-3. Restart the affected service to apply changes. `SIGUSR1` reopens the log file; it does not reload configuration.
+3. Restart the affected service to apply changes. `SIGHUP` reopens the log file; it does not reload configuration.
 4. Check the drive's desired state, reported state, and down reason with `cta-admin dr ls`.
 5. If the startup policy leaves the drive Down, request Up when ready:
 

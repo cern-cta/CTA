@@ -35,11 +35,11 @@
 
     sharedscripts
     postrotate
-        # SIGUSR1 makes each taped parent refresh its log descriptor and notify its children.
+        # SIGHUP reopens the log descriptor but does not reload the configuration.
         # Signal the default unit and every loaded template instance.
         # Rotation must still succeed when none are active.
-        /usr/bin/systemctl kill --kill-whom=main --signal=USR1 cta-taped.service > /dev/null 2>&1 || true
-        /usr/bin/systemctl kill --kill-whom=main --signal=USR1 'cta-taped@*.service' > /dev/null 2>&1 || true
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP cta-taped.service > /dev/null 2>&1 || true
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP 'cta-taped@*.service' > /dev/null 2>&1 || true
     endscript
 }
 

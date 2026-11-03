@@ -14,7 +14,6 @@ set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_OPTIONS -O2)
 
 set (COMMON_LIB_SRC_FILES
   CmdLineTool.cpp
-  CmdLineParams.cpp
   checksum/ChecksumBlob.cpp
   checksum/CRC.cpp
   config/Config.cpp
@@ -73,7 +72,6 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  exception/InvalidConfigEntry.cpp
   exception/NoPortInRange.cpp
   json/object/JSONCObject.cpp
   log/ExceptionLogging.cpp

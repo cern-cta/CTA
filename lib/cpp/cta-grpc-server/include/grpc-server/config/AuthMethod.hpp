@@ -5,14 +5,14 @@
 
 #pragma once
 
-#include "common/config/Config.hpp"
+#include "common/utils/StringConversions.hpp"
 
 #include <optional>
 #include <string>
 
 namespace cta::grpc_server {
 
-using cta::common::FromString;
+using cta::utils::FromString;
 
 /**
  * @brief Authentication methods supported by the CTA frontend APIs
@@ -22,7 +22,7 @@ enum class AuthMethod { JWT, KERBEROS, MTLS };
 }  // namespace cta::grpc_server
 
 template<>
-struct cta::common::FromString<cta::grpc_server::AuthMethod> {
+struct cta::utils::FromString<cta::grpc_server::AuthMethod> {
   static std::optional<cta::grpc_server::AuthMethod> tryFrom(std::string_view text) {
     using enum cta::grpc_server::AuthMethod;
     if (text == "jwt") {
