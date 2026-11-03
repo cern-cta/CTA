@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # For the media changer: map to a logicalLibrary
 SUBSYSTEM=="scsi_generic", SUBSYSTEMS=="scsi",  ATTRS{type}=="8", \
 KERNEL=="sg*[0-9]*", IMPORT{program}="/usr/lib/udev/ctaops-udev", SYMLINK+="tape/by-name/%E{CTAOPS_NAME}"

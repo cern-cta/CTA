@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Shared pytest fixtures for ctaops-sdk unit tests.
 
 The SDK interacts with hardware through pyudev and external SCSI/tape

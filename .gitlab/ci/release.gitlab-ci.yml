@@ -6,7 +6,6 @@ spec:
     platform:
       type: string
 ---
-
 # =========================================================================
 #  Publish RPMs
 # =========================================================================
@@ -26,11 +25,12 @@ internal-release-cta:
   script:
     # TODO: Publish ctaops-udev from RPMS/noarch and include it in upload/promotion filters.
     - echo "Publishing to internal CTA repository"
-    - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD}
-      ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                    --local-source-dir build/$[[ inputs.platform ]]/RPM/RPMS/x86_64
-                                    --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64
-                                    --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
+    - |
+      EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} ./ci/release/upload_to_eos.sh \
+        --eos-username ${DOCKER_LOGIN_USERNAME} \
+        --local-source-dir build/$[[ inputs.platform ]]/RPM/RPMS/x86_64 \
+        --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64 \
+        --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
   after_script:
     - |
       case "$CI_JOB_STATUS" in
@@ -64,11 +64,12 @@ internal-release-cta:
   script:
     - REPOSITORY_PATH="${RELEASE_CHANNEL}/cta-${CTA_MAJOR_VERSION:?Missing CTA_MAJOR_VERSION}/$[[ inputs.platform ]]/cta/x86_64"
     - echo "Publishing CTA version ${CTA_PACKAGE_VERSION} to the ${RELEASE_CHANNEL} CTA repository"
-    - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD}
-      ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                    --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/${REPOSITORY_PATH}
-                                    --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
+    - |
+      EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD} ./ci/release/upload_to_eos.sh \
+        --eos-username ${DOCKER_LOGIN_USERNAME} \
+        --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS \
+        --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/${REPOSITORY_PATH} \
+        --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
     - REPO_URL="https://cta-public-repo.web.cern.ch/${REPOSITORY_PATH}"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CTA_PACKAGE_VERSION}"
   after_script:
@@ -124,7 +125,6 @@ public-release-cta-stable:
     reports:
       dotenv: stable-publication.env
 
-
 # =========================================================================
 #  Publish Images
 # =========================================================================
@@ -147,7 +147,7 @@ public-release-cta-stable:
     - job: build-cta-images
       parallel:
         matrix:
-          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
+          - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
   rules:
     - if: $CI_COMMIT_TAG
       when: on_success
@@ -174,15 +174,17 @@ public-release-cta-stable:
         exit 1
       fi
     - rm -f "$SOURCE_REGISTRY_AUTH_FILE" "$DEST_REGISTRY_AUTH_FILE"
-    - echo "$SOURCE_REGISTRY_PASSWORD" | buildah login
-        --authfile "$SOURCE_REGISTRY_AUTH_FILE"
-        -u "$SOURCE_REGISTRY_USERNAME"
-        --password-stdin
+    - |
+      echo "$SOURCE_REGISTRY_PASSWORD" | buildah login \
+        --authfile "$SOURCE_REGISTRY_AUTH_FILE" \
+        -u "$SOURCE_REGISTRY_USERNAME" \
+        --password-stdin \
         "$DOCKER_IMAGE_REGISTRY"
-    - echo "$DEST_REGISTRY_PASSWORD" | buildah login
-        --authfile "$DEST_REGISTRY_AUTH_FILE"
-        -u "$DEST_REGISTRY_USERNAME"
-        --password-stdin
+    - |
+      echo "$DEST_REGISTRY_PASSWORD" | buildah login \
+        --authfile "$DEST_REGISTRY_AUTH_FILE" \
+        -u "$DEST_REGISTRY_USERNAME" \
+        --password-stdin \
         "$DEST_REGISTRY"
   script:
     - SRC_IMAGE="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}"
@@ -208,11 +210,11 @@ publish-images-private:
     - job: prepare-cta-version
       artifacts: true
     - job: internal-release-cta
-      optional: true  # Present on tags; branch publication does not publish RPMs.
+      optional: true # Present on tags; branch publication does not publish RPMs.
     - job: build-cta-images
       parallel:
         matrix:
-          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
+          - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
   rules:
     - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
@@ -243,7 +245,7 @@ publish-images-public:
     - job: build-cta-images
       parallel:
         matrix:
-          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
+          - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
   rules:
     - if: '$ENABLE_ORACLE_SUPPORT == "true"'
       when: never
@@ -307,7 +309,6 @@ publish-docs:
   pages:
     publish: build/docs/public
     expire_in: never
-
 
 # =========================================================================
 #  Deploy Review App

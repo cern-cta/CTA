@@ -77,8 +77,8 @@ pod:
   extraSpec:
     terminationGracePeriodSeconds: 1
 
-extraEnv:
+extraEnv: null
 
 extraVolumes:
-  volumes:
-  volumeMounts:
+  volumes: null
+  volumeMounts: null

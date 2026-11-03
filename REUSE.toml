@@ -2,71 +2,82 @@ version = 1
 
 # Project branding assets
 [[annotations]]
-path = ["docs/content/assets/images/cta-logo.png", "docs/content/assets/images/cern-logo.png", "docs/content/assets/images/cern-logo.png.license"]
-SPDX-FileCopyrightText = "2025 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path = [
+        "docs/content/assets/images/cta-logo.png",
+        "docs/content/assets/images/cern-logo.png",
+        "docs/content/assets/images/cern-logo.png.license",
+    ]
+    SPDX-FileCopyrightText = "2025 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # All json files
 [[annotations]]
-path = "**/*.json"
-SPDX-FileCopyrightText = "2025 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path                    = "**/*.json"
+    SPDX-FileCopyrightText  = "2025 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# All jsonl files
+[[annotations]]
+    path                    = "**/*.jsonl"
+    SPDX-FileCopyrightText  = "2023-2026 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # All markdown files
 [[annotations]]
-path = "**/*.md"
-SPDX-FileCopyrightText = "2025 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path                    = "**/*.md"
+    SPDX-FileCopyrightText  = "2025 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Python requirements files
 [[annotations]]
-path = "**/requirements.txt"
-SPDX-FileCopyrightText = "2025 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path                    = "**/requirements.txt"
+    SPDX-FileCopyrightText  = "2025 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Misc files that are tedious to attach copyright to
 [[annotations]]
-path = [
-    "**/.gitkeep",
-    ".gitattributes",
-    ".gitmodules",
-    ".git-blame-ignore-revs",
-    ".cppcheck-suppressions.txt",
-    ".secrets.baseline",
-    "docs/content/dev/internals/components/catalogue/cta_catalogue_class_diagram.png",
-    "catalogue/rdbms_classes.pdf",
-    "catalogue/rdbms_classes.pptx",
-    "rdbms/cta_rdbms_class_diagram.svg",
-    "taped/AUTHORS",
-    "tests/parallelTestsMakefile.in",
-    "tests/parallelTestsMakefile.local.in",
-    "Cargo.lock"
-]
-SPDX-FileCopyrightText = "2025 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path = [
+        ".python-version",
+        "**/.gitkeep",
+        ".gitattributes",
+        ".gitmodules",
+        ".git-blame-ignore-revs",
+        ".cppcheck-suppressions.txt",
+        ".secrets.baseline",
+        "docs/content/dev/internals/components/catalogue/cta_catalogue_class_diagram.png",
+        "catalogue/rdbms_classes.pdf",
+        "catalogue/rdbms_classes.pptx",
+        "rdbms/cta_rdbms_class_diagram.svg",
+        "taped/AUTHORS",
+        "tests/parallelTestsMakefile.in",
+        "tests/parallelTestsMakefile.local.in",
+        "Cargo.lock",
+    ]
+    SPDX-FileCopyrightText = "2025 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Imported documentation snapshot; preserve any embedded attribution.
 [[annotations]]
-path = ["docs/content/**", "docs/includes/**", "docs/overrides/**"]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "2026 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path                    = ["docs/content/**", "docs/includes/**", "docs/overrides/**"]
+    precedence              = "aggregate"
+    SPDX-FileCopyrightText  = "2026 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Debian packaging formats without inline SPDX headers.
 [[annotations]]
-path = [
-    "packaging/deb/control.in",
-    "packaging/deb/copyright",
-    "packaging/deb/changelog.in",
-    "packaging/deb/source/format"
-]
-SPDX-FileCopyrightText = "2026 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path = [
+        "packaging/deb/control.in",
+        "packaging/deb/copyright",
+        "packaging/deb/changelog.in",
+        "packaging/deb/source/format",
+    ]
+    SPDX-FileCopyrightText = "2026 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Stable Python packages imported from cta-operations-utilities.
 # TODO: these need to get proper REUSE headers
 [[annotations]]
-path = ["lib/python/**", "tools/ctaops-cli/**", "tools/ctaops-udev/**", "uv.lock"]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "2023-2026 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
+    path                    = ["uv.lock"]
+    precedence              = "aggregate"
+    SPDX-FileCopyrightText  = "2023-2026 CERN"
+    SPDX-License-Identifier = "GPL-3.0-or-later"

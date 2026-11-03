@@ -33,13 +33,15 @@ lint-cpp:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
   script:
-    - cppcheck --xml
-               --force
-               --enable=warning,performance
-               --inline-suppr
-               --check-level=exhaustive
-               --suppressions-list=.cppcheck-suppressions.txt
-               . 2> cppcheck_out.xml
+    - |
+      cppcheck \
+        --xml \
+        --force \
+        --enable=warning,performance \
+        --inline-suppr \
+        --check-level=exhaustive \
+        --suppressions-list=.cppcheck-suppressions.txt \
+        . 2> cppcheck_out.xml
     - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
     - |
       if cat cppcheck_out.xml | grep -q "<error\s"; then
@@ -330,7 +332,7 @@ lint-dockerfile:
   image: $IMAGE_LINT
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for these job
-    FORMAT_DIFF:
+    FORMAT_DIFF: ""
   before_script:
     - !reference [.merge-train-guard, before_script]
     - exit 1  # The jobs that extend this job should override this

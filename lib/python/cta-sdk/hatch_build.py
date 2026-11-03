@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from __future__ import annotations
 
 import importlib.util
@@ -29,7 +32,7 @@ class CustomBuildHook(BuildHookInterface[BuilderConfig]):
         root = Path(self.root)
         gen_script = root / "scripts" / "gen_proto.py"
 
-        module_spec = importlib.util.spec_from_file_location("ctaops_cli_gen_proto", gen_script)
+        module_spec = importlib.util.spec_from_file_location("cta_cli_gen_proto", gen_script)
         if module_spec is None or module_spec.loader is None:
             raise RuntimeError(f"Unable to load module spec from: {gen_script}")
 

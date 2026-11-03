@@ -13,7 +13,6 @@ spec:
       options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
       default: "none"
 ---
-
 .setup-cta-install: &setup-cta-install
   - mkdir -p ${CTAREPODIR}
   - cp -r build/$[[ inputs.platform ]]/RPM ${CTAREPODIR}
@@ -69,7 +68,8 @@ unit-test-python:
   script:
     # Root test discovery includes CI and imported suites, and excludes system tests.
     - uv sync --locked --all-packages --all-extras --no-default-groups --group unit-tests
-    - uv run --no-sync python -m pytest --junitxml=python-ci-unit-tests.xml
+    - |
+      uv run --no-sync python -m pytest --junitxml=python-ci-unit-tests.xml \
         --cov --cov-report=term --cov-report=xml:coverage.xml
   artifacts:
     when: always
@@ -131,7 +131,7 @@ test-cta-valgrind:
       allow_failure: true
   image: $IMAGE_TEST
   variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - !reference [.merge-train-guard, before_script]
@@ -152,7 +152,7 @@ unit-test-cta:
     - when: on_success
   image: $IMAGE_TEST
   variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   script:
     - run_cpp_test cta-unit-tests-multiprocess /usr/bin/cta-unit-tests-multiprocess
@@ -172,7 +172,7 @@ unit-test-postgresql:
     - when: on_success
   image: $IMAGE_TEST
   variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   script:
     - dnf -y install cta-catalogue-utils
@@ -219,7 +219,7 @@ unit-test-oracle:
     - when: on_success
   image: $IMAGE_TEST
   variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
     ORACLE_USERNAME: cta_dev04
     ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
@@ -269,7 +269,7 @@ test-cta-rpm-install:
       allow_failure: true
   image: $IMAGE_TEST
   variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   script:
     - mkdir -p ${CTAREPODIR}
@@ -278,19 +278,21 @@ test-cta-rpm-install:
     - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
     - dnf install --nogpgcheck -y cta-release
     - cta-versionlock apply
-    - dnf install --nogpgcheck -y cta-admin
-                                  cta-catalogue-utils
-                                  cta-scheduler-utils
-                                  cta-admin-api
-                                  cta-workflow-api
-                                  cta-maintd
-                                  cta-taped
-                                  cta-tape-label
-                                  cta-readtp
-                                  cta-rmcd
-                                  cta-smc
-                                  cta-tools-rs
-                                  ctaops-udev
+    - |
+      dnf install --nogpgcheck -y \
+        cta-admin \
+        cta-catalogue-utils \
+        cta-scheduler-utils \
+        cta-admin-api \
+        cta-workflow-api \
+        cta-maintd \
+        cta-taped \
+        cta-tape-label \
+        cta-readtp \
+        cta-rmcd \
+        cta-smc \
+        cta-tools-rs \
+        ctaops-udev
     - |
       if $ENABLE_ORACLE_SUPPORT; then
         dnf install --nogpgcheck -y cta-lib-catalogue-occi
@@ -304,7 +306,6 @@ test-cta-rpm-install:
       - checkpkg-output.json
     reports:
       metrics: metrics.txt
-
 
 test-cta-debian-install:
   stage: test
@@ -339,7 +340,6 @@ test-cta-debian-install:
         test "$(dpkg-query --show --showformat='${Status} ${Version}' "$name")" = "install ok installed $version"
       done
     - bash ci/checks/check_installed_layout.sh deb
-
 
 # Uses lintian to test Debian package compliance
 test-cta-debian-compliance:

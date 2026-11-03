@@ -1,6 +1,6 @@
 # Python workspace
 
-Shared Python libraries for CTA and [ctaops-cli](../../tools/ctaops-cli/README.md).
+Shared Python libraries for CTA and [cta-cli](../../tools/cta-cli/README.md).
 Dependencies and tool configuration are managed in the root [pyproject.toml](../../pyproject.toml).
 
 ## Setup
@@ -19,7 +19,7 @@ uv run --no-sync pytest
 uv run --no-sync ruff check .
 uv run --no-sync ruff format . --check
 uv run --no-sync pyright --pythonpath .venv/bin/python
-uv run --no-sync ctaops --help
+uv run --no-sync cta --help
 uv build --all-packages --out-dir build/python
 ```
 

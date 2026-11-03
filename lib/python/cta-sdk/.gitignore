@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 src/cta/sdk/client/grpc/protobuf_generated/*_pb2.py
 src/cta/sdk/client/grpc/protobuf_generated/*_pb2.pyi
 src/cta/sdk/client/grpc/protobuf_generated/*_pb2_grpc.py

@@ -42,12 +42,13 @@ update-pipeline-image-version:
     GIT_SUBMODULE_STRATEGY: "none"
     PIPELINE_IMAGE_UPDATE_BRANCH: "ci/update-pipeline-images-${CI_PIPELINE_ID}"
   script:
-    - python3 ci/release/update_pipeline_image_version.py
-        --api-url "$CI_SERVER_URL"
-        --project-id "$CI_PROJECT_ID"
-        --api-token "$CI_API_TOKEN"
-        --target-branch "$CI_COMMIT_BRANCH"
-        --source-branch "$PIPELINE_IMAGE_UPDATE_BRANCH"
-        --version "$NEW_PIPELINE_IMAGE_VERSION"
-        --triggering-user-id "$GITLAB_USER_ID"
+    - |
+      python3 ci/release/update_pipeline_image_version.py \
+        --api-url "$CI_SERVER_URL" \
+        --project-id "$CI_PROJECT_ID" \
+        --api-token "$CI_API_TOKEN" \
+        --target-branch "$CI_COMMIT_BRANCH" \
+        --source-branch "$PIPELINE_IMAGE_UPDATE_BRANCH" \
+        --version "$NEW_PIPELINE_IMAGE_VERSION" \
+        --triggering-user-id "$GITLAB_USER_ID" \
         --auto-merge "$PIPELINE_IMAGE_AUTO_MERGE"

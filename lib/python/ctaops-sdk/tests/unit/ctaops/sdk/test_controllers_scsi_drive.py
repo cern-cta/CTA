@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Tests for ScsiDriveController and ScsiMountedDriveController.
 
 Both classes delegate to subprocess for sg_logs/mt and to direct device-node

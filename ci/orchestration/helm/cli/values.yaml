@@ -8,7 +8,6 @@ image:
   repository: cta/ctageneric/cta-tools
   tag: latest
 
-
 conf:
   cta:
     endpoint: cta-frontend-admin:10955
@@ -20,5 +19,5 @@ pod:
     terminationGracePeriodSeconds: 1
 
 extraVolumes:
-  volumeMounts:
-  volumes:
+  volumeMounts: null
+  volumes: null

@@ -11,7 +11,7 @@ on:
     - cron: '0 4 * * *'
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   # Use the same base image as the GitLab CI for building

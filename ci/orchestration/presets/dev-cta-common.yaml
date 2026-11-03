@@ -4,8 +4,8 @@
 global:
   securityContext:
     # We need privilege escalation for the tests and debugging
-    allowPrivilegeEscalation: True
-    privileged: False
+    allowPrivilegeEscalation: true
+    privileged: false
 
 frontend-wfe:
   port: 10956
@@ -21,8 +21,7 @@ frontend-admin:
 
 cli:
   useGrpc: true
-  conf:
-    # set by more specific config
+  conf: null # set by more specific config
 
   extraEnv:
     - name: GRPC_SETUP_JWT
