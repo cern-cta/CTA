@@ -23,7 +23,7 @@
         - "**/ruff.toml"
         - "**/.ruff.toml"
         - "lib/python/**/*"
-        - "tools/ctaops-cli/**/*"
+        - "tools/cta-cli/**/*"
         - "tools/ctaops-udev/**/*"
         - "lib/protobuf/external/xrootd-ssi-protobuf-interface"
         - ".gitmodules"

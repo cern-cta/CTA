@@ -1,6 +1,6 @@
 # Python workspace
 
-Shared Python libraries for CTA and [ctaops-cli](../../tools/ctaops-cli/README.md).
+Shared Python libraries for CTA and [cta-cli](../../tools/cta-cli/README.md).
 Dependencies and tool configuration are managed in the root [pyproject.toml](../../pyproject.toml).
 
 ## Setup

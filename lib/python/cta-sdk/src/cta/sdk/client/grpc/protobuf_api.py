@@ -15,7 +15,7 @@ from cta.sdk.client.grpc.exceptions import WorkflowRpcError
 from cta.sdk.client.grpc.models import WorkflowConfig, WorkflowFileInfo
 from cta.sdk.client.grpc.protobuf_generated import cta_common_pb2, cta_frontend_pb2
 
-LOGGER = logging.getLogger("ctaops.cli.protobuf_api")
+LOGGER = logging.getLogger("cta.cli.protobuf_api")
 
 
 def build_channel(workflow_cfg: WorkflowConfig) -> grpc.Channel:

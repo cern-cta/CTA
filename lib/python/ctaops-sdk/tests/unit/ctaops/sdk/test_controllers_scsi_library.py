@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Tests for ScsiManagedLibraryController.
 
 The library controller shells out to /usr/bin/cta-smc and /usr/bin/cta-tape-label

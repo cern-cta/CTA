@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Tests for the udev-backed local repositories.
 
 These tests fabricate fake pyudev devices via the ``device_factory`` /
