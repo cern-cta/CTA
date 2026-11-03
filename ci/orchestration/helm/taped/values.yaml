@@ -74,12 +74,9 @@ transfers:
     enabled: false
     externalKeyScript: "/usr/local/bin/cta-get-encryption-key.sh"
 
-telemetry:
-  enabled: true
-
 # OpenTelemetry is entirely configured through declarative configuration.
 telemetryConfig: |
-  file_format: "1.0-rc.1"
+  file_format: "1.1"
   disabled: true
 
 # SSS keytab to communicate to the disk buffer

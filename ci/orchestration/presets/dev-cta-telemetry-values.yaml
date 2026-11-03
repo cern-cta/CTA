@@ -1,15 +1,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Note that this values can be used in combination with other values files
-frontend-wfe: &frontend
-  conf:
-    telemetry:
-      enabled: true
-  # Once all the services support declarative config
-  # this will be moved to a global config for all services
+# These values can be combined with other values files.
+# All five services share the same telemetry configuration.
+frontend-wfe: &telemetry
   # The structure below follows the OpenTelemetry Declarative config format
-  telemetryConfig: &otelConfig |
+  telemetryConfig: |
     file_format: "1.1"
     disabled: false
     resource:
@@ -33,21 +29,7 @@ frontend-wfe: &frontend
                 temporality_preference: cumulative
                 default_histogram_aggregation: explicit_bucket_histogram
 
-frontend-admin: *frontend
-
-taped:
-  conf:
-    telemetry:
-      enabled: true
-      retainInstanceIdOnRestart: true
-      metrics:
-        backend: "OTLP_HTTP"
-        exportInterval: 1000
-        exportTimeout: 500
-        otlp:
-          endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
-
-maintd: &runtimeTelemetry
-  telemetryConfig: *otelConfig
-
-rmcd: *runtimeTelemetry
+frontend-admin: *telemetry
+maintd: *telemetry
+rmcd: *telemetry
+taped: *telemetry

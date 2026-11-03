@@ -4,8 +4,6 @@
 add_library(ctatelemetry SHARED
   src/CtaOtelLogHandler.cpp
   src/OtelInit.cpp
-  src/TelemetryInit.cpp
-  src/config/TelemetryConfig.cpp
   src/metrics/DriveState.cpp
   src/metrics/InstrumentRegistry.cpp
   src/metrics/MetricsUtils.cpp)
