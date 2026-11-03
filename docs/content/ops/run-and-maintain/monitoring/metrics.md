@@ -142,7 +142,7 @@ Once metrics publishing is enabled and the OpenTelemetry Collector is receiving 
 
 ### Declarative configuration
 
-`cta-maintd` and `cta-rmcd` use the same OpenTelemetry declarative configuration.
+`cta-admin-api`, `cta-workflow-api`, `cta-taped`, `cta-maintd`, and `cta-rmcd` use the same OpenTelemetry SDK declarative configuration.
 Set the following options in each service's TOML configuration file:
 
 ```toml
@@ -167,52 +167,6 @@ Configure `/etc/cta/cta-otel.yaml` using the bundled [example configuration](#ex
 The runtime generates a new `service.instance.id` on each startup, which creates new series after restarts when the backend preserves that identity.
 Restart the service after applying the configuration and check that metrics arrive after the service processes work.
 Configure histogram boundaries in each metric's unit, as listed in [Supported Metrics](#supported-metrics).
-
-### `cta-frontend`
-
-!!! warning
-
-    `cta-frontend` does not support the declarative OpenTelemetry configuration yet. As such, it must be configured directly through its config file. Before telemetry is taken out of experimental, this will be updated.
-
-cta-frontend supports similar metrics publishing, but its configuration names are slightly different.
-
-???+ "cta-frontend.example.conf"
-
-    ```ini
-    # Telemetry is an experimental feature and must be explicitly enabled before it can be used.
-    # Note that this flag alone is not sufficient to start producing telemetry.
-    cta.experimental.telemetry.enabled true
-
-    # Used to control cardinality.
-    # If set to false, each restart of a process will generate a new unique ID for the `service.instance.id`.
-    # If set to true, `service.instance.id` remains constant across restarts.
-    # The cta-frontend should not restart frequently, so this option can be left off if desired.
-    cta.telemetry.retain_instance_id_on_restart false
-
-    # Metrics backend to use. Possible options are NOOP, OTLP_HTTP, OTLP_GRPC, STDOUT, FILE
-    # Default is NOOP, meaning no metrics are collected/exported
-    cta.telemetry.metrics.backend OTLP_GRPC
-
-    # Amount of time in milliseconds between exports
-    cta.telemetry.metrics.export.interval 15000
-
-    # timeout for a single export
-    cta.telemetry.metrics.export.timeout 3000
-
-    # Service location of the OTLP collector in case the OTLP backend is used
-    cta.telemetry.metrics.otlp.endpoint endpoint:port
-
-    # Basic authentication: configured both username and passwordFile Adds the header "authorization: Basic <base64(username:password)>"
-    # Username to use for setting up basic auth for push metrics over HTTP
-    cta.telemetry.metrics.otlp.auth.basic.username username
-    # File location containing the password (not base64 encoded) to set up basic auth for push metrics over HTTP
-    cta.telemetry.metrics.otlp.auth.basic.password_file /path/to/password/file
-    ```
-
-Restart cta-frontend after applying the changes.
-If metrics are correctly enabled, you should begin to see metric data arriving at your collector within a few seconds.
-
----
 
 ## Example configuration
 

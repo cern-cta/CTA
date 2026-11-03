@@ -6,7 +6,7 @@ This page is for developers changing telemetry initialization and lifecycle. To 
 
 - `lib/telemetry/include/telemetry/` exposes initialization and component instruments.
 - `lib/telemetry/src/metrics/` contains instrument definitions and the registry implementation.
-- `lib/telemetry/src/TelemetryInit.cpp` handles the existing programmatic configuration; `OtelInit.cpp` provides the newer initialization path.
+- `lib/telemetry/src/OtelInit.cpp` initializes and cleans up the SDK using declarative configuration.
 - `common/semconv/` holds the shared metric and attribute definitions.
 
 Keep initialization changes consistent with the service runtime and the supported configuration path. Do not initialize a new provider in ordinary application code merely to add a metric.
@@ -21,7 +21,10 @@ OpenTelemetry distinguishes identical instrument definitions from conflicting de
 
 ## Process identity and temporality
 
-Resource identity must distinguish simultaneous metric writers. The existing configuration can generate a service-instance UUID or derive a retained identity from hostname and process name. Retained identities can reduce series churn for repeatedly created processes, but must not cause concurrently active writers to share an identity. Check restart and fork behaviour when changing this logic.
+Resource identity must distinguish simultaneous metric writers.
+The service runtime generates a new `service.instance.id` UUID on each startup and supplies it with the service and host attributes through `CTA_OTEL_RESOURCE_ATTRIBUTES`.
+Retain `resource.attributes_list: "${CTA_OTEL_RESOURCE_ATTRIBUTES}"` in the declarative configuration to include these attributes.
+Check restart and fork behaviour when changing this logic.
 
 Cumulative metrics represent measurements since their start or reset; delta metrics represent an interval. Keep exporter and backend expectations compatible, and verify counter resets and histogram behaviour when changing configuration. The standard Prometheus path uses cumulative series. Collector configuration and production backend choices belong in Operations.
 

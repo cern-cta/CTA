@@ -108,5 +108,8 @@ Avoid expensive attribute construction or additional I/O in frequently executed 
 
 ### Inspect exported metrics
 
-For direct inspection, the legacy telemetry configuration offers `STDOUT` and `FILE` debug exporters as well as `NOOP` and OTLP backends. Use the configuration supported by the service you are testing; configuration interfaces differ during the runtime migration. These debug exporters are for development, not production collection.
+Configure exporters through the OpenTelemetry SDK declarative configuration referenced by `telemetry.config_file`.
+CTA registers console, file, OTLP HTTP, and OTLP gRPC exporter builders.
+For local inspection, use a console or file exporter; see [telemetry configuration](../../../ops/run-and-maintain/monitoring/metrics.md#declarative-configuration) for service setup.
+Set `disabled: true` in the declarative configuration to disable telemetry.
 

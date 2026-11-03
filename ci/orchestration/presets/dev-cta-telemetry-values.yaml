@@ -6,8 +6,6 @@ frontend-wfe: &frontend
   conf:
     telemetry:
       enabled: true
-  # Once all the services support declarative config
-  # this will be moved to a global config for all services
   # The structure below follows the OpenTelemetry Declarative config format
   telemetryConfig: &otelConfig |
     file_format: "1.1"
@@ -35,19 +33,8 @@ frontend-wfe: &frontend
 
 frontend-admin: *frontend
 
-taped:
-  conf:
-    telemetry:
-      enabled: true
-      retainInstanceIdOnRestart: true
-      metrics:
-        backend: "OTLP_HTTP"
-        exportInterval: 1000
-        exportTimeout: 500
-        otlp:
-          endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
-
 maintd: &runtimeTelemetry
   telemetryConfig: *otelConfig
 
 rmcd: *runtimeTelemetry
+taped: *runtimeTelemetry
