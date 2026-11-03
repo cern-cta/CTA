@@ -97,15 +97,14 @@ public:
   void complete() override;
 
   /**
-   * Report a drive status change
+   * Report tape-session activity
    */
-  void setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                      const std::optional<std::string>& reason = std::nullopt) override;
+  void reportTapeSessionState(cta::common::dataStructures::TapeSessionState state) override;
 
   /**
    * Report a tape session statistics
    */
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override;
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override;
 
   /**
    * Report a tape mounted event

@@ -1,0 +1,63 @@
+/*
+ * SPDX-FileCopyrightText: 2026 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+#pragma once
+
+#include <string>
+#include <string_view>
+
+namespace cta::common::dataStructures {
+
+/**
+ * @brief Reasons recorded by cta-taped when requesting or reporting a drive down.
+ *
+ * Categories identify operation context; underlying failure causes belong in the detail string.
+ */
+enum class DriveDownReason {
+  /// The daemon is starting and the drive is not yet ready for scheduling.
+  Startup,
+  /// Startup requires a fresh operator Up request because automatic recovery is disabled.
+  StartupRecoveryDisabled,
+  /// The daemon is shutting down normally.
+  Shutdown,
+  /// A readiness probe found a tape in the drive without automatic cleanup enabled.
+  TapeDetected,
+  /// A readiness probe failed to establish that the drive was empty.
+  DriveProbeFailed,
+  /// A transfer session could not discover, locate, or open its drive.
+  SessionDriveAccessFailed,
+  /// Cleanup could not establish a reusable drive, including failures to access it, reset it, or eject a tape.
+  DriveCleanupFailed,
+  /// Fallback for an unusable session drive when no existing specific failure or operator reason is retained.
+  SessionLeftDriveUnusable,
+  /// A failed tape session could not confirm that its workers stopped accessing the drive.
+  SessionDidNotStopSafely,
+  /// An unexpected fatal lifecycle failure ended the daemon or drive session.
+  UnexpectedFailure
+};
+
+/**
+ * @brief Get the logging severity for a drive-down reason.
+ * @param reason Reason category to classify.
+ * @return INFO for startup, disabled startup recovery and shutdown; ERR for failures.
+ * @throws std::invalid_argument If the reason is unknown.
+ */
+int driveDownReasonSeverity(DriveDownReason reason);
+
+/**
+ * @brief Format a drive-down reason with optional failure details.
+ * @param reason Reason category to format.
+ * @param detail Additional text appended when nonempty.
+ * @return "[cta-taped] <message>", followed by optional details.
+ * @throws std::invalid_argument If the reason is unknown.
+ */
+std::string formatDriveDownReason(DriveDownReason reason, std::string_view detail = {});
+
+/// Policy meaning of a persisted reason; unknown or operator-written reasons remain Other.
+enum class PersistedDriveReasonKind { Startup, CleanShutdown, Other };
+
+/// Match the startup message exactly and the shutdown message with optional details.
+PersistedDriveReasonKind classifyPersistedDriveReason(std::string_view reason);
+
+}  // namespace cta::common::dataStructures

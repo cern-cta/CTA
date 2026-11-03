@@ -84,7 +84,9 @@ void DummyDriveStateCatalogue::setDesiredTapeDriveState(const std::string&,
                                                         const common::dataStructures::DesiredDriveState& desiredState) {
   m_tapeDriveStatus.desiredUp = desiredState.up;
   m_tapeDriveStatus.desiredForceDown = desiredState.forceDown;
-  m_tapeDriveStatus.reasonUpDown = desiredState.reason;
+  if (desiredState.reason) {
+    m_tapeDriveStatus.reasonUpDown = desiredState.reason;
+  }
 }
 
 void DummyDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
@@ -108,7 +110,20 @@ void DummyDriveStateCatalogue::updateTapeDriveStatistics(
 bool DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   const bool changed =
     m_tapeDriveStatus.driveName != tapeDrive.driveName || m_tapeDriveStatus.driveStatus != tapeDrive.driveStatus;
-  m_tapeDriveStatus = tapeDrive;
+
+  // take the incoming tape drive information (actual drive state)
+  auto updated = tapeDrive;
+
+  // retain our desired state
+  updated.desiredUp = m_tapeDriveStatus.desiredUp;
+  updated.desiredForceDown = m_tapeDriveStatus.desiredForceDown;
+
+  // no reason set in the incoming state means there's no change
+  if (!updated.reasonUpDown) {
+    updated.reasonUpDown = std::move(m_tapeDriveStatus.reasonUpDown);
+  }
+
+  m_tapeDriveStatus = std::move(updated);
   return changed;
 }
 

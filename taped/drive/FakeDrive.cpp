@@ -36,7 +36,7 @@ cta::tape::drive::compressionStats cta::tape::drive::FakeDrive::getCompression()
     stats.toTape += m_tape[i].data.length();
   }
 
-  // that way we set also stats for reading
+  // Reuse stored byte counts for reads; the simulation does not track I/O separately.
   stats.fromTape = stats.toTape;
   return stats;
 }
@@ -100,13 +100,17 @@ std::vector<cta::tape::drive::endOfWrapPosition> cta::tape::drive::FakeDrive::ge
 }
 
 std::vector<uint16_t> cta::tape::drive::FakeDrive::getTapeAlertCodes() {
-  std::vector<uint16_t> empty;
-  return empty;
+  throwIfFailurePoint(FailurePoint::TapeAlertCodes);
+  return m_tapeAlertCodes;
 }
 
-std::vector<std::string> cta::tape::drive::FakeDrive::getTapeAlerts(const std::vector<uint16_t>&) {
-  std::vector<std::string> empty;
-  return empty;
+std::vector<std::string> cta::tape::drive::FakeDrive::getTapeAlerts(const std::vector<uint16_t>& codes) {
+  throwIfFailurePoint(FailurePoint::TapeAlerts);
+  std::vector<std::string> alerts;
+  for (const auto code : codes) {
+    alerts.push_back("Fake tape alert " + std::to_string(code));
+  }
+  return alerts;
 }
 
 std::vector<std::string> cta::tape::drive::FakeDrive::getTapeAlertsCompact(const std::vector<uint16_t>&) {
@@ -213,6 +217,7 @@ void cta::tape::drive::FakeDrive::flush(void) {
 }
 
 uint64_t cta::tape::drive::FakeDrive::getRemaingSpace(uint32_t currentPosition) {
+  // At BOT no stored record precedes the position, so the full capacity remains.
   if (!currentPosition) {
     return m_tapeCapacity;
   }
@@ -223,6 +228,7 @@ void cta::tape::drive::FakeDrive::writeSyncFileMarks(size_t count) {
   if (count == 0) {
     return;
   }
+  // Resize discards later records; empty records represent file marks.
   m_tape.resize(m_currentPosition + count);
   for (size_t i = 0; i < count; ++i) {
     m_tape.at(m_currentPosition).data = filemark;
@@ -340,6 +346,7 @@ bool cta::tape::drive::FakeDrive::isEncryptionCapEnabled() {
 }
 
 bool cta::tape::drive::FakeDrive::hasTapeInPlace() {
+  throwIfFailurePoint(FailurePoint::HasTapeInPlace);
   return m_tapeInPlace;
 }
 
@@ -357,6 +364,10 @@ void cta::tape::drive::FakeDrive::setFailurePoint(FailurePoint failurePoint, boo
 
 void cta::tape::drive::FakeDrive::clearFailurePoints() {
   m_failurePoints.clear();
+}
+
+void cta::tape::drive::FakeDrive::setTapeAlertCodes(std::vector<uint16_t> codes) {
+  m_tapeAlertCodes = std::move(codes);
 }
 
 void cta::tape::drive::FakeDrive::throwIfFailurePoint(FailurePoint failurePoint) const {

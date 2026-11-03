@@ -96,7 +96,7 @@ set_property(TARGET ctaobjectstoreunittests PROPERTY SOVERSION "${CTA_SOVERSION}
 set_property(TARGET ctaobjectstoreunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctaobjectstoreunittests
-  rados ctacommon gtest ctaobjectstore)
+  rados ctacommon ctaobjectstore)
 if(NOT CTA_USE_PGSCHED)
   if(CTA_BUILD_TEST_PACKAGES)
     install(TARGETS ctaobjectstoreunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

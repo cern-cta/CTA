@@ -116,6 +116,7 @@ target_compile_definitions(ctacatalogue PRIVATE
 install (TARGETS ctacatalogue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
+  ctatelemetry
   ctacommon
   ctapluginmanager
   ctaprotobufconversions
@@ -176,7 +177,7 @@ set_property(TARGET ctacataloguesqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}")
 
-target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue)
+target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue ctaschemachecker)
 
 install(TARGETS ctacataloguesqlite DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
@@ -317,6 +318,7 @@ set(CATALOGUE_MODULES_TESTS_SRC_FILES
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   ${CATALOGUE_MODULES_TESTS_SRC_FILES}
+  TapeDrivesCatalogueStateTest.cpp
   TapeItemWrittenPointerTest.cpp
   SqliteCatalogueSchema.cpp
   tests/CatalogueTestUtils.cpp
@@ -331,6 +333,13 @@ set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBV
 # The test "filesWrittenToTape_many_archive_files" is over 1000 lines long and exceeds the variable tracking size limit.
 # We switch off this compiler option for this file to avoid compiling it twice.
 target_compile_options(ctainmemorycatalogueunittests PRIVATE -fno-var-tracking-assignments)
+
+# GCC 14 LTO reports false string overflows in gMock's EXPECT_CALL diagnostic construction.
+# Compile only this test without LTO, preserving overflow diagnostics and LTO for production code.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14
+   AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+  set_property(SOURCE TapeDrivesCatalogueStateTest.cpp APPEND PROPERTY COMPILE_OPTIONS -fno-lto)
+endif()
 
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue ctadisk ctacatalogueinmemory)
@@ -390,6 +399,9 @@ add_library (ctaschemachecker SHARED
 
 set_property(TARGET ctaschemachecker PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschemachecker PROPERTY VERSION "${CTA_LIBVERSION}")
+
+# Record runtime dependencies on the library itself, not only on its executable consumers.
+target_link_libraries(ctaschemachecker ctacatalogue ctardbms)
 
 add_dependencies(ctaschemachecker
   create_all_catalogue_schema_header)

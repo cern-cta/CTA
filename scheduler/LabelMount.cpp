@@ -37,11 +37,11 @@ std::string LabelMount::getVid() const {
   throw exception::NotImplementedException();
 }
 
-void LabelMount::setDriveStatus(common::dataStructures::DriveStatus status, const std::optional<std::string>& reason) {
+void LabelMount::reportTapeSessionState(common::dataStructures::TapeSessionState state) {
   throw exception::NotImplementedException();
 }
 
-void LabelMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
+void LabelMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   throw exception::NotImplementedException();
 }
 

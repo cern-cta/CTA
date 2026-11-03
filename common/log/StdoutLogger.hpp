@@ -32,14 +32,6 @@ public:
   ~StdoutLogger() final = default;
 
   /**
-   * Prepares the logger object for a call to fork()
-   *
-   * No further calls to operator() should be made after calling this
-   * method until the call to fork() has completed.
-   */
-  void prepareForFork() final { /* intentionally-blank override of pure virtual method */ }
-
-  /**
    * Refresh the underlying logger setup
    */
   void refresh() final { /* intentionally-blank override of pure virtual method */ }

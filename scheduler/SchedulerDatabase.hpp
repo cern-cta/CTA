@@ -16,6 +16,7 @@
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/DriveReport.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/MountControl.hpp"
@@ -27,6 +28,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
+#include "common/dataStructures/TapeSessionState.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
@@ -205,18 +207,19 @@ public:
       cta::common::dataStructures::Label::Format labelFormat;
       cta::common::dataStructures::MountType mountType;
       uint64_t priority = 0;
+
+      /// Combine this assignment's metadata with its current tape-session phase.
+      common::dataStructures::TapeSessionReport
+      makeTapeSessionReport(common::dataStructures::TapeSessionState state) const;
     } mountInfo;
 
     virtual const MountInfo& getMountInfo() = 0;
     virtual std::list<std::unique_ptr<ArchiveJob>>
     getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) = 0;
 
-    virtual void setDriveStatus(common::dataStructures::DriveStatus status,
-                                common::dataStructures::MountType mountType,
-                                time_t completionTime,
-                                const std::optional<std::string>& reason = std::nullopt) = 0;
+    virtual void reportTapeSessionState(common::dataStructures::TapeSessionState state, time_t reportTime) = 0;
 
-    virtual void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) = 0;
+    virtual void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) = 0;
     virtual void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                         log::LogContext& lc) = 0;
 
@@ -585,6 +588,10 @@ public:
       std::optional<std::string> activity;
       cta::common::dataStructures::Label::Format labelFormat;
       uint64_t priority = 0;
+
+      /// Combine this assignment's metadata with its current tape-session phase.
+      common::dataStructures::TapeSessionReport
+      makeTapeSessionReport(common::dataStructures::TapeSessionState state) const;
     } mountInfo;
 
     virtual const MountInfo& getMountInfo() = 0;
@@ -602,12 +609,9 @@ public:
      */
     virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const = 0;
 
-    virtual void setDriveStatus(common::dataStructures::DriveStatus status,
-                                common::dataStructures::MountType mountType,
-                                time_t completionTime,
-                                const std::optional<std::string>& reason = std::nullopt) = 0;
+    virtual void reportTapeSessionState(common::dataStructures::TapeSessionState state, time_t reportTime) = 0;
 
-    virtual void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) = 0;
+    virtual void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) = 0;
 
     virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                           log::LogContext& lc) = 0;

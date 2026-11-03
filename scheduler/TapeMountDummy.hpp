@@ -40,14 +40,13 @@ class TapeMountDummy : public TapeMount {
 
   std::optional<std::string> getEncryptionKeyName() const override { throw exception::NotImplementedException(); }
 
-  void setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                      const std::optional<std::string>& reason) override {}
+  void reportTapeSessionState(cta::common::dataStructures::TapeSessionState state) override {}
 
   cta::common::dataStructures::Label::Format getLabelFormat() const override {
     throw exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {};
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override {};
   void setTapeMounted(log::LogContext& logContext) const override {};
 };
 
