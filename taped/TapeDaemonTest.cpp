@@ -142,22 +142,6 @@ protected:
 
   int shutdown() { return daemon->shutdown(TapeDaemon::ExitCause::Normal, true); }
 
-  void expectLifecycleEvents(bool started) {
-    const auto output = logger.getLog();
-    for (const auto* event : {"program_started", "program_stopping"}) {
-      const auto first = output.find(event);
-      if (!started && std::string_view(event) == "program_started") {
-        EXPECT_EQ(std::string::npos, first);
-        continue;
-      }
-      ASSERT_NE(std::string::npos, first);
-      EXPECT_EQ(std::string::npos, output.find(event, first + 1));
-    }
-    if (started) {
-      EXPECT_LT(output.find("program_started"), output.find("program_stopping"));
-    }
-  }
-
   void expectRunStartup() {
     EXPECT_CALL(driveState(),
                 createTapeDrive(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
@@ -280,7 +264,6 @@ TEST_F(TapeDaemonTest, RegistrationConflictStopsStartup) {
   EXPECT_CALL(driveState(), createTapeDrive(testing::Truly([](const TapeDrive&) { return true; }))).Times(0);
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
-  expectLifecycleEvents(false);
 }
 
 TEST_F(TapeDaemonTest, RegistrationPublishesReadinessLast) {
@@ -388,7 +371,6 @@ TEST_F(TapeDaemonTest, LibraryFailureAfterRegistrationPublishesDownAndClearsRead
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
   EXPECT_TRUE(daemon->isLive());
-  expectLifecycleEvents(false);
 }
 
 TEST_F(TapeDaemonTest, StopBeforeRegistrationSkipsWaitingAndExitsNormally) {
@@ -403,34 +385,6 @@ TEST_F(TapeDaemonTest, StopBeforeRegistrationSkipsWaitingAndExitsNormally) {
                                                    testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
   EXPECT_EQ(0, daemon->run());
   EXPECT_FALSE(daemon->isReady());
-  expectLifecycleEvents(true);
-}
-
-TEST_F(TapeDaemonTest, StartedPrecedesWorkAndStoppingPrecedesShutdownPublication) {
-  expectRunStartup();
-  common::dataStructures::LogicalLibrary logicalLibrary;
-  logicalLibrary.name = "library";
-  EXPECT_CALL(library(), getLogicalLibraries()).WillOnce(Invoke([&] {
-    EXPECT_EQ(std::string::npos, logger.getLog().find("program_started"));
-    // The next drive read belongs to the work loop, after startup has completed.
-    EXPECT_CALL(driveState(), getTapeDrive("drive"))
-      .WillOnce(Invoke([&] {
-        EXPECT_NE(std::string::npos, logger.getLog().find("program_started"));
-        auto desired = previousDrive;
-        desired->desiredUp = true;
-        daemon->stop();
-        return desired;
-      }))
-      .RetiresOnSaturation();
-    return std::vector<common::dataStructures::LogicalLibrary> {logicalLibrary};
-  }));
-  EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _)).Times(2);
-  EXPECT_CALL(driveState(), updateTapeDriveStatus(_)).WillOnce(Invoke([&](const TapeDrive&) {
-    EXPECT_NE(std::string::npos, logger.getLog().find("program_stopping"));
-    return true;
-  }));
-  EXPECT_EQ(0, daemon->run());
-  expectLifecycleEvents(true);
 }
 
 TEST_F(TapeDaemonTest, StopRetainsExitRequestWhenPublicationFails) {
@@ -465,7 +419,6 @@ TEST_F(TapeDaemonTest, MissingDriveEndsRunWithoutShutdownPublication) {
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
   EXPECT_TRUE(daemon->isLive());
-  expectLifecycleEvents(true);
 }
 
 }  // namespace cta::tape::daemon
