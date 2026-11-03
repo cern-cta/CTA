@@ -632,7 +632,7 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
       drive->info = m_driveInfo;
       return drive.release();
     } catch (cta::exception::Exception& ex) {
-      putDriveDown("Failed to create stress drive", mount, logContext);
+      putDriveDown("Failed to create VtlDrive", mount, logContext);
       return nullptr;
     }
   }

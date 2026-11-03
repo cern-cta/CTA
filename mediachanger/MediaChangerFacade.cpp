@@ -138,9 +138,9 @@ private:
 // .lock with a configurable timeout before throwing.
 struct VirtualChangerImpl final : cta::mediachanger::MediaChangerFacadeImpl {
   VirtualChangerImpl(std::string driveName,
-             std::string logicalLibrary,
-             std::filesystem::path baseDir,
-             cta::log::Logger& /*log*/)
+                     std::string logicalLibrary,
+                     std::filesystem::path baseDir,
+                     cta::log::Logger& /*log*/)
       : m_driveName(std::move(driveName)),
         m_logicalLibrary(std::move(logicalLibrary)),
         m_baseDir(std::move(baseDir)) {
