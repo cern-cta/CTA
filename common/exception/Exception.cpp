@@ -49,6 +49,11 @@ void Exception::setWhat(std::string_view what) {
 }
 
 std::string currentExceptionMessage() {
+  // A bare rethrow requires an exception currently being handled.
+  if (!std::current_exception()) {
+    return "No active exception";
+  }
+
   try {
     throw;
   } catch (const Exception& ex) {
