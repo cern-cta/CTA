@@ -34,7 +34,7 @@ Schema deletion and scheduler repair/reset commands modify or remove state. Thei
 | [cta-tape-label](cta-tape-label.md) | Write tape labels. |
 | [cta-smc](cta-smc.md) | Control tape-library media moves. |
 | [cta-ops-repack (ATRESYS)](repack-automation.md) | Coordinate automated tape repacking. |
-| [cta-ops-drive-config-generate](cta-ops-drive-config-generate.md) | Generate drive configuration from hardware and library information. |
+| [cta-ops-drive-config-generate](cta-ops-drive-config-generate.md) | Legacy drive configuration generator; superseded by `cta device list` and [cta-udev](../deploy-and-configure/deployment/cta-udev.md). |
 | [cta-ops-pool-supply](cta-ops-pool-supply.md) | Supply tapes to destination tape pools. |
 | [cta-ops-tape-verify](tape-verification.md) | Coordinate tape-data verification. |
 

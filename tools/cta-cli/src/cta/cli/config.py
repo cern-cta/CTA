@@ -17,10 +17,10 @@ from cta.sdk.client.grpc.models import WorkflowConfig
 
 @dataclass
 class UdevPropertiesMap:
-    library_name_key: str = "CTAOPS_NAME"
-    drive_name_key: str = "CTAOPS_NAME"
-    drive_library_address_key: str = "CTAOPS_LIBRARY_ADDRESS"
-    drive_library_ordinal_key: str = "CTAOPS_LIBRARY_ORDINAL"
+    library_name_key: str = "CTA_NAME"
+    drive_name_key: str = "CTA_NAME"
+    drive_library_address_key: str = "CTA_LIBRARY_ADDRESS"
+    drive_library_ordinal_key: str = "CTA_LIBRARY_ORDINAL"
 
 
 @dataclass

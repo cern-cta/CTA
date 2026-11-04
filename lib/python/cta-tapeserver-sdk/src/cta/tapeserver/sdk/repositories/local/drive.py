@@ -117,11 +117,11 @@ class LocalNamedDriveRepository(_LocalAbstractDriveRepository, NamedDriveReposit
 
     Same discovery as
     [LocalDriveRepository][cta.tapeserver.sdk.repositories.local.drive.LocalDriveRepository],
-    but additionally requires the `CTAOPS_NAME` udev property on each
-    `nstN` device. Drives without `CTAOPS_NAME` are skipped.
+    but additionally requires the `CTA_NAME` udev property on each
+    `nstN` device. Drives without `CTA_NAME` are skipped.
     """
 
-    def __init__(self, context: Optional[Context] = None, drive_name_key: str = "CTAOPS_NAME"):
+    def __init__(self, context: Optional[Context] = None, drive_name_key: str = "CTA_NAME"):
         super().__init__(context)
         self._drive_name_key = drive_name_key
 
@@ -172,15 +172,15 @@ class LocalLocatedDriveRepository(_LocalAbstractDriveRepository, LocatedDriveRep
     Each drive is bound to its parent library by walking up to the drive's
     `scsi_target` parent and finding the sibling `sgN` medium changer
     that carries `ID_SCSI_SERIAL`. Drives without a sibling changer, or
-    without the `CTAOPS_LIBRARY_ADDRESS` / `CTAOPS_LIBRARY_ORDINAL`
+    without the `CTA_LIBRARY_ADDRESS` / `CTA_LIBRARY_ORDINAL`
     properties, are skipped.
     """
 
     def __init__(
         self,
         context: Optional[Context] = None,
-        drive_library_address_key: str = "CTAOPS_LIBRARY_ADDRESS",
-        drive_library_ordinal_key: str = "CTAOPS_LIBRARY_ORDINAL",
+        drive_library_address_key: str = "CTA_LIBRARY_ADDRESS",
+        drive_library_ordinal_key: str = "CTA_LIBRARY_ORDINAL",
     ):
         super().__init__(context)
         self._drive_library_address_key = drive_library_address_key
@@ -247,17 +247,17 @@ class LocalLocatedNamedDriveRepository(_LocalAbstractDriveRepository, LocatedNam
     [LocalLocatedDriveRepository][cta.tapeserver.sdk.repositories.local.drive.LocalLocatedDriveRepository]
     with the name requirement of
     [LocalNamedDriveRepository][cta.tapeserver.sdk.repositories.local.drive.LocalNamedDriveRepository]:
-    a drive must carry `ID_SCSI_SERIAL`, `CTAOPS_NAME`,
-    `CTAOPS_LIBRARY_ADDRESS`, `CTAOPS_LIBRARY_ORDINAL`, and have a
+    a drive must carry `ID_SCSI_SERIAL`, `CTA_NAME`,
+    `CTA_LIBRARY_ADDRESS`, `CTA_LIBRARY_ORDINAL`, and have a
     sibling medium-changer with `ID_SCSI_SERIAL`.
     """
 
     def __init__(
         self,
         context: Optional[Context] = None,
-        drive_name_key: str = "CTAOPS_NAME",
-        drive_library_address_key: str = "CTAOPS_LIBRARY_ADDRESS",
-        drive_library_ordinal_key: str = "CTAOPS_LIBRARY_ORDINAL",
+        drive_name_key: str = "CTA_NAME",
+        drive_library_address_key: str = "CTA_LIBRARY_ADDRESS",
+        drive_library_ordinal_key: str = "CTA_LIBRARY_ORDINAL",
     ):
         super().__init__(context)
         self._drive_name_key = drive_name_key

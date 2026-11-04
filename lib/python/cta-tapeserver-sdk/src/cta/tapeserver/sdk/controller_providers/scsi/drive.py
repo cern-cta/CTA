@@ -30,7 +30,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
     Implements the
     [DriveControllerProvider][cta.tapeserver.sdk.controller_providers.protocols.drive.DriveControllerProvider]
     protocol; instances can be addressed by SCSI serial number or by
-    ctaops logical name (`CTAOPS_NAME` udev property).
+    CTA logical name (`CTA_NAME` udev property).
 
     Args:
         context: Optional pyudev `Context`. When omitted, a fresh context
@@ -46,7 +46,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
         ```
     """
 
-    def __init__(self, context: Optional[Context] = None, drive_name_key: str = "CTAOPS_NAME"):
+    def __init__(self, context: Optional[Context] = None, drive_name_key: str = "CTA_NAME"):
         LOGGER.debug("Initializing ScsiDriveControllerProvider")
         self._context = Context() if context is None else context
         self._drive_name_key = drive_name_key

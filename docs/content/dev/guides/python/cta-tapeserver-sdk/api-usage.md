@@ -68,7 +68,7 @@ from cta.tapeserver.sdk import ScsiManagedLibraryControllerProvider, EOTError, E
 
 lib = ScsiManagedLibraryControllerProvider().get_library_controller_by_name("T0-LIB0")
 
-# Drive can be referenced by ordinal (int) or by ctaops name (str):
+# Drive can be referenced by ordinal (int) or by CTA name (str):
 with lib.mount(drive_key="T0-LIB0-DRV0", vid="ABC123") as mounted:
     print(f"Mounted {mounted.mounted_vid}, VOL1={mounted.get_VOL1()!r}")
 

@@ -110,11 +110,11 @@ class LocalNamedLibraryRepository(_LocalAbstractLibraryRepository, NamedLibraryR
 
     Same discovery rules as
     [LocalLibraryRepository][cta.tapeserver.sdk.repositories.local.library.LocalLibraryRepository],
-    but additionally requires the `CTAOPS_NAME` udev property on each
-    medium changer. Changers without `CTAOPS_NAME` are skipped.
+    but additionally requires the `CTA_NAME` udev property on each
+    medium changer. Changers without `CTA_NAME` are skipped.
     """
 
-    def __init__(self, context: Optional[Context] = None, library_name_key: str = "CTAOPS_NAME"):
+    def __init__(self, context: Optional[Context] = None, library_name_key: str = "CTA_NAME"):
         super().__init__(context)
         self._library_name_key = library_name_key
 

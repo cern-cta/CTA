@@ -53,7 +53,7 @@ _DEFAULT_TECH_MODEL_DRIVE_MAPPING: TechModelDriveMapping = {
 
 @dataclass
 class Config:
-    library_config_dir: Path = Path("/etc/cta-ops/library_drive_config")
+    library_inventory_dir: Path = Path("/etc/cta/library-inventory")
     tech_model_drive_map: TechModelDriveMapping = field(default_factory=lambda: _DEFAULT_TECH_MODEL_DRIVE_MAPPING)
     vendor_map_suffix: dict[str, str] = field(default_factory=lambda: {"SPECTRA": ".xml", "IBM": ".json"})
     exclude_vendor_logical_library: list[str] = field(default_factory=lambda: ["BACKUP"])
@@ -63,8 +63,8 @@ class Config:
         configuration_parser.optionxform = str  # type: ignore[assignment]
         if not configuration_parser.read(file):
             return self
-        self.library_config_dir = Path(
-            configuration_parser.get("global", "library_config_dir", fallback=self.library_config_dir)
+        self.library_inventory_dir = Path(
+            configuration_parser.get("global", "library_inventory_dir", fallback=self.library_inventory_dir)
         )
 
         if configuration_parser.has_section("tech_model_drive_map"):
@@ -84,9 +84,9 @@ class Config:
         return self
 
     def validate(self) -> "Config":
-        if not self.library_config_dir.is_dir():
+        if not self.library_inventory_dir.is_dir():
             raise ValueError(
-                f"Library configuration directory {self.library_config_dir} does not exist or is not a directory"
+                f"Library inventory directory {self.library_inventory_dir} does not exist or is not a directory"
             )
         return self
 
@@ -257,7 +257,7 @@ class MediaChangerPropertiesGenerator:
 
     @property
     def _cache_path(self) -> Path:
-        return self.conf.library_config_dir / (
+        return self.conf.library_inventory_dir / (
             f"{self._vendor}-{os.environ['SCSI_MODEL']}-"
             f"{os.environ['ID_SCSI_SERIAL']}{self.conf.vendor_map_suffix[self._vendor]}"
         )
@@ -267,7 +267,7 @@ class MediaChangerPropertiesGenerator:
         return next(d.library for d in drive_inventory if d.library not in self.conf.exclude_vendor_logical_library)
 
     def generate_udev_properties(self) -> str:
-        return f"CTAOPS_NAME={self.get_name()}"
+        return f"CTA_NAME={self.get_name()}"
 
 
 class DrivePropertiesGenerator:
@@ -277,7 +277,7 @@ class DrivePropertiesGenerator:
     def get_drive_inventory_entry(self) -> LibraryDriveInventoryEntry:
         drive_generator = (
             d
-            for p in Path(self.conf.library_config_dir).iterdir()
+            for p in Path(self.conf.library_inventory_dir).iterdir()
             if p.is_file() and p.suffix in [".json", ".xml"]
             for d in get_parser_from_file_suffix(p.suffix, self.conf.tech_model_drive_map).parse(p)
         )
@@ -287,9 +287,9 @@ class DrivePropertiesGenerator:
     def generate_udev_properties(self) -> str:
         entry = self.get_drive_inventory_entry()
         return (
-            f"CTAOPS_NAME={entry.library}-{entry.tech}-{entry.location}\n"
-            f"CTAOPS_LIBRARY_ADDRESS={entry.address}\n"
-            f"CTAOPS_LIBRARY_ORDINAL={entry.ordinal}"
+            f"CTA_NAME={entry.library}-{entry.tech}-{entry.location}\n"
+            f"CTA_LIBRARY_ADDRESS={entry.address}\n"
+            f"CTA_LIBRARY_ORDINAL={entry.ordinal}"
         )
 
 
@@ -303,7 +303,7 @@ def get_udev_properties_generator(conf: Config) -> UdevPropertiesGenerator:
 
 
 def main():
-    conf = Config().load_from_file(Path("/etc/udev/ctaops-udev.ini")).validate()
+    conf = Config().load_from_file(Path("/etc/udev/cta-udev.ini")).validate()
     udev_generator = get_udev_properties_generator(conf)
     print(udev_generator.generate_udev_properties())
 

@@ -54,7 +54,7 @@ class LibraryControllerProvider(Protocol):
         self,
         name: str,
     ) -> LibraryController:
-        """Return the library controller matching the logical ctaops `name`.
+        """Return the library controller matching the logical CTA `name`.
 
         Raises:
             ResourceNotFoundError: If no matching library is visible.
@@ -119,7 +119,7 @@ class ManagedLibraryControllerProvider(Protocol):
     ) -> ManagedLibraryController:
         """Return the managed library controller of the library that hosts drive `drive_name`.
 
-        `drive_name` is the logical ctaops name (`CTAOPS_NAME`) of the
+        `drive_name` is the logical CTA name (`CTA_NAME`) of the
         drive — the parent library is resolved through the local drive
         repository.
 

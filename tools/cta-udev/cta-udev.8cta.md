@@ -1,32 +1,32 @@
 ---
 date: 2026-05-12
-section: 8ctaops
-title: CTAOPS-UDEV
+section: 8cta
+title: CTA-UDEV
 header: The CERN Tape Archive (CTA)
 ---
 
 # NAME
 
-ctaops-udev - Udev rule and helper that labels CTA tape hardware with stable
+cta-udev - Udev rule and helper that labels CTA tape hardware with stable
 udev properties and creates `/dev/tape/by-name/` symlinks.
 
 # DESCRIPTION
 
-The **ctaops-udev** package installs a udev rule and a Python helper that
+The **cta-udev** package installs a udev rule and a Python helper that
 run when a tape medium changer (`sgN`, SCSI type 8) or a tape drive (`nstN`,
 `scsi_tape`) appears on the system. For each such device the helper emits
 the following properties on stdout, which udev imports onto the device:
 
-- **CTAOPS_NAME** — logical name of the device. For a medium changer this
+- **CTA_NAME** — logical name of the device. For a medium changer this
   is the logical library name (e.g. `T0-LIB0`); for a tape drive it is
   `<library>-<tech>-<location>` (e.g. `T0-LIB0-LTO9-F01C03R02`).
-- **CTAOPS_LIBRARY_ADDRESS** — SCSI element address of the drive within
+- **CTA_LIBRARY_ADDRESS** — SCSI element address of the drive within
   its parent medium changer (drives only).
-- **CTAOPS_LIBRARY_ORDINAL** — 0-based ordinal of the drive within its
+- **CTA_LIBRARY_ORDINAL** — 0-based ordinal of the drive within its
   parent medium changer (drives only).
 
 The udev rule additionally creates a persistent symlink at
-`/dev/tape/by-name/${CTAOPS_NAME}` pointing at the corresponding kernel
+`/dev/tape/by-name/${CTA_NAME}` pointing at the corresponding kernel
 device.
 
 These properties are the contract consumed by **cta-tapeserver-sdk**'s local
@@ -38,15 +38,15 @@ considered unmanaged and silently skipped.
 
 The RPM installs the following files:
 
-- `/usr/lib/udev/rules.d/62-ctaops.rules` — udev rule matching tape devices
-- `/usr/lib/udev/ctaops-udev` — Python helper invoked by the rule
+- `/usr/lib/udev/rules.d/62-cta.rules` — udev rule matching tape devices
+- `/usr/lib/udev/cta-udev` — Python helper invoked by the rule
   (`IMPORT{program}=`)
-- `/usr/lib/udev/ctaops-udev.ini` — default configuration (sample)
-- `/usr/share/man/man8/ctaops-udev.8ctaops` — this man page
+- `/usr/share/doc/cta-udev/examples/cta-udev.example.ini` — example configuration
+- `/usr/share/man/man8/cta-udev.8cta` — this man page
 
 # CAVEATS
 
-The **ctaops-udev** RPM is provided **as-is** and is **not stable**. The
+The **cta-udev** RPM is provided **as-is** and is **not stable**. The
 parsers, ordinal arithmetic, location regexes, and inventory layout are
 tailored to the tape hardware deployed at CERN and will likely need to be
 forked for any other site. See the online documentation for the full list
@@ -54,12 +54,14 @@ of assumptions.
 
 # CONFIGURATION
 
-The helper reads `/usr/lib/udev/ctaops-udev.ini` at every invocation. All
-sections are optional and fall back to baked-in defaults:
+The helper reads `/etc/udev/cta-udev.ini` at every invocation. The file
+is optional; copy the example from
+`/usr/share/doc/cta-udev/examples/cta-udev.example.ini`
+to create it. All sections are optional and fall back to baked-in defaults:
 
 ```ini
 [global]
-library_config_dir = /etc/cta-ops/library_drive_config
+library_inventory_dir = /etc/cta/library-inventory
 exclude_vendor_logical_library = BACKUP, BACKUP2
 
 [tech_model_drive_map]
@@ -75,10 +77,10 @@ IBM     = .json
 SPECTRA = .xml
 ```
 
-- **global.library_config_dir** — directory where the per-library
+- **global.library_inventory_dir** — directory where the per-library
   inventory files live.
 - **global.exclude_vendor_logical_library** — vendor logical-library
-  names to ignore when picking `CTAOPS_NAME` for a changer (e.g.
+  names to ignore when picking `CTA_NAME` for a changer (e.g.
   internal `BACKUP` partitions).
 - **tech_model_drive_map.&lt;tech&gt;** — comma-separated SCSI model
   strings that should map to `<tech>` in the drive name.
@@ -88,7 +90,7 @@ SPECTRA = .xml
 # PRE-REQUISITES
 
 For every tape library, place an inventory file under
-`global.library_config_dir`. The filename convention is
+`global.library_inventory_dir`. The filename convention is
 `<VENDOR>-<MODEL>-<SERIAL>.<json|xml>`; the three values come from
 `sg_inq` on the medium-changer device.
 
@@ -98,7 +100,7 @@ The file is produced by the vendor's own tool:
 
 ```bash
 /opt/itdt/itdt -f /dev/smc RoS GET /v1/drives \
-    > /etc/cta-ops/library_drive_config/IBM-03584L22-0000078AA6480401.json
+    > /etc/cta/library-inventory/IBM-03584L22-0000078AA6480401.json
 ```
 
 - **Spectra Logic** libraries — use *slapi*:
@@ -106,7 +108,7 @@ The file is produced by the vendor's own tool:
 ```bash
 /usr/bin/slapi --config /root/SPECTRA/slapi.conf \
     --server spectralib2 drivelist \
-    > /etc/cta-ops/library_drive_config/SPECTRA-PYTHON-92400068FC.xml
+    > /etc/cta/library-inventory/SPECTRA-PYTHON-92400068FC.xml
 ```
 
 # DIAGNOSTICS
@@ -126,7 +128,7 @@ udevadm test /sys/class/scsi_tape/nst0
 Check the udev daemon log for invocation failures:
 
 ```bash
-journalctl -u systemd-udevd | grep ctaops-udev
+journalctl -u systemd-udevd | grep cta-udev
 ```
 
 # SEE ALSO
@@ -135,7 +137,7 @@ journalctl -u systemd-udevd | grep ctaops-udev
 - systemd-udevd(8)
 - udevadm(8)
 - The `cta-tapeserver-sdk` documentation — the library that consumes the
-  `CTAOPS_NAME`, `CTAOPS_LIBRARY_ADDRESS`, and `CTAOPS_LIBRARY_ORDINAL`
+  `CTA_NAME`, `CTA_LIBRARY_ADDRESS`, and `CTA_LIBRARY_ORDINAL`
   properties this tool produces.
 
 # COPYRIGHT

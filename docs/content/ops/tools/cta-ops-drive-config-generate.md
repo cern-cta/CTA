@@ -1,5 +1,10 @@
 # CTA Operations Drive Config Generate
 
+!!! warning "Superseded"
+    Local drive and library discovery is now provided by [`cta-udev`](../deploy-and-configure/deployment/cta-udev.md),
+    which labels devices with `CTA_*` udev properties, and by `cta device list drives|libraries`
+    from [`cta`](cta-usage.md#tape-server-extra). This page documents the legacy tool.
+
 This script generates tape drive configuration in JSON format for the CTA tape daemon.
 It is intended to be used as a single source of truth for drive naming and related information on the host where a tape drive is connected.
 The output may be fed into various templating and configuration tools.

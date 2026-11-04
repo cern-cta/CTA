@@ -44,5 +44,5 @@ cta_catalogue_conn_file = "/etc/cta/cta-catalogue.conf"
     # server_name_override = "cta-workflow.test"
 
 [tape_server]
-    udev_properties_map = { "library_name_key" = "CTAOPS_NAME", "drive_name_key" = "CTAOPS_NAME", "drive_library_address_key" = "CTAOPS_LIBRARY_ADDRESS", "drive_library_ordinal_key" = "CTAOPS_LIBRARY_ORDINAL" }
-    # for custom udev integration change this map (default map works with ctaops-udev RPM package)
+    udev_properties_map = { "library_name_key" = "CTA_NAME", "drive_name_key" = "CTA_NAME", "drive_library_address_key" = "CTA_LIBRARY_ADDRESS", "drive_library_ordinal_key" = "CTA_LIBRARY_ORDINAL" }
+    # for custom udev integration change this map (default map works with cta-udev RPM package)
