@@ -22,8 +22,8 @@ from typing import (
 )
 
 from cta.cli.display.encoders import CtaSdkJsonEncoder, encode_table_field, encode_table_header
+from cta.common.dataclasses import flatten_dataclass_class, flatten_dataclass_instance
 from cta.sdk.units import FreeText
-from ctaops.utils.dataclasses import flatten_dataclass_class, flatten_dataclass_instance
 from rich.table import Table
 from rich.text import Text
 

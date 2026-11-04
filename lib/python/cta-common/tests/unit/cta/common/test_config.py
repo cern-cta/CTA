@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from ctaops.utils.config import NOT_SET, CtaOpsConfigLoader
-from ctaops.utils.logging import LoggingConfiguration
+from cta.common.config import NOT_SET, CtaConfigLoader
+from cta.common.logging import LoggingConfiguration
 
 
 @dataclass
@@ -52,10 +52,10 @@ def unchecked_config(config: AppConfig) -> AppConfig:
     return config
 
 
-class TestCtaOpsConfigLoader:
+class TestCtaConfigLoader:
     @pytest.fixture(autouse=True)
     def set_config_loader(self):
-        self.config_loader = CtaOpsConfigLoader(AppConfig)
+        self.config_loader = CtaConfigLoader(AppConfig)
 
     @patch.object(AppConfig, "validate", unchecked_config)
     def test_load_from_dict(self):

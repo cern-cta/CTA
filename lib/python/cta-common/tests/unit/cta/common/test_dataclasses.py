@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Annotated, Any, Final, Optional, Union
 
 import pytest
-from ctaops.utils.dataclasses import (
+from cta.common.dataclasses import (
     DataclassProtocol,
     flatten_dataclass_class,
     flatten_dataclass_instance,

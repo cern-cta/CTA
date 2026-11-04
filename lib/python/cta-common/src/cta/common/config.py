@@ -17,13 +17,13 @@ implementations, including the NOT_SET singleton for distinguishing unset values
 from None or default values.
 
 Key Classes:
-    CtaOpsConfigLoader: Generic configuration loader with fluent API
+    CtaConfigLoader: Generic configuration loader with fluent API
     DataclassWithValidation: Protocol for validatable dataclasses
     NotSetType: Sentinel value for unset configuration fields
 
 Usage:
     Designed for use by tools (not libraries). Tools should create dataclass
-    configuration classes and use CtaOpsConfigLoader to load and validate them.
+    configuration classes and use CtaConfigLoader to load and validate them.
 """
 
 import os
@@ -90,7 +90,7 @@ like password or secret keys.
 T = TypeVar("T", bound=DataclassWithValidation)
 
 
-class CtaOpsConfigLoader(Generic[T]):
+class CtaConfigLoader(Generic[T]):
     """
     A generic configuration loader for dataclasses.
 
@@ -118,7 +118,7 @@ class CtaOpsConfigLoader(Generic[T]):
 
     def load_from_toml(
         self, toml_path: Optional[Path], file_exist_error: Literal["raise", "warn", "ignore"] = "raise"
-    ) -> "CtaOpsConfigLoader[T]":
+    ) -> "CtaConfigLoader[T]":
         """
         Load configuration from a TOML file.
 
@@ -150,7 +150,7 @@ class CtaOpsConfigLoader(Generic[T]):
 
         return self
 
-    def load_from_dict(self, raw_dict: dict[str, Any]) -> "CtaOpsConfigLoader[T]":
+    def load_from_dict(self, raw_dict: dict[str, Any]) -> "CtaConfigLoader[T]":
         """
         Load configuration from a dictionary.
 
@@ -163,7 +163,7 @@ class CtaOpsConfigLoader(Generic[T]):
         dc.load_data(self._config, raw_dict)
         return self
 
-    def set(self, *keys: str, value: object) -> "CtaOpsConfigLoader[T]":
+    def set(self, *keys: str, value: object) -> "CtaConfigLoader[T]":
         """
         Set a configuration value for a nested key.
 

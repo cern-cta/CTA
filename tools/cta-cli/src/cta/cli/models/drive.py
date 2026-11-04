@@ -10,8 +10,8 @@ adding optional serial number and connection state attributes.
 from dataclasses import dataclass
 from typing import Optional
 
+from cta.common import copy_dataclass
 from cta.sdk.models import Drive
-from ctaops.utils import copy_dataclass
 
 
 @dataclass

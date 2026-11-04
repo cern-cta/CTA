@@ -20,7 +20,7 @@ from dataclasses import Field, fields, is_dataclass
 from functools import lru_cache
 from typing import Any, ClassVar, Optional, Protocol, TypeVar, cast, get_args, get_origin, get_type_hints
 
-from ctaops.utils.typing import normalize_types
+from cta.common.typing import normalize_types
 
 
 class DataclassProtocol(Protocol):

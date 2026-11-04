@@ -18,11 +18,11 @@ from typing import Optional
 
 import click
 from cta.cli.display.printers import print_dataclasses
+from cta.common.config import CtaConfigLoader
+from cta.common.logging import configure_logging
 from cta.sdk import get_cta_client
 from cta.sdk.client.grpc.exceptions import WorkflowConfigError, WorkflowRpcError
 from cta.sdk.exceptions import CtaSdkError
-from ctaops.utils.config import CtaOpsConfigLoader
-from ctaops.utils.logging import configure_logging
 from rich.console import Console
 from rich.panel import Panel
 
@@ -47,7 +47,7 @@ from .context import AppContext, __version__
     "--config-file",
     "-C",
     type=click.Path(path_type=Path),
-    default=CtaOpsConfigLoader.find_default_config_file(project_name="cta", file_name="cta-cli.toml"),
+    default=CtaConfigLoader.find_default_config_file(project_name="cta", file_name="cta-cli.toml"),
     help="Path to valid yaml config file",
     show_default=True,
 )
@@ -59,7 +59,7 @@ def cta(ctx: click.Context, format: str, log_level: str, config_file: Optional[P
     manage tapes, drives, storage classes, and other CTA resources.
     """
     config = (
-        CtaOpsConfigLoader(AppConfig)
+        CtaConfigLoader(AppConfig)
         .load_from_toml(config_file, file_exist_error="ignore")
         .set("display", "format", value=format)
         .set("logging", "level", value=log_level)
@@ -129,7 +129,7 @@ def _infer_output_format(argv: t.Optional[list[str]] = None) -> t.Optional[str]:
         return explicit_format
 
     try:
-        config = CtaOpsConfigLoader(AppConfig).load_from_toml(config_file, "ignore").get_safe_config()
+        config = CtaConfigLoader(AppConfig).load_from_toml(config_file, "ignore").get_safe_config()
         # there is a format set via the config file
         return getattr(getattr(config, "display", None), "format", None)
     except Exception:

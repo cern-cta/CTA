@@ -10,9 +10,9 @@ display settings, backend selection, and logging configuration.
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 
+from cta.common.config import NOT_SET
+from cta.common.logging import LoggingConfiguration
 from cta.sdk.client.grpc.models import WorkflowConfig
-from ctaops.utils.config import NOT_SET
-from ctaops.utils.logging import LoggingConfiguration
 
 
 @dataclass

@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from ipaddress import IPv4Address, IPv6Address
 from typing import Annotated, Literal, Optional, Union
 
+from cta.common.prometheus import Labels
 from cta.sdk.units import FreeText
-from ctaops.utils.prometheus import Labels
 
 IPAddress = Union[IPv4Address, IPv6Address]
 Family = Literal["ipv4", "ipv6"]

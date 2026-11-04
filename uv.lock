@@ -11,9 +11,9 @@ resolution-markers = [
 [manifest]
 members = [
     "cta-cli",
+    "cta-common",
     "cta-sdk",
     "ctaops-sdk",
-    "ctaops-utils",
 ]
 
 [manifest.dependency-groups]
@@ -1301,8 +1301,8 @@ dependencies = [
     { name = "click" },
     { name = "cryptography", version = "47.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version <= '3.9'" },
     { name = "cryptography", version = "50.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version > '3.9'" },
+    { name = "cta-common" },
     { name = "cta-sdk" },
-    { name = "ctaops-utils" },
     { name = "grpcio-health-checking", version = "1.80.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "grpcio-health-checking", version = "1.85.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pyjwt" },
@@ -1322,16 +1322,32 @@ workflow = [
 requires-dist = [
     { name = "click" },
     { name = "cryptography", specifier = ">=47.0.0" },
+    { name = "cta-common", editable = "lib/python/cta-common" },
     { name = "cta-sdk", editable = "lib/python/cta-sdk" },
     { name = "cta-sdk", marker = "extra == 'workflow'", editable = "lib/python/cta-sdk" },
     { name = "ctaops-sdk", marker = "extra == 'tapeserver'", editable = "lib/python/ctaops-sdk" },
-    { name = "ctaops-utils", editable = "lib/python/ctaops-utils" },
     { name = "grpcio-health-checking", specifier = ">=1.80.0" },
     { name = "pyjwt", specifier = ">=2.14.0" },
     { name = "rich" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 provides-extras = ["tapeserver", "workflow"]
+
+[[package]]
+name = "cta-common"
+source = { editable = "lib/python/cta-common" }
+dependencies = [
+    { name = "rich" },
+    { name = "tomli" },
+    { name = "typing-extensions" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "rich" },
+    { name = "tomli" },
+    { name = "typing-extensions", specifier = ">=4.4.0" },
+]
 
 [[package]]
 name = "cta-sdk"
@@ -1377,22 +1393,6 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "pyudev" },
-    { name = "typing-extensions", specifier = ">=4.4.0" },
-]
-
-[[package]]
-name = "ctaops-utils"
-source = { editable = "lib/python/ctaops-utils" }
-dependencies = [
-    { name = "rich" },
-    { name = "tomli" },
-    { name = "typing-extensions" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "rich" },
-    { name = "tomli" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 
