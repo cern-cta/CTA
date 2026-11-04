@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Udev helpers live under lib/udev, including on platforms using lib64 for libraries.
-install(FILES src/62-cta.rules DESTINATION lib/udev/rules.d)
+install(FILES src/62-cta.rules DESTINATION ${CTA_UDEV_DIR}/rules.d)
+install(DIRECTORY DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/cta/library-inventory)
 install(FILES cta-udev.example.ini DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-udev/examples)
-install(PROGRAMS src/cta_udev.py DESTINATION lib/udev RENAME cta-udev)
+install(PROGRAMS src/cta_udev.py DESTINATION ${CTA_UDEV_DIR} RENAME cta-udev)
 
 set(manpage "${CMAKE_CURRENT_BINARY_DIR}/cta-udev.8cta")
 add_custom_command(

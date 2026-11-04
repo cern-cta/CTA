@@ -122,6 +122,7 @@ The RPM lays down:
 | `/usr/lib/udev/rules.d/62-cta.rules` | The udev rule that fires on tape devices |
 | `/usr/lib/udev/cta-udev` | The Python helper script (run by udev) |
 | `/usr/share/doc/cta-udev/examples/cta-udev.example.ini` | Example configuration |
+| `/etc/cta/library-inventory/` | Empty directory for the library inventory files |
 | `/usr/share/man/man8/cta-udev.8cta` | Man page |
 
 ### Prerequisites
@@ -133,7 +134,7 @@ The RPM lays down:
 ### Generate the inventory files
 
 For each tape library, drop one inventory file under
-`/etc/cta/library-inventory/`. The filename convention is
+`/etc/cta/library-inventory/` (created empty by the RPM). The filename convention is
 `<VENDOR>-<MODEL>-<SERIAL>.<json|xml>`. You can read these three values
 from the medium changer device with `sg_inq`.
 

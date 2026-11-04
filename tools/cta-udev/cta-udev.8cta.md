@@ -42,6 +42,7 @@ The RPM installs the following files:
 - `/usr/lib/udev/cta-udev` — Python helper invoked by the rule
   (`IMPORT{program}=`)
 - `/usr/share/doc/cta-udev/examples/cta-udev.example.ini` — example configuration
+- `/etc/cta/library-inventory/` — empty directory for the library inventory files
 - `/usr/share/man/man8/cta-udev.8cta` — this man page
 
 # CAVEATS
