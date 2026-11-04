@@ -24,7 +24,7 @@ flowchart
         logging[Logging]
     end
 
-    subgraph optional[ctaops-sdk - optional, on tape servers]
+    subgraph optional[cta-tapeserver-sdk - optional, on tape servers]
         tpsrv_ctrl[Library &amp; Drive controllers]
     end
 

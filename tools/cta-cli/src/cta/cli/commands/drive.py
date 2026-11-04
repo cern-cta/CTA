@@ -44,7 +44,7 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
 
     if EXTRA_TPSRV:
         from cta.cli.models.drive import EnrichedDrive
-        from ctaops.sdk import LocalDriveRepository, LocalNamedDriveRepository
+        from cta.tapeserver.sdk import LocalDriveRepository, LocalNamedDriveRepository
 
         local_named_drives = LocalNamedDriveRepository(
             drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
@@ -92,7 +92,7 @@ def get(obj: AppContext, name: str):
 
     if EXTRA_TPSRV:
         from cta.cli.models.drive import EnrichedDrive
-        from ctaops.sdk import LocalNamedDriveRepository, ResourceNotFoundError
+        from cta.tapeserver.sdk import LocalNamedDriveRepository, ResourceNotFoundError
 
         try:
             local_drive = LocalNamedDriveRepository(
@@ -122,7 +122,7 @@ def up(obj: AppContext, name: Optional[str], reason: Optional[str], local: Optio
         return
 
     if local is True:
-        # easy implementation maybe move to ctaops.sdk for better accuracy
+        # easy implementation maybe move to cta.tapeserver.sdk for better accuracy
         for d in obj.cta_client.drive.list(all=True):
             if d.host_name.split(".")[0].lower().strip() == gethostname().split(".")[0].lower().strip():
                 obj.cta_client.drive.up(d.name)
@@ -147,7 +147,7 @@ def down(obj: AppContext, name: Optional[str], reason: str, force: bool, local: 
         return
 
     if local is True:
-        # easy implementation maybe move to ctaops.sdk for better accuracy
+        # easy implementation maybe move to cta.tapeserver.sdk for better accuracy
         for d in obj.cta_client.drive.list(all=True):
             if d.host_name.split(".")[0].lower().strip() == gethostname().split(".")[0].lower().strip():
                 obj.cta_client.drive.down(d.name, reason=reason, force=force)
@@ -179,7 +179,7 @@ def delete(obj: AppContext, name: str, force: bool):
 if EXTRA_TPSRV:
     from dataclasses import asdict
 
-    from ctaops.sdk import (
+    from cta.tapeserver.sdk import (
         LocalLibraryRepository,
         LocalLocatedDriveRepository,
         ResourceNotFoundError,

@@ -22,11 +22,11 @@ It also creates persistent device symlinks under `/dev/tape/by-name/` from the `
     Use it as a working reference. Expect to fork the parsers, the
     location regexes, and the configuration layout to fit your own site.
 
-## Why it matters for `ctaops-sdk`
+## Why it matters for `cta-tapeserver-sdk`
 
-[`ctaops-sdk`](../../../dev/guides/python/ctaops-sdk/index.md) discovers tape libraries and drives
+[`cta-tapeserver-sdk`](../../../dev/guides/python/cta-tapeserver-sdk/index.md) discovers tape libraries and drives
 **entirely from udev metadata**. Its
-[local repositories](../../../api/python/ctaops-sdk/reference/infrastructure-repository.md) read exactly the three properties listed above:
+[local repositories](../../../api/python/cta-tapeserver-sdk/reference/infrastructure-repository.md) read exactly the three properties listed above:
 
 - `CTAOPS_NAME` resolves a `NamedLibrary.name` (for changers) or a
   `NamedDrive.name` (for drives).
@@ -199,7 +199,7 @@ journalctl -u systemd-udevd | grep ctaops-udev
 - [Stable Drive Identities and udev Rules](udev-rules.md) — commissioning and verification.
 - [Source manual](https://gitlab.cern.ch/cta/CTA/-/blob/main/tools/ctaops-udev/ctaops-udev.8ctaops.md).
 
-- [`ctaops-sdk`](../../../dev/guides/python/ctaops-sdk/index.md) — the library that consumes the
+- [`cta-tapeserver-sdk`](../../../dev/guides/python/cta-tapeserver-sdk/index.md) — the library that consumes the
   udev properties this tool produces.
 - `udev(7)`, `systemd-udevd(8)`, `udevadm(8)` — the underlying mechanism.
 

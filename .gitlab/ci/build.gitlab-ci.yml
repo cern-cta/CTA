@@ -273,7 +273,7 @@ build-python:
     - |
       cd /tmp
       "$CI_PROJECT_DIR/build/python-smoke/bin/cta" --help
-      "$CI_PROJECT_DIR/build/python-smoke/bin/python" -c 'import cta.sdk.client.grpc.protobuf_api; import ctaops.sdk; import cta.common'
+      "$CI_PROJECT_DIR/build/python-smoke/bin/python" -c 'import cta.sdk.client.grpc.protobuf_api; import cta.tapeserver.sdk; import cta.common'
   artifacts:
     expire_in: 7 days
     paths:

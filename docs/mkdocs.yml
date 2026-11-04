@@ -66,7 +66,7 @@ plugins:
         python:
           paths:
             - ../lib/python/cta-sdk/src
-            - ../lib/python/ctaops-sdk/src
+            - ../lib/python/cta-tapeserver-sdk/src
             - ../lib/python/cta-common/src
             - ../tools/cta-cli/src
           inventories:
@@ -372,9 +372,9 @@ nav:
               - "cta-sdk":
                   - "Overview": dev/guides/python/cta-sdk/index.md
                   - "Usage": dev/guides/python/cta-sdk/api-usage.md
-              - "ctaops-sdk":
-                  - "Overview": dev/guides/python/ctaops-sdk/index.md
-                  - "Usage": dev/guides/python/ctaops-sdk/api-usage.md
+              - "cta-tapeserver-sdk":
+                  - "Overview": dev/guides/python/cta-tapeserver-sdk/index.md
+                  - "Usage": dev/guides/python/cta-tapeserver-sdk/api-usage.md
               - "cta-common":
                   - "Overview": dev/guides/python/cta-common/index.md
                   - "Usage": dev/guides/python/cta-common/api-usage.md
@@ -481,12 +481,12 @@ nav:
               - api/python/cta-sdk/reference/models.md
               - api/python/cta-sdk/reference/units.md
               - api/python/cta-sdk/reference/workflow.md
-          - ctaops-sdk:
-              - api/python/ctaops-sdk/index.md
-              - api/python/ctaops-sdk/reference/controller-providers.md
-              - api/python/ctaops-sdk/reference/controllers.md
-              - api/python/ctaops-sdk/reference/exceptions.md
-              - api/python/ctaops-sdk/reference/infrastructure-repository.md
+          - cta-tapeserver-sdk:
+              - api/python/cta-tapeserver-sdk/index.md
+              - api/python/cta-tapeserver-sdk/reference/controller-providers.md
+              - api/python/cta-tapeserver-sdk/reference/controllers.md
+              - api/python/cta-tapeserver-sdk/reference/exceptions.md
+              - api/python/cta-tapeserver-sdk/reference/infrastructure-repository.md
           - cta-common:
               - api/python/cta-common/reference.md
           - cta-cli:

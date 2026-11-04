@@ -3,7 +3,7 @@
 This reference is generated from the Python source in the same CTA checkout as the manual.
 
 - [cta-sdk](cta-sdk/index.md): CTA client and resource models.
-- [ctaops-sdk](ctaops-sdk/index.md): local hardware discovery and control.
+- [cta-tapeserver-sdk](cta-tapeserver-sdk/index.md): local hardware discovery and control.
 - [cta-common](cta-common/reference.md): shared configuration, logging and dataclass helpers.
 - [cta-cli](cta-cli/index.md): command implementation and extension interfaces.
 

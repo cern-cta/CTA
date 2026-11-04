@@ -22,8 +22,8 @@ if EXTRA_TPSRV:
     @click.pass_obj
     def list_command(obj: AppContext, type: Literal["drives", "libraries"]):
         """List device present locally."""
-        from ctaops.sdk.repositories.local.drive import LocalLocatedNamedDriveRepository
-        from ctaops.sdk.repositories.local.library import LocalNamedLibraryRepository
+        from cta.tapeserver.sdk.repositories.local.drive import LocalLocatedNamedDriveRepository
+        from cta.tapeserver.sdk.repositories.local.library import LocalNamedLibraryRepository
 
         if type == "libraries":
             named_lib_repo = LocalNamedLibraryRepository()

@@ -275,7 +275,7 @@ tail -f /tmp/cta-debug.log
 
 ## Tape server extra
 
-When `cta-cli` is installed with the `[tapeserver]` extra on a host where [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) requirements are met (udev rules, `cta-smc`, `mt`, `sg_logs`), additional commands and command options light up automatically — typically for local mount/unmount, label, and media check operations.
+When `cta-cli` is installed with the `[tapeserver]` extra on a host where [`cta-tapeserver-sdk`](../../dev/guides/python/cta-tapeserver-sdk/index.md) requirements are met (udev rules, `cta-smc`, `mt`, `sg_logs`), additional commands and command options light up automatically — typically for local mount/unmount, label, and media check operations.
 
 !!! note
-    Availability of these extra options is detected at start-up via [`tapeserver_option`](../../api/python/cta-cli/reference/entrypoint.md#cta.cli.context.tapeserver_option): when `ctaops.sdk` is importable, the corresponding Click options are registered; otherwise they are silently omitted.
+    Availability of these extra options is detected at start-up via [`tapeserver_option`](../../api/python/cta-cli/reference/entrypoint.md#cta.cli.context.tapeserver_option): when `cta.tapeserver.sdk` is importable, the corresponding Click options are registered; otherwise they are silently omitted.

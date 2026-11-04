@@ -1,7 +1,7 @@
 # cta
 
 `cta` is the command-line interface provided by `cta-cli` for managing CTA resources and local tape hardware.
-It uses [`cta-sdk`](../../dev/guides/python/cta-sdk/index.md) to communicate with CTA and the optional [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) for tape-server operations.
+It uses [`cta-sdk`](../../dev/guides/python/cta-sdk/index.md) to communicate with CTA and the optional [`cta-tapeserver-sdk`](../../dev/guides/python/cta-tapeserver-sdk/index.md) for tape-server operations.
 
 Commands support table, JSON, and raw output, with configuration supplied through TOML files and command-line options.
 
@@ -19,8 +19,8 @@ Commands support table, JSON, and raw output, with configuration supplied throug
         --extra-index-url https://cta-public-repo.web.cern.ch/cta-operations/stable/pypi/simple/
     ```
 
-The `tapeserver` extra installs [`ctaops-sdk`](../../dev/guides/python/ctaops-sdk/index.md) and enables local hardware commands.
-See the [system requirements](../../dev/guides/python/ctaops-sdk/index.md#system-requirements) for tape-server setup.
+The `tapeserver` extra installs [`cta-tapeserver-sdk`](../../dev/guides/python/cta-tapeserver-sdk/index.md) and enables local hardware commands.
+See the [system requirements](../../dev/guides/python/cta-tapeserver-sdk/index.md#system-requirements) for tape-server setup.
 
 ### Prerequisites
 

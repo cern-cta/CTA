@@ -263,7 +263,7 @@ def refresh_stats(obj: AppContext):
 if EXTRA_TPSRV:
     from dataclasses import asdict
 
-    from ctaops.sdk import (
+    from cta.tapeserver.sdk import (
         EOTError,
         LocalLibraryRepository,
         LocalLocatedDriveRepository,

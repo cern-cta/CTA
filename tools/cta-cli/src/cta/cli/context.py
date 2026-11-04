@@ -25,7 +25,7 @@ try:
 except PackageNotFoundError:
     __version__ = "UNKNOWN"
 
-EXTRA_TPSRV = importlib.util.find_spec("ctaops.sdk") is not None
+EXTRA_TPSRV = importlib.util.find_spec("cta.tapeserver.sdk") is not None
 
 
 @dataclass
@@ -55,7 +55,7 @@ def tapeserver_option(*option_args: str, **option_kwargs: Any) -> Callable[[F], 
     """Conditionally add Click options based on tapeserver availability.
 
     This decorator allows Cli commands to optionally support tapeserver-specific options
-    only when the ctaops.sdk package is installed. If the package is not available,
+    only when the cta.tapeserver.sdk package is installed. If the package is not available,
     the decorator returns the function unchanged.
 
     Args:

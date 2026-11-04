@@ -16,7 +16,7 @@ import pytest
 from hatchling.builders.wheel import WheelBuilder
 
 ROOT = Path(__file__).resolve().parents[2]
-PACKAGES = ["lib/python/cta-sdk", "lib/python/ctaops-sdk", "lib/python/cta-common", "tools/cta-cli"]
+PACKAGES = ["lib/python/cta-sdk", "lib/python/cta-tapeserver-sdk", "lib/python/cta-common", "tools/cta-cli"]
 
 
 VersionSource = tuple[dict[str, Any], Callable[..., str]]
