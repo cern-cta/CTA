@@ -8,10 +8,13 @@
 #include "CtaRpcWfeImpl.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/LogLevel.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "grpc-server/auth/jwt/JwtAuthFactory.hpp"
 #include "grpc-server/server/ServerBuilderHelper.hpp"
 #include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "service-resources/ServiceResources.hpp"
+
+#include <string>
 
 namespace cta::workflow_api {
 
@@ -25,7 +28,6 @@ void WorkflowApiApp::stop() {
 
 int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-  lc.log(cta::log::INFO, "Starting cta-workflow-api");
 
   // Catalogue, Scheduler DB
   service_resources::ServiceResources serviceResources(
@@ -78,12 +80,22 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   auto server = serverBuilderHelper.buildAndStart();
   lc.log(cta::log::INFO, "Listening on socket address: " + serverBuilderHelper.serverAddress());
 
+  log(cta::log::INFO,
+      std::string("Started ") + cta::semconv::attr::ServiceNameValues::kCtaWorkflowApi,
+      {
+        {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+  });
+
   {
     std::unique_lock lock(m_mutex);
     m_stopCv.wait(lock, [this] { return m_stopRequested; });
   }
 
-  lc.log(cta::log::INFO, "Stopping cta-workflow-api");
+  log(cta::log::INFO,
+      std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaWorkflowApi,
+      {
+        {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+  });
   server->Shutdown();
   server->Wait();
   // server->Wait() returns only after every in-flight RPC handler has exited: stop the batchers now so their

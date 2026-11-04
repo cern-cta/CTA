@@ -7,6 +7,7 @@
 
 #include "common/log/LogContext.hpp"
 #include "common/log/LogLevel.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "grpc-server/auth/jwt/JwtAuthFactory.hpp"
 #include "grpc-server/server/ServerBuilderHelper.hpp"
 #include "rpc/CtaRpcStreamImpl.hpp"
@@ -18,6 +19,7 @@
 
 #include <functional>
 #include <optional>
+#include <string>
 
 namespace cta::admin_api {
 
@@ -31,7 +33,6 @@ void AdminApiApp::stop() {
 
 int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-  lc.log(cta::log::INFO, "Starting cta-admin-api");
 
   // Catalogue, Scheduler DB
   service_resources::ServiceResources serviceResources(
@@ -96,12 +97,22 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   lc.log(cta::log::INFO, "Listening on socket address: " + serverBuilderHelper.serverAddress());
 
   // wait until `.stop()` is called
+  log(cta::log::INFO,
+      std::string("Started ") + cta::semconv::attr::ServiceNameValues::kCtaAdminApi,
+      {
+        {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+  });
+
   {
     std::unique_lock lock(m_mutex);
     m_stopCv.wait(lock, [this] { return m_stopRequested; });
   }
 
-  lc.log(cta::log::INFO, "Stopping cta-admin-api");
+  log(cta::log::INFO,
+      std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaAdminApi,
+      {
+        {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+  });
   server->Shutdown();
   server->Wait();
   return 0;

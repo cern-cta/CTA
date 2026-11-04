@@ -264,6 +264,8 @@ TEST_F(TapeDaemonTest, RegistrationConflictStopsStartup) {
   EXPECT_CALL(driveState(), createTapeDrive(testing::Truly([](const TapeDrive&) { return true; }))).Times(0);
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
+  EXPECT_THAT(logger.getLog(), testing::Not(testing::HasSubstr("program_started")));
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("program_stopping"));
 }
 
 TEST_F(TapeDaemonTest, RegistrationPublishesReadinessLast) {
@@ -371,6 +373,8 @@ TEST_F(TapeDaemonTest, LibraryFailureAfterRegistrationPublishesDownAndClearsRead
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
   EXPECT_TRUE(daemon->isLive());
+  EXPECT_THAT(logger.getLog(), testing::Not(testing::HasSubstr("program_started")));
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("program_stopping"));
 }
 
 TEST_F(TapeDaemonTest, StopBeforeRegistrationSkipsWaitingAndExitsNormally) {
@@ -385,6 +389,10 @@ TEST_F(TapeDaemonTest, StopBeforeRegistrationSkipsWaitingAndExitsNormally) {
                                                    testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
   EXPECT_EQ(0, daemon->run());
   EXPECT_FALSE(daemon->isReady());
+  const auto output = logger.getLog();
+  // An early stop skips the startup announcement but still reports shutdown.
+  EXPECT_THAT(output, testing::Not(testing::HasSubstr("program_started")));
+  EXPECT_THAT(output, testing::HasSubstr("program_stopping"));
 }
 
 TEST_F(TapeDaemonTest, StopRetainsExitRequestWhenPublicationFails) {

@@ -1508,7 +1508,7 @@ class TestRuntimeDeployment:
                 pass
 
             # Not all events may occur in the output logs of test
-            ignore_events = ["program_exiting"]
+            ignore_events = ["program_stopping", "program_stopped", "liveness_probe_failed"]
             return expected_events - set(ignore_events)
 
         print("Verifying log schema")

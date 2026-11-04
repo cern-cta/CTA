@@ -11,6 +11,7 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/ExceptionLogging.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/semconv/Logging.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
@@ -21,6 +22,7 @@
 #include <exception>
 #include <memory>
 #include <optional>
+#include <string>
 #include <unistd.h>
 
 namespace cta::tape::daemon {
@@ -83,6 +85,14 @@ int TapeDaemon::run() {
   try {
     // An absent logical library can appear later; wait to avoid transient scheduling errors.
     waitForLogicalLibrary();
+    // Waiting may take a while; if it is interrupted, we should not be logging that we started
+    if (!m_stopSource.stop_requested()) {
+      m_lc.logger()(cta::log::INFO,
+                    std::string("Started ") + cta::semconv::attr::ServiceNameValues::kCtaTaped,
+                    {
+                      {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarted}
+      });
+    }
     while (!m_stopSource.stop_requested()) {
       // Only spawn drive sessions when we're Up
       waitUntilDriveIsRequestedUp();
@@ -112,6 +122,11 @@ int TapeDaemon::run() {
 }
 
 int TapeDaemon::shutdown(ExitCause cause, bool putDriveDown, std::string_view exceptionMsg) {
+  m_lc.logger()(cta::log::INFO,
+                std::string("Stopping ") + cta::semconv::attr::ServiceNameValues::kCtaTaped,
+                {
+                  {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStopping}
+  });
   using common::dataStructures::DriveDownReason;
   auto reason = DriveDownReason::Shutdown;
   int exitCode = cause == ExitCause::Normal ? 0 : 1;

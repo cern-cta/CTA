@@ -38,10 +38,10 @@ public:
   int run(const TapedConfig& config, cta::log::Logger& log);
 
   /// Return the configured drive and logical library as static log attributes.
-  std::map<std::string, std::string> getStaticLogAttributes(const TapedConfig& config) const;
+  static std::map<std::string, std::string> getStaticLogAttributes(const TapedConfig& config);
 
   /// Return the configured drive and logical library as static telemetry attributes.
-  std::map<std::string, std::string> getStaticTelemetryAttributes(const TapedConfig& config) const;
+  static std::map<std::string, std::string> getStaticTelemetryAttributes(const TapedConfig& config);
 
   /// Return daemon liveness, or true before the daemon is published.
   bool isLive() const;

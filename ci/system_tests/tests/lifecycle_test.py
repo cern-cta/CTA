@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import shlex
 import time
 import uuid
@@ -112,9 +113,18 @@ class TestGracefulRestart:
     Allow normal client retries and session draining.
     """
 
-    @pytest.mark.parametrize("daemon_fixture", ["cta_maintd", "cta_rmcd"], ids=["maintd", "rmcd"])
+    @pytest.mark.parametrize(
+        ("daemon_fixture", "program"),
+        [
+            ("cta_maintd", "cta-maintd"),
+            ("cta_taped", "cta-taped"),
+            ("cta_rmcd", "cta-rmcd"),
+            ("cta_admin_api", "cta-admin-api"),
+            ("cta_workflow_api", "cta-workflow-api"),
+        ],
+    )
     def test_sigterm_exits_cleanly_and_restarts(
-        self, request: SubRequest, daemon_fixture: str, restart_expectations: RestartExpectations
+        self, request: SubRequest, daemon_fixture: str, program: str, restart_expectations: RestartExpectations
     ) -> None:
         daemon = request.getfixturevalue(daemon_fixture)
         connection = daemon.conn
@@ -125,9 +135,22 @@ class TestGracefulRestart:
         before = connection.container_snapshot()
         assert before.container_id
         assert before.ready
+
+        def assert_daemon_is_pid_one() -> None:
+            # /proc/1/exe requires ptrace access; taped also changes its process name.
+            # Check argv[0] directly so a shell launcher cannot masquerade as the daemon.
+            command_line = daemon.exec_with_output("cat /proc/1/cmdline")
+            executable = command_line.split("\0", 1)[0]
+            assert executable.rsplit("/", 1)[-1] == program, (
+                f"Expected {program} as PID 1, got command line {command_line!r}"
+            )
+
         # The launcher must replace itself so Kubernetes signals the daemon directly.
-        pid = daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}")
-        assert pid == "1", f"Expected {daemon.process_name} as PID 1, got {pid!r}"
+        assert_daemon_is_pid_one()
+
+        # The log volume survives a container restart. Snapshot complete records before sending SIGTERM.
+        log_file = shlex.quote(str(daemon.log_file_path))
+        previous_records = daemon.exec_with_output(f"cat {log_file}").splitlines()
 
         try:
             with restart_expectations.expect_container_restarts(daemon):
@@ -139,7 +162,32 @@ class TestGracefulRestart:
                 assert termination.container_id == before.container_id
                 assert termination.exit_code == 0, f"Unclean SIGTERM exit: {termination}"
                 assert not termination.signal, f"Daemon was terminated by a signal: {termination}"
-                assert daemon.exec_with_output(f"pgrep -u cta -x cta-{daemon.process_name}") == "1"
+                assert_daemon_is_pid_one()
+                expected_events = [
+                    "program_stopping",
+                    "program_stopped",
+                    "program_starting",
+                    "program_started",
+                ]
+                # Readiness can precede application startup completion (notably for rmcd).
+                deadline = time.monotonic() + 120
+                while True:
+                    records = daemon.exec_with_output(f"cat {log_file}").splitlines()
+                    assert records[: len(previous_records)] == previous_records, "Logs changed during restart"
+                    events = [json.loads(line).get("event_name") for line in records[len(previous_records) :]]
+                    lifecycle_events = [event for event in events if event in expected_events]
+                    # Fail immediately on duplicates or out-of-order transitions; wait only for missing events.
+                    assert lifecycle_events == expected_events[: len(lifecycle_events)], lifecycle_events
+                    if lifecycle_events == expected_events:
+                        break
+                    assert time.monotonic() < deadline, (
+                        f"{program} did not complete its restart lifecycle: {lifecycle_events!r}"
+                    )
+                    time.sleep(0.5)
+
+                # No record may appear between the old process's final log and the new process's first log.
+                assert events.index("program_starting") == events.index("program_stopped") + 1
+
                 if daemon_fixture == "cta_rmcd":
                     # Readiness alone does not prove the restarted media changer can serve requests.
                     daemon.list_tapes_in_library()

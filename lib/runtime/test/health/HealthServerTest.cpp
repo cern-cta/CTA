@@ -9,6 +9,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/StringLogger.hpp"
 
 #include <chrono>
 #include <gtest/gtest.h>
@@ -174,6 +175,48 @@ TEST(HealthServer, LiveEndpointReturnsUnavailableWhenCheckThrows) {
   ASSERT_TRUE(res) << "connection failed";
   EXPECT_EQ(res->status, 503);
   EXPECT_NE(res->body.find("liveness check failed"), std::string::npos);
+}
+
+TEST(HealthServer, LogsExactlyOneEventPerFailedLivenessProbe) {
+  for (const int failure : {0, 1, 2, 3}) {
+    SCOPED_TRACE(failure);
+    cta::log::StringLogger log("dummy", "unitTest", cta::log::DEBUG);
+    const std::string host = "127.0.0.1";
+    const int port = getFreePort();
+    {
+      cta::runtime::HealthServer server(
+        log,
+        host,
+        port,
+        [] { return true; },
+        [failure]() -> bool {
+          if (failure == 2) {
+            throw std::runtime_error("liveness failure");
+          }
+          if (failure == 3) {
+            throw 42;
+          }
+          return failure == 0;
+        });
+      server.start();
+      for (int request = 0; request < 2; ++request) {
+        auto response = httpGet(host, port, "/health/live");
+        ASSERT_TRUE(response);
+        EXPECT_EQ(failure == 0 ? 200 : 503, response->status);
+      }
+    }
+    // Read after joining HTTP workers: StringLogger's reader is not synchronized.
+    const auto output = log.getLog();
+    const std::string event = "liveness_probe_failed";
+    unsigned count = 0;
+    for (auto pos = output.find(event); pos != std::string::npos; pos = output.find(event, pos + event.size())) {
+      ++count;
+    }
+    EXPECT_EQ(failure == 0 ? 0 : 2, count);
+    if (failure == 2) {
+      EXPECT_NE(std::string::npos, output.find("liveness failure"));
+    }
+  }
 }
 
 TEST(HealthServer, EmptyHostThrowsUserError) {

@@ -96,17 +96,27 @@ void HealthServer::start() {
                     } else {
                       res.status = 503;
                       res.set_content("not live\n", "text/plain");
+                      log(log::ERR,
+                          "Liveness probe failed",
+                          {
+                            {semconv::log::eventName, semconv::log::EventNameValues::kLivenessProbeFailed}
+                      });
                     }
                   } catch (const std::exception& ex) {
                     log(log::ERR,
                         "Liveness check threw an exception",
                         {
-                          {semconv::log::exceptionMessage, ex.what()}
+                          {semconv::log::eventName,        semconv::log::EventNameValues::kLivenessProbeFailed},
+                          {semconv::log::exceptionMessage, ex.what()                                          }
                     });
                     res.status = 503;
                     res.set_content("liveness check failed\n", "text/plain");
                   } catch (...) {
-                    log(log::ERR, "Liveness check threw an unknown exception", {});
+                    log(log::ERR,
+                        "Liveness check threw an unknown exception",
+                        {
+                          {semconv::log::eventName, semconv::log::EventNameValues::kLivenessProbeFailed}
+                    });
                     res.status = 503;
                     res.set_content("liveness check failed\n", "text/plain");
                   }
