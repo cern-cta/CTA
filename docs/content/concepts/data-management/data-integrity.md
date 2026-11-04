@@ -4,20 +4,20 @@ CTA checks file contents during archival, retrieval, and repack using expected s
 
 ## File identity and expected contents
 
-The disk system supplies the file identity, size, and checksum with an archive request. CTA assigns an archive file ID and records successful tape copies in the catalogue. The identity associates the work with a file; the size and checksum describe its expected contents.
+The disk system supplies the file identity, size, and checksums with an archive request. The checksums must include ADLER32, additional supported checksum types may also be supplied. CTA rejects the `CLOSEW` request before queueing if ADLER32 is missing. CTA assigns an archive file ID and records successful tape copies in the catalogue. The identity associates the work with a file; the size and checksums describe its expected contents.
 
 File sizes and checksums describe the original file data, independent of tape position or drive compression. Moving a copy through repack changes its location, not the expected contents. See [Storage Model](storage-model.md) for archive files and tape copies.
 
-The disk system must supply correct metadata and keep the source file unchanged while archival reads it. A checksum comparison detects disagreement with the supplied value; it cannot establish that the original file was correct before that value was calculated.
+The disk system must supply correct metadata and keep the source file unchanged while archival reads it. Checksum comparisons detect disagreement with the supplied values; they cannot establish that the original file was correct before those values were calculated.
 
 ## Checks during transfers
 
-The tape-transfer path computes an **Adler-32** checksum over each file. The expected checksum accompanies the archive request and is retained in the catalogue for subsequent reads.
+The tape-transfer path computes an **Adler-32** checksum over each file. The expected ADLER32 checksum and any additional supplied checksums accompany the archive request and are retained in the catalogue.
 
 | Workflow | Checks and responsibilities |
 | --- | --- |
-| **Archival** | The tape daemon checks the source file's size against the request and computes a checksum while processing its data for tape. The calculated checksum must match the expected value before the copy is accepted into the catalogue. |
-| **Retrieval** | The tape daemon calculates the checksum while reading the file from tape and compares it with the catalogue value. A mismatch fails the transfer rather than producing a successful retrieval result. |
+| **Archival** | The tape daemon checks the source file's size against the request and computes an Adler-32 checksum while processing its data for tape. The calculated Adler-32 must match the value supplied by the disk system before the copy is accepted into the catalogue. |
+| **Retrieval** | The tape daemon calculates Adler-32 while reading the file from tape and compares it with the catalogue value. A mismatch fails the transfer rather than producing a successful retrieval result. |
 | **Repack** | The same read and write checks apply as data passes through the repack buffer. Destination copies retain the file's identity and expected contents. Operator-supplied recovered files also undergo the archival checks. |
 
 Successful archival does not mean CTA has performed a second, full read-back of the file from tape. Its transfer checks and the drive's write-error handling are distinct from a later verification read.
@@ -26,12 +26,12 @@ The disk system controls when a received replica becomes available to clients an
 
 ## File checksums and block protection
 
-The whole-file checksum and logical block protection (LBP) cover different units:
+Whole-file checksums and logical block protection (LBP) cover different units:
 
-- **File checksum:** Adler-32 describes the complete file contents and is stored in the catalogue. It allows CTA to compare a later read with the expected file data.
+- **File checksums:** ADLER32 describes the complete file contents and is mandatory for archive requests. Additional supported checksums may also be supplied and stored in the catalogue. CTA calculates ADLER32 during tape transfers and compares it with the expected value.
 - **Logical block protection:** tapes labelled with CRC32C LBP carry additional protection bytes for each block. Protection depends on the tape session’s `useLbp` setting as well as the tape label. With LBP enabled, CTA enables CRC32C drive protection for these tapes. With LBP disabled, reads proceed without drive LBP checking, while writes to CRC32C-labelled tapes are rejected.
 
-LBP protection bytes are not part of the original file payload and are not included in its logical size. LBP complements the whole-file checksum and the drive's internal media protection; it does not replace either. See [CTA Tape Format: Checksums](../tape/media/format.md#checksums) for the on-tape representation.
+LBP protection bytes are not part of the original file payload and are not included in its logical size. LBP complements the whole-file checksums and the drive's internal media protection; it does not replace either. See [CTA Tape Format: Checksums](../tape/media/format.md#checksums) for the on-tape representation.
 
 ## Verification and mismatches
 
