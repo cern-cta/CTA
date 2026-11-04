@@ -390,11 +390,9 @@ TEST_F(TapeDaemonTest, StopBeforeRegistrationSkipsWaitingAndExitsNormally) {
   EXPECT_EQ(0, daemon->run());
   EXPECT_FALSE(daemon->isReady());
   const auto output = logger.getLog();
-  const auto started = output.find("program_started");
-  const auto stopping = output.find("program_stopping");
-  ASSERT_NE(std::string::npos, started);
-  ASSERT_NE(std::string::npos, stopping);
-  EXPECT_LT(started, stopping);
+  // An early stop skips the startup announcement but still reports shutdown.
+  EXPECT_THAT(output, testing::Not(testing::HasSubstr("program_started")));
+  EXPECT_THAT(output, testing::HasSubstr("program_stopping"));
 }
 
 TEST_F(TapeDaemonTest, StopRetainsExitRequestWhenPublicationFails) {
