@@ -29,7 +29,7 @@ The udev rule additionally creates a persistent symlink at
 `/dev/tape/by-name/${CTAOPS_NAME}` pointing at the corresponding kernel
 device.
 
-These properties are the contract consumed by **ctaops-sdk**'s local
+These properties are the contract consumed by **cta-tapeserver-sdk**'s local
 repositories (e.g. `LocalNamedLibraryRepository`,
 `LocalLocatedNamedDriveRepository`): devices that lack them are
 considered unmanaged and silently skipped.
@@ -134,7 +134,7 @@ journalctl -u systemd-udevd | grep ctaops-udev
 - udev(7)
 - systemd-udevd(8)
 - udevadm(8)
-- The `ctaops-sdk` documentation — the library that consumes the
+- The `cta-tapeserver-sdk` documentation — the library that consumes the
   `CTAOPS_NAME`, `CTAOPS_LIBRARY_ADDRESS`, and `CTAOPS_LIBRARY_ORDINAL`
   properties this tool produces.
 

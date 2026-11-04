@@ -43,7 +43,7 @@
 [tool.uv.sources]
     cta-common = { workspace = true }
     cta-sdk      = { workspace = true }
-    ctaops-sdk   = { workspace = true }
+    cta-tapeserver-sdk   = { workspace = true }
 
 [tool.hatch.version]
     source     = "code"
@@ -67,5 +67,5 @@
             "../../LICENSES/GPL-3.0-or-later.txt" = "LICENSE"
 
     [project.optional-dependencies]
-        tapeserver = ["ctaops-sdk"]
+        tapeserver = ["cta-tapeserver-sdk"]
         workflow   = ["cta-sdk"]

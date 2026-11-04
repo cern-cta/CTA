@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2023-2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[build-system]
+# Hatch reads release tags or local development identifiers through the shared version helper.
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cta-tapeserver-sdk"
+authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
+description = "CTA tape server SDK library"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+keywords = ["CTA", "tape", "CERN"]
+
+dynamic = ["version"]
+
+dependencies = ["typing-extensions>=4.4.0", "pyudev"]
+
+[project.urls]
+Source = "https://gitlab.cern.ch/cta/CTA/"
+Documentation = "https://cta.docs.cern.ch/latest/dev/guides/python/cta-tapeserver-sdk/"
+"CTA Documentation" = "https://cta.docs.cern.ch/"
+
+[tool.hatch.version]
+source = "code"
+path = "../../../ci/utils/cta_version.py"
+expression = "package_version()"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cta"]
+
+[tool.hatch.build.targets.sdist]
+include = ["README.md", "pyproject.toml", "src/**", "tests/**"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"../../../LICENSES/GPL-3.0-or-later.txt" = "LICENSE"

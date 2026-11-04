@@ -117,7 +117,7 @@ def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool
 
     if EXTRA_TPSRV:
         from cta.cli.models.physical_library import EnrichedPhysicalLibrary
-        from ctaops.sdk import LocalLibraryRepository, LocalNamedLibraryRepository
+        from cta.tapeserver.sdk import LocalLibraryRepository, LocalNamedLibraryRepository
 
         local_named_libraries = LocalNamedLibraryRepository(
             library_name_key=obj.config.tape_server.udev_properties_map.library_name_key
@@ -163,7 +163,7 @@ def get(obj: AppContext, name: str):
 
     if EXTRA_TPSRV:
         from cta.cli.models.physical_library import EnrichedPhysicalLibrary
-        from ctaops.sdk import LocalNamedLibraryRepository, ResourceNotFoundError
+        from cta.tapeserver.sdk import LocalNamedLibraryRepository, ResourceNotFoundError
 
         try:
             local_library = LocalNamedLibraryRepository(

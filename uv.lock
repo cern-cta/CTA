@@ -13,7 +13,7 @@ members = [
     "cta-cli",
     "cta-common",
     "cta-sdk",
-    "ctaops-sdk",
+    "cta-tapeserver-sdk",
 ]
 
 [manifest.dependency-groups]
@@ -1312,7 +1312,7 @@ dependencies = [
 
 [package.optional-dependencies]
 tapeserver = [
-    { name = "ctaops-sdk" },
+    { name = "cta-tapeserver-sdk" },
 ]
 workflow = [
     { name = "cta-sdk" },
@@ -1325,7 +1325,7 @@ requires-dist = [
     { name = "cta-common", editable = "lib/python/cta-common" },
     { name = "cta-sdk", editable = "lib/python/cta-sdk" },
     { name = "cta-sdk", marker = "extra == 'workflow'", editable = "lib/python/cta-sdk" },
-    { name = "ctaops-sdk", marker = "extra == 'tapeserver'", editable = "lib/python/ctaops-sdk" },
+    { name = "cta-tapeserver-sdk", marker = "extra == 'tapeserver'", editable = "lib/python/cta-tapeserver-sdk" },
     { name = "grpcio-health-checking", specifier = ">=1.80.0" },
     { name = "pyjwt", specifier = ">=2.14.0" },
     { name = "rich" },
@@ -1382,8 +1382,8 @@ dev = [
 ]
 
 [[package]]
-name = "ctaops-sdk"
-source = { editable = "lib/python/ctaops-sdk" }
+name = "cta-tapeserver-sdk"
+source = { editable = "lib/python/cta-tapeserver-sdk" }
 dependencies = [
     { name = "pyudev", version = "0.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pyudev", version = "0.24.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
