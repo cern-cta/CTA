@@ -1,6 +1,6 @@
 # Overview
 
-`ctaops-utils` provides shared configuration, logging, dataclass, and type utilities for CTA tools and scripts.
+`cta-common` provides shared configuration, logging, dataclass, and type utilities for CTA tools and scripts.
 It supports layered TOML configuration, rotating log files with compression and group ownership, and loading and flattening nested dataclasses.
 
 ## Layout
@@ -9,10 +9,10 @@ The library provides these submodules:
 
 | Submodule | Purpose | API |
 | --- | --- | --- |
-| `ctaops.utils.config` | Layered configuration loader | `CtaOpsConfigLoader` |
-| `ctaops.utils.logging` | Stdlib-logging configuration | `LoggingConfiguration`, `configure_logging` |
-| `ctaops.utils.dataclasses` | Nested-dataclass helpers | `load_data`, `flatten_dataclass_instance`, `flatten_dataclass_class` |
-| `ctaops.utils.typing` | Type-annotation normalisation | `normalize_types` |
+| `cta.common.config` | Layered configuration loader | `CtaConfigLoader` |
+| `cta.common.logging` | Stdlib-logging configuration | `LoggingConfiguration`, `configure_logging` |
+| `cta.common.dataclasses` | Nested-dataclass helpers | `load_data`, `flatten_dataclass_instance`, `flatten_dataclass_class` |
+| `cta.common.typing` | Type-annotation normalisation | `normalize_types` |
 
 Each submodule can be used independently.
 
@@ -20,7 +20,7 @@ Each submodule can be used independently.
 
 !!! abstract "Command"
     ```bash
-    python3 -m pip install ctaops-utils \
+    python3 -m pip install cta-common \
         --extra-index-url https://cta-public-repo.web.cern.ch/cta-operations/stable/pypi/simple/
     ```
 

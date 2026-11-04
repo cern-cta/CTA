@@ -2,13 +2,13 @@
 
 ## Configuration Management
 
-**`ctaops.utils.config`**
+**`cta.common.config`**
 
 **Step 1**: Define your configuration schema using dataclasses
 
 ```python
 from dataclasses import dataclass, field
-from ctaops.utils.logging import LoggingConfiguration
+from cta.common.logging import LoggingConfiguration
 
 @dataclass
 class DatabaseConfig:
@@ -59,10 +59,10 @@ class AppConfig:
 
 ```python
 from pathlib import Path
-from ctaops.utils.config import CtaOpsConfigLoader
+from cta.common.config import CtaConfigLoader
 
 # Create loader instance
-loader = CtaOpsConfigLoader(AppConfig)
+loader = CtaConfigLoader(AppConfig)
 
 # Load from TOML file (optional)
 loader.load_from_toml(Path("/etc/myapp/config.toml"), file_exist_error="ignore")
@@ -86,17 +86,17 @@ config = loader.get_safe_config()
 ```
 
 !!! info
-    See also different loading mode for [`load_from_toml()`](../../../../api/python/ctaops-utils/reference.md)
+    See also different loading mode for [`load_from_toml()`](../../../../api/python/cta-common/reference.md)
 
 ??? tip
     You can chain all operations in one line.
 
     ```python
     from pathlib import Path
-    from ctaops.utils.config import CtaOpsConfigLoader
+    from cta.common.config import CtaConfigLoader
 
     config = (
-        CtaOpsConfigLoader(AppConfig)
+        CtaConfigLoader(AppConfig)
         .load_from_toml(Path("config.toml"), file_exist_error="ignore")
         .load_from_dict(cli_args)
         .set("logging", "level", value="INFO")
@@ -116,11 +116,11 @@ print(f"Timeout: {config.timeout}s")
 
 ## Logging Configuration
 
-**`ctaops.utils.logging`**
+**`cta.common.logging`**
 
 ```python
 from pathlib import Path
-from ctaops.utils.logging import configure_logging, LoggingConfiguration
+from cta.common.logging import configure_logging, LoggingConfiguration
 
 # Configure logging
 configure_logging(
@@ -142,11 +142,11 @@ LOGGER.error("An error occurred")
 ```
 
 !!! info
-    See also [Package reference](../../../../api/python/ctaops-utils/reference.md).
+    See also [Package reference](../../../../api/python/cta-common/reference.md).
 
 ## Dataclass Utilities
 
-**`ctaops.utils.dataclasses`**
+**`cta.common.dataclasses`**
 
 Utility functions for working with nested dataclasses and flattening complex structures.
 
@@ -156,7 +156,7 @@ Recursively loads data from a dictionary into a dataclass instance, handling nes
 
 ```python
 from dataclasses import dataclass, field
-from ctaops.utils.dataclasses import load_data
+from cta.common.dataclasses import load_data
 
 @dataclass
 class Address:
@@ -188,7 +188,7 @@ Converts a dataclass instance to a flat dictionary with dot-notation keys, usefu
 
 ```python
 from dataclasses import dataclass, field
-from ctaops.utils.dataclasses import flatten_dataclass_instance
+from cta.common.dataclasses import flatten_dataclass_instance
 
 @dataclass
 class DatabaseConfig:
@@ -214,7 +214,7 @@ Extracts type information from a dataclass definition, returning paths and their
 
 ```python
 from dataclasses import dataclass, field
-from ctaops.utils.dataclasses import flatten_dataclass_class
+from cta.common.dataclasses import flatten_dataclass_class
 
 @dataclass
 class DatabaseConfig:
@@ -240,7 +240,7 @@ for path, types in schema:
 
 ## Type Annotation Utilities
 
-**`ctaops.utils.typing`**
+**`cta.common.typing`**
 
 Utilities for normalizing and working with Python type annotations, particularly useful for handling complex types like `Union`, `Optional`, and generic types.
 
@@ -250,7 +250,7 @@ Normalizes Python type annotations to a set of instantiable types. This is usefu
 
 ```python
 from typing import Optional, Union
-from ctaops.utils.typing import normalize_types
+from cta.common.typing import normalize_types
 
 # Handle Optional types
 types = normalize_types(Optional[int])
@@ -272,7 +272,7 @@ print(types)  # frozenset({<class 'str'>})
 ```
 
 !!! info 
-    For **Supported Type Constructs** see also [ctaops.utils reference](../../../../api/python/ctaops-utils/reference.md).
+    For **Supported Type Constructs** see also [cta.common reference](../../../../api/python/cta-common/reference.md).
 
 !!! note
     **Performance:** The function is cached with LRU (Least Recently Used) caching for fast repeated calls.
@@ -286,9 +286,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 import logging
 
-from ctaops.utils.config import CtaOpsConfigLoader
-from ctaops.utils.logging import configure_logging, LoggingConfiguration
-from ctaops.utils.dataclasses import flatten_dataclass_instance
+from cta.common.config import CtaConfigLoader
+from cta.common.logging import configure_logging, LoggingConfiguration
+from cta.common.dataclasses import flatten_dataclass_instance
 
 # 1. Define configuration schema
 @dataclass
@@ -306,7 +306,7 @@ class AppConfig:
 
 # 2. Load configuration
 config = (
-    CtaOpsConfigLoader(AppConfig)
+    CtaConfigLoader(AppConfig)
     .load_from_toml(Path("/etc/myapp/config.toml"), file_exist_error="ignore")
     .set("logging", "file_path", value="/var/log/myapp/app.log")
     .set("logging", "level", value="INFO")

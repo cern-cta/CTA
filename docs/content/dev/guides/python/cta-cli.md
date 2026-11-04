@@ -19,7 +19,7 @@ flowchart
         sdk_iface(CtaClient interface)
     end
 
-    subgraph ctaops_utils[ctaops-utils]
+    subgraph cta_common[cta-common]
         config[Config loader]
         logging[Logging]
     end

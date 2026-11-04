@@ -7,9 +7,9 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ctaops-utils"
+name = "cta-common"
 authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
-description = "CTAOPS utils library for ctaops apps and tools"
+description = "Common utilities library for CTA apps and tools"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "GPL-3.0-or-later"
@@ -25,7 +25,7 @@ dependencies = ["typing-extensions>=4.4.0", "tomli", "rich"]
 
 [project.urls]
 Source = "https://gitlab.cern.ch/cta/CTA/"
-Documentation = "https://cta.docs.cern.ch/latest/dev/guides/python/ctaops-utils/"
+Documentation = "https://cta.docs.cern.ch/latest/dev/guides/python/cta-common/"
 "CTA Documentation" = "https://cta.docs.cern.ch/"
 
 
@@ -35,7 +35,7 @@ path = "../../../ci/utils/cta_version.py"
 expression = "package_version()"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ctaops"]
+packages = ["src/cta"]
 
 [tool.hatch.build.targets.sdist]
 include = ["README.md", "pyproject.toml", "src/**", "tests/**"]

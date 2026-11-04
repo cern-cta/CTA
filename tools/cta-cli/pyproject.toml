@@ -23,7 +23,7 @@
     dynamic = ["version"]
     dependencies = [
         "typing-extensions>=4.4.0",
-        "ctaops-utils",
+        "cta-common",
         "cta-sdk",
         "click",
         "rich",
@@ -41,7 +41,7 @@
         cta = "cta.cli.main:main"
 
 [tool.uv.sources]
-    ctaops-utils = { workspace = true }
+    cta-common = { workspace = true }
     cta-sdk      = { workspace = true }
     ctaops-sdk   = { workspace = true }
 

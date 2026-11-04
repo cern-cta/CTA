@@ -15,13 +15,13 @@ Modules:
     typing: Type annotation normalization and manipulation.
 """
 
-from ctaops.utils.config import NOT_SET, CtaOpsConfigLoader, DataclassWithValidation
-from ctaops.utils.dataclasses import copy_dataclass, flatten_dataclass_class, flatten_dataclass_instance, load_data
-from ctaops.utils.logging import LoggingConfiguration, configure_logging
+from cta.common.config import NOT_SET, CtaConfigLoader, DataclassWithValidation
+from cta.common.dataclasses import copy_dataclass, flatten_dataclass_class, flatten_dataclass_instance, load_data
+from cta.common.logging import LoggingConfiguration, configure_logging
 
 __all__ = [
     "NOT_SET",
-    "CtaOpsConfigLoader",
+    "CtaConfigLoader",
     "DataclassWithValidation",
     "LoggingConfiguration",
     "configure_logging",

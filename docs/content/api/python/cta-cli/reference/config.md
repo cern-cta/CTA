@@ -1,6 +1,6 @@
 # Configuration
 
-Dataclasses describing the on-disk TOML configuration of the CLI. These are the structures that [`AppConfig`][cta.cli.config.AppConfig] is loaded into by [`CtaOpsConfigLoader`][ctaops.utils.config.CtaOpsConfigLoader] before being made available on the [`AppContext`][cta.cli.context.AppContext].
+Dataclasses describing the on-disk TOML configuration of the CLI. These are the structures that [`AppConfig`][cta.cli.config.AppConfig] is loaded into by [`CtaConfigLoader`][cta.common.config.CtaConfigLoader] before being made available on the [`AppContext`][cta.cli.context.AppContext].
 
 ::: cta.cli.config
     options:

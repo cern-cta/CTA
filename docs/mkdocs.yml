@@ -67,7 +67,7 @@ plugins:
           paths:
             - ../lib/python/cta-sdk/src
             - ../lib/python/ctaops-sdk/src
-            - ../lib/python/ctaops-utils/src
+            - ../lib/python/cta-common/src
             - ../tools/cta-cli/src
           inventories:
             - https://docs.python.org/3.9/objects.inv
@@ -375,9 +375,9 @@ nav:
               - "ctaops-sdk":
                   - "Overview": dev/guides/python/ctaops-sdk/index.md
                   - "Usage": dev/guides/python/ctaops-sdk/api-usage.md
-              - "ctaops-utils":
-                  - "Overview": dev/guides/python/ctaops-utils/index.md
-                  - "Usage": dev/guides/python/ctaops-utils/api-usage.md
+              - "cta-common":
+                  - "Overview": dev/guides/python/cta-common/index.md
+                  - "Usage": dev/guides/python/cta-common/api-usage.md
               - "Extending cta": dev/guides/python/cta-cli.md
           # Select, write, and run tests before learning pipeline mechanics; CI administration belongs to maintainers.
           - "Testing & CI":
@@ -487,8 +487,8 @@ nav:
               - api/python/ctaops-sdk/reference/controllers.md
               - api/python/ctaops-sdk/reference/exceptions.md
               - api/python/ctaops-sdk/reference/infrastructure-repository.md
-          - ctaops-utils:
-              - api/python/ctaops-utils/reference.md
+          - cta-common:
+              - api/python/cta-common/reference.md
           - cta-cli:
               - api/python/cta-cli/index.md
               - api/python/cta-cli/reference/commands.md

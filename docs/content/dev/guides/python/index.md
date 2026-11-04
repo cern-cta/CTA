@@ -6,7 +6,7 @@ CTA's Python workspace contains libraries for scripting CTA and operating tape h
 | --- | --- | --- |
 | [cta-sdk](cta-sdk/index.md) | `lib/python/cta-sdk` | Typed CTA client, resource models and backend interfaces. |
 | [ctaops-sdk](ctaops-sdk/index.md) | `lib/python/ctaops-sdk` | Local tape-drive and library discovery and control. |
-| [ctaops-utils](ctaops-utils/index.md) | `lib/python/ctaops-utils` | Configuration, logging and dataclass utilities. |
+| [cta-common](cta-common/index.md) | `lib/python/cta-common` | Configuration, logging and dataclass utilities. |
 | [cta-cli](../../../ops/tools/cta.md) | `tools/cta-cli` | Operator commands built on these libraries. |
 
 See the [Python API reference](../../../api/python/index.md) for classes and functions, [Extending cta](cta-cli.md) to add commands, and [ctaops-udev](../../../ops/deploy-and-configure/deployment/ctaops-udev.md) for hardware discovery setup.

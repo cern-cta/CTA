@@ -24,7 +24,7 @@ from cta.cli.models.frontend import (
     ResolvedService,
     Service,
 )
-from ctaops.utils.prometheus import Labels, Value, sample, write_atomic
+from cta.common.prometheus import Labels, Value, sample, write_atomic
 from grpc_health.v1 import health_pb2, health_pb2_grpc
 
 LOGGER = getLogger("cta.cli")

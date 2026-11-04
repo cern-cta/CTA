@@ -4,7 +4,7 @@
 from typing import Annotated, Any, Final, Optional
 
 import pytest
-from ctaops.utils.typing import normalize_types
+from cta.common.typing import normalize_types
 
 
 class Unit:
@@ -35,6 +35,6 @@ def test_nomalize_types(tp: Any, expected: frozenset[type]):
     ],
 )
 def test_unwrap_optional_type(tp: Any, expected: Any):
-    from ctaops.utils.typing import unwrap_optional_type
+    from cta.common.typing import unwrap_optional_type
 
     assert unwrap_optional_type(tp) == expected

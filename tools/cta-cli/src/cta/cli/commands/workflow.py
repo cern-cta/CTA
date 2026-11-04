@@ -11,10 +11,10 @@ from pathlib import Path
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
 from cta.cli.context import AppContext
+from cta.common.dataclasses import load_data
+from cta.common.typing import unwrap_optional_type
 from cta.sdk.client.grpc.models import WorkflowFileInfo as WorkflowFileInfoBase
 from cta.sdk.client.grpc.workflow import WorkflowRpcClient
-from ctaops.utils.dataclasses import load_data
-from ctaops.utils.typing import unwrap_optional_type
 from rich import print as print_rich
 from rich.panel import Panel
 from rich.pretty import Pretty
