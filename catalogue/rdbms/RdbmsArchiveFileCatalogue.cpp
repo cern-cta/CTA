@@ -23,6 +23,8 @@
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
+#include "common/exception/ChecksumTypeMismatch.hpp"
+#include "common/exception/ChecksumValueMismatch.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
@@ -833,9 +835,7 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
   if (deleteRequest.checksumBlob.has_value()) {
     const auto& requestChecksum = deleteRequest.checksumBlob.value();
 
-    try {
-      requestChecksum.validate(archiveFile.checksumBlob);
-    } catch (const cta::exception::Exception&) {
+    const auto throwChecksumMismatch = [&]() {
       std::ostringstream msg;
       msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
           << " to the recycle-bin because the checksum of "
@@ -847,6 +847,14 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
              "Failed to move archive file to the recycle-bin because the checksum of the request "
              "does not match that of the archived file.");
       throw cta::exception::Exception(msg.str());
+    };
+
+    try {
+      requestChecksum.validate(archiveFile.checksumBlob);
+    } catch (const cta::exception::ChecksumTypeMismatch&) {
+      throwChecksumMismatch();
+    } catch (const cta::exception::ChecksumValueMismatch&) {
+      throwChecksumMismatch();
     }
   }
   if (deleteRequest.diskFilePath.empty()) {
