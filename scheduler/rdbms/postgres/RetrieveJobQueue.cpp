@@ -772,7 +772,13 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         M.COPY_NB,
-        M.START_TIME,
+        -- Reset to the time this job actually enters the archive queue, rather than
+        -- carrying over the original retrieve job's START_TIME. Otherwise the archive
+        -- job inherits however long the retrieve took (which can be hours for repack),
+        -- making it look far older than MIN_ARCHIVE_REQUEST_AGE and triggering a
+        -- premature mount (see the ARCHIVE_QUEUE_SUMMARY/REPACK_ARCHIVE_QUEUE_SUMMARY
+        -- views, which key the age check off START_TIME).
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT AS START_TIME,
         M.CHECKSUMBLOB,
         M.CREATION_TIME,
         M.DISK_INSTANCE,
@@ -845,7 +851,9 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         REARCHIVE_COPY.REARCHIVE_COPY_VAL AS COPY_NB,
-        M.START_TIME,
+        -- See comment on the equivalent column in BASE_INSERT above: reset START_TIME
+        -- to now instead of inheriting the retrieve job's age.
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT AS START_TIME,
         M.CHECKSUMBLOB,
         M.CREATION_TIME,
         M.DISK_INSTANCE,
