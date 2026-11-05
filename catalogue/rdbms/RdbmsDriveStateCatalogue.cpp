@@ -797,9 +797,6 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   //   …) build a fresh TapeDrive struct and leave nextMountType at its default
   //   (NoMount). Updating NEXT_* unconditionally would wipe the marker on every
   //   routine status report (e.g. Transferring bytes update), defeating the fix.
-  //   Only TapeMountDecisionInfo::createArchiveMount / createRetrieveMount
-  //   explicitly set nextMountType to a real type, so the condition reaches
-  //   exactly the right callers without any interface changes.
   std::string sql = R"SQL(
     UPDATE DRIVE_STATE SET
       HOST = :HOST,
@@ -813,6 +810,9 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :REPORT_TIME - SESSION_START_TIME END,
     )SQL";
   }
+  // Only TapeMountDecisionInfo::createArchiveMount / createRetrieveMount
+  // explicitly set nextMountType to a real type, so this condition reaches
+  // exactly the right callers without any interface changes.
   if (tapeDrive.nextMountType != common::dataStructures::MountType::NoMount) {
     sql += R"SQL(
       NEXT_MOUNT_TYPE = :NEXT_MOUNT_TYPE,
@@ -846,10 +846,20 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     stmt.bindUint64(":REPORT_TIME", tapeDrive.transferStartTime.value());
   }
   if (tapeDrive.nextMountType != common::dataStructures::MountType::NoMount) {
+    // Bind NULL (not "") for unset companion fields, matching Case 2 which hardcodes
+    // NEXT_VID/NEXT_TAPE_POOL/NEXT_VO to NULL.  Keeps SQL semantics consistent so
+    // IS NULL readers behave the same regardless of which update path wrote the row.
+    auto bindOptional = [&stmt](const std::string& field, const std::optional<std::string>& val) {
+      if (val && !val->empty()) {
+        stmt.bindString(field, *val);
+      } else {
+        stmt.bindString(field, std::nullopt);
+      }
+    };
     stmt.bindString(":NEXT_MOUNT_TYPE", common::dataStructures::toString(tapeDrive.nextMountType));
-    stmt.bindString(":NEXT_VID", tapeDrive.nextVid.value_or(""));
-    stmt.bindString(":NEXT_TAPE_POOL", tapeDrive.nextTapePool.value_or(""));
-    stmt.bindString(":NEXT_VO", tapeDrive.nextVo.value_or(""));
+    bindOptional(":NEXT_VID", tapeDrive.nextVid);
+    bindOptional(":NEXT_TAPE_POOL", tapeDrive.nextTapePool);
+    bindOptional(":NEXT_VO", tapeDrive.nextVo);
   }
   stmt.executeNonQuery();
 
