@@ -6,7 +6,7 @@ set(CTATAPEDDRIVE_LIBRARY_SRCS
   DriveGeneric.cpp
   FakeDrive.cpp
   VtlDrive.cpp
-  VirtualDrive.cpp)
+  InMemoryTape.cpp)
 
 add_library(ctatapeddrive ${CTATAPEDDRIVE_LIBRARY_SRCS})
 target_link_libraries(ctatapeddrive ctascsi ctatapedaemon)
@@ -25,7 +25,7 @@ target_link_libraries(cta-test-tape-drive-read-write
 
 add_library(ctatapeddriveunittests SHARED
   DriveTest.cpp
-  VirtualDriveTest.cpp
+  InMemoryTapeTest.cpp
   VtlDriveTest.cpp)
 set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")

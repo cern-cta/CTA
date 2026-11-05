@@ -179,9 +179,10 @@ public:
 };
 
 /**
- * Abstract class used by DriveGeneric (real SCSI drives), VirtualDrive (in-memory simulation
- * base), FakeDrive (unit-test double with failure injection), and VtlDrive (persistent
- * virtual drive for stress/scale testing).
+ * Abstract class implemented by DriveGeneric (real SCSI drives), FakeDrive
+ * (unit-test double with failure injection), and VtlDrive (persistent virtual
+ * drive for stress/scale testing).  FakeDrive and VtlDrive delegate tape I/O
+ * to an InMemoryTape member.
  */
 class DriveInterface {
 public:

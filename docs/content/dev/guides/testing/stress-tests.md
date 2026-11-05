@@ -39,9 +39,9 @@ Use the configuration and `ci/system_tests/tests/stress_test.py` from the tested
 
 The standard stress test requires `mhvtl` virtual tape hardware and a dedicated CI runner with the matching kernel modules and library setup. Virtual stress-drive mode removes that dependency: drives are pure in-process software objects backed by a shared PersistentVolumeClaim (PVC), so the full stress workload — archive, retrieve, tape mount and dismount — runs on any Kubernetes cluster without any tape hardware or kernel modules.
 
-### Why VirtualDrive instead of mhVTL
+### Why VtlDrive instead of mhVTL
 
-| Property | mhVTL | VirtualDrive / VtlDrive |
+| Property | mhVTL | VtlDrive |
 | --- | --- | --- |
 | Backend | SCSI target (kernel) | Filesystem directory (PVC) |
 | Tiny-file latency | High (SCSI + driver) | Minimal (direct file I/O) |
@@ -52,7 +52,7 @@ The standard stress test requires `mhvtl` virtual tape hardware and a dedicated 
 
 ### How it works
 
-`VtlDrive` is a subclass of `VirtualDrive` that persists tape content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
+`VtlDrive` implements `DriveInterface` directly and delegates tape I/O to an `InMemoryTape` member that holds the tape content as a RAM block vector.  It persists that content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
 
 Each library has its own PVC mounted at `/cta-stress-lib-{i}` (library index `i`). `stressBaseDir` for a drive is derived automatically from its `DriveDevice` URI (`virtual:///cta-stress-lib-{i}`), so no manual config key is needed. The shared directory layout under each `stressBaseDir`:
 
@@ -70,7 +70,7 @@ The full lifecycle per archive or retrieve session:
 1. `MediaChangerFacade::mountTapeReadWrite(vid)` acquires the single changer lock (`changer/.lock` via `O_CREAT|O_EXCL`) and atomically renames `slots/VID.tape → changer/VID.tape → drives/<drv>/VID.tape`, then releases the lock.
 2. `DataTransferSession::findDrive()` detects `DriveDevice = virtual://` and instantiates a `VtlDrive`.
 3. `VtlDrive::waitUntilReady()` scans `drives/<drv>/` for the mounted `*.tape` file, derives the VID from its filename stem, looks up the tape capacity from `library.toml`, then loads the binary block stream into the in-memory block vector (`m_tape`). An empty file (blank tape) synthesises an ANSI VOL1 label.
-4. The transfer session runs entirely in memory via `VirtualDrive`'s block I/O — no filesystem I/O during the data transfer itself.
+4. The transfer session runs entirely in memory via `InMemoryTape`'s block I/O — no filesystem I/O during the data transfer itself.
 5. `VtlDrive::unloadTape()` serialises `m_tape` back to the `*.tape` file via an atomic tmp-rename, then clears the in-memory state.
 6. `MediaChangerFacade::dismountTape(vid)` acquires the changer lock and atomically renames `drives/<drv>/VID.tape → changer/VID.tape → slots/VID.tape`.
 
