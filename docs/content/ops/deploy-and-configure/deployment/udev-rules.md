@@ -18,7 +18,7 @@ Inspect the udev properties exposed by the host and define rules that match a st
 
 CTA's supplied `99-tape.rules` assigns the `st` group to `nst*` devices; it does not create stable drive names. Site-specific identity rules must complement the required device permissions.
 
-For hardware discovery with the Python tools, see [ctaops-udev Setup](ctaops-udev.md).
+For hardware discovery with the Python tools, see [cta-udev Setup](cta-udev.md); `cta device list drives|libraries` lists the devices it labels.
 Its naming conventions are CERN-specific; adapt and validate them for your deployment.
 
 ## Configure CTA

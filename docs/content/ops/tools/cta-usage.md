@@ -277,5 +277,15 @@ tail -f /tmp/cta-debug.log
 
 When `cta-cli` is installed with the `[tapeserver]` extra on a host where [`cta-tapeserver-sdk`](../../dev/guides/python/cta-tapeserver-sdk/index.md) requirements are met (udev rules, `cta-smc`, `mt`, `sg_logs`), additional commands and command options light up automatically — typically for local mount/unmount, label, and media check operations.
 
+The `device` group lists the hardware discovered through the [cta-udev](../deploy-and-configure/deployment/cta-udev.md) udev properties:
+
+```bash
+# Libraries (medium changers) attached to this host
+cta device list libraries
+
+# Tape drives attached to this host, with their library location
+cta device list drives
+```
+
 !!! note
     Availability of these extra options is detected at start-up via [`tapeserver_option`](../../api/python/cta-cli/reference/entrypoint.md#cta.cli.context.tapeserver_option): when `cta.tapeserver.sdk` is importable, the corresponding Click options are registered; otherwise they are silently omitted.

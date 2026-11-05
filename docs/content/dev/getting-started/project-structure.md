@@ -30,7 +30,7 @@ This reorganization is not yet complete. The map below describes where code live
 | `rdbms/` | Shared relational database access. This is distinct from catalogue and scheduler implementations in their own `rdbms/` directories. |
 | `lib/` | Runtime, telemetry, plugin-manager, and protobuf libraries. |
 | `lib/python/` | [Python SDKs and shared utilities](../guides/python/index.md). |
-| `tools/` | Administrative and diagnostic command-line tools, including `cta-admin`, `cta-cli`, and `ctaops-udev`. |
+| `tools/` | Administrative and diagnostic command-line tools, including `cta-admin`, `cta-cli`, and `cta-udev`. |
 
 ## Build, tests, and documentation
 

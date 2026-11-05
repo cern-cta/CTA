@@ -8,7 +8,7 @@ Four progressively richer protocols are exposed:
 * [DriveRepository][cta.tapeserver.sdk.repositories.protocols.drive.DriveRepository]
   — bare-bones inventory; drives are identified by SCSI serial only.
 * [NamedDriveRepository][cta.tapeserver.sdk.repositories.protocols.drive.NamedDriveRepository]
-  — drives also carry their logical ctaops name.
+  — drives also carry their logical CTA name.
 * [LocatedDriveRepository][cta.tapeserver.sdk.repositories.protocols.drive.LocatedDriveRepository]
   — drives also know which library/ordinal they sit in.
 * [LocatedNamedDriveRepository][cta.tapeserver.sdk.repositories.protocols.drive.LocatedNamedDriveRepository]
@@ -61,7 +61,7 @@ class Drive:
     """Identity of a tape drive.
 
     The base class carries only the SCSI serial number; richer variants
-    add the logical ctaops name
+    add the logical CTA name
     ([NamedDrive][cta.tapeserver.sdk.repositories.protocols.drive.NamedDrive]),
     the library binding
     ([LocatedDrive][cta.tapeserver.sdk.repositories.protocols.drive.LocatedDrive]),
@@ -96,11 +96,11 @@ class Drive:
 
 @dataclass(frozen=True, eq=False)  # eq = False so the Drive-based equality survives
 class NamedDrive(Drive):
-    """Drive that also exposes its logical ctaops name.
+    """Drive that also exposes its logical CTA name.
 
     Attributes:
         name: Logical drive name, configured externally by the operator
-            (typically the `CTAOPS_NAME` udev property).
+            (typically the `CTA_NAME` udev property).
 
     Raises:
         ValueError: If `name` is empty.
@@ -137,7 +137,7 @@ class LocatedDrive(Drive):
 
 @dataclass(frozen=True, eq=False)
 class LocatedNamedDrive(LocatedDrive, NamedDrive):
-    """Drive carrying both a logical ctaops name and a library binding."""
+    """Drive carrying both a logical CTA name and a library binding."""
 
 
 class DriveRepository(Protocol):
@@ -157,7 +157,7 @@ class DriveRepository(Protocol):
 
 
 class NamedDriveRepository(Protocol):
-    """Drive repository whose entries also carry their logical ctaops name."""
+    """Drive repository whose entries also carry their logical CTA name."""
 
     def list_drives(self) -> set[NamedDrive]:
         """Return the set of locally-visible named drives."""

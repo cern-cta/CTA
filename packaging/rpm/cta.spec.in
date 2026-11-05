@@ -573,22 +573,27 @@ Configures package repositories, signing keys and version locks for CTA and its 
 %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
 %{_bindir}/cta-versionlock
 
-%package -n ctaops-udev
+%package -n cta-udev
 Summary: CTA tape device udev rules and helper
 BuildArch: noarch
 Requires: python3
 Requires: systemd-udev
-%description -n ctaops-udev
+Obsoletes: ctaops-udev
+%description -n cta-udev
 Provides udev rules and a helper for stable CTA tape device names.
-%files -n ctaops-udev
+%files -n cta-udev
 %license COPYING
-%{_prefix}/lib/udev/rules.d/62-ctaops.rules
-%{_prefix}/lib/udev/ctaops-udev
-%config(noreplace) %{_prefix}/lib/udev/ctaops-udev.ini
-%{_mandir}/man8/ctaops-udev.8ctaops*
+%dir %{_sysconfdir}/cta
+%dir %{_sysconfdir}/cta/library-inventory
+%{_udevrulesdir}/62-cta.rules
+%{_prefix}/lib/udev/cta-udev
+%doc %{_docdir}/cta-udev/examples/cta-udev.example.ini
+%{_mandir}/man8/cta-udev.8cta*
 
-%post -n ctaops-udev
-/usr/sbin/udevadm control --reload-rules && /usr/sbin/udevadm trigger
+%post -n cta-udev
+# Apply the CTA_* properties to tape devices that are already present.
+udevadm control --reload-rules >/dev/null 2>&1 || :
+udevadm trigger --subsystem-match=scsi_generic --subsystem-match=scsi_tape >/dev/null 2>&1 || :
 
 # =========================================================================
 #  Tests

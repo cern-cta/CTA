@@ -9,7 +9,7 @@ Two layers are exposed:
   — minimal contract sufficient to operate a changer addressed by drive
   ordinals only.
 * [ManagedLibraryController][cta.tapeserver.sdk.controllers.protocols.library.ManagedLibraryController]
-  — extends `LibraryController` with ctaops-aware operations: drives can
+  — extends `LibraryController` with CTA-aware operations: drives can
   be addressed by either ordinal or logical name, `mount` returns a
   [MountedDriveController][cta.tapeserver.sdk.controllers.protocols.drive.MountedDriveController]
   ready for I/O, and CTA-specific operations such as `label_tape` are
@@ -137,14 +137,14 @@ class LibraryController(Protocol):
 
 
 class ManagedLibraryController(LibraryController, Protocol):
-    """ctaops-aware media-changer contract.
+    """CTA-aware media-changer contract.
 
     Layered on top of
     [LibraryController][cta.tapeserver.sdk.controllers.protocols.library.LibraryController]
     to add:
 
-    * a logical `name` resolved from the changer's ctaops udev metadata,
-    * acceptance of either drive ordinal *or* drive name (`CTAOPS_NAME`)
+    * a logical `name` resolved from the changer's CTA udev metadata,
+    * acceptance of either drive ordinal *or* drive name (`CTA_NAME`)
       everywhere a `drive_key` is taken,
     * a richer `mount` that returns a
       [MountedDriveController][cta.tapeserver.sdk.controllers.protocols.drive.MountedDriveController]
@@ -165,7 +165,7 @@ class ManagedLibraryController(LibraryController, Protocol):
 
     @property
     def name(self) -> str:
-        """Logical library name (`CTAOPS_NAME` udev property)."""
+        """Logical library name (`CTA_NAME` udev property)."""
         ...
 
     @override

@@ -5,7 +5,7 @@
 
 A provider enumerates locally-visible tape drives and returns
 [DriveController][cta.tapeserver.sdk.controllers.protocols.drive.DriveController]
-instances for them, either by SCSI serial number or by logical ctaops
+instances for them, either by SCSI serial number or by logical CTA
 name. The `get_*` methods raise
 [ResourceNotFoundError][cta.tapeserver.sdk.exceptions.ResourceNotFoundError] when
 no match is visible; the `find_*` variants return `None` instead so
@@ -45,7 +45,7 @@ class DriveControllerProvider(Protocol):
         self,
         name: str,
     ) -> DriveController:
-        """Return the drive controller matching the logical ctaops `name`.
+        """Return the drive controller matching the logical CTA `name`.
 
         Raises:
             ResourceNotFoundError: If no matching drive is visible.

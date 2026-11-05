@@ -43,7 +43,7 @@ def _build_st_device(
     *,
     sys_name: str = "nst0",
     serial: Optional[str] = "DRSN",
-    ctaops_name: str = "T0-LIB0-DRV0",
+    cta_name: str = "T0-LIB0-DRV0",
 ):
     parent = MagicMock(name="ScsiTarget")
     nst_device = device_factory(
@@ -51,7 +51,7 @@ def _build_st_device(
         subsystem="scsi_tape",
         device_node=f"/dev/{sys_name}",
         parent=parent,
-        properties={"ID_SCSI_SERIAL": serial, "CTAOPS_NAME": ctaops_name},
+        properties={"ID_SCSI_SERIAL": serial, "CTA_NAME": cta_name},
     )
     sg_device = device_factory(
         sys_name="sg5",

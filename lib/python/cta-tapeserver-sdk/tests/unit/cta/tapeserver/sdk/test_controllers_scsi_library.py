@@ -28,7 +28,7 @@ from cta.tapeserver.sdk.repositories.protocols.drive import DriveLibraryLocation
 
 
 def _make_sg_device(
-    device_factory: Callable[..., MagicMock], *, serial: Optional[str] = "LIBSN", ctaops_name: str = "T0-LIB0"
+    device_factory: Callable[..., MagicMock], *, serial: Optional[str] = "LIBSN", cta_name: str = "T0-LIB0"
 ):
     return device_factory(
         sys_name="sg0",
@@ -36,7 +36,7 @@ def _make_sg_device(
         device_node="/dev/sg0",
         properties={
             "ID_SCSI_SERIAL": serial,
-            "CTAOPS_NAME": ctaops_name,
+            "CTA_NAME": cta_name,
             "SCSI_TYPE": "medium changer",
         },
     )

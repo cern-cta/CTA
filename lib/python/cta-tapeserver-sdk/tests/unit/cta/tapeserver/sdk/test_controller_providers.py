@@ -31,7 +31,7 @@ def _drive_nst(
     *,
     sys_name: str = "nst0",
     serial: Optional[str] = "DRSN",
-    ctaops_name: str = "T0-LIB0-DRV0",
+    cta_name: str = "T0-LIB0-DRV0",
 ):
     parent = MagicMock(name="ScsiTarget")
     nst = device_factory(
@@ -39,7 +39,7 @@ def _drive_nst(
         subsystem="scsi_tape",
         device_node=f"/dev/{sys_name}",
         parent=parent,
-        properties={"ID_SCSI_SERIAL": serial, "CTAOPS_NAME": ctaops_name},
+        properties={"ID_SCSI_SERIAL": serial, "CTA_NAME": cta_name},
     )
     sg = device_factory(
         sys_name="sg5",
@@ -104,7 +104,7 @@ def _library_sg(
     *,
     sys_name: str = "sg0",
     serial: Optional[str] = "LIBSN",
-    ctaops_name: str = "T0-LIB0",
+    cta_name: str = "T0-LIB0",
 ):
     return device_factory(
         sys_name=sys_name,
@@ -112,7 +112,7 @@ def _library_sg(
         device_node=f"/dev/{sys_name}",
         properties={
             "ID_SCSI_SERIAL": serial,
-            "CTAOPS_NAME": ctaops_name,
+            "CTA_NAME": cta_name,
             "SCSI_TYPE": "medium changer",
         },
     )

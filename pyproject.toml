@@ -99,7 +99,7 @@
         "ci",
         "lib/python",
         "tools/cta-cli/tests",
-        "tools/ctaops-udev/tests",
+        "tools/cta-udev/tests",
     ]
 
 # Keep XML filenames relative to the repository root for GitLab diff annotations.
@@ -126,7 +126,7 @@
         "ci/*",
         "lib/python/*/src/*",
         "tools/cta-cli/src/*",
-        "tools/ctaops-udev/src/*",
+        "tools/cta-udev/src/*",
     ]
 
 [tool.ruff]

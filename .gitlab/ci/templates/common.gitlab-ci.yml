@@ -24,7 +24,7 @@
         - "**/.ruff.toml"
         - "lib/python/**/*"
         - "tools/cta-cli/**/*"
-        - "tools/ctaops-udev/**/*"
+        - "tools/cta-udev/**/*"
         - "lib/protobuf/external/xrootd-ssi-protobuf-interface"
         - ".gitmodules"
         - "LICENSES/GPL-3.0-or-later.txt"

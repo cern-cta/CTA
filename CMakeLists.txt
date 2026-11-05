@@ -165,6 +165,9 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   endif()
   set(CTA_SYSTEMD_UNIT_DIR "lib/systemd/system" CACHE PATH
     "Installation directory for systemd system units")
+  # Udev helpers live under lib/udev, including on platforms using lib64 for libraries.
+  set(CTA_UDEV_DIR "lib/udev" CACHE PATH
+    "Installation directory for udev rules and helpers")
 
   include_directories(${PROJECT_SOURCE_DIR})
   include_directories(${CMAKE_BINARY_DIR})
@@ -377,5 +380,6 @@ if(CTA_SHOW_CONFIGURATION_SUMMARY)
   message(STATUS "Installation")
   message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
   message(STATUS "CTA_SYSTEMD_UNIT_DIR: ${CTA_SYSTEMD_UNIT_DIR}")
+  message(STATUS "CTA_UDEV_DIR: ${CTA_UDEV_DIR}")
   message(STATUS "")
 endif()

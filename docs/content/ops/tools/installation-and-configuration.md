@@ -34,6 +34,7 @@ You will only need the sections corresponding to the tools you install.
 Additionally, some of the command line tools and library functionalities depend on knowing some basic information about the locally installed tape drives.
 This information should be provided in a dedicated json file on the tape server, which is pointed to by the `global::tape::drive_facts` config option.
 A command line tool to generate such a file from the information provided by the tape libraries themselves is included in the `ctaopsdrvconfgen` package.
+For new deployments, use [`cta-udev`](../deploy-and-configure/deployment/cta-udev.md) and `cta device list drives|libraries` instead.
 The documentation for this package also specifies the intended format, in case you prefer to create this file manually.
 
 

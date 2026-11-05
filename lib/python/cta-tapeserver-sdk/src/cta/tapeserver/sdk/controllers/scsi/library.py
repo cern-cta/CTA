@@ -632,7 +632,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         Reuses the wrapped `sg_device` and pyudev `Context` so the resulting
         controller shares the udev snapshot of the source. Useful when a
         caller obtained a minimal controller (for example from a generic
-        provider) and now needs the richer ctaops-aware operations.
+        provider) and now needs the richer CTA-aware operations.
 
         Args:
             lib_ctrl: Source controller to wrap.

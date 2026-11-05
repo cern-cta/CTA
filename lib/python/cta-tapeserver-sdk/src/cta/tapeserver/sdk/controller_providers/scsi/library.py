@@ -72,7 +72,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
     def __init__(
         self,
         context: Optional[Context] = None,
-        library_name_key: str = "CTAOPS_NAME",
+        library_name_key: str = "CTA_NAME",
     ):
         LOGGER.debug("Initializing ScsiLibraryControllerProvider")
         self._context = context if context is not None else Context()
@@ -148,7 +148,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
     [ScsiLibraryController][cta.tapeserver.sdk.controllers.scsi.library.ScsiLibraryController]:
 
     * logical-name resolution (drives can be addressed by either ordinal
-      or `CTAOPS_NAME`),
+      or `CTA_NAME`),
     * a richer `mount(...)` returning a context-managed
       [MountedDriveController][cta.tapeserver.sdk.controllers.protocols.drive.MountedDriveController],
     * the `label_tape(...)` operation backed by `cta-tape-label`.
@@ -176,10 +176,10 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
     def __init__(
         self,
         context: Optional[Context] = None,
-        library_name_key: str = "CTAOPS_NAME",
-        drive_name_key: str = "CTAOPS_NAME",
-        drive_library_address_key: str = "CTAOPS_LIBRARY_ADDRESS",
-        drive_library_ordinal_key: str = "CTAOPS_LIBRARY_ORDINAL",
+        library_name_key: str = "CTA_NAME",
+        drive_name_key: str = "CTA_NAME",
+        drive_library_address_key: str = "CTA_LIBRARY_ADDRESS",
+        drive_library_ordinal_key: str = "CTA_LIBRARY_ORDINAL",
     ):
         super().__init__(context, library_name_key)
         LOGGER.debug("Initializing ScsiManagedLibraryControllerProvider")
@@ -231,7 +231,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
             (
                 ScsiManagedLibraryController(sg_device)
                 for sg_device in self._list_media_changer_sg_devices()
-                if name == sg_device.properties.get("CTAOPS_NAME")
+                if name == sg_device.properties.get("CTA_NAME")
             ),
             None,
         )

@@ -29,6 +29,6 @@ uv build --all-packages --out-dir build/python
   Hatch builds the packages; explicit CI release tags supply release versions.
   Local builds always use `<major>.dev1`; CI development builds use `<major>.dev<pipeline>+g<sha>[.dirty]`.
 - SDK builds generate protobuf bindings from the submodule above.
-- `ctaops-udev` is packaged separately as an RPM.
+- `cta-udev` is packaged separately as an RPM.
 
 Imported from [cta-operations-utilities](https://gitlab.cern.ch/cta/cta-operations-utilities) at commit `af96ab9dc8893a1d2e5f988ad8da9f6f7fa05c1a`.

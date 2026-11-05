@@ -8,7 +8,7 @@ Two protocols are exposed:
 * [LibraryRepository][cta.tapeserver.sdk.repositories.protocols.library.LibraryRepository]
   — bare-bones inventory; libraries are identified by SCSI serial only.
 * [NamedLibraryRepository][cta.tapeserver.sdk.repositories.protocols.library.NamedLibraryRepository]
-  — libraries also carry their logical ctaops name.
+  — libraries also carry their logical CTA name.
 
 Concrete udev-backed implementations:
 [LocalLibraryRepository][cta.tapeserver.sdk.repositories.local.library.LocalLibraryRepository]
@@ -86,7 +86,7 @@ class LibraryRepository(Protocol):
 
 
 class NamedLibraryRepository(Protocol):
-    """Library repository whose entries also carry their logical ctaops name."""
+    """Library repository whose entries also carry their logical CTA name."""
 
     def list_libraries(self) -> set[NamedLibrary]:
         """Return the set of locally-visible named libraries."""

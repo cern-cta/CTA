@@ -207,7 +207,7 @@ nav:
               - "Tape Server Setup": ops/deploy-and-configure/deployment/tape-servers.md
               # Bind stable hardware identities to non-rewinding paths; runtime settings belong in Configuration.
               - "Stable Drive Identities & udev": ops/deploy-and-configure/deployment/udev-rules.md
-              - "ctaops-udev Setup": ops/deploy-and-configure/deployment/ctaops-udev.md
+              - "cta-udev Setup": ops/deploy-and-configure/deployment/cta-udev.md
               - "Initialisation & Verification": ops/deploy-and-configure/deployment/initialisation.md
           # Explain settings, prerequisites, and examples; managing live resources belongs in Administration.
           - "Configuration":

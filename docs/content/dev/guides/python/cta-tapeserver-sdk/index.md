@@ -14,7 +14,7 @@ The package is organised in three layers, each with a `Protocol`-based interface
 | --- | --- | --- | --- |
 | Repositories | Discover libraries and drives via udev metadata | `LibraryRepository`, `NamedLibraryRepository`, `DriveRepository`, `NamedDriveRepository`, `LocatedDriveRepository`, `LocatedNamedDriveRepository` | `LocalLibraryRepository`, `LocalNamedLibraryRepository`, `LocalDriveRepository`, `LocalNamedDriveRepository`, `LocalLocatedDriveRepository`, `LocalLocatedNamedDriveRepository` |
 | Controllers | Operate a single library / drive (mount, unmount, label, I/O, …) | `LibraryController`, `ManagedLibraryController`, `DriveController`, `MountedDriveController` | `ScsiLibraryController`, `ScsiManagedLibraryController`, `ScsiDriveController`, `ScsiMountedDriveController` |
-| Controller providers | Resolve a controller by serial number or ctaops name | `DriveControllerProvider`, `LibraryControllerProvider`, `ManagedLibraryControllerProvider` | `ScsiDriveControllerProvider`, `ScsiLibraryControllerProvider`, `ScsiManagedLibraryControllerProvider` |
+| Controller providers | Resolve a controller by serial number or CTA name | `DriveControllerProvider`, `LibraryControllerProvider`, `ManagedLibraryControllerProvider` | `ScsiDriveControllerProvider`, `ScsiLibraryControllerProvider`, `ScsiManagedLibraryControllerProvider` |
 
 ## Installation
 !!! abstract "Command"
@@ -34,15 +34,15 @@ The library shells out to standard SCSI/tape utilities, which must be present on
 
 ### udev metadata requirements
 
-Discovery is driven entirely by udev properties. Every CTA-managed device must carry these properties (typically populated by the [`ctaops-udev`](../../../../ops/deploy-and-configure/deployment/ctaops-udev.md) rules package — provided as-is, see its docs for the caveats):
+Discovery is driven entirely by udev properties. Every CTA-managed device must carry these properties (typically populated by the [`cta-udev`](../../../../ops/deploy-and-configure/deployment/cta-udev.md) rules package — provided as-is, see its docs for the caveats):
 
 | Property | Library (sg) | Drive (nst) |
 | --- | :---: | :---: |
 | `ID_SCSI_SERIAL` | required | required |
-| `CTAOPS_NAME` | required for `Named*` variants | required for `Named*` variants |
+| `CTA_NAME` | required for `Named*` variants | required for `Named*` variants |
 | `SCSI_TYPE=medium changer` | required | – |
-| `CTAOPS_LIBRARY_ADDRESS` | – | required for `Located*` variants |
-| `CTAOPS_LIBRARY_ORDINAL` | – | required for `Located*` variants |
+| `CTA_LIBRARY_ADDRESS` | – | required for `Located*` variants |
+| `CTA_LIBRARY_ORDINAL` | – | required for `Located*` variants |
 
 Devices missing the metadata required for the variant you queried are silently skipped during discovery.
 
@@ -77,7 +77,7 @@ from cta.tapeserver.sdk import (
 Drive value objects progressively add metadata:
 
 - `Drive` — bare-bones, just a SCSI serial.
-- `NamedDrive` — adds `CTAOPS_NAME`.
+- `NamedDrive` — adds `CTA_NAME`.
 - `LocatedDrive` — adds the parent library binding (`DriveLibraryLocation`).
 - `LocatedNamedDrive` — adds both name and location.
 

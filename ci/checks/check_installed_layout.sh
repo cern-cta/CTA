@@ -37,7 +37,7 @@ services=(
 case "$package_format" in
   rpm)
     libdir=/usr/lib64
-    mapfile -t packages < <(rpm -qa --qf '%{NAME}\n' | grep -E '^(cta-|ctaops-udev$)')
+    mapfile -t packages < <(rpm -qa --qf '%{NAME}\n' | grep -E '^cta-')
     files=$(rpm -ql "${packages[@]}")
     configs=$(rpm -q --qf '[%{FILENAMES} %{FILEFLAGS:fflags}\n]' "${packages[@]}" | \
       awk '$2 ~ /c/ && $2 ~ /n/ {print $1}')
@@ -131,11 +131,10 @@ done
 # The udev helper is currently packaged only for RPM, outside /usr/bin.
 if [[ "$package_format" == rpm ]]; then
   log_task "Checking CTA udev rules and helper..."
-  require_file /usr/lib/udev/ctaops-udev ctaops-udev
-  [[ -x /usr/lib/udev/ctaops-udev ]] || fail "not executable: /usr/lib/udev/ctaops-udev"
-  require_file /usr/lib/udev/rules.d/62-ctaops.rules ctaops-udev
-  require_config /usr/lib/udev/ctaops-udev.ini ctaops-udev
-  require_document /usr/share/man/man8/ctaops-udev.8ctaops ctaops-udev
+  require_file /usr/lib/udev/cta-udev cta-udev
+  [[ -x /usr/lib/udev/cta-udev ]] || fail "not executable: /usr/lib/udev/cta-udev"
+  require_file /usr/lib/udev/rules.d/62-cta.rules cta-udev
+  require_document /usr/share/man/man8/cta-udev.8cta cta-udev
 fi
 
 log_task "Checking service units and configuration ($package_format)..."
@@ -163,6 +162,7 @@ examples=(
   cta-lib-catalogue:cta-catalogue.example.conf
   cta-lib-scheduler:cta-scheduler.example.conf
   cta-lib-telemetry:cta-otel.example.yaml
+  cta-udev:cta-udev.example.ini
 )
 for example in "${examples[@]}"; do
   package=${example%%:*}

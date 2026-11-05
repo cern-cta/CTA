@@ -26,14 +26,14 @@ from cta.tapeserver.sdk.repositories.local.library import (
 )
 
 
-def _library_device(make_device: Callable[..., MagicMock], *, sys_name: str, serial: str, ctaops_name: str = "T0-LIB0"):
+def _library_device(make_device: Callable[..., MagicMock], *, sys_name: str, serial: str, cta_name: str = "T0-LIB0"):
     return make_device(
         sys_name=sys_name,
         subsystem="scsi_generic",
         device_node=f"/dev/{sys_name}",
         properties={
             "ID_SCSI_SERIAL": serial,
-            "CTAOPS_NAME": ctaops_name,
+            "CTA_NAME": cta_name,
             "SCSI_TYPE": "medium changer",
         },
     )
@@ -44,7 +44,7 @@ def _drive_device(
     *,
     sys_name: str,
     serial: str,
-    ctaops_name: str = "T0-LIB0-DRV0",
+    cta_name: str = "T0-LIB0-DRV0",
     address: str = "257",
     ordinal: str = "0",
     parent: Optional[MagicMock] = None,
@@ -56,9 +56,9 @@ def _drive_device(
         parent=parent,
         properties={
             "ID_SCSI_SERIAL": serial,
-            "CTAOPS_NAME": ctaops_name,
-            "CTAOPS_LIBRARY_ADDRESS": address,
-            "CTAOPS_LIBRARY_ORDINAL": ordinal,
+            "CTA_NAME": cta_name,
+            "CTA_LIBRARY_ADDRESS": address,
+            "CTA_LIBRARY_ORDINAL": ordinal,
         },
     )
     if parent is not None:
@@ -73,7 +73,7 @@ def test_list_libraries_returns_one_entry_per_changer(
     device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]
 ):
     lib_a = _library_device(device_factory, sys_name="sg0", serial="LIBA")
-    lib_b = _library_device(device_factory, sys_name="sg1", serial="LIBB", ctaops_name="T0-LIB1")
+    lib_b = _library_device(device_factory, sys_name="sg1", serial="LIBB", cta_name="T0-LIB1")
     repo = LocalLibraryRepository(make_context([lib_a, lib_b]))
 
     serials = {lib.serial_number for lib in repo.list_libraries()}
@@ -123,7 +123,7 @@ def test_get_library_missing_raises(make_context: Callable[[list[MagicMock]], Ma
         repo.get_library("DOES-NOT-EXIST")
 
 
-def test_named_library_repo_skips_devices_without_ctaops_name(
+def test_named_library_repo_skips_devices_without_cta_name(
     device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]
 ):
     plain_changer = device_factory(
@@ -189,7 +189,7 @@ def test_local_drive_repository_get_drive_missing_raises(make_context: Callable[
 def test_local_named_drive_repository_lists_named_drives(
     device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]
 ):
-    drive = _drive_device(device_factory, sys_name="nst0", serial="DRA", ctaops_name="T0-LIB0-DRV0")
+    drive = _drive_device(device_factory, sys_name="nst0", serial="DRA", cta_name="T0-LIB0-DRV0")
     repo = LocalNamedDriveRepository(make_context([drive]))
 
     drives = repo.list_drives()
@@ -199,7 +199,7 @@ def test_local_named_drive_repository_lists_named_drives(
 def test_local_named_drive_repository_get_drive_by_name(
     device_factory: Callable[..., MagicMock], make_context: Callable[[list[MagicMock]], MagicMock]
 ):
-    drive = _drive_device(device_factory, sys_name="nst0", serial="DRA", ctaops_name="T0-LIB0-DRV0")
+    drive = _drive_device(device_factory, sys_name="nst0", serial="DRA", cta_name="T0-LIB0-DRV0")
     repo = LocalNamedDriveRepository(make_context([drive]))
 
     found = repo.get_drive_by_name("T0-LIB0-DRV0")
@@ -232,13 +232,13 @@ def _wire_drive_under_library(
     """Build a (lib, drive) pair sharing the same scsi_target parent."""
     target = device_factory(sys_name=lib_sys_name + "-target", subsystem="scsi")
     target.find_parent.return_value = target
-    lib = _library_device(device_factory, sys_name=lib_sys_name, serial=lib_serial, ctaops_name=lib_name)
+    lib = _library_device(device_factory, sys_name=lib_sys_name, serial=lib_serial, cta_name=lib_name)
     lib.parent = target
     drive = _drive_device(
         device_factory,
         sys_name=drive_sys_name,
         serial=drive_serial,
-        ctaops_name=drive_name,
+        cta_name=drive_name,
         address=address,
         ordinal=ordinal,
         parent=target,
