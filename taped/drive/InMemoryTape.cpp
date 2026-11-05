@@ -162,8 +162,8 @@ ssize_t InMemoryTape::readBlock(void* data, size_t count) {
   if (count < m_blocks[m_currentPosition].data.size()) {
     throw cta::exception::Exception("Block size too small in InMemoryTape::readBlock");
   }
-  size_t bytes_copied = m_blocks[m_currentPosition]
-                          .data.copy(static_cast<char*>(data), m_blocks[m_currentPosition].data.size());
+  size_t bytes_copied =
+    m_blocks[m_currentPosition].data.copy(static_cast<char*>(data), m_blocks[m_currentPosition].data.size());
   m_currentPosition++;
   return bytes_copied;
 }

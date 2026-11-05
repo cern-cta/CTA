@@ -220,7 +220,11 @@ lbpToUse FakeDrive::getLbpToUse() {
 }
 
 std::vector<endOfWrapPosition> FakeDrive::getEndOfWrapPositions() {
-  return {{0, 208310, 0}, {1, 416271, 0}, {2, 624562, 0}};
+  return {
+    {0, 208310, 0},
+    {1, 416271, 0},
+    {2, 624562, 0}
+  };
 }
 
 FakeNonRAODrive::FakeNonRAODrive() : FakeDrive() {}

@@ -61,8 +61,8 @@ private:
   cta::FrontendBatchingLayer*
     m_batchingLayer;  //!< Opportunistic-batching layer for archive/retrieve queueing (pgsched only; null when unavailable)
 #endif
-  log::LogContext m_lc;                                    //!< CTA Log Context
-  std::string m_verificationMountPolicy;                   //!< Verification mount policy
+  log::LogContext m_lc;                   //!< CTA Log Context
+  std::string m_verificationMountPolicy;  //!< Verification mount policy
 
   bool m_zeroLengthFilesDisallowed;  //!< Do not allow 0-length files to be archived
   std::set<std::string>

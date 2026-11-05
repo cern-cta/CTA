@@ -64,7 +64,9 @@ protected:
   void TearDown() override { fs::remove_all(m_baseDir); }
 
   fs::path driveDir() const { return m_baseDir / "contents" / m_lib / "drives" / m_drive; }
+
   fs::path slotsDir() const { return m_baseDir / "contents" / m_lib / "slots"; }
+
   fs::path changerDir() const { return m_baseDir / "contents" / m_lib / "changer"; }
 
   // Place an empty (blank) tape file in the drive directory, simulating a

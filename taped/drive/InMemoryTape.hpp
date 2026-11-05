@@ -76,13 +76,21 @@ public:
 
   // --- Low-level accessors for FakeDrive and VtlDrive ---
   uint32_t currentPosition() const { return m_currentPosition; }
+
   uint64_t remainingSpace() const;
+
   size_t blockCount() const { return m_blocks.size(); }
+
   const Block& blockAt(size_t i) const { return m_blocks.at(i); }
+
   const std::vector<Block>& blocks() const { return m_blocks; }
+
   void setCapacity(uint64_t capacity) { m_capacity = capacity; }
+
   void reserve(size_t n) { m_blocks.reserve(n); }
+
   void loadBlocks(std::vector<Block> blocks);
+
   void resetPosition() { m_currentPosition = 0; }
 
 private:

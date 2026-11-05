@@ -63,39 +63,66 @@ public:
 
   // --- Delegation to InMemoryTape (tape-block operations) ---
   compressionStats getCompression() override { return m_tape.getCompression(); }
+
   void clearCompressionStats() override { m_tape.clearCompressionStats(); }
+
   void positionToLogicalObject(uint32_t b) override;
+
   positionInfo getPositionInfo() override { return m_tape.getPositionInfo(); }
+
   physicalPositionInfo getPhysicalPositionInfo() override { return m_tape.getPhysicalPositionInfo(); }
+
   std::vector<endOfWrapPosition> getEndOfWrapPositions() override;
   void enableCRC32CLogicalBlockProtectionReadOnly() override;
   void enableCRC32CLogicalBlockProtectionReadWrite() override;
-  void disableLogicalBlockProtection() override;
+
   void fastSpaceToEOM(void) override { m_tape.fastSpaceToEOM(); }
+
   void spaceToEOM(void) override { m_tape.spaceToEOM(); }
+
   void spaceFileMarksBackwards(size_t count) override { m_tape.spaceFileMarksBackwards(count); }
+
   void spaceFileMarksForward(size_t count) override { m_tape.spaceFileMarksForward(count); }
+
   void writeSyncFileMarks(size_t count) override { m_tape.writeSyncFileMarks(count); }
+
   void writeImmediateFileMarks(size_t count) override { m_tape.writeImmediateFileMarks(count); }
+
   ssize_t readBlock(void* data, size_t count) override { return m_tape.readBlock(data, count); }
-  void readExactBlock(void* data, size_t count, const std::string& ctx) override { m_tape.readExactBlock(data, count, ctx); }
+
+  void readExactBlock(void* data, size_t count, const std::string& ctx) override {
+    m_tape.readExactBlock(data, count, ctx);
+  }
+
   void readFileMark(const std::string& ctx) override { m_tape.readFileMark(ctx); }
+
   bool isWriteProtected() override;
+
   bool isAtBOT() override { return m_tape.isAtBOT(); }
+
   bool isAtEOD() override { return m_tape.isAtEOD(); }
+
   bool isTapeBlank() override { return m_tape.isTapeBlank(); }
+
   lbpToUse getLbpToUse() override;
+
   bool hasTapeInPlace() override { return m_tape.isLoaded(); }
 
   // --- Drive-metadata and SCSI stubs (not tape-block operations) ---
   // FakeDrive is used in unit tests that never call these; they throw rather
   // than silently swallow to avoid masking unexpected call paths.
   std::map<std::string, uint32_t> getVolumeStats() override { return {}; }
+
   std::vector<uint16_t> getTapeAlertCodes() override { return {}; }
+
   std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) override { return {}; }
+
   std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) override { return {}; }
+
   bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>&) override { return false; }
+
   bool isEncryptionCapEnabled() override { return false; }
+
   void setEncryptionKey(const std::string&) override;
   void setDensityAndCompression(bool = true, unsigned char = 0) override;
   drive::LBPInfo getLBPInfo() override;
@@ -107,6 +134,7 @@ public:
 
   // Test helpers: direct access to in-memory tape state.
   void setTapeInPlace(bool tapeInPlace) { m_tape.setLoaded(tapeInPlace); }
+
   uint32_t getBlockIdPositioningCount() const { return m_blockIdPositioningCount; }
 
   // Returns a human-readable dump of the tape contents for test diagnostics.

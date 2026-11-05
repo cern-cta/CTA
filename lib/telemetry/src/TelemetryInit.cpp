@@ -15,7 +15,6 @@
 
 #include <cstdlib>
 #include <fstream>
-#include <thread>
 #include <opentelemetry/exporters/ostream/metric_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_grpc_metric_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_factory.h>
@@ -29,6 +28,7 @@
 #include <opentelemetry/sdk/metrics/meter_provider.h>
 #include <opentelemetry/sdk/metrics/meter_provider_factory.h>
 #include <opentelemetry/sdk/resource/resource.h>
+#include <thread>
 
 namespace cta::telemetry {
 
@@ -191,7 +191,8 @@ void reinitTelemetryWithJitter(const std::string& instanceId, cta::log::LogConte
       // Spread export cycles: jitter in [0, exportInterval/2) so the max
       // stagger is half an interval — enough to eliminate the thundering herd
       // while keeping the worst-case metric delay to 1.5× the export interval.
-      const auto jitterMs = static_cast<long>(std::hash<std::string>{}(instanceId) % static_cast<size_t>(intervalMs / 2));
+      const auto jitterMs =
+        static_cast<long>(std::hash<std::string> {}(instanceId) % static_cast<size_t>(intervalMs / 2));
       log::ScopedParamContainer params(lc);
       params.add("jitterMs", jitterMs).add("instanceId", instanceId);
       lc.log(log::INFO, "In reinitTelemetryWithJitter(): staggering OTel export startup");

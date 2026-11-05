@@ -367,7 +367,11 @@ bool VtlDrive::isWriteProtected() {
 }
 
 std::vector<endOfWrapPosition> VtlDrive::getEndOfWrapPositions() {
-  return {{0, 208310, 0}, {1, 416271, 0}, {2, 624562, 0}};
+  return {
+    {0, 208310, 0},
+    {1, 416271, 0},
+    {2, 624562, 0}
+  };
 }
 
 }  // namespace cta::tape::drive

@@ -74,7 +74,8 @@ struct ChangerGuard {
 // DmcProxy (operator console prompt) based on the library slot type.
 struct HardwareChangerImpl final : cta::mediachanger::MediaChangerFacadeImpl {
   HardwareChangerImpl(const cta::mediachanger::RmcProxy& rmcProxy, cta::log::Logger& log)
-      : m_rmcProxy(rmcProxy), m_dmcProxy(log) {}
+      : m_rmcProxy(rmcProxy),
+        m_dmcProxy(log) {}
 
   void mountTapeReadOnly(const std::string& vid, const cta::mediachanger::LibrarySlot& slot) override {
     try {
@@ -111,7 +112,9 @@ struct HardwareChangerImpl final : cta::mediachanger::MediaChangerFacadeImpl {
 
 private:
   cta::mediachanger::MediaChangerProxy& getProxy(const cta::mediachanger::LibrarySlot& slot) {
-    if (slot.isDummy()) return m_dmcProxy;
+    if (slot.isDummy()) {
+      return m_dmcProxy;
+    }
     return m_rmcProxy;
   }
 
@@ -172,7 +175,9 @@ struct VirtualChangerImpl final : cta::mediachanger::MediaChangerFacadeImpl {
     const auto changerTape = changerDir / (vid + ".tape");
     const auto slotPath = contentsBase / "slots" / (vid + ".tape");
 
-    if (!std::filesystem::exists(drivePath)) return;
+    if (!std::filesystem::exists(drivePath)) {
+      return;
+    }
 
     const ChangerGuard guard(changerDir, m_changerTimeoutMs);
     std::filesystem::rename(drivePath, changerTape);  // drives/<drv>/ → changer/
@@ -226,9 +231,9 @@ MediaChangerFacade::MediaChangerFacade(std::string driveName,
                                        std::filesystem::path stressBaseDir,
                                        log::Logger& log)
     : m_impl(std::make_unique<VirtualChangerImpl>(std::move(driveName),
-                                          std::move(logicalLibraryName),
-                                          std::move(stressBaseDir),
-                                          log)) {}
+                                                  std::move(logicalLibraryName),
+                                                  std::move(stressBaseDir),
+                                                  log)) {}
 
 //------------------------------------------------------------------------------
 // destructor — defined here so unique_ptr can see the complete MediaChangerFacadeImpl type
