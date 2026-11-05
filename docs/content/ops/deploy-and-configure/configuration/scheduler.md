@@ -4,19 +4,40 @@
 
 # Scheduler Configuration
 
-Configure the scheduler backend used by the CTA services. See [Scheduler Concepts](../../../concepts/components/scheduler.md).
+Configure the scheduler backend used by the CTA services. See [Scheduler DB](../../../concepts/components/scheduler-db.md).
 
 ## Objectstore backend
 
-TODO: Document provisioning, connection configuration, access permissions, and verification.
+!!! note "TODO"
+    TODO: Document provisioning, connection configuration, access permissions, and verification.
 
 ## PostgreSQL backend
 
-TODO: Document provisioning, schema initialisation, connection configuration, and verification.
+The schema is created and dropped with `cta-scheduler-schema-create` and `cta-scheduler-schema-drop`, which connect with the username from the connection string in the configuration file.
+
+!!! tip
+
+    The schema is named `scheduler` by default. To use a different name, pass it as the `search_path` option in the connection string, either plain (`postgresql://user:pw@dbhost/mydb?options=-c search_path=myschemaname`) or URL-encoded (`postgresql://user:pw@dbhost/mydb?options=-c%20search_path%3Dmyschemaname`). The search path is then set on the account, so later sessions use that schema automatically.
+
+!!! note "TODO"
+    Document provisioning, connection configuration, and verification.
+
+### Opportunistic batching
+
+With the PostgreSQL backend, the workflow frontend can merge concurrent archive and retrieve queueing requests into a single bulk insert. The feature is experimental and disabled by default. It is configured in `cta-workflow-api.toml` (see `app/cta-workflow-api/cta-workflow-api.pg.example.toml`):
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `experimental.opportunistic_batching_enabled` | `false` | Enables batching for archive and retrieve queueing. |
+| `opportunistic_batching.window_ms` | `10` | Maximum time a batch waits for concurrent requests to join before inserting. |
+| `opportunistic_batching.max_batch_size` | `1000` | Maximum number of requests per batch. Must be greater than zero. |
+
+A longer window adds latency to each request in exchange for bigger batches. See [PostgreSQL Opportunistic Batching](../../../dev/internals/shared-state/scheduler-db/postgresql/opportunistic-batching.md) for how it works.
 
 ## Maintenance and reporting
 
-TODO: Document the routines required by each backend and how to check that they are running. See [Maintenance Daemon Configuration](maintenance-daemon.md).
+!!! note "TODO"
+    Document the routines required by each backend and how to check that they are running. See [Maintenance Daemon Configuration](maintenance-daemon.md).
 
 ## Isolate repack with separate scheduler backends
 

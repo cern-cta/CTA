@@ -12,7 +12,7 @@ Use these guides for the task at hand. For your first development environment, s
 | Debug a service | [Debugging](tools-and-environment/debugging.md) |
 | Follow code, packaging, or CI conventions | [Conventions](conventions/index.md) |
 | Understand request processing and component implementation | [Implementation Internals](../internals/index.md) |
-| Change the catalogue schema | [Schema Development](../internals/components/catalogue/schema-development.md) |
+| Change the catalogue schema | [Schema Development](../internals/shared-state/catalogue/schema-development.md) |
 | Develop an EOS or dCache integration | [Disk System Integrations](integrations/index.md) |
 | Add or test logs and metrics | [Instrumentation](instrumentation/index.md) |
 

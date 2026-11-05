@@ -28,7 +28,7 @@ If a **delete** is called on a file that is not yet archived to tape, the corres
 
 ### Moving of the file to delete into a recycle-bin
 
-If a **delete** is called after the file is successfully archived to tape, the ArchiveFile (`ARCHIVE_FILE`) and the TapeFiles (`TAPE_FILE`) entries will be moved to the [recycle-bin](recycle-bin.md)
+If a **delete** is called after the file is successfully archived to tape, the ArchiveFile (`ARCHIVE_FILE`) and the TapeFiles (`TAPE_FILE`) entries will be moved to the [recycle-bin](../shared-state/catalogue/recycle-bin.md)
 
 ## Definitely remove a file from CTA
 

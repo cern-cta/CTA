@@ -95,6 +95,7 @@ theme:
     - content.action.repo
     - content.code.copy
     - content.code.select
+    - content.tooltips
     - navigation.instant
     - navigation.instant.progress
     - navigation.instant.prefetch
@@ -126,6 +127,7 @@ theme:
 
 extra_css:
   - stylesheets/extra.css
+  - stylesheets/mermaid.css
 
 extra:
   version:
@@ -156,7 +158,7 @@ nav:
           # Explain persistent metadata versus scheduled work; provisioning and schemas belong elsewhere.
           - "Databases & Backends":
               - "Catalogue": concepts/components/catalogue.md
-              - "Scheduler": concepts/components/scheduler.md
+              - "Scheduler DB": concepts/components/scheduler-db.md
           # Explain external namespace and disk-copy responsibilities; vendor setup belongs in Disk System Integration.
           - "Disk System": concepts/components/disk-system.md
       # Explain placement, scheduling, and file workflows; policy changes and recovery recipes belong in Operations.
@@ -427,40 +429,47 @@ nav:
           - "Overview": dev/internals/index.md
           - "Interfaces & Protocols": dev/internals/interfaces.md
           # Trace requests through code and state changes; lifecycle explanations belong in Concepts.
-          - "Workflow Implementation":
+          - "Workflows":
               - "Overview": dev/internals/workflows/index.md
               - "Archival": dev/internals/workflows/archival.md
               - "Retrieval": dev/internals/workflows/retrieval.md
-              - "Scheduling": dev/internals/workflows/scheduling.md
               - "Deletion": dev/internals/workflows/deletion.md
               - "Repack": dev/internals/workflows/repack.md
-              - "Recycle Bin": dev/internals/workflows/recycle-bin.md
+          # Explain the processes; the state they share belongs in Shared State.
           - "Components":
-              # Explain catalogue implementation and schema changes; database operation belongs in Operations.
-              - "Catalogue":
-                  - "Overview": dev/internals/components/catalogue/index.md
-                  # Create and test compatible schema changes and migrations; publishing belongs in For Maintainers.
-                  - "Schema Development": dev/internals/components/catalogue/schema-development.md
-                  - "Compatible Changes": dev/internals/components/catalogue/compatible-changes.md
-                  - "Incompatible Changes": dev/internals/components/catalogue/incompatible-changes.md
-                  - "New Schema Version": dev/internals/components/catalogue/new-version.md
-                  - "Naming": dev/internals/components/catalogue/naming.md
-                  - "Migration Scripts": dev/internals/components/catalogue/migration-scripts.md
-                  - "Testing Migrations": dev/internals/components/catalogue/testing.md
-              # Explain backend storage, coordination, and algorithms; scheduling principles belong in Concepts.
-              - "Scheduler":
-                  - "Overview": dev/internals/components/scheduler/index.md
-                  # Explain SQL schema and backend routines; build/test setup belongs in Getting Started or Testing & CI.
-                  - "PostgreSQL Scheduler": dev/internals/components/scheduler/postgresql.md
-                  - "Backend Schema": dev/internals/components/scheduler/schema.md
-                  - "Workflow Integration": dev/internals/components/scheduler/workflow.md
-                  - "Opportunistic Batching": dev/internals/components/scheduler/opportunistic-batching.md
-                  - "Garbage Collection Routines": dev/internals/components/scheduler/garbage-collection.md
               - "Workflow Frontend": dev/internals/components/workflow-frontend.md
               - "Admin Frontend": dev/internals/components/admin-frontend.md
               - "Tape Daemon": dev/internals/components/tape-daemon.md
               - "Maintenance Daemon": dev/internals/components/maintenance-daemon.md
               - "Media Changer Daemon": dev/internals/components/media-changer-daemon.md
+          # Explain the stores the processes communicate through, and the logic built on them.
+          - "Shared State":
+              - "Overview": dev/internals/shared-state/index.md
+              # Explain catalogue implementation and schema changes; database operation belongs in Operations.
+              - "Catalogue":
+                  - "Overview": dev/internals/shared-state/catalogue/index.md
+                  - "Recycle Bin": dev/internals/shared-state/catalogue/recycle-bin.md
+                  # Create and test compatible schema changes and migrations; publishing belongs in For Maintainers.
+                  - "Schema Development": dev/internals/shared-state/catalogue/schema-development.md
+                  - "Compatible Changes": dev/internals/shared-state/catalogue/compatible-changes.md
+                  - "Incompatible Changes": dev/internals/shared-state/catalogue/incompatible-changes.md
+                  - "New Schema Version": dev/internals/shared-state/catalogue/new-version.md
+                  - "Naming": dev/internals/shared-state/catalogue/naming.md
+                  - "Migration Scripts": dev/internals/shared-state/catalogue/migration-scripts.md
+                  - "Testing Migrations": dev/internals/shared-state/catalogue/testing.md
+              # Explain backend storage, coordination, and algorithms; scheduling principles belong in Concepts.
+              - "Scheduler DB":
+                  # Backend contract and comparison; code layout belongs in the Shared State overview.
+                  - "Overview": dev/internals/shared-state/scheduler-db/index.md
+                  # Backend-independent mount selection and job claiming; the request path belongs in Workflows.
+                  - "Scheduling Algorithm": dev/internals/shared-state/scheduler-db/scheduling-algorithm.md
+                  # Explain SQL schema and backend routines; build/test setup belongs in Getting Started or Testing & CI.
+                  - "PostgreSQL Backend":
+                      - "Overview": dev/internals/shared-state/scheduler-db/postgresql/index.md
+                      - "Schema": dev/internals/shared-state/scheduler-db/postgresql/schema.md
+                      - "Mount Scheduling": dev/internals/shared-state/scheduler-db/postgresql/mount-scheduling.md
+                      - "Opportunistic Batching": dev/internals/shared-state/scheduler-db/postgresql/opportunistic-batching.md
+                      - "Garbage Collection": dev/internals/shared-state/scheduler-db/postgresql/garbage-collection.md
           - "Shared Libraries":
               - "Overview": dev/internals/shared-libraries.md
               - "Service Runtime": dev/internals/service-runtime.md

@@ -58,7 +58,7 @@ flowchart TB
 ## Databases and backends
 
 - [Catalogue](catalogue.md): stores **non-transient metadata** describing archived files, tape copies, resources and policies. These records remain necessary after individual transfers finish.
-- [Scheduler](scheduler.md): stores **transient work state**, including requests, queues and job progress, and coordinates work across tape drives. This state is needed while work is pending or in progress, including reporting and cleanup.
+- [Scheduler DB](scheduler-db.md): stores **transient work state**, including requests, queues and job progress, and is the shared state through which tape drives coordinate their mounts. This state is needed while work is pending or in progress, including reporting and cleanup.
 
 Transient does not mean held only in memory: the scheduler backend persists work across service restarts. Losing that backend's stored state means losing the work it tracks, even if the catalogue and recorded tape copies remain intact.
 

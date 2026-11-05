@@ -1,0 +1,5 @@
+classDef ext    fill:#78909c33,stroke:#78909c,stroke-width:1.5px
+classDef api    fill:#42a5f533,stroke:#42a5f5,stroke-width:1.5px
+classDef store  fill:#ffb30033,stroke:#ffb300,stroke-width:1.5px
+classDef daemon fill:#66bb6a33,stroke:#66bb6a,stroke-width:1.5px
+classDef group  fill:none,stroke:#90a4ae,stroke-dasharray:4 3
