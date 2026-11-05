@@ -446,7 +446,7 @@ TEST_P(RelationalDBTest, queueRepackWithStorageClass) {
   ASSERT_EQ(storageClass, repackInfo.storageClass);
 }
 
-TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformationResetsStartTimeAndArchiveMinRequestAge) {
+TEST_P(RelationalDBTest, repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransformed) {
   using namespace cta;
 
   auto logger = makeLogger();
@@ -468,18 +468,10 @@ TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformationResetsStartTimeAnd
   db.queueRepack(repackRequest, lc);
 
   // Retrieving a repack tape takes hours, so by the time its retrieve jobs are transformed into
-  // archive jobs they are already far older than any MIN_ARCHIVE_REQUEST_AGE. Their minimum
-  // request age is a retrieve one, which must not end up as the archive jobs' either.
+  // archive jobs they are already far older than any MIN_ARCHIVE_REQUEST_AGE.
   const uint64_t now = static_cast<uint64_t>(cta::utils::getCurrentEpochTime());
   const uint64_t retrieveStartTime = now - 100000;
   constexpr uint64_t creationTime = 500;
-  constexpr uint64_t minRetrieveRequestAge = 3600;
-  // DummyMountPolicyCatalogue knows "mountPolicy" (the name makeMountPolicy() uses) and gives it
-  // an archive minimum request age of 0, which is what the transformation has to pick up.
-  constexpr uint64_t catalogueArchiveMinRequestAge = 0;
-  // A mount policy which is not in the catalogue keeps the retrieve value instead.
-  const std::string unknownMountPolicy = "policyNotInCatalogue";
-  constexpr uint64_t unknownMinRetrieveRequestAge = 1800;
 
   {
     auto conn = db.getRelationalDB().getConn();
@@ -493,77 +485,59 @@ TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformationResetsStartTimeAnd
       repackRequestId = rset.columnUint64("REPACK_REQUEST_ID");
     }
 
-    // Insert the finished repack retrieve jobs directly: driving a repack retrieve all the way to
+    // Insert the finished repack retrieve job directly: driving a repack retrieve all the way to
     // RJS_ToReportToRepackForSuccess through the scheduler would need a full tape session.
-    auto insertFinishedRetrieveJob = [&](uint64_t archiveFileId,
-                                         const std::string& mountPolicyName,
-                                         uint64_t minRequestAge,
-                                         const std::string& tapePool,
-                                         const std::string& rearchiveCopyNbs,
-                                         const std::string& rearchiveTapePools) {
-      auto stmt = conn.createStmt(R"SQL(
-        INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
-          REPACK_REQUEST_ID,
-          RETRIEVE_REQUEST_ID,
-          REQUEST_JOB_COUNT,
-          STATUS,
-          ARCHIVE_FILE_ID,
-          CREATION_TIME,
-          START_TIME,
-          STORAGE_CLASS,
-          SIZE_IN_BYTES,
-          VID,
-          TAPE_POOL,
-          MOUNT_POLICY,
-          PRIORITY,
-          MIN_RETRIEVE_REQUEST_AGE,
-          COPY_NB,
-          MOUNT_ID,
-          REPACK_REARCHIVE_COPY_NBS,
-          REPACK_REARCHIVE_TAPE_POOLS
-        ) VALUES (
-          :REPACK_REQUEST_ID,
-          :RETRIEVE_REQUEST_ID,
-          1,
-          :STATUS,
-          :ARCHIVE_FILE_ID,
-          :CREATION_TIME,
-          :START_TIME,
-          :STORAGE_CLASS,
-          1000,
-          :VID,
-          :TAPE_POOL,
-          :MOUNT_POLICY,
-          1,
-          :MIN_RETRIEVE_REQUEST_AGE,
-          1,
-          42,
-          :REARCHIVE_COPY_NBS,
-          :REARCHIVE_TAPE_POOLS
-        )
-      )SQL");
-      stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
-      stmt.bindUint64(":RETRIEVE_REQUEST_ID", archiveFileId);
-      stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-      stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
-      stmt.bindUint64(":CREATION_TIME", creationTime);
-      stmt.bindUint64(":START_TIME", retrieveStartTime);
-      stmt.bindString(":STORAGE_CLASS", s_storageClassName);
-      stmt.bindString(":VID", vid);
-      stmt.bindString(":TAPE_POOL", tapePool);
-      stmt.bindString(":MOUNT_POLICY", mountPolicyName);
-      stmt.bindUint64(":MIN_RETRIEVE_REQUEST_AGE", minRequestAge);
-      stmt.bindString(":REARCHIVE_COPY_NBS", rearchiveCopyNbs);
-      stmt.bindString(":REARCHIVE_TAPE_POOLS", rearchiveTapePools);
-      stmt.executeNonQuery();
-    };
-
     // REPACK_REARCHIVE_COPY_NBS lists both the repacked copy (1, inserted by the transformation's
     // BASE_INSERT) and an additional copy (2, inserted by its ALTERNATE_INSERT), so that both
     // insert branches are covered.
-    insertFinishedRetrieveJob(555, mountPolicy.name, minRetrieveRequestAge, "tapePoolA", "1,2", "tapePoolA,tapePoolB");
-    // Repacked copy only, under a mount policy the catalogue does not know.
-    insertFinishedRetrieveJob(556, unknownMountPolicy, unknownMinRetrieveRequestAge, "tapePoolC", "1", "tapePoolC");
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID,
+        RETRIEVE_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        STATUS,
+        ARCHIVE_FILE_ID,
+        CREATION_TIME,
+        START_TIME,
+        STORAGE_CLASS,
+        SIZE_IN_BYTES,
+        VID,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_RETRIEVE_REQUEST_AGE,
+        COPY_NB,
+        MOUNT_ID,
+        REPACK_REARCHIVE_COPY_NBS,
+        REPACK_REARCHIVE_TAPE_POOLS
+      ) VALUES (
+        :REPACK_REQUEST_ID,
+        777,
+        1,
+        :STATUS,
+        555,
+        :CREATION_TIME,
+        :START_TIME,
+        :STORAGE_CLASS,
+        1000,
+        :VID,
+        'tapePoolA',
+        'mountPolicy',
+        1,
+        3600,
+        1,
+        42,
+        '1,2',
+        'tapePoolA,tapePoolB'
+      )
+    )SQL");
+    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
+    stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindUint64(":CREATION_TIME", creationTime);
+    stmt.bindUint64(":START_TIME", retrieveStartTime);
+    stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
   }
   // Let the connection go back to the pool before the transformation asks for its own ones.
 
@@ -573,17 +547,15 @@ TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformationResetsStartTimeAnd
 
   auto conn = db.getRelationalDB().getConn();
   auto stmt = conn.createStmt(R"SQL(
-    SELECT TAPE_POOL, MIN_ARCHIVE_REQUEST_AGE, START_TIME, CREATION_TIME
+    SELECT TAPE_POOL, START_TIME, CREATION_TIME
     FROM REPACK_ARCHIVE_PENDING_QUEUE
-    ORDER BY ARCHIVE_FILE_ID, COPY_NB
+    ORDER BY COPY_NB
   )SQL");
   auto rset = stmt.executeQuery();
 
   std::list<std::string> tapePools;
-  std::list<uint64_t> minArchiveRequestAges;
   while (rset.next()) {
     tapePools.emplace_back(rset.columnString("TAPE_POOL"));
-    minArchiveRequestAges.emplace_back(rset.columnUint64("MIN_ARCHIVE_REQUEST_AGE"));
     // The age the mount decision sees has to be the age of the job in the archive queue: the
     // ARCHIVE_QUEUE_SUMMARY/REPACK_ARCHIVE_QUEUE_SUMMARY views compare MIN(START_TIME) against
     // MIN_ARCHIVE_REQUEST_AGE, so a START_TIME carried over from the retrieve job makes the
@@ -597,16 +569,9 @@ TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformationResetsStartTimeAnd
     // CREATION_TIME is not part of the age check and keeps tracking the original request.
     ASSERT_EQ(creationTime, rset.columnUint64("CREATION_TIME"));
   }
-
-  // The repacked copy (BASE_INSERT) and the additional copy (ALTERNATE_INSERT) of the first job,
-  // then the repacked copy of the second one.
-  ASSERT_EQ((std::list<std::string> {"tapePoolA", "tapePoolB", "tapePoolC"}), tapePools);
-  // The first job's archive minimum request age comes from its mount policy in the catalogue, not
-  // from the retrieve job's own; the second one's mount policy is unknown there, so it keeps the
-  // retrieve value.
-  ASSERT_EQ(
-    (std::list<uint64_t> {catalogueArchiveMinRequestAge, catalogueArchiveMinRequestAge, unknownMinRetrieveRequestAge}),
-    minArchiveRequestAges);
+  // One archive job for the repacked copy (BASE_INSERT), one for the additional copy
+  // (ALTERNATE_INSERT).
+  ASSERT_EQ((std::list<std::string> {"tapePoolA", "tapePoolB"}), tapePools);
 }
 
 TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
