@@ -791,12 +791,6 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   //   commit() releases the advisory lock, so same-library schedulers (which
   //   wait for the lock) and concurrent different-library schedulers (which read
   //   DRIVE_STATE independently) both see the marker.
-  //
-  // Why conditional on nextMountType != NoMount:
-  //   TapeDrivesCatalogueState helpers (setDriveStarting, setDriveTransfering,
-  //   …) build a fresh TapeDrive struct and leave nextMountType at its default
-  //   (NoMount). Updating NEXT_* unconditionally would wipe the marker on every
-  //   routine status report (e.g. Transferring bytes update), defeating the fix.
   std::string sql = R"SQL(
     UPDATE DRIVE_STATE SET
       HOST = :HOST,
@@ -810,9 +804,14 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :REPORT_TIME - SESSION_START_TIME END,
     )SQL";
   }
-  // Only TapeMountDecisionInfo::createArchiveMount / createRetrieveMount
-  // explicitly set nextMountType to a real type, so this condition reaches
-  // exactly the right callers without any interface changes.
+  // Why conditional on nextMountType != NoMount:
+  //   TapeDrivesCatalogueState helpers (setDriveStarting, setDriveTransfering,
+  //   …) build a fresh TapeDrive struct and leave nextMountType at its default
+  //   (NoMount). Updating NEXT_* unconditionally would wipe the marker on every
+  //   routine status report (e.g. Transferring bytes update), defeating the fix.
+  //   Only TapeMountDecisionInfo::createArchiveMount / createRetrieveMount
+  //   explicitly set nextMountType to a real type, so the condition reaches
+  //   exactly the right callers without any interface changes.
   if (tapeDrive.nextMountType != common::dataStructures::MountType::NoMount) {
     sql += R"SQL(
       NEXT_MOUNT_TYPE = :NEXT_MOUNT_TYPE,
