@@ -13,13 +13,35 @@ data:
     name             = "stress-lib-{{ $i }}"
     changerTimeoutMs = {{ $.Values.library.changerTimeoutMs }}
     {{- range $.Values.library.mediaTypes }}
+    {{- /* Derive the capacity so that a tape always holds a whole number of fetch batches:
+           capacityBytes = vol1Bytes + batchesPerTape * batchFiles * logicalBytesPerFile.
+           An explicit capacityBytes wins, for media types which do not want the derivation. */}}
+    {{- $capacityBytes := .capacityBytes }}
+    {{- if not $capacityBytes }}
+      {{- if or (not .batchFiles) (not .batchesPerTape) (not .logicalBytesPerFile) }}
+        {{- fail (printf "media type %s needs either capacityBytes or batchFiles + batchesPerTape + logicalBytesPerFile" .name) }}
+      {{- end }}
+      {{- $capacityBytes = add (default 80 .vol1Bytes) (mul .batchesPerTape .batchFiles .logicalBytesPerFile) }}
+    {{- end }}
 
     [[library.mediaTypes]]
     name           = {{ .name | quote }}
-    capacityBytes  = {{ .capacityBytes }}
+    {{- /* int64, or Helm renders a large number in scientific notation (1e+06). VtlDrive reads
+           this with toml value<uint64_t>(), which does not accept a TOML float: the capacity
+           would silently fall back to its unlimited default and the tape would never fill. */}}
+    capacityBytes  = {{ int64 $capacityBytes }}
     vidPrefix      = "S{{ $i }}"
-    mountDelayMs   = {{ .mountDelayMs }}
-    maxWriteRateHz = {{ .maxWriteRateHz }}
+    {{- /* Every optional number ends in "| default 0": a media type that omits the key would
+           otherwise render "key = " and the TOML would not parse, which VtlDrive only discovers
+           at drive startup. */}}
+    mountDelayMs   = {{ .mountDelayMs | default 0 }}
+    {{- /* library.max{Write,Read}RateHzOverride apply to every media type. They exist because
+           --set library.mediaTypes[0].maxWriteRateHz=N cannot be used: Helm replaces a list
+           element instead of merging into it, so that form silently drops the media type's
+           name and capacity inputs. Note that an override of 0 is indistinguishable from unset
+           and falls back to the media type's own value: disable a throttle there, not here. */}}
+    maxWriteRateHz = {{ $.Values.library.maxWriteRateHzOverride | default .maxWriteRateHz | default 0 }}
+    maxReadRateHz  = {{ $.Values.library.maxReadRateHzOverride | default .maxReadRateHz | default 0 }}
     count          = {{ .count }}
     {{- end }}
 {{- end }}

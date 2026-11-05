@@ -37,6 +37,8 @@ usage() {
   echo "      --extra-cta-values:             Extra verbatim values for the CTA chart. These will override any previous values from files."
   echo "      --no-hardware-drives:           Use virtual stress drives instead of mhvtl/SCSI hardware.  Deploys the virtual-tape-library chart and generates a drive list from --max-drives."
   echo "      --num-stress-libraries <n>:     Number of independent logical libraries for stress drives (default: 1). Requires --no-hardware-drives."
+  echo "      --stress-write-rate-hz <n>:     Per-drive write-rate ceiling of the virtual drives, in files/s. Overrides the media type's maxWriteRateHz; lower values lengthen each archive mount. Requires --no-hardware-drives."
+  echo "      --stress-read-rate-hz <n>:      Per-drive read-rate ceiling of the virtual drives, in files/s. Overrides the media type's maxReadRateHz; lower values lengthen each retrieve mount. Requires --no-hardware-drives."
   exit 1
 }
 
@@ -114,6 +116,17 @@ EOF
     extra_flags+=("--set" "pvc.storageClass=-")
   fi
   extra_flags+=("--set" "libraryCount=${num_libs}")
+  # Per-drive files/s ceilings enforced by VtlDrive. They set how long a mount lasts: a tape holds
+  # capacityBytes/496 files, so mount length = files-per-tape / rate. Lowering them does not change
+  # the capacity/batch alignment, only the pace at which a tape is filled or read back.
+  if [[ -n "${stress_write_rate_hz}" ]]; then
+    echo "  Overriding maxWriteRateHz with ${stress_write_rate_hz} Hz per drive."
+    extra_flags+=("--set" "library.maxWriteRateHzOverride=${stress_write_rate_hz}")
+  fi
+  if [[ -n "${stress_read_rate_hz}" ]]; then
+    echo "  Overriding maxReadRateHz with ${stress_read_rate_hz} Hz per drive."
+    extra_flags+=("--set" "library.maxReadRateHzOverride=${stress_read_rate_hz}")
+  fi
   helm upgrade --install virtual-tape-library helm/virtual-tape-library \
     --namespace "${namespace}" \
     --wait --wait-for-jobs --timeout 10m \
@@ -279,6 +292,9 @@ create_instance() {
   one_logical_library=false
   no_hardware_drives=false
   num_stress_libraries=2
+  # Empty keeps the virtual-tape-library chart's own maxWriteRateHz / maxReadRateHz.
+  stress_write_rate_hz=""
+  stress_read_rate_hz=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -353,6 +369,12 @@ create_instance() {
       --no-hardware-drives) no_hardware_drives=true ;;
       --num-stress-libraries)
         num_stress_libraries="$2"
+        shift ;;
+      --stress-write-rate-hz)
+        stress_write_rate_hz="$2"
+        shift ;;
+      --stress-read-rate-hz)
+        stress_read_rate_hz="$2"
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
@@ -535,8 +557,17 @@ create_instance() {
   wait $scheduler_pid || exit 1
 
   # Flags applied BEFORE the cta_config chain so that user-supplied presets
-  # (e.g. stress-cta-pgsched-values.yaml) can override telemetry defaults.
+  # (e.g. stress-cta-pgsched-values.yaml) can override these defaults.
   pre_cta_chart_flags=""
+  # Backend-specific maintd routine defaults. These belong before the chain: they are defaults,
+  # and a preset passed with --cta-config which tunes a routine (the stress presets tune the
+  # reporting and queue-cleanup routines) has to win over them. Applied after the chain they
+  # silently reverted those presets' maintd settings.
+  if grep -q "postgres" "$scheduler_config"; then
+    pre_cta_chart_flags+=" --values presets/dev-cta-maintd-postgres-values.yaml"
+  else
+    pre_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
+  fi
   if [[ "$local_telemetry" == "true" ]]; then
     pre_cta_chart_flags+=" --values presets/dev-cta-telemetry-values.yaml"
   fi
@@ -548,27 +579,6 @@ create_instance() {
   if [[ "$dcache_enabled" == "true" ]]; then
     # The dCache CTA nearline-storage driver only supports mTLS.
     extra_cta_chart_flags+=" --values presets/frontend-wfe/auth-mtls.yaml"
-  fi
-  # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
-  if grep -q "postgres" "$scheduler_config"; then
-    extra_cta_chart_flags+=" --values presets/dev-cta-maintd-postgres-values.yaml"
-  else
-    extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
-  fi
-  # stress-cta-maintd-values.yaml raises the maintd OTel reader timeout 100 ms → 1500 ms.
-  # Only for --local-telemetry: the file has a hardcoded local-collector endpoint
-  # (http://otel-opentelemetry-collector:4318) — applying it with --publish-telemetry
-  # would override the MONIT endpoint set by ci-cta-telemetry-values.yaml, redirecting
-  # maintd metrics to a collector that does not exist in the scale-test namespace.
-  if [[ "${no_hardware_drives}" == "true" ]] && [[ "$local_telemetry" == "true" ]]; then
-    extra_cta_chart_flags+=" --values presets/stress-cta-maintd-values.yaml"
-  fi
-  # stress-cta-taped-values.yaml slows each taped pod's export interval 1 s → 15 s
-  # (matching the Prometheus scrape cycle).  100 pods × 1 s/pod = 100 req/s saturates
-  # the MONIT endpoint (or the local collector) and causes metric drops; 15 s → ~7 req/s.
-  # This file only sets interval/timeout — no endpoint — so it is safe for both modes.
-  if [[ "${no_hardware_drives}" == "true" ]] && { [[ "$local_telemetry" == "true" ]] || [[ "$publish_telemetry" == "true" ]]; }; then
-    extra_cta_chart_flags+=" --values presets/stress-cta-taped-values.yaml"
   fi
   if [[ "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "

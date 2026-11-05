@@ -117,6 +117,16 @@ public:
    */
   void writeBlock(const void* data, size_t count) override;
 
+  ssize_t readBlock(void* data, size_t count) override;
+
+  /**
+   * Counts the bytes read and applies the read-side adaptive-mirror throttle, which sleeps once
+   * per file for max(minInterval, elapsed) with minInterval = 1s/maxReadRateHz. The label blocks
+   * are read through here, so the file's HDR1 is the per-file marker, as it is for writes; the
+   * sleep lands just after it rather than just before. No sleep when maxReadRateHz == 0.
+   */
+  void readExactBlock(void* data, size_t count, const std::string& ctx) override;
+
   // --- Delegation to InMemoryTape (tape-block operations) ---
   compressionStats getCompression() override { return m_tape.getCompression(); }
 
@@ -149,12 +159,6 @@ public:
 
   void writeImmediateFileMarks(size_t count) override { m_tape.writeImmediateFileMarks(count); }
 
-  ssize_t readBlock(void* data, size_t count) override { return m_tape.readBlock(data, count); }
-
-  void readExactBlock(void* data, size_t count, const std::string& ctx) override {
-    m_tape.readExactBlock(data, count, ctx);
-  }
-
   void readFileMark(const std::string& ctx) override { m_tape.readFileMark(ctx); }
 
   bool isWriteProtected() override;
@@ -174,19 +178,25 @@ public:
 
   std::string getDriveFirmwareVersion() override { return "0.0"; }
 
+  // The statistics below are the same maps a real drive builds from its SCSI log pages, so that
+  // the session layer's logSCSIMetrics() reports the same keys for a virtual drive. The byte
+  // counters are measured, counted per mount exactly like the drive's own log pages: they are
+  // reset by waitUntilReady() when a cartridge is loaded. The error, retry and temperature
+  // counters are genuinely zero: an in-memory tape has no medium to fail, and reporting anything
+  // else would invent failures the test never had.
   std::map<std::string, uint64_t> getTapeWriteErrors() override {
     return {
-      {"mountTotalCorrectedWriteErrors",   0},
-      {"mountTotalWriteBytesProcessed",    0},
-      {"mountTotalUncorrectedWriteErrors", 0}
+      {"mountTotalCorrectedWriteErrors",   0                  },
+      {"mountTotalWriteBytesProcessed",    m_mountBytesWritten},
+      {"mountTotalUncorrectedWriteErrors", 0                  }
     };
   }
 
   std::map<std::string, uint64_t> getTapeReadErrors() override {
     return {
-      {"mountTotalCorrectedReadErrors",   0},
-      {"mountTotalReadBytesProcessed",    0},
-      {"mountTotalUncorrectedReadErrors", 0}
+      {"mountTotalCorrectedReadErrors",   0               },
+      {"mountTotalReadBytesProcessed",    m_mountBytesRead},
+      {"mountTotalUncorrectedReadErrors", 0               }
     };
   }
 
@@ -234,9 +244,10 @@ public:
   struct MediaTypeInfo {
     uint64_t capacityBytes = std::numeric_limits<uint64_t>::max();
     uint32_t mountDelayMs = 0;
-    // Adaptive-throttle ceiling in files/sec (HDR1 blocks per second).
-    // 0 = disabled (write at RAM speed).
+    // Adaptive-throttle ceilings in files/sec (one HDR1 block per file).
+    // 0 = disabled (transfer at RAM speed).
     uint32_t maxWriteRateHz = 0;
+    uint32_t maxReadRateHz = 0;
   };
 
 private:
@@ -255,10 +266,31 @@ private:
   // Empty when no tape is loaded in the current session.
   std::filesystem::path m_currentTapePath;
 
+  // Bytes written to and read from the cartridge since it was loaded, reported through
+  // getTapeWriteErrors()/getTapeReadErrors() as a real drive reports its SCSI log-page counters.
+  // Reset by waitUntilReady() for each newly loaded cartridge.
+  uint64_t m_mountBytesWritten = 0;
+  uint64_t m_mountBytesRead = 0;
+
   // Adaptive rate state (set from MediaTypeInfo at each waitUntilReady call).
   uint32_t m_maxWriteRateHz = 0;
-  // Default-constructed time_point (epoch) signals "no write yet this session".
+  uint32_t m_maxReadRateHz = 0;
+  // Default-constructed time_point (epoch) signals "no file transferred yet on this cartridge".
+  // Both are reset when a cartridge is loaded, so the tape change is not mistaken for queue wait.
   std::chrono::steady_clock::time_point m_lastWriteBlockTime;
+  std::chrono::steady_clock::time_point m_lastReadBlockTime;
+
+  /// True when the block is the HDR1 label, i.e. the first block of a file: the per-file marker
+  /// both throttles key off.
+  static bool isFileHeader(const void* data, size_t count);
+
+  /// Adaptive-mirror throttle shared by the read and write paths. Sleeps
+  /// max(1s/rateHz, now - last) and then sets last to the time the sleep ended, so that elapsed
+  /// measures only the wait between transfers and never the sleep itself; recovery from a stall
+  /// is therefore self-correcting. Drive-limited (elapsed < minInterval) caps the rate at rateHz;
+  /// queue-limited (elapsed > minInterval) mirrors the rate work arrives at. No-op when rateHz is
+  /// 0 or no file has been transferred yet on this cartridge.
+  static void throttle(uint32_t rateHz, std::chrono::steady_clock::time_point& last);
 
   // Per-drive RNG for jittering mount delay; seeded from drive name XOR current time.
   std::mt19937 m_rng;

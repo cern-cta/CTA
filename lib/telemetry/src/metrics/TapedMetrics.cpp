@@ -59,6 +59,8 @@ std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedTransfer
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferUsage;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountedDuration;
+std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedMountedActive;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedMountType;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> CtaTapedDriveStatus;
 
@@ -109,6 +111,16 @@ void initInstruments() {
     meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaTapedMountDuration,
                                  cta::semconv::metrics::descrCtaTapedMountDuration,
                                  cta::semconv::metrics::unitCtaTapedMountDuration);
+
+  cta::telemetry::metrics::ctaTapedMountedDuration =
+    meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaTapedMountedDuration,
+                                 cta::semconv::metrics::descrCtaTapedMountedDuration,
+                                 cta::semconv::metrics::unitCtaTapedMountedDuration);
+
+  cta::telemetry::metrics::ctaTapedMountedActive =
+    meter->CreateInt64UpDownCounter(cta::semconv::metrics::kMetricCtaTapedMountedActive,
+                                    cta::semconv::metrics::descrCtaTapedMountedActive,
+                                    cta::semconv::metrics::unitCtaTapedMountedActive);
 
   cta::telemetry::metrics::ctaTapedMountType =
     meter->CreateInt64ObservableUpDownCounter(cta::semconv::metrics::kMetricCtaTapedMountType,

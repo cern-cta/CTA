@@ -6,6 +6,7 @@
 #pragma once
 
 #include "DriveCleaner.hpp"
+#include "common/utils/Timer.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
 #include <optional>
@@ -57,6 +58,14 @@ private:
   std::optional<DriveCleaner::CleanupResult>& m_cleanupResult;
   log::LogContext& m_lc;
   bool m_finished = false;
+  /// Read or write, as the mounted-tape metrics label it; fixed by the volume's mount type.
+  const char* m_ioDirection;
+  /// Started once the cartridge is mounted, read when it is released, to report how long the tape
+  /// stayed mounted. Only meaningful while m_mounted is true.
+  utils::Timer m_mountedTimer;
+  /// True between a successful mount and the cleanup which releases the cartridge. Keeps the
+  /// mounted-tape metrics balanced when construction fails before the mount.
+  bool m_mounted = false;
 };
 
 }  // namespace cta::tape::daemon

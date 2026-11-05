@@ -134,6 +134,20 @@ static constexpr const char* kMetricCtaTapedMountDuration = "cta.taped.mount.dur
 static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a tape";
 static constexpr const char* unitCtaTapedMountDuration = "s";
 
+// Mounted-tape lifetime, i.e. how long a cartridge stayed mounted in the drive, recorded once per
+// mount when the cartridge is released. Complements cta.taped.mount.duration, which measures how
+// long the mount operation itself took.
+static constexpr const char* kMetricCtaTapedMountedDuration = "cta.taped.mounted.duration";
+static constexpr const char* descrCtaTapedMountedDuration = "Duration a tape stayed mounted in the drive";
+static constexpr const char* unitCtaTapedMountedDuration = "s";
+
+// 1 while a cartridge is mounted, 0 otherwise. An UpDownCounter rather than a per-mount event, so
+// every export interval carries the current value and an idle drive is distinguishable from a drive
+// whose metrics stopped arriving.
+static constexpr const char* kMetricCtaTapedMountedActive = "cta.taped.mounted.active";
+static constexpr const char* descrCtaTapedMountedActive = "Number of tapes currently mounted in the drive";
+static constexpr const char* unitCtaTapedMountedActive = "1";
+
 static constexpr const char* kMetricCtaTapedMountType = "cta.taped.mount.type";
 static constexpr const char* descrCtaTapedMountType = "Number of drive sessions with the given mount type";
 static constexpr const char* unitCtaTapedMountType = "1";

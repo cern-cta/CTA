@@ -51,9 +51,9 @@ taped:
   scheduler:
     # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
     numberOfConnections: 3
-# OTel scale-test tuning (60 s / 50 s interval/timeout) lives in stress-cta-taped-values.yaml,
-# applied conditionally by create_instance.sh when --no-hardware-drives is set and telemetry
-# is enabled.  Not duplicated here.
+# OTel scale-test tuning (15 s / 13 s interval/timeout, matching the Prometheus scrape cycle)
+# lives in stress-scale-values.yaml, which the scale job applies after this file.  Not duplicated
+# here: the non-scale stress test runs few enough pods to keep the default cadence.
 
 maintd:
   logging:

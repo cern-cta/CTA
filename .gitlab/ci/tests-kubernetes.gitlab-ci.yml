@@ -509,6 +509,14 @@ stress-scale-test:
       # Scale test always uses VtlDrives: 100 drives, 4 libraries.
       # Override per-run via NUM_STRESS_DRIVES / NUM_STRESS_LIBRARIES CI variables.
       EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-100} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-4}"
+      # 250 files/s per drive instead of the chart default of 1000, for this job only. A tape holds
+      # 200 000 files, so a mount spends ~13 min transferring rather than ~3 min and the drives lose
+      # far less of the run to tape changes. 100 drives x 250 Hz = 25 kHz, still well above the rate
+      # the frontend can queue, which is the actual bottleneck. The read ceiling matters just as
+      # much: without it a retrieve mount reads a whole tape back at RAM speed and lasts seconds.
+      # Override per-run via STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ.
+      EXTRA_SPAWN_ARGS+=" --stress-write-rate-hz ${STRESS_WRITE_RATE_HZ:-250}"
+      EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-250}"
       # File count and prequeue settings come from test_pgsched_params.toml.
       # CI variables allow per-run overrides via "Play with variables".
       [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"

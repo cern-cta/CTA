@@ -30,7 +30,10 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
     : m_cleaner(mediaChanger, lc.logger(), drive.info, volume.vid, true, tapeLoadTimeout, catalogue, tracker),
       m_drive(drive),
       m_cleanupResult(cleanupResult),
-      m_lc(lc) {
+      m_lc(lc),
+      m_ioDirection(volume.mountType == common::dataStructures::MountType::Retrieve ?
+                      semconv::attr::CtaIoDirectionValues::kRead :
+                      semconv::attr::CtaIoDirectionValues::kWrite) {
   m_cleanupResult.reset();
   const bool mountReadOnly = volume.mountType == common::dataStructures::MountType::Retrieve;
   const auto slot = mediachanger::LibrarySlotParser::parse(drive.info.rawLibrarySlot);
@@ -65,6 +68,14 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
          mountReadOnly ? semconv::attr::CtaIoDirectionValues::kRead : semconv::attr::CtaIoDirectionValues::kWrite}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
+    // The cartridge is mounted from here on: start measuring how long it stays mounted and mark
+    // the drive as holding a tape. Both are undone by cleanup(), which the destructor always runs.
+    m_mountedTimer.reset();
+    m_mounted = true;
+    telemetry::metrics::ctaTapedMountedActive->Add(1,
+                                                   {
+                                                     {semconv::attr::kCtaIoDirection, m_ioDirection}
+    });
     m_lc.log(log::INFO, mountReadOnly ? "Tape mounted for read-only access" : "Tape mounted for read/write access");
   } catch (...) {
     // Construction failed, so the destructor cannot clean up a partially mounted cartridge.
@@ -82,6 +93,28 @@ const DriveCleaner::CleanupResult& MountedTape::cleanup() noexcept {
     return *m_cleanupResult;
   }
   m_finished = true;
+  // Report the mounted-tape lifetime before the cleanup which releases the cartridge, so the active
+  // count drops as soon as the tape stops being usable even if the cleanup itself hangs or throws.
+  // Metrics must not interrupt stack unwinding, hence the catch-all.
+  if (m_mounted) {
+    m_mounted = false;
+    try {
+      const auto mountedSecs = static_cast<uint64_t>(std::llround(m_mountedTimer.secs()));
+      telemetry::metrics::ctaTapedMountedActive->Add(-1,
+                                                     {
+                                                       {semconv::attr::kCtaIoDirection, m_ioDirection}
+      });
+      telemetry::metrics::ctaTapedMountedDuration->Record(mountedSecs,
+                                                          {
+                                                            {semconv::attr::kCtaIoDirection, m_ioDirection}
+      },
+                                                          opentelemetry::context::RuntimeContext::GetCurrent());
+      log::ScopedParamContainer(m_lc)
+        .add("mountedTime", mountedSecs)
+        .add("mode", m_ioDirection)
+        .log(log::INFO, "Tape released after being mounted");
+    } catch (...) {}
+  }
   // Keep a result available for the exception handler if cleaning throws.
   m_cleanupResult.emplace();
 

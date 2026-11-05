@@ -8,6 +8,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -25,7 +26,8 @@ void writeLibraryConf(const fs::path& baseDir,
                       const std::string& vidPrefix,
                       uint64_t capacityBytes,
                       uint32_t mountDelayMs = 0,
-                      uint32_t maxWriteRateHz = 0) {
+                      uint32_t maxWriteRateHz = 0,
+                      uint32_t maxReadRateHz = 0) {
   const auto confDir = baseDir / "config" / lib;
   fs::create_directories(confDir);
   std::ofstream f(confDir / "library.toml");
@@ -38,6 +40,7 @@ void writeLibraryConf(const fs::path& baseDir,
     << "capacityBytes = " << capacityBytes << "\n"
     << "mountDelayMs = " << mountDelayMs << "\n"
     << "maxWriteRateHz = " << maxWriteRateHz << "\n"
+    << "maxReadRateHz = " << maxReadRateHz << "\n"
     << "count = 10\n";
 }
 
@@ -178,6 +181,101 @@ TEST_F(VtlDriveTest, MediaTypeCapacityIsApplied) {
     FAIL() << "Expected ENOSPC";
   } catch (const cta::exception::Errnum& e) {
     EXPECT_EQ(ENOSPC, e.errorNumber());
+  }
+}
+
+TEST_F(VtlDriveTest, TransferRateCeilingsSleepOncePerFile) {
+  // 50 files/s on both directions, i.e. 20 ms per file. The throttle sleeps before every HDR1
+  // except the first one on a cartridge, so n files cost at least (n-1) intervals. Asserting only
+  // the lower bound keeps this independent of how slow the machine running it is.
+  constexpr uint32_t rateHz = 50;
+  constexpr int files = 4;
+  constexpr auto minInterval = std::chrono::milliseconds(1000 / rateHz);
+  const auto expected = (files - 1) * minInterval;
+
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, rateHz, rateHz);
+  const std::string vid = m_vidPrefix + "00001";
+  mountBlankTape(vid);
+
+  const std::string hdr = "HDR1xxxx";
+  const std::string dat = "file body";
+
+  {
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    char vol1buf[80] = {};
+    drv.readBlock(vol1buf, sizeof(vol1buf));  // skip the synthetic VOL1
+
+    const auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < files; ++i) {
+      drv.writeBlock(hdr.data(), hdr.size());
+      drv.writeBlock(dat.data(), dat.size());
+      drv.writeSyncFileMarks(1);
+    }
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    EXPECT_GE(elapsed, expected) << "write throttle did not sleep once per file";
+    drv.unloadTape();
+  }
+
+  {
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    char vol1buf[80] = {};
+    drv.readBlock(vol1buf, sizeof(vol1buf));
+
+    // The label blocks go through readExactBlock, which is where the read throttle lives.
+    const auto start = std::chrono::steady_clock::now();
+    for (int i = 0; i < files; ++i) {
+      char hdrbuf[8] = {};
+      drv.readExactBlock(hdrbuf, sizeof(hdrbuf), "HDR1");
+      char datbuf[64] = {};
+      drv.readBlock(datbuf, sizeof(datbuf));
+      drv.readFileMark("FM");
+    }
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    EXPECT_GE(elapsed, expected) << "read throttle did not sleep once per file";
+  }
+}
+
+TEST_F(VtlDriveTest, PerMountByteCountersCoverTheCurrentCartridgeOnly) {
+  const std::string vid = m_vidPrefix + "00001";
+  mountBlankTape(vid);
+
+  const std::string hdr = "HDR1xxxx";
+  const std::string dat = "file body";
+  const uint64_t writtenBytes = 2 * (hdr.size() + dat.size());
+
+  {
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    EXPECT_EQ(0u, drv.getTapeWriteErrors().at("mountTotalWriteBytesProcessed"));
+
+    char vol1buf[80] = {};
+    drv.readBlock(vol1buf, sizeof(vol1buf));
+    for (int i = 0; i < 2; ++i) {
+      drv.writeBlock(hdr.data(), hdr.size());
+      drv.writeBlock(dat.data(), dat.size());
+      drv.writeSyncFileMarks(1);
+    }
+    // File marks take no space on the tape and are not payload, so they are not counted either.
+    EXPECT_EQ(writtenBytes, drv.getTapeWriteErrors().at("mountTotalWriteBytesProcessed"));
+    EXPECT_EQ(sizeof(vol1buf), drv.getTapeReadErrors().at("mountTotalReadBytesProcessed"));
+    drv.unloadTape();
+  }
+
+  {
+    // A fresh mount starts from zero, as a real drive's log pages do.
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    EXPECT_EQ(0u, drv.getTapeWriteErrors().at("mountTotalWriteBytesProcessed"));
+    EXPECT_EQ(0u, drv.getTapeReadErrors().at("mountTotalReadBytesProcessed"));
+
+    char vol1buf[80] = {};
+    drv.readBlock(vol1buf, sizeof(vol1buf));
+    char hdrbuf[8] = {};
+    drv.readExactBlock(hdrbuf, sizeof(hdrbuf), "HDR1");
+    EXPECT_EQ(sizeof(vol1buf) + sizeof(hdrbuf), drv.getTapeReadErrors().at("mountTotalReadBytesProcessed"));
+    EXPECT_EQ(0u, drv.getTapeWriteErrors().at("mountTotalWriteBytesProcessed"));
   }
 }
 

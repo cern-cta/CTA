@@ -86,6 +86,7 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
 
   m_tape.setCapacity(info.capacityBytes);
   m_maxWriteRateHz = info.maxWriteRateHz;
+  m_maxReadRateHz = info.maxReadRateHz;
   m_lastWriteBlockTime = {};  // reset adaptive-rate state for this tape session
 
   loadTape(tapeFile);
@@ -137,6 +138,13 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   }
 
   m_tape.setLoaded(true);
+  // A real drive's log-page counters cover the current mount only; reset them with the cartridge.
+  m_mountBytesWritten = 0;
+  m_mountBytesRead = 0;
+  // Reset the throttle clocks too: the gap the tape change leaves is not queue wait, and mirroring
+  // it would make the first file of every cartridge pay the mount delay a second time.
+  m_lastWriteBlockTime = {};
+  m_lastReadBlockTime = {};
 }
 
 void VtlDrive::unloadTape() {
@@ -147,24 +155,47 @@ void VtlDrive::unloadTape() {
   m_tape.unloadTape();
 }
 
+bool VtlDrive::isFileHeader(const void* data, size_t count) {
+  return count >= 4 && std::memcmp(data, "HDR1", 4) == 0;
+}
+
+void VtlDrive::throttle(uint32_t rateHz, std::chrono::steady_clock::time_point& last) {
+  if (rateHz == 0) {
+    return;
+  }
+  if (last != std::chrono::steady_clock::time_point {}) {
+    const auto elapsed = std::chrono::steady_clock::now() - last;
+    const std::chrono::nanoseconds minInterval {1'000'000'000LL / rateHz};
+    std::this_thread::sleep_for(std::max(minInterval, elapsed));
+  }
+  last = std::chrono::steady_clock::now();
+}
+
 void VtlDrive::writeBlock(const void* data, size_t count) {
-  // Adaptive-mirror throttle: sleeps once per file at HDR1 for
-  //   max(minInterval, elapsed)
-  // where minInterval = 1s/maxWriteRateHz and elapsed = wall time since the
-  // previous HDR1.  Queue-limited (elapsed > minInterval): mirrors arrival rate.
-  // Drive-limited (elapsed < minInterval): caps at maxWriteRateHz files/sec.
-  // Timestamp is captured after the sleep so elapsed measures only idle wait,
-  // not the sleep itself; this makes recovery from stalls self-correcting.
-  // Disabled (0) when maxWriteRateHz == 0.
-  if (m_maxWriteRateHz > 0 && count >= 4 && std::memcmp(data, "HDR1", 4) == 0) {
-    if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point {}) {
-      const auto elapsed = std::chrono::steady_clock::now() - m_lastWriteBlockTime;
-      const std::chrono::nanoseconds minInterval {1'000'000'000LL / m_maxWriteRateHz};
-      std::this_thread::sleep_for(std::max(minInterval, elapsed));
-    }
-    m_lastWriteBlockTime = std::chrono::steady_clock::now();
+  // One throttle per file: HDR1 is the first block the writer emits for a file.
+  if (isFileHeader(data, count)) {
+    throttle(m_maxWriteRateHz, m_lastWriteBlockTime);
   }
   m_tape.writeBlock(data, count);
+  m_mountBytesWritten += count;
+}
+
+ssize_t VtlDrive::readBlock(void* data, size_t count) {
+  const ssize_t read = m_tape.readBlock(data, count);
+  if (read > 0) {
+    m_mountBytesRead += static_cast<uint64_t>(read);
+  }
+  return read;
+}
+
+void VtlDrive::readExactBlock(void* data, size_t count, const std::string& ctx) {
+  m_tape.readExactBlock(data, count, ctx);
+  m_mountBytesRead += count;
+  // One throttle per file, as on the write side. The content is only known once read, so the
+  // sleep follows the header instead of preceding it, which makes no difference to the rate.
+  if (isFileHeader(data, count)) {
+    throttle(m_maxReadRateHz, m_lastReadBlockTime);
+  }
 }
 
 void VtlDrive::saveTape() const {
@@ -285,6 +316,9 @@ void VtlDrive::parseLibraryConf() {
     }
     if (auto rate = (*mt)["maxWriteRateHz"].value<int64_t>()) {
       info.maxWriteRateHz = static_cast<uint32_t>(*rate);
+    }
+    if (auto rate = (*mt)["maxReadRateHz"].value<int64_t>()) {
+      info.maxReadRateHz = static_cast<uint32_t>(*rate);
     }
     m_mediaTypes[*prefix] = info;
   }

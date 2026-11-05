@@ -91,13 +91,38 @@ name             = "stress-lib-0"    # auto-derived: stress-lib-{i}
 changerTimeoutMs = 30000
 
 [[library.mediaTypes]]
-name           = "STRESS28MB"
-capacityBytes  = 29760080   # ≈ 28.4 MB — exactly 3 × 20 000-file batches
+name           = "STRESSTAPE"
+capacityBytes  = 99200080   # derived, see below — exactly 10 × 20 000-file batches
 vidPrefix      = "S0"       # auto-derived: S{i}  (2 chars + 4-digit index = 6-char VID)
 mountDelayMs   = 15000      # base mount latency; actual delay uniformly random in [base, 2×base]
-maxWriteRateHz = 1000       # file-rate ceiling per drive; 0 = write at RAM speed
-count          = 180        # virtual tapes: S00001..S00180
+maxWriteRateHz = 1000       # file-rate ceiling per drive when writing; 0 = RAM speed
+maxReadRateHz  = 1000       # file-rate ceiling per drive when reading;  0 = RAM speed
+count          = 100        # virtual tapes: S00001..S00100
 ```
+
+`capacityBytes` is **not** written by hand. The chart derives it from the fetch batch so that a
+tape always holds a whole number of batches:
+
+```
+capacityBytes = vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile
+              = 80        + 10            × 20 000     × 496                  = 99 200 080
+```
+
+`logicalBytesPerFile` is one file's tape footprint: 6 ANSI label blocks of 80 bytes plus the
+payload (16 bytes in the stress tests). File marks consume no capacity.
+
+This matters because a drive pipelines its next fetch while writing the current batch, and nothing
+limits a fetch to the tape's remaining space: when the tape fills, ENOSPC ends the session and
+every job already fetched but not yet written goes back to the queue. Those jobs are re-queued,
+not failed, but each costs a scheduler round trip. The waste is about one fetch batch per tape
+boundary regardless of tape size, so only the ratio matters — `batchesPerTape: 10` keeps it to a
+tenth of a tape, and at 10 M files over 100 drives (~100 000 files per drive, half a tape) most
+drives never reach a boundary at all.
+
+Raising `batchesPerTape` further costs memory and PVC I/O: the drive holds the whole tape in RAM
+(~1 kB per file, ~200 MB per taped pod at 10 batches) and serialises it to the PVC on every unload
+(~99 MB). Keep `batchFiles` equal to `transfers.archive.fetchMaxFiles` in
+`presets/stress-scale-values.yaml`.
 
 The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `VtlDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
 
@@ -170,12 +195,16 @@ All stress-drive parameters are set in the `virtual-tape-library` chart `values.
 | Number of libraries | `libraryCount` in `values.yaml` | `1` |
 | Logical library name | **auto-derived**: `stress-lib-{i}` | — |
 | Changer lock timeout | `library.changerTimeoutMs` in `values.yaml` | `30000` ms |
-| Media type name | `library.mediaTypes[].name` | `STRESS28MB` |
-| Tape capacity | `library.mediaTypes[].capacityBytes` | `29760080` (≈28.4 MB) |
+| Media type name | `library.mediaTypes[].name` | `STRESSTAPE` |
+| Tape capacity | **derived**: `vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile` | `99200080` (≈99 MB) |
+| Fetch batch per tape | `library.mediaTypes[].batchesPerTape` | `10` |
+| Files per fetch batch | `library.mediaTypes[].batchFiles` | `20000` |
+| Tape footprint per file | `library.mediaTypes[].logicalBytesPerFile` | `496` bytes |
 | VID prefix | **auto-derived**: `S{i}` (library index) | — |
 | Simulated mount latency base | `library.mediaTypes[].mountDelayMs` | `15000` ms |
 | Max write rate | `library.mediaTypes[].maxWriteRateHz` | `1000` files/s |
-| Tapes per library | `library.mediaTypes[].count` | `180` |
+| Max read rate | `library.mediaTypes[].maxReadRateHz` | `1000` files/s |
+| Tapes per library | `library.mediaTypes[].count` | `100` |
 | PVC name prefix | `pvc.namePrefix` | `cta-virtual-tape-library` |
 | PVC size | `pvc.size` | `50Gi` |
 

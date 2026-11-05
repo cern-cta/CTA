@@ -40,25 +40,59 @@ library:
   # Maximum milliseconds to wait for the single changer robot to become free.
   changerTimeoutMs: 30000
 
+  # Per-drive transfer-rate ceilings in files/s, applied to every media type when set, overriding
+  # their own maxWriteRateHz / maxReadRateHz. This is how create_instance.sh
+  # --stress-write-rate-hz and --stress-read-rate-hz reach the chart: a --set on
+  # library.mediaTypes[0].maxWriteRateHz would replace the whole list element and drop the media
+  # type's name and capacity inputs with it. Empty leaves each media type's own value in place.
+  maxWriteRateHzOverride: ""
+  maxReadRateHzOverride: ""
+
   # Media type definitions — shared across all libraries.
   # setup_stress_drives_test.py reads these and registers them in the CTA catalogue.
   mediaTypes:
-    - name: STRESS28MB
-      # Capacity co-designed with archiveFetchBytesFiles in stress-scale-values.yaml
-      # to avoid partial-batch requeues at tape boundaries.
-      # With file_size=16: logical_bytes_per_file = 6×80 + 16 = 496 bytes/file.
-      # C = 80 (VOL1) + 3 × 20000 × 496 = 29 760 080 bytes ≈ 28.4 MB
-      # → 60 000 files/tape, exactly 3 full batches; ENOSPC fires at a batch boundary
-      # so no files are unnecessarily re-queued to the scheduler.
-      # If you change capacityBytes or the batch size in stress-scale-values.yaml,
-      # keep C - 80 an exact multiple of (batch_files × 496) to preserve this property.
-      capacityBytes: 29760080
+    - name: STRESSTAPE
+      # Capacity is DERIVED, not hardcoded: the template computes
+      #   capacityBytes = vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile
+      # so the tape always holds a whole number of fetch batches and the two settings cannot
+      # drift apart. Set capacityBytes explicitly only to bypass the derivation entirely.
+      #
+      # Why whole batches matter
+      # ------------------------
+      # A drive fetches work in batches of transfers.archive.fetchMaxFiles and pipelines the next
+      # fetch while writing the current one; nothing limits a fetch to the tape's remaining space.
+      # When the tape fills, ENOSPC ends the session and every job already fetched but not yet
+      # written goes back to the queue. Those jobs are not failures - they are re-queued, and
+      # re-queueing costs a scheduler round trip per job. The waste per tape boundary is about one
+      # fetch batch whatever the tape size, so what matters is the ratio: with 3 batches per tape
+      # a third of the work was being re-queued. batchesPerTape: 10 brings that to a tenth, and
+      # at 10 M files over 100 drives (~100 000 files per drive, half a tape) most drives never
+      # reach a boundary at all, so in practice re-queues go to ~0.
+      #
+      # Raising it further costs memory and PVC I/O: the whole tape is held in RAM by the drive
+      # (~1 kB per file, so ~200 MB per taped pod here) and is serialised to the PVC on every
+      # unload (~99 MB here). The taped pods have no memory limit, so keep an eye on the node.
+      #
+      # batchFiles MUST equal transfers.archive.fetchMaxFiles in stress-scale-values.yaml.
+      # logicalBytesPerFile is the tape footprint of one file: 6 ANSI label blocks of 80 bytes
+      # plus the payload (16 bytes in the stress tests, see test_pgsched_params.toml). File marks
+      # consume no capacity. vol1Bytes is the single 80-byte VOL1 label at the start of the tape.
+      batchFiles: 20000
+      batchesPerTape: 10
+      logicalBytesPerFile: 496
+      vol1Bytes: 80
       mountDelayMs: 15000
+      # Per-drive file-rate ceilings. The drive sleeps once per file for
+      # max(1/rate, time since the previous file), so the ceiling binds when work is already
+      # queued and otherwise just mirrors the rate work arrives at. 0 disables the throttle, which
+      # means transferring at RAM speed - fine for correctness tests, but it makes a mount last
+      # seconds, so scale runs set both (see create_instance.sh --stress-{write,read}-rate-hz).
       maxWriteRateHz: 1000
-      # Tapes per library. 100 × 28.4 MB ≈ 2.84 GB per PVC.
-      # 10 M-file run needs 167 tapes total (10 M / 60 k files/tape); with 4 libraries
-      # each handles ~42 tapes; 100 gives headroom and ensures all drives in a library
-      # can always find a free tape slot.
+      maxReadRateHz: 1000
+      # Tapes per library. At the derived capacity (99 MB for 200 000 files) a 10 M-file run
+      # needs 50 tapes in total, ~13 per library with 4 libraries; 100 gives headroom and ensures
+      # every drive in a library can always find a free tape slot. Tapes are only materialised on
+      # the PVC as they are written, so the unused ones cost nothing.
       count: 100
 
 # ---------------------------------------------------------------------------
