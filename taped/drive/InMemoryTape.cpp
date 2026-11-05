@@ -147,6 +147,13 @@ void InMemoryTape::writeBlock(const void* data, size_t count) {
   m_currentPosition++;
 }
 
+void InMemoryTape::writeBlockForce(const void* data, size_t count) {
+  m_blocks.resize(m_currentPosition + 1);
+  m_blocks.at(m_currentPosition).data.assign(static_cast<const char*>(data), count);
+  m_blocks.at(m_currentPosition).remainingSpaceAfter = 0;
+  m_currentPosition++;
+}
+
 ssize_t InMemoryTape::readBlock(void* data, size_t count) {
   if (m_currentPosition >= m_blocks.size()) {
     throw cta::exception::Exception("InMemoryTape::readBlock: position " + std::to_string(m_currentPosition)

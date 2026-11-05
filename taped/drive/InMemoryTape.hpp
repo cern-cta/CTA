@@ -58,6 +58,9 @@ public:
   void writeSyncFileMarks(size_t count);
   void writeImmediateFileMarks(size_t count);
   void writeBlock(const void* data, size_t count);
+  // Write without space check: used by failure injection (e.g., overflow-on-flush).
+  // Sets remainingSpaceAfter to 0.
+  void writeBlockForce(const void* data, size_t count);
   ssize_t readBlock(void* data, size_t count);
   void readExactBlock(void* data, size_t count, const std::string& context);
   void readFileMark(const std::string& context);
