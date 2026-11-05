@@ -22,7 +22,9 @@
 # ---------------------
 #   - Tunes taped for virtual drives: small buffer pool, single disk thread,
 #     large fetch batches aligned to tape capacity, relaxed cache TTLs, and
-#     disabled underfill-driven dismounting.
+#     underfill-driven dismount tuned for this test's batch size (see the
+#     underfill block below for why disabling it outright is a real bug, not
+#     a convenience).
 #   - Disables rmcd (no StatefulSet deployed; taped never contacts it for
 #     virtual drives, and /dev/smc does not exist on a node without mhvtl).
 #
@@ -111,15 +113,40 @@ taped:
       # of one per 200 files.
       flushMaxBytes: 80000000000
       flushMaxFiles: 20000
-      # startThresholdPercent=0 disables underfill-driven dismounting: in
-      # stress tests the frontend queueing rate is the bottleneck, so drives
-      # always appear underfilled between file batches. Keeping drives mounted
-      # avoids unnecessary remount delays.
+      # Underfill-driven dismount MUST stay enabled here. A mounted drive -
+      # idle or not - counts toward the VO's writeMaxDrives cap
+      # (Scheduler::getExistingAndNextMounts() counts any drive whose status is
+      # in {Starting,Mounting,Transferring,Unloading,Unmounting,DrainingToDisk,
+      # CleaningUp}; a drive waiting on an empty fetch queue stays Transferring,
+      # so it still counts). With 100 drives sharing one VO at writeMaxDrives:
+      # 100, a drive that keeps a tape mounted after it runs out of work to
+      # write occupies a slot that a DIFFERENT drive - one that just dismounted
+      # and has fresh work queued - cannot get: the mount decision refuses it
+      # once existingMountsBasicTypeForThisVo >= maxDrives, even though the
+      # occupying drive is doing nothing. startThresholdPercent: 0 (the
+      # previous setting here) disables the mechanism entirely - every
+      # fetch response satisfies "fillRatio >= 0" - so once the initial
+      # backlog drains, idle drives never let go of their slot and new work
+      # can only start when a drive happens to hit real ENOSPC. That produces
+      # exactly the bursty, mostly-idle pattern this is meant to fix: a
+      # handful of drives processing at a time while the other ~90 sit
+      # mounted and idle, throughput collapsing to a fraction of 100 drives'
+      # worth of work.
+      #
+      # 20% / 40% with the 300 s / 3-sample hysteresis below: a single
+      # fetch returning fewer files than requested (normal when supply is
+      # bursty) does not trigger a dismount by itself - only a fill ratio
+      # below 20% sustained for 300 s across at least 3 fetch responses does,
+      # which only happens when the queue has genuinely gone dry for minutes,
+      # not during ordinary unevenness in upload rate. recoveryThresholdPercent
+      # (40%) is deliberately well above the start threshold so a single
+      # decent-sized fetch cancels the observation outright, rather than the
+      # drive hovering near the boundary and dismounting on noise.
       underfill:
         watchPeriodSecs: 300
         minimumSamples: 3
-        startThresholdPercent: 0
-        recoveryThresholdPercent: 1
+        startThresholdPercent: 20
+        recoveryThresholdPercent: 40
 
     retrieve:
       fetchMaxBytes: 80000000000
