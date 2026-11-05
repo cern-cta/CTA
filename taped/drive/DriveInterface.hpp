@@ -348,8 +348,13 @@ std::unique_ptr<DriveInterface> createDrive(const SCSI::DeviceInfo& di, System::
 /// SCSI hardware), or a DriveGeneric for all other device paths.
 /// @param driveInfo CTA-catalogue drive info (devFilename, driveName, logicalLibrary).
 /// @param sw System wrapper (unused for VtlDrive; required for SCSI scanning).
+/// @param stage If non-null, updated with a human-readable label for the step the factory
+///   is currently performing ("Drive discovery failed" / "Configured drive lookup failed" /
+///   "Drive opening failed"). Callers that report stage-specific diagnostics read the
+///   latest value after catching an exception; callers that do not care pass nullptr.
 std::unique_ptr<DriveInterface> createDrive(const cta::common::dataStructures::DriveInfo& driveInfo,
-                                            System::virtualWrapper& sw);
+                                            System::virtualWrapper& sw,
+                                            std::string_view* stage = nullptr);
 
 /// Read the unit serial number through a borrowed open device descriptor and system wrapper.
 std::string getSerialNumber(const int& fd, System::virtualWrapper& sw);

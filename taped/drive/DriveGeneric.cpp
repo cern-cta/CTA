@@ -2818,13 +2818,26 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const 
 }
 
 std::unique_ptr<DriveInterface> createDrive(const cta::common::dataStructures::DriveInfo& driveInfo,
-                                            System::virtualWrapper& sw) {
+                                            System::virtualWrapper& sw,
+                                            std::string_view* stage) {
+  const auto setStage = [stage](std::string_view s) {
+    if (stage) {
+      *stage = s;
+    }
+  };
   if (driveInfo.devFilename.rfind("virtual://", 0) == 0) {
+    // Virtual drive: no SCSI enumeration/lookup. Any VtlDrive construction
+    // failure is reported as "Drive opening failed" for consistency with the
+    // hardware path's final step.
+    setStage("Drive opening failed");
     const auto baseDir = driveInfo.devFilename.substr(std::string("virtual://").size());
     return std::make_unique<VtlDrive>(driveInfo.driveName, driveInfo.logicalLibrary, baseDir);
   }
+  setStage("Drive discovery failed");
   SCSI::DeviceVector dv(sw);
+  setStage("Configured drive lookup failed");
   const SCSI::DeviceInfo di = dv.findBySymlink(driveInfo.devFilename);
+  setStage("Drive opening failed");
   return createDrive(di, sw);
 }
 

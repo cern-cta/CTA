@@ -455,12 +455,12 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
 
 std::unique_ptr<drive::DriveInterface> TapeSession::findDrive(log::LogContext& logContext, ExecutionState& state) {
   constexpr auto reason = common::dataStructures::DriveDownReason::SessionDriveAccessFailed;
+  // The factory updates `stage` before each step it performs; on exception the
+  // latest value identifies exactly which step failed. No URI inspection here —
+  // the virtual-drive vs. hardware dispatch lives inside createDrive().
   std::string_view stage = "Drive discovery failed";
   try {
-    stage = "Drive opening failed";
-    // createDrive(DriveInfo, sw) dispatches on the devFilename URI: "virtual://<base_dir>"
-    // yields a VtlDrive (no SCSI device scan), any other path yields a DriveGeneric.
-    auto drive = drive::createDrive(m_driveInfo, m_sysWrapper);
+    auto drive = drive::createDrive(m_driveInfo, m_sysWrapper, &stage);
     if (!drive) {
       throw exception::Exception("Drive creation returned no drive");
     }
