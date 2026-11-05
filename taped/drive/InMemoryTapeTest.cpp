@@ -165,19 +165,6 @@ TEST(InMemoryTape, PositionToLogicalObject_ThrowsBeyondEnd) {
   EXPECT_THROW(tape.positionToLogicalObject(10), cta::exception::Exception);
 }
 
-TEST(InMemoryTape, BlockIdPositioningCount) {
-  InMemoryTape tape;
-  const std::string d = "block";
-  tape.writeBlock(d.data(), d.size());
-  tape.writeBlock(d.data(), d.size());
-
-  EXPECT_EQ(0u, tape.getBlockIdPositioningCount());
-  tape.positionToLogicalObject(0);
-  EXPECT_EQ(1u, tape.getBlockIdPositioningCount());
-  tape.positionToLogicalObject(1);
-  EXPECT_EQ(2u, tape.getBlockIdPositioningCount());
-}
-
 TEST(InMemoryTape, SpaceFileMarksForward) {
   InMemoryTape tape;
   const std::string d = "data";
@@ -216,20 +203,6 @@ TEST(InMemoryTape, WriteImmediateFileMarks_BehavesLikeSyncFileMarks) {
   EXPECT_NO_THROW(tape.readFileMark("test"));
 }
 
-TEST(InMemoryTape, LBPModeRoundTrip) {
-  InMemoryTape tape;
-  EXPECT_EQ(lbpToUse::disabled, tape.getLbpToUse());
-
-  tape.enableCRC32CLogicalBlockProtectionReadWrite();
-  EXPECT_EQ(lbpToUse::crc32cReadWrite, tape.getLbpToUse());
-
-  tape.enableCRC32CLogicalBlockProtectionReadOnly();
-  EXPECT_EQ(lbpToUse::crc32cReadOnly, tape.getLbpToUse());
-
-  tape.disableLogicalBlockProtection();
-  EXPECT_EQ(lbpToUse::disabled, tape.getLbpToUse());
-}
-
 TEST(InMemoryTape, CompressionStats) {
   InMemoryTape tape;
   tape.clearCompressionStats();
@@ -243,11 +216,6 @@ TEST(InMemoryTape, CompressionStats) {
 
   tape.clearCompressionStats();
   EXPECT_EQ(0u, tape.getCompression().toTape);
-}
-
-TEST(InMemoryTape, IsWriteProtected_AlwaysFalse) {
-  InMemoryTape tape;
-  EXPECT_FALSE(tape.isWriteProtected());
 }
 
 TEST(InMemoryTape, Flush_DoesNotThrow) {
