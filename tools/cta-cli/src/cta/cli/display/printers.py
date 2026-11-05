@@ -46,7 +46,10 @@ def raw_print(objects: Union[DataClassProtocol, Iterable[DataClassProtocol]]) ->
         print(str(obj))
 
 
-def print_as_json(objects: Union[DataClassProtocol, Iterable[DataClassProtocol]]) -> None:
+def print_as_json(
+    objects: Union[DataClassProtocol, Iterable[DataClassProtocol]],
+    display_config: Optional[DisplayConfig] = None,
+) -> None:
     """Print dataclass objects in JSON format.
 
     Each object is output as a separate JSON line (JSONL format).
@@ -54,8 +57,12 @@ def print_as_json(objects: Union[DataClassProtocol, Iterable[DataClassProtocol]]
     Args:
         objects: A single dataclass object or sequence of dataclass objects.
     """
+    display_config = display_config or DisplayConfig()
+    highligth = display_config.pretty_json
+    indent = 2 if display_config.pretty_json else None
+
     if not isinstance(objects, Iterable):
-        print_json(DataClassFormatterProvider.get(type(objects)).to_json(objects))
+        print_json(DataClassFormatterProvider.get(type(objects)).to_json(objects), highlight=highligth, indent=indent)
         return
 
     iterator = iter(objects)
@@ -68,10 +75,10 @@ def print_as_json(objects: Union[DataClassProtocol, Iterable[DataClassProtocol]]
 
     formatter = DataClassFormatterProvider.get(type(first))
 
-    print_json(formatter.to_json(first))
+    print_json(formatter.to_json(first), highlight=highligth, indent=indent)
 
     for obj in iterator:
-        print_json(formatter.to_json(obj))
+        print_json(formatter.to_json(obj), highlight=highligth, indent=indent)
 
 
 def print_as_table(
@@ -92,7 +99,7 @@ def print_as_table(
     """
     display_config = display_config or DisplayConfig()
 
-    if display_config.pretty_get and is_dataclass(objects):
+    if display_config.pretty_table and is_dataclass(objects):
         return print(DataClassFormatterProvider.get(type(objects)).to_table(objects))
 
     console = Console(width=1000)
@@ -172,7 +179,7 @@ def print_dataclasses(
     if display_config.format == "raw":
         raw_print(objects)
     elif display_config.format == "json":
-        print_as_json(objects)
+        print_as_json(objects, display_config=display_config)
     elif display_config.format == "table":
         print_as_table(objects, title=title, display_config=display_config)
     else:

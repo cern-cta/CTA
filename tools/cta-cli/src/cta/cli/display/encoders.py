@@ -238,6 +238,8 @@ ENCODE_TABLE_HEADER_RULES = [
     (re.compile(r"_name"), ""),
     (re.compile(r"tape_session."), ""),
     (re.compile(r"statistics."), ""),
+    (re.compile(r"location."), ""),
+    (re.compile(r"local_"), ""),
     (re.compile(r"metadata."), ""),
     (re.compile(r"start_info."), "start_"),
 ]

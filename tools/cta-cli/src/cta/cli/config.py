@@ -98,7 +98,8 @@ class DisplayConfig:
 
     format: Literal["table", "json", "raw"] = "table"
     chunk_size: int = 1000  # Number of objects to include in each chunk for display
-    pretty_get: bool = False
+    pretty_table: bool = True
+    pretty_json: bool = True
     columns: list[TableColumnsConfig] = field(default_factory=list)
 
 

@@ -12,6 +12,7 @@ from typing import Optional
 
 from cta.common import copy_dataclass
 from cta.sdk.models import Drive
+from cta.tapeserver.sdk.repositories.protocols.drive import DriveLibraryLocation, LocatedNamedDrive
 
 
 @dataclass
@@ -25,25 +26,32 @@ class EnrichedDrive(Drive):
             Whether the drive is currently connected.
     """
 
-    serial_number: Optional[str]
-    is_connected: bool
+    local_serial_number: Optional[str]
+    location: Optional[DriveLibraryLocation]
 
     @classmethod
-    def from_drive(
-        cls, drive: Drive, serial_number: Optional[str] = None, is_connected: bool = False
-    ) -> "EnrichedDrive":
+    def merge(cls, cta_drive: Drive, local_drive: Optional[LocatedNamedDrive] = None) -> "EnrichedDrive":
         """Create an enriched drive from a base drive model.
 
         Args:
-            drive: The base drive model to enrich.
-            serial_number: Optional serial number for the enriched drive.
-            is_connected: Connection state for the enriched drive.
+            cta_drive: The base drive model to enrich.
+            local_drive:Optional local drive.
 
         Returns:
             EnrichedDrive: An enriched drive instance.
         """
+        if local_drive is None:
+            return cls(
+                **copy_dataclass(cta_drive),
+                local_serial_number=None,
+                location=None,
+            )
+
+        if local_drive.name != cta_drive.name:
+            raise ValueError("Mismatch between local_drive.name and cta_drive.name")
+
         return cls(
-            **copy_dataclass(drive),
-            serial_number=serial_number,
-            is_connected=is_connected,
+            **copy_dataclass(cta_drive),
+            local_serial_number=local_drive.serial_number,
+            location=local_drive.location,
         )

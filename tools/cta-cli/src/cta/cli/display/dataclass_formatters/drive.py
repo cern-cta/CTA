@@ -73,8 +73,9 @@ class EnrichedDriveFormatter(DataClassBaseFormatter[EnrichedDrive], dataclass_ty
             "tape_session.speed",
             "state_change_age",
             "metadata.last_refresh_age",
-            "serial_number",
-            "is_connected",
+            "local_serial_number",
+            "location.address",
+            "location.ordinal",
             "state_reason",
         ]
 

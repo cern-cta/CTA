@@ -40,8 +40,10 @@ from .context import AppContext, __version__
     help="Override output format from the config file.",
 )
 @click.option(
-    "--log-level",
-    type=click.Choice(["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]),
+    "--verbose",
+    "-v",
+    count=True,
+    help="Increase log verbosity (-v: INFO, -vv: DEBUG). Overrides the config file.",
 )
 @click.option(
     "--config-file",
@@ -52,12 +54,14 @@ from .context import AppContext, __version__
     show_default=True,
 )
 @click.pass_context
-def cta(ctx: click.Context, format: str, log_level: str, config_file: Optional[Path]):
+def cta(ctx: click.Context, format: str, verbose: int, config_file: Optional[Path]):
     """Manage CERN Tape Archive (CTA) operations from the command line.
 
     This is the main entry point for the CTA operations Cli. Use subcommands to
     manage tapes, drives, storage classes, and other CTA resources.
     """
+    log_level = {0: None, 1: "INFO"}.get(verbose, "DEBUG")
+
     config = (
         CtaConfigLoader(AppConfig)
         .load_from_toml(config_file, file_exist_error="ignore")

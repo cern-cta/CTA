@@ -7,6 +7,7 @@ import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
 from cta.cli.context import EXTRA_TPSRV, AppContext, tapeserver_option
 from cta.cli.display.printers import print_dataclasses
+from cta.sdk.exceptions import ResourceNotFoundError as CTAResourceNotFoundError
 from cta.sdk.models import PhysicalLibraryState
 from rich import print
 
@@ -124,23 +125,17 @@ def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool
         ).list_libraries()
         print_dataclasses(
             (
-                EnrichedPhysicalLibrary.from_physical_library(
-                    pl,
-                    serial_number=(
-                        sn := next((lnl.serial_number for lnl in local_named_libraries if lnl.name == pl.name), None)
-                    ),
-                    is_connected=bool(sn),
+                EnrichedPhysicalLibrary.merge(
+                    cta_physical_library=pl,
+                    local_library=next((lnl for lnl in local_named_libraries if lnl.name == pl.name), None),
                 )
                 for pl in obj.cta_client.physical_library.list(state=state)
-                if (
-                    not local
-                    or next((lnl.serial_number for lnl in local_named_libraries if lnl.name == pl.name), None)
-                    is not None
-                )
+                if (not local or next((lnl for lnl in local_named_libraries if lnl.name == pl.name), None) is not None)
             ),
             display_config=obj.config.display,
         )
 
+        # Add non CTA aware libraries
         if local:
             cta_lib_names = {pl.name for pl in obj.cta_client.physical_library.list()}
             if cta_unknown_named_libs := {lnl for lnl in local_named_libraries if lnl.name not in cta_lib_names}:
@@ -156,25 +151,37 @@ def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool
 
 @physical_library.command()
 @click.argument("name")
+@tapeserver_option("-l", "--local", is_flag=True, help="Don't fail if library not present in CTA")
 @click.pass_obj
-def get(obj: AppContext, name: str):
+def get(obj: AppContext, name: str, local: Optional[bool] = None):
     """Get physical library registered in CTA."""
-    library = obj.cta_client.physical_library.get(name)
-
     if EXTRA_TPSRV:
         from cta.cli.models.physical_library import EnrichedPhysicalLibrary
-        from cta.tapeserver.sdk import LocalNamedLibraryRepository, ResourceNotFoundError
+        from cta.tapeserver.sdk import LocalNamedLibraryRepository
+        from cta.tapeserver.sdk import ResourceNotFoundError as LocalResourceNotFoundError
 
-        try:
+        if local:
             local_library = LocalNamedLibraryRepository(
                 library_name_key=obj.config.tape_server.udev_properties_map.library_name_key
             ).get_library_by_name(name)
-        except ResourceNotFoundError:
-            library = EnrichedPhysicalLibrary.from_physical_library(library, serial_number=None, is_connected=False)
+            try:
+                cta_library = obj.cta_client.physical_library.get(name)
+            except CTAResourceNotFoundError:
+                library = local_library
+            else:
+                library = EnrichedPhysicalLibrary.merge(cta_library, local_library)
+
         else:
-            library = EnrichedPhysicalLibrary.from_physical_library(
-                library, serial_number=local_library.serial_number, is_connected=True
-            )
+            cta_library = obj.cta_client.physical_library.get(name)
+            try:
+                local_library = LocalNamedLibraryRepository(
+                    library_name_key=obj.config.tape_server.udev_properties_map.library_name_key
+                ).get_library_by_name(name)
+            except LocalResourceNotFoundError:
+                local_library = None
+            library = EnrichedPhysicalLibrary.merge(cta_library, local_library)
+    else:
+        library = obj.cta_client.physical_library.get(name)
 
     print_dataclasses(library, display_config=obj.config.display)
 

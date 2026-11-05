@@ -13,6 +13,7 @@ from cta.cli.click_extension.aliases import ClickAliasedGroup
 from cta.cli.context import EXTRA_TPSRV, AppContext, tapeserver_option
 from cta.cli.display.encoders import encode_table_field
 from cta.cli.display.printers import print_dataclasses
+from cta.sdk.exceptions import ResourceNotFoundError as CTAResourceNotFoundError
 from cta.sdk.models import Drive, DriveOperatingState, LogicalLibraryState
 from cta.sdk.units import Byte, BytePerSecond
 from rich import print
@@ -32,7 +33,7 @@ def drive():
 def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
     """List drive in cta catalogue."""
 
-    def updated_drives_with_disabled_libraries(drives: Iterable[Drive]) -> list[Drive]:
+    def update_drives_with_disabled_libraries(drives: Iterable[Drive]) -> list[Drive]:
         drives = list(drives)
         disabled_library_names = [
             ll.name for ll in obj.cta_client.logical_library.list(state=LogicalLibraryState.DISABLED)
@@ -44,24 +45,21 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
 
     if EXTRA_TPSRV:
         from cta.cli.models.drive import EnrichedDrive
-        from cta.tapeserver.sdk import LocalDriveRepository, LocalNamedDriveRepository
+        from cta.tapeserver.sdk import LocalDriveRepository, LocalLocatedNamedDriveRepository
 
-        local_named_drives = LocalNamedDriveRepository(
+        local_located_named_drives = LocalLocatedNamedDriveRepository(
             drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
         ).list_drives()
         print_dataclasses(
             (
-                EnrichedDrive.from_drive(
+                EnrichedDrive.merge(
                     dr,
-                    serial_number=(
-                        sn := next((lnd.serial_number for lnd in local_named_drives if lnd.name == dr.name), None)
-                    ),
-                    is_connected=bool(sn),
+                    local_drive=next((llnd for llnd in local_located_named_drives if llnd.name == dr.name), None),
                 )
-                for dr in updated_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all))
+                for dr in update_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all))
                 if (
                     not local
-                    or next((lnd.serial_number for lnd in local_named_drives if lnd.name == dr.name), None) is not None
+                    or next((llnd for llnd in local_located_named_drives if llnd.name == dr.name), None) is not None
                 )
             ),
             display_config=obj.config.display,
@@ -69,39 +67,58 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
 
         if local:
             cta_drive_names = {pl.name for pl in obj.cta_client.drive.list(all=True)}
-            if cta_unknown_named_libs := {lnd for lnd in local_named_drives if lnd.name not in cta_drive_names}:
+            if cta_unknown_named_libs := {lnd for lnd in local_located_named_drives if lnd.name not in cta_drive_names}:
                 print_dataclasses(
-                    cta_unknown_named_libs, display_config=obj.config.display, title="Non-CTA Drives (Named)"
+                    cta_unknown_named_libs, display_config=obj.config.display, title="Non-CTA Drives (Named & Located)"
                 )
 
-            if others_drives := (LocalDriveRepository().list_drives() - local_named_drives):
+            if others_drives := (LocalDriveRepository().list_drives() - local_located_named_drives):
                 print_dataclasses(others_drives, display_config=obj.config.display, title="Non-CTA Drives")
     else:
         print_dataclasses(
-            updated_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all)),
+            update_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all)),
             display_config=obj.config.display,
         )
 
 
 @drive.command()
 @click.argument("name")
+@tapeserver_option("-l", "--local", is_flag=True, help="Don't fail if library not present in CTA")
 @click.pass_obj
-def get(obj: AppContext, name: str):
+def get(obj: AppContext, name: str, local: Optional[bool] = None):
     """Get drive registered in CTA."""
-    drive = obj.cta_client.drive.get(name)
-
     if EXTRA_TPSRV:
         from cta.cli.models.drive import EnrichedDrive
-        from cta.tapeserver.sdk import LocalNamedDriveRepository, ResourceNotFoundError
+        from cta.tapeserver.sdk import (
+            LocalLocatedNamedDriveRepository,
+        )
+        from cta.tapeserver.sdk import (
+            ResourceNotFoundError as LocalResourceNotFoundError,
+        )
 
-        try:
-            local_drive = LocalNamedDriveRepository(
+        if local:
+            local_drive = LocalLocatedNamedDriveRepository(
                 drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
             ).get_drive_by_name(name)
-        except ResourceNotFoundError:
-            drive = EnrichedDrive.from_drive(drive, serial_number=None, is_connected=False)
+            try:
+                cta_drive = obj.cta_client.drive.get(name)
+            except CTAResourceNotFoundError:
+                drive = local_drive
+            else:
+                drive = EnrichedDrive.merge(cta_drive, local_drive)
+
         else:
-            drive = EnrichedDrive.from_drive(drive, serial_number=local_drive.serial_number, is_connected=True)
+            cta_drive = obj.cta_client.drive.get(name)
+            try:
+                local_drive = LocalLocatedNamedDriveRepository(
+                    drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
+                ).get_drive_by_name(name)
+            except LocalResourceNotFoundError:
+                local_drive = None
+
+            drive = EnrichedDrive.merge(cta_drive, local_drive)
+    else:
+        drive = obj.cta_client.drive.get(name)
 
     print_dataclasses(drive, display_config=obj.config.display)
 
