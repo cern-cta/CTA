@@ -623,7 +623,7 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
   } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
     putDriveDown("Drive not found on this path", mount, logContext);
   } catch (cta::exception::Exception& ex) {
-    putDriveDown(ex.getMessage().str(), mount, logContext);
+    putDriveDown("Error looking for path to tape drive: " + ex.getMessage().str(), mount, logContext);
   } catch (...) {
     putDriveDown("Unexpected exception while opening drive", mount, logContext);
   }
