@@ -703,6 +703,13 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(
   // a catalogue lookup, the lookup would need to be per (STORAGE_CLASS, COPY_NB) and would
   // not see the ALTERNATE_INSERT entries, which already have their pools set.
 
+  // START_TIME is set to the time the job enters the archive queue instead of being carried over
+  // from the retrieve job: it is the column the mount decision takes the job's queue age from (the
+  // ARCHIVE_QUEUE_SUMMARY / REPACK_ARCHIVE_QUEUE_SUMMARY views expose MIN(START_TIME) as
+  // OLDEST_JOB_START_TIME), so a retrieve job which waited hours would otherwise produce an archive
+  // job already older than MIN_ARCHIVE_REQUEST_AGE and warrant a mount straight away. CREATION_TIME
+  // is carried over, it is not part of the age check.
+  //
   // MIN_ARCHIVE_REQUEST_AGE has to come from the archive side of the mount policy, while the
   // retrieve row only carries MIN_RETRIEVE_REQUEST_AGE. Mount policies live in the catalogue,
   // which is a different database, so the caller passes in their archive minimum request ages and
@@ -802,12 +809,6 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         M.COPY_NB,
-        -- Reset to the time this job actually enters the archive queue, rather than
-        -- carrying over the original retrieve job's START_TIME. Otherwise the archive
-        -- job inherits however long the retrieve took (which can be hours for repack),
-        -- making it look far older than MIN_ARCHIVE_REQUEST_AGE and triggering a
-        -- premature mount (see the ARCHIVE_QUEUE_SUMMARY/REPACK_ARCHIVE_QUEUE_SUMMARY
-        -- views, which key the age check off START_TIME).
         EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT AS START_TIME,
         M.CHECKSUMBLOB,
         M.CREATION_TIME,
@@ -882,8 +883,6 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         REARCHIVE_COPY.REARCHIVE_COPY_VAL AS COPY_NB,
-        -- See comment on the equivalent column in BASE_INSERT above: reset START_TIME
-        -- to now instead of inheriting the retrieve job's age.
         EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT AS START_TIME,
         M.CHECKSUMBLOB,
         M.CREATION_TIME,
