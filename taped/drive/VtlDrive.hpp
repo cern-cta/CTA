@@ -4,7 +4,8 @@
  */
 #pragma once
 
-#include "VirtualDrive.hpp"
+#include "DriveInterface.hpp"
+#include "InMemoryTape.hpp"
 
 #include <chrono>
 #include <filesystem>
@@ -16,11 +17,12 @@
 namespace cta::tape::drive {
 
 /**
- * Virtual Tape Library drive: a VirtualDrive whose tape content is persisted to a
- * file on a shared volume between mount/dismount cycles.  This allows multiple
- * drives — in the same taped process or in different taped processes on the
- * same host — to share virtual tapes by VID, exactly as a physical tape library
- * makes one tape accessible from any drive slot.
+ * Virtual Tape Library drive: implements DriveInterface and holds an
+ * InMemoryTape whose content is persisted to a file on a shared volume
+ * between mount/dismount cycles.  This allows multiple drives — in the same
+ * taped process or in different taped processes on the same host — to share
+ * virtual tapes by VID, exactly as a physical tape library makes one tape
+ * accessible from any drive slot.
  *
  * Directory layout (all under baseDir, e.g. /cta-stress-lib):
  *
@@ -37,11 +39,10 @@ namespace cta::tape::drive {
  *   2. DataTransferSession calls waitUntilReady(): VtlDrive scans
  *      drives/<driveName>/ for a *.tape file, derives the VID from its stem,
  *      reads the tape capacity from library.toml, then loads the binary
- *      block stream from the file into m_tape (the inherited VirtualDrive
- *      in-memory block vector).  An empty file means a blank tape.
- *   3. The full transfer runs via VirtualDrive's in-memory block I/O.
+ *      block stream from the file into m_tape.  An empty file means a blank tape.
+ *   3. The full transfer runs via m_tape in-memory block I/O.
  *   4. DataTransferSession calls unloadTape(): VtlDrive serialises m_tape
- *      back to the same file, then delegates to VirtualDrive::unloadTape().
+ *      back to the same file, then marks the tape as absent.
  *   5. MediaChangerFacade::dismountTape(vid) acquires the changer lock and
  *      renames VID.tape: drives/<driveName>/ → changer/ → slots/.
  *
@@ -49,7 +50,7 @@ namespace cta::tape::drive {
  * e.g. "virtual:///cta-stress-lib".  drive::createDrive() detects the "virtual://"
  * prefix and creates a VtlDrive; the path component is the library root.
  */
-class VtlDrive : public VirtualDrive {
+class VtlDrive : public DriveInterface {
 public:
   /**
    * @param driveName          Drive name as registered in the CTA catalogue
@@ -75,26 +76,30 @@ public:
    *   3. Derives VID from filename stem; looks up tape capacity from library.toml.
    *   4. Loads the binary block stream from the file into m_tape.  An empty
    *      file (new blank tape) synthesises a VOL1 label in m_tape.
-   *   5. Resets m_currentPosition to 0 (BOT).
+   *   5. Resets position to BOT.
    */
   void waitUntilReady(uint32_t timeoutSecond) override;
 
   /**
    * Serialises the current m_tape state back to the *.tape file via an atomic
-   * tmp-rename, then delegates to VirtualDrive::unloadTape() to mark the tape as
-   * absent.  Saving is skipped if no tape was ever loaded in this session.
+   * tmp-rename, then marks the tape as absent.  Saving is skipped if no tape
+   * was ever loaded in this session.
    */
   void unloadTape() override;
 
-  // The following five methods throw NotImplementedException in VirtualDrive but
-  // are called by taped during normal transfer sessions.  VtlDrive overrides
-  // return sensible no-op values so the rest of the session logic proceeds.
+  // Drive-status and hardware-info overrides.
   driveStatus getDriveStatus() override;
-  void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0) override;
-  void setSTBufferWrite(bool bufWrite) override;
-  drive::LBPInfo getLBPInfo() override;
-  std::string getSerialNumber() override;
   deviceInfo getDeviceInfo() override;
+  std::string getSerialNumber() override;
+
+  // These SCSI concepts have no meaning for a virtual tape; silently ignored.
+  void setDensityAndCompression(bool = true, unsigned char = 0) override {}
+  void setSTBufferWrite(bool) override {}
+  drive::LBPInfo getLBPInfo() override;
+  void setLogicalBlockProtection(unsigned char, unsigned char, bool, bool) override {}
+  void setEncryptionKey(const std::string&) override {}
+  bool clearEncryptionKey() override { return false; }
+  bool isEncryptionCapEnabled() override { return false; }
 
   /**
    * Adaptive-mirror throttle: sleeps once per file at HDR1 for
@@ -102,6 +107,50 @@ public:
    * No sleep when maxWriteRateHz == 0.
    */
   void writeBlock(const void* data, size_t count) override;
+
+  // --- Delegation to InMemoryTape (tape-block operations) ---
+  compressionStats getCompression() override { return m_tape.getCompression(); }
+  void clearCompressionStats() override { m_tape.clearCompressionStats(); }
+  void positionToLogicalObject(uint32_t b) override { m_tape.positionToLogicalObject(b); }
+  positionInfo getPositionInfo() override { return m_tape.getPositionInfo(); }
+  physicalPositionInfo getPhysicalPositionInfo() override { return m_tape.getPhysicalPositionInfo(); }
+  std::vector<endOfWrapPosition> getEndOfWrapPositions() override;
+  void enableCRC32CLogicalBlockProtectionReadOnly() override;
+  void enableCRC32CLogicalBlockProtectionReadWrite() override;
+  void disableLogicalBlockProtection() override;
+  void fastSpaceToEOM(void) override { m_tape.fastSpaceToEOM(); }
+  void rewind(void) override { m_tape.rewind(); }
+  void spaceToEOM(void) override { m_tape.spaceToEOM(); }
+  void spaceFileMarksBackwards(size_t count) override { m_tape.spaceFileMarksBackwards(count); }
+  void spaceFileMarksForward(size_t count) override { m_tape.spaceFileMarksForward(count); }
+  void flush(void) override { m_tape.flush(); }
+  void writeSyncFileMarks(size_t count) override { m_tape.writeSyncFileMarks(count); }
+  void writeImmediateFileMarks(size_t count) override { m_tape.writeImmediateFileMarks(count); }
+  ssize_t readBlock(void* data, size_t count) override { return m_tape.readBlock(data, count); }
+  void readExactBlock(void* data, size_t count, const std::string& ctx) override { m_tape.readExactBlock(data, count, ctx); }
+  void readFileMark(const std::string& ctx) override { m_tape.readFileMark(ctx); }
+  bool isWriteProtected() override;
+  bool isAtBOT() override { return m_tape.isAtBOT(); }
+  bool isAtEOD() override { return m_tape.isAtEOD(); }
+  bool isTapeBlank() override { return m_tape.isTapeBlank(); }
+  lbpToUse getLbpToUse() override;
+  bool hasTapeInPlace() override { return m_tape.isLoaded(); }
+
+  // --- Drive-metadata and SCSI stubs ---
+  std::string getGenericSCSIPath() override { return ""; }
+  std::string getDriveFirmwareVersion() override { return "0.0"; }
+  std::map<std::string, uint64_t> getTapeWriteErrors() override { return {{"mountTotalCorrectedWriteErrors", 0}, {"mountTotalWriteBytesProcessed", 0}, {"mountTotalUncorrectedWriteErrors", 0}}; }
+  std::map<std::string, uint64_t> getTapeReadErrors() override { return {{"mountTotalCorrectedReadErrors", 0}, {"mountTotalReadBytesProcessed", 0}, {"mountTotalUncorrectedReadErrors", 0}}; }
+  std::map<std::string, uint32_t> getTapeNonMediumErrors() override { return {{"mountTotalNonMediumErrorCounts", 0}}; }
+  std::map<std::string, float> getQualityStats() override { return {{"lifetimeMediumEfficiencyPrct", 100.0f}, {"mountReadEfficiencyPrct", 100.0f}, {"mountWriteEfficiencyPrct", 100.0f}}; }
+  std::map<std::string, uint32_t> getDriveStats() override { return {{"mountTemps", 0}, {"mountReadTransients", 0}, {"mountWriteTransients", 0}, {"mountTotalReadRetries", 0}, {"mountTotalWriteRetries", 0}, {"mountServoTemps", 0}, {"mountServoTransients", 0}}; }
+  std::map<std::string, uint32_t> getVolumeStats() override { return {}; }
+  std::vector<uint16_t> getTapeAlertCodes() override { return {}; }
+  std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) override { return {}; }
+  std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) override { return {}; }
+  bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>&) override { return false; }
+  cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
+  void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int) override { files.reverse(); }
 
   // Per-media-type properties derived from library.toml at construction time.
   struct MediaTypeInfo {
@@ -116,6 +165,9 @@ private:
   const std::string m_driveName;
   const std::string m_logicalLibrary;
   const std::filesystem::path m_baseDir;
+
+  InMemoryTape m_tape;
+  lbpToUse m_lbpToUse = lbpToUse::disabled;
 
   // Maps VID prefix (e.g. "ST") → MediaTypeInfo for that media type.
   // Populated by parseLibraryConf() at construction.

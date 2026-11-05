@@ -6,6 +6,7 @@
 #include "FakeDrive.hpp"
 
 #include "DriveGeneric.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
 #include <sstream>
@@ -13,29 +14,26 @@
 namespace cta::tape::drive {
 
 FakeDrive::FakeDrive(uint64_t capacity, FailureMoment failureMoment, bool failToMount) noexcept
-    : VirtualDrive(capacity),
-      m_failureMoment(failureMoment),
-      m_failToMount(failToMount) {}
+    : m_failureMoment(failureMoment),
+      m_failToMount(failToMount),
+      m_tape(capacity) {}
 
 FakeDrive::FakeDrive(bool failToMount) noexcept
-    : VirtualDrive(std::numeric_limits<uint64_t>::max()),
-      m_failureMoment(OnWrite),
-      m_failToMount(failToMount) {}
+    : m_failureMoment(OnWrite),
+      m_failToMount(failToMount),
+      m_tape(std::numeric_limits<uint64_t>::max()) {}
 
 void FakeDrive::writeBlock(const void* data, size_t count) {
-  if (count > getRemainingSpace(m_currentPosition)) {
+  if (count > m_tape.remainingSpace()) {
     if (m_failureMoment == OnWrite) {
       throw cta::exception::Errnum(ENOSPC, "Error in cta::tape::drive::FakeDrive::writeBlock");
     }
     // OnFlush: record the overflow and continue; flush() will raise ENOSPC later.
-    m_tape.resize(m_currentPosition + 1);
-    m_tape.at(m_currentPosition).data.assign(static_cast<const char*>(data), count);
-    m_tape.at(m_currentPosition).remainingSpaceAfter = 0;
-    m_currentPosition++;
+    m_tape.writeBlockForce(data, count);
     m_tapeOverflow = true;
     return;
   }
-  VirtualDrive::writeBlock(data, count);
+  m_tape.writeBlock(data, count);
 }
 
 void FakeDrive::flush() {
@@ -46,12 +44,25 @@ void FakeDrive::flush() {
 
 void FakeDrive::rewind() {
   throwIfFailurePoint(FailurePoint::Rewind);
-  VirtualDrive::rewind();
+  m_tape.rewind();
+}
+
+void FakeDrive::positionToLogicalObject(uint32_t blockId) {
+  ++m_blockIdPositioningCount;
+  m_tape.positionToLogicalObject(blockId);
+}
+
+void FakeDrive::enableCRC32CLogicalBlockProtectionReadOnly() {
+  m_lbpToUse = lbpToUse::crc32cReadOnly;
+}
+
+void FakeDrive::enableCRC32CLogicalBlockProtectionReadWrite() {
+  m_lbpToUse = lbpToUse::crc32cReadWrite;
 }
 
 void FakeDrive::disableLogicalBlockProtection() {
   throwIfFailurePoint(FailurePoint::DisableLogicalBlockProtection);
-  VirtualDrive::disableLogicalBlockProtection();
+  m_lbpToUse = lbpToUse::disabled;
 }
 
 bool FakeDrive::clearEncryptionKey() {
@@ -61,7 +72,7 @@ bool FakeDrive::clearEncryptionKey() {
 
 void FakeDrive::unloadTape() {
   throwIfFailurePoint(FailurePoint::UnloadTape);
-  VirtualDrive::unloadTape();
+  m_tape.unloadTape();
 }
 
 void FakeDrive::waitUntilReady(const uint32_t /*timeoutSecond*/) {
@@ -134,17 +145,52 @@ std::string FakeDrive::getSerialNumber() {
   throw cta::exception::NotImplementedException();
 }
 
+void FakeDrive::setEncryptionKey(const std::string&) {
+  throw cta::exception::Exception("In FakeDrive::setEncryptionKey: Not implemented.");
+}
+
+void FakeDrive::setDensityAndCompression(bool, unsigned char) {
+  throw cta::exception::NotImplementedException();
+}
+
+drive::LBPInfo FakeDrive::getLBPInfo() {
+  throw cta::exception::NotImplementedException();
+}
+
+void FakeDrive::setLogicalBlockProtection(unsigned char, unsigned char, bool, bool) {
+  throw cta::exception::NotImplementedException();
+}
+
+drive::driveStatus FakeDrive::getDriveStatus() {
+  throw cta::exception::NotImplementedException();
+}
+
+void FakeDrive::setSTBufferWrite(bool) {
+  throw cta::exception::NotImplementedException();
+}
+
+cta::tape::SCSI::Structures::RAO::udsLimits FakeDrive::getLimitUDS() {
+  cta::tape::SCSI::Structures::RAO::udsLimits lims;
+  lims.maxSize = 30000;
+  lims.maxSupported = 30;
+  return lims;
+}
+
+void FakeDrive::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int /*maxSupported*/) {
+  files.reverse();
+}
+
 std::string FakeDrive::contentToString() noexcept {
-  std::stringstream exc;
-  exc << std::endl;
-  exc << "Tape position: " << m_currentPosition << std::endl;
-  exc << std::endl;
-  exc << "Tape contents:" << std::endl;
-  for (unsigned int i = 0; i < m_tape.size(); i++) {
-    exc << i << ": " << m_tape[i].data << std::endl;
+  std::stringstream ss;
+  ss << std::endl;
+  ss << "Tape position: " << m_tape.currentPosition() << std::endl;
+  ss << std::endl;
+  ss << "Tape contents:" << std::endl;
+  for (size_t i = 0; i < m_tape.blockCount(); i++) {
+    ss << i << ": " << m_tape.blockAt(i).data << std::endl;
   }
-  exc << std::endl;
-  return exc.str();
+  ss << std::endl;
+  return ss.str();
 }
 
 void FakeDrive::setFailurePoint(FailurePoint failurePoint, bool enabled) {
@@ -163,6 +209,18 @@ void FakeDrive::throwIfFailurePoint(FailurePoint failurePoint) const {
   if (m_failurePoints.contains(failurePoint)) {
     throw cta::exception::Exception("Configured FakeDrive failure");
   }
+}
+
+bool FakeDrive::isWriteProtected() {
+  return false;
+}
+
+lbpToUse FakeDrive::getLbpToUse() {
+  return m_lbpToUse;
+}
+
+std::vector<endOfWrapPosition> FakeDrive::getEndOfWrapPositions() {
+  return {{0, 208310, 0}, {1, 416271, 0}, {2, 624562, 0}};
 }
 
 FakeNonRAODrive::FakeNonRAODrive() : FakeDrive() {}

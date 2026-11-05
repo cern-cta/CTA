@@ -28,16 +28,16 @@ namespace cta::tape::drive {
 // An empty file (size 0) means a blank (never-archived) tape.
 
 VtlDrive::VtlDrive(std::string driveName, std::string logicalLibraryName, std::filesystem::path baseDir)
-    : VirtualDrive(std::numeric_limits<uint64_t>::max()),
-      m_driveName(std::move(driveName)),
+    : m_driveName(std::move(driveName)),
       m_logicalLibrary(std::move(logicalLibraryName)),
       m_baseDir(std::move(baseDir)),
+      m_tape(std::numeric_limits<uint64_t>::max()),
       m_rng(std::hash<std::string> {}(m_driveName)
             ^ static_cast<size_t>(std::chrono::steady_clock::now().time_since_epoch().count())) {
-  // VirtualDrive defaults m_tapeInPlace to true (for convenience), but a
-  // VtlDrive starts with an empty slot: no tape is loaded until the media
-  // changer mounts one and waitUntilReady() is called.
-  m_tapeInPlace = false;
+  // m_tape defaults to loaded=true (convenient for most drives), but a VtlDrive
+  // starts with an empty slot: no tape is present until the media changer mounts
+  // one and waitUntilReady() is called.
+  m_tape.setLoaded(false);
   // Pre-allocate for large stress-test tapes (~320 k files at 470 bytes each).
   m_tape.reserve(512'000);
   parseLibraryConf();
@@ -84,13 +84,13 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     std::this_thread::sleep_for(std::chrono::milliseconds(dist(m_rng)));
   }
 
-  m_tapeCapacity = info.capacityBytes;
+  m_tape.setCapacity(info.capacityBytes);
   m_maxWriteRateHz = info.maxWriteRateHz;
   m_lastWriteBlockTime = {};  // reset adaptive-rate state for this tape session
 
   loadTape(tapeFile);
   m_currentTapePath = tapeFile;
-  m_currentPosition = 0;
+  m_tape.resetPosition();
 
   // Synthesize a VOL1 label on a blank tape so WriteSession does not reject it.
   // Inlined to avoid a ctatapedfile link dependency on ctatapeddrive.
@@ -105,7 +105,7 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   //   [51..76] reserved2      spaces (26 bytes)
   //   [77..78] LBPMethod      "00"  (no LBP)
   //   [79]     lblStandard    "3"
-  if (m_tape.empty()) {
+  if (m_tape.isTapeBlank()) {
     struct RawVOL1 {
       char label[4];
       char vsn[6];
@@ -130,13 +130,13 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     const size_t vidLen = std::min(vid.size(), sizeof(vol1.vsn));
     std::memcpy(vol1.vsn, vid.data(), vidLen);
 
-    tapeBlock block;
-    block.data.assign(reinterpret_cast<const char*>(&vol1), sizeof(vol1));
-    block.remainingSpaceAfter = m_tapeCapacity - sizeof(vol1);
-    m_tape.push_back(std::move(block));
+    // writeBlock advances position; reset back to BOT so the caller reads
+    // from position 0 as expected.
+    m_tape.writeBlock(reinterpret_cast<const char*>(&vol1), sizeof(vol1));
+    m_tape.resetPosition();
   }
 
-  setTapeInPlace(true);
+  m_tape.setLoaded(true);
 }
 
 void VtlDrive::unloadTape() {
@@ -144,7 +144,7 @@ void VtlDrive::unloadTape() {
     saveTape();
     m_currentTapePath.clear();
   }
-  VirtualDrive::unloadTape();
+  m_tape.unloadTape();
 }
 
 void VtlDrive::writeBlock(const void* data, size_t count) {
@@ -164,7 +164,7 @@ void VtlDrive::writeBlock(const void* data, size_t count) {
     }
     m_lastWriteBlockTime = std::chrono::steady_clock::now();
   }
-  VirtualDrive::writeBlock(data, count);
+  m_tape.writeBlock(data, count);
 }
 
 void VtlDrive::saveTape() const {
@@ -182,7 +182,7 @@ void VtlDrive::saveTape() const {
     write32(k_magic);
     write32(k_version);
 
-    for (const auto& block : m_tape) {
+    for (const auto& block : m_tape.blocks()) {
       const uint64_t sz = block.data.size();
       write64(sz);
       if (sz > 0) {
@@ -203,11 +203,10 @@ void VtlDrive::saveTape() const {
 }
 
 void VtlDrive::loadTape(const std::filesystem::path& tapePath) {
-  m_tape.clear();
-
   if (std::filesystem::file_size(tapePath) == 0) {
-    // Empty file = blank tape (never archived).  Leave m_tape empty so that
-    // waitUntilReady() synthesises the VOL1 label.
+    // Empty file = blank tape (never archived).  loadBlocks({}) leaves m_tape
+    // blank so waitUntilReady() synthesises the VOL1 label.
+    m_tape.loadBlocks({});
     return;
   }
 
@@ -228,8 +227,9 @@ void VtlDrive::loadTape(const std::filesystem::path& tapePath) {
                                     + std::to_string(version));
   }
 
+  std::vector<InMemoryTape::Block> blocks;
   while (f.peek() != std::char_traits<char>::eof()) {
-    tapeBlock block;
+    InMemoryTape::Block block;
     uint64_t sz = 0;
     f.read(reinterpret_cast<char*>(&sz), sizeof(sz));
     if (!f) {
@@ -246,8 +246,9 @@ void VtlDrive::loadTape(const std::filesystem::path& tapePath) {
     if (!f) {
       throw cta::exception::Exception("VtlDrive::loadTape: truncated block in " + tapePath.string());
     }
-    m_tape.push_back(std::move(block));
+    blocks.push_back(std::move(block));
   }
+  m_tape.loadBlocks(std::move(blocks));
 }
 
 void VtlDrive::parseLibraryConf() {
@@ -307,17 +308,13 @@ cta::tape::drive::driveStatus VtlDrive::getDriveStatus() {
   st.ready = true;
   st.writeProtection = false;
   st.eod = false;
-  st.bot = (m_currentPosition == 0);
-  st.hasTapeInPlace = hasTapeInPlace();
+  st.bot = m_tape.isAtBOT();
+  st.hasTapeInPlace = m_tape.isLoaded();
   return st;
 }
 
-void VtlDrive::setDensityAndCompression(bool /*compression*/, unsigned char /*densityCode*/) {
-  // No physical density setting on a virtual tape; silently ignored.
-}
-
-void VtlDrive::setSTBufferWrite(bool /*bufWrite*/) {
-  // ST buffer control is a SCSI detail irrelevant to a virtual tape; ignored.
+std::string VtlDrive::getSerialNumber() {
+  return "VTL-" + m_driveName;
 }
 
 cta::tape::drive::LBPInfo VtlDrive::getLBPInfo() {
@@ -329,17 +326,48 @@ cta::tape::drive::LBPInfo VtlDrive::getLBPInfo() {
   return info;
 }
 
-std::string VtlDrive::getSerialNumber() {
-  return "VTL-" + m_driveName;
+cta::tape::SCSI::Structures::RAO::udsLimits VtlDrive::getLimitUDS() {
+  cta::tape::SCSI::Structures::RAO::udsLimits lims;
+  lims.maxSize = 30000;
+  lims.maxSupported = 30;
+  return lims;
 }
 
 cta::tape::drive::deviceInfo VtlDrive::getDeviceInfo() {
-  // VirtualDrive leaves serialNumber empty; UTL1::verifyCommon() verifies it
-  // matches the value written at archive time, so it must be non-empty.
-  // Capped at 12 chars to fit UHL1/UTL1 field width without silent truncation.
-  deviceInfo devInfo = VirtualDrive::getDeviceInfo();
+  // UTL1::verifyCommon() checks serialNumber against the value written at archive
+  // time, so it must be non-empty.  Capped at 12 chars to fit UHL1/UTL1 field
+  // width without silent truncation.
+  deviceInfo devInfo;
+  devInfo.product = "VirtualDrive";
+  devInfo.productRevisionLevel = "0.0";
+  devInfo.vendor = "CTA";
+  devInfo.isPIsupported = false;
   devInfo.serialNumber = m_driveName.substr(0, 12);
   return devInfo;
+}
+
+void VtlDrive::enableCRC32CLogicalBlockProtectionReadOnly() {
+  m_lbpToUse = lbpToUse::crc32cReadOnly;
+}
+
+void VtlDrive::enableCRC32CLogicalBlockProtectionReadWrite() {
+  m_lbpToUse = lbpToUse::crc32cReadWrite;
+}
+
+void VtlDrive::disableLogicalBlockProtection() {
+  m_lbpToUse = lbpToUse::disabled;
+}
+
+lbpToUse VtlDrive::getLbpToUse() {
+  return m_lbpToUse;
+}
+
+bool VtlDrive::isWriteProtected() {
+  return false;
+}
+
+std::vector<endOfWrapPosition> VtlDrive::getEndOfWrapPositions() {
+  return {{0, 208310, 0}, {1, 416271, 0}, {2, 624562, 0}};
 }
 
 }  // namespace cta::tape::drive

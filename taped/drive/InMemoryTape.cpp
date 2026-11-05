@@ -47,15 +47,10 @@ void InMemoryTape::clearCompressionStats() {
 }
 
 void InMemoryTape::positionToLogicalObject(uint32_t blockId) {
-  ++m_blockIdPositioningCount;
   if (blockId >= m_blocks.size()) {
     throw cta::exception::Exception("InMemoryTape: trying to position beyond the end of data");
   }
   m_currentPosition = blockId;
-}
-
-uint32_t InMemoryTape::getBlockIdPositioningCount() const {
-  return m_blockIdPositioningCount;
 }
 
 positionInfo InMemoryTape::getPositionInfo() {
@@ -72,26 +67,6 @@ physicalPositionInfo InMemoryTape::getPhysicalPositionInfo() {
   pos.lpos = 0;
   pos.wrap = m_currentPosition;
   return pos;
-}
-
-std::vector<endOfWrapPosition> InMemoryTape::getEndOfWrapPositions() {
-  return {{0, 208310, 0}, {1, 416271, 0}, {2, 624562, 0}};
-}
-
-void InMemoryTape::enableCRC32CLogicalBlockProtectionReadOnly() {
-  m_lbpToUse = lbpToUse::crc32cReadOnly;
-}
-
-void InMemoryTape::enableCRC32CLogicalBlockProtectionReadWrite() {
-  m_lbpToUse = lbpToUse::crc32cReadWrite;
-}
-
-void InMemoryTape::disableLogicalBlockProtection() {
-  m_lbpToUse = lbpToUse::disabled;
-}
-
-lbpToUse InMemoryTape::getLbpToUse() {
-  return m_lbpToUse;
 }
 
 void InMemoryTape::fastSpaceToEOM() {
@@ -172,13 +147,6 @@ void InMemoryTape::writeBlock(const void* data, size_t count) {
   m_currentPosition++;
 }
 
-void InMemoryTape::writeBlockForce(const void* data, size_t count) {
-  m_blocks.resize(m_currentPosition + 1);
-  m_blocks.at(m_currentPosition).data.assign(static_cast<const char*>(data), count);
-  m_blocks.at(m_currentPosition).remainingSpaceAfter = 0;
-  m_currentPosition++;
-}
-
 ssize_t InMemoryTape::readBlock(void* data, size_t count) {
   if (m_currentPosition >= m_blocks.size()) {
     throw cta::exception::Exception("InMemoryTape::readBlock: position " + std::to_string(m_currentPosition)
@@ -225,10 +193,6 @@ void InMemoryTape::readFileMark(const std::string& context) {
                                     + (context.empty() ? "" : " (" + context + ")"));
   }
   m_currentPosition++;
-}
-
-bool InMemoryTape::isWriteProtected() {
-  return false;
 }
 
 bool InMemoryTape::isAtBOT() {
