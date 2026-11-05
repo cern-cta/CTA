@@ -678,11 +678,13 @@ uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
   return nrows;
 }
 
-rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t limit) {
+rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(
+  Transaction& txn,
+  const size_t limit,
+  const std::unordered_map<std::string, uint64_t>& archiveMinRequestAgeByMountPolicy) {
   // Notes for dev process: we assume the DST_URL becomes SRC_URL, the ARCHIVE_REPORT_URL
   // and ARCHIVE_ERROR_REPORT_URL should not need to be used - must be checked
   // we assume these should be poiniting to the same disk URL as for retrieve
-  // MIN_ARCHIVE_REQUEST_AGE ? - to be checked if could be used same as for the
   // BASE_INSERT - the original copy NB from the retrieve
   // ALTERNATE_INSERT - the alternative COPY_NB to re-archive if any
   //
@@ -700,8 +702,35 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   // primary copy number goes through BASE_INSERT only; if that case were resolved here via
   // a catalogue lookup, the lookup would need to be per (STORAGE_CLASS, COPY_NB) and would
   // not see the ALTERNATE_INSERT entries, which already have their pools set.
+
+  // MIN_ARCHIVE_REQUEST_AGE has to come from the archive side of the mount policy, while the
+  // retrieve row only carries MIN_RETRIEVE_REQUEST_AGE. Mount policies live in the catalogue,
+  // which is a different database, so the caller passes in their archive minimum request ages and
+  // they are matched on the mount policy name here. A mount policy which is no longer in the
+  // catalogue falls back to the retrieve value, which is what this query used for every job
+  // before.
+  //
+  // The map is copied into a vector first, so that the VALUES list built here and the parameters
+  // bound below are in the same order.
+  const std::vector<std::pair<std::string, uint64_t>> mountPolicyAges(archiveMinRequestAgeByMountPolicy.begin(),
+                                                                      archiveMinRequestAgeByMountPolicy.end());
+  std::string mountPolicyAgesCte;
+  std::string minArchiveRequestAge = "M.MIN_RETRIEVE_REQUEST_AGE";
+  if (!mountPolicyAges.empty()) {
+    mountPolicyAgesCte = "MOUNT_POLICY_ARCHIVE_AGES (MOUNT_POLICY, MIN_ARCHIVE_REQUEST_AGE) AS ( VALUES ";
+    for (size_t i = 0; i < mountPolicyAges.size(); ++i) {
+      const std::string idx = std::to_string(i);
+      mountPolicyAgesCte += std::string(i ? ", " : "") + "(:MP_NAME_" + idx + "::VARCHAR, :MP_AGE_" + idx + "::BIGINT)";
+    }
+    mountPolicyAgesCte += " ),\n  ";
+    minArchiveRequestAge = R"SQL(COALESCE((SELECT MPA.MIN_ARCHIVE_REQUEST_AGE
+                      FROM MOUNT_POLICY_ARCHIVE_AGES MPA
+                     WHERE MPA.MOUNT_POLICY = M.MOUNT_POLICY), M.MIN_RETRIEVE_REQUEST_AGE))SQL";
+  }
+
   std::string sql = R"SQL(
-  WITH MOVED_ROWS AS (
+  WITH )SQL" + mountPolicyAgesCte
+                    + R"SQL(MOVED_ROWS AS (
     DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE rraq
     WHERE rraq.JOB_ID IN (
         SELECT JOB_ID
@@ -768,7 +797,8 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         M.TAPE_POOL,
         M.MOUNT_POLICY,
         M.PRIORITY,
-        M.MIN_RETRIEVE_REQUEST_AGE,
+        )SQL" + minArchiveRequestAge
+                    + R"SQL( AS MIN_ARCHIVE_REQUEST_AGE,
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         M.COPY_NB,
@@ -847,7 +877,8 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         REARCHIVE_POOL.REARCHIVE_TAPE_POOL_VAL AS TAPE_POOL,
         M.MOUNT_POLICY,
         M.PRIORITY,
-        M.MIN_RETRIEVE_REQUEST_AGE,
+        )SQL" + minArchiveRequestAge
+                    + R"SQL( AS MIN_ARCHIVE_REQUEST_AGE,
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         REARCHIVE_COPY.REARCHIVE_COPY_VAL AS COPY_NB,
@@ -931,6 +962,11 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT_BASE", 0);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT_ALTERNATE", 0);
   stmt.bindUint32(":LIMIT", limit);
+  for (size_t i = 0; i < mountPolicyAges.size(); ++i) {
+    const std::string idx = std::to_string(i);
+    stmt.bindString(":MP_NAME_" + idx, mountPolicyAges[i].first);
+    stmt.bindUint64(":MP_AGE_" + idx, mountPolicyAges[i].second);
+  }
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRepackRetrieveToArchive);
   return stmt.executeQuery();
 }

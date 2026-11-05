@@ -818,14 +818,22 @@ public:
    * All additional copies are created from the ALTERNATE_COPYNBS column on the DB side
    * (as filled when queueing the original retrieve request for repack)
    *
-   * @param txn       Active database transaction handle.
-   * @param limit     Maximum number of jobs to move in this batch.
+   * @param txn    Active database transaction handle.
+   * @param limit  Maximum number of jobs to move in this batch.
+   * @param archiveMinRequestAgeByMountPolicy
+   *               Archive minimum request age of every mount policy in the catalogue, keyed by
+   *               mount policy name. The retrieve row only carries MIN_RETRIEVE_REQUEST_AGE, so
+   *               this is what MIN_ARCHIVE_REQUEST_AGE of the new archive jobs is taken from.
+   *               A mount policy missing from the map (and an empty map) keeps the retrieve value.
    *
    * @return The rset containing statistics summary info
    *
    * @throws std::runtime_error if the database query fails.
    */
-  static rdbms::Rset transformJobBatchToArchive(Transaction& txn, const size_t limit);
+  static rdbms::Rset
+  transformJobBatchToArchive(Transaction& txn,
+                             const size_t limit,
+                             const std::unordered_map<std::string, uint64_t>& archiveMinRequestAgeByMountPolicy);
 
   /**
   * Update job status when job report failed

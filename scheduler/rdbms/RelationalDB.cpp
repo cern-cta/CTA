@@ -1319,8 +1319,16 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     //   2) all rearchive copies inserted additionally
     // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
     try {
+      // The new archive jobs take their MIN_ARCHIVE_REQUEST_AGE from the archive side of their
+      // mount policy; the retrieve rows they come from only carry MIN_RETRIEVE_REQUEST_AGE.
+      std::unordered_map<std::string, uint64_t> archiveMinRequestAgeByMountPolicy;
+      for (const auto& mountPolicy : m_catalogue.MountPolicy()->getCachedMountPolicies()) {
+        archiveMinRequestAgeByMountPolicy[mountPolicy.name] = mountPolicy.archiveMinRequestAge;
+      }
       auto count_rset =
-        schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn, c_repackRetrieveReportBatchSize);
+        schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn,
+                                                                               c_repackRetrieveReportBatchSize,
+                                                                               archiveMinRequestAgeByMountPolicy);
       auto count = 0;
       while (count_rset.next()) {
         schedulerdb::postgres::RepackRequestProgress update;
