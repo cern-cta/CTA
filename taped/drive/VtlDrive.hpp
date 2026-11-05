@@ -94,12 +94,21 @@ public:
 
   // These SCSI concepts have no meaning for a virtual tape; silently ignored.
   void setDensityAndCompression(bool = true, unsigned char = 0) override {}
+
   void setSTBufferWrite(bool) override {}
+
   drive::LBPInfo getLBPInfo() override;
+
   void setLogicalBlockProtection(unsigned char, unsigned char, bool, bool) override {}
+
   void setEncryptionKey(const std::string&) override {}
+
   bool clearEncryptionKey() override { return false; }
+
   bool isEncryptionCapEnabled() override { return false; }
+
+  // Virtual drive has no SCSI device; the empty-drive probe is a no-op.
+  bool requiresEmptyDriveProbe() const override { return false; }
 
   /**
    * Adaptive-mirror throttle: sleeps once per file at HDR1 for
@@ -110,46 +119,115 @@ public:
 
   // --- Delegation to InMemoryTape (tape-block operations) ---
   compressionStats getCompression() override { return m_tape.getCompression(); }
+
   void clearCompressionStats() override { m_tape.clearCompressionStats(); }
+
   void positionToLogicalObject(uint32_t b) override { m_tape.positionToLogicalObject(b); }
+
   positionInfo getPositionInfo() override { return m_tape.getPositionInfo(); }
+
   physicalPositionInfo getPhysicalPositionInfo() override { return m_tape.getPhysicalPositionInfo(); }
+
   std::vector<endOfWrapPosition> getEndOfWrapPositions() override;
   void enableCRC32CLogicalBlockProtectionReadOnly() override;
   void enableCRC32CLogicalBlockProtectionReadWrite() override;
   void disableLogicalBlockProtection() override;
+
   void fastSpaceToEOM(void) override { m_tape.fastSpaceToEOM(); }
+
   void rewind(void) override { m_tape.rewind(); }
+
   void spaceToEOM(void) override { m_tape.spaceToEOM(); }
+
   void spaceFileMarksBackwards(size_t count) override { m_tape.spaceFileMarksBackwards(count); }
+
   void spaceFileMarksForward(size_t count) override { m_tape.spaceFileMarksForward(count); }
+
   void flush(void) override { m_tape.flush(); }
+
   void writeSyncFileMarks(size_t count) override { m_tape.writeSyncFileMarks(count); }
+
   void writeImmediateFileMarks(size_t count) override { m_tape.writeImmediateFileMarks(count); }
+
   ssize_t readBlock(void* data, size_t count) override { return m_tape.readBlock(data, count); }
-  void readExactBlock(void* data, size_t count, const std::string& ctx) override { m_tape.readExactBlock(data, count, ctx); }
+
+  void readExactBlock(void* data, size_t count, const std::string& ctx) override {
+    m_tape.readExactBlock(data, count, ctx);
+  }
+
   void readFileMark(const std::string& ctx) override { m_tape.readFileMark(ctx); }
+
   bool isWriteProtected() override;
+
   bool isAtBOT() override { return m_tape.isAtBOT(); }
+
   bool isAtEOD() override { return m_tape.isAtEOD(); }
+
   bool isTapeBlank() override { return m_tape.isTapeBlank(); }
+
   lbpToUse getLbpToUse() override;
+
   bool hasTapeInPlace() override { return m_tape.isLoaded(); }
 
   // --- Drive-metadata and SCSI stubs ---
   std::string getGenericSCSIPath() override { return ""; }
+
   std::string getDriveFirmwareVersion() override { return "0.0"; }
-  std::map<std::string, uint64_t> getTapeWriteErrors() override { return {{"mountTotalCorrectedWriteErrors", 0}, {"mountTotalWriteBytesProcessed", 0}, {"mountTotalUncorrectedWriteErrors", 0}}; }
-  std::map<std::string, uint64_t> getTapeReadErrors() override { return {{"mountTotalCorrectedReadErrors", 0}, {"mountTotalReadBytesProcessed", 0}, {"mountTotalUncorrectedReadErrors", 0}}; }
-  std::map<std::string, uint32_t> getTapeNonMediumErrors() override { return {{"mountTotalNonMediumErrorCounts", 0}}; }
-  std::map<std::string, float> getQualityStats() override { return {{"lifetimeMediumEfficiencyPrct", 100.0f}, {"mountReadEfficiencyPrct", 100.0f}, {"mountWriteEfficiencyPrct", 100.0f}}; }
-  std::map<std::string, uint32_t> getDriveStats() override { return {{"mountTemps", 0}, {"mountReadTransients", 0}, {"mountWriteTransients", 0}, {"mountTotalReadRetries", 0}, {"mountTotalWriteRetries", 0}, {"mountServoTemps", 0}, {"mountServoTransients", 0}}; }
+
+  std::map<std::string, uint64_t> getTapeWriteErrors() override {
+    return {
+      {"mountTotalCorrectedWriteErrors",   0},
+      {"mountTotalWriteBytesProcessed",    0},
+      {"mountTotalUncorrectedWriteErrors", 0}
+    };
+  }
+
+  std::map<std::string, uint64_t> getTapeReadErrors() override {
+    return {
+      {"mountTotalCorrectedReadErrors",   0},
+      {"mountTotalReadBytesProcessed",    0},
+      {"mountTotalUncorrectedReadErrors", 0}
+    };
+  }
+
+  std::map<std::string, uint32_t> getTapeNonMediumErrors() override {
+    return {
+      {"mountTotalNonMediumErrorCounts", 0}
+    };
+  }
+
+  std::map<std::string, float> getQualityStats() override {
+    return {
+      {"lifetimeMediumEfficiencyPrct", 100.0f},
+      {"mountReadEfficiencyPrct",      100.0f},
+      {"mountWriteEfficiencyPrct",     100.0f}
+    };
+  }
+
+  std::map<std::string, uint32_t> getDriveStats() override {
+    return {
+      {"mountTemps",             0},
+      {"mountReadTransients",    0},
+      {"mountWriteTransients",   0},
+      {"mountTotalReadRetries",  0},
+      {"mountTotalWriteRetries", 0},
+      {"mountServoTemps",        0},
+      {"mountServoTransients",   0}
+    };
+  }
+
   std::map<std::string, uint32_t> getVolumeStats() override { return {}; }
+
   std::vector<uint16_t> getTapeAlertCodes() override { return {}; }
+
   std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) override { return {}; }
+
   std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) override { return {}; }
+
   bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>&) override { return false; }
+
   cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
+
   void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int) override { files.reverse(); }
 
   // Per-media-type properties derived from library.toml at construction time.

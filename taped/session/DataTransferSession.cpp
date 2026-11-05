@@ -617,10 +617,7 @@ cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::
 cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
                                                                                     cta::TapeMount* mount) {
   try {
-    auto drive = cta::tape::drive::createDrive(m_driveInfo.devFilename,
-                                               m_driveInfo.driveName,
-                                               m_driveInfo.logicalLibrary,
-                                               m_sysWrapper);
+    auto drive = cta::tape::drive::createDrive(m_driveInfo, m_sysWrapper);
     drive->info = m_driveInfo;
     return drive.release();
   } catch (cta::tape::SCSI::DeviceVector::NotFound&) {

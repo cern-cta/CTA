@@ -254,6 +254,14 @@ public:
   virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) = 0;
 
   /**
+   * Whether this drive needs the hardware empty-drive probe (SCSI TEST UNIT
+   * READY + READ POSITION) to detect a tape left in the drive from a prior
+   * session. Virtual drives have no SCSI device and manage their own state,
+   * so they override this to return false.
+   */
+  virtual bool requiresEmptyDriveProbe() const { return true; }
+
+  /**
    * The information of the tape drive.
    */
   cta::common::dataStructures::DriveInfo info;
@@ -268,18 +276,14 @@ public:
 std::unique_ptr<DriveInterface> createDrive(const SCSI::DeviceInfo& di, System::virtualWrapper& sw);
 
 /**
- * Factory overload that selects the drive type from the device URI.
+ * Factory overload that selects the drive type from the drive's catalogue info.
  * Creates a VtlDrive for "virtual://<base_dir>" URIs (scale/stress testing without
  * real SCSI hardware), or a DriveGeneric for all other device paths.
- * @param devFilename Device path or "virtual://<base_dir>" URI from the CTA catalogue.
- * @param driveName   Drive name as registered in the catalogue.
- * @param logicalLibrary Logical library this drive belongs to.
- * @param sw          System wrapper (unused for VtlDrive; required for SCSI scanning).
+ * @param driveInfo CTA-catalogue drive info (devFilename, driveName, logicalLibrary).
+ * @param sw        System wrapper (unused for VtlDrive; required for SCSI scanning).
  */
-std::unique_ptr<DriveInterface> createDrive(const std::string& devFilename,
-                                             const std::string& driveName,
-                                             const std::string& logicalLibrary,
-                                             System::virtualWrapper& sw);
+std::unique_ptr<DriveInterface> createDrive(const cta::common::dataStructures::DriveInfo& driveInfo,
+                                            System::virtualWrapper& sw);
 
 std::string getSerialNumber(const int& fd, System::virtualWrapper& sw);
 

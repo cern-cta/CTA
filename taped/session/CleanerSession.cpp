@@ -293,10 +293,7 @@ void cta::tape::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterf
 // createDrive
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::CleanerSession::createDrive() {
-  auto drive = drive::createDrive(m_driveInfo.devFilename,
-                                  m_driveInfo.driveName,
-                                  m_driveInfo.logicalLibrary,
-                                  m_sysWrapper);
+  auto drive = drive::createDrive(m_driveInfo, m_sysWrapper);
   if (!drive) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";

@@ -965,20 +965,35 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
   }
 }
 
-cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
-  std::optional<cta::mediachanger::MediaChangerFacade> mediaChangerOpt;
-  if (cta::tape::daemon::DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
-    mediaChangerOpt.emplace(m_driveInfo.driveName,
-                            m_driveInfo.logicalLibrary,
-                            cta::tape::daemon::DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename),
-                            m_lc.logger());
-  } else {
-    cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
-                                         m_tapedConfig.rmcPort.value(),
-                                         m_tapedConfig.rmcNetTimeout.value(),
-                                         m_tapedConfig.rmcRequestAttempts.value());
-    mediaChangerOpt.emplace(rmcProxy, m_lc.logger());
+namespace {
+
+// Picks the MediaChangerFacade constructor based on the drive's device URI:
+// "virtual://" URIs get the filesystem-backed changer (stress/scale testing);
+// everything else routes to rmcd. Returned as std::optional because
+// MediaChangerFacade is not movable (RmcProxy internals).
+std::optional<cta::mediachanger::MediaChangerFacade>
+makeMediaChangerForDrive(const cta::common::dataStructures::DriveInfo& driveInfo,
+                         const TapedConfiguration& tapedConfig,
+                         cta::log::Logger& log) {
+  if (DataTransferConfig::isVirtualDrive(driveInfo.devFilename)) {
+    return std::optional<cta::mediachanger::MediaChangerFacade>(
+      std::in_place,
+      driveInfo.driveName,
+      driveInfo.logicalLibrary,
+      DataTransferConfig::virtualDriveBaseDir(driveInfo.devFilename),
+      log);
   }
+  cta::mediachanger::RmcProxy rmcProxy(tapedConfig.rmcHost.value(),
+                                       tapedConfig.rmcPort.value(),
+                                       tapedConfig.rmcNetTimeout.value(),
+                                       tapedConfig.rmcRequestAttempts.value());
+  return std::optional<cta::mediachanger::MediaChangerFacade>(std::in_place, rmcProxy, log);
+}
+
+}  // namespace
+
+cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
+  auto mediaChangerOpt = makeMediaChangerForDrive(m_driveInfo, m_tapedConfig, m_lc.logger());
   cta::mediachanger::MediaChangerFacade& mediaChangerFacade = mediaChangerOpt.value();
   cta::tape::System::realWrapper sWrapper;
   const auto cleanerSession =
@@ -1096,19 +1111,7 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
   dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.wdGetNextMountMaxSecs.value();
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
-  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
-                                       m_tapedConfig.rmcPort.value(),
-                                       m_tapedConfig.rmcNetTimeout.value(),
-                                       m_tapedConfig.rmcRequestAttempts.value());
-  std::optional<cta::mediachanger::MediaChangerFacade> mediaChangerOpt;
-  if (cta::tape::daemon::DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
-    mediaChangerOpt.emplace(m_driveInfo.driveName,
-                            m_driveInfo.logicalLibrary,
-                            cta::tape::daemon::DataTransferConfig::virtualDriveBaseDir(m_driveInfo.devFilename),
-                            m_lc.logger());
-  } else {
-    mediaChangerOpt.emplace(rmcProxy, m_lc.logger());
-  }
+  auto mediaChangerOpt = makeMediaChangerForDrive(m_driveInfo, m_tapedConfig, m_lc.logger());
   cta::mediachanger::MediaChangerFacade& mediaChangerFacade = mediaChangerOpt.value();
   cta::tape::System::realWrapper sWrapper;
 

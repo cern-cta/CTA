@@ -2990,16 +2990,14 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const 
   throw ex;
 }
 
-std::unique_ptr<DriveInterface> createDrive(const std::string& devFilename,
-                                             const std::string& driveName,
-                                             const std::string& logicalLibrary,
-                                             System::virtualWrapper& sw) {
-  if (devFilename.rfind("virtual://", 0) == 0) {
-    const auto baseDir = devFilename.substr(std::string("virtual://").size());
-    return std::make_unique<VtlDrive>(driveName, logicalLibrary, baseDir);
+std::unique_ptr<DriveInterface> createDrive(const cta::common::dataStructures::DriveInfo& driveInfo,
+                                            System::virtualWrapper& sw) {
+  if (driveInfo.devFilename.rfind("virtual://", 0) == 0) {
+    const auto baseDir = driveInfo.devFilename.substr(std::string("virtual://").size());
+    return std::make_unique<VtlDrive>(driveInfo.driveName, driveInfo.logicalLibrary, baseDir);
   }
   SCSI::DeviceVector dv(sw);
-  const SCSI::DeviceInfo di = dv.findBySymlink(devFilename);
+  const SCSI::DeviceInfo di = dv.findBySymlink(driveInfo.devFilename);
   return createDrive(di, sw);
 }
 

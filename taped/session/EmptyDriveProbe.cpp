@@ -5,8 +5,6 @@
 
 #include "EmptyDriveProbe.hpp"
 
-#include "DataTransferConfig.hpp"
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -21,17 +19,6 @@ cta::tape::daemon::EmptyDriveProbe::EmptyDriveProbe(cta::log::Logger& log,
 // driveIsEmpty()
 //------------------------------------------------------------------------------
 bool cta::tape::daemon::EmptyDriveProbe::driveIsEmpty() noexcept {
-  // VTL drives have no robot arm and no risk of mechanical damage from an
-  // occupied drive slot.  Any stale .tape file left by a crashed session is
-  // caught later by VtlDrive::waitUntilReady(), which throws if it finds more
-  // than one tape file in the drive directory.  There is also no operator to
-  // respond to a drive-down event in an automated stress/scale-test environment.
-  if (DataTransferConfig::isVirtualDrive(m_driveInfo.devFilename)) {
-    std::vector<cta::log::Param> params = {cta::log::Param("tapeDrive", m_driveInfo.driveName)};
-    m_log(cta::log::INFO, "Virtual drive: empty-drive probe skipped, drive is empty", params);
-    return true;
-  }
-
   std::string errorMessage;
 
   try {
@@ -69,6 +56,15 @@ bool cta::tape::daemon::EmptyDriveProbe::exceptionThrowingDriveIsEmpty() {
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface& drive = *drivePtr.get();
 
+  // Drives that manage their own state (e.g. VtlDrive — no SCSI device, no
+  // robot arm, no mechanical damage risk) opt out of the hardware probe.
+  // Any stale state left by a crashed session is handled inside the drive
+  // implementation itself (e.g. VtlDrive::waitUntilReady()).
+  if (!drive.requiresEmptyDriveProbe()) {
+    m_log(cta::log::INFO, "Empty-drive probe skipped: drive opts out of hardware probe", params);
+    return true;
+  }
+
   if (drive.hasTapeInPlace()) {
     m_log(cta::log::INFO, "Probe found tape drive with a tape inside", params);
     return false;
@@ -82,11 +78,7 @@ bool cta::tape::daemon::EmptyDriveProbe::exceptionThrowingDriveIsEmpty() {
 // createDrive
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::EmptyDriveProbe::createDrive() {
-  SCSI::DeviceVector dv(m_sysWrapper);
-  SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
-
-  // Instantiate the drive object
-  std::unique_ptr<cta::tape::drive::DriveInterface> drive(drive::createDrive(driveInfo, m_sysWrapper));
+  std::unique_ptr<cta::tape::drive::DriveInterface> drive = drive::createDrive(m_driveInfo, m_sysWrapper);
 
   if (nullptr == drive.get()) {
     cta::exception::Exception ex;
