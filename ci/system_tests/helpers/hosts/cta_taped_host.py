@@ -1,12 +1,39 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import sys
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 
 from .remote_host import RemoteHost
+
+
+@dataclass
+class MediaTypeConf:
+    """Properties of one media type as declared in library.toml."""
+
+    name: str
+    capacity_bytes: int
+    vid_prefix: str
+    mount_delay_ms: int
+    count: int
+
+
+@dataclass
+class StressLibraryConf:
+    """Parsed contents of a stress-drive library.toml file."""
+
+    name: str
+    changer_timeout_ms: int
+    media_types: list[MediaTypeConf] = field(default_factory=list)
 
 
 class CtaTapedHost(RemoteHost):
@@ -28,7 +55,7 @@ class CtaTapedHost(RemoteHost):
     @cached_property
     def drive_device(self) -> str:
         device: str = self.exec_with_output("printenv DRIVE_DEVICE")
-        if not device.startswith("/dev/"):
+        if not device.startswith("/dev/") and "://" not in device:
             device = "/dev/" + device
         return device
 
@@ -61,3 +88,39 @@ class CtaTapedHost(RemoteHost):
 
     def label_tape(self, tape: str) -> None:
         self.exec(f"cta-tape-label --vid {tape} --force")
+
+    _VIRTUAL_DRIVE_SCHEME = "virtual://"
+
+    @cached_property
+    def is_stress_mode(self) -> bool:
+        """True when this taped pod uses virtual drives (DriveDevice starts with "virtual://")."""
+        device = self.exec_with_output("printenv DRIVE_DEVICE")
+        return device.startswith(self._VIRTUAL_DRIVE_SCHEME)
+
+    @cached_property
+    def stress_base_dir(self) -> Path:
+        """Library root extracted from the DriveDevice URI ("virtual://<base_dir>")."""
+        device = self.exec_with_output("printenv DRIVE_DEVICE")
+        return Path(device[len(self._VIRTUAL_DRIVE_SCHEME) :])
+
+    def read_stress_library_conf(self) -> StressLibraryConf:
+        """Read and parse the library.toml from the shared volume mounted in this pod."""
+        conf_path = self.stress_base_dir / "config" / self.logical_library_name / "library.toml"
+        raw = self.exec_with_output(f"cat '{conf_path}'")
+        data = tomllib.loads(raw)
+        lib = data["library"]
+        media_types = [
+            MediaTypeConf(
+                name=mt["name"],
+                capacity_bytes=mt["capacityBytes"],
+                vid_prefix=mt["vidPrefix"],
+                mount_delay_ms=mt.get("mountDelayMs", 0),
+                count=mt["count"],
+            )
+            for mt in lib.get("mediaTypes", [])
+        ]
+        return StressLibraryConf(
+            name=lib["name"],
+            changer_timeout_ms=lib.get("changerTimeoutMs", 30_000),
+            media_types=media_types,
+        )

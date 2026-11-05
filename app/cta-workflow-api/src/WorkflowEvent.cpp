@@ -383,7 +383,37 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
 
   utils::Timer t;
 
-  // Queue the request
+  // Queue the retrieve request into the scheduler database.
+  //
+  // EOS WFE scanner bottleneck — retrieve pre-queuing throughput ceiling:
+  //
+  // Every fs.prepare(STAGE) call creates one WFE event that EOS places into
+  // /eos/<instance>/proc/workflow/<YYYYMMDD>/q/<workflow>/
+  // as a single file named <unix-timestamp>:<fid>:prepare.
+  // For a run within one calendar day all events land in the SAME leaf
+  // directory (one date subdirectory, one workflow subdirectory).
+  //
+  // The EOS WFE scheduler wakes every wfe.interval seconds and scans that
+  // leaf directory to find the next batch of events to dispatch.  The hard
+  // throughput ceiling is wfe.ntx / wfe.interval events/s (stress-test
+  // tuning: ntx=100000, interval=15 → ~6.7 kHz).  ntx also caps the batch size,
+  // so the scanner stops after finding ntx candidates rather than walking the
+  // entire directory — keeping per-cycle scan cost O(ntx).
+  //
+  // A prepare/STAGE WFE event is only completed (and thus removed from the
+  // leaf directory) after the file has been staged back to disk — NOT when
+  // CTA queues the retrieve job.  With drives DOWN nothing is ever staged,
+  // so the leaf directory only grows.  At ~9 M pending entries the directory
+  // scan cost dominates and observed throughput collapses over ~1–2 h, even
+  // though this queueRetrieve() call and the RETRIEVE_PENDING_QUEUE INSERT
+  // remain fast throughout.  The bottleneck is the EOS WFE leaf-directory
+  // scanner — not CTA, not thread starvation.
+  //
+  // Mitigation: keep the leaf directory bounded by starting drives early
+  // enough that events complete (file staged → event removed) before the
+  // directory reaches millions of entries.  See retrieve_prequeue_fraction in
+  // test_pgsched_params.toml and wfe.ntx tuning in
+  // stress_test.py::test_update_setup_for_max_powerrrr.
   std::string retrieveReqId =
 #ifdef CTA_PGSCHED
     m_batchingLayer->queueRetrieve(m_cliIdentity.username, request, m_lc);

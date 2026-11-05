@@ -19,9 +19,13 @@
 
   [tests.stress]
 
-    # For the actual stress test we currently have 40 directories with 50.000 files each
-    # mhvtl is mounted in-memory, so we keep the file size small and easily compressible (unique string + zero padding)
-    num_dirs          = 40
+    # Total number of files to archive.  num_dirs is derived automatically as
+    # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
+    # files/dir limit.  Override per-run via the STRESS_TOTAL_FILES CI variable.
+    # File size is kept at 16 bytes; the effective tape footprint is 496 bytes/file
+    # (6 ANSI label blocks × 80 bytes + 16-byte data payload), giving ~4.7 GB total on
+    # tape for the full 10 M run — trivially small on the fast-ssd PVC.
+    total_files       = 10000000
     num_files_per_dir = 50000
     # file size in bytes
     file_size = 16
@@ -33,18 +37,88 @@
     write_files_in_chunks      = false
     check_copy_interval_sec    = 20
     check_archive_interval_sec = 10
-    # Stop waiting for archival after this many consecutive intervals without progress
-    max_no_progress_intervals = 3
+    # Stop waiting after this many consecutive 10-second intervals without progress.
+    # At each tape-cycle boundary all drives hit ENOSPC, save to PVC, dismount, and mount
+    # a new tape — dead zone at 100 drives: saveTape (~6 s) + dismount (~5 s) +
+    # mountDelayMs (~15 s minimum) ≈ 26 s.  8 intervals (80 s) gives ~3× headroom.
+    # (For retrieve: retrieveQueueCacheMaxAgeSecs 5 s + mountDelayMs 15 s + reporting ~1 s = 21 s → covered.)
+    max_no_progress_intervals = 8
     # Maximum acceptable file loss percentage before proceeding to retrieval
     max_acceptable_loss_percent = 5.0
 
     [tests.stress.prequeue]
 
-      # If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
-      # This prevents drives from outpacing the queueing capabilities of EOS.
-      enabled                    = true
-      num_files_to_put_drives_up = 1000000
-      # timeout in seconds
-      timeout_to_put_drives_up_sec = 3600
-      # how often to count number of files when prequeueing
-      check_interval_sec = 300
+      # If true, put drives down before archiving and only put them up after
+      # prequeue_fraction × total_files files are created.  This gives the
+      # scheduler a large backlog before the first tape mount so all drives
+      # stay busy from the start.
+      enabled = true
+
+      # Fraction of total_files that must be archive-queued before drives come
+      # up for the archive phase.  0.9 → 9 M of 10 M files queued first, then
+      # drives start and the last 1 M are queued while drives are already
+      # transferring.  Archive WFE events complete quickly (CTA queues the job
+      # → EOS marks done), so the /eos/proc/workflow/<date>/q/default/ leaf
+      # directory stays bounded and no scanner degradation occurs.
+      prequeue_fraction = 0.9
+
+      # Fraction of total_files that must be retrieve-queued before drives come
+      # up for the retrieve phase.
+      #
+      # EOS WFE scanner bottleneck:
+      #   Each fs.prepare(STAGE) call places one event into the leaf directory
+      #   /eos/<instance>/proc/workflow/<YYYYMMDD>/q/<workflow>/
+      #   A retrieve/STAGE event is only removed from that directory when the
+      #   file is staged back to disk — NOT when CTA queues the retrieve job.
+      #   With drives DOWN the directory only grows.  wfe.ntx=100000 caps the
+      #   per-cycle batch so the scanner stops after 100000 entries, bounding
+      #   scan cost regardless of queue depth.  With drives coming up at 0.5
+      #   the directory is drained concurrently from the start of the second
+      #   half, so the peak depth stays well below the level where even an
+      #   early-stop scan would become slow (~1–2 M entries at ~6.7 kHz for
+      #   ~5–10 min of pre-queuing, vs 9 M with the old 0.1 fraction).
+      retrieve_prequeue_fraction = 0.5
+
+      # Expected EOS queue throughput used to derive the drive-up timeout for
+      # both archive and retrieve phases:
+      #   timeout = (fraction × total_files / eos_queue_rate_hz) × timeout_margin_factor
+      eos_queue_rate_hz    = 1000
+      timeout_margin_factor = 1.2
+
+      # Check every 2 min so drives come up promptly once the threshold is crossed.
+      check_interval_sec = 120
+
+    # -----------------------------------------------------------------------
+    # Virtual stress-drive mode (no mhvtl, no real SCSI hardware).
+    # These settings are used by setup_stress_drives_test.py to prepare the
+    # CTA catalogue and the shared tmpfs tape library.
+    # They must be consistent with the drive list in the Helm preset
+    # stress-scale-values.yaml.
+    # -----------------------------------------------------------------------
+    [tests.stress.drives]
+
+      # Number of virtual tapes to register in the CTA catalogue.
+      # Must match mediaTypes[].count in virtual-tape-library/values.yaml.
+      # With ~47 MB tapes and 10 M files: 100 tapes needed; 120 gives ample headroom.
+      num_tapes = 120
+
+      # VID prefix: tapes are named <vid_prefix><4-digit index>, e.g. ST0001..ST0020.
+      # Must be at most 2 characters so that the full VID fits in the 6-character
+      # ANSI tape label VSN field (VOL1).  HeaderChecker::checkVOL1() compares the
+      # label VSN to the catalogue VID and throws if they differ.
+      # Must be unique across all tape pools in the catalogue.
+      vid_prefix = "ST"
+
+      # Logical library name that stress drives and tapes are registered under.
+      # Must match logicalLibraryName in the Helm preset drives list.
+      logical_library = "stress-lib"
+
+      # Shared tmpfs root directory mounted into every taped pod via hostPath.
+      # The setup test creates tapes/ and drives/ subdirectories here.
+      base_dir = "/dev/shm/cta-stress"
+
+      # Simulated tape capacity in bytes reported to the CTA catalogue.
+      # Must match capacityBytes in virtual-tape-library/values.yaml.
+      # Logical capacity: 80 (VOL1) + 5 × 20000 × 496 (logical bytes/file) = 49 600 080.
+      # See capacityBytes in virtual-tape-library/values.yaml for the derivation.
+      tape_capacity_bytes = 49600080  # ≈47.3 MB, exact 5-batch boundary

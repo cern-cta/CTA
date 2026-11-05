@@ -1,0 +1,89 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+# One pre-population Job per library.  Each Job:
+#   - Mounts its own PVC at /data
+#   - Reads library-{i}.toml from the shared ConfigMap
+#   - Creates the directory layout and blank tape files under /data
+#
+# Layout created under each PVC root:
+#   config/stress-lib-{i}/library.toml      — VtlDrive configuration
+#   contents/stress-lib-{i}/slots/          — VID.tape files (blank = never written)
+#   contents/stress-lib-{i}/changer/        — tape in transit; .lock = robot busy
+#   contents/stress-lib-{i}/drives/         — per-drive subdirs created by taped
+{{- range $i := until (int .Values.libraryCount) }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $.Release.Name }}-prepopulate-{{ $i }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  # Fail immediately on error rather than retrying — a failed prepopulate means
+  # the PVC is unavailable or the script is broken; retrying just delays the
+  # error message.  Helm --wait-for-jobs will report the failure quickly.
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: prepopulate
+          image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              LIB="stress-lib-{{ $i }}"
+              mkdir -p /data/config/${LIB}
+              mkdir -p /data/contents/${LIB}/slots
+              mkdir -p /data/contents/${LIB}/changer
+              mkdir -p /data/contents/${LIB}/drives
+              cp /config/library-{{ $i }}.toml /data/config/${LIB}/library.toml
+
+              awk '
+                /\[\[library\.mediaTypes\]\]/ {
+                  if (prefix != "" && n > 0)
+                    for (i = 1; i <= n; i++) printf "%s%04d\n", prefix, i
+                  prefix = ""; n = 0
+                }
+                /vidPrefix[[:space:]]*=/ {
+                  gsub(/^[^"]*"/, ""); gsub(/".*$/, ""); prefix = $0
+                }
+                /^[[:space:]]*count[[:space:]]*=/ {
+                  gsub(/[^0-9]/, ""); n = $0 + 0
+                }
+                END {
+                  if (prefix != "" && n > 0)
+                    for (i = 1; i <= n; i++) printf "%s%04d\n", prefix, i
+                }
+              ' "/data/config/${LIB}/library.toml" | while read -r vid; do
+                slot="/data/contents/${LIB}/slots/${vid}.tape"
+                [ -f "${slot}" ] || touch "${slot}"
+              done
+
+              echo "Virtual tape library pre-population complete."
+              echo "  config/${LIB}/library.toml"
+              echo "  contents/${LIB}/slots/  ($(ls /data/contents/${LIB}/slots/ | wc -l) tape files)"
+              echo "  contents/${LIB}/changer/"
+              echo "  contents/${LIB}/drives/"
+
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: library-conf
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $.Values.pvc.namePrefix }}-{{ $i }}
+        - name: library-conf
+          configMap:
+            name: {{ $.Release.Name }}-library-conf
+{{- end }}

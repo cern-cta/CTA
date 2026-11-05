@@ -7,6 +7,7 @@
 
 #include "DriveInterface.hpp"
 #include "FakeDrive.hpp"
+#include "VtlDrive.hpp"
 #include "common/checksum/CRC.hpp"
 #include "common/exception/MemException.hpp"
 #include "common/utils/Timer.hpp"
@@ -2814,6 +2815,17 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const 
   ex.getMessage() << "Failed to test unit ready after waiting " << timeoutSecond
                   << " seconds: " << lastTestUnitReadyExceptionMsg;
   throw ex;
+}
+
+std::unique_ptr<DriveInterface> createDrive(const cta::common::dataStructures::DriveInfo& driveInfo,
+                                            System::virtualWrapper& sw) {
+  if (driveInfo.devFilename.rfind("virtual://", 0) == 0) {
+    const auto baseDir = driveInfo.devFilename.substr(std::string("virtual://").size());
+    return std::make_unique<VtlDrive>(driveInfo.driveName, driveInfo.logicalLibrary, baseDir);
+  }
+  SCSI::DeviceVector dv(sw);
+  const SCSI::DeviceInfo di = dv.findBySymlink(driveInfo.devFilename);
+  return createDrive(di, sw);
 }
 
 }  // namespace cta::tape::drive

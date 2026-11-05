@@ -65,10 +65,15 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
     cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL).add("actualURL", sourceFile->URL());
     currentErrorToCount = TapeSessionFailure::DiskFileToReadSizeMismatch;
-    diskFileSize = sourceFile->size();
-    if (migratingFileSize != *diskFileSize) {
-      throw cta::exception::Exception("Mismatch between size given by the client "
-                                      "and the real one");
+    {
+      diskFileSize = sourceFile->size();
+      if (migratingFileSize != *diskFileSize) {
+        cta::log::ScopedParamContainer spc(lc);
+        spc.add("expectedSize", migratingFileSize).add("diskFileSize", *diskFileSize);
+        lc.log(cta::log::ERR, "Disk file size mismatch before read");
+        throw cta::exception::Exception("Mismatch between size given by the client "
+                                        "and the real one");
+      }
     }
     currentErrorToCount.reset();
 

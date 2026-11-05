@@ -134,6 +134,10 @@ public:
 
 /// @brief Common tape I/O and control contract for hardware drives and in-memory substitutes.
 ///
+/// Implemented by DriveGeneric (real SCSI drives), FakeDrive (unit-test double with failure
+/// injection), and VtlDrive (persistent virtual drive for stress/scale testing).
+/// FakeDrive and VtlDrive delegate tape I/O to an InMemoryTape member.
+///
 /// Operations may throw on device, system-call or unsupported-feature errors.
 /// Callers must serialize operations on a drive and stop all users before destroying it.
 class DriveInterface {
@@ -325,6 +329,12 @@ public:
   /// @param maxSupported Maximum number of segments to submit, obtained from getLimitUDS().
   virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) = 0;
 
+  /// @brief Whether this drive needs the hardware empty-drive probe (SCSI TEST UNIT READY +
+  /// READ POSITION) to detect a tape left in the drive from a prior session.
+  /// Virtual drives have no SCSI device and manage their own state, so they override
+  /// this to return false.
+  virtual bool requiresEmptyDriveProbe() const { return true; }
+
   cta::common::dataStructures::DriveInfo info;
 };
 
@@ -332,6 +342,14 @@ public:
 /// The returned pointer owns the drive; the borrowed system wrapper must outlive it.
 /// Unsupported device types and device-open failures raise exceptions.
 std::unique_ptr<DriveInterface> createDrive(const SCSI::DeviceInfo& di, System::virtualWrapper& sw);
+
+/// @brief Create a drive implementation selected from the drive's catalogue info.
+/// Returns a VtlDrive for "virtual://<base_dir>" URIs (scale/stress testing without real
+/// SCSI hardware), or a DriveGeneric for all other device paths.
+/// @param driveInfo CTA-catalogue drive info (devFilename, driveName, logicalLibrary).
+/// @param sw System wrapper (unused for VtlDrive; required for SCSI scanning).
+std::unique_ptr<DriveInterface> createDrive(const cta::common::dataStructures::DriveInfo& driveInfo,
+                                            System::virtualWrapper& sw);
 
 /// Read the unit serial number through a borrowed open device descriptor and system wrapper.
 std::string getSerialNumber(const int& fd, System::virtualWrapper& sw);

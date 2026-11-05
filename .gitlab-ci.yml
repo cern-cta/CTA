@@ -153,6 +153,29 @@ spec:
       description: "pgsched only: opportunistically batch concurrent queueing requests into a single bulk DB insert instead of queueing them one at a time."
       type: boolean
       default: false
+
+    use-stress-drives:
+      description: |-
+        Run the stress test with virtual VtlDrives instead of mhvtl tape hardware.
+        Drives are pure in-process software objects backed by a shared PVC directory;
+        no SCSI devices, kernel modules, or rmcd are needed.
+      type: boolean
+      default: false
+
+    num-stress-drives:
+      description: |-
+        Number of virtual drives for the stress-test job (use-stress-drives=true).
+        Has no effect when use-stress-drives is false.
+      type: number
+      default: 2
+
+    use-pgbouncer:
+      description: |-
+        Route catalogue and scheduler DB connections through PgBouncer.
+        Uses the pgbouncer-specific config files for both catalogue and scheduler.
+        Has no effect when scheduler-type is not pgsched.
+      type: boolean
+      default: false
 ---
 
 stages:
@@ -353,6 +376,8 @@ include:
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+      use-stress-drives: $[[ inputs.use-stress-drives ]]
+      num-stress-drives: $[[ inputs.num-stress-drives ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
@@ -407,6 +432,9 @@ include:
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
       enable-opportunistic-batching: $[[ inputs.enable-opportunistic-batching ]]
+      use-stress-drives: $[[ inputs.use-stress-drives ]]
+      num-stress-drives: $[[ inputs.num-stress-drives ]]
+      use-pgbouncer: $[[ inputs.use-pgbouncer ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.platform ]]" == "debian13"'

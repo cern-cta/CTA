@@ -9,6 +9,13 @@ image:
 logging:
   level: "INFO"
 
+# Pod startup stagger via initContainer sleep. Enabled only in scale-test
+# presets (e.g. stress-scale-values.yaml). Value is the maximum delay in
+# seconds; each pod sleeps hash(hostname) % staggerMaxSeconds. Set to 0
+# (default) to disable — production and non-scale CI start immediately.
+startup:
+  staggerMaxSeconds: 0
+
 drive:
   # Match the drive lifecycle defaults in cta-taped.example.toml.
   lifecycle:

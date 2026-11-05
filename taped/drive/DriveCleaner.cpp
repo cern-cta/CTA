@@ -301,18 +301,15 @@ void DriveCleaner::logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept 
 }
 
 std::unique_ptr<drive::DriveInterface> DriveCleaner::createDrive(System::virtualWrapper& sysWrapper) {
-  SCSI::DeviceVector dv(sysWrapper);
-  SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
-
-  // Instantiate the drive object
-  std::unique_ptr<drive::DriveInterface> drive(drive::createDrive(driveInfo, sysWrapper));
-
-  if (nullptr == drive.get()) {
+  // createDrive(DriveInfo, sw) dispatches on the devFilename URI: "virtual://<base_dir>"
+  // yields a VtlDrive (no SCSI device scan), any other path yields a DriveGeneric.
+  auto drive = drive::createDrive(m_driveInfo, sysWrapper);
+  if (!drive) {
     exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
   }
-
+  drive->info = m_driveInfo;
   return drive;
 }
 

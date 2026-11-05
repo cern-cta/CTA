@@ -119,6 +119,54 @@ save_logs() {
 
 }
 
+wipe_fast_ssd_pvs() {
+  local wipe_namespace="$1"
+  # Wipe fast-ssd PV node paths while the PVs are still Bound and queryable, so
+  # the paths are guaranteed clean before pods terminate and before reclaim_released_pvs runs.
+  local fast_ssd_pvs
+  fast_ssd_pvs=$(kubectl get pv -o json | jq -r \
+    --arg ns "$wipe_namespace" \
+    '.items[]
+    | select(
+        .spec.storageClassName == "fast-ssd"
+        and .spec.claimRef.namespace == $ns
+      )
+    | .metadata.name')
+
+  for pv in $fast_ssd_pvs; do
+    local path
+    path=$(kubectl get pv "$pv" -o jsonpath='{.spec.local.path}')
+    if [[ -z "$path" ]]; then
+      log_warn "Skipping ${pv}: no local path found."
+      continue
+    fi
+    log_task "Wiping fast-ssd PV data at ${path} (${pv})..."
+    (
+      shopt -s dotglob
+      sudo rm -rf "${path:?}/"*
+      log_success "Wiped ${pv} at ${path}."
+    ) &
+  done
+  wait
+}
+
+cleanup_hostpath_pvs() {
+  local wipe_namespace="$1"
+  # Delete manually-created hostPath PVs (created by create_instance.sh when no
+  # fast-ssd or local-path StorageClass is available).  Identified by label.
+  local hostpath_pvs
+  hostpath_pvs=$(kubectl get pv -l "cta-hostpath-ns=${wipe_namespace}" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null || true)
+  for pv in $hostpath_pvs; do
+    local path
+    path=$(kubectl get pv "$pv" -o jsonpath='{.spec.hostPath.path}' 2>/dev/null || true)
+    if [[ -n "$path" && -d "$path" ]]; then
+      log_task "Removing hostPath PV data at ${path} (${pv})..."
+      rm -rf "${path:?}"
+    fi
+    kubectl delete pv "$pv" --ignore-not-found >/dev/null
+  done
+}
+
 reclaim_released_pvs() {
   wipe_namespace="$1"
   released_pvs=$(kubectl get pv -o json | jq -r \
@@ -243,14 +291,20 @@ delete_instance() {
   rm -f /tmp/${namespace}-rmcd-*-values.yaml
   rm -f /tmp/${namespace}-taped-*-values.yaml
 
-  # Delete the actual namespace
+  # Wipe fast-ssd PV data while PVs are still Bound and paths are queryable.
+  if [[ "$wipe_pvs" = true ]]; then
+    wipe_fast_ssd_pvs "$namespace"
+  fi
+
+  # Delete the actual namespace (waits until all pods are terminated).
   log_task "Deleting CTA instance ${namespace}..."
   kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n "${namespace}" --now --wait=false >/dev/null
   kubectl delete namespace "${namespace}" --wait=true >/dev/null
 
-  # Reclaim any PVs
+  # Reclaim fast-ssd PVs: remove claimRef so they become Available again.
   if [[ "$wipe_pvs" = true ]]; then
     reclaim_released_pvs $namespace
+    cleanup_hostpath_pvs $namespace
   else
     log_warn "Skipping reclamation of released persistent volumes."
   fi

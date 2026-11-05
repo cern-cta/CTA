@@ -10,7 +10,7 @@ danger-review:
     - when: never
   image: $IMAGE_DANGER
   variables:
-    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
+    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     DANGER_GITLAB_USE_THREADS: 1
   before_script:
     # Ensure Danger doesn't have to fetch a lot of repo history

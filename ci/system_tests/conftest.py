@@ -12,6 +12,11 @@ pytest_plugins = [
 
 _canonical_items_key = pytest.StashKey[list[pytest.Item]]()
 
+
+def _parse_bool_option(v: str) -> bool:
+    return v.lower() in ("1", "true", "yes")
+
+
 # =========================================================================
 #  Commandline options
 # =========================================================================
@@ -57,6 +62,30 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         type=Path,
         default=Path("config/test_params.toml"),
         help="Path to the config file containing all test parameters",
+    )
+    parser.addoption(
+        "--stress-total-files",
+        type=int,
+        default=None,
+        help="Override the total number of files for the stress test (num_dirs is derived automatically)",
+    )
+    parser.addoption(
+        "--stress-prequeue-enabled",
+        type=_parse_bool_option,
+        default=None,
+        help="Override prequeue.enabled in the stress test config (true/false)",
+    )
+    parser.addoption(
+        "--stress-prequeue-fraction",
+        type=float,
+        default=None,
+        help="Override prequeue.prequeue_fraction in the stress test config (e.g. 0.9)",
+    )
+    parser.addoption(
+        "--stress-retrieve-prequeue-fraction",
+        type=float,
+        default=None,
+        help="Override prequeue.retrieve_prequeue_fraction in the stress test config (e.g. 0.1)",
     )
 
 

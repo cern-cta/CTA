@@ -1,8 +1,10 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import shlex
 import subprocess
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -118,6 +120,100 @@ class K8sConnection(RemoteConnection):
         else:
             stdout = ""
             stderr = ""
+
+        return ExecResult(stdout=stdout, stderr=stderr, success=success)
+
+    def exec_long_running(
+        self,
+        command: str,
+        capture_output: bool = False,
+        throw_on_failure: bool = True,
+        print_command: bool = False,
+        poll_timeout_secs: int = 14400,
+    ) -> ExecResult:
+        """Execute a long-running command without holding a Kubernetes WebSocket open.
+
+        Starts the command as a setsid background process on the pod, polls for
+        completion via a sentinel file, then reads back stdout/stderr.
+
+        The critical property: setsid moves the background process into a new session
+        and process group.  Kubernetes keeps an exec WebSocket open until every process
+        in the exec session's process group exits.  Without setsid the background
+        process shares the shell's process group, so the WebSocket stays open for the
+        entire duration of the command (hours) and eventually times out.  With setsid
+        the shell's process group is empty as soon as the shell exits (~1 s), so the
+        WebSocket closes immediately and the poll loop takes over.
+        """
+        if print_command:
+            print(command)
+
+        tmpdir = f"/tmp/cta_exec_{uuid.uuid4().hex}"
+        # Build the inner shell fragment that captures output and records the exit code.
+        inner = f"{command} > {tmpdir}/stdout 2> {tmpdir}/stderr; echo $? > {tmpdir}/exitcode"
+        # setsid creates a new session so the background process is fully detached from
+        # the exec session.  Some Kubernetes container runtimes (containerd/cri-o) send
+        # SIGHUP or even SIGKILL to the entire session when the exec WebSocket closes;
+        # nohup only ignores SIGHUP, while setsid moves the process into a new session
+        # that the runtime never touches.  The subshell ( ... ) ensures $! refers to the
+        # setsid PID and that tmpdir already exists before the pid file is written.
+        launch = f"mkdir -p {tmpdir} && ( setsid sh -c {shlex.quote(inner)} > /dev/null 2>&1 & echo $! > {tmpdir}/pid )"
+        # This exec is short-lived — it just daemonises the process and returns.
+        self.exec(launch)
+
+        deadline = time.time() + poll_timeout_secs
+        exitcode: Optional[int] = None
+        # Under 100-drive scale-test load the K8s API server can be temporarily
+        # slow and return a TCP-level timeout on established WebSocket connections.
+        # Track consecutive failures so we retry transient errors but still raise
+        # after 5 consecutive failures (~2.5 min worst-case overhead).
+        _consecutive_failures = 0
+        _MAX_CONSECUTIVE_FAILURES = 5
+        try:
+            # Poll every 30 s for the exit-code sentinel file.
+            while True:
+                if time.time() > deadline:
+                    raise TimeoutError(
+                        f"exec_long_running: command did not finish within {poll_timeout_secs}s: {command!r}"
+                    )
+                try:
+                    probe = self.exec(
+                        f"cat {tmpdir}/exitcode 2>/dev/null || true",
+                        capture_output=True,
+                        throw_on_failure=False,
+                    )
+                    _consecutive_failures = 0
+                except Exception:
+                    _consecutive_failures += 1
+                    if _consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                        raise
+                    time.sleep(30)
+                    continue
+                raw = probe.stdout.strip()
+                if raw:
+                    try:
+                        exitcode = int(raw)
+                        break
+                    except ValueError:
+                        pass  # partial write — retry on next poll
+                time.sleep(30)
+        finally:
+            if exitcode is None:
+                # Timed out or interrupted — kill the background process and clean up.
+                try:
+                    self.exec(
+                        f"kill $(cat {tmpdir}/pid 2>/dev/null) 2>/dev/null; rm -rf {tmpdir}",
+                        throw_on_failure=False,
+                    )
+                except Exception:
+                    pass  # best-effort cleanup; don't mask the original exception
+
+        stdout = self.exec(f"cat {tmpdir}/stdout", capture_output=True, throw_on_failure=False).stdout
+        stderr = self.exec(f"cat {tmpdir}/stderr", capture_output=True, throw_on_failure=False).stdout
+        self.exec(f"rm -rf {tmpdir}", throw_on_failure=False)
+
+        success = exitcode == 0
+        if throw_on_failure and not success:
+            raise RuntimeError(f'"{command}" failed with exit code {exitcode}: {stderr}')
 
         return ExecResult(stdout=stdout, stderr=stderr, success=success)
 

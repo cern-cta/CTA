@@ -101,3 +101,4 @@ Pipfile.lock
 
 # Generated Debian packaging state
 /debian/
+.idea/

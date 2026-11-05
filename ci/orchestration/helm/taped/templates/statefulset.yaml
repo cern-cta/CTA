@@ -37,6 +37,25 @@ spec:
         runAsUser: 1000 # cta
         runAsGroup: 33 # tape
         fsGroup: 33
+      {{- if gt (int $.Values.startup.staggerMaxSeconds) 0 }}
+      # Scale-test startup stagger: each taped pod sleeps a deterministic
+      # fraction of staggerMaxSeconds, derived from its hostname, before
+      # the main container starts.  This spreads OTel exporter boot times
+      # across the whole range so 100 pods do not all open simultaneous
+      # HTTPS connections to the collector at every subsequent export tick
+      # (replaces the pre-rebase reinitTelemetryWithJitter() C++ hack).
+      # Set staggerMaxSeconds=0 in production values to disable.
+      initContainers:
+      - name: startup-stagger
+        image: busybox:1.36
+        command: ["sh", "-c"]
+        args:
+          - |
+            SEED=$(echo "$HOSTNAME" | cksum | awk '{print $1}')
+            DELAY=$(( SEED % {{ int $.Values.startup.staggerMaxSeconds }} ))
+            echo "startup-stagger: hostname=$HOSTNAME sleep=${DELAY}s (max {{ $.Values.startup.staggerMaxSeconds }}s)"
+            sleep "$DELAY"
+      {{- end }}
       containers:
       - name: cta-taped
         image: {{ include "taped.image" $ }}

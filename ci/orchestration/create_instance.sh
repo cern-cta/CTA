@@ -29,11 +29,14 @@ usage() {
   echo "      --dcache-image-repository <repo>: Docker image repository for the dCache chart."
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <files>:           Values file(s) to use for the CTA chart. Comma-separated for composition."
-  echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes."
+  echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes.
+      --eos-deploy-timeout <min>:    EOS Helm chart installation timeout in minutes (default: 5)."
   echo "      --one-logical-library           Will use only one logical library name for all drives except the default creating one library name for each drive."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
   echo "      --extra-cta-values:             Extra verbatim values for the CTA chart. These will override any previous values from files."
+  echo "      --no-hardware-drives:           Use virtual stress drives instead of mhvtl/SCSI hardware.  Deploys the virtual-tape-library chart and generates a drive list from --max-drives."
+  echo "      --num-stress-libraries <n>:     Number of independent logical libraries for stress drives (default: 1). Requires --no-hardware-drives."
   exit 1
 }
 
@@ -46,6 +49,126 @@ check_deploy_commands() {
     fi
   done
   (( errors == 0 )) || die "Deployment requirements are not satisfied."
+}
+
+deploy_virtual_tape_library() {
+  log_task "Deploying virtual-tape-library chart (PVC + directory layout + library.toml)..."
+  local num_libs="${num_stress_libraries:-1}"
+  local -a extra_flags=()
+  if kubectl get sc fast-ssd >/dev/null 2>&1; then
+    # fast-ssd uses WaitForFirstConsumer with static (no-provisioner) PVs.
+    # Collect all available fast-ssd PVs; if there are enough, bind each
+    # library PVC directly to its own PV (bypasses WaitForFirstConsumer so
+    # the prepopulate Job starts immediately).
+    # On teardown, reclaim_released_pvs in delete_instance.sh catches the PVs
+    # (Released, claimRef.namespace matches, not local-path) and reclaims them.
+    readarray -t fast_ssd_pvs < <(kubectl get pv -o json | jq -r \
+      '[.items[] | select(.spec.storageClassName=="fast-ssd" and .status.phase=="Available") | .metadata.name] | .[]')
+    if [[ ${#fast_ssd_pvs[@]} -ge "${num_libs}" ]]; then
+      echo "  fast-ssd StorageClass found — binding ${num_libs} PVC(s) to: ${fast_ssd_pvs[*]:0:${num_libs}}"
+      extra_flags+=("--set" "pvc.storageClass=fast-ssd")
+      for i in $(seq 0 $((num_libs - 1))); do
+        extra_flags+=("--set" "pvc.volumeNames[${i}]=${fast_ssd_pvs[$i]}")
+      done
+    elif [[ ${#fast_ssd_pvs[@]} -gt 0 ]]; then
+      log_warn "Found ${#fast_ssd_pvs[@]} fast-ssd PV(s) but need ${num_libs}; using cluster default StorageClass."
+    else
+      echo "  fast-ssd StorageClass found but no Available PVs — using cluster default StorageClass."
+    fi
+  elif kubectl get sc local-path >/dev/null 2>&1; then
+    # local-path is the default dynamic provisioner on k3s / k3d clusters.
+    # It creates a directory under /var/lib/rancher/k3s/storage/ on the node.
+    echo "  local-path StorageClass found — using it for library PVCs."
+    extra_flags+=("--set" "pvc.storageClass=local-path")
+  else
+    # No suitable StorageClass found.  Create one hostPath PV per library
+    # under /tmp so the prepopulate Job and taped pods can bind immediately.
+    # This covers single-node clusters (CI workers, local kind/minikube)
+    # where the node filesystem is directly accessible from kubectl.
+    # Cleanup: delete_instance.sh removes these PVs and dirs (pass --keep-pvs to skip).
+    echo "  No fast-ssd or local-path StorageClass — creating hostPath PVs under /tmp."
+    for i in $(seq 0 $((num_libs - 1))); do
+      local dir="/tmp/cta-tape-lib-${namespace}-${i}"
+      local pv_name="cta-tape-lib-${namespace}-${i}"
+      mkdir -p "${dir}"
+      kubectl apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ${pv_name}
+  labels:
+    cta-hostpath-ns: "${namespace}"
+spec:
+  capacity:
+    storage: 50Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: "${dir}"
+EOF
+      extra_flags+=("--set" "pvc.volumeNames[${i}]=${pv_name}")
+    done
+    # storageClassName: "" in the PVC matches the PVs above (no StorageClass).
+    extra_flags+=("--set" "pvc.storageClass=-")
+  fi
+  extra_flags+=("--set" "libraryCount=${num_libs}")
+  helm upgrade --install virtual-tape-library helm/virtual-tape-library \
+    --namespace "${namespace}" \
+    --wait --wait-for-jobs --timeout 10m \
+    "${extra_flags[@]}"
+  log_success "virtual-tape-library chart deployed."
+}
+
+generate_stress_drive_values() {
+  local num_libs="${num_stress_libraries:-1}"
+  local drives_per_lib=$(( (max_drives + num_libs - 1) / num_libs ))
+  log_task "Generating stress drive configuration (${max_drives} drives across ${num_libs} librar$([ "$num_libs" -eq 1 ] && echo y || echo ies))..."
+
+  # Per-drive taped values.  Drives are split across libraries by ceiling division;
+  # the last library may have fewer drives if max_drives is not a multiple of num_libs.
+  # All library PVCs are mounted into every taped pod so that library.toml is always
+  # readable from any pod, regardless of which library the drive belongs to.
+  taped_config=$(mktemp "/tmp/${namespace}-taped-stress-XXXXXX-values.yaml")
+  {
+    echo "taped:"
+    echo "  drives:"
+    # Drive naming: S{lib}D{index_within_lib} — mirrors the tape VID prefix S{lib},
+    # so everything in library N is immediately identifiable in logs and monitoring.
+    # Example: 10 drives across 3 libraries → S0D0000..S0D0009, S1D0000..S1D0009, S2D0000..S2D0004
+    for i in $(seq 0 $((max_drives - 1))); do
+      lib_index=$(( i / drives_per_lib ))
+      (( lib_index >= num_libs )) && lib_index=$(( num_libs - 1 ))
+      drive_in_lib=$(( i % drives_per_lib ))
+      printf "    - name: \"S%dD%04d\"\n" "$lib_index" "$drive_in_lib"
+      printf "      device: \"virtual:///cta-stress-lib-%d\"\n" "$lib_index"
+      printf "      logicalLibraryName: \"stress-lib-%d\"\n" "$lib_index"
+      printf "      controlPath: \"smc0\"\n"
+    done
+    echo "  extraVolumes:"
+    echo "    volumes:"
+    for l in $(seq 0 $((num_libs - 1))); do
+      printf "      - name: \"stress-lib-%d\"\n" "$l"
+      printf "        persistentVolumeClaim:\n"
+      printf "          claimName: \"cta-virtual-tape-library-%d\"\n" "$l"
+    done
+    echo "    volumeMounts:"
+    for l in $(seq 0 $((num_libs - 1))); do
+      printf "      - name: \"stress-lib-%d\"\n" "$l"
+      printf "        mountPath: \"/cta-stress-lib-%d\"\n" "$l"
+    done
+  } > "$taped_config"
+
+  echo "Content of stress drive values file $taped_config:"
+  echo
+  cat "$taped_config"
+  echo
+
+  # Disable rmcd: no tape library hardware is present; taped never contacts rmcd
+  # for virtual drives, and /dev/smc does not exist on a node without mhvtl.
+  rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
+  printf "rmcd:\n  enabled: false\n" > "$rmcd_config"
 }
 
 # This should all go once we have auto-discovery and auto-scaling of hardware resources
@@ -148,10 +271,14 @@ create_instance() {
   dcache_enabled=false
   # CTA chart timeout
   chart_install_timeout=5
+  # EOS chart timeout
+  eos_deploy_timeout=5
   # Telemetry
   local_telemetry=false
   publish_telemetry=false
   one_logical_library=false
+  no_hardware_drives=false
+  num_stress_libraries=2
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -218,8 +345,15 @@ create_instance() {
       --chart-install-timeout)
         chart_install_timeout="$2"
         shift ;;
+      --eos-deploy-timeout)
+        eos_deploy_timeout="$2"
+        shift ;;
       --publish-telemetry) publish_telemetry=true ;;
       --one-logical-library) one_logical_library=true ;;
+      --no-hardware-drives) no_hardware_drives=true ;;
+      --num-stress-libraries)
+        num_stress_libraries="$2"
+        shift ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;
@@ -264,8 +398,13 @@ create_instance() {
     die "Another CTA release was found. Currently, installing multiple CTA releases on the same machine is not supported."
   fi
 
-  # Determine the library config to use
-  if [[ -z "${tapeservers_config}" ]]; then
+  # Determine the library config to use (drive values only; the virtual-tape-library
+  # chart itself is deployed after the namespace is created, see below).
+  taped_config=""
+  rmcd_config=""
+  if [[ "${no_hardware_drives}" == "true" ]]; then
+    generate_stress_drive_values
+  else
     generate_tape_values_files
   fi
 
@@ -303,6 +442,11 @@ create_instance() {
   log_task "Creating namespace ${namespace}..."
   kubectl create namespace "${namespace}"
   kubectl label namespace "$namespace" "app.kubernetes.io/managed-by=cta-create-instance"
+
+  # Deploy the virtual-tape-library chart now that the namespace exists.
+  if [[ "${no_hardware_drives}" == "true" ]]; then
+    deploy_virtual_tape_library
+  fi
   log_task "Copying secrets into namespace ${namespace}..."
   for secret_name in ${secrets}; do
     # If the secret exists...
@@ -325,9 +469,18 @@ create_instance() {
           --namespace "${namespace}" \
           --values "${opentelemetry_collector_config}" \
           --wait --timeout 2m
+    # For virtual-drive (stress/scale) tests, overlay relaxed scrape settings on
+    # top of the base Prometheus config: 100 pods export simultaneously, which
+    # temporarily slows the OTel collector's :8889 Prometheus endpoint and causes
+    # holes in Grafana when the default 3 s scrape_timeout fires first.
+    stress_prometheus_overlay=""
+    if [[ "${no_hardware_drives}" == "true" ]]; then
+      stress_prometheus_overlay="--values presets/stress-prometheus-values.yaml"
+    fi
     helm install prometheus prometheus-community/prometheus \
           --namespace "${namespace}" \
           --values "${prometheus_config}" \
+          ${stress_prometheus_overlay} \
           --wait --timeout 2m
   fi
 
@@ -364,7 +517,8 @@ create_instance() {
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
                     --eos-image-repository "${eos_image_repository}" \
-                    --eos-image-tag "${eos_image_tag}" &
+                    --eos-image-tag "${eos_image_tag}" \
+                    --eos-deploy-timeout "${eos_deploy_timeout}" &
     eos_pid=$!
   fi
 
@@ -380,16 +534,20 @@ create_instance() {
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
 
+  # Flags applied BEFORE the cta_config chain so that user-supplied presets
+  # (e.g. stress-cta-pgsched-values.yaml) can override telemetry defaults.
+  pre_cta_chart_flags=""
+  if [[ "$local_telemetry" == "true" ]]; then
+    pre_cta_chart_flags+=" --values presets/dev-cta-telemetry-values.yaml"
+  fi
+  if [[ "$publish_telemetry" == "true" ]]; then
+    pre_cta_chart_flags+=" --values presets/ci-cta-telemetry-values.yaml"
+  fi
+
   extra_cta_chart_flags=""
   if [[ "$dcache_enabled" == "true" ]]; then
     # The dCache CTA nearline-storage driver only supports mTLS.
     extra_cta_chart_flags+=" --values presets/frontend-wfe/auth-mtls.yaml"
-  fi
-  if [[ "$local_telemetry" == "true" ]]; then
-    extra_cta_chart_flags+=" --values presets/dev-cta-telemetry-values.yaml"
-  fi
-  if [[ "$publish_telemetry" == "true" ]]; then
-    extra_cta_chart_flags+=" --values presets/ci-cta-telemetry-values.yaml"
   fi
   # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
   if grep -q "postgres" "$scheduler_config"; then
@@ -397,19 +555,39 @@ create_instance() {
   else
     extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
   fi
+  # stress-cta-maintd-values.yaml raises the maintd OTel reader timeout 100 ms → 1500 ms.
+  # Only for --local-telemetry: the file has a hardcoded local-collector endpoint
+  # (http://otel-opentelemetry-collector:4318) — applying it with --publish-telemetry
+  # would override the MONIT endpoint set by ci-cta-telemetry-values.yaml, redirecting
+  # maintd metrics to a collector that does not exist in the scale-test namespace.
+  if [[ "${no_hardware_drives}" == "true" ]] && [[ "$local_telemetry" == "true" ]]; then
+    extra_cta_chart_flags+=" --values presets/stress-cta-maintd-values.yaml"
+  fi
+  # stress-cta-taped-values.yaml slows each taped pod's export interval 1 s → 15 s
+  # (matching the Prometheus scrape cycle).  100 pods × 1 s/pod = 100 req/s saturates
+  # the MONIT endpoint (or the local collector) and causes metric drops; 15 s → ~7 req/s.
+  # This file only sets interval/timeout — no endpoint — so it is safe for both modes.
+  if [[ "${no_hardware_drives}" == "true" ]] && { [[ "$local_telemetry" == "true" ]] || [[ "$publish_telemetry" == "true" ]]; }; then
+    extra_cta_chart_flags+=" --values presets/stress-cta-taped-values.yaml"
+  fi
   if [[ "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "
+  fi
+  if [[ -n "${taped_config}" ]]; then
+    extra_cta_chart_flags+=" -f ${taped_config}"
+  fi
+  if [[ -n "${rmcd_config}" ]]; then
+    extra_cta_chart_flags+=" -f ${rmcd_config}"
   fi
 
 
   log_run helm upgrade --install cta helm/cta \
                                 --namespace "${namespace}" \
+                                ${pre_cta_chart_flags} \
                                 ${cta_config} \
                                 --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
-                                -f "${taped_config}" \
-                                -f "${rmcd_config}" \
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}
   log_success "Deployed CTA in namespace ${namespace}."
 

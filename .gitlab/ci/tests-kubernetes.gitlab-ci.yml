@@ -21,6 +21,14 @@ spec:
     enable-opportunistic-batching:
       type: boolean
       default: false
+    use-stress-drives:
+      type: boolean
+    num-stress-drives:
+      type: number
+      default: 2
+    use-pgbouncer:
+      type: boolean
+      default: false
 ---
 # All of the below tests use only the docker image generated in the build:image stage.
 # They should not rely on any other generated artifacts.
@@ -44,10 +52,11 @@ spec:
       SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
     fi
   - | # Which catalogue config to use
+    # Use ${VAR:-default} so a value set via GitLab UI "Rerun job with modified values" is preserved.
     if $ENABLE_ORACLE_SUPPORT; then
-      CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+      CATALOGUE_CONFIG="${CATALOGUE_CONFIG:-/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml}"
     else
-      CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+      CATALOGUE_CONFIG="${CATALOGUE_CONFIG:-presets/dev-catalogue-postgres-values.yaml}"
     fi
   - | # Opportunistic batching overlay (pgsched only)
     if [[ "$SCHEDULER_TYPE" == "pgsched" ]] && $[[ inputs.enable-opportunistic-batching ]]; then
@@ -58,6 +67,14 @@ spec:
       IMAGE_TAG="$[[ inputs.custom-cta-image-tag ]]"
     else
       IMAGE_TAG="${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}"
+    fi
+  - | # Virtual stress-drive mode: deploy fake tape library PVCs instead of mhvtl/SCSI hardware.
+    # USE_STRESS_DRIVES CI variable overrides the pipeline input when replaying via GitLab "Play with variables".
+    # create_instance.sh automatically disables rmcd when --no-hardware-drives is set.
+    # setup_stress_drives_test.py is auto-collected by conftest.py (tests/setup/ scan) and auto-skips
+    # when no stress-mode taped pods are found, so this is a no-op when use-stress-drives=false.
+    if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
+      EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --no-hardware-drives --max-drives $[[ inputs.num-stress-drives ]] --num-stress-libraries ${NUM_STRESS_LIBRARIES:-1}"
     fi
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
@@ -346,11 +363,39 @@ stress-test:
     - |
       if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+        # Default pgsched stress to the external DBOD postgres (higher max_connections).
+        # Only override the generic dev-postgres default; preserve any value set via the GitLab UI.
+        [[ "$CATALOGUE_CONFIG" == "presets/dev-catalogue-postgres-values.yaml" ]] && \
+          CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-repack-values.yaml
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
+        if ${USE_PGBOUNCER:-$[[ inputs.use-pgbouncer ]]}; then
+          CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-pgbouncer-values.yaml
+          SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-pgbouncer-values.yaml
+        fi
       else
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
+      fi
+      # File count and prequeue settings come from the test config TOML.
+      # For pgsched, test_pgsched_params.toml has total_files=10M (scale test default);
+      # hardcode 2M for the non-scale stress test.  objectstore uses test_params.toml (2M).
+      # CI variables allow per-run overrides via "Play with variables".
+      EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES:-2000000}"
+      [[ -n "${STRESS_PREQUEUE_ENABLED}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED}"
+      [[ -n "${STRESS_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION}"
+      [[ -n "${STRESS_RETRIEVE_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-retrieve-prequeue-fraction ${STRESS_RETRIEVE_PREQUEUE_FRACTION}"
+    - |
+      # Virtual stress-drive mode: no mhvtl or SCSI hardware needed.
+      # --no-hardware-drives deploys the fake-tape-library PVC chart and generates
+      # N virtual drives backed by VID.tape files on the PVC.
+      # No node labelling, hostPath volumes, or tmpfs pre-mounting is required.
+      # USE_STRESS_DRIVES, NUM_STRESS_DRIVES, NUM_STRESS_LIBRARIES CI variables
+      # override the pipeline inputs when replaying via the GitLab "Play with variables" dialog.
+      if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
+        # stress-scale-values.yaml works for all scheduler backends.
+        STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-scale-values.yaml"
+        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-stress-drives ]]} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-1}"
       fi
     # Set up stress test
     - cd ci/orchestration/
@@ -368,6 +413,7 @@ stress-test:
         --catalogue-config ${CATALOGUE_CONFIG} \
         --scheduler-config ${SCHEDULER_CONFIG} \
         --chart-install-timeout 15 \
+        --eos-deploy-timeout 10 \
         ${EXTRA_SPAWN_ARGS}
     # Run the actual stress test
     - cd ../system_tests
@@ -406,6 +452,111 @@ stress-test:
   tags:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
+  resource_group: stress-test
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - test_logs
+
+stress-scale-test:
+  allow_failure: true
+  interruptible: false
+  timeout: 12 hours
+  stage: system-test
+  needs:
+    - job: prepare-cta-version
+      artifacts: true
+      optional: true
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: modify-project-json
+      optional: true
+    - job: build-cta-images
+      optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
+  rules:
+    - when: manual
+      allow_failure: true
+  variables:
+    NAMESPACE: stress-scale-${CI_JOB_ID}
+    EXTRA_SPAWN_ARGS: ""
+    EXTRA_PYTEST_ARGS: ""
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - bash ./ci/checks/check_runner_healthy.sh
+    - uv venv
+    - source .venv/bin/activate
+    - uv pip install -r ci/system_tests/requirements.txt
+    - *setup-k8s-test-variables
+  script:
+    - |
+      if [[ "$SCHEDULER_TYPE" != "pgsched" ]]; then
+        echo "stress-scale-test requires SCHEDULER_TYPE=pgsched" >&2
+        exit 1
+      fi
+      SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+      [[ "$CATALOGUE_CONFIG" == "presets/dev-catalogue-postgres-values.yaml" ]] && \
+        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-repack-values.yaml
+      EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
+      STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml,presets/stress-scale-values.yaml"
+      if ${USE_PGBOUNCER:-$[[ inputs.use-pgbouncer ]]}; then
+        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-pgbouncer-values.yaml
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-pgbouncer-values.yaml
+      fi
+      # Scale test always uses VtlDrives: 100 drives, 4 libraries.
+      # Override per-run via NUM_STRESS_DRIVES / NUM_STRESS_LIBRARIES CI variables.
+      EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-100} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-4}"
+      # File count and prequeue settings come from test_pgsched_params.toml.
+      # CI variables allow per-run overrides via "Play with variables".
+      [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"
+      [[ -n "${STRESS_PREQUEUE_ENABLED}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED}"
+      [[ -n "${STRESS_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION}"
+      [[ -n "${STRESS_RETRIEVE_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-retrieve-prequeue-fraction ${STRESS_RETRIEVE_PREQUEUE_FRACTION}"
+    - cd ci/orchestration/
+    - ./create_instance.sh --namespace ${NAMESPACE}
+                           --reset-catalogue
+                           --reset-scheduler
+                           --publish-telemetry
+                           --cta-image-tag ${IMAGE_TAG}
+                           --cta-config ${STRESS_CTA_VALUES_CHAIN}
+                           --eos-config presets/stress-eos-values.yaml
+                           --catalogue-config ${CATALOGUE_CONFIG}
+                           --scheduler-config ${SCHEDULER_CONFIG}
+                           --chart-install-timeout 15
+                           --eos-deploy-timeout 10
+                           ${EXTRA_SPAWN_ARGS}
+    - cd ../system_tests
+    - mkdir -p "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}"
+    - pytest tests/stress_test.py --namespace ${NAMESPACE}
+                                  --setup
+                                  --color=yes
+                                  ${EXTRA_PYTEST_ARGS}
+                                  2>&1
+                                  | tee "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pytest.log"
+  after_script:
+    - |
+      if $[[ inputs.keep-stress-test-namespace ]]; then
+        echo "Skipping deletion of stress test namespace ${NAMESPACE}"
+        exit 0
+      fi
+    - cd ci/orchestration/
+    - ./delete_instance.sh --namespace ${NAMESPACE}
+                           --collect-logs "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pods"
+                           --force-delete-cluster-resources
+    - |
+      if [[ -n "$CI_COMMIT_TAG" ]]; then
+        case "$CI_JOB_STATUS" in
+          success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) completed successfully." ;;
+          failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed." ;;
+          *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
+        esac
+        python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
+      fi
+  tags:
+    - stress
   resource_group: stress-test
   artifacts:
     when: always

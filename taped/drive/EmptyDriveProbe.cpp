@@ -15,11 +15,18 @@ EmptyDriveProbeResult probeEmptyDrive(const common::dataStructures::DriveInfo& d
                                       System::virtualWrapper& sysWrapper) {
   using Status = EmptyDriveProbeResult::Status;
   try {
-    SCSI::DeviceVector devices(sysWrapper);
-    const auto device = devices.findBySymlink(driveInfo.devFilename);
-    auto drive = drive::createDrive(device, sysWrapper);
+    // createDrive(DriveInfo, sw) dispatches on the devFilename URI: "virtual://<base_dir>"
+    // yields a VtlDrive (no SCSI device scan), any other path yields a DriveGeneric.
+    auto drive = drive::createDrive(driveInfo, sysWrapper);
     if (!drive) {
       return {Status::Failed, "Failed to instantiate drive object"};
+    }
+
+    // Drives that manage their own state (e.g. VtlDrive — no SCSI device, no robot arm,
+    // no mechanical damage risk) opt out of the hardware probe. Any stale state left by
+    // a crashed session is handled inside the drive implementation itself.
+    if (!drive->requiresEmptyDriveProbe()) {
+      return {Status::Empty, {}};
     }
 
     // Only inspect presence: even an empty drive must retain its current configuration.

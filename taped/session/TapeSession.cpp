@@ -457,11 +457,10 @@ std::unique_ptr<drive::DriveInterface> TapeSession::findDrive(log::LogContext& l
   constexpr auto reason = common::dataStructures::DriveDownReason::SessionDriveAccessFailed;
   std::string_view stage = "Drive discovery failed";
   try {
-    SCSI::DeviceVector devices(m_sysWrapper);
-    stage = "Configured drive lookup failed";
-    const auto driveInfo = devices.findBySymlink(m_driveInfo.devFilename);
     stage = "Drive opening failed";
-    auto drive = drive::createDrive(driveInfo, m_sysWrapper);
+    // createDrive(DriveInfo, sw) dispatches on the devFilename URI: "virtual://<base_dir>"
+    // yields a VtlDrive (no SCSI device scan), any other path yields a DriveGeneric.
+    auto drive = drive::createDrive(m_driveInfo, m_sysWrapper);
     if (!drive) {
       throw exception::Exception("Drive creation returned no drive");
     }

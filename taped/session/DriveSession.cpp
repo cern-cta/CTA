@@ -32,6 +32,29 @@ using common::dataStructures::DriveReport;
 using common::dataStructures::ReportedDriveState;
 using common::dataStructures::TapeSessionReport;
 
+namespace {
+
+// Dispatch on the drive device URI: "virtual://<base_dir>" selects the
+// filesystem-backed changer (stress/scale testing with no SCSI hardware);
+// everything else goes through rmcd.
+mediachanger::MediaChangerFacade makeMediaChanger(const TapedConfig& config, log::Logger& log) {
+  constexpr std::string_view kVirtualPrefix = "virtual://";
+  if (config.drive.device.rfind(kVirtualPrefix, 0) == 0) {
+    auto baseDir = config.drive.device.substr(kVirtualPrefix.size());
+    return mediachanger::MediaChangerFacade(config.drive.name,
+                                            config.drive.logical_library_name,
+                                            std::move(baseDir),
+                                            log);
+  }
+  return mediachanger::MediaChangerFacade(mediachanger::RmcProxy(config.rmcd.host,
+                                                                 config.rmcd.port,
+                                                                 config.rmcd.request_timeout_secs,
+                                                                 config.rmcd.request_attempts),
+                                          log);
+}
+
+}  // namespace
+
 DriveSession::DriveSession(const TapedConfig& config,
                            log::Logger& log,
                            SchedulerContext& schedulerContext,
@@ -45,11 +68,7 @@ DriveSession::DriveSession(const TapedConfig& config,
       m_lc(log),
       m_schedulerContext(schedulerContext),
       m_driveState(schedulerContext.catalogue()),
-      m_mediaChanger(mediachanger::RmcProxy(config.rmcd.host,
-                                            config.rmcd.port,
-                                            config.rmcd.request_timeout_secs,
-                                            config.rmcd.request_attempts),
-                     log),
+      m_mediaChanger(makeMediaChanger(config, log)),
       m_sysWrapper(sysWrapper ? *sysWrapper : m_realSysWrapper),
       m_driveReservation(m_lc) {}
 

@@ -2205,6 +2205,26 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   // First, get the mount-related info from the DB
   utils::Timer timer;
   utils::Timer ttel;
+  uint64_t totalJobCount = 0;
+  auto recordGetNextMountTelemetry = [&]() {
+    auto tteltime = ttel.msecs();
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      tteltime,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount                                                    }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      totalJobCount,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kMount                                                    }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+  };
   double getMountInfoTime = 0;
   double queueTrimingTime = 0;
   double getTapeInfoTime = 0;
@@ -2216,7 +2236,6 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   double schedulerDbTime = 0;
   double checkLogicalAndPhysicalLibrariesTime = 0;
   double catalogueTime = 0;
-  uint64_t totalJobCount = 0;
 
   if (!checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc)) {
     return std::unique_ptr<TapeMount>();
@@ -2325,6 +2344,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("schedulerDbTime", schedulerDbTime)
               .add("catalogueTime", catalogueTime);
             lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (archive)");
+            recordGetNextMountTelemetry();
             return std::unique_ptr<TapeMount>(internalRet.release());
           } catch (const exception::LostDatabaseConnection&) {
             // Let the caller wait for backend recovery before attempting more candidates.
@@ -2408,6 +2428,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("schedulerDbTime", schedulerDbTime)
           .add("catalogueTime", catalogueTime);
         lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
+        recordGetNextMountTelemetry();
         return std::unique_ptr<TapeMount>(internalRet.release());
       } catch (const exception::LostDatabaseConnection&) {
         // Let the caller wait for backend recovery before attempting more candidates.
@@ -2423,21 +2444,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
-  auto tteltime = ttel.msecs();
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    tteltime,
-    {
-      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
-      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kMount   }
-  },
-    opentelemetry::context::RuntimeContext::GetCurrent());
-  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    totalJobCount,
-    {
-      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
-      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kMount   }
-  },
-    opentelemetry::context::RuntimeContext::GetCurrent());
+  recordGetNextMountTelemetry();
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
   catalogueTime = getTapeInfoTime + getTapeForWriteTime + checkLogicalAndPhysicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);

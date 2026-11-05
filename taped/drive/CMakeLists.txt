@@ -5,6 +5,8 @@
 add_library(ctatapeddrive
   DriveGeneric.cpp
   FakeDrive.cpp
+  InMemoryTape.cpp
+  VtlDrive.cpp
   DriveCleaner.cpp
   DriveReservation.cpp
   EmptyDriveProbe.cpp
@@ -39,7 +41,9 @@ add_library(ctatapeddriveunittests SHARED
   DriveTest.cpp
   DriveCleanerTest.cpp
   EmptyDriveProbeTest.cpp
+  InMemoryTapeTest.cpp
   MountedTapeTest.cpp
+  VtlDriveTest.cpp
 )
 set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")

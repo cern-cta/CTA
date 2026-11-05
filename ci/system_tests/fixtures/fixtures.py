@@ -304,3 +304,9 @@ def cta_cli(env: TestEnv) -> CtaCliHost:
 @pytest.fixture(scope="session")
 def disk_instance_name(disk_instance: DiskInstanceHost) -> str:
     return disk_instance.instance_name
+
+
+# =========================================================================
+#  Stress-drive fixtures
+# =========================================================================
+
