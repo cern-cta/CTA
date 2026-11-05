@@ -11,6 +11,6 @@ The disk system learns transfer outcomes through its reporting or transfer-compl
 
 ## Relationships with other components
 
-The [Catalogue](catalogue.md) holds file identities, recorded copies and policies. The [Scheduler](scheduler.md) tracks pending work, and tape daemons transfer the data. Operator commands use the separate [Admin Frontend](admin-frontend.md).
+The [Catalogue](catalogue.md) holds file identities, recorded copies and policies. The [Scheduler DB](scheduler-db.md) tracks pending work, and tape daemons transfer the data. Operator commands use the separate [Admin Frontend](admin-frontend.md).
 
 See [Authentication](authentication.md) for workflow identities and [Workflow Frontend Configuration](../../ops/deploy-and-configure/configuration/workflow-frontend.md) for service settings.

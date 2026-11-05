@@ -41,7 +41,7 @@ Use these definitions to distinguish file identities, copies, requests and compo
 : Persistent metadata for tape copies, resources and policies. It does not own the disk namespace. See [Catalogue](components/catalogue.md).
 
 **Ceph** {#ceph}
-: Distributed storage whose RADOS object store can persist CTA's objectstore scheduler backend. It is not the scheduler decision logic. See [Scheduler](components/scheduler.md).
+: Distributed storage whose RADOS object store can persist CTA's objectstore scheduler backend. It is not the scheduler decision logic. See [Scheduler DB](components/scheduler-db.md).
 
 **Copy number** {#copy-number}
 : Identifies a required or recorded tape copy within an archive file, starting at 1. See [Storage Model](data-management/storage-model.md#files-and-tape-copies).
@@ -95,6 +95,9 @@ Use these definitions to distinguish file identities, copies, requests and compo
 
 ### J {#j}
 
+**Job** {#job}
+: One unit of queued tape work on one file: writing one copy to tape or reading one copy back. An archive request creates one job per required tape copy; a retrieve request creates one job. See [Scheduling](data-management/scheduling.md#queues-and-batching).
+
 **JWT** {#jwt}
 : JSON Web Token: used to authenticate a disk-instance or admin identity at the relevant frontend. See [Authentication](components/authentication.md).
 
@@ -140,10 +143,10 @@ Use these definitions to distinguish file identities, copies, requests and compo
 ### O
 
 **Objectstore** {#objectstore}
-: CTA scheduler backend that persists work as objects, using storage such as Ceph RADOS or a filesystem. It is separate from the catalogue. See [Scheduler](components/scheduler.md).
+: CTA scheduler backend that persists work as objects, using storage such as Ceph RADOS or a filesystem. It is separate from the catalogue. See [Scheduler DB](components/scheduler-db.md).
 
 **OStoreDB** {#ostoredb}
-: Scheduler interface implementation for the objectstore backend. See [Scheduler internals](../dev/internals/components/scheduler/index.md).
+: Scheduler interface implementation for the objectstore backend. See [Scheduler internals](../dev/internals/shared-state/scheduler-db/index.md).
 
 ### P
 
@@ -159,7 +162,7 @@ Use these definitions to distinguish file identities, copies, requests and compo
 : Recommended Access Order: ordering a batch of reads on one tape to reduce positioning time. See [RAO](tape/rao.md).
 
 **RelationalDB** {#relationaldb}
-: Scheduler interface implementation for the PostgreSQL backend. See [PostgreSQL Scheduler](../dev/internals/components/scheduler/postgresql.md).
+: Scheduler interface implementation for the PostgreSQL backend. See [PostgreSQL Backend](../dev/internals/shared-state/scheduler-db/postgresql/index.md).
 
 **Release (verb)** {#release}
 : Indicate that a client no longer needs a staged disk replica. Other clients or retention policy may still keep it. See [Retrieval](data-management/retrieval.md#shared-requests-and-disk-replica-retention).
@@ -185,10 +188,10 @@ Use these definitions to distinguish file identities, copies, requests and compo
 ### S
 
 **Scheduler** {#scheduler}
-: CTA logic for queueing work and selecting eligible tape mounts. See [Scheduler](components/scheduler.md) and [Scheduling](data-management/scheduling.md).
+: CTA library for queueing work and selecting eligible tape mounts, linked into the frontends and daemons; there is no scheduler process. See [Scheduler DB](components/scheduler-db.md) and [Scheduling](data-management/scheduling.md).
 
 **SchedulerDB** {#schedulerdb}
-: Interface to the persistent scheduler backend. Request state is shorter-lived than archive metadata but must survive restarts; it is not disposable. See [Scheduler](components/scheduler.md#backends).
+: Interface to the persistent scheduler backend. Request state is shorter-lived than archive metadata but must survive restarts; it is not disposable. See [Scheduler DB](components/scheduler-db.md#backends).
 
 **SSS** {#sss}
 : Simple Shared Secret authentication, used for EOS tape-daemon data transfers. See [Authentication](components/authentication.md).

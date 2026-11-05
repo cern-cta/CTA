@@ -17,6 +17,8 @@ The CTA catalogue uses a database to store the following non-exhaustive list of 
   4. The archive routes which decide which files get written to which tape pools.
   5. The rules defining when tapes get mounted for which users.
 
+Two parts of the catalogue are described elsewhere: the `DRIVE_STATE` table, which mount scheduling reads and writes (see [Drive state and next mounts](../scheduler-db/postgresql/mount-scheduling.md#drive-state-and-next-mounts)), and the [Recycle Bin](recycle-bin.md), which keeps the metadata of deleted and repacked tape copies. For how the catalogue and the scheduler DB work together, see [Shared State](../index.md).
+
 ## Working on the catalogue
 
 | Task | Guide |

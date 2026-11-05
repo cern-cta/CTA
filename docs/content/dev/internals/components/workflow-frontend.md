@@ -58,6 +58,8 @@ The APIs currently share frontend code and dependencies. This separation follows
 
 See [Admin Frontend Internals](admin-frontend.md) for administrative commands.
 
+With the PostgreSQL backend, archive and retrieve queueing calls can go through `FrontendBatchingLayer`, which merges concurrent requests into one bulk insert; see [PostgreSQL Opportunistic Batching](../shared-state/scheduler-db/postgresql/opportunistic-batching.md). For what happens to a request after it is queued, see the [request path](../workflows/index.md#the-request-path).
+
 ## Add or change a workflow operation
 
 TODO: Trace request definitions, dispatch, authentication and authorization, error mapping, and tests for a workflow operation. Link shared contracts rather than duplicating them.
