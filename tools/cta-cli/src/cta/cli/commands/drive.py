@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from logging import getLogger
 from socket import gethostname
 from time import perf_counter
-from typing import Optional
+from typing import Callable, Literal, Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -196,12 +197,66 @@ def delete(obj: AppContext, name: str, force: bool):
 if EXTRA_TPSRV:
     from dataclasses import asdict
 
+    from cta.cli.models.drive import DriveSensors
+    from cta.common.prometheus import Labels, Value, sample, write_atomic
     from cta.tapeserver.sdk import (
+        DriveController,
+        DriveOperationError,
         LocalLibraryRepository,
         LocalLocatedDriveRepository,
+        LocalNamedDriveRepository,
+        NamedDrive,
         ResourceNotFoundError,
+        ScsiDriveControllerProvider,
         ScsiManagedLibraryControllerProvider,
     )
+    from pyudev import Context
+
+    def read_sensor(read: Callable[[], int], drive: NamedDrive, sensor: str) -> Optional[int]:
+        try:
+            return read()
+        except DriveOperationError as e:
+            LOGGER.debug("Unable to read %s of drive %s: %s", sensor, drive.name, e)
+            return None
+
+    def read_sensors(drive: NamedDrive, controller: DriveController) -> DriveSensors:
+        return DriveSensors(
+            name=drive.name,
+            serial_number=drive.serial_number,
+            temperature_celsius=read_sensor(controller.get_drive_temperature, drive, "temperature"),
+            humidity_percent=read_sensor(controller.get_drive_humidity, drive, "humidity"),
+        )
+
+    def render_sensors(sensors: list[DriveSensors]) -> str:
+        prefix = "ctaops_drive"
+        # (metric, help, samples)
+        metrics: list[tuple[str, str, list[tuple[Labels, Value]]]] = [
+            (
+                "sensor_read_success",
+                "1 if the sensor of the drive could be read.",
+                [
+                    ({**e.labels(), "sensor": sensor}, int(value is not None))
+                    for e in sensors
+                    for sensor, value in (("temperature", e.temperature_celsius), ("humidity", e.humidity_percent))
+                ],
+            ),
+            (
+                "temperature_celsius",
+                "Internal temperature of the drive in degrees Celsius.",
+                [(e.labels(), e.temperature_celsius) for e in sensors if e.temperature_celsius is not None],
+            ),
+            (
+                "humidity_percent",
+                "Internal relative humidity of the drive in percent.",
+                [(e.labels(), e.humidity_percent) for e in sensors if e.humidity_percent is not None],
+            ),
+        ]
+        lines: list[str] = []
+        for metric, help_text, samples in metrics:
+            lines.append(f"# HELP {prefix}_{metric} {help_text}")
+            lines.append(f"# TYPE {prefix}_{metric} gauge")
+            lines.extend(sample(metric, labels, value, prefix=prefix) for labels, value in samples)
+        return "\n".join(lines) + "\n"
 
     @drive.command(aliases=["m"])
     @click.argument("drive_name")
@@ -339,3 +394,60 @@ if EXTRA_TPSRV:
             LOGGER.info(
                 "Average speed: %s", encode_table_field(file_count * file_size / r_time.total_seconds(), BytePerSecond)
             )
+
+    @drive.command("sensors", aliases=["s"])
+    @click.argument("drive_names", nargs=-1)
+    @click.option("--all", "-a", is_flag=True, help="Read all local named drives. Mutually exclusive with drive names.")
+    @click.option(
+        "-j", "--jobs", type=click.IntRange(min=1), default=8, show_default=True, help="Number of parallel reads."
+    )
+    @click.option(
+        "-c",
+        "--output-content",
+        type=click.Choice(["sensors", "prom-metrics"]),
+        default="sensors",
+        show_default=True,
+        help="Choose the content of the output",
+    )
+    @click.option(
+        "-o", "--prom-output-file", type=click.Path(dir_okay=False), help="Write metrics to this file atomically"
+    )
+    @click.pass_obj
+    def sensors_command(
+        obj: AppContext,
+        drive_names: tuple[str, ...],
+        all: bool,
+        jobs: int,
+        output_content: Literal["sensors", "prom-metrics"],
+        prom_output_file: Optional[str],
+    ):
+        """Show temperature and humidity of local drives."""
+        if not (bool(drive_names) ^ all):
+            raise click.UsageError("Provide either drive names or --all flag")
+        if prom_output_file is not None and output_content != "prom-metrics":
+            raise click.UsageError("You can't use --prom-output-file if --output-content/-c is not 'prom-metrics'")
+
+        drive_name_key = obj.config.tape_server.udev_properties_map.drive_name_key
+        context = Context()
+        local_drives = sorted(
+            LocalNamedDriveRepository(context, drive_name_key=drive_name_key).list_drives(), key=lambda d: d.name
+        )
+
+        if unknown_names := set(drive_names) - {d.name for d in local_drives}:
+            raise click.UsageError(f"Drive(s) not found locally: {', '.join(sorted(unknown_names))}")
+
+        drives = local_drives if all else [d for d in local_drives if d.name in drive_names]
+        provider = ScsiDriveControllerProvider(context, drive_name_key=drive_name_key)
+        controllers = [provider.get_drive_controller(d.serial_number) for d in drives]
+
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            sensors = list(pool.map(read_sensors, drives, controllers))
+
+        if output_content == "prom-metrics":
+            metrics = render_sensors(sensors)
+            if prom_output_file is None:
+                click.echo(metrics)
+            else:
+                write_atomic(prom_output_file, metrics)
+        elif output_content == "sensors":
+            print_dataclasses(sensors, display_config=obj.config.display)

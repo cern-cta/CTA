@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from cta.common import copy_dataclass
+from cta.common.prometheus import Labels
 from cta.sdk.models import Drive
 from cta.tapeserver.sdk.repositories.protocols.drive import DriveLibraryLocation, LocatedNamedDrive
 
@@ -55,3 +56,23 @@ class EnrichedDrive(Drive):
             local_serial_number=local_drive.serial_number,
             location=local_drive.location,
         )
+
+
+@dataclass(frozen=True)
+class DriveSensors:
+    """Sensor readings of a local tape drive.
+
+    Attributes:
+        name: Logical name of the drive.
+        serial_number: SCSI serial number of the drive.
+        temperature_celsius: Internal temperature, None if the drive does not report it.
+        humidity_percent: Internal relative humidity, None if the drive does not report it.
+    """
+
+    name: str
+    serial_number: str
+    temperature_celsius: Optional[int]
+    humidity_percent: Optional[int]
+
+    def labels(self) -> Labels:
+        return {"drive": self.name, "serial_number": self.serial_number}
