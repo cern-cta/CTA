@@ -5,6 +5,16 @@
 [tool.uv.workspace]
     members = ["lib/python/cta*", "tools/cta-cli"]
 
+[tool.uv]
+    # Cooldown period of 14 days
+    exclude-newer = "14 days"
+    # Build-time requirements are not covered by uv.lock. Pin the protobuf generator to the locked runtime
+    # version so that the generated gRPC stubs never require a newer grpcio than the one installed.
+    build-constraint-dependencies = [
+        "grpcio-tools==1.80.0; python_full_version < '3.10'",
+        "grpcio-tools==1.84.1; python_full_version >= '3.10'",
+    ]
+
 [dependency-groups]
     dev = [{ include-group = "lint" }, { include-group = "unit-tests" }]
     lint = [
