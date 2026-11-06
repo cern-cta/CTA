@@ -289,12 +289,14 @@ private:
   /// both throttles key off.
   static bool isFileHeader(const void* data, size_t count);
 
-  /// Adaptive-mirror throttle shared by the read and write paths. Sleeps
-  /// max(1s/rateHz, now - last) and then sets last to the time the sleep ended, so that elapsed
-  /// measures only the wait between transfers and never the sleep itself; recovery from a stall
-  /// is therefore self-correcting. Drive-limited (elapsed < minInterval) caps the rate at rateHz;
-  /// queue-limited (elapsed > minInterval) mirrors the rate work arrives at. No-op when rateHz is
-  /// 0 or no file has been transferred yet on this cartridge.
+  /// Adaptive-mirror throttle shared by the read and write paths. The per-file interval is
+  /// 1/rateHz seconds; the throttle sleeps whatever is left of that interval since the previous
+  /// file and then sets last to the time the sleep ended, so that elapsed measures only the wait
+  /// between transfers and never the sleep itself. Per-file spacing is therefore
+  /// max(arrival gap, interval): drive-limited (elapsed < interval) caps the rate at rateHz,
+  /// queue-limited (elapsed >= interval) passes work through at the rate it arrives, and a stall
+  /// costs exactly its own duration. No interval debt is carried, so recovery never produces a
+  /// catch-up burst. No-op when rateHz is 0 or no file has been transferred yet on this cartridge.
   static void throttle(uint32_t rateHz, std::chrono::steady_clock::time_point& last);
 
   // Per-drive RNG for jittering mount delay; seeded from drive name XOR current time.

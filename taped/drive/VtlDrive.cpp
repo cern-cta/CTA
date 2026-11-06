@@ -170,7 +170,15 @@ void VtlDrive::throttle(uint32_t rateHz, std::chrono::steady_clock::time_point& 
   if (last != std::chrono::steady_clock::time_point {}) {
     const auto elapsed = std::chrono::steady_clock::now() - last;
     const std::chrono::nanoseconds minInterval {1'000'000'000LL / rateHz};
-    std::this_thread::sleep_for(std::max(minInterval, elapsed));
+    // Sleep only what is left of the interval. Sleeping max(minInterval, elapsed) instead made the
+    // drive pay every supply stall twice: after an idle gap, elapsed is the whole gap, so a 90 s
+    // wait for work cost another 90 s of sleep before the next file was written. Its average rate
+    // was still correct - the overshoot on a late file ate into the next file's wait, a feedback
+    // loop that holds only while work keeps arriving - but a stall is precisely where it does not.
+    // Spacing files at max(arrival gap, minInterval) needs no such feedback.
+    if (elapsed < minInterval) {
+      std::this_thread::sleep_for(minInterval - elapsed);
+    }
   }
   last = std::chrono::steady_clock::now();
 }

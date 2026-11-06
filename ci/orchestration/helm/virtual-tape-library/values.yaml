@@ -88,9 +88,10 @@ library:
       logicalBytesPerFile: 496
       vol1Bytes: 80
       mountDelayMs: 15000
-      # Per-drive file-rate ceilings. The drive sleeps once per file for
-      # max(1/rate, time since the previous file), so the ceiling binds when work is already
-      # queued and otherwise just mirrors the rate work arrives at. 0 disables the throttle, which
+      # Per-drive file-rate ceilings, in files/s. The per-file interval is 1/rate seconds and the
+      # drive sleeps whatever is left of it since the previous file, so files are spaced at
+      # max(arrival gap, interval): the ceiling binds when work is already queued and otherwise
+      # the drive just mirrors the rate work arrives at. 0 disables the throttle, which
       # means transferring at RAM speed - fine for correctness tests, but it makes a mount last
       # seconds, so scale runs set both (see create_instance.sh --stress-{write,read}-rate-hz).
       maxWriteRateHz: 1000
