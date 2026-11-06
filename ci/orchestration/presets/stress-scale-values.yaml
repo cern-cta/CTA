@@ -54,8 +54,14 @@
 
 taped:
   logging:
-    # Avoid verbose tape-operation logs dominating the small-file workload.
-    level: "WARNING"
+    # Raised from WARNING to INFO for this debugging session: needed to see
+    # ArchiveMount::reportJobsBatchTransferred()'s exception detail (logged at
+    # ERR, already visible at WARNING - this is for broader INFO-level context
+    # around the "move archive back to pending" / reportJobsBatchTransferred
+    # burst investigation, e.g. per-flush timing/outcome logs). Revert to
+    # WARNING once the investigation concludes - INFO is noticeably more
+    # verbose across 100 drives.
+    level: "INFO"
 
   # Scale-test OTel export stagger: each of the 100 taped pods sleeps a
   # deterministic fraction of 10 s (hash(hostname) % 10) in an initContainer
@@ -108,11 +114,26 @@ taped:
       # Keep batchFiles in virtual-tape-library/values.yaml equal to fetchMaxFiles here.
       fetchMaxBytes: 80000000000
       fetchMaxFiles: 20000
-      # Align flush granularity with the fetch batch so exactly one
-      # "update archive" DB query fires per 20 000-file fetch batch instead
-      # of one per 200 files.
+      # flushMaxFiles decoupled from fetchMaxFiles (debugging the 05:25-05:27 scheddb_stress
+      # waiting bursts, which correlate with drives unmounting): suspected cause is
+      # ArchiveMount::reportJobsBatchTransferred() reporting a 20 000-file batch to EOS's WFE in
+      # one XRootD call - if that throws for ANY reason (one bad file is enough), every job in
+      # the batch falls back to MigrationReportPacker's per-job path
+      # (ArchiveRdbJob::failTransfer -> requeueJobToMount -> requeueFailedJob), each issuing its
+      # own individual "move archive back to pending" query - turning one failure into up to
+      # 20 000 single-row DB calls instead of 1 bulk call. A smaller flush bounds that worst case
+      # without changing total throughput: at maxWriteRateHz=250/drive, flush size does not gate
+      # the aggregate file-report rate (that is fixed by the write throttle at 100 x 250 =
+      # 25 000 files/s regardless of flush size) - it only changes how that work is chunked into
+      # EOS report calls. 2000 (10x smaller) means one call every 8 s per drive, 12.5 calls/s
+      # aggregate across 100 drives, each covering 2000 files - still 25x above the 1 kHz floor,
+      # and bounds a single EOS/catalogue failure to 2000 individual fallback queries instead of
+      # 20 000. If EOS WFE is still the bottleneck at this size, halve it again rather than
+      # chasing 1 - too small trades the opposite way (per-call overhead dominating).
+      # fetchMaxFiles is unaffected: it is co-designed with the tape-capacity derivation above and
+      # with G_max/ageForCollectionSecs further below, neither of which depend on flush size.
       flushMaxBytes: 80000000000
-      flushMaxFiles: 20000
+      flushMaxFiles: 2000
       # Underfill-driven dismount MUST stay enabled here. A mounted drive -
       # idle or not - counts toward the VO's writeMaxDrives cap
       # (Scheduler::getExistingAndNextMounts() counts any drive whose status is
