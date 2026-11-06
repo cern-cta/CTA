@@ -263,33 +263,57 @@ maintd:
       dnsConfig: *dnsNdots1
 
   routines:
-    # Reduced from 2 replicas / batchSize 8000 to 1 replica / batchSize 1500: the EOS MGM was
-    # observed marking filesystems unavailable (fsid=3, fsid=5) under this test's load.
-    # Scheduler::reportArchiveJobsBatch() (scheduler/Scheduler.cpp) fires EVERY job in a batch as
-    # an unthrottled concurrent asyncReport() call in a tight loop, THEN waits on all of them -
-    # batchSize is not just "rows fetched per DB round-trip", it is ALSO "simultaneous XrdCl RPCs
-    # launched against the MGM at once". At the previous 8000 x 2 replicas, that was up to 16 000
-    # concurrent report RPCs in a single burst every pass - a far more plausible cause of the FST
-    # unavailability than anything on the taped/WFE side (see docs/content/dev/guides/testing/
-    # stress-tests.md and this file's taped.catalogue comment for the ruled-out alternatives).
-    # 1500 x 1 replica caps that burst at 1500, a >10x reduction.
+    # batchSize is the MGM burst width, not just a DB page size.
+    # Scheduler::reportArchiveJobsBatch() (scheduler/Scheduler.cpp) fires EVERY job in the batch as
+    # a concurrent asyncReport() in a tight loop and only THEN waits on all of them, and each job
+    # gets its own EOSReporter holding its own XrdCl::FileSystem (disk/EOSReporter.cpp), so
+    # batchSize is simultaneously "rows per DB round-trip" and "simultaneous XrdCl queries against
+    # the MGM". The EOS MGM was observed marking filesystems unavailable (fsid=3, fsid=5) under
+    # this test's load at the original 8000 x 2 replicas - up to 16 000 concurrent report RPCs per
+    # burst - which is a far more plausible cause than anything on the taped/WFE side (see
+    # docs/content/dev/guides/testing/stress-tests.md and this file's taped.catalogue comment for
+    # the ruled-out alternatives). 1500 x 1 replica cut that to 1500; 300 x 1 replica cuts it to
+    # 300, ~50x below where the FST unavailability was seen.
     #
-    # iterSleepMs=500ms paces the inner loop inside one execute() pass
-    # (DiskReportArchiveRoutine.cpp): with sustained backlog, each pass is dominated by this
-    # sleep (fetch+report time is small next to 500 ms), so one pod completes ~2 passes/sec.
-    # At batchSize 1500: 1500 x 2 = 3000 files/s max per pod - with only 1 replica now, that IS
-    # the aggregate, 3x the 1 kHz floor this job targets, with large margin to spare. (The
-    # previous comment's "500 reports/s/pod x 2 replicas = 1 kHz" sizing assumed 2 replicas and a
-    # much larger batch; both have changed, so that derivation no longer applies - this one
-    # replaces it.)
+    # What that costs, deliberately. Per pass the routine does: one flagReportingJobsByStatus
+    # transaction, the launch loop, the wait loop, one bulk setArchiveJobBatchReported, then
+    # iterSleepMs. So
+    #     rate = n / (F + n/R + S) = 1 / (F/n + 1/R + S/n)
+    # with F the fixed per-pass DB cost, R the reports/s the MGM actually serves for ONE pod's
+    # stream, S the sleep. The 1/R term shrinks with neither n nor S, so a single replica cannot
+    # exceed R whatever these two are set to. Calibrating R from the observed run (1 replica,
+    # n=1500, S=500 ms -> ~500 files/s, i.e. ~2.5 s of non-sleep work per pass) gives R ~ 610/s per
+    # pod, and therefore:
+    #     n=1500, S=500 ms  ~500/s   (what was measured)
+    #     n=1500, S=50 ms   ~590/s
+    #     n=300,  S=50 ms   ~510/s
+    #     n=300,  S=200 ms  ~405/s   (this setting)
+    # n=300/S=200 ms is chosen for the 5x smaller burst, accepting ~20% less reporting throughput
+    # than n=1500/S=500 ms. Note the arithmetic that does NOT apply: "batchSize x passes/s" (300 x
+    # 5 = 1500/s) assumes the report work itself is free, which the measured 2.5 s/pass says it is
+    # not. The previous comment in this block claimed 3000 files/s per pod on exactly that
+    # reasoning; the observed 500 files/s contradicted it.
+    #
+    # Two things to re-measure before tuning this again, both from data the routine already logs
+    # (getArchiveJobsToReportTime, asyncReportLaunchTime, reportCompletionTime,
+    # reportRecordInSchedDbTime, one INFO line per pass):
+    #   - F and R exactly, instead of the F=50 ms guess this calibration assumes.
+    #   - R after ndots:1 (set at the top of this file). Every report is an eosQuery:// to
+    #     eos-mgm.<ns>.svc.cluster.local with one XrdCl::FileSystem per job, so these pods are among
+    #     the heaviest DNS resolvers in the deployment and R may rise on its own.
+    #
+    # Also worth keeping in view: at ~0.5 kHz, reporting drains an order of magnitude slower than
+    # the drives can produce (100 drives x ~50 files/s each), so ARCHIVE_ACTIVE_QUEUE accumulates
+    # ToReport rows for most of the run. Only replicas lift the aggregate past R; that is left at 1
+    # on purpose while the MGM burst is still the suspect.
     diskReportArchive:
       replicas: 1
-      batchSize: 1500
-      iterSleepMs: 500
+      batchSize: 300
+      iterSleepMs: 200
     diskReportRetrieve:
       replicas: 1
-      batchSize: 1500
-      iterSleepMs: 500
+      batchSize: 300
+      iterSleepMs: 200
     # Repack is not used in scale tests; disable to avoid unnecessary DB polls
     # and free scheduler connections for the active archive/retrieve workload.
     repackExpand:
