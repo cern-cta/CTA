@@ -682,7 +682,6 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   // Notes for dev process: we assume the DST_URL becomes SRC_URL, the ARCHIVE_REPORT_URL
   // and ARCHIVE_ERROR_REPORT_URL should not need to be used - must be checked
   // we assume these should be poiniting to the same disk URL as for retrieve
-  // MIN_ARCHIVE_REQUEST_AGE ? - to be checked if could be used same as for the
   // BASE_INSERT - the original copy NB from the retrieve
   // ALTERNATE_INSERT - the alternative COPY_NB to re-archive if any
   //
@@ -700,6 +699,22 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   // primary copy number goes through BASE_INSERT only; if that case were resolved here via
   // a catalogue lookup, the lookup would need to be per (STORAGE_CLASS, COPY_NB) and would
   // not see the ALTERNATE_INSERT entries, which already have their pools set.
+
+  // START_TIME is set to the time the job enters the archive queue instead of being carried over
+  // from the retrieve job: it is the column the mount decision takes the job's queue age from (the
+  // ARCHIVE_QUEUE_SUMMARY / REPACK_ARCHIVE_QUEUE_SUMMARY views expose MIN(START_TIME) as
+  // OLDEST_JOB_START_TIME), so a retrieve job which waited hours would otherwise produce an archive
+  // job already older than MIN_ARCHIVE_REQUEST_AGE and warrant a mount straight away. CREATION_TIME
+  // is carried over, it is not part of the age check.
+  //
+  // MIN_ARCHIVE_REQUEST_AGE is carried over from M.MIN_RETRIEVE_REQUEST_AGE, so the archive job
+  // ends up storing the retrieve side of its mount policy. That is irrelevant: the value stored in
+  // the queue tables is never what the mount decision uses. Both Scheduler::getNextMountDryRun()
+  // and Scheduler::getQueuesAndMountSummaries() call fillMountPolicyNamesForPotentialMounts(),
+  // which overwrites PotentialMount::minRequestAge with the archive minimum request age read from
+  // the catalogue, where mount policies actually live and can be changed at any time. The column is
+  // only informational here (scheduler logs, direct DB inspection) and could be dropped from these
+  // queue tables altogether.
   std::string sql = R"SQL(
   WITH MOVED_ROWS AS (
     DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE rraq
@@ -772,7 +787,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         M.COPY_NB,
-        M.START_TIME,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT AS START_TIME,
         M.CHECKSUMBLOB,
         M.CREATION_TIME,
         M.DISK_INSTANCE,
@@ -845,7 +860,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         M.ARCHIVE_FILE_ID,
         M.SIZE_IN_BYTES,
         REARCHIVE_COPY.REARCHIVE_COPY_VAL AS COPY_NB,
-        M.START_TIME,
+        EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT AS START_TIME,
         M.CHECKSUMBLOB,
         M.CREATION_TIME,
         M.DISK_INSTANCE,
