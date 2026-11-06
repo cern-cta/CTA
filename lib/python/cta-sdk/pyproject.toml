@@ -25,7 +25,12 @@
     keywords = ["CTA", "tape", "CERN"]
 
     dynamic      = ["version"]
-    dependencies = ["typing-extensions>=4.4.0", "grpcio>=1.80.1", "protobuf"]
+    dependencies = [
+        "typing-extensions>=4.4.0",
+        "grpcio>=1.80.0; python_full_version < '3.10'",
+        "grpcio-tools>=1.84.1; python_full_version >= '3.10'",
+        "protobuf",
+    ]
 
     [project.urls]
         Source              = "https://gitlab.cern.ch/cta/CTA/"
@@ -33,7 +38,11 @@
         "CTA Documentation" = "https://cta.docs.cern.ch/"
 
 [dependency-groups]
-    dev = ["cattrs", "grpcio-tools>=1.80.1"]
+    dev = [
+        "cattrs",
+        "grpcio-tools>=1.80.0; python_full_version < '3.10'",
+        "grpcio-tools>=1.84.1; python_full_version >= '3.10'",
+    ]
 
 [tool.hatch.version]
     source     = "code"
