@@ -99,6 +99,21 @@ public:
    */
   virtual void transferFailed(const std::string& failureReason, log::LogContext& lc);
 
+#ifdef CTA_PGSCHED
+  /**
+   * Prepares the in-memory job state for batch failure reporting.
+   * Updates failure log and retry counts without touching the DB.
+   * Also rotates the VID if within-mount retries are exhausted.
+   */
+  virtual void prepareFailTransfer(const std::string& failureReason);
+
+  /**
+   * Prepares the in-memory job state for batch report-failure handling.
+   * Updates report failure log and increments totalReportRetries without DB access.
+   */
+  virtual void prepareFailReport(const std::string& failureReason);
+#endif
+
   /**
    * Get the URL used for reporting
    * @return The URL used to report to the disk system.

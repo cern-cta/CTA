@@ -12,8 +12,10 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/session/ReportPackerInterface.hpp"
 
+#include <chrono>
 #include <memory>
 #include <utility>
+#include <vector>
 
 namespace cta::tape::daemon {
 
@@ -222,6 +224,12 @@ private:
    * The time limit for successful reports to trigger flush.
    */
   const double RECALL_REPORT_PACKER_FLUSH_TIME = 180;
+
+#ifdef CTA_PGSCHED
+  static constexpr size_t c_failedJobsBatchMax = 600;
+  std::vector<std::unique_ptr<cta::RetrieveJob>> m_failedRetrieveJobs;
+  void flushFailedJobs(cta::log::LogContext& lc);
+#endif
 };
 
 }  // namespace cta::tape::daemon

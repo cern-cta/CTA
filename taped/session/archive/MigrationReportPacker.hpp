@@ -11,9 +11,11 @@
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/session/ReportPackerInterface.hpp"
 
+#include <chrono>
 #include <list>
 #include <memory>
 #include <utility>
+#include <vector>
 
 namespace cta::tape::daemon {
 
@@ -251,6 +253,18 @@ private:
    * The skipped files (or placeholders list)
    */
   std::queue<cta::catalogue::TapeItemWritten> m_skippedFiles;
+
+#ifdef CTA_PGSCHED
+  static constexpr size_t c_failedJobsBatchMax = 600;
+
+  // Accumulator: jobs with in-memory state already updated by prepareFailTransfer().
+  std::vector<std::unique_ptr<cta::ArchiveJob>> m_failedArchiveJobs;
+
+  void flushFailedJobs(cta::log::LogContext& lc);
+#endif
+
+  // Report m_successfulArchiveJobs and m_skippedFiles to the mount. No-op if both are empty.
+  void reportSuccessfulJobsBatch(cta::log::LogContext& lc);
 };
 
 }  // namespace cta::tape::daemon

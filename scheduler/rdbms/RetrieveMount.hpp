@@ -22,6 +22,7 @@
 #include <optional>
 #include <string>
 #include <time.h>
+#include <vector>
 
 namespace cta::schedulerdb {
 
@@ -80,6 +81,8 @@ public:
 
   void
   putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) override;
+
+  void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch, log::LogContext& lc) override;
 
 private:
   cta::RelationalDB& m_RelationalDB;
