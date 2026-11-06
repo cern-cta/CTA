@@ -268,7 +268,7 @@ async def test_generate_and_copy_files(
                 )
                 if not drives_up and time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    cta_cli.set_all_drives_up(wait=False)
+                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
                     drives_up = True
                 if _consecutive_failures >= 5 and drives_up:
                     print(
@@ -292,11 +292,11 @@ async def test_generate_and_copy_files(
                         flush=True,
                     )
                     # do not wait for status to be UP as drives will immediately start TRANSFERING
-                    cta_cli.set_all_drives_up(wait=False)
+                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
                     drives_up = True
                 elif time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    cta_cli.set_all_drives_up(wait=False)
+                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
                     drives_up = True
 
             sleep_time = (
@@ -317,7 +317,7 @@ async def test_generate_and_copy_files(
     # If archive finished before threshold was reached, still put drives up
     if stress_params.prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
-        cta_cli.set_all_drives_up(wait=False)
+        await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
 
     timer_end = time.time()
 
@@ -433,11 +433,11 @@ async def test_request_files_for_retrieve(
                         ),
                         flush=True,
                     )
-                    cta_cli.set_all_drives_up(wait=False)
+                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
                     drives_up = True
                 elif time.time() - timer_start > stress_params.retrieve_prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    cta_cli.set_all_drives_up(wait=False)
+                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
                     drives_up = True
 
             sleep_time = (
@@ -457,7 +457,7 @@ async def test_request_files_for_retrieve(
 
     if stress_params.retrieve_prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold — putting drives UP now")
-        cta_cli.set_all_drives_up(wait=False)
+        await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
 
     timer_end = time.time()
 

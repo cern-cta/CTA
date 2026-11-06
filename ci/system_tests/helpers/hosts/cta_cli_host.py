@@ -65,6 +65,20 @@ class CtaCliHost(RemoteHost):
     def set_all_drives_up(self, *, wait: bool = True) -> None:
         self.set_drive_up(".*", wait=wait)
 
+    def set_all_drives_up_staggered(self, *, stagger_secs: float = 3.0, wait: bool = True) -> None:
+        """Bring every drive up one at a time, sleeping stagger_secs before each call after the first.
+
+        Unlike set_all_drives_up() - one 'cta-admin dr up .*' call that flips every drive to UP
+        at once - this issues one 'cta-admin dr up <name>' call per drive, so at scale-test drive
+        counts the taped pods do not all start mounting simultaneously: the initial
+        catalogue/EOS-open burst is spread across the ramp-up instead of landing at one instant.
+        """
+        drive_names = [d["driveName"] for d in json.loads(self.exec_with_output("cta-admin --json drive ls"))]
+        for i, drive_name in enumerate(drive_names):
+            if i > 0:
+                time.sleep(stagger_secs)
+            self.set_drive_up(drive_name, wait=wait)
+
     def set_all_drives_down(self, *, wait: bool = True) -> None:
         self.set_drive_down(".*", wait=wait)
 
