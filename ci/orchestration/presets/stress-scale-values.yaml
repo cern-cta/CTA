@@ -160,6 +160,16 @@ taped:
     # 5 s guarantees drives discover the retrieve queue within 5 s of it
     # becoming non-empty (critical for retrieve test correctness).
     retrieveQueueCacheMaxAgeSecs: 5
+    # Override of stress-cta-pgsched-values.yaml's numberOfConnections: 3, for this job only - the
+    # non-scale stress test does not have enough drives for this to matter. At 100 drives, 3 each
+    # means 300 scheduler-side client connections through pgbouncer, against a pgbouncer
+    # default_pool_size of 100 backend connections in session pooling mode: only the first ~33
+    # drives (100 / 3) can ever hold a connection, the rest queue in pgbouncer forever. 2 per drive
+    # still exceeds the 100-connection budget (200 > 100) - this alone does not fix the exhaustion,
+    # pgbouncer's pool_mode/default_pool_size needs fixing too - but it lowers the floor of what a
+    # given pgbouncer capacity can serve, and reduces the DB-side connection count taped itself has
+    # to hold open for a workload that is 1 archive-mount + 1 retrieve-mount per drive at a time.
+    numberOfConnections: 2
 
 # No tape library hardware present: disable rmcd entirely.
 # /dev/smc does not exist on a node without mhvtl; deploying rmcd would fail.
