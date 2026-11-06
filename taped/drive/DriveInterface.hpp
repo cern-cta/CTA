@@ -23,6 +23,21 @@
 /// Tape-drive abstractions, status types and device factory.
 namespace cta::tape::drive {
 
+/// A drive-level fault affecting only the file currently being transferred, not the tape session
+/// as a whole. Thrown by VtlDrive's failure-scenario fault injection (see
+/// MediaTypeInfo::transferFailureRate/retrieveFailureRate in VtlDrive.hpp) so that a transfer
+/// failure for one file does not abort every other file on the same mount.
+///
+/// Declared here, in the drive layer, rather than alongside the session-layer exception types
+/// that happen to receive the same treatment (e.g. taped/session/archive/TapeWriteTask.hpp's
+/// RecoverableMigrationErrorException) because the dependency has to run drive -> session, never
+/// the reverse: a DriveInterface implementation (VtlDrive) must not need to include
+/// session-layer headers just to report a per-file fault. The session layer, which already
+/// depends on DriveInterface, is the one that needs to recognise this type - see
+/// TapeWriteTask.cpp's catch clause for it, immediately alongside the one for
+/// RecoverableMigrationErrorException.
+CTA_GENERATE_EXCEPTION_CLASS(RecoverableTransferFault);
+
 /// Host and tape byte counters returned by DriveInterface::getCompression().
 class compressionStats {
 public:

@@ -53,38 +53,56 @@ library:
   # effect, override or not.
   mountDelayMsOverride: ""
   mountDelayMaxMsOverride: ""
+  # Same override mechanism again, for VtlDrive's failure-scenario fault injection and its
+  # eager-persist option (see the media type fields below and taped/drive/VtlDrive.hpp). Empty
+  # leaves each media type's own value in place; these stay empty/false for every normal
+  # deployment and test, and are set only by the dedicated failure-scenario test job.
+  persistOnFlushOverride: ""
+  transferFailureRateOverride: ""
+  retrieveFailureRateOverride: ""
+  # Same override mechanism, for the derived-capacity re-queue-fraction target (see
+  # mediaTypes[].overflowFraction below and the template's derivation comment). Empty leaves each
+  # media type's own value in place. Only meaningful when the media type does not set an explicit
+  # capacityBytes (which bypasses the derivation, and so this override, entirely).
+  overflowFractionOverride: ""
 
   # Media type definitions — shared across all libraries.
   # setup_stress_drives_test.py reads these and registers them in the CTA catalogue.
   mediaTypes:
     - name: STRESSTAPE
-      # Capacity is DERIVED, not hardcoded: the template computes
-      #   capacityBytes = vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile
-      # so the tape always holds a whole number of fetch batches and the two settings cannot
-      # drift apart. Set capacityBytes explicitly only to bypass the derivation entirely.
+      # Capacity is DERIVED, not hardcoded: the template computes it from overflowFraction, the
+      # fraction of a drive's files expected to be re-queued at each tape-fill boundary, rather
+      # than from a whole-batch count - see the template's own comment for the exact formula and
+      # why a fraction (any value, e.g. 0.05 or 0.15) is more directly meaningful here than an
+      # integer batch count ever was. Set capacityBytes explicitly only to bypass the derivation
+      # entirely.
       #
       # Sized above this test's average per-drive share so tape-boundary crossings stay rare
       # rather than routine: test_pgsched_params.toml has total_files = 4 000 000 over 100 drives,
-      # ~40 000 files/drive on average, so 10 × 5 000 = 50 000 files/tape keeps the average drive
-      # inside a single tape (above-average-share drives can still cross, but that is the
-      # exception, not the norm). At the 50 Hz write/read ceiling (STRESS_WRITE_RATE_HZ /
-      # STRESS_READ_RATE_HZ in tests-kubernetes.gitlab-ci.yml, which also matches the per-drive
-      # rate these drives actually achieve under 100-drive EOS MGM contention) that is a ~16.7 min
-      # mount (50 000 / 50 Hz = 1 000 s). Recompute batchFiles × batchesPerTape, and
-      # ageForCollectionSecs below, if the rate, total_files, drive count, or target average
-      # headroom changes.
+      # ~40 000 files/drive on average, so overflowFraction: 0.05 derives ~50 000 files/tape,
+      # keeping the average drive inside a single tape (above-average-share drives can still
+      # cross, but that is the exception, not the norm). At the 50 Hz write/read ceiling
+      # (STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ in tests-kubernetes.gitlab-ci.yml, which also
+      # matches the per-drive rate these drives actually achieve under 100-drive EOS MGM
+      # contention) that is a ~16.7 min mount (50 000 / 50 Hz = 1 000 s). Recompute batchFiles,
+      # overflowFraction and ageForCollectionSecs below if the rate, total_files, drive count, or
+      # target average headroom changes.
       #
-      # Why whole batches matter
-      # ------------------------
+      # Why the re-queue fraction matters
+      # ----------------------------------
       # A drive fetches work in batches of transfers.archive.fetchMaxFiles and pipelines the next
       # fetch while writing the current one; nothing limits a fetch to the tape's remaining space.
       # When the tape fills, ENOSPC ends the session and every job already fetched but not yet
       # written goes back to the queue. Those jobs are not failures - they are re-queued, and
       # re-queueing costs a scheduler round trip per job. The waste per tape boundary is about one
-      # fetch batch whatever the tape size, so what matters is the ratio: with 3 batches per tape
-      # a third of the work was being re-queued; batchesPerTape: 10 brings that to a tenth - and
-      # with capacity sized above the average per-drive share (above), most drives never reach a
-      # boundary at all, so in practice crossings, and their bounded re-queue cost, stay rare.
+      # fetch batch whatever the tape size, so what matters is the ratio to total files on the
+      # tape: overflowFraction: 0.05 keeps it to a twentieth - and with capacity sized above the
+      # average per-drive share (above), most drives never reach a boundary at all, so in
+      # practice crossings, and their bounded re-queue cost, stay rare. A dedicated
+      # failure-scenario test that WANTS frequent, deliberate re-queues (to exercise that recovery
+      # path and the cleanup routines) sets this much higher instead, via the
+      # --stress-overflow-fraction create_instance.sh flag (overflowFractionOverride below) - see
+      # the stress-scale-fail-test CI job.
       #
       # Raising capacity further costs memory and PVC I/O: the whole tape is held in RAM by the
       # drive (~1 kB per file, so ~50 MB per taped pod here) and is serialised to the PVC on every
@@ -95,7 +113,7 @@ library:
       # plus the payload (16 bytes in the stress tests, see test_pgsched_params.toml). File marks
       # consume no capacity. vol1Bytes is the single 80-byte VOL1 label at the start of the tape.
       batchFiles: 5000
-      batchesPerTape: 10
+      overflowFraction: 0.05
       logicalBytesPerFile: 496
       vol1Bytes: 80
       mountDelayMs: 15000
@@ -107,6 +125,13 @@ library:
       # seconds, so scale runs set both (see create_instance.sh --stress-{write,read}-rate-hz).
       maxWriteRateHz: 1000
       maxReadRateHz: 1000
+      # Off by default: see MediaTypeInfo::persistOnFlush in taped/drive/VtlDrive.hpp.
+      persistOnFlush: false
+      # Fault injection for failure-scenario testing, off by default: see
+      # MediaTypeInfo::transferFailureRate/retrieveFailureRate in taped/drive/VtlDrive.hpp. Set
+      # non-zero only in a dedicated failure-scenario preset, e.g. stress-scale-fail-values.yaml.
+      transferFailureRate: 0.0
+      retrieveFailureRate: 0.0
       # Tapes per library. At the derived capacity (~25 MB for 50 000 files), this test's actual
       # 4 000 000-file run (test_pgsched_params.toml: total_files) needs ~80 tapes in total,
       # ~20 per library with 4 libraries; 100 gives ~5x headroom over the minimum and ensures

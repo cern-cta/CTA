@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Failure-scenario overlay for the stress-scale-fail-test CI job. Applied ON TOP OF
+# stress-scale-values.yaml (both files go in STRESS_CTA_VALUES_CHAIN, same as every other preset
+# combination in this directory) - it only contains what differs for deliberately exercising
+# CTA's failure-recovery paths at scale, not a duplicate of the base scale-test tuning.
+#
+# What this test is for
+# ----------------------
+# stress-scale-test proves CTA can sustain a target throughput. This test proves CTA RECOVERS
+# from a representative mix of failures without losing any file, by deliberately engineering
+# three independent failure classes into the same run:
+#
+#   1. Tape-boundary overflow (end-of-tape re-queues). Driven by
+#      --stress-overflow-fraction on create_instance.sh (NOT set here - it targets the
+#      virtual-tape-library chart, not this cta-chart overlay). This path is RETRY-NEUTRAL:
+#      ArchiveJobQueueRow::requeueJobBatch() copies RETRIES_WITHIN_MOUNT/TOTAL_RETRIES unchanged,
+#      so an ENOSPC-driven re-queue costs a file nothing against its retry budget - it is purely
+#      a re-fetch on the next tape. See the stress-scale-fail-test CI job for the actual value.
+#
+#   2. Genuine transfer/retrieve faults, injected by VtlDrive itself (see
+#      taped/drive/VtlDrive.hpp's MediaTypeInfo::transferFailureRate/retrieveFailureRate),
+#      likewise driven by CLI flags on create_instance.sh, not set here. Unlike (1), this DOES
+#      consume one of a file's limited retry attempts (ArchiveRequest::TOTAL_RETRIES /
+#      REPORT_RETRIES = 2, i.e. 3 total attempts) - but VtlDrive guarantees AT MOST ONE such fault
+#      per file for its entire lifetime (see maybeInjectFault()'s one-time, atomic marker), so a
+#      file always has at least 2 attempts left after it. Combined with (1) costing nothing, no
+#      file can ever exhaust its retry budget from these two mechanisms alone.
+#
+#   3. Deliberate mid-run disruption: the test harness itself kills a taped pod mid-mount and a
+#      diskReportArchive/diskReportRetrieve pod mid-batch (see the stress-scale-fail-test CI
+#      job's pytest invocation), to prove the maintd cleanup routines
+#      (Archive/RetrieveInactiveMountActiveQueueRoutine, ResubmitInactiveReportingRoutine) are
+#      what actually recovers that work, not just the job's own graceful-shutdown path.
+#
+# The test's final assertion is that every one of total_files ends up visible in the catalogue
+# with zero rows left behind in any *_FAILED_QUEUE or stuck IS_REPORTING - i.e. that the retry
+# budget was never exhausted and the cleanup routines did their job. See
+# tests/stress_scale_fail_test.py.
+#
+# What is intentionally UNCHANGED from stress-scale-values.yaml
+# ---------------------------------------------------------------
+# transfers.archive/retrieve.fetchMaxFiles stay at 5000: overflowFraction only changes the
+# DERIVED TAPE CAPACITY (filesPerTape = batchFiles / (2 * overflowFraction)), not batchFiles
+# itself, so T_batch = fetchMaxFiles / rate is unaffected and the existing
+# maintd.routines.userActiveQueueCleanup.ageForCollectionSecs margin over G_max (see that
+# preset's comment) still holds unchanged.
+#
+# What DOES change here
+# ----------------------
+# The mount cycle shortens (more frequent tape-fill boundaries by design), so
+# ageForCollectionSecs's margin over the MOUNT CYCLE (not over G_max, which is unaffected) is
+# recomputed below for the higher overflowFraction the CI job actually uses.
+
+maintd:
+  routines:
+    # At the stress-scale-fail-test CI job's overflow fraction (0.20, see that job's
+    # --stress-overflow-fraction), filesPerTape = 5000 / (2 x 0.20) = 12 500, so the mount cycle
+    # shortens from stress-scale-values.yaml's ~16.7 min to ~4.2 min (12 500 / 50 Hz = 250 s).
+    # G_max (T_batch + T_change ~ 190 s, see stress-scale-values.yaml's derivation - unaffected,
+    # since it depends on fetchMaxFiles/rate and mountDelayMaxMs, neither of which changed here)
+    # is now 76% of the mount cycle itself, where at the base preset's 0.05 it was only 19%. The
+    # base preset's two goals - a generous margin over G_max (there, ~3.2x) AND staying well
+    # inside the mount cycle (there, 60%) - are no longer simultaneously achievable: at this
+    # overflow fraction, any age with a 3x+ margin over G_max (570 s+) is itself 2+ mount cycles,
+    # which is exactly the "waits through several healthy-mount-equivalents before reclaiming a
+    # dead one" problem the base preset's comment warns against. 600 s (unchanged from the base
+    # preset) would be 2.4 cycles.
+    #
+    # 240 s is the resolution: it keeps the SAME kind of margin the base preset enforces, just
+    # measured against the binding constraint here. Over G_max it is only ~1.26x (thinner than
+    # the base preset's ~3.2x) and it is 96% of the mount cycle (not "comfortably inside" either)
+    # - but accepting a thinner margin is specifically safe for THIS test and would not be for
+    # the base scale test: neither failure class this test injects (end-of-tape overflow,
+    # VtlDrive's one-time fault injection) can ever exhaust a file's retry budget regardless of
+    # how long reclaim takes (see the top-of-file comment), so a slower-than-ideal reclaim costs
+    # this run some wall-clock time, never a lost file. Do not reuse 240 s as a general template
+    # for a different overflowFraction without rechecking both ratios above - the right age value
+    # is a property of the G_max/cycle relationship at the specific overflowFraction in use, not
+    # a constant.
+    userActiveQueueCleanup: &failCleanup
+      replicas: 1
+      sleepIntervalSecs: 60
+      batchSize: 50000
+      ageForCollectionSecs: 240
+    userPendingQueueCleanup: *failCleanup

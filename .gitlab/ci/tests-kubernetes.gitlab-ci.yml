@@ -587,3 +587,139 @@ stress-scale-test:
     expire_in: 30 days
     paths:
       - test_logs
+
+# Same scale as stress-scale-test, but deliberately engineers failures instead of avoiding them:
+# end-of-tape re-queuing (overflowFraction raised well above the base preset's rare-boundary
+# target), VtlDrive's one-time transfer/retrieve fault injection, and mid-run pod kills of a
+# taped mount and a diskReportArchive/diskReportRetrieve batch. The point is proving maintd's
+# cleanup routines actually recover that work - every file must still end up archived and
+# retrieved despite all of it. See presets/stress-scale-fail-values.yaml and
+# tests/stress_scale_fail_test.py for the detailed design.
+stress-scale-fail-test:
+  allow_failure: true
+  interruptible: false
+  timeout: 12 hours
+  stage: system-test
+  needs:
+    - job: prepare-cta-version
+      artifacts: true
+      optional: true
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: modify-project-json
+      optional: true
+    - job: build-cta-images
+      optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
+  rules:
+    - when: manual
+      allow_failure: true
+  variables:
+    NAMESPACE: stress-scale-fail-${CI_JOB_ID}
+    EXTRA_SPAWN_ARGS: ""
+    EXTRA_PYTEST_ARGS: ""
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - bash ./ci/checks/check_runner_healthy.sh
+    - uv venv
+    - source .venv/bin/activate
+    - uv pip install -r ci/system_tests/requirements.txt
+    - *setup-k8s-test-variables
+  script:
+    - |
+      if [[ "$SCHEDULER_TYPE" != "pgsched" ]]; then
+        echo "stress-scale-fail-test requires SCHEDULER_TYPE=pgsched" >&2
+        exit 1
+      fi
+      SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+      [[ "$CATALOGUE_CONFIG" == "presets/dev-catalogue-postgres-values.yaml" ]] && \
+        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-repack-values.yaml
+      EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
+      # stress-scale-fail-values.yaml ONLY overrides maintd's dead-mount-reclaim age (see that
+      # file's own comment for why); every other scale-test tuning (rates, fetch/flush sizes,
+      # reporting throughput, DNS, etc.) is inherited unchanged from stress-scale-values.yaml.
+      STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml,presets/stress-scale-values.yaml,presets/stress-scale-fail-values.yaml"
+      if ${USE_PGBOUNCER:-$[[ inputs.use-pgbouncer ]]}; then
+        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-pgbouncer-values.yaml
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-pgbouncer-values.yaml
+      fi
+      # Same drive/library topology as stress-scale-test: 100 drives, 4 libraries.
+      # Override per-run via NUM_STRESS_DRIVES / NUM_STRESS_LIBRARIES CI variables.
+      EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-100} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-4}"
+      # Same per-drive rate ceiling as stress-scale-test (see that job's comment for the full
+      # rationale) - this test is about failure RECOVERY at the same throughput, not about
+      # throughput itself. Override per-run via STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ.
+      EXTRA_SPAWN_ARGS+=" --stress-write-rate-hz ${STRESS_WRITE_RATE_HZ:-50}"
+      EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-50}"
+      EXTRA_SPAWN_ARGS+=" --stress-mount-delay-ms ${STRESS_MOUNT_DELAY_MS:-5000}"
+      EXTRA_SPAWN_ARGS+=" --stress-mount-delay-max-ms ${STRESS_MOUNT_DELAY_MAX_MS:-90000}"
+      # The three deliberate failure injections this job exists to test. Defaults chosen per
+      # presets/stress-scale-fail-values.yaml's design comment:
+      #   - overflow-fraction 0.20: ~20% of each drive's files re-queued at a tape boundary
+      #     (vs stress-scale-test's 0.05) - retry-NEUTRAL (requeueJobBatch preserves retry
+      #     counters), so this alone can never cause a permanent loss, only extra DB round trips.
+      #   - transfer/retrieve-failure-rate 0.02/0.02: 2% of archived/retrieved files get a
+      #     synthetic fault, injected AT MOST ONCE per file for its whole lifetime (see
+      #     VtlDrive::maybeInjectFault()'s one-time atomic marker) - so it costs a file exactly
+      #     one of its ArchiveRequest::TOTAL_RETRIES=2 retries, never all of them.
+      # Override per-run via STRESS_OVERFLOW_FRACTION / STRESS_TRANSFER_FAILURE_RATE /
+      # STRESS_RETRIEVE_FAILURE_RATE.
+      EXTRA_SPAWN_ARGS+=" --stress-overflow-fraction ${STRESS_OVERFLOW_FRACTION:-0.20}"
+      EXTRA_SPAWN_ARGS+=" --stress-transfer-failure-rate ${STRESS_TRANSFER_FAILURE_RATE:-0.02}"
+      EXTRA_SPAWN_ARGS+=" --stress-retrieve-failure-rate ${STRESS_RETRIEVE_FAILURE_RATE:-0.02}"
+      # File count and prequeue settings come from test_pgsched_params.toml, same as
+      # stress-scale-test. CI variables allow per-run overrides via "Play with variables".
+      [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"
+      [[ -n "${STRESS_PREQUEUE_ENABLED}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED}"
+      [[ -n "${STRESS_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION}"
+      [[ -n "${STRESS_RETRIEVE_PREQUEUE_FRACTION}" ]] && EXTRA_PYTEST_ARGS+=" --stress-retrieve-prequeue-fraction ${STRESS_RETRIEVE_PREQUEUE_FRACTION}"
+    - cd ci/orchestration/
+    - ./create_instance.sh --namespace ${NAMESPACE}
+                           --reset-catalogue
+                           --reset-scheduler
+                           --publish-telemetry
+                           --cta-image-tag ${IMAGE_TAG}
+                           --cta-config ${STRESS_CTA_VALUES_CHAIN}
+                           --eos-config presets/stress-eos-values.yaml
+                           --catalogue-config ${CATALOGUE_CONFIG}
+                           --scheduler-config ${SCHEDULER_CONFIG}
+                           --chart-install-timeout 15
+                           --eos-deploy-timeout 10
+                           ${EXTRA_SPAWN_ARGS}
+    - cd ../system_tests
+    - mkdir -p "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}"
+    - pytest tests/stress_scale_fail_test.py --namespace ${NAMESPACE}
+                                             --setup
+                                             --color=yes
+                                             ${EXTRA_PYTEST_ARGS}
+                                             2>&1
+                                             | tee "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pytest.log"
+  after_script:
+    - |
+      if $[[ inputs.keep-stress-test-namespace ]]; then
+        echo "Skipping deletion of stress test namespace ${NAMESPACE}"
+        exit 0
+      fi
+    - cd ci/orchestration/
+    - ./delete_instance.sh --namespace ${NAMESPACE}
+                           --collect-logs "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pods"
+                           --force-delete-cluster-resources
+    - |
+      if [[ -n "$CI_COMMIT_TAG" ]]; then
+        case "$CI_JOB_STATUS" in
+          success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) completed successfully." ;;
+          failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed." ;;
+          *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
+        esac
+        python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
+      fi
+  tags:
+    - stress
+  resource_group: stress-test
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - test_logs
