@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <atomic>
 #include <bits/unique_ptr.h>
+#include <chrono>
 #include <exception>
 #include <gtest/gtest.h>
 #include <memory>
@@ -46,6 +47,7 @@
 #ifdef CTA_PGSCHED
 #include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
 #endif
 
 #ifdef STDOUT_LOGGING
@@ -4006,6 +4008,386 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount) {
     ASSERT_TRUE(nextMount);
   }
 }
+
+// The mount policy's minimum request age is one of the three criteria which can warrant an archive
+// mount, the other two being the queued bytes and the queued file count. A queue which stays below
+// both of those thresholds must therefore not be mounted before the minimum request age elapsed.
+TEST_P(SchedulerTest, archiveMountPolicyMinRequestAgeIsRespected) {
+  using namespace cta;
+
+  Scheduler& scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   libraryComment);
+
+  auto tape = getDefaultTape();
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  {
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
+  }
+
+  {
+    // Queue a single small archive request: one file is below s_minFilesToWarrantAMount and its
+    // size is below s_minBytesToWarrantAMount, so only the request age can warrant a mount.
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID";
+    request.fileSize = 1000;
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    request.srcURL = "srcURL";
+    request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:";
+    request.archiveErrorReportURL = "null:";
+    const uint64_t archiveFileId =
+      scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // The job has just been queued, so it is younger than the minimum request age: no mount.
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 3600);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc));
+
+  // Same queue, same drive: only lowering the minimum request age makes the mount happen, which
+  // also proves the absence of a mount above was really down to the age criterion. The comparison
+  // against the minimum request age is strict, hence the one second wait.
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 0);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc));
+}
+
+// Retrieve counterpart of archiveMountPolicyMinRequestAgeIsRespected above: a retrieve queue below
+// both the queued bytes and the queued file count thresholds must not be mounted before the mount
+// policy's minimum request age elapsed.
+TEST_P(SchedulerTest, retrieveMountPolicyMinRequestAgeIsRespected) {
+  using namespace cta;
+
+  Scheduler& scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   libraryComment);
+
+  auto tape = getDefaultTape();
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
+  {
+    // This first initialization is normally done by the dataSession function.
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
+  }
+
+  // The file to retrieve has to be on tape first. It is kept small on purpose, so that the
+  // retrieve queue it ends up in stays below s_minBytesToWarrantAMount.
+  constexpr uint64_t fileSize = 1000;
+  uint64_t archiveFileId;
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file";
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID";
+    request.fileSize = fileSize;
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    request.srcURL = "srcURL";
+    request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:";
+    request.archiveErrorReportURL = "null:";
+    archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  {
+    // Emulate a tape server writing the file to tape. This single small file only warrants an
+    // archive mount once it is older than the archive minimum request age, hence the wait.
+    catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 0);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto mount = scheduler.getNextMount(s_libraryName, driveName, lc);
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount->getMountType());
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
+
+    std::unique_ptr<cta::ArchiveMount> archiveMount(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    auto archiveJobBatch = archiveMount->getNextJobBatch(1, fileSize, lc);
+    ASSERT_EQ(1, archiveJobBatch.size());
+    std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
+    archiveJob->tapeFile.blockId = 1;
+    archiveJob->tapeFile.fSeq = 1;
+    archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
+    archiveJob->tapeFile.copyNb = 1;
+    archiveJob->validate();
+    std::queue<std::unique_ptr<cta::ArchiveJob>> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
+    sDBarchiveJobBatch.emplace(std::move(archiveJob));
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
+    archiveMount->complete();
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
+  }
+
+  {
+    // Emulate the reporter process, so that the archive queue is left empty and the retrieve queue
+    // below is the only queue which could warrant a mount.
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
+    ASSERT_NE(0, jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
+    ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
+  }
+
+  {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    scheduler.queueRetrieve(s_diskInstance, request, lc);
+    scheduler.waitSchedulerDbSubthreadsComplete();
+  }
+
+  // The retrieve job has just been queued, so it is younger than the minimum request age: no mount.
+  catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 3600);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc));
+
+  // Same queue, same drive: only lowering the minimum request age makes the mount happen. The
+  // comparison against the minimum request age is strict, hence the one second wait.
+  catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 0);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc));
+}
+
+#ifdef CTA_PGSCHED
+// The repack archive queue is where the premature mounts reported in cta/CTA#1793 happened: a
+// repack retrieve job which had been waiting for hours became an archive job carrying that same
+// START_TIME, so the age check of REPACK_ARCHIVE_QUEUE_SUMMARY was satisfied the moment the job
+// was queued. This drives the mount decision off a repack archive job whose START_TIME is set
+// explicitly, both for a freshly queued job and for a job with the inherited (stale) one.
+TEST_P(SchedulerTest, archiveForRepackMountPolicyMinRequestAgeIsRespected) {
+  using namespace cta;
+
+  Scheduler& scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  // Repack mounts are filtered out altogether unless a default repack VO exists.
+  {
+    cta::common::dataStructures::VirtualOrganization repackVo;
+    repackVo.name = "repack_vo";
+    repackVo.comment = "comment";
+    repackVo.writeMaxDrives = 1;
+    repackVo.readMaxDrives = 1;
+    repackVo.maxFileSize = 0;
+    repackVo.diskInstanceName = s_diskInstance;
+    repackVo.isRepackVo = true;
+    catalogue.VO()->createVirtualOrganization(s_adminOnAdminHost, repackVo);
+  }
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   libraryComment);
+
+  auto tape = getDefaultTape();
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  {
+    // This first initialization is normally done by the dataSession function.
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
+  }
+
+  auto* dbWrapper = dynamic_cast<cta::RelationalDBTestWrapper*>(&getSchedulerDB());
+  ASSERT_NE(nullptr, dbWrapper);
+
+  // Same clock the mount decision computes the job age with (see Scheduler::sortAndGetTapesForMountInfo)
+  const uint64_t now = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+  // Queue one repack archive job directly: getting one into that queue through the scheduler needs
+  // a full repack retrieve tape session. A single small file stays well below both
+  // s_minFilesToWarrantAMount and s_minBytesToWarrantAMount (both doubled for ArchiveForRepack),
+  // so the request age is the only criterion which can warrant a mount. REPACK_REQUEST_ID is
+  // nullable and only used for progress reporting, so no repack request is needed here.
+  {
+    auto conn = dbWrapper->getRelationalDB().getConn();
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_ARCHIVE_PENDING_QUEUE (
+        ARCHIVE_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        STATUS,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_ARCHIVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES,
+        COPY_NB,
+        START_TIME,
+        CREATION_TIME,
+        STORAGE_CLASS
+      ) VALUES (
+        1,
+        1,
+        :STATUS,
+        :TAPE_POOL,
+        :MOUNT_POLICY,
+        1,
+        :MIN_ARCHIVE_REQUEST_AGE,
+        555,
+        1000,
+        1,
+        :START_TIME,
+        :CREATION_TIME,
+        :STORAGE_CLASS
+      )
+    )SQL");
+    stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack));
+    stmt.bindString(":TAPE_POOL", s_tapePoolName);
+    stmt.bindString(":MOUNT_POLICY", s_mountPolicyName);
+    stmt.bindUint64(":MIN_ARCHIVE_REQUEST_AGE", s_minArchiveRequestAge);
+    stmt.bindUint64(":START_TIME", now - 10);
+    stmt.bindUint64(":CREATION_TIME", now - 100000);
+    stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+    stmt.executeNonQuery();
+  }
+
+  // The job entered the archive queue 10 seconds ago, which is less than the minimum request age:
+  // no mount, even though the file it came from was created long before that.
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 3600);
+  ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc));
+
+  // Same queue, same drive: lowering the minimum request age below the job's age is enough to get
+  // the mount, which also proves the absence of a mount above was down to the age criterion.
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 0);
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc));
+
+  // And this is the behaviour the transformation must not produce: a START_TIME inherited from a
+  // repack retrieve job which had been running for more than a day passes a 1 hour minimum
+  // request age straight away.
+  catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(s_adminOnAdminHost, s_mountPolicyName, 3600);
+  {
+    auto conn = dbWrapper->getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE REPACK_ARCHIVE_PENDING_QUEUE SET START_TIME = :START_TIME");
+    stmt.bindUint64(":START_TIME", now - 100000);
+    stmt.executeNonQuery();
+  }
+  ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc));
+}
+#endif
 
 TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled) {
   using namespace cta;

@@ -13,6 +13,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/rdbms/RelationalDBTest.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
 
 #include <limits>
 #include <list>
@@ -443,6 +444,134 @@ TEST_P(RelationalDBTest, queueRepackWithStorageClass) {
   const auto repackInfo = db.getRepackInfo("V99999");
 
   ASSERT_EQ(storageClass, repackInfo.storageClass);
+}
+
+TEST_P(RelationalDBTest, repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransformed) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // The repack queue tables carry a foreign key on REPACK_REQUEST_ID, so the repack request has
+  // to exist before a repack retrieve job can be inserted below.
+  const std::string vid = "V10000";
+  auto mountPolicy = makeMountPolicy(1000);
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest(
+    vid,
+    "/repack/buffer",
+    cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+    mountPolicy,
+    false,
+    10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+
+  // Retrieving a repack tape takes hours, so by the time its retrieve jobs are transformed into
+  // archive jobs they are already far older than any MIN_ARCHIVE_REQUEST_AGE.
+  const uint64_t now = static_cast<uint64_t>(cta::utils::getCurrentEpochTime());
+  const uint64_t retrieveStartTime = now - 100000;
+  constexpr uint64_t creationTime = 500;
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+
+    uint64_t repackRequestId = 0;
+    {
+      auto stmt = conn.createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE VID = :VID");
+      stmt.bindString(":VID", vid);
+      auto rset = stmt.executeQuery();
+      ASSERT_TRUE(rset.next());
+      repackRequestId = rset.columnUint64("REPACK_REQUEST_ID");
+    }
+
+    // Insert the finished repack retrieve job directly: driving a repack retrieve all the way to
+    // RJS_ToReportToRepackForSuccess through the scheduler would need a full tape session.
+    // REPACK_REARCHIVE_COPY_NBS lists both the repacked copy (1, inserted by the transformation's
+    // BASE_INSERT) and an additional copy (2, inserted by its ALTERNATE_INSERT), so that both
+    // insert branches are covered.
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID,
+        RETRIEVE_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        STATUS,
+        ARCHIVE_FILE_ID,
+        CREATION_TIME,
+        START_TIME,
+        STORAGE_CLASS,
+        SIZE_IN_BYTES,
+        VID,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_RETRIEVE_REQUEST_AGE,
+        COPY_NB,
+        MOUNT_ID,
+        REPACK_REARCHIVE_COPY_NBS,
+        REPACK_REARCHIVE_TAPE_POOLS
+      ) VALUES (
+        :REPACK_REQUEST_ID,
+        777,
+        1,
+        :STATUS,
+        555,
+        :CREATION_TIME,
+        :START_TIME,
+        :STORAGE_CLASS,
+        1000,
+        :VID,
+        'tapePoolA',
+        'mountPolicy',
+        1,
+        3600,
+        1,
+        42,
+        '1,2',
+        'tapePoolA,tapePoolB'
+      )
+    )SQL");
+    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
+    stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindUint64(":CREATION_TIME", creationTime);
+    stmt.bindUint64(":START_TIME", retrieveStartTime);
+    stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+  }
+  // Let the connection go back to the pool before the transformation asks for its own ones.
+
+  const uint64_t beforeTransform = static_cast<uint64_t>(cta::utils::getCurrentEpochTime());
+  db.getNextSuccessfulRetrieveRepackReportBatch(lc);
+  const uint64_t afterTransform = static_cast<uint64_t>(cta::utils::getCurrentEpochTime());
+
+  auto conn = db.getRelationalDB().getConn();
+  auto stmt = conn.createStmt(R"SQL(
+    SELECT TAPE_POOL, START_TIME, CREATION_TIME
+    FROM REPACK_ARCHIVE_PENDING_QUEUE
+    ORDER BY COPY_NB
+  )SQL");
+  auto rset = stmt.executeQuery();
+
+  std::list<std::string> tapePools;
+  while (rset.next()) {
+    tapePools.emplace_back(rset.columnString("TAPE_POOL"));
+    // The age the mount decision sees has to be the age of the job in the archive queue: the
+    // ARCHIVE_QUEUE_SUMMARY/REPACK_ARCHIVE_QUEUE_SUMMARY views compare MIN(START_TIME) against
+    // MIN_ARCHIVE_REQUEST_AGE, so a START_TIME carried over from the retrieve job makes the
+    // archive job look old enough to mount the moment it is queued. The stamp has to be the one
+    // taken while the transformation ran: neither the retrieve job's own (far in the past) nor
+    // anything in the future. Postgres rounds the EXTRACT(EPOCH ...)::BIGINT cast rather than
+    // truncating it, so the upper bound allows for one second of rounding up.
+    const uint64_t startTime = rset.columnUint64("START_TIME");
+    ASSERT_GE(startTime, beforeTransform);
+    ASSERT_LE(startTime, afterTransform + 1);
+    // CREATION_TIME is not part of the age check and keeps tracking the original request.
+    ASSERT_EQ(creationTime, rset.columnUint64("CREATION_TIME"));
+  }
+  // One archive job for the repacked copy (BASE_INSERT), one for the additional copy
+  // (ALTERNATE_INSERT).
+  ASSERT_EQ((std::list<std::string> {"tapePoolA", "tapePoolB"}), tapePools);
 }
 
 TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
