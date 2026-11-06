@@ -109,7 +109,7 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
                                              log::LogContext& lc,
                                              [[maybe_unused]] const std::string& reason) {
   if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser
-      || m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
+      && m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
     lc.log(log::WARNING,
            std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status)
              + std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure or "
@@ -159,6 +159,18 @@ void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
       .log(log::ERR, log_msg + std::string(" failed. Aborting transaction."));
     txn.abort();
   }
+}
+
+void ArchiveRdbJob::prepareFailTransfer(const std::string& failureReason) {
+  m_jobRow.updateJobRowFailureLog(failureReason);
+  m_jobRow.updateRetryCounts(m_mountId);
+}
+
+void ArchiveRdbJob::prepareFailReport(const std::string& failureReason) {
+  // is_report_log=true: appends to reportFailureLogs and increments totalReportRetries.
+  // The updated counters are read by failReportBatch() to decide per-job whether to
+  // mark ReadyForDeletion (exceed retries) or reset IS_REPORTING (retry later).
+  m_jobRow.updateJobRowFailureLog(failureReason, true);
 }
 
 void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
