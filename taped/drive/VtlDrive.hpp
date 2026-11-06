@@ -43,7 +43,10 @@ namespace cta::tape::drive {
  *   3. The full transfer runs via m_tape in-memory block I/O. flush() is an in-memory no-op by
  *      default — the file on disk is stale until step 4 — unless the media type's
  *      persistOnFlush is set, in which case flush() also serialises m_tape to disk
- *      immediately (see MediaTypeInfo::persistOnFlush).
+ *      immediately (see MediaTypeInfo::persistOnFlush). If the media type's
+ *      transferFailureRate/retrieveFailureRate is set, each file's first HDR1 block may throw a
+ *      synthetic I/O error instead of transferring (see MediaTypeInfo::transferFailureRate and
+ *      maybeInjectFault()), for failure-scenario testing.
  *   4. DataTransferSession calls unloadTape(): VtlDrive serialises m_tape
  *      back to the same file, then marks the tape as absent.
  *   5. MediaChangerFacade::dismountTape(vid) acquires the changer lock and
@@ -266,6 +269,15 @@ public:
     // a pod restart or an unload-time saveTape() failure is unacceptable even at the cost of
     // the extra PVC I/O.
     bool persistOnFlush = false;
+    // Fault injection for failure-scenario testing, off by default (0.0). On the first HDR1
+    // block of a write/read, with probability transferFailureRate/retrieveFailureRate (a stable
+    // function of the file's archive-file-ID, not re-rolled per attempt), VtlDrive throws a
+    // synthetic I/O error instead of transferring the file — see tryClaimFaultOnce() for why this
+    // is guaranteed to affect a given file at most once across its lifetime, however many drives
+    // or retries it passes through. 0.0 (unset) disables injection entirely; the normal case for
+    // every deployment and test except the dedicated failure-scenario preset.
+    double transferFailureRate = 0.0;
+    double retrieveFailureRate = 0.0;
   };
 
 private:
@@ -295,6 +307,10 @@ private:
   uint32_t m_maxReadRateHz = 0;
   // Set from MediaTypeInfo::persistOnFlush at each waitUntilReady call; see flush().
   bool m_persistOnFlush = false;
+  // Set from MediaTypeInfo::transferFailureRate/retrieveFailureRate at each waitUntilReady call;
+  // see maybeInjectFault().
+  double m_transferFailureRate = 0.0;
+  double m_retrieveFailureRate = 0.0;
   // Default-constructed time_point (epoch) signals "no file transferred yet on this cartridge".
   // Both are reset when a cartridge is loaded, so the tape change is not mistaken for queue wait.
   std::chrono::steady_clock::time_point m_lastWriteBlockTime;
@@ -313,6 +329,30 @@ private:
   /// costs exactly its own duration. No interval debt is carried, so recovery never produces a
   /// catch-up burst. No-op when rateHz is 0 or no file has been transferred yet on this cartridge.
   static void throttle(uint32_t rateHz, std::chrono::steady_clock::time_point& last);
+
+  /// If data/count is an HDR1 block and rate > 0, decide whether this file is fault-eligible (a
+  /// stable function of the fileId hex-encoded in the block, see FileWriter.cpp/Structures.hpp —
+  /// NOT re-rolled per attempt) and, if so, atomically claim its one-time fault via
+  /// tryClaimFaultOnce(). Throws a synthetic cta::exception::Exception if the claim succeeds (this
+  /// is the first attempt, on any drive, to reach this file); does nothing otherwise — including
+  /// when the file is eligible but another attempt already claimed its fault, which is what
+  /// bounds the injected failures to AT MOST ONE per file for its entire lifetime regardless of
+  /// how many times it is retried or which drive handles the retry.
+  void maybeInjectFault(const void* data, size_t count, double rate, const char* kind) const;
+
+  /// Parse the fileId field (hex-encoded cta::ArchiveFile::archiveFileID, see
+  /// taped/file/FileWriter.cpp) out of an HDR1 block. Returns empty if data/count is not a valid
+  /// HDR1 block or the field cannot be parsed.
+  static std::string extractFileIdFromHDR1(const void* data, size_t count);
+
+  /// Atomically claim fileIdHex's one-time fault of the given kind ("write" or "read") on the
+  /// shared library volume, using the same O_CREAT|O_EXCL idiom as ChangerGuard's .lock file.
+  /// Returns true if this call created the marker (first claim — inject the fault), false if it
+  /// already existed (already claimed by an earlier attempt — do not inject again). The marker is
+  /// permanent for the life of the PVC/test run: deliberately never cleaned up, since its entire
+  /// purpose is "has this file ever had its one fault consumed," which must survive across mounts,
+  /// drives and taped pod restarts.
+  bool tryClaimFaultOnce(const char* kind, const std::string& fileIdHex) const;
 
   // Per-drive RNG for jittering mount delay; seeded from drive name XOR current time.
   std::mt19937 m_rng;

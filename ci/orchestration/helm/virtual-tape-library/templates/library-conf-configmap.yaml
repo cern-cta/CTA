@@ -13,15 +13,34 @@ data:
     name             = "stress-lib-{{ $i }}"
     changerTimeoutMs = {{ $.Values.library.changerTimeoutMs }}
     {{- range $.Values.library.mediaTypes }}
-    {{- /* Derive the capacity so that a tape always holds a whole number of fetch batches:
-           capacityBytes = vol1Bytes + batchesPerTape * batchFiles * logicalBytesPerFile.
-           An explicit capacityBytes wins, for media types which do not want the derivation. */}}
+    {{- /* Derive the capacity from the fraction of a drive's files expected to be re-queued at
+           each tape-fill boundary (overflowFraction), rather than from a whole-batch count: a
+           drive fetches fixed-size batches of batchFiles without regard to the tape's remaining
+           space, so when ENOSPC ends a session, whatever was already fetched but not yet written
+           - up to one batch's worth - goes back to the queue. Averaged over where in the last
+           batch the boundary happens to fall, that is overflowFraction = (batchFiles / 2) /
+           filesPerTape, i.e. filesPerTape = batchFiles / (2 * overflowFraction).
+           filesPerTape need not be, and generally will not be, a whole multiple of batchFiles -
+           that is the point of specifying the fraction directly (e.g. 0.05 or 0.15) instead of an
+           integer batch count, which could previously only hit a handful of discrete fractions
+           (1/(2*N) for integer N). The target is only approximate regardless: the formula's
+           "averaged over where the boundary falls" assumption is itself an estimate, not a
+           guarantee, so treat the actually observed re-queue rate as the ground truth and this as
+           a starting point. An explicit capacityBytes wins, for media types which do not want the
+           derivation - and when set, library.overflowFractionOverride below has no effect, same
+           as the rate/delay overrides it sits alongside. */}}
     {{- $capacityBytes := .capacityBytes }}
     {{- if not $capacityBytes }}
-      {{- if or (not .batchFiles) (not .batchesPerTape) (not .logicalBytesPerFile) }}
-        {{- fail (printf "media type %s needs either capacityBytes or batchFiles + batchesPerTape + logicalBytesPerFile" .name) }}
+      {{- $overflowFraction := $.Values.library.overflowFractionOverride | default .overflowFraction }}
+      {{- if or (not .batchFiles) (not $overflowFraction) (not .logicalBytesPerFile) }}
+        {{- fail (printf "media type %s needs either capacityBytes or batchFiles + overflowFraction + logicalBytesPerFile" .name) }}
       {{- end }}
-      {{- $capacityBytes = add (default 80 .vol1Bytes) (mul .batchesPerTape .batchFiles .logicalBytesPerFile) }}
+      {{- /* Go template pipe semantics append the piped value as the FINAL argument, so
+             round's (value, precision) signature must be called directly rather than piped
+             into - "X | round 0" would call round(0, X), the wrong argument order. */}}
+      {{- $filesPerTapeFloat := divf (float64 .batchFiles) (mulf 2.0 $overflowFraction) }}
+      {{- $filesPerTape := round $filesPerTapeFloat 0 | int64 }}
+      {{- $capacityBytes = add (default 80 .vol1Bytes) (mul $filesPerTape .logicalBytesPerFile) }}
     {{- end }}
 
     [[library.mediaTypes]]
@@ -36,13 +55,18 @@ data:
            at drive startup. */}}
     mountDelayMs   = {{ $.Values.library.mountDelayMsOverride | default .mountDelayMs | default 0 }}
     mountDelayMaxMs = {{ $.Values.library.mountDelayMaxMsOverride | default .mountDelayMaxMs | default 0 }}
-    {{- /* library.max{Write,Read}RateHzOverride apply to every media type. They exist because
-           --set library.mediaTypes[0].maxWriteRateHz=N cannot be used: Helm replaces a list
-           element instead of merging into it, so that form silently drops the media type's
-           name and capacity inputs. Note that an override of 0 is indistinguishable from unset
-           and falls back to the media type's own value: disable a throttle there, not here. */}}
+    {{- /* library.max{Write,Read}RateHzOverride, persistOnFlushOverride and
+           {transfer,retrieve}FailureRateOverride all apply to every media type, for the same
+           reason: --set library.mediaTypes[0].maxWriteRateHz=N cannot be used, since Helm
+           replaces a list element instead of merging into it, silently dropping the media type's
+           name and capacity inputs. Note that an override equal to the field's own zero value
+           (0, 0.0 or false) is indistinguishable from "no override set" and falls back to the
+           media type's own value: disable one of these there, not via its Override here. */}}
     maxWriteRateHz = {{ $.Values.library.maxWriteRateHzOverride | default .maxWriteRateHz | default 0 }}
     maxReadRateHz  = {{ $.Values.library.maxReadRateHzOverride | default .maxReadRateHz | default 0 }}
+    persistOnFlush = {{ $.Values.library.persistOnFlushOverride | default .persistOnFlush | default false }}
+    transferFailureRate = {{ $.Values.library.transferFailureRateOverride | default .transferFailureRate | default 0.0 }}
+    retrieveFailureRate = {{ $.Values.library.retrieveFailureRateOverride | default .retrieveFailureRate | default 0.0 }}
     count          = {{ .count }}
     {{- end }}
 {{- end }}

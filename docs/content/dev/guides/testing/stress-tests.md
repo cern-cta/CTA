@@ -92,22 +92,27 @@ changerTimeoutMs = 30000
 
 [[library.mediaTypes]]
 name           = "STRESSTAPE"
-capacityBytes  = 24800080   # derived, see below — exactly 10 × 5 000-file batches
+capacityBytes  = 24800080   # derived, see below — 5% overflowFraction at 5 000-file batches
 vidPrefix      = "S0"       # auto-derived: S{i}  (2 chars + 4-digit index = 6-char VID)
 mountDelayMs    = 15000     # mount-delay jitter floor
 mountDelayMaxMs = 0         # jitter ceiling; 0 = default to 2x mountDelayMs
 maxWriteRateHz = 1000       # file-rate ceiling per drive when writing; 0 = RAM speed
 maxReadRateHz  = 1000       # file-rate ceiling per drive when reading;  0 = RAM speed
 persistOnFlush = false      # true = also saveTape() on every flush(), not just at unload
+transferFailureRate = 0.0   # fraction of archived files given a one-time synthetic fault
+retrieveFailureRate = 0.0   # fraction of retrieved files given a one-time synthetic fault
 count          = 100        # virtual tapes: S00001..S00100
 ```
 
-`capacityBytes` is **not** written by hand. The chart derives it from the fetch batch so that a
-tape always holds a whole number of batches:
+`capacityBytes` is **not** written by hand. The chart derives it from `overflowFraction` — the
+fraction of a drive's files expected to be re-queued at each tape-fill boundary — so that
+specifying the fraction directly (any value, e.g. `0.05` or `0.15`) determines the tape size:
 
 ```
-capacityBytes = vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile
-              = 80        + 10            × 5 000      × 496                  = 24 800 080
+filesPerTape  = batchFiles / (2 × overflowFraction)
+              = 5 000      / (2 × 0.05)               = 50 000
+capacityBytes = vol1Bytes + filesPerTape × logicalBytesPerFile
+              = 80        + 50 000      × 496         = 24 800 080
 ```
 
 `logicalBytesPerFile` is one file's tape footprint: 6 ANSI label blocks of 80 bytes plus the
@@ -116,18 +121,22 @@ payload (16 bytes in the stress tests). File marks consume no capacity.
 This matters because a drive pipelines its next fetch while writing the current batch, and nothing
 limits a fetch to the tape's remaining space: when the tape fills, ENOSPC ends the session and
 every job already fetched but not yet written goes back to the queue. Those jobs are re-queued,
-not failed, but each costs a scheduler round trip. The waste is about one fetch batch per tape
-boundary regardless of tape size, so only the ratio matters — `batchesPerTape: 10` keeps it to a
-tenth of a tape. 5 000 × 10 = 50 000 files/tape is sized above this test's actual-scale average
+not failed, but each costs a scheduler round trip. The waste per tape boundary is about one fetch
+batch's worth, averaged over where in the last batch the boundary happens to fall — hence
+`overflowFraction: 0.05` directly targets a twentieth of a tape's files being re-queued over the
+tape's lifetime. The resulting 50 000 files/tape is sized above this test's actual-scale average
 per-drive share (4 000 000 files over 100 drives, ~40 000 files/drive), so tape-boundary crossings
 stay rare rather than routine — only a drive that pulls an above-average share from the shared
 queue crosses at all. At the 50 Hz write/read rate ceiling (`STRESS_WRITE_RATE_HZ`/
 `STRESS_READ_RATE_HZ`) that is a ~16.7 min mount. Even when a crossing does happen it is not a
-failure mode, only overhead bounded to one re-queued fetch batch (≤5 000 jobs).
+failure mode, only overhead bounded to one re-queued fetch batch (≤5 000 jobs). A dedicated
+failure-scenario test that WANTS frequent re-queues sets `overflowFraction` much higher instead
+(e.g. `0.20`), to exercise that recovery path and the cleanup routines deliberately — see
+`presets/stress-scale-fail-values.yaml`.
 
-Raising `batchesPerTape` further costs memory and PVC I/O: the drive holds the whole tape in RAM
-(~1 kB per file, ~50 MB per taped pod at 10 batches) and serialises it to the PVC on every unload
-(~25 MB). Keep `batchFiles` equal to `transfers.archive.fetchMaxFiles` in
+Raising `overflowFraction` (and so shrinking the tape) costs memory and PVC I/O: the drive holds
+the whole tape in RAM (~1 kB per file, ~50 MB per taped pod at this default) and serialises it to
+the PVC on every unload (~25 MB). Keep `batchFiles` equal to `transfers.archive.fetchMaxFiles` in
 `presets/stress-scale-values.yaml`.
 
 The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `VtlDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
@@ -202,8 +211,8 @@ All stress-drive parameters are set in the `virtual-tape-library` chart `values.
 | Logical library name | **auto-derived**: `stress-lib-{i}` | — |
 | Changer lock timeout | `library.changerTimeoutMs` in `values.yaml` | `30000` ms |
 | Media type name | `library.mediaTypes[].name` | `STRESSTAPE` |
-| Tape capacity | **derived**: `vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile` | `24800080` (≈25 MB) |
-| Fetch batch per tape | `library.mediaTypes[].batchesPerTape` | `10` |
+| Tape capacity | **derived**: `vol1Bytes + (batchFiles / (2 × overflowFraction)) × logicalBytesPerFile` | `24800080` (≈25 MB) |
+| Re-queue fraction per tape | `library.mediaTypes[].overflowFraction` | `0.05` |
 | Files per fetch batch | `library.mediaTypes[].batchFiles` | `5000` |
 | Tape footprint per file | `library.mediaTypes[].logicalBytesPerFile` | `496` bytes |
 | VID prefix | **auto-derived**: `S{i}` (library index) | — |
@@ -212,6 +221,8 @@ All stress-drive parameters are set in the `virtual-tape-library` chart `values.
 | Max write rate | `library.mediaTypes[].maxWriteRateHz` | `1000` files/s |
 | Max read rate | `library.mediaTypes[].maxReadRateHz` | `1000` files/s |
 | Persist on flush | `library.mediaTypes[].persistOnFlush` | `false` |
+| Transfer failure rate | `library.mediaTypes[].transferFailureRate` | `0.0` |
+| Retrieve failure rate | `library.mediaTypes[].retrieveFailureRate` | `0.0` |
 | Tapes per library | `library.mediaTypes[].count` | `100` |
 | PVC name prefix | `pvc.namePrefix` | `cta-virtual-tape-library` |
 | PVC size | `pvc.size` | `50Gi` |

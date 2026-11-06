@@ -10,6 +10,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "taped/drive/DriveInterface.hpp"
 #include "taped/session/TapeSessionStats.hpp"
 #include "taped/session/pipeline/AutoReleaseBlock.hpp"
 #include "taped/session/pipeline/DataConsumer.hpp"
@@ -232,6 +233,28 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc, *failure);
     lc.log(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.");
+    return;
+  } catch (const cta::tape::drive::RecoverableTransferFault& e) {
+    // VtlDrive's failure-scenario fault injection (see MediaTypeInfo::transferFailureRate in
+    // taped/drive/VtlDrive.hpp) throws this type specifically so it lands HERE rather than in the
+    // generic cta::exception::Exception handler below, which sets m_errorFlag and ends the whole
+    // write session - the wrong blast radius for a deliberately injected single-file fault.
+    // Handled identically to RecoverableMigrationErrorException just above: report this one job
+    // failed and continue the mount for every other file.
+    if (currentErrorToCount) {
+      failure = tracker.recordFailure(*currentErrorToCount);
+    }
+    if (!failure) {
+      failure = tracker.recordFailure(TapeSessionFailure::UnclassifiedFile);
+    }
+    LogContext::ScopedParam sp(lc, Param("exceptionCode", cta::log::ERR));
+    LogContext::ScopedParam sp1(lc, Param(cta::semconv::log::exceptionMessage, e.getMessageValue()));
+    lc.log(cta::log::ERR, "Injected transfer fault for this file; migration will proceed.");
+    circulateMemBlocks();
+
+    session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+    reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc, *failure);
+    lc.log(cta::log::INFO, "Left placeholder on tape after skipping injected-fault file.");
     return;
   } catch (const cta::exception::Exception& e) {
     // We can end up there because

@@ -9,10 +9,12 @@
 #include "common/exception/Exception.hpp"
 
 #include <chrono>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <unistd.h>
+#include <vector>
 
 namespace unitTests {
 
@@ -29,7 +31,9 @@ void writeLibraryConf(const fs::path& baseDir,
                       uint32_t maxWriteRateHz = 0,
                       uint32_t maxReadRateHz = 0,
                       uint32_t mountDelayMaxMs = 0,
-                      bool persistOnFlush = false) {
+                      bool persistOnFlush = false,
+                      double transferFailureRate = 0.0,
+                      double retrieveFailureRate = 0.0) {
   const auto confDir = baseDir / "config" / lib;
   fs::create_directories(confDir);
   std::ofstream f(confDir / "library.toml");
@@ -45,7 +49,19 @@ void writeLibraryConf(const fs::path& baseDir,
     << "maxWriteRateHz = " << maxWriteRateHz << "\n"
     << "maxReadRateHz = " << maxReadRateHz << "\n"
     << "persistOnFlush = " << (persistOnFlush ? "true" : "false") << "\n"
+    << "transferFailureRate = " << transferFailureRate << "\n"
+    << "retrieveFailureRate = " << retrieveFailureRate << "\n"
     << "count = 10\n";
+}
+
+// Minimal HDR1 label block: "HDR1" (4 bytes) + a 17-byte fileId field (space-padded), padded to
+// the real 80-byte ANSI label block size so size-based checks elsewhere are unaffected.
+std::vector<char> makeHDR1Block(const std::string& fileIdHex) {
+  std::vector<char> block(80, ' ');
+  std::memcpy(block.data(), "HDR1", 4);
+  const std::string padded = fileIdHex.substr(0, 17);
+  std::memcpy(block.data() + 4, padded.data(), padded.size());
+  return block;
 }
 
 }  // namespace
@@ -193,6 +209,112 @@ TEST_F(VtlDriveTest, FlushPersistsWhenPersistOnFlushEnabled) {
 
   // persistOnFlush=true: the write must already be durable before unloadTape() runs.
   EXPECT_GT(fs::file_size(driveDir() / (vid + ".tape")), 0u);
+}
+
+TEST_F(VtlDriveTest, NoFaultInjectionByDefault) {
+  mountBlankTape("ST0005");
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);
+
+  const auto hdr = makeHDR1Block("ABCDEF");
+  EXPECT_NO_THROW(drv.writeBlock(hdr.data(), hdr.size()));
+}
+
+TEST_F(VtlDriveTest, TransferFaultFiresOnceThenNotAgainForTheSameFile) {
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, false,
+                   /*transferFailureRate=*/1.0);
+  mountBlankTape("ST0006");
+  const auto hdr = makeHDR1Block("DEADBEEF1");
+
+  {
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    // rate=1.0: every file is eligible, and this is the first (only) attempt so far, so the
+    // fault must fire.
+    EXPECT_THROW(drv.writeBlock(hdr.data(), hdr.size()), cta::exception::Exception);
+  }
+  {
+    // A second attempt for the SAME fileId - simulating the scheduler's retry after the failure
+    // above - must transfer normally: the one-time marker from the first attempt must prevent a
+    // second fault for this file, which is the guarantee the whole mechanism exists for (a file
+    // can lose at most one of its total retry attempts to injected faults).
+    VtlDrive drv2(m_drive, m_lib, m_baseDir);
+    drv2.waitUntilReady(30);
+    EXPECT_NO_THROW(drv2.writeBlock(hdr.data(), hdr.size()));
+  }
+}
+
+TEST_F(VtlDriveTest, RetrieveFaultFiresOnlyOnReadNotOnWrite) {
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, false,
+                   /*transferFailureRate=*/0.0, /*retrieveFailureRate=*/1.0);
+  const auto hdr = makeHDR1Block("FEEDFACE");
+  const std::string vid = "ST0007";
+  mountBlankTape(vid);
+
+  // Write must succeed: transferFailureRate is 0, only retrieveFailureRate is set.
+  {
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    EXPECT_NO_THROW(drv.writeBlock(hdr.data(), hdr.size()));
+    drv.unloadTape();
+  }
+
+  // Reading the same file back must fault, since retrieveFailureRate=1.0 and this is the first
+  // read attempt for this fileId.
+  {
+    VtlDrive drv2(m_drive, m_lib, m_baseDir);
+    drv2.waitUntilReady(30);
+    char buf[80];
+    EXPECT_THROW(drv2.readExactBlock(buf, sizeof(buf), "HDR1"), cta::exception::Exception);
+  }
+}
+
+TEST_F(VtlDriveTest, InjectedFaultIsSharedAcrossSiblingLibraries) {
+  // tryClaimFaultOnce() derives a shared "library 0" marker root from this drive's baseDir by
+  // naming convention (parent dir + same prefix + "0" - see that method's comment); m_baseDir
+  // here already ends in "-<pid>" (see SetUp()), so its sibling "library 0" is
+  // parent/<same-prefix>-0. Set that up as a second, independent library here so the test does
+  // not depend on m_baseDir literally being named "cta-stress-lib-N" the way production
+  // deployments are.
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, false,
+                   /*transferFailureRate=*/1.0);
+  mountBlankTape("ST0008");
+
+  const auto myDirName = m_baseDir.filename().string();
+  const auto lastDash = myDirName.rfind('-');
+  ASSERT_NE(std::string::npos, lastDash);
+  const fs::path library0Base = m_baseDir.parent_path() / (myDirName.substr(0, lastDash + 1) + "0");
+  const std::string otherDrive = "OTHERDRIVE";
+  fs::create_directories(library0Base / "contents" / m_lib / "slots");
+  fs::create_directories(library0Base / "contents" / m_lib / "changer");
+  fs::create_directories(library0Base / "contents" / m_lib / "drives" / otherDrive);
+  writeLibraryConf(library0Base, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, false,
+                   /*transferFailureRate=*/1.0);
+  std::ofstream(library0Base / "contents" / m_lib / "drives" / otherDrive / "ST0008.tape", std::ios::binary);
+
+  const auto hdr = makeHDR1Block("C0FFEE");
+
+  // First attempt, on this (non-"library 0") drive: nothing has claimed this fileId's fault
+  // anywhere yet, so it fires and is recorded under library0Base's shared marker directory.
+  {
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    EXPECT_THROW(drv.writeBlock(hdr.data(), hdr.size()), cta::exception::Exception);
+  }
+
+  // Second attempt, on a drive that is itself library 0 - simulating the scheduler's retry
+  // landing on a completely different library's drive (possible under a single tape pool shared
+  // across libraries, see tryClaimFaultOnce()'s comment). Both drives have
+  // transferFailureRate=1.0, so without the shared marker this would fault again; it must not.
+  {
+    VtlDrive drv2(otherDrive, m_lib, library0Base);
+    drv2.waitUntilReady(30);
+    EXPECT_NO_THROW(drv2.writeBlock(hdr.data(), hdr.size()));
+  }
+
+  // library0Base lives outside m_baseDir (it is m_baseDir's sibling), so TearDown()'s
+  // fs::remove_all(m_baseDir) does not clean it up.
+  fs::remove_all(library0Base);
 }
 
 TEST_F(VtlDriveTest, MediaTypeCapacityIsApplied) {

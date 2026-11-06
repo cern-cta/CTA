@@ -123,7 +123,7 @@ taped:
     # ceiling (maxWriteRateHz/maxReadRateHz: 50; previously a 250 Hz ceiling sat above the ~50 Hz
     # drives actually achieved) - i.e. ~20 ms per disk read, so the writer waits on EOS rather than
     # on buffers. Worth trimming because the in-memory tape already costs
-    # ~50 MB per pod at batchesPerTape: 10, batchFiles: 5000 and the taped pods have no memory limit.
+    # ~50 MB per pod at overflowFraction: 0.05, batchFiles: 5000 and the taped pods have no memory limit.
     bufferCount: 64
     bufferSizeBytes: 262144
     # 1 disk-I/O thread per drive keeps XRootD connection count proportional
@@ -136,10 +136,9 @@ taped:
       # while writing the current batch and nothing limits a fetch to the tape's remaining
       # space, so when ENOSPC ends the session every job already fetched but not yet written is
       # re-queued - about one fetch batch per tape boundary, whatever the tape size. The
-      # virtual-tape-library chart therefore DERIVES the capacity as
-      #   vol1Bytes + batchesPerTape * batchFiles * logicalBytesPerFile
-      # which keeps a tape an exact whole number of these batches; at its batchesPerTape: 10 the
-      # re-queued tail is a tenth of a tape (see that chart's values.yaml for the current sizing
+      # virtual-tape-library chart therefore DERIVES the capacity from overflowFraction, the target
+      # fraction of a drive's files re-queued at each boundary: at its overflowFraction: 0.05 the
+      # re-queued tail is a twentieth of a tape (see that chart's values.yaml for the current sizing
       # and the up-to-date boundary-crossing-frequency analysis at this test's actual scale).
       #
       # Keep batchFiles in virtual-tape-library/values.yaml equal to fetchMaxFiles here.

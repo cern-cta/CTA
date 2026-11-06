@@ -41,6 +41,9 @@ usage() {
   echo "      --stress-read-rate-hz <n>:      Per-drive read-rate ceiling of the virtual drives, in files/s. Overrides the media type's maxReadRateHz; lower values lengthen each retrieve mount. Requires --no-hardware-drives."
   echo "      --stress-mount-delay-ms <n>:     Lower bound of the virtual drives' mount-delay jitter window, in ms. Overrides the media type's mountDelayMs. Requires --no-hardware-drives."
   echo "      --stress-mount-delay-max-ms <n>: Upper bound of the virtual drives' mount-delay jitter window, in ms. Overrides the media type's mountDelayMaxMs; widening this spreads concurrent remounts across a wider window without changing the minimum delay. Requires --no-hardware-drives."
+  echo "      --stress-transfer-failure-rate <f>: Fraction (0.0-1.0) of archived files the virtual drives inject a one-time synthetic transfer fault for. Overrides the media type's transferFailureRate. For failure-scenario testing; leave unset for normal stress/scale runs. Requires --no-hardware-drives."
+  echo "      --stress-retrieve-failure-rate <f>: Fraction (0.0-1.0) of retrieved files the virtual drives inject a one-time synthetic read fault for. Overrides the media type's retrieveFailureRate. For failure-scenario testing; leave unset for normal stress/scale runs. Requires --no-hardware-drives."
+  echo "      --stress-overflow-fraction <f>:  Target fraction of a drive's files re-queued at each tape-fill boundary; determines the derived tape capacity. Overrides the media type's overflowFraction. Raise for failure-scenario testing (e.g. 0.20) to deliberately exercise ENOSPC re-queuing; leave unset for normal stress/scale runs. Requires --no-hardware-drives."
   exit 1
 }
 
@@ -136,6 +139,18 @@ EOF
   if [[ -n "${stress_mount_delay_max_ms}" ]]; then
     echo "  Overriding mountDelayMaxMs with ${stress_mount_delay_max_ms} ms per drive."
     extra_flags+=("--set" "library.mountDelayMaxMsOverride=${stress_mount_delay_max_ms}")
+  fi
+  if [[ -n "${stress_transfer_failure_rate}" ]]; then
+    echo "  Overriding transferFailureRate with ${stress_transfer_failure_rate} per drive."
+    extra_flags+=("--set" "library.transferFailureRateOverride=${stress_transfer_failure_rate}")
+  fi
+  if [[ -n "${stress_retrieve_failure_rate}" ]]; then
+    echo "  Overriding retrieveFailureRate with ${stress_retrieve_failure_rate} per drive."
+    extra_flags+=("--set" "library.retrieveFailureRateOverride=${stress_retrieve_failure_rate}")
+  fi
+  if [[ -n "${stress_overflow_fraction}" ]]; then
+    echo "  Overriding overflowFraction with ${stress_overflow_fraction} (derived tape capacity changes accordingly)."
+    extra_flags+=("--set" "library.overflowFractionOverride=${stress_overflow_fraction}")
   fi
   helm upgrade --install virtual-tape-library helm/virtual-tape-library \
     --namespace "${namespace}" \
@@ -302,11 +317,15 @@ create_instance() {
   one_logical_library=false
   no_hardware_drives=false
   num_stress_libraries=2
-  # Empty keeps the virtual-tape-library chart's own maxWriteRateHz / maxReadRateHz / mountDelayMs / mountDelayMaxMs.
+  # Empty keeps the virtual-tape-library chart's own maxWriteRateHz / maxReadRateHz / mountDelayMs /
+  # mountDelayMaxMs / transferFailureRate / retrieveFailureRate.
   stress_write_rate_hz=""
   stress_read_rate_hz=""
   stress_mount_delay_ms=""
   stress_mount_delay_max_ms=""
+  stress_transfer_failure_rate=""
+  stress_retrieve_failure_rate=""
+  stress_overflow_fraction=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -393,6 +412,15 @@ create_instance() {
         shift ;;
       --stress-mount-delay-max-ms)
         stress_mount_delay_max_ms="$2"
+        shift ;;
+      --stress-transfer-failure-rate)
+        stress_transfer_failure_rate="$2"
+        shift ;;
+      --stress-retrieve-failure-rate)
+        stress_retrieve_failure_rate="$2"
+        shift ;;
+      --stress-overflow-fraction)
+        stress_overflow_fraction="$2"
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
