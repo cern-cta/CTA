@@ -1085,5 +1085,45 @@ VALUES )SQL";
 
   static rdbms::Rset getNextSuccessfulArchiveRepackReportBatch(Transaction& txn, const size_t limit);
   static rdbms::Rset deleteSuccessfulRepackArchiveJobBatch(Transaction& txn, std::vector<std::string>& jobIDs);
+
+  /**
+   * Batch DELETE-from-active + INSERT-into-pending for jobs that have not exhausted
+   * their total retry limit.  Reads retry counters directly from each row's m_jobRow
+   * (already updated in-memory by prepareFailTransfer).
+   * keepMountId is decided per-row based on retriesWithinMount < maxRetriesWithinMount.
+   */
+  static uint64_t failTransferBatchRequeue(Transaction& txn,
+                                           const std::vector<ArchiveJobQueueRow*>& jobs,
+                                           bool isRepack);
+
+  /**
+   * Batch UPDATE of the active queue to ToReportToUser/RepackForFailure for jobs that
+   * have exhausted their total retry limit.  Reads retry counters directly from each
+   * row's m_jobRow (already updated in-memory by prepareFailTransfer).
+   */
+  static uint64_t failTransferBatchExceedRetries(Transaction& txn,
+                                                 const std::vector<ArchiveJobQueueRow*>& jobs,
+                                                 bool isRepack);
+
+  /**
+   * Batch UPDATE + INSERT for jobs that have exhausted their report-retry budget
+   * (or require no report): sets STATUS=ReadyForDeletion, IS_REPORTING=FALSE and
+   * moves each row from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_FAILED_QUEUE in one CTE.
+   * Reads totalReportRetries and reportFailureLogs from each row's m_jobRow
+   * (already updated in-memory by prepareFailReport).
+   */
+  static uint64_t failReportBatchExceedRetries(Transaction& txn,
+                                               const std::vector<ArchiveJobQueueRow*>& jobs,
+                                               bool isRepack);
+
+  /**
+   * Batch UPDATE for jobs that still have report retries remaining: resets
+   * IS_REPORTING=FALSE so the job will be picked up for another report attempt.
+   * Reads totalReportRetries and reportFailureLogs from each row's m_jobRow
+   * (already updated in-memory by prepareFailReport).
+   */
+  static uint64_t failReportBatchRequeue(Transaction& txn,
+                                         const std::vector<ArchiveJobQueueRow*>& jobs,
+                                         bool isRepack);
 };
 };  // namespace cta::schedulerdb::postgres

@@ -7,6 +7,7 @@
 
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/Logger.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 
@@ -65,6 +66,14 @@ RecallReportPacker::RecallReportPacker(cta::RetrieveMount* retrieveMount,
 //------------------------------------------------------------------------------
 RecallReportPacker::~RecallReportPacker() {
   cta::threading::MutexLocker ml(m_producterProtection);
+#ifdef CTA_PGSCHED
+  if (!m_failedRetrieveJobs.empty()) {
+    cta::log::ScopedParamContainer params(m_lc);
+    params.add("failedJobsLostInQueue", m_failedRetrieveJobs.size());
+    m_lc.log(cta::log::WARNING,
+             "In RecallReportPacker::~RecallReportPacker(): failed jobs lost in queue.");
+  }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -153,6 +162,9 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& reportPacker) {
+#ifdef CTA_PGSCHED
+  reportPacker.flushFailedJobs(reportPacker.m_lc);
+#endif
   if (!reportPacker.completionHasDiagnostics()) {
     reportPacker.m_lc.log(cta::log::INFO, "Nominal RecallReportPacker::EndofSession has been reported");
   } else {
@@ -173,6 +185,9 @@ bool RecallReportPacker::ReportEndofSession::goingToEnd() {
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent) {
+#ifdef CTA_PGSCHED
+  parent.flushFailedJobs(parent.m_lc);
+#endif
   if (parent.m_failedJobReported) {
     parent.m_lc.log(cta::log::ERR, m_message);
   } else {
@@ -200,6 +215,21 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) 
     reportPacker.m_lc.log(cta::log::ERR,
                           "In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.");
   }
+#ifdef CTA_PGSCHED
+  try {
+    m_failedRetrieveJob->prepareFailTransfer(m_failureLog);
+    reportPacker.m_failedRetrieveJobs.push_back(std::move(m_failedRetrieveJob));
+    if (reportPacker.m_failedRetrieveJobs.size() >= RecallReportPacker::c_failedJobsBatchMax) {
+      reportPacker.flushFailedJobs(reportPacker.m_lc);
+    }
+  } catch (const cta::exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
+      .add("fileId", m_failedRetrieveJob ? m_failedRetrieveJob->archiveFile.archiveFileID : 0);
+    reportPacker.m_lc.log(cta::log::ERR,
+                          "In RecallReportPacker::ReportError::execute(): prepareFailTransfer threw.");
+  }
+#else
   try {
     m_failedRetrieveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (const cta::exception::NoSuchObject& ex) {
@@ -218,6 +248,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) 
       "In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -361,6 +392,28 @@ void RecallReportPacker::WorkerThread::run() {
 }
 
 //------------------------------------------------------------------------------
+//flushFailedJobs()
+//------------------------------------------------------------------------------
+#ifdef CTA_PGSCHED
+void RecallReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
+  if (m_failedRetrieveJobs.empty()) return;
+  cta::log::ScopedParamContainer params(lc);
+  params.add("failedJobsBatchSize", m_failedRetrieveJobs.size());
+  lc.log(cta::log::INFO,
+         "In RecallReportPacker::flushFailedJobs(): flushing batch of failed retrieve jobs.");
+  try {
+    m_retrieveMount->failTransferBatch(m_failedRetrieveJobs, lc);
+  } catch (const cta::exception::Exception& ex) {
+    cta::log::ScopedParamContainer exParams(lc);
+    exParams.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::ERR,
+           "In RecallReportPacker::flushFailedJobs(): failTransferBatch threw; jobs will be rescued by GC.");
+  }
+  m_failedRetrieveJobs.clear();
+}
+#endif  // CTA_PGSCHED
+
+//------------------------------------------------------------------------------
 //completionHasDiagnostics()
 //------------------------------------------------------------------------------
 bool RecallReportPacker::completionHasDiagnostics() {
@@ -372,6 +425,15 @@ bool RecallReportPacker::completionHasDiagnostics() {
 //------------------------------------------------------------------------------
 void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
   m_retrieveMount->setJobBatchTransferred(m_successfulRetrieveJobs, m_lc);
+#ifdef CTA_PGSCHED
+  // Piggyback: flush any accumulated failed jobs whenever we flush successful ones.
+  // The only gap is if failures arrive after the last success flush and before
+  // end-of-session — in that rare case they are held until ReportEndofSession fires,
+  // which is guaranteed. A stalled session that never reaches end-of-session would
+  // not flush failures either, but that scenario also prevents any success flushes,
+  // so there is no asymmetry.
+  flushFailedJobs(m_lc);
+#endif
 }
 
 //------------------------------------------------------------------------------

@@ -887,5 +887,45 @@ public:
    * Increments the number of retries and updates the last failed mount accordingly.
    */
   void updateRetryCounts(uint64_t mountId);
+
+#ifdef CTA_PGSCHED
+  /**
+   * Batch-updates jobs that have exceeded their total retry limit.
+   * Sets their status to the appropriate ToReport status (user or repack) in the active queue.
+   *
+   * @param txn      Active transaction
+   * @param jobs     Per-row pointers (already updated in memory by prepareFailTransfer)
+   * @param isRepack true if these are repack jobs
+   * @return         Number of rows updated
+   */
+  static uint64_t failTransferBatchExceedRetries(Transaction& txn,
+                                                 const std::vector<RetrieveJobQueueRow*>& jobs,
+                                                 bool isRepack);
+
+  /**
+   * Batch-moves jobs from the active queue to the pending queue (requeue after failure).
+   * Per-row VID/fSeq/copyNb/blockId are taken from the (already rotated) in-memory state.
+   * keepMountId is derived as retriesWithinMount > 0 (set to 0 by prepareFailTransfer for new-mount cases).
+   *
+   * @param txn      Active transaction
+   * @param jobs     Per-row pointers (already updated in memory by prepareFailTransfer)
+   * @param isRepack true if these are repack jobs
+   * @return         Number of rows inserted into pending queue
+   */
+  static uint64_t failTransferBatchRequeue(Transaction& txn,
+                                           const std::vector<RetrieveJobQueueRow*>& jobs,
+                                           bool isRepack);
+
+  // failReportBatchRequeue: batch UPDATE for jobs where report retries are not exhausted.
+  // Resets IS_REPORTING=FALSE, updates TOTAL_REPORT_RETRIES and REPORT_FAILURE_LOG.
+  // No table move — job stays in RETRIEVE_ACTIVE_QUEUE for retry.
+  static uint64_t failReportBatchRequeue(Transaction& txn,
+                                         const std::vector<RetrieveJobQueueRow*>& jobs);
+
+  // failReportBatchExceedRetries: batch UPDATE counters for jobs that have exhausted report
+  // retries or have NoReportRequired, then batch-moves them to RETRIEVE_FAILED_QUEUE.
+  static uint64_t failReportBatchExceedRetries(Transaction& txn,
+                                               const std::vector<RetrieveJobQueueRow*>& jobs);
+#endif
 };
 };  // namespace cta::schedulerdb::postgres
