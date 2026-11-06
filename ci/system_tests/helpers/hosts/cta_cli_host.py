@@ -65,19 +65,44 @@ class CtaCliHost(RemoteHost):
     def set_all_drives_up(self, *, wait: bool = True) -> None:
         self.set_drive_up(".*", wait=wait)
 
-    def set_all_drives_up_staggered(self, *, stagger_secs: float = 3.0, wait: bool = True) -> None:
+    def set_all_drives_up_staggered(
+        self,
+        *,
+        stagger_secs: float = 3.0,
+        wait: bool = True,
+        retries: int = 3,
+        retry_delay_secs: float = 5.0,
+    ) -> None:
         """Bring every drive up one at a time, sleeping stagger_secs before each call after the first.
 
         Unlike set_all_drives_up() - one 'cta-admin dr up .*' call that flips every drive to UP
         at once - this issues one 'cta-admin dr up <name>' call per drive, so at scale-test drive
         counts the taped pods do not all start mounting simultaneously: the initial
         catalogue/EOS-open burst is spread across the ramp-up instead of landing at one instant.
+
+        Spreading ~100 individual K8s exec calls over several minutes multiplies the chance that
+        at least one hits the transient API/DNS flakiness this test already sees under load (see
+        the K8s-API-error handling in stress_test.py's copy monitor) - a single such failure must
+        not abort the whole ramp-up and strand every drive after it. Each drive therefore gets its
+        own retries, and a drive that still fails after all of them is logged and skipped rather
+        than raised, so the rest of the fleet still comes up.
         """
         drive_names = [d["driveName"] for d in json.loads(self.exec_with_output("cta-admin --json drive ls"))]
         for i, drive_name in enumerate(drive_names):
             if i > 0:
                 time.sleep(stagger_secs)
-            self.set_drive_up(drive_name, wait=wait)
+            for attempt in range(1, retries + 1):
+                try:
+                    self.set_drive_up(drive_name, wait=wait)
+                    break
+                except Exception as e:
+                    print(
+                        f"cta-admin dr up '{drive_name}' failed (attempt {attempt}/{retries}): {type(e).__name__}: {e}"
+                    )
+                    if attempt < retries:
+                        time.sleep(retry_delay_secs)
+                    else:
+                        print(f"Giving up on bringing drive '{drive_name}' up; continuing with the remaining drives")
 
     def set_all_drives_down(self, *, wait: bool = True) -> None:
         self.set_drive_down(".*", wait=wait)
