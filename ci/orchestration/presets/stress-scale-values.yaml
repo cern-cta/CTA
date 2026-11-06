@@ -171,35 +171,21 @@ taped:
     # to hold open for a workload that is 1 archive-mount + 1 retrieve-mount per drive at a time.
     numberOfConnections: 2
 
-  # The catalogue pool had NO explicit setting at all before this override existed - every taped
-  # pod silently used the C++ default of 10 connections (see helm/taped/values.yaml), giving
-  # 100 drives x 10 = 1000 client connections against cta_catalogue's pgbouncer budget. That is a
-  # 10x oversubscription, worse than the scheduler DB one this file already addresses above, and
-  # unlike the scheduler DB it cannot be fixed by a pool_mode change: the catalogue layer uses
-  # session-scoped temporary tables (see PostgresCatalogue.cpp's createAndPopulateTempTableFxid),
-  # so its pgbouncer pool must stay in session mode, not transaction mode. Session mode gives
-  # pgbouncer no multiplexing credit at all - every opened connection is pinned 1:1 to a Postgres
-  # backend for the life of the pod (rdbms/ConnPool.cpp: lazy-open, never recycled while healthy) -
-  # so at 100 taped pods, even 1 connection each (100) already consumes this environment's entire
-  # *normal* cta_catalogue budget (100 connections; 120 is already treated as overkill there, 150
-  # the absolute ceiling), before maintd or the frontends get a single connection. 1 is therefore
-  # the floor here, not 2: ConnPool::getConn() blocks on a condition variable with no timeout when
-  # exhausted (rdbms/ConnPool.cpp) rather than deadlocking outright, so a drive-state-report
-  # callback contending with the main fetch loop for taped's one connection costs latency, not
-  # correctness, and a real deadlock would additionally require one of those two call paths to
-  # re-acquire a second connection from this same pool while already holding the first, which has
-  # not been found. See maintd's and the frontends' catalogue overrides below for the rest of this
-  # budget (100 + 7 + 10 = 117, leaving 3 of 120 spare).
-  catalogue:
-    numberOfConnections: 1
+  # NOTE: there used to be a catalogue.numberOfConnections override here. It was removed:
+  # taped's catalogue connection count is hardcoded to 1 in C++ (taped/TapedApp.cpp:
+  # `const uint64_t nbConns = 1;`), never read from config, and its [catalogue] TOML schema
+  # (cta::runtime::CatalogueConfig = BasicCatalogueConfig<NoClientConfig>) has no
+  # number_of_connections field at all. Rendering that field into cta-taped.toml made every
+  # taped pod fail to start ("Unknown field 'number_of_connections'") - there is no config lever
+  # here, taped always uses exactly 1 catalogue connection, regardless of drive count.
 
-# Completes the cta_catalogue connection budget alongside taped's and maintd's catalogue
-# overrides above: 100 (taped, 1/pod) + 7 (maintd, 1/pod) + 10 (frontend-wfe + frontend-admin, 5
-# each) = 117, leaving 3 of this environment's 120-connection ceiling spare. Still real margin
-# relative to taped/maintd's floor of 1: there are only 2 frontend pods total (1 each, replicas
-# are not expected to work per each chart's own values.yaml), so 5/pod costs only 8 extra
-# connections over a floor of 1/pod, not the 900 it would cost to give every taped pod the same
-# multiple.
+# cta_catalogue connection budget: taped (100 pods x 1, hardcoded, see the note above) + maintd
+# (7 active routine pods x 1, also hardcoded - MaintdApp.cpp: `ConnectionOptions connections
+# {1, 1};` - see the equivalent note under maintd's routines below) + frontend-wfe/frontend-admin
+# (2 pods x 5, see below - this one IS a real, working override: both call
+# service_resources::makeConnectionOptions(), which actually reads catalogue.client.
+# number_of_connections, unlike taped/maintd) = 117, leaving 3 of this environment's
+# 120-connection ceiling spare.
 frontend-wfe:
   conf:
     catalogue:
@@ -334,13 +320,9 @@ maintd:
       ageForCollectionSecs: 340
     userPendingQueueCleanup: *scaleCleanup
 
-  # Same finding as taped's catalogue override above: this was never exposed, so every maintd pod
-  # silently used the C++ default of 10 connections. 7 active routine pods x 10 = 70 client
-  # connections - smaller than taped's 1000, but the same root cause and the same fix. Dropped to
-  # 1 (from an earlier, more conservative 2) alongside taped's: cta_catalogue's session-mode
-  # budget (100 normal / 120 overkill / 150 absolute ceiling, see taped's catalogue override
-  # above) has no room for anything above the floor once 100 taped pods are counted. The routine
-  # loops look single-threaded per pod from the code, so 1 is not expected to cost more than the
-  # same latency-not-correctness risk accepted for taped.
-  catalogue:
-    numberOfConnections: 1
+  # NOTE: there used to be a catalogue.numberOfConnections override here too. Also removed, same
+  # reason as taped's above: maintd/MaintdApp.cpp hardcodes
+  # `service_resources::ConnectionOptions connections {1, 1};` for every routine pod regardless of
+  # config, and MaintdConfig's [catalogue] TOML schema has no number_of_connections field to
+  # render into in the first place. No config lever here either - maintd always uses exactly 1
+  # catalogue connection per pod.

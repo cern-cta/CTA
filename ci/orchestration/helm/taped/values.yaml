@@ -27,15 +27,6 @@ drive:
       preserveDesiredUp: false
       autoUp: false
 
-# The catalogue connection pool size was not exposed here: the rendered TOML only ever had
-# config_file under [catalogue], so every taped pod silently fell back to the C++ default of 10
-# connections (lib/cpp/cta-service-resources/.../CatalogueConfig.hpp) regardless of drive count.
-# At stress-test scale (100 drives) that is 1000 client connections against a catalogue pgbouncer
-# pool sized for far fewer - see presets/stress-scale-values.yaml for the override.
-# null preserves today's behaviour (fall back to the C++ default) for every other deployment.
-catalogue:
-  numberOfConnections: null
-
 scheduler:
   tapeCacheMaxAgeSecs: 1
   retrieveQueueCacheMaxAgeSecs: 1

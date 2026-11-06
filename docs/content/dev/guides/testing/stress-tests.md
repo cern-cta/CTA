@@ -267,14 +267,29 @@ a *different* backend to the next statement, and the temporary table simply woul
 In session mode, pgbouncer gives **no multiplexing credit at all**: every client connection a pod
 opens is pinned 1:1 to a Postgres backend for as long as the pod runs (`rdbms/ConnPool.cpp` opens
 connections lazily on demand, but never closes a healthy one — there is no idle-timeout or
-recycling). So `number_of_connections: N` per pod effectively means up to N permanently-held
-Postgres backends per pod, not a throughput-shaped pool. At 100 `taped` pods, even a floor of 1
-connection per pod (100 total) already consumes most environments' *entire* normal `cta_catalogue`
-backend budget, before `maintd` or the frontends get a single connection — this is why
-`stress-scale-values.yaml` overrides every consumer's catalogue `numberOfConnections` down to the
-minimum that is still believed safe (see the comments next to `taped.catalogue`,
-`maintd.routines.catalogue`, `frontend-wfe.conf.catalogue`, and `frontend-admin.conf.catalogue`
-in that file for the exact floor and its reasoning).
+recycling). So a connection count of N per pod effectively means up to N permanently-held Postgres
+backends per pod, not a throughput-shaped pool.
+
+!!! warning "`taped` and `maintd`'s catalogue connection count is hardcoded, not configurable"
+    `taped/TapedApp.cpp` hardcodes `const uint64_t nbConns = 1;` and `maintd/MaintdApp.cpp`
+    hardcodes `service_resources::ConnectionOptions connections {1, 1};` — neither reads a
+    catalogue connection count from config at all, and neither app's `[catalogue]` TOML schema
+    (`cta::runtime::CatalogueConfig`) even has a `number_of_connections` field to set. Both
+    daemons always use exactly 1 catalogue connection per pod, unconditionally. An earlier version
+    of this chart's Helm templates rendered a `number_of_connections` key under `[catalogue]`
+    anyway — the strict TOML parser rejects it as an unknown field, which crashed every `taped`
+    and `maintd` pod at startup (`FATAL: Invalid config ... Unknown field 'number_of_connections'`
+    under `/health/ready` never coming up). That template logic has been removed; there is no
+    config lever for these two daemons' catalogue connection count.
+
+`frontend-wfe`/`frontend-admin` are different: both call `service_resources::makeConnectionOptions()`
+(`app/cta-workflow-api/src/WorkflowApiApp.cpp`, `app/cta-admin-api/src/AdminApiApp.cpp`), which
+genuinely reads `catalogue.client.number_of_connections` — that is a real, working override,
+currently set to `5` for each of the two frontend pods in `stress-scale-values.yaml`
+(`frontend-wfe.conf.catalogue`/`frontend-admin.conf.catalogue`).
+
+So the actual `cta_catalogue` client-connection budget for this job is: 100 `taped` pods × 1
+(fixed) + 7 active `maintd` routine pods × 1 (fixed) + 2 frontend pods × 5 (configurable) = 117.
 
 **A narrower blocker than it first looks, and a path to transaction mode.** The session-scoped
 temp-table pattern above is *not* used anywhere on the main connection pool that `taped`/`maintd`
@@ -320,9 +335,11 @@ instance before trusting a full run):
   but needs a (mechanical, moderate-sized) change to thread a second `rdbms::Login` through
   `RdbmsCatalogue` and its callers — not implemented, since the scale test does not need it.
 
-If this is validated, the per-pod `numberOfConnections` floors in `stress-scale-values.yaml` can
-likely be raised back toward a more comfortable margin, since transaction mode removes the hard
-1:1 backend-per-connection pinning that forced them down to the current floor.
+If this is validated, `frontend-wfe`/`frontend-admin`'s catalogue connection count (the only real
+lever of the three consumers above) could be raised back toward a more comfortable margin, since
+transaction mode removes the hard 1:1 backend-per-connection pinning that otherwise argues for
+keeping it low. It has no effect on `taped`/`maintd`'s contribution to the budget, which is fixed
+at 1 per pod regardless of pgbouncer mode.
 
 ## Monitor and evaluate
 

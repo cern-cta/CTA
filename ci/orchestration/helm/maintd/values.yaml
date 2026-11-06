@@ -37,12 +37,6 @@ routines:
 logging:
   level: "INFO"
 
-# See the equivalent comment in helm/taped/values.yaml: this was never exposed, so every maintd
-# pod silently used the C++ default of 10 connections regardless of routine replica count.
-# null preserves that default for every other deployment.
-catalogue:
-  numberOfConnections: null
-
 scheduler:
   tapeCacheMaxAgeSecs: 600
   retrieveQueueCacheMaxAgeSecs: 10

@@ -18,9 +18,6 @@ data:
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
-      {{- if $.Values.catalogue.numberOfConnections }}
-      number_of_connections = {{ $.Values.catalogue.numberOfConnections }}
-      {{- end }}
 
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}
