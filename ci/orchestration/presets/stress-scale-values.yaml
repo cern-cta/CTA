@@ -191,6 +191,23 @@ rmcd:
 
 maintd:
   routines:
+    # Reporting batch size, doubled for this job only. The dominant cause of reporting falling
+    # behind in the last scale run was the scheduler/catalogue connection-pool exhaustion fixed
+    # elsewhere in this file and in helm/taped + helm/maintd's catalogue override above, not
+    # batchSize itself - Scheduler::reportArchiveJobsBatch() already fires every report in a
+    # batch as a concurrent async call and waits on all of them (scheduler/Scheduler.cpp), so the
+    # real throughput unit is the batch, not the pod: one replica at batchSize 4000 already issues
+    # up to 4000 simultaneous async EOS calls per pass. This bump is margin, not a confirmed fix
+    # for a confirmed-insufficient value - it costs more simultaneous outstanding EOS/XRootD calls
+    # per pass, which has its own ceiling (EOS-side socket/thread capacity), so this is a cautious
+    # 2x, not a larger jump. If "report"/"select to report to user" still falls behind after the
+    # connection fixes, the signal to look for is getNextArchiveJobsToReportBatch() consistently
+    # returning a FULL batch (proof the queue has more backlog than one pass clears) - that is
+    # what would justify raising this further, or raising softTimeoutSecs instead.
+    diskReportArchive:
+      batchSize: 8000
+    diskReportRetrieve:
+      batchSize: 8000
     # Repack is not used in scale tests; disable to avoid unnecessary DB polls
     # and free scheduler connections for the active archive/retrieve workload.
     repackExpand:

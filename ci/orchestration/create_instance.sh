@@ -39,6 +39,7 @@ usage() {
   echo "      --num-stress-libraries <n>:     Number of independent logical libraries for stress drives (default: 1). Requires --no-hardware-drives."
   echo "      --stress-write-rate-hz <n>:     Per-drive write-rate ceiling of the virtual drives, in files/s. Overrides the media type's maxWriteRateHz; lower values lengthen each archive mount. Requires --no-hardware-drives."
   echo "      --stress-read-rate-hz <n>:      Per-drive read-rate ceiling of the virtual drives, in files/s. Overrides the media type's maxReadRateHz; lower values lengthen each retrieve mount. Requires --no-hardware-drives."
+  echo "      --stress-mount-delay-max-ms <n>: Upper bound of the virtual drives' mount-delay jitter window, in ms (the lower bound is the media type's own mountDelayMs). Overrides the media type's mountDelayMaxMs; widening this spreads concurrent remounts across a wider window without changing the minimum delay. Requires --no-hardware-drives."
   exit 1
 }
 
@@ -126,6 +127,10 @@ EOF
   if [[ -n "${stress_read_rate_hz}" ]]; then
     echo "  Overriding maxReadRateHz with ${stress_read_rate_hz} Hz per drive."
     extra_flags+=("--set" "library.maxReadRateHzOverride=${stress_read_rate_hz}")
+  fi
+  if [[ -n "${stress_mount_delay_max_ms}" ]]; then
+    echo "  Overriding mountDelayMaxMs with ${stress_mount_delay_max_ms} ms per drive."
+    extra_flags+=("--set" "library.mountDelayMaxMsOverride=${stress_mount_delay_max_ms}")
   fi
   helm upgrade --install virtual-tape-library helm/virtual-tape-library \
     --namespace "${namespace}" \
@@ -292,9 +297,10 @@ create_instance() {
   one_logical_library=false
   no_hardware_drives=false
   num_stress_libraries=2
-  # Empty keeps the virtual-tape-library chart's own maxWriteRateHz / maxReadRateHz.
+  # Empty keeps the virtual-tape-library chart's own maxWriteRateHz / maxReadRateHz / mountDelayMaxMs.
   stress_write_rate_hz=""
   stress_read_rate_hz=""
+  stress_mount_delay_max_ms=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -375,6 +381,9 @@ create_instance() {
         shift ;;
       --stress-read-rate-hz)
         stress_read_rate_hz="$2"
+        shift ;;
+      --stress-mount-delay-max-ms)
+        stress_mount_delay_max_ms="$2"
         shift ;;
       *)
         die_usage "Unsupported argument: $1"

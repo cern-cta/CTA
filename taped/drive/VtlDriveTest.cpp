@@ -27,7 +27,8 @@ void writeLibraryConf(const fs::path& baseDir,
                       uint64_t capacityBytes,
                       uint32_t mountDelayMs = 0,
                       uint32_t maxWriteRateHz = 0,
-                      uint32_t maxReadRateHz = 0) {
+                      uint32_t maxReadRateHz = 0,
+                      uint32_t mountDelayMaxMs = 0) {
   const auto confDir = baseDir / "config" / lib;
   fs::create_directories(confDir);
   std::ofstream f(confDir / "library.toml");
@@ -39,6 +40,7 @@ void writeLibraryConf(const fs::path& baseDir,
     << "vidPrefix = \"" << vidPrefix << "\"\n"
     << "capacityBytes = " << capacityBytes << "\n"
     << "mountDelayMs = " << mountDelayMs << "\n"
+    << "mountDelayMaxMs = " << mountDelayMaxMs << "\n"
     << "maxWriteRateHz = " << maxWriteRateHz << "\n"
     << "maxReadRateHz = " << maxReadRateHz << "\n"
     << "count = 10\n";
@@ -182,6 +184,36 @@ TEST_F(VtlDriveTest, MediaTypeCapacityIsApplied) {
   } catch (const cta::exception::Errnum& e) {
     EXPECT_EQ(ENOSPC, e.errorNumber());
   }
+}
+
+TEST_F(VtlDriveTest, MountDelayMaxMsWidensTheJitterSpreadWithoutRaisingTheFloor) {
+  // mountDelayMs = 10, mountDelayMaxMs = 40: a 4x spread [10, 40] ms, same ratio as the
+  // production [15 s, 60 s] configuration this is modelled on, but small enough to keep the test
+  // fast. Unset (0), this would default to a 2x spread [10, 20] - the assertion on the upper
+  // bound is what actually exercises mountDelayMaxMs rather than silently falling back to that.
+  constexpr uint32_t mountDelayMs = 10;
+  constexpr uint32_t mountDelayMaxMs = 40;
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, mountDelayMs, 0, 0, mountDelayMaxMs);
+  const std::string vid = m_vidPrefix + "00001";
+
+  // A handful of mounts is enough that, if the ceiling really is 40 ms and not the old 20 ms
+  // default, at least one draw lands above 20 ms with overwhelming probability (uniform over
+  // [10, 40]: per draw P(>20 ms) = 2/3, so P(none exceed in 20 draws) = (1/3)^20).
+  uint64_t maxObservedMs = 0;
+  for (int i = 0; i < 20; ++i) {
+    mountBlankTape(vid);
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    const auto start = std::chrono::steady_clock::now();
+    drv.waitUntilReady(30);
+    const auto elapsedMs =
+      std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+    EXPECT_GE(elapsedMs, mountDelayMs) << "below the configured floor on draw " << i;
+    EXPECT_LE(elapsedMs, mountDelayMaxMs) << "above the configured ceiling on draw " << i;
+    maxObservedMs = std::max<uint64_t>(maxObservedMs, elapsedMs);
+    drv.unloadTape();
+  }
+  EXPECT_GT(maxObservedMs, 2 * mountDelayMs)
+    << "no draw exceeded the old 2x-mountDelayMs default; mountDelayMaxMs may not be taking effect";
 }
 
 TEST_F(VtlDriveTest, TransferRateCeilingsSleepOncePerFile) {

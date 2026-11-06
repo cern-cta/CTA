@@ -69,9 +69,10 @@ public:
 
   /**
    * Simulates tape loading:
-   *   1. Sleeps a uniformly random duration in [mountDelayMs, 2×mountDelayMs]
-   *      so every drive has a guaranteed minimum delay while concurrent mounts
-   *      are spread across a window, preventing synchronised PVC I/O storms.
+   *   1. Sleeps a uniformly random duration in [mountDelayMs, mountDelayMaxMs] (default
+   *      [mountDelayMs, 2×mountDelayMs] when mountDelayMaxMs is unset) so every drive has a
+   *      guaranteed minimum delay while concurrent mounts are spread across a window,
+   *      preventing synchronised PVC I/O storms.
    *   2. Scans contents/<lib>/drives/<driveName>/ for a *.tape file.
    *   3. Derives VID from filename stem; looks up tape capacity from library.toml.
    *   4. Loads the binary block stream from the file into m_tape.  An empty
@@ -244,6 +245,10 @@ public:
   struct MediaTypeInfo {
     uint64_t capacityBytes = std::numeric_limits<uint64_t>::max();
     uint32_t mountDelayMs = 0;
+    // Upper bound of the mount-delay jitter window; 0 means "unset", which keeps the original
+    // behaviour of defaulting to 2 x mountDelayMs. Set explicitly to widen the spread without
+    // also raising the floor (see waitUntilReady()).
+    uint32_t mountDelayMaxMs = 0;
     // Adaptive-throttle ceilings in files/sec (one HDR1 block per file).
     // 0 = disabled (transfer at RAM speed).
     uint32_t maxWriteRateHz = 0;

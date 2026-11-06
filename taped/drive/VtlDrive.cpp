@@ -76,11 +76,15 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   // Look up per-media-type properties from the VID prefix.
   const MediaTypeInfo info = infoForVid(vid);
 
-  // Jitter sleep in [mountDelayMs, 2×mountDelayMs] spreads concurrent remounts
-  // across drives, preventing synchronised PVC I/O bursts.  Total downtime per
-  // drive (save + jitter + load) must stay below the no-progress detector (60 s).
+  // Jitter sleep in [mountDelayMs, mountDelayMaxMs] spreads concurrent remounts across drives,
+  // preventing synchronised PVC I/O bursts. mountDelayMaxMs defaults to 2x mountDelayMs when
+  // unset (0), preserving the original spread for anyone not setting it explicitly. Widening the
+  // window (without also raising the floor) only helps the no-progress detector: it is the
+  // SIMULTANEOUS dead zones across many drives that risk tripping it, not one drive's own delay,
+  // and a wider spread makes that overlap less likely, not more.
   if (info.mountDelayMs > 0) {
-    std::uniform_int_distribution<uint64_t> dist(info.mountDelayMs, 2u * info.mountDelayMs);
+    const uint64_t maxDelay = info.mountDelayMaxMs > 0 ? info.mountDelayMaxMs : 2u * info.mountDelayMs;
+    std::uniform_int_distribution<uint64_t> dist(info.mountDelayMs, maxDelay);
     std::this_thread::sleep_for(std::chrono::milliseconds(dist(m_rng)));
   }
 
@@ -313,6 +317,9 @@ void VtlDrive::parseLibraryConf() {
     }
     if (auto delay = (*mt)["mountDelayMs"].value<int64_t>()) {
       info.mountDelayMs = static_cast<uint32_t>(*delay);
+    }
+    if (auto delayMax = (*mt)["mountDelayMaxMs"].value<int64_t>()) {
+      info.mountDelayMaxMs = static_cast<uint32_t>(*delayMax);
     }
     if (auto rate = (*mt)["maxWriteRateHz"].value<int64_t>()) {
       info.maxWriteRateHz = static_cast<uint32_t>(*rate);

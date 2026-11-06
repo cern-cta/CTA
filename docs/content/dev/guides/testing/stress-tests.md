@@ -94,7 +94,8 @@ changerTimeoutMs = 30000
 name           = "STRESSTAPE"
 capacityBytes  = 99200080   # derived, see below — exactly 10 × 20 000-file batches
 vidPrefix      = "S0"       # auto-derived: S{i}  (2 chars + 4-digit index = 6-char VID)
-mountDelayMs   = 15000      # base mount latency; actual delay uniformly random in [base, 2×base]
+mountDelayMs    = 15000     # mount-delay jitter floor
+mountDelayMaxMs = 0         # jitter ceiling; 0 = default to 2x mountDelayMs
 maxWriteRateHz = 1000       # file-rate ceiling per drive when writing; 0 = RAM speed
 maxReadRateHz  = 1000       # file-rate ceiling per drive when reading;  0 = RAM speed
 count          = 100        # virtual tapes: S00001..S00100
@@ -202,6 +203,7 @@ All stress-drive parameters are set in the `virtual-tape-library` chart `values.
 | Tape footprint per file | `library.mediaTypes[].logicalBytesPerFile` | `496` bytes |
 | VID prefix | **auto-derived**: `S{i}` (library index) | — |
 | Simulated mount latency base | `library.mediaTypes[].mountDelayMs` | `15000` ms |
+| Simulated mount latency ceiling | `library.mediaTypes[].mountDelayMaxMs` | `0` (defaults to 2x the base) |
 | Max write rate | `library.mediaTypes[].maxWriteRateHz` | `1000` files/s |
 | Max read rate | `library.mediaTypes[].maxReadRateHz` | `1000` files/s |
 | Tapes per library | `library.mediaTypes[].count` | `100` |
