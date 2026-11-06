@@ -177,12 +177,38 @@ taped:
   # 10x oversubscription, worse than the scheduler DB one this file already addresses above, and
   # unlike the scheduler DB it cannot be fixed by a pool_mode change: the catalogue layer uses
   # session-scoped temporary tables (see PostgresCatalogue.cpp's createAndPopulateTempTableFxid),
-  # so its pgbouncer pool must stay in session mode, not transaction mode. 2 per drive (200 total)
-  # is the same floor used for the scheduler connections above, for the same reason: taped's
-  # drive-state-report callback can fire from a different thread than the main fetch loop while a
-  # transfer is in flight, so 1 risks a self-deadlock for an unconfirmed gain.
+  # so its pgbouncer pool must stay in session mode, not transaction mode. Session mode gives
+  # pgbouncer no multiplexing credit at all - every opened connection is pinned 1:1 to a Postgres
+  # backend for the life of the pod (rdbms/ConnPool.cpp: lazy-open, never recycled while healthy) -
+  # so at 100 taped pods, even 1 connection each (100) already consumes this environment's entire
+  # *normal* cta_catalogue budget (100 connections; 120 is already treated as overkill there, 150
+  # the absolute ceiling), before maintd or the frontends get a single connection. 1 is therefore
+  # the floor here, not 2: ConnPool::getConn() blocks on a condition variable with no timeout when
+  # exhausted (rdbms/ConnPool.cpp) rather than deadlocking outright, so a drive-state-report
+  # callback contending with the main fetch loop for taped's one connection costs latency, not
+  # correctness, and a real deadlock would additionally require one of those two call paths to
+  # re-acquire a second connection from this same pool while already holding the first, which has
+  # not been found. See maintd's and the frontends' catalogue overrides below for the rest of this
+  # budget (100 + 7 + 10 = 117, leaving 3 of 120 spare).
   catalogue:
-    numberOfConnections: 2
+    numberOfConnections: 1
+
+# Completes the cta_catalogue connection budget alongside taped's and maintd's catalogue
+# overrides above: 100 (taped, 1/pod) + 7 (maintd, 1/pod) + 10 (frontend-wfe + frontend-admin, 5
+# each) = 117, leaving 3 of this environment's 120-connection ceiling spare. Still real margin
+# relative to taped/maintd's floor of 1: there are only 2 frontend pods total (1 each, replicas
+# are not expected to work per each chart's own values.yaml), so 5/pod costs only 8 extra
+# connections over a floor of 1/pod, not the 900 it would cost to give every taped pod the same
+# multiple.
+frontend-wfe:
+  conf:
+    catalogue:
+      numberOfConnections: 5
+
+frontend-admin:
+  conf:
+    catalogue:
+      numberOfConnections: 5
 
 # No tape library hardware present: disable rmcd entirely.
 # /dev/smc does not exist on a node without mhvtl; deploying rmcd would fail.
@@ -283,9 +309,12 @@ maintd:
     userPendingQueueCleanup: *scaleCleanup
 
   # Same finding as taped's catalogue override above: this was never exposed, so every maintd pod
-  # silently used the C++ default of 10 connections. 7 routine pods x 10 = 70 client connections -
-  # smaller than taped's 1000, but the same root cause and the same fix. 2 is a conservative floor
-  # here too: the routine loops look single-threaded per pod from the code, but that has not been
-  # verified as thoroughly as taped's drive-state-report case above.
+  # silently used the C++ default of 10 connections. 7 active routine pods x 10 = 70 client
+  # connections - smaller than taped's 1000, but the same root cause and the same fix. Dropped to
+  # 1 (from an earlier, more conservative 2) alongside taped's: cta_catalogue's session-mode
+  # budget (100 normal / 120 overkill / 150 absolute ceiling, see taped's catalogue override
+  # above) has no room for anything above the floor once 100 taped pods are counted. The routine
+  # loops look single-threaded per pod from the code, so 1 is not expected to cost more than the
+  # same latency-not-correctness risk accepted for taped.
   catalogue:
-    numberOfConnections: 2
+    numberOfConnections: 1

@@ -23,9 +23,10 @@
     # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
     # files/dir limit.  Override per-run via the STRESS_TOTAL_FILES CI variable.
     # File size is kept at 16 bytes; the effective tape footprint is 496 bytes/file
-    # (6 ANSI label blocks × 80 bytes + 16-byte data payload), giving ~4.7 GB total on
-    # tape for the full 10 M run — trivially small on the fast-ssd PVC.
-    total_files       = 10000000
+    # (6 ANSI label blocks × 80 bytes + 16-byte data payload), giving ~1.98 GB total
+    # on tape for the full 4 M run — trivially small on the fast-ssd PVC.
+    # Lowered from 10 M for faster scale-test turnaround.
+    total_files       = 4000000
     num_files_per_dir = 50000
     # file size in bytes
     file_size = 16
