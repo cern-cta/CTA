@@ -171,6 +171,19 @@ taped:
     # to hold open for a workload that is 1 archive-mount + 1 retrieve-mount per drive at a time.
     numberOfConnections: 2
 
+  # The catalogue pool had NO explicit setting at all before this override existed - every taped
+  # pod silently used the C++ default of 10 connections (see helm/taped/values.yaml), giving
+  # 100 drives x 10 = 1000 client connections against cta_catalogue's pgbouncer budget. That is a
+  # 10x oversubscription, worse than the scheduler DB one this file already addresses above, and
+  # unlike the scheduler DB it cannot be fixed by a pool_mode change: the catalogue layer uses
+  # session-scoped temporary tables (see PostgresCatalogue.cpp's createAndPopulateTempTableFxid),
+  # so its pgbouncer pool must stay in session mode, not transaction mode. 2 per drive (200 total)
+  # is the same floor used for the scheduler connections above, for the same reason: taped's
+  # drive-state-report callback can fire from a different thread than the main fetch loop while a
+  # transfer is in flight, so 1 risks a self-deadlock for an unconfirmed gain.
+  catalogue:
+    numberOfConnections: 2
+
 # No tape library hardware present: disable rmcd entirely.
 # /dev/smc does not exist on a node without mhvtl; deploying rmcd would fail.
 rmcd:
@@ -251,3 +264,11 @@ maintd:
       batchSize: 50000
       ageForCollectionSecs: 240
     userPendingQueueCleanup: *scaleCleanup
+
+  # Same finding as taped's catalogue override above: this was never exposed, so every maintd pod
+  # silently used the C++ default of 10 connections. 7 routine pods x 10 = 70 client connections -
+  # smaller than taped's 1000, but the same root cause and the same fix. 2 is a conservative floor
+  # here too: the routine loops look single-threaded per pod from the code, but that has not been
+  # verified as thoroughly as taped's drive-state-report case above.
+  catalogue:
+    numberOfConnections: 2
