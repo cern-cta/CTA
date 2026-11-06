@@ -416,10 +416,47 @@ async def test_request_files_for_retrieve(
     queue_samples: list[tuple[float, int]] = []
 
     async def monitor_retrieve_and_put_drives_up() -> None:
-        """Monitor CTA retrieve queue depth and put drives up when threshold reached (for prequeue mode)."""
+        """Monitor CTA retrieve queue depth and put drives up when threshold reached (for prequeue mode).
+
+        cta_cli.retrieve_queue_file_count() uses a K8s WebSocket exec call, same as the archive
+        monitor's count_files_in_namespace() - subject to the same transient K8s API/DNS flakiness
+        under 100-drive load (observed here as 'DNS resolution failed for cta-frontend-admin').
+        Without a try/except the exception propagates out of this task and is re-raised when it is
+        awaited in the finally block after the retrieve future completes, collapsing the test even
+        though the retrieve itself finished successfully - mirrors the archive monitor's handling.
+        """
         nonlocal drives_up
+        _consecutive_failures = 0
         while not stop_monitoring.is_set():
-            queued = cta_cli.retrieve_queue_file_count()
+            try:
+                queued = cta_cli.retrieve_queue_file_count()
+                _consecutive_failures = 0
+            except Exception as e:
+                # Counting the queue is best-effort: a failure is not fatal - the timeout safety
+                # net puts drives up, and after drives are up the monitor is only tracking progress.
+                _consecutive_failures += 1
+                print(
+                    f"\t[retrieve monitor] K8s API error counting queue "
+                    f"({type(e).__name__}; failure {_consecutive_failures}/5)",
+                    flush=True,
+                )
+                if (
+                    not drives_up
+                    and time.time() - timer_start > stress_params.retrieve_prequeue.timeout_to_put_drives_up_sec
+                ):
+                    print("\tTimeout reached — putting drives UP", flush=True)
+                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+                    drives_up = True
+                if _consecutive_failures >= 5 and drives_up:
+                    print(
+                        "\t[retrieve monitor] Stopping queue monitor: drives already up, K8s API unresponsive",
+                        flush=True,
+                    )
+                    break
+                with contextlib.suppress(asyncio.TimeoutError):
+                    await asyncio.wait_for(stop_monitoring.wait(), stress_params.check_copy_interval_sec)
+                continue
+
             queue_samples.append((time.time(), queued))
 
             print(f"\t[retrieve monitor] {queued}/{total_file_count} retrieve requests queued in CTA", flush=True)
