@@ -3,6 +3,6 @@
 
 ## Specific client implementations
 
-::: cta.sdk.client.cli
+::: cta.sdk.client.cta_admin
 
-::: cta.sdk.client.file
+::: cta.sdk.client.mock

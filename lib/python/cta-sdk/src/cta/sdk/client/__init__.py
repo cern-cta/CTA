@@ -4,5 +4,5 @@
 """CTA client interfaces.
 
 This module provides client interface for interacting with CTA services,
-including CLI-based client implementations and File-based client implementations.
+including the cta-admin client implementation and the mock client implementation.
 """

@@ -9,8 +9,8 @@ The `get_cta_client` function is the entry point for creating a client. You must
 ```python
 from cta.sdk import CtaClient, get_cta_client
 
-# Initialize the client with the "CLI" backend
-cta_client: CtaClient = get_cta_client("CLI")
+# Initialize the client with the "CTA_ADMIN" backend
+cta_client: CtaClient = get_cta_client("CTA_ADMIN")
 ```
 
 ## Retrieving Resources
@@ -103,7 +103,7 @@ from cta.sdk.exceptions import (
     BackendError
 )
 
-cta_client = get_cta_client("CLI")
+cta_client = get_cta_client("CTA_ADMIN")
 
 # Handle specific exceptions
 try:
