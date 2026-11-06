@@ -37,6 +37,12 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   srcURL = std::move(m_jobRow.srcUrl);
   archiveReportURL = std::move(m_jobRow.archiveReportURL);
   errorReportURL = std::move(m_jobRow.archiveErrorReportURL);
+  // latestError is what ArchiveJob::exceptionThrowingReportURL() base64-encodes into the
+  // mgm.errmsg= of a failure report, so leaving it empty means EOS is told a file failed with no
+  // reason attached. OStoreDB populates it (OStoreDB.cpp, `aj->latestError = j.latestError`);
+  // this backend never did, and the row carries the same information in FAILURE_LOG. Copied, not
+  // moved: failTransfer() logs it and updateJobRowFailureLog() appends to it after this point.
+  latestError = m_jobRow.failureLogs.value_or("");
 
   archiveFile.archiveFileID = m_jobRow.archiveFileID;
   archiveFile.creationTime = m_jobRow.creationTime;
@@ -76,6 +82,7 @@ void ArchiveRdbJob::reset() {
   srcURL.clear();            // Clearing source URL
   archiveReportURL.clear();  // Clearing the archive report URL
   errorReportURL.clear();    // Clearing the error report URL
+  latestError.clear();       // Clearing the last failure reason (pooled jobs are re-used)
 
   archiveFile.archiveFileID = 0;
   archiveFile.diskFileId.clear();
