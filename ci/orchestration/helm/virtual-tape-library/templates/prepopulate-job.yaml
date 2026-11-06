@@ -30,6 +30,19 @@ spec:
   template:
     spec:
       restartPolicy: OnFailure
+      # Match the taped pod's uid/gid (ci/orchestration/helm/taped/templates/statefulset.yaml:
+      # runAsUser 1000 "cta", runAsGroup 33 "tape") so the layout this Job creates is readable
+      # and writable by taped from the start. Without this the Job runs as root (the
+      # almalinux/9-minimal image default) and taped only gets access where the kubelet applies
+      # fsGroup ownership - which it does not for hostPath-backed volumes (the local-path/hostPath
+      # fallbacks create_instance.sh uses on k3s, kind and minikube), so taped fails with EACCES
+      # on every directory and file this Job creates there. Numeric uid/gid work here without a
+      # matching /etc/passwd entry in the image: the script only uses plain POSIX utilities
+      # (mkdir, touch, cp, awk) that do not need a name lookup.
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 33
+        fsGroup: 33
       containers:
         - name: prepopulate
           image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
