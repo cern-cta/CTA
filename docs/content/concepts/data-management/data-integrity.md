@@ -12,12 +12,12 @@ The disk system must supply correct metadata and keep the source file unchanged 
 
 ## Checks during transfers
 
-The tape-transfer path computes an **Adler-32** checksum over each file. The expected ADLER32 checksum and any additional supplied checksums accompany the archive request and are retained in the catalogue.
+The tape-transfer path computes an **ADLER32** checksum over each file. The expected ADLER32 checksum and any additional supplied checksums accompany the archive request and are retained in the catalogue.
 
 | Workflow | Checks and responsibilities |
 | --- | --- |
-| **Archival** | The tape daemon checks the source file's size against the request and computes an Adler-32 checksum while processing its data for tape. The calculated Adler-32 must match the value supplied by the disk system before the copy is accepted into the catalogue. |
-| **Retrieval** | The tape daemon calculates Adler-32 while reading the file from tape and compares it with the catalogue value. A mismatch fails the transfer rather than producing a successful retrieval result. |
+| **Archival** | The tape daemon checks the source file's size against the request and computes an ADLER32 checksum while processing its data for tape. The calculated ADLER32 must match the value supplied by the disk system before the copy is accepted into the catalogue. |
+| **Retrieval** | The tape daemon calculates ADLER32 while reading the file from tape and compares it with the catalogue value. A mismatch fails the transfer rather than producing a successful retrieval result. |
 | **Repack** | The same read and write checks apply as data passes through the repack buffer. Destination copies retain the file's identity and expected contents. Operator-supplied recovered files also undergo the archival checks. |
 
 Successful archival does not mean CTA has performed a second, full read-back of the file from tape. Its transfer checks and the drive's write-error handling are distinct from a later verification read.
