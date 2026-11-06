@@ -47,9 +47,11 @@ library:
   # type's name and capacity inputs with it. Empty leaves each media type's own value in place.
   maxWriteRateHzOverride: ""
   maxReadRateHzOverride: ""
-  # Same override mechanism, for the upper bound of the mount-delay jitter window (see
-  # mountDelayMs below). Empty leaves each media type's own mountDelayMaxMs (or, if that is also
-  # unset, 2x its mountDelayMs) in place.
+  # Same override mechanism, for the floor and ceiling of the mount-delay jitter window (see
+  # mountDelayMs on each media type below). Empty leaves each media type's own value in place;
+  # mountDelayMaxMsOverride alone (floor left unset) still falls back to 2x whatever floor is in
+  # effect, override or not.
+  mountDelayMsOverride: ""
   mountDelayMaxMsOverride: ""
 
   # Media type definitions — shared across all libraries.

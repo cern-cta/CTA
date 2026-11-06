@@ -517,14 +517,20 @@ stress-scale-test:
       # Override per-run via STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ.
       EXTRA_SPAWN_ARGS+=" --stress-write-rate-hz ${STRESS_WRITE_RATE_HZ:-250}"
       EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-250}"
-      # Widen the mount-delay jitter spread to [15 s, 60 s] (the chart's own mountDelayMs floor
-      # of 15 s is unchanged) instead of the chart default [15 s, 30 s]. This spreads concurrent
-      # remounts across a wider window - what actually risks the test harness's no-progress
-      # detector is many drives' dead zones overlapping at once, not one drive's own delay, so a
-      # wider spread helps that, not hurts it - while also lowering the average delay (37.5 s vs
-      # 30 s at the old ceiling), since the floor does not move. Override per-run via
-      # STRESS_MOUNT_DELAY_MAX_MS.
-      EXTRA_SPAWN_ARGS+=" --stress-mount-delay-max-ms ${STRESS_MOUNT_DELAY_MAX_MS:-60000}"
+      # Widen the mount-delay jitter spread to [5 s, 90 s] instead of the chart default [15 s,
+      # 30 s]. What actually risks the test harness's no-progress detector (80 s: 8 intervals x
+      # check_archive_interval_sec=10s, system-wide - it resets on ANY drive's progress) is many
+      # drives' dead zones overlapping at once, not one drive's own delay; a wider, less
+      # correlated spread across 100 drives makes that overlap less likely, not more. Note the
+      # ceiling alone (90 s) now exceeds that 80 s budget, so this specifically relies on having
+      # many drives - do not reuse this override as-is for a low-drive-count job, where a single
+      # unlucky draw could stall the only active drive past the detector's window. The average
+      # delay also goes up versus both the old override (37.5 s) and the chart default (22.5 s),
+      # since the floor drop (15 s -> 5 s) is smaller than the ceiling rise (60 s -> 90 s): 47.5 s
+      # average, so this trades a little average throughput for a wider, better-decorrelated
+      # spread. Override per-run via STRESS_MOUNT_DELAY_MS / STRESS_MOUNT_DELAY_MAX_MS.
+      EXTRA_SPAWN_ARGS+=" --stress-mount-delay-ms ${STRESS_MOUNT_DELAY_MS:-5000}"
+      EXTRA_SPAWN_ARGS+=" --stress-mount-delay-max-ms ${STRESS_MOUNT_DELAY_MAX_MS:-90000}"
       # File count and prequeue settings come from test_pgsched_params.toml.
       # CI variables allow per-run overrides via "Play with variables".
       [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"

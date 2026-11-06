@@ -34,7 +34,7 @@ data:
     {{- /* Every optional number ends in "| default 0": a media type that omits the key would
            otherwise render "key = " and the TOML would not parse, which VtlDrive only discovers
            at drive startup. */}}
-    mountDelayMs   = {{ .mountDelayMs | default 0 }}
+    mountDelayMs   = {{ $.Values.library.mountDelayMsOverride | default .mountDelayMs | default 0 }}
     mountDelayMaxMs = {{ $.Values.library.mountDelayMaxMsOverride | default .mountDelayMaxMs | default 0 }}
     {{- /* library.max{Write,Read}RateHzOverride apply to every media type. They exist because
            --set library.mediaTypes[0].maxWriteRateHz=N cannot be used: Helm replaces a list

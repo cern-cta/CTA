@@ -187,18 +187,19 @@ TEST_F(VtlDriveTest, MediaTypeCapacityIsApplied) {
 }
 
 TEST_F(VtlDriveTest, MountDelayMaxMsWidensTheJitterSpreadWithoutRaisingTheFloor) {
-  // mountDelayMs = 10, mountDelayMaxMs = 40: a 4x spread [10, 40] ms, same ratio as the
-  // production [15 s, 60 s] configuration this is modelled on, but small enough to keep the test
-  // fast. Unset (0), this would default to a 2x spread [10, 20] - the assertion on the upper
-  // bound is what actually exercises mountDelayMaxMs rather than silently falling back to that.
-  constexpr uint32_t mountDelayMs = 10;
-  constexpr uint32_t mountDelayMaxMs = 40;
+  // mountDelayMs = 5, mountDelayMaxMs = 90: an 18x spread [5, 90] ms, same numbers as the
+  // production [5 s, 90 s] configuration this is modelled on (just ms instead of s, to keep the
+  // test fast). Unset (0), this would default to a 2x spread [5, 10] - the assertion on the
+  // upper bound is what actually exercises mountDelayMaxMs rather than silently falling back to
+  // that.
+  constexpr uint32_t mountDelayMs = 5;
+  constexpr uint32_t mountDelayMaxMs = 90;
   writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, mountDelayMs, 0, 0, mountDelayMaxMs);
   const std::string vid = m_vidPrefix + "00001";
 
-  // A handful of mounts is enough that, if the ceiling really is 40 ms and not the old 20 ms
-  // default, at least one draw lands above 20 ms with overwhelming probability (uniform over
-  // [10, 40]: per draw P(>20 ms) = 2/3, so P(none exceed in 20 draws) = (1/3)^20).
+  // A handful of mounts is enough that, if the ceiling really is 90 ms and not the old 10 ms
+  // default, at least one draw lands above 10 ms with overwhelming probability (uniform over
+  // [5, 90]: per draw P(>10 ms) = 80/85, so P(none exceed in 20 draws) = (5/85)^20).
   uint64_t maxObservedMs = 0;
   for (int i = 0; i < 20; ++i) {
     mountBlankTape(vid);
