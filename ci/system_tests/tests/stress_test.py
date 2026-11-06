@@ -4,6 +4,7 @@
 import asyncio
 import contextlib
 import math
+import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -156,11 +157,17 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     #   balloons to the depth where even an early-stop scan becomes slow.
     eos_mgm.exec("eos space config default space.wfe.ntx=100000")
     eos_mgm.exec("eos space config default space.wfe.interval=15")
-    # Get number of "booted" filesystems
-    result = eos_mgm.exec_with_output("eos fs ls | grep -c 'booted'")
-    count_fs = int(result.strip())
-    for i in range(1, count_fs + 1):
-        eos_mgm.exec(f"eos fs config {i} scaninterval=0")
+    # Disable the periodic scanner on every "booted" filesystem. Read the actual filesystem IDs
+    # from monitoring-format output (-m: stable "key=value" pairs, one filesystem per line, used
+    # elsewhere in this test suite for the same reason - see setup_eos_test.py) rather than
+    # counting "booted" lines and assuming IDs form a contiguous 1..count range: EOS does not
+    # guarantee that - a filesystem re-registered after its FST pod restarts can come back under
+    # a new, non-contiguous id, which previously made "eos fs config <contiguous i>" fail with
+    # "cannot identify the filesystem by <i>" for any id that no longer exists.
+    result = eos_mgm.exec_with_output("eos fs ls -m | grep booted")
+    fs_ids = re.findall(r"\bid=(\d+)\b", result)
+    for fsid in fs_ids:
+        eos_mgm.exec(f"eos fs config {fsid} scaninterval=0")
 
 
 @pytest.mark.asyncio
