@@ -170,14 +170,41 @@ struct VirtualChangerImpl final : cta::mediachanger::MediaChangerFacadeImpl {
 
   void dismountTape(const std::string& vid, const cta::mediachanger::LibrarySlot& /*slot*/) override {
     const auto contentsBase = m_baseDir / "contents" / m_logicalLibrary;
-    const auto drivePath = contentsBase / "drives" / m_driveName / (vid + ".tape");
+    const auto driveDir = contentsBase / "drives" / m_driveName;
     const auto changerDir = contentsBase / "changer";
-    const auto changerTape = changerDir / (vid + ".tape");
-    const auto slotPath = contentsBase / "slots" / (vid + ".tape");
 
-    if (!std::filesystem::exists(drivePath)) {
-      return;
+    std::filesystem::path drivePath;
+    if (vid.empty()) {
+      // DriveCleaner uses an empty vid on purpose to mean "eject whatever cartridge is in the
+      // drive" (startup cleanDrive(""), the drive-open-failure fallback, and the retry after a
+      // VID-specific dismount fails). There is no VID to build a filename from, so find the
+      // single *.tape file actually in the drive directory instead.
+      for (const auto& entry : std::filesystem::directory_iterator(driveDir)) {
+        if (entry.path().extension() != ".tape") {
+          continue;
+        }
+        if (!drivePath.empty()) {
+          // Stale state from an earlier crash, not a case this call can resolve on its own:
+          // throw so the caller's failure handling (DriveCleaner sets ejectFailed and disables
+          // the tape) is engaged instead of silently abandoning whichever file is left behind.
+          throw cta::exception::Exception("VirtualChangerImpl::dismountTape: multiple .tape files in "
+                                          + driveDir.string() + " with an empty vid — cannot tell which to eject");
+        }
+        drivePath = entry.path();
+      }
+      if (drivePath.empty()) {
+        return;  // nothing in the drive to eject
+      }
+    } else {
+      drivePath = driveDir / (vid + ".tape");
+      if (!std::filesystem::exists(drivePath)) {
+        return;
+      }
     }
+
+    const auto actualVid = drivePath.stem().string();
+    const auto changerTape = changerDir / (actualVid + ".tape");
+    const auto slotPath = contentsBase / "slots" / (actualVid + ".tape");
 
     const ChangerGuard guard(changerDir, m_changerTimeoutMs);
     std::filesystem::rename(drivePath, changerTape);  // drives/<drv>/ → changer/
