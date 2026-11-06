@@ -53,6 +53,35 @@
 #                                   recoveryThresholdPercent}
 
 taped:
+  # Kubernetes DNS amplification (scale job only).
+  #
+  # Pods default to ndots:5. The MGM endpoint EOS hands CTA is
+  # root://eos-mgm.<namespace>.svc.cluster.local//eos/... - four dots, FEWER than five - so glibc
+  # treats it as a RELATIVE name and walks the search list before trying it literally:
+  #     eos-mgm.<ns>.svc.cluster.local.<ns>.svc.cluster.local   NXDOMAIN
+  #     eos-mgm.<ns>.svc.cluster.local.svc.cluster.local        NXDOMAIN
+  #     eos-mgm.<ns>.svc.cluster.local.cluster.local            NXDOMAIN
+  #     eos-mgm.<ns>.svc.cluster.local                          NOERROR
+  # Four lookups, doubled to eight when A and AAAA are both asked, seven eighths of them wasted -
+  # per resolution, from 100 taped pods plus the maintd reporters and the frontends. In the
+  # 2026-11-06 run that showed up as XrdCl failing with "[FATAL] Invalid address code:101"
+  # (errInvalidAddr - resolution failed before any connection was attempted) on archive source
+  # files, and as CoreDNS so CPU-starved that its own loopback health probe timed out.
+  #
+  # ndots:1 makes any name with at least one dot be tried literally FIRST, so the FQDN costs one
+  # lookup instead of four. It cannot break resolution: a name with no dots (cta-frontend-wfe) is
+  # still searched and still hits on the first search entry, and a partially qualified name that
+  # genuinely needs the search list still falls back to it after one extra query.
+  #
+  # Scoped to this preset on purpose - it is set per pod spec, and only the stress/scale jobs run
+  # enough resolvers for the amplification to matter.
+  pod:
+    extraSpec:
+      dnsConfig: &dnsNdots1
+        options:
+          - name: ndots
+            value: "1"
+
   logging:
     # Raised from WARNING to INFO for this debugging session: needed to see
     # ArchiveMount::reportJobsBatchTransferred()'s exception detail (logged at
@@ -208,11 +237,17 @@ taped:
 # number_of_connections, unlike taped/maintd) = 117, leaving 3 of this environment's
 # 120-connection ceiling spare.
 frontend-wfe:
+  pod:
+    extraSpec:
+      dnsConfig: *dnsNdots1
   conf:
     catalogue:
       numberOfConnections: 5
 
 frontend-admin:
+  pod:
+    extraSpec:
+      dnsConfig: *dnsNdots1
   conf:
     catalogue:
       numberOfConnections: 5
@@ -223,6 +258,10 @@ rmcd:
   enabled: false
 
 maintd:
+  pod:
+    extraSpec:
+      dnsConfig: *dnsNdots1
+
   routines:
     # Reduced from 2 replicas / batchSize 8000 to 1 replica / batchSize 1500: the EOS MGM was
     # observed marking filesystems unavailable (fsid=3, fsid=5) under this test's load.
@@ -346,3 +385,10 @@ maintd:
   # config, and MaintdConfig's [catalogue] TOML schema has no number_of_connections field to
   # render into in the first place. No config lever here either - maintd always uses exactly 1
   # catalogue connection per pod.
+
+# The cli pod belongs to the same umbrella chart and resolves the MGM endpoint for every command
+# the test harness runs through it, so it gets the same ndots treatment (see taped.pod above).
+cli:
+  pod:
+    extraSpec:
+      dnsConfig: *dnsNdots1

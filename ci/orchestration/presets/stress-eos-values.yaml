@@ -4,6 +4,22 @@
 # Values for the upstream EOS server dependency.
 server:
   mgm:
+    # Kubernetes DNS amplification: pods default to ndots:5, so any name with fewer than five dots
+    # is treated as RELATIVE and walked through the search list before being tried literally -
+    # three NXDOMAINs before the answer for a <svc>.<ns>.svc.cluster.local name, doubled when A and
+    # AAAA are both asked. Under this job's load that contributed to CoreDNS becoming CPU-starved
+    # to the point where its own loopback health probe timed out, which in turn showed up as XrdCl
+    # "[FATAL] Invalid address code:101" (resolution failed before any connection) on the CTA side.
+    # ndots:1 tries any dotted name literally first; names with no dots (cta-frontend-wfe) are
+    # unaffected, and a partially qualified name still falls back to the search list.
+    # See the matching block in stress-scale-values.yaml for the CTA-side pods.
+    pod:
+      extraSpec:
+        dnsConfig: &dnsNdots1
+          options:
+            - name: ndots
+              value: "1"
+
     xrd:
       # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
       extraConfig: |
@@ -81,6 +97,10 @@ server:
             secretName: ctaeos-self-signed-key-pem
 
   fst:
+    pod:
+      extraSpec:
+        dnsConfig: *dnsNdots1
+
     # 5 FSTs × 256 max threads = 1280 total.
     # Historically the archive queuing rate has been observed at ~1.3 kHz
     # (limited by the EOS MGM / frontend-wfe path, not the FST count).
@@ -123,6 +143,10 @@ server:
     extraVolumes: *extra-volumes
 
   qdb:
+    pod:
+      extraSpec:
+        dnsConfig: *dnsNdots1
+
     probes:
       # Keep readiness checks infrequent during throughput measurements.
       readinessPeriodSeconds: 10
@@ -137,3 +161,10 @@ server:
       # 10 M file entries at ~2 KB metadata each ≈ 20 GB; 100 Gi gives comfortable
       # headroom for QuarkDB WAL and compaction during the stress run.
       size: 100Gi
+
+# The client pod runs the test harness's file creation and prepare requests, so it resolves the MGM
+# far more often than anything else in the deployment: same ndots treatment (see server.mgm above).
+client:
+  pod:
+    extraSpec:
+      dnsConfig: *dnsNdots1
