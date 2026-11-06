@@ -269,12 +269,20 @@ maintd:
     #
     # The timings this is aligned to (see virtual-tape-library/values.yaml and transfers.* above,
     # at the scale job's 250 files/s per drive):
-    #   T_batch  = fetchMaxFiles / rate = 20 000 / 250   =  80 s  one fetch batch
-    #   T_tape   = batchesPerTape x T_batch = 10 x 80 s   = 800 s  one tape
-    #   T_change = mountDelayMs jitter + .tape I/O        ~  40 s  tape change at ENOSPC
-    #   T_cycle  = T_tape + T_change                      ~ 840 s  mount to mount
-    #   G_max    = T_batch + T_change                     ~ 120 s  longest gap between two fetches
-    #                                                              of a HEALTHY drive
+    #   T_batch  = fetchMaxFiles / rate = 20 000 / 250        =  80 s  one fetch batch
+    #   T_tape   = batchesPerTape x T_batch = 10 x 80 s        = 800 s  one tape
+    #   T_change = mountDelayMaxMs (worst case, not average) ~  90 s  tape change at ENOSPC
+    #   T_cycle  = T_tape + T_change                          ~ 890 s  mount to mount
+    #   G_max    = T_batch + T_change                         ~ 170 s  longest gap between two
+    #                                                                  fetches of a HEALTHY drive
+    #
+    # T_change uses the jitter's CEILING (mountDelayMaxMs), not its average: G_max is a bound a
+    # healthy drive must never exceed, and a single real tape change can draw anywhere up to that
+    # ceiling, not just the average case. Using the average here would intermittently misclassify
+    # a healthy drive that happens to draw a long delay as dead. This was 40 s (close to this
+    # file's old mountDelayMaxMsOverride-less [15 s, 60 s] average of 37.5 s, not its ceiling
+    # either) before the mount-delay jitter was widened to [5 s, 90 s] elsewhere in this file -
+    # recompute this block again if that range changes.
     #
     # ageForCollectionSecs is compared against MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME, which a
     # drive refreshes on every fetch, so it must exceed G_max or a live mount is declared dead and
@@ -282,14 +290,15 @@ maintd:
     # mount really did die keeps its work reserved for longer than writing a whole tape takes,
     # while the other 99 drives starve waiting for it.
     #
-    # age = 2 x G_max = 240 s satisfies both: twice the headroom a healthy drive needs, and a
-    # full turnaround (age + poll <= 300 s) well inside one mount cycle. The dev preset's 120 s
-    # pending age is below G_max at this write rate, and its 1800 s / 900 s active settings fire
-    # roughly once per run, which is also why the active-queue cleanup is near-invisible in the
-    # dashboards.
+    # age = 2 x G_max = 340 s satisfies both: twice the headroom a healthy drive needs, and a
+    # full turnaround (age + poll <= 400 s) well inside one mount cycle (890 s, a 2.2x margin).
+    # The dev preset's 120 s pending age is below G_max at this write rate, and its 1800 s / 900 s
+    # active settings fire roughly once per run, which is also why the active-queue cleanup is
+    # near-invisible in the dashboards.
     #
-    # G_max depends on the fetch batch and the write rate, not on the tape size, so recompute
-    # this only if STRESS_WRITE_RATE_HZ or fetchMaxFiles changes: keep age >= 2 x G_max.
+    # G_max depends on the fetch batch, the write rate, and the mount-delay jitter ceiling - not
+    # on the tape size or total_files - so recompute this only if STRESS_WRITE_RATE_HZ,
+    # fetchMaxFiles, or the mount-delay jitter override changes: keep age >= 2 x G_max.
     #
     # The active-queue group also runs ResubmitInactiveReportingRoutine on the same age, so a
     # report batch left flagged IS_REPORTING by a failed attempt is retried within ~5 min instead
@@ -322,7 +331,7 @@ maintd:
       replicas: 1
       sleepIntervalSecs: 60
       batchSize: 50000
-      ageForCollectionSecs: 240
+      ageForCollectionSecs: 340
     userPendingQueueCleanup: *scaleCleanup
 
   # Same finding as taped's catalogue override above: this was never exposed, so every maintd pod
