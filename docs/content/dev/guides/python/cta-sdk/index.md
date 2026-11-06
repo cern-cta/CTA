@@ -2,7 +2,7 @@
 
 `cta-sdk` provides a typed Python interface for administering CTA resources.
 Its `CtaClient` exposes resource DAOs such as `TapeDao` and `DriveDao`, which return Python dataclasses.
-The CLI backend runs `cta-admin` and parses its output for the caller.
+The CTA_ADMIN backend runs `cta-admin` and parses its output for the caller.
 
 The SDK supports streaming results, XRootD SSS authentication through keytab files, and backend interfaces defined with Python protocols.
 
@@ -67,14 +67,14 @@ classDiagram
 
     CtaClient --> DriveDao : drive
 
-    CtaClient <|-- CtaClientCli: implements
+    CtaClient <|-- CtaClientCtaAdmin: implements
     CtaClient <|-- CtaClientNOOP: implements
 
-    CtaClientCli --> DriveDaoCli : drive
+    CtaClientCtaAdmin --> DriveDaoCtaAdmin : drive
     CtaClientNOOP --> DriveDaoNOOP : drive
 
 
-    DriveDao <|-- DriveDaoCli: implements
+    DriveDao <|-- DriveDaoCtaAdmin: implements
     DriveDao <|-- DriveDaoNOOP: implements
 
 ```
@@ -106,7 +106,7 @@ The SDK is designed to support multiple backends for communicating with CTA. Cur
 
 ## configuration
 
-The only configuration provided for now, is during the backend instantiation when getting a CtaClient object. The backend can be configured by passing parameters to the `get_cta_client()` function, or directly by using the corresponding CtaClient implementation as `CtaClientCli`.
+The only configuration provided for now, is during the backend instantiation when getting a CtaClient object. The backend can be configured by passing parameters to the `get_cta_client()` function, or directly by using the corresponding CtaClient implementation as `CtaClientCtaAdmin`.
 
 ???+ Example
     ```python
@@ -114,7 +114,7 @@ The only configuration provided for now, is during the backend instantiation whe
 
     # Create client with custom configuration
     cta_client = get_cta_client(
-        "CLI",
+        "CTA_ADMIN",
         exec_path="/usr/bin/cta-admin",        # Path to cta-admin executable
         timeout=60,                             # Command timeout in seconds (default: 60)
         sss_keytab_file="/etc/cta/tape-local.sss.keytab",  # Path to XRootD SSS keytab
@@ -135,7 +135,7 @@ The only configuration provided for now, is during the backend instantiation whe
     os.environ['CTAXrdSecSSSKT'] = '/path/to/custom.keytab'
 
     # Create client - will use the custom keytab if readable
-    cta_client = get_cta_client("CLI")
+    cta_client = get_cta_client("CTA_ADMIN")
     ```
 
 !!! note

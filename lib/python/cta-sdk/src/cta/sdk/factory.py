@@ -10,29 +10,29 @@ CtaClient implementation based on the requested backend.
 from importlib import import_module
 from typing import Any, Literal
 
-from cta.sdk.client.cli import CtaClientCli
+from cta.sdk.client.cta_admin import CtaClientCtaAdmin
 from cta.sdk.client.protocol import CtaClient
 
 
-def get_cta_client(backend: Literal["CLI", "FILE"], *args: Any, **kwargs: Any) -> CtaClient:
+def get_cta_client(backend: Literal["CTA_ADMIN", "MOCK"], *args: Any, **kwargs: Any) -> CtaClient:
     """Return a concrete CtaClient instance for the given backend.
 
     Factory function that selects and instantiates the appropriate
     CtaClient subclass based on the `backend` identifier.
 
     Args:
-        backend: Name of the backend to use. `"CLI"` and `"FILE"` are supported.
+        backend: Name of the backend to use. `"CTA_ADMIN"` and `"MOCK"` are supported.
         *args: Positional arguments forwarded to the client constructor.
         **kwargs: Keyword arguments forwarded to the client constructor.
-            For `"CLI"` backend, see
-            [CtaClientCli][cta.sdk.client.cli.CtaClientCli] for accepted
+            For `"CTA_ADMIN"` backend, see
+            [CtaClientCtaAdmin][cta.sdk.client.cta_admin.CtaClientCtaAdmin] for accepted
             parameters.
-            For `"File"` backend, see
-            [CtaClientFile][cta.sdk.client.file.CtaClientFile] for accepted
+            For `"MOCK"` backend, see
+            [CtaClientMock][cta.sdk.client.mock.CtaClientMock] for accepted
             parameters.
 
     Warning:
-        Use `"File"` backend only for unit tests, there is nothing behind just raw local files,
+        Use `"MOCK"` backend only for unit tests, there is nothing behind just raw local files,
         no scheduler, no catalogue DB, no real frontend.
 
     Returns:
@@ -45,18 +45,18 @@ def get_cta_client(backend: Literal["CLI", "FILE"], *args: Any, **kwargs: Any) -
         ```python
         from cta.sdk import get_cta_client
 
-        client = get_cta_client("CLI", timeout=120)
+        client = get_cta_client("CTA_ADMIN", timeout=120)
         ```
     """
-    if backend == "CLI":
-        return CtaClientCli(*args, **kwargs)
-    elif backend == "FILE":
+    if backend == "CTA_ADMIN":
+        return CtaClientCtaAdmin(*args, **kwargs)
+    elif backend == "MOCK":
         try:
             import_module("cattrs")
         except ImportError as e:
-            raise ImportError("Cannot instantiate CtaClient with FILE backend: [dev] extra is not installed") from e
-        from cta.sdk.client.file import CtaClientFile
+            raise ImportError("Cannot instantiate CtaClient with MOCK backend: [dev] extra is not installed") from e
+        from cta.sdk.client.mock import CtaClientMock
 
-        return CtaClientFile(*args, **kwargs)
+        return CtaClientMock(*args, **kwargs)
     else:
         raise NotImplementedError(f"Backend {backend!r} is not available")

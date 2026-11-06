@@ -18,4 +18,4 @@ def config():
 @click.pass_obj
 def view(obj: AppContext):
     """View a CTA archive route."""
-    print_dataclasses(obj.config, replace(obj.config.display, pretty_get=True))
+    print_dataclasses(obj.config, replace(obj.config.display, pretty_table=True))

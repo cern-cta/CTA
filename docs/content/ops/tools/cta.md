@@ -58,7 +58,7 @@ The bundled example currently uses `rotation_max_size` and `rotation_keep_files`
 
 | Variable | Effect |
 | --- | --- |
-| `CTAXrdSecSSSKT` | Overrides the SSS keytab path used by the `cta-admin` backend. Takes precedence over `[backends.CLI].sss_keytab_file` when set and readable. |
+| `CTAXrdSecSSSKT` | Overrides the SSS keytab path used by the `cta-admin` backend. Takes precedence over `[backends.CTA_ADMIN].sss_keytab_file` when set and readable. |
 
 ## Usage
 

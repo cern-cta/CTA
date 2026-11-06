@@ -15,7 +15,7 @@ if EXTRA_TPSRV:
 
     @click.group(cls=ClickAliasedGroup, aliases=["de"])
     def device():
-        """Integration with cta-udev package to discover CTA hardware resources present."""
+        """Discover local hardware resources."""
 
     @device.command("list", aliases=["ls"])
     @click.argument("type", type=click.Choice(["drives", "libraries"]))

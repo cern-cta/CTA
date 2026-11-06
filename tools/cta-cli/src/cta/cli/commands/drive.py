@@ -2,17 +2,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from logging import getLogger
 from socket import gethostname
 from time import perf_counter
-from typing import Optional
+from typing import Callable, Literal, Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
 from cta.cli.context import EXTRA_TPSRV, AppContext, tapeserver_option
 from cta.cli.display.encoders import encode_table_field
 from cta.cli.display.printers import print_dataclasses
+from cta.sdk.exceptions import ResourceNotFoundError as CTAResourceNotFoundError
 from cta.sdk.models import Drive, DriveOperatingState, LogicalLibraryState
 from cta.sdk.units import Byte, BytePerSecond
 from rich import print
@@ -32,7 +34,7 @@ def drive():
 def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
     """List drive in cta catalogue."""
 
-    def updated_drives_with_disabled_libraries(drives: Iterable[Drive]) -> list[Drive]:
+    def update_drives_with_disabled_libraries(drives: Iterable[Drive]) -> list[Drive]:
         drives = list(drives)
         disabled_library_names = [
             ll.name for ll in obj.cta_client.logical_library.list(state=LogicalLibraryState.DISABLED)
@@ -44,24 +46,21 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
 
     if EXTRA_TPSRV:
         from cta.cli.models.drive import EnrichedDrive
-        from cta.tapeserver.sdk import LocalDriveRepository, LocalNamedDriveRepository
+        from cta.tapeserver.sdk import LocalDriveRepository, LocalLocatedNamedDriveRepository
 
-        local_named_drives = LocalNamedDriveRepository(
+        local_located_named_drives = LocalLocatedNamedDriveRepository(
             drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
         ).list_drives()
         print_dataclasses(
             (
-                EnrichedDrive.from_drive(
+                EnrichedDrive.merge(
                     dr,
-                    serial_number=(
-                        sn := next((lnd.serial_number for lnd in local_named_drives if lnd.name == dr.name), None)
-                    ),
-                    is_connected=bool(sn),
+                    local_drive=next((llnd for llnd in local_located_named_drives if llnd.name == dr.name), None),
                 )
-                for dr in updated_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all))
+                for dr in update_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all))
                 if (
                     not local
-                    or next((lnd.serial_number for lnd in local_named_drives if lnd.name == dr.name), None) is not None
+                    or next((llnd for llnd in local_located_named_drives if llnd.name == dr.name), None) is not None
                 )
             ),
             display_config=obj.config.display,
@@ -69,39 +68,58 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
 
         if local:
             cta_drive_names = {pl.name for pl in obj.cta_client.drive.list(all=True)}
-            if cta_unknown_named_libs := {lnd for lnd in local_named_drives if lnd.name not in cta_drive_names}:
+            if cta_unknown_named_libs := {lnd for lnd in local_located_named_drives if lnd.name not in cta_drive_names}:
                 print_dataclasses(
-                    cta_unknown_named_libs, display_config=obj.config.display, title="Non-CTA Drives (Named)"
+                    cta_unknown_named_libs, display_config=obj.config.display, title="Non-CTA Drives (Named & Located)"
                 )
 
-            if others_drives := (LocalDriveRepository().list_drives() - local_named_drives):
+            if others_drives := (LocalDriveRepository().list_drives() - local_located_named_drives):
                 print_dataclasses(others_drives, display_config=obj.config.display, title="Non-CTA Drives")
     else:
         print_dataclasses(
-            updated_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all)),
+            update_drives_with_disabled_libraries(obj.cta_client.drive.list(all=all)),
             display_config=obj.config.display,
         )
 
 
 @drive.command()
 @click.argument("name")
+@tapeserver_option("-l", "--local", is_flag=True, help="Don't fail if library not present in CTA")
 @click.pass_obj
-def get(obj: AppContext, name: str):
+def get(obj: AppContext, name: str, local: Optional[bool] = None):
     """Get drive registered in CTA."""
-    drive = obj.cta_client.drive.get(name)
-
     if EXTRA_TPSRV:
         from cta.cli.models.drive import EnrichedDrive
-        from cta.tapeserver.sdk import LocalNamedDriveRepository, ResourceNotFoundError
+        from cta.tapeserver.sdk import (
+            LocalLocatedNamedDriveRepository,
+        )
+        from cta.tapeserver.sdk import (
+            ResourceNotFoundError as LocalResourceNotFoundError,
+        )
 
-        try:
-            local_drive = LocalNamedDriveRepository(
+        if local:
+            local_drive = LocalLocatedNamedDriveRepository(
                 drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
             ).get_drive_by_name(name)
-        except ResourceNotFoundError:
-            drive = EnrichedDrive.from_drive(drive, serial_number=None, is_connected=False)
+            try:
+                cta_drive = obj.cta_client.drive.get(name)
+            except CTAResourceNotFoundError:
+                drive = local_drive
+            else:
+                drive = EnrichedDrive.merge(cta_drive, local_drive)
+
         else:
-            drive = EnrichedDrive.from_drive(drive, serial_number=local_drive.serial_number, is_connected=True)
+            cta_drive = obj.cta_client.drive.get(name)
+            try:
+                local_drive = LocalLocatedNamedDriveRepository(
+                    drive_name_key=obj.config.tape_server.udev_properties_map.drive_name_key
+                ).get_drive_by_name(name)
+            except LocalResourceNotFoundError:
+                local_drive = None
+
+            drive = EnrichedDrive.merge(cta_drive, local_drive)
+    else:
+        drive = obj.cta_client.drive.get(name)
 
     print_dataclasses(drive, display_config=obj.config.display)
 
@@ -179,12 +197,66 @@ def delete(obj: AppContext, name: str, force: bool):
 if EXTRA_TPSRV:
     from dataclasses import asdict
 
+    from cta.cli.models.drive import DriveSensors
+    from cta.common.prometheus import Labels, Value, sample, write_atomic
     from cta.tapeserver.sdk import (
+        DriveController,
+        DriveOperationError,
         LocalLibraryRepository,
         LocalLocatedDriveRepository,
+        LocalNamedDriveRepository,
+        NamedDrive,
         ResourceNotFoundError,
+        ScsiDriveControllerProvider,
         ScsiManagedLibraryControllerProvider,
     )
+    from pyudev import Context
+
+    def read_sensor(read: Callable[[], int], drive: NamedDrive, sensor: str) -> Optional[int]:
+        try:
+            return read()
+        except DriveOperationError as e:
+            LOGGER.debug("Unable to read %s of drive %s: %s", sensor, drive.name, e)
+            return None
+
+    def read_sensors(drive: NamedDrive, controller: DriveController) -> DriveSensors:
+        return DriveSensors(
+            name=drive.name,
+            serial_number=drive.serial_number,
+            temperature_celsius=read_sensor(controller.get_drive_temperature, drive, "temperature"),
+            humidity_percent=read_sensor(controller.get_drive_humidity, drive, "humidity"),
+        )
+
+    def render_sensors(sensors: list[DriveSensors]) -> str:
+        prefix = "ctaops_drive"
+        # (metric, help, samples)
+        metrics: list[tuple[str, str, list[tuple[Labels, Value]]]] = [
+            (
+                "sensor_read_success",
+                "1 if the sensor of the drive could be read.",
+                [
+                    ({**e.labels(), "sensor": sensor}, int(value is not None))
+                    for e in sensors
+                    for sensor, value in (("temperature", e.temperature_celsius), ("humidity", e.humidity_percent))
+                ],
+            ),
+            (
+                "temperature_celsius",
+                "Internal temperature of the drive in degrees Celsius.",
+                [(e.labels(), e.temperature_celsius) for e in sensors if e.temperature_celsius is not None],
+            ),
+            (
+                "humidity_percent",
+                "Internal relative humidity of the drive in percent.",
+                [(e.labels(), e.humidity_percent) for e in sensors if e.humidity_percent is not None],
+            ),
+        ]
+        lines: list[str] = []
+        for metric, help_text, samples in metrics:
+            lines.append(f"# HELP {prefix}_{metric} {help_text}")
+            lines.append(f"# TYPE {prefix}_{metric} gauge")
+            lines.extend(sample(metric, labels, value, prefix=prefix) for labels, value in samples)
+        return "\n".join(lines) + "\n"
 
     @drive.command(aliases=["m"])
     @click.argument("drive_name")
@@ -322,3 +394,60 @@ if EXTRA_TPSRV:
             LOGGER.info(
                 "Average speed: %s", encode_table_field(file_count * file_size / r_time.total_seconds(), BytePerSecond)
             )
+
+    @drive.command("sensors", aliases=["s"])
+    @click.argument("drive_names", nargs=-1)
+    @click.option("--all", "-a", is_flag=True, help="Read all local named drives. Mutually exclusive with drive names.")
+    @click.option(
+        "-j", "--jobs", type=click.IntRange(min=1), default=8, show_default=True, help="Number of parallel reads."
+    )
+    @click.option(
+        "-c",
+        "--output-content",
+        type=click.Choice(["sensors", "prom-metrics"]),
+        default="sensors",
+        show_default=True,
+        help="Choose the content of the output",
+    )
+    @click.option(
+        "-o", "--prom-output-file", type=click.Path(dir_okay=False), help="Write metrics to this file atomically"
+    )
+    @click.pass_obj
+    def sensors_command(
+        obj: AppContext,
+        drive_names: tuple[str, ...],
+        all: bool,
+        jobs: int,
+        output_content: Literal["sensors", "prom-metrics"],
+        prom_output_file: Optional[str],
+    ):
+        """Show temperature and humidity of local drives."""
+        if not (bool(drive_names) ^ all):
+            raise click.UsageError("Provide either drive names or --all flag")
+        if prom_output_file is not None and output_content != "prom-metrics":
+            raise click.UsageError("You can't use --prom-output-file if --output-content/-c is not 'prom-metrics'")
+
+        drive_name_key = obj.config.tape_server.udev_properties_map.drive_name_key
+        context = Context()
+        local_drives = sorted(
+            LocalNamedDriveRepository(context, drive_name_key=drive_name_key).list_drives(), key=lambda d: d.name
+        )
+
+        if unknown_names := set(drive_names) - {d.name for d in local_drives}:
+            raise click.UsageError(f"Drive(s) not found locally: {', '.join(sorted(unknown_names))}")
+
+        drives = local_drives if all else [d for d in local_drives if d.name in drive_names]
+        provider = ScsiDriveControllerProvider(context, drive_name_key=drive_name_key)
+        controllers = [provider.get_drive_controller(d.serial_number) for d in drives]
+
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            sensors = list(pool.map(read_sensors, drives, controllers))
+
+        if output_content == "prom-metrics":
+            metrics = render_sensors(sensors)
+            if prom_output_file is None:
+                click.echo(metrics)
+            else:
+                write_atomic(prom_output_file, metrics)
+        elif output_content == "sensors":
+            print_dataclasses(sensors, display_config=obj.config.display)

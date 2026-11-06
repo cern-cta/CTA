@@ -64,14 +64,14 @@ class CtaClient(Protocol):
     Example:
         ```python
         from cta.sdk import get_cta_client
-        client = get_cta_client("CLI")
+        client = get_cta_client("CTA_ADMIN")
         tape = client.tape.get("L12345")
         drives = client.drive.list()
         ```
 
     See Also:
         [get_cta_client][cta.sdk.factory.get_cta_client]: Factory function to create client instances
-        CtaClientCli: Cli backend implementation
+        CtaClientCtaAdmin: Cli backend implementation
     """
 
     @property

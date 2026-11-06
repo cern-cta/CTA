@@ -12,6 +12,7 @@ from typing import Optional
 
 from cta.common import copy_dataclass
 from cta.sdk.models import PhysicalLibrary
+from cta.tapeserver.sdk.repositories.protocols.library import NamedLibrary
 
 
 @dataclass
@@ -21,29 +22,32 @@ class EnrichedPhysicalLibrary(PhysicalLibrary):
     Attributes:
         serial_number: Optional[str]
             Serial number of the physical library, if available.
-        is_connected: bool
-            Whether the physical library is currently connected.
     """
 
-    serial_number: Optional[str]
-    is_connected: bool
+    local_serial_number: Optional[str]
 
     @classmethod
-    def from_physical_library(
-        cls, physical_library: PhysicalLibrary, serial_number: Optional[str] = None, is_connected: bool = False
+    def merge(
+        cls, cta_physical_library: PhysicalLibrary, local_library: Optional[NamedLibrary] = None
     ) -> "EnrichedPhysicalLibrary":
         """Create an enriched physical library from a base physical library model.
 
         Args:
-            physical_library: The base physical library model to enrich.
-            serial_number: Optional serial number for the enriched physical library.
-            is_connected: Connection state for the enriched physical library.
-
+            cta_physical_library: The base cta physical library model to enrich.
+            local_library: Optional local library.
         Returns:
             EnrichedPhysicalLibrary: An enriched physical library instance.
         """
+        if local_library is None:
+            return cls(
+                **copy_dataclass(cta_physical_library),
+                local_serial_number=None,
+            )
+
+        if local_library.name != cta_physical_library.name:
+            raise ValueError("Mismatch between local_library.name and cta_physical_library.name")
+
         return cls(
-            **copy_dataclass(physical_library),
-            serial_number=serial_number,
-            is_connected=is_connected,
+            **copy_dataclass(cta_physical_library),
+            local_serial_number=local_library.serial_number,
         )

@@ -47,11 +47,11 @@ class AdminBackendConfig:
 
 
 @dataclass
-class FileBackendConfig:
-    """Configuration for File backend execution.
+class MockBackendConfig:
+    """Configuration for MOCK backend execution.
 
     Attributes:
-        config_file: Path to the configuration file for file-based operations.
+        root_dir: Directory where the MOCK backend stores its JSON files.
     """
 
     root_dir: str = NOT_SET
@@ -62,11 +62,12 @@ class BackendsConfig:
     """Configuration container for supported backends.
 
     Attributes:
-        CLI: Configuration for CLI backend operations.
+        CTA_ADMIN: Configuration for the CTA_ADMIN backend.
+        MOCK: Configuration for the MOCK backend.
     """
 
-    CLI: AdminBackendConfig = field(default_factory=AdminBackendConfig)
-    FILE: FileBackendConfig = field(default_factory=FileBackendConfig)
+    CTA_ADMIN: AdminBackendConfig = field(default_factory=AdminBackendConfig)
+    MOCK: MockBackendConfig = field(default_factory=MockBackendConfig)
 
 
 @dataclass
@@ -98,7 +99,8 @@ class DisplayConfig:
 
     format: Literal["table", "json", "raw"] = "table"
     chunk_size: int = 1000  # Number of objects to include in each chunk for display
-    pretty_get: bool = False
+    pretty_table: bool = True
+    pretty_json: bool = True
     columns: list[TableColumnsConfig] = field(default_factory=list)
 
 
@@ -112,7 +114,7 @@ class AppConfig:
     Attributes:
         display: Display configuration for output formatting.
         logging: Logging configuration for console and file logging.
-        backend: Selected backend type (currently only "CLI" is supported).
+        backend: Selected backend type ("CTA_ADMIN" or "MOCK").
         backends: Container for all backend configurations.
         cta_catalogue_conn_file: Path to CTA catalogue connection configuration file.
         tape_server: Configuration for tape server interactions.
@@ -121,7 +123,7 @@ class AppConfig:
 
     display: DisplayConfig = field(default_factory=DisplayConfig)
     logging: LoggingConfiguration = field(default_factory=lambda: LoggingConfiguration(level="INFO"))
-    backend: Literal["CLI", "FILE"] = "CLI"
+    backend: Literal["CTA_ADMIN", "MOCK"] = "CTA_ADMIN"
     backends: BackendsConfig = field(default_factory=BackendsConfig)
     cta_catalogue_conn_file: str = "/etc/cta/cta-catalogue.conf"
     tape_server: TapeServerConfig = field(default_factory=TapeServerConfig)
@@ -135,8 +137,8 @@ class AppConfig:
         Returns:
             Self for method chaining.
         """
-        if self.backend not in ["FILE", "CLI"]:
-            raise ValueError(f"Unknown backend {self.backend!r} selected, possible options are: FILE, CLI ")
-        if self.backend == "FILE" and self.backends.FILE.root_dir is NOT_SET:
-            raise ValueError("FILE backend selected but not root_dir config provided")
+        if self.backend not in ["MOCK", "CTA_ADMIN"]:
+            raise ValueError(f"Unknown backend {self.backend!r} selected, possible options are: MOCK, CTA_ADMIN")
+        if self.backend == "MOCK" and self.backends.MOCK.root_dir is NOT_SET:
+            raise ValueError("MOCK backend selected but not root_dir config provided")
         return self
