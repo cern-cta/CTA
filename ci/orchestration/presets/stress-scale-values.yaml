@@ -267,38 +267,44 @@ maintd:
     # stopped fetching - with a cadence derived from this test's own mount cycle rather than from
     # the dev defaults.
     #
-    # The timings this is aligned to (see virtual-tape-library/values.yaml and transfers.* above,
-    # at the scale job's 250 files/s per drive):
-    #   T_batch  = fetchMaxFiles / rate = 20 000 / 250        =  80 s  one fetch batch
-    #   T_tape   = batchesPerTape x T_batch = 10 x 80 s        = 800 s  one tape
+    # ageForCollectionSecs is the SECOND of two guards, not the only one. RelationalDB::
+    # getDeadMounts() first takes the mounts whose MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME is older
+    # than this age, and then erases every mount id the catalogue still reports for any drive
+    # (SELECT DRIVE_NAME, SESSION_ID FROM DRIVE_STATE, all drives, no state filter - SESSION_ID is
+    # the mount id, see SchedulerDatabase::ArchiveMount::MountInfo::makeTapeSessionReport()). A live
+    # mount is therefore normally protected by the drive state however stale its last-fetch row is,
+    # and the two guards cover each other: at mount start the drive state may not be published yet
+    # but the fetch has just refreshed the age row, and mid-session the age row goes stale while the
+    # drive state names the mount.
+    #
+    # The age still matters because both updateMountQueueLastFetch() and reportDriveState() failures
+    # are swallowed with a WARNING, so a mount whose drive state never made it to the catalogue has
+    # nothing but the age protecting it. What it must then exceed is the real interval between two
+    # fetches of a HEALTHY drive:
+    #   T_batch  = fetchMaxFiles / rate                       one fetch batch
+    #              20 000 / 250 Hz =  80 s at the configured ceiling
+    #              20 000 /  50 Hz = 400 s at the rate the drives actually achieve, which is set by
+    #                                the per-drive share of the EOS MGM open rate with 100 drives
+    #                                competing, not by maxWriteRateHz
     #   T_change = mountDelayMaxMs (worst case, not average) ~  90 s  tape change at ENOSPC
-    #   T_cycle  = T_tape + T_change                          ~ 890 s  mount to mount
-    #   G_max    = T_batch + T_change                         ~ 170 s  longest gap between two
-    #                                                                  fetches of a HEALTHY drive
+    #   G_max    = T_batch + T_change                        ~ 490 s  longest healthy fetch gap
     #
-    # T_change uses the jitter's CEILING (mountDelayMaxMs), not its average: G_max is a bound a
-    # healthy drive must never exceed, and a single real tape change can draw anywhere up to that
-    # ceiling, not just the average case. Using the average here would intermittently misclassify
-    # a healthy drive that happens to draw a long delay as dead. This was 40 s (close to this
-    # file's old mountDelayMaxMsOverride-less [15 s, 60 s] average of 37.5 s, not its ceiling
-    # either) before the mount-delay jitter was widened to [5 s, 90 s] elsewhere in this file -
-    # recompute this block again if that range changes.
+    # T_change uses the jitter's CEILING, not its average: a single real tape change can draw
+    # anywhere up to it, and using the average would intermittently misclassify a healthy drive that
+    # happens to draw a long delay. Recompute if the [5 s, 90 s] override elsewhere in this file
+    # changes.
     #
-    # ageForCollectionSecs is compared against MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME, which a
-    # drive refreshes on every fetch, so it must exceed G_max or a live mount is declared dead and
-    # its jobs are taken away mid-session. It must also stay well inside T_cycle, or a drive whose
-    # mount really did die keeps its work reserved for longer than writing a whole tape takes,
-    # while the other 99 drives starve waiting for it.
+    # age = 600 s is above the observed 400 s fetch interval with a 1.5x margin, and still far
+    # inside one mount cycle (a tape is 200 000 files, ~4 000 s at the observed rate), so a mount
+    # that really did die does not keep its work reserved for anything like as long as writing a
+    # tape takes. It is NOT the old "2 x G_max" (980 s): that rule treated the age as the only
+    # guard, which it is not, and doubling it again would slow recovery from genuinely dead mounts
+    # for no benefit while the drive-state guard is doing the primary work. The previous value, 340
+    # s, was derived from T_batch at the configured 250 Hz ceiling and sat BELOW the interval the
+    # drives actually fetch at - the one case the second guard exists to cover.
     #
-    # age = 2 x G_max = 340 s satisfies both: twice the headroom a healthy drive needs, and a
-    # full turnaround (age + poll <= 400 s) well inside one mount cycle (890 s, a 2.2x margin).
-    # The dev preset's 120 s pending age is below G_max at this write rate, and its 1800 s / 900 s
-    # active settings fire roughly once per run, which is also why the active-queue cleanup is
-    # near-invisible in the dashboards.
-    #
-    # G_max depends on the fetch batch, the write rate, and the mount-delay jitter ceiling - not
-    # on the tape size or total_files - so recompute this only if STRESS_WRITE_RATE_HZ,
-    # fetchMaxFiles, or the mount-delay jitter override changes: keep age >= 2 x G_max.
+    # Recompute if STRESS_WRITE_RATE_HZ, fetchMaxFiles, the mount-delay jitter override, or the
+    # achieved per-drive rate changes: keep age comfortably above T_batch at the ACHIEVED rate.
     #
     # The active-queue group also runs ResubmitInactiveReportingRoutine on the same age, so a
     # report batch left flagged IS_REPORTING by a failed attempt is retried within ~5 min instead
@@ -331,7 +337,7 @@ maintd:
       replicas: 1
       sleepIntervalSecs: 60
       batchSize: 50000
-      ageForCollectionSecs: 340
+      ageForCollectionSecs: 600
     userPendingQueueCleanup: *scaleCleanup
 
   # NOTE: there used to be a catalogue.numberOfConnections override here too. Also removed, same
