@@ -39,6 +39,7 @@ target_link_libraries(ctataped
 add_library(ctatapedunittests SHARED
   DriveStartupPolicyTest.cpp
   TapeDaemonTest.cpp
+  TapedConfigTest.cpp
 )
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")

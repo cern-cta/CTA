@@ -161,6 +161,8 @@ struct ArchiveUnderfillConfig final {
 
 /// Scheduling intervals and drive-phase timeouts.
 struct MountsConfig final {
+  /// Allowed operations for new mounts: all, archive_only or retrieve_only. Applied at daemon startup.
+  std::string mode = "all";
   /// Queued-byte threshold for a mount, ORed with minimum_queued_files.
   /// Catalogue mount-rule timeouts can allow mounts below these thresholds.
   uint64_t minimum_queued_bytes = 500000000000;
@@ -188,11 +190,15 @@ struct MountsConfig final {
   /// Maximum seconds in Finalizing before liveness becomes unhealthy.
   uint32_t finalizing_timeout_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 12; }
+  static constexpr std::size_t memberCount() { return 13; }
 
   /// Collect zero scheduling thresholds, polling intervals and phase timeouts.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
+    if (mode != "all" && mode != "archive_only" && mode != "retrieve_only") {
+      result.addError("mode",
+                      "has unsupported value '" + mode + "'; must be one of [all, archive_only, retrieve_only]");
+    }
     if (minimum_queued_bytes == 0) {
       result.addError("minimum_queued_bytes", "must be greater than zero");
     }

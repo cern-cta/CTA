@@ -102,6 +102,11 @@
 # Preparing, Finalizing and controller operations are not checked by liveness.
 
 [mounts]
+  # Allowed new mounts: "all", "archive_only", or "retrieve_only". Defaults to "all".
+  # Includes repack writes in archive mode and repack reads in retrieve mode.
+  # Read at startup; restart cta-taped to change it. Disallowed work leaves the drive idle.
+  mode = "all"
+
   # Minimum amount of queued archive or retrieve data, in bytes, required before the scheduler considers
   # the queue large enough to start a tape mount. A mount can still start below this threshold when the
   # applicable catalogue mount-rule timeout expires. This is combined with minimum_queued_files using OR

@@ -1150,7 +1150,8 @@ void Scheduler::sortAndGetTapesForMountInfo(
   double& getTapeInfoTime,
   double& candidateSortingTime,
   double& getTapeForWriteTime,
-  log::LogContext& lc) const {
+  log::LogContext& lc,
+  MountSelectionMode mode) const {
   // Check if there are any potential mounts for retrieve
   bool anyRetr;
   {
@@ -1434,6 +1435,9 @@ void Scheduler::sortAndGetTapesForMountInfo(
       }
     }
   }
+
+  // Preserve tape and repack accounting above before restricting new mount candidates.
+  std::erase_if(mountInfo->potentialMounts, [mode](const auto& mount) { return !allowsMount(mode, mount.type); });
 
   // We can now filter out the potential mounts for which their mount criteria
   // is not yet met, filter out the potential mounts for which the maximum mount
@@ -2023,7 +2027,8 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
 //------------------------------------------------------------------------------
 bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
                                    const std::string& driveName,
-                                   log::LogContext& lc) {
+                                   log::LogContext& lc,
+                                   MountSelectionMode mode) {
   // We run the same algorithm as the actual getNextMount without the global lock
   // For this reason, we just return true as soon as valid mount has been found.
   utils::Timer timer;
@@ -2062,7 +2067,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
                               getTapeInfoTime,
                               candidateSortingTime,
                               getTapeForWriteTime,
-                              lc);
+                              lc,
+                              mode);
 
   // We can now simply iterate on the candidates until we manage to find a valid mount
   for (auto m = mountInfo->potentialMounts.begin(); m != mountInfo->potentialMounts.end(); m++) {
@@ -2191,7 +2197,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
 std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLibraryName,
                                                    const std::string& driveName,
                                                    log::LogContext& lc,
-                                                   uint64_t timeout_us) {
+                                                   uint64_t timeout_us,
+                                                   MountSelectionMode mode) {
   // In order to decide the next mount to do, we have to take a global lock on
   // the scheduling, retrieve a list of all running mounts, queues sizes for
   // tapes and tape pools, order the candidates by priority
@@ -2256,7 +2263,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
                               getTapeInfoTime,
                               candidateSortingTime,
                               getTapeForWriteTime,
-                              lc);
+                              lc,
+                              mode);
 
   // We can now simply iterate on the candidates until we manage to create a
   // mount for one of them

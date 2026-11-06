@@ -33,6 +33,7 @@
 #include "disk/DiskReporterFactory.hpp"
 #include "disk/DiskSystem.hpp"
 #include "scheduler/IScheduler.hpp"
+#include "scheduler/MountSelectionMode.hpp"
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
@@ -282,7 +283,8 @@ private:
                                    double& getTapeInfoTime,
                                    double& candidateSortingTime,
                                    double& getTapeForWriteTime,
-                                   log::LogContext& lc) const;
+                                   log::LogContext& lc,
+                                   MountSelectionMode mode) const;
 
   /**
    * Checks wether the tape can be repacked of not.
@@ -398,9 +400,13 @@ public:
    * @param logicalLibraryName library for the drive we are scheduling
    * @param driveName name of the drive we are scheduling
    * @param lc log context
+   * @param mode local policy restricting the types of new mounts
    * @return true if a valid mount would have been found.
    */
-  bool getNextMountDryRun(const std::string& logicalLibraryName, const std::string& driveName, log::LogContext& lc);
+  bool getNextMountDryRun(const std::string& logicalLibraryName,
+                          const std::string& driveName,
+                          log::LogContext& lc,
+                          MountSelectionMode mode = MountSelectionMode::All);
   /**
    * Actually decide which mount to do next for a given drive.
    * Throws a TimeoutException in case the timeout goes out
@@ -408,12 +414,14 @@ public:
    * @param driveName name of the drive we are scheduling
    * @param lc log context
    * @param timeout_us get next mount timeout
+   * @param mode local policy restricting the types of new mounts
    * @return unique pointer to the tape mount structure. Next step for the user will be find which type of mount this is.
    */
   std::unique_ptr<TapeMount> getNextMount(const std::string& logicalLibraryName,
                                           const std::string& driveName,
                                           log::LogContext& lc,
-                                          uint64_t timeout_us = 0);
+                                          uint64_t timeout_us = 0,
+                                          MountSelectionMode mode = MountSelectionMode::All);
 
   /**
    * A function returning

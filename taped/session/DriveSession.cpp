@@ -199,13 +199,15 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   utils::Timer t;
   try {
     auto& scheduler = m_schedulerContext.scheduler();
+    const auto mode = mountSelectionModeFromString(m_config.mounts.mode);
     // The dry run avoids constructing an assignment when no work is eligible.
-    if (scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
+    if (scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc, mode)) {
       mountCandidate =
         scheduler.getNextMount(m_driveInfo.logicalLibrary,
                                m_driveInfo.driveName,
                                m_lc,
-                               static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
+                               static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000,
+                               mode);
     }
   } catch (const exception::TimeoutException& ex) {
     log::ScopedParamContainer params(m_lc);

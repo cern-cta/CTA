@@ -722,7 +722,12 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(nullptr, mount.get());
     catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, false);
     //continue our test
-    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    // A forbidden queue must neither pass the dry run nor allocate a mount.
+    ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc, cta::MountSelectionMode::RetrieveOnly));
+    ASSERT_EQ(nullptr, scheduler.getNextMount(s_libraryName, driveName, lc, 0, cta::MountSelectionMode::RetrieveOnly));
+    ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc, cta::MountSelectionMode::ArchiveOnly));
+    mount.reset(
+      scheduler.getNextMount(s_libraryName, driveName, lc, 0, cta::MountSelectionMode::ArchiveOnly).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
@@ -829,7 +834,11 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
-    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc, cta::MountSelectionMode::ArchiveOnly));
+    ASSERT_EQ(nullptr, scheduler.getNextMount(s_libraryName, driveName, lc, 0, cta::MountSelectionMode::ArchiveOnly));
+    ASSERT_TRUE(scheduler.getNextMountDryRun(s_libraryName, driveName, lc, cta::MountSelectionMode::RetrieveOnly));
+    mount.reset(
+      scheduler.getNextMount(s_libraryName, driveName, lc, 0, cta::MountSelectionMode::RetrieveOnly).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
