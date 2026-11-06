@@ -221,17 +221,20 @@ class K8sConnection(RemoteConnection):
                 )
         raise RuntimeError(f"Status for container {self.container} is unavailable")
 
-    def wait_for_container_restart(self, before: ContainerSnapshot, *, timeout_secs: int = 120) -> ContainerSnapshot:
-        """Wait for one healthy restart in the same pod, retaining the previous exit status."""
+    def wait_for_container_restart(
+        self, before: ContainerSnapshot, *, count: int = 1, timeout_secs: int = 120
+    ) -> ContainerSnapshot:
+        """Wait for exactly count restarts in the same pod and for the readiness probe to pass."""
+        assert count > 0, "Expected restart count must be positive"
         deadline = time.monotonic() + timeout_secs
         while True:
             current = self.container_snapshot()
             if current.pod_uid != before.pod_uid:
                 raise RuntimeError("Pod was replaced instead of restarting its container")
-            if current.restart_count > before.restart_count + 1:
-                raise RuntimeError(f"Container restarted more than once: {current}")
+            if current.restart_count > before.restart_count + count:
+                raise RuntimeError(f"Container restarted more than {count} times: {current}")
             if (
-                current.restart_count == before.restart_count + 1
+                current.restart_count == before.restart_count + count
                 and current.container_id
                 and current.container_id != before.container_id
                 and current.ready

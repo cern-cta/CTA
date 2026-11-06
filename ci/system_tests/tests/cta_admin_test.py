@@ -424,12 +424,10 @@ def test_cta_admin_drive(
         assert_dict_equals(dr_updated3, dr_updated2, ["driveStatusSince", "timeSinceLastUpdate", "comment"])
         assert dr_updated3["comment"] == f"Updated {dr_name}"
 
-        # Delete
-        cta_cli.exec(f"cta-admin dr rm {dr_name}")
+        # Deleting the drive makes taped exit; Kubernetes restarts it and it registers the drive again.
+        with restart_expectations.expect_container_restarts(cta_taped):
+            cta_cli.exec(f"cta-admin dr rm {dr_name}")
 
-    # Restart taped for the drive in question to ensure it ends up back in the catalogue again
-    with restart_expectations.expect_pod_replacement(cta_taped):
-        cta_taped.restart(wait_for_restart=True)
     cta_cli.set_all_drives_up(wait=True)
     # Since dr ls has things like "time since" in its output, we need to filter certain keys
     ls_after = cta_cli.exec_with_output("cta-admin --json dr ls")
