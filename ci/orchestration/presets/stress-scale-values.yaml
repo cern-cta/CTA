@@ -251,16 +251,17 @@ taped:
   # here, taped always uses exactly 1 catalogue connection, regardless of drive count.
 
 # cta_catalogue connection budget: taped (100 pods x 1, hardcoded, see the note above) + maintd
-# (8 active routine pods x 1, also hardcoded - MaintdApp.cpp: `ConnectionOptions connections
-# {1, 1};` - see the equivalent note under maintd's routines below; 8 = diskReportArchive: 3 +
-# diskReportRetrieve: 2 + userActiveQueueCleanup: 1 + userPendingQueueCleanup: 1 + 1 more active by
+# (9 active routine pods x 1, also hardcoded - MaintdApp.cpp: `ConnectionOptions connections
+# {1, 1};` - see the equivalent note under maintd's routines below; 9 = diskReportArchive: 3 +
+# diskReportRetrieve: 3 + userActiveQueueCleanup: 1 + userPendingQueueCleanup: 1 + 1 more active by
 # chart default, not overridden here) + frontend-wfe/frontend-admin (2 pods x 5, see below - this
 # one IS a real, working override: both call service_resources::makeConnectionOptions(), which
-# actually reads catalogue.client.number_of_connections, unlike taped/maintd) = 118, leaving 2 of
-# this environment's 120-connection ceiling spare. This is also effectively the drive-count
-# ceiling: taped's 1-connection-per-pod is hardcoded with no config lever, so raising
-# NUM_STRESS_DRIVES past ~102 (120 - 8 - 10) needs the catalogue's own max_connections raised
-# first, not a change in this file.
+# actually reads catalogue.client.number_of_connections, unlike taped/maintd) = 119, leaving just 1
+# of this environment's 120-connection ceiling spare - the next replica added anywhere in this file
+# needs a connection freed elsewhere first. This is also effectively the drive-count ceiling:
+# taped's 1-connection-per-pod is hardcoded with no config lever, so raising NUM_STRESS_DRIVES past
+# ~101 (120 - 9 - 10) needs the catalogue's own max_connections raised first, not a change in this
+# file.
 frontend-wfe:
   pod:
     extraSpec:
@@ -368,28 +369,33 @@ maintd:
     # phase diskReportRetrieve has nothing to do (empty fetch, immediate break, 1 s cycle sleep), so
     # the archive-phase rate is whatever diskReportArchive alone delivers.
     #
-    # replicas: 3 / batchSize: 300 (from 2 / 400): the 2x400 measurement confirmed R (~500-610/s) is
-    # a PER-CLIENT ceiling, not a global MGM one - each pod's XrdCl client defaults to
-    # SubStreamsPerChannel=1 and WorkerThreads=3 (XrdClConstants.hh; nothing in this codebase
-    # overrides either), which is the more likely explanation for a flat per-pod ceiling regardless
-    # of batchSize than the MGM itself. Per the same rate = n/(F + n/R + S) model: n=300, S=100ms,
-    # F~50ms, R~610/s gives ~467/s per pod; 3 pods ~1.4 kHz, against 2x400's ~992/s measured - a
-    # real increase. Dropping to 300 when adding the 3rd pod also keeps the concurrent-RPC burst
-    # from growing with it: 3x300=900 is BELOW 2x400's 800... only barely, intentionally - the
-    # point is to add a pod without pushing the burst past where 2x400 already proved safe (see
-    # the burst-safety numbers above: 1500 survived at 1 replica, 16 000 is where FST unavailability
-    # was seen). Costs one more catalogue connection (117 -> 118/120, see the budget note above
-    # taped's routines are rendered). Re-measure getArchiveJobsToReportTime/reportCompletionTime
-    # before going further: if SubStreamsPerChannel/WorkerThreads turn out to be the real ceiling,
-    # raising those (via XRD_SUBSTREAMSPERCHANNEL/XRD_WORKERTHREADS on the maintd pods) may lift the
-    # per-pod rate directly, without paying another connection for a 4th replica.
+    # replicas: 3 / batchSize: 300 (from 2 / 400), applied to BOTH routines below: the 2x400
+    # archive measurement confirmed R (~500-610/s) is a PER-CLIENT ceiling, not a global MGM one -
+    # each pod's XrdCl client defaults to SubStreamsPerChannel=1 and WorkerThreads=3
+    # (XrdClConstants.hh; nothing in this codebase overrides either), which is the more likely
+    # explanation for a flat per-pod ceiling regardless of batchSize than the MGM itself. Nothing
+    # about that ceiling is archive-specific - diskReportRetrieve reports through the same
+    # EOSReporter/XrdCl path - so the same change applies here, even though the two routines never
+    # run concurrently at load (archive phase vs retrieve phase, per the note above). Per the same
+    # rate = n/(F + n/R + S) model: n=300, S=100ms, F~50ms, R~610/s gives ~467/s per pod; 3 pods
+    # ~1.4 kHz, against 2x400's ~992/s measured - a real increase. Dropping to 300 when adding the
+    # 3rd pod also keeps the concurrent-RPC burst from growing with it: 3x300=900 is BELOW 2x400's
+    # 800... only barely, intentionally - the point is to add a pod without pushing the burst past
+    # where 2x400 already proved safe (see the burst-safety numbers above: 1500 survived at 1
+    # replica, 16 000 is where FST unavailability was seen). Costs one more catalogue connection
+    # PER ROUTINE (117 -> 119/120 for both, see the budget note above taped's routines are
+    # rendered - only 1 connection spare left). Re-measure getArchiveJobsToReportTime/
+    # reportCompletionTime before going further: if SubStreamsPerChannel/WorkerThreads turn out to
+    # be the real ceiling, raising those (via XRD_SUBSTREAMSPERCHANNEL/XRD_WORKERTHREADS on the
+    # maintd pods) may lift the per-pod rate directly, without paying another connection for a 4th
+    # replica.
     diskReportArchive:
       replicas: 3
       batchSize: 300
       iterSleepMs: 100
     diskReportRetrieve:
-      replicas: 2
-      batchSize: 400
+      replicas: 3
+      batchSize: 300
       iterSleepMs: 100
     # Repack is not used in scale tests; disable to avoid unnecessary DB polls
     # and free scheduler connections for the active archive/retrieve workload.
