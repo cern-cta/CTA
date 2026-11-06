@@ -1649,18 +1649,20 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedDuringTransferringSta
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
       .reportDriveState(driveInfo,
-                        {.state = cta::common::dataStructures::ReportedDriveState::Up,
-                         .tapeSession =
-                           cta::common::dataStructures::TapeSessionReport {
-                             .state = cta::common::dataStructures::TapeSessionState::Transferring,
-                             .mountType = cta::common::dataStructures::MountType::ArchiveForUser,
-                             .mountSessionId = 1,
-                             .bytesTransferred = 1024 * 1024,
-                             .filesTransferred = 10,
-                             .vid = "VID002",
-                             .tapePool = "pool2",
-                             .vo = "vo2"},
-                         .reportTime = now},
+                        {
+                          .state = cta::common::dataStructures::ReportedDriveState::Up,
+                          .tapeSession =
+                            cta::common::dataStructures::TapeSessionReport {
+                                                                            .state = cta::common::dataStructures::TapeSessionState::Transferring,
+                                                                            .mountType = cta::common::dataStructures::MountType::ArchiveForUser,
+                                                                            .mountSessionId = 1,
+                                                                            .bytesTransferred = 1024 * 1024,
+                                                                            .filesTransferred = 10,
+                                                                            .vid = "VID002",
+                                                                            .tapePool = "pool2",
+                                                                            .vo = "vo2"},
+                          .reportTime = now
+    },
                         dummyLc);
   }
 
@@ -1709,8 +1711,7 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypeClearedOnStatusTransitionInCas
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
       .reportDriveState(driveInfo,
-                        {.state = cta::common::dataStructures::ReportedDriveState::Preparing,
-                         .reportTime = now},
+                        {.state = cta::common::dataStructures::ReportedDriveState::Preparing, .reportTime = now},
                         dummyLc);
   }
 
