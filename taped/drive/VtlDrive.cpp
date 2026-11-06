@@ -91,6 +91,7 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   m_tape.setCapacity(info.capacityBytes);
   m_maxWriteRateHz = info.maxWriteRateHz;
   m_maxReadRateHz = info.maxReadRateHz;
+  m_persistOnFlush = info.persistOnFlush;
   m_lastWriteBlockTime = {};  // reset adaptive-rate state for this tape session
 
   loadTape(tapeFile);
@@ -157,6 +158,13 @@ void VtlDrive::unloadTape() {
     m_currentTapePath.clear();
   }
   m_tape.unloadTape();
+}
+
+void VtlDrive::flush(void) {
+  m_tape.flush();
+  if (m_persistOnFlush && !m_currentTapePath.empty()) {
+    saveTape();
+  }
 }
 
 bool VtlDrive::isFileHeader(const void* data, size_t count) {
@@ -334,6 +342,9 @@ void VtlDrive::parseLibraryConf() {
     }
     if (auto rate = (*mt)["maxReadRateHz"].value<int64_t>()) {
       info.maxReadRateHz = static_cast<uint32_t>(*rate);
+    }
+    if (auto persist = (*mt)["persistOnFlush"].value<bool>()) {
+      info.persistOnFlush = *persist;
     }
     m_mediaTypes[*prefix] = info;
   }

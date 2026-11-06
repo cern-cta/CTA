@@ -28,7 +28,8 @@ void writeLibraryConf(const fs::path& baseDir,
                       uint32_t mountDelayMs = 0,
                       uint32_t maxWriteRateHz = 0,
                       uint32_t maxReadRateHz = 0,
-                      uint32_t mountDelayMaxMs = 0) {
+                      uint32_t mountDelayMaxMs = 0,
+                      bool persistOnFlush = false) {
   const auto confDir = baseDir / "config" / lib;
   fs::create_directories(confDir);
   std::ofstream f(confDir / "library.toml");
@@ -43,6 +44,7 @@ void writeLibraryConf(const fs::path& baseDir,
     << "mountDelayMaxMs = " << mountDelayMaxMs << "\n"
     << "maxWriteRateHz = " << maxWriteRateHz << "\n"
     << "maxReadRateHz = " << maxReadRateHz << "\n"
+    << "persistOnFlush = " << (persistOnFlush ? "true" : "false") << "\n"
     << "count = 10\n";
 }
 
@@ -162,6 +164,35 @@ TEST_F(VtlDriveTest, DataPersistsAcrossMountCycle) {
     const ssize_t n = drv2.readBlock(buf, sizeof(buf));  // payload at pos 1
     EXPECT_EQ("persistent data block", std::string(buf, static_cast<size_t>(n)));
   }
+}
+
+TEST_F(VtlDriveTest, FlushDoesNotPersistByDefault) {
+  const std::string vid = "ST0003";
+  mountBlankTape(vid);  // on-disk file starts empty (blank tape)
+
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);
+  const std::string payload = "not yet on disk";
+  drv.writeBlock(payload.data(), payload.size());
+  drv.flush();
+
+  // persistOnFlush defaults to false: flush() must not touch the on-disk file.
+  EXPECT_EQ(0u, fs::file_size(driveDir() / (vid + ".tape")));
+}
+
+TEST_F(VtlDriveTest, FlushPersistsWhenPersistOnFlushEnabled) {
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, /*persistOnFlush=*/true);
+  const std::string vid = "ST0004";
+  mountBlankTape(vid);
+
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);
+  const std::string payload = "on disk immediately";
+  drv.writeBlock(payload.data(), payload.size());
+  drv.flush();
+
+  // persistOnFlush=true: the write must already be durable before unloadTape() runs.
+  EXPECT_GT(fs::file_size(driveDir() / (vid + ".tape")), 0u);
 }
 
 TEST_F(VtlDriveTest, MediaTypeCapacityIsApplied) {

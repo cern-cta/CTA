@@ -40,7 +40,10 @@ namespace cta::tape::drive {
  *      drives/<driveName>/ for a *.tape file, derives the VID from its stem,
  *      reads the tape capacity from library.toml, then loads the binary
  *      block stream from the file into m_tape.  An empty file means a blank tape.
- *   3. The full transfer runs via m_tape in-memory block I/O.
+ *   3. The full transfer runs via m_tape in-memory block I/O. flush() is an in-memory no-op by
+ *      default — the file on disk is stale until step 4 — unless the media type's
+ *      persistOnFlush is set, in which case flush() also serialises m_tape to disk
+ *      immediately (see MediaTypeInfo::persistOnFlush).
  *   4. DataTransferSession calls unloadTape(): VtlDrive serialises m_tape
  *      back to the same file, then marks the tape as absent.
  *   5. MediaChangerFacade::dismountTape(vid) acquires the changer lock and
@@ -154,7 +157,11 @@ public:
 
   void spaceFileMarksForward(size_t count) override { m_tape.spaceFileMarksForward(count); }
 
-  void flush(void) override { m_tape.flush(); }
+  /**
+   * In-memory flush, plus an eager saveTape() when the current cartridge's media type has
+   * persistOnFlush enabled (default off — see MediaTypeInfo::persistOnFlush).
+   */
+  void flush(void) override;
 
   void writeSyncFileMarks(size_t count) override { m_tape.writeSyncFileMarks(count); }
 
@@ -253,6 +260,12 @@ public:
     // 0 = disabled (transfer at RAM speed).
     uint32_t maxWriteRateHz = 0;
     uint32_t maxReadRateHz = 0;
+    // Off by default: the tape is deliberately in-memory-only until unloadTape() calls
+    // saveTape(), so a session never pays disk I/O mid-transfer. Set true to make flush()
+    // durable immediately (see flush() below) — e.g. for a run where losing in-flight data to
+    // a pod restart or an unload-time saveTape() failure is unacceptable even at the cost of
+    // the extra PVC I/O.
+    bool persistOnFlush = false;
   };
 
 private:
@@ -280,6 +293,8 @@ private:
   // Adaptive rate state (set from MediaTypeInfo at each waitUntilReady call).
   uint32_t m_maxWriteRateHz = 0;
   uint32_t m_maxReadRateHz = 0;
+  // Set from MediaTypeInfo::persistOnFlush at each waitUntilReady call; see flush().
+  bool m_persistOnFlush = false;
   // Default-constructed time_point (epoch) signals "no file transferred yet on this cartridge".
   // Both are reset when a cartridge is loaded, so the tape change is not mistaken for queue wait.
   std::chrono::steady_clock::time_point m_lastWriteBlockTime;

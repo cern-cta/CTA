@@ -98,6 +98,7 @@ mountDelayMs    = 15000     # mount-delay jitter floor
 mountDelayMaxMs = 0         # jitter ceiling; 0 = default to 2x mountDelayMs
 maxWriteRateHz = 1000       # file-rate ceiling per drive when writing; 0 = RAM speed
 maxReadRateHz  = 1000       # file-rate ceiling per drive when reading;  0 = RAM speed
+persistOnFlush = false      # true = also saveTape() on every flush(), not just at unload
 count          = 100        # virtual tapes: S00001..S00100
 ```
 
@@ -210,6 +211,7 @@ All stress-drive parameters are set in the `virtual-tape-library` chart `values.
 | Simulated mount latency ceiling | `library.mediaTypes[].mountDelayMaxMs` | `0` (defaults to 2x the base) |
 | Max write rate | `library.mediaTypes[].maxWriteRateHz` | `1000` files/s |
 | Max read rate | `library.mediaTypes[].maxReadRateHz` | `1000` files/s |
+| Persist on flush | `library.mediaTypes[].persistOnFlush` | `false` |
 | Tapes per library | `library.mediaTypes[].count` | `100` |
 | PVC name prefix | `pvc.namePrefix` | `cta-virtual-tape-library` |
 | PVC size | `pvc.size` | `50Gi` |
