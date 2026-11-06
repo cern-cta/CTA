@@ -16,6 +16,25 @@ from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
 
+async def put_drives_up_best_effort(cta_cli: CtaCliHost, context: str) -> None:
+    """Best-effort wrapper around set_all_drives_up_staggered() for use from a monitor's own
+    K8s-API-error recovery path (and the one-shot post-loop fallbacks below).
+
+    set_all_drives_up_staggered() already retries both its drive-listing call and each
+    individual 'dr up' call, but can still raise after exhausting those retries (a sustained,
+    not just transient, outage). Every call site here is itself inside error-recovery logic for
+    a prior K8s API failure, so letting a SECOND failure here propagate unhandled would crash
+    the monitor task the same way the original, unguarded call used to - defeating the point of
+    the retry logic one level down. If drives genuinely never come up, the no-progress detector
+    in wait_for_archival_in_directory()/wait_for_retrieval_in_directory() surfaces that later
+    with a clear, test-specific failure instead of a raw K8s RuntimeError here.
+    """
+    try:
+        await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+    except Exception as e:
+        print(f"\t[{context}] Failed to bring drives up even after retries: {type(e).__name__}: {e}")
+
+
 @dataclass
 class PrequeueParams:
     enabled: bool
@@ -268,7 +287,7 @@ async def test_generate_and_copy_files(
                 )
                 if not drives_up and time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+                    await put_drives_up_best_effort(cta_cli, "copy monitor: timeout during API error")
                     drives_up = True
                 if _consecutive_failures >= 5 and drives_up:
                     print(
@@ -292,11 +311,11 @@ async def test_generate_and_copy_files(
                         flush=True,
                     )
                     # do not wait for status to be UP as drives will immediately start TRANSFERING
-                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+                    await put_drives_up_best_effort(cta_cli, "copy monitor: threshold reached")
                     drives_up = True
                 elif time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+                    await put_drives_up_best_effort(cta_cli, "copy monitor: timeout")
                     drives_up = True
 
             sleep_time = (
@@ -317,7 +336,7 @@ async def test_generate_and_copy_files(
     # If archive finished before threshold was reached, still put drives up
     if stress_params.prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
-        await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+        await put_drives_up_best_effort(cta_cli, "post-archive fallback")
 
     timer_end = time.time()
 
@@ -445,7 +464,7 @@ async def test_request_files_for_retrieve(
                     and time.time() - timer_start > stress_params.retrieve_prequeue.timeout_to_put_drives_up_sec
                 ):
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+                    await put_drives_up_best_effort(cta_cli, "retrieve monitor: timeout during API error")
                     drives_up = True
                 if _consecutive_failures >= 5 and drives_up:
                     print(
@@ -470,11 +489,11 @@ async def test_request_files_for_retrieve(
                         ),
                         flush=True,
                     )
-                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+                    await put_drives_up_best_effort(cta_cli, "retrieve monitor: threshold reached")
                     drives_up = True
                 elif time.time() - timer_start > stress_params.retrieve_prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+                    await put_drives_up_best_effort(cta_cli, "retrieve monitor: timeout")
                     drives_up = True
 
             sleep_time = (
@@ -494,7 +513,7 @@ async def test_request_files_for_retrieve(
 
     if stress_params.retrieve_prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold — putting drives UP now")
-        await asyncio.to_thread(cta_cli.set_all_drives_up_staggered, wait=False)
+        await put_drives_up_best_effort(cta_cli, "post-retrieve fallback")
 
     timer_end = time.time()
 
