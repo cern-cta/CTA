@@ -224,39 +224,32 @@ rmcd:
 
 maintd:
   routines:
-    # Reporting batch size, doubled for this job only. The dominant cause of reporting falling
-    # behind in the last scale run was the scheduler/catalogue connection-pool exhaustion fixed
-    # elsewhere in this file and in helm/taped + helm/maintd's catalogue override above, not
-    # batchSize itself - Scheduler::reportArchiveJobsBatch() already fires every report in a
-    # batch as a concurrent async call and waits on all of them (scheduler/Scheduler.cpp), so the
-    # real throughput unit is the batch, not the pod: one replica at batchSize 4000 already issues
-    # up to 4000 simultaneous async EOS calls per pass. This bump is margin, not a confirmed fix
-    # for a confirmed-insufficient value - it costs more simultaneous outstanding EOS/XRootD calls
-    # per pass, which has its own ceiling (EOS-side socket/thread capacity), so this is a cautious
-    # 2x, not a larger jump. If "report"/"select to report to user" still falls behind after the
-    # connection fixes, the signal to look for is getNextArchiveJobsToReportBatch() consistently
-    # returning a FULL batch (proof the queue has more backlog than one pass clears) - that is
-    # what would justify raising this further, or raising softTimeoutSecs instead.
+    # Reduced from 2 replicas / batchSize 8000 to 1 replica / batchSize 1500: the EOS MGM was
+    # observed marking filesystems unavailable (fsid=3, fsid=5) under this test's load.
+    # Scheduler::reportArchiveJobsBatch() (scheduler/Scheduler.cpp) fires EVERY job in a batch as
+    # an unthrottled concurrent asyncReport() call in a tight loop, THEN waits on all of them -
+    # batchSize is not just "rows fetched per DB round-trip", it is ALSO "simultaneous XrdCl RPCs
+    # launched against the MGM at once". At the previous 8000 x 2 replicas, that was up to 16 000
+    # concurrent report RPCs in a single burst every pass - a far more plausible cause of the FST
+    # unavailability than anything on the taped/WFE side (see docs/content/dev/guides/testing/
+    # stress-tests.md and this file's taped.catalogue comment for the ruled-out alternatives).
+    # 1500 x 1 replica caps that burst at 1500, a >10x reduction.
     #
-    # iterSleepMs paces the inner loop inside one execute() pass (DiskReportArchiveRoutine.cpp):
-    # with it at its default of 0 (maintd/MaintdConfig.hpp - true everywhere, there is no hidden
-    # pgsched-specific nonzero default), the routine re-issues getNextArchiveJobsToReportBatch()
-    # again immediately after reporting the previous batch, continuously, for the whole
-    # softTimeoutSecs=30 pass whenever there is backlog - which during this test's sustained
-    # archive/retrieve load is every pass. 500 ms between batches gives the scheduler DB
-    # connection pool (see numberOfConnections above) periodic breathing room instead of
-    # back-to-back SELECT ... FOR UPDATE SKIP LOCKED polls. It costs negligible throughput against
-    # the 1 kHz target: sustaining 500 reports/s/pod (x2 replicas = 1 kHz aggregate) only requires
-    # batchSize >= 500 x 0.5 s = 250 to cover this pause alone - two orders of magnitude below the
-    # 8000 already configured below, which leaves effectively all of its headroom for whatever the
-    # real per-batch bottleneck turns out to be (most likely XRootD/EOS call concurrency, not the
-    # DB side - see the comment block above). Revisit if a validation run's reportArchiveJobsTime
-    # (DEBUG-level log, see docs/content/dev/guides/testing/stress-tests.md) shows otherwise.
+    # iterSleepMs=500ms paces the inner loop inside one execute() pass
+    # (DiskReportArchiveRoutine.cpp): with sustained backlog, each pass is dominated by this
+    # sleep (fetch+report time is small next to 500 ms), so one pod completes ~2 passes/sec.
+    # At batchSize 1500: 1500 x 2 = 3000 files/s max per pod - with only 1 replica now, that IS
+    # the aggregate, 3x the 1 kHz floor this job targets, with large margin to spare. (The
+    # previous comment's "500 reports/s/pod x 2 replicas = 1 kHz" sizing assumed 2 replicas and a
+    # much larger batch; both have changed, so that derivation no longer applies - this one
+    # replaces it.)
     diskReportArchive:
-      batchSize: 8000
+      replicas: 1
+      batchSize: 1500
       iterSleepMs: 500
     diskReportRetrieve:
-      batchSize: 8000
+      replicas: 1
+      batchSize: 1500
       iterSleepMs: 500
     # Repack is not used in scale tests; disable to avoid unnecessary DB polls
     # and free scheduler connections for the active archive/retrieve workload.
