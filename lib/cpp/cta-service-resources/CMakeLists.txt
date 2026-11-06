@@ -3,7 +3,7 @@
 
 # Resources shared by the CTA services
 add_library(cta-service-resources STATIC src/ServiceResources.cpp)
-target_include_directories(cta-service-resources PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_public_headers(cta-service-resources)
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-service-resources PUBLIC ctacommon ctacatalogue ctascheduler ctaruntime)
 else()

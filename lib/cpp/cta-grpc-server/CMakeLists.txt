@@ -7,7 +7,7 @@ add_library(cta-grpc-server-config STATIC
   src/config/ListenerConfig.cpp
   src/config/TlsConfig.cpp)
 
-target_include_directories(cta-grpc-server-config PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_public_headers(cta-grpc-server-config PATTERNS grpc-server/config/*.hpp grpc-server/PbException.hpp)
 target_link_libraries(cta-grpc-server-config PUBLIC ctaruntime ctacommon)
 
 # Authentication of gRPC requests: JWT validation (JWKS cache, revoke list) and mTLS identities
@@ -19,7 +19,8 @@ add_library(cta-grpc-server-auth STATIC
   src/auth/jwt/JwtAuthFactory.cpp
   src/auth/jwt/JwtAuthManager.cpp)
 
-target_include_directories(cta-grpc-server-auth PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/common/jwt-cpp/include)
+add_public_headers(cta-grpc-server-auth PATTERNS grpc-server/auth/*.hpp)
+target_include_directories(cta-grpc-server-auth PUBLIC ${CMAKE_SOURCE_DIR}/common/jwt-cpp/include)
 target_link_libraries(cta-grpc-server-auth PUBLIC cta-grpc-server-config ctaruntime ctacommon gRPC::grpc++ PRIVATE curl OpenSSL::Crypto)
 
 # Plumbing shared by cta-admin-api and cta-workflow-api: TLS credentials, request logging and tracking
@@ -30,7 +31,7 @@ add_library(cta-grpc-server STATIC
   src/server/ServerBuilderHelper.cpp
   src/server/TlsCredentials.cpp)
 
-target_include_directories(cta-grpc-server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_public_headers(cta-grpc-server PATTERNS grpc-server/server/*.hpp)
 target_link_libraries(cta-grpc-server PUBLIC cta-grpc-server-config ctacommon ctatelemetryfrontend gRPC::grpc++ gRPC::grpc++_reflection)
 
 # Unit tests for the shared gRPC server library

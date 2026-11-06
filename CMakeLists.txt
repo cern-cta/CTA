@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.23)
 
 # Package preparation needs metadata, not a compiler toolchain.
 project(cta LANGUAGES NONE)
@@ -109,6 +109,10 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   # Applications attach their example configuration checks to this target.
   add_custom_target(cta-example-config-checks)
 
+  # Directories generating headers (protobuf, gRPC, catalogue schema) attach them to this target, so that
+  # IDEs can resolve the generated includes without a full build
+  add_custom_target(cta-generated-headers)
+
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
   if(ENABLE_SCCACHE)
@@ -207,6 +211,7 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   # Components
   # ---------------------------------------------------------------------------
   include(cmake/Manpages.cmake)
+  include(cmake/PublicHeaders.cmake)
   add_subdirectory(packaging)
   add_subdirectory(lib/plugin-manager)
   add_subdirectory(lib/protobuf)

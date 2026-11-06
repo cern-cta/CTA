@@ -238,6 +238,7 @@ add_custom_command(
 
 add_custom_target(create_all_catalogue_schema_header
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/AllCatalogueSchema.hpp)
+add_dependencies(cta-generated-headers create_all_catalogue_schema_header)
 
 add_custom_command(
   OUTPUT sqlite_catalogue_schema.cpp postgres_catalogue_schema.cpp

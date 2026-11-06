@@ -21,6 +21,9 @@ set_source_files_properties(
   ${GrpcSourcesCtaFrontend} ${GrpcHeadersCtaFrontend}
   PROPERTIES GENERATED TRUE)
 
+add_custom_target(ctaprotobuf-generated-headers DEPENDS ${ProtoHeadersCtaFrontend} ${GrpcHeadersCtaFrontend})
+add_dependencies(cta-generated-headers ctaprotobuf-generated-headers)
+
 # Generated CTA protobuf message types shared by clients and servers
 add_library(ctaprotobuf SHARED ${ProtoSourcesCtaFrontend})
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
@@ -47,8 +50,7 @@ add_library(ctaprotobufconversions
 set_target_properties(ctaprotobufconversions PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_include_directories(ctaprotobufconversions PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_public_headers(ctaprotobufconversions)
 target_link_libraries(ctaprotobufconversions
   ctaprotobuf
   ctacommon)

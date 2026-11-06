@@ -21,9 +21,8 @@ if(CTA_PACKAGE_FORMAT STREQUAL "deb")
   pkg_check_modules(HTTPLIB REQUIRED IMPORTED_TARGET cpp-httplib)
   target_link_libraries(ctaruntime PRIVATE PkgConfig::HTTPLIB)
 endif()
-target_include_directories(ctaruntime
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_public_headers(ctaruntime)
+target_include_directories(ctaruntime PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 install(TARGETS ctaruntime DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
