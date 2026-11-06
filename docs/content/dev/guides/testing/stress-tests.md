@@ -92,7 +92,7 @@ changerTimeoutMs = 30000
 
 [[library.mediaTypes]]
 name           = "STRESSTAPE"
-capacityBytes  = 99200080   # derived, see below — exactly 10 × 20 000-file batches
+capacityBytes  = 24800080   # derived, see below — exactly 10 × 5 000-file batches
 vidPrefix      = "S0"       # auto-derived: S{i}  (2 chars + 4-digit index = 6-char VID)
 mountDelayMs    = 15000     # mount-delay jitter floor
 mountDelayMaxMs = 0         # jitter ceiling; 0 = default to 2x mountDelayMs
@@ -106,7 +106,7 @@ tape always holds a whole number of batches:
 
 ```
 capacityBytes = vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile
-              = 80        + 10            × 20 000     × 496                  = 99 200 080
+              = 80        + 10            × 5 000      × 496                  = 24 800 080
 ```
 
 `logicalBytesPerFile` is one file's tape footprint: 6 ANSI label blocks of 80 bytes plus the
@@ -117,12 +117,16 @@ limits a fetch to the tape's remaining space: when the tape fills, ENOSPC ends t
 every job already fetched but not yet written goes back to the queue. Those jobs are re-queued,
 not failed, but each costs a scheduler round trip. The waste is about one fetch batch per tape
 boundary regardless of tape size, so only the ratio matters — `batchesPerTape: 10` keeps it to a
-tenth of a tape, and at 10 M files over 100 drives (~100 000 files per drive, half a tape) most
-drives never reach a boundary at all.
+tenth of a tape. 5 000 × 10 = 50 000 files/tape is sized above this test's actual-scale average
+per-drive share (4 000 000 files over 100 drives, ~40 000 files/drive), so tape-boundary crossings
+stay rare rather than routine — only a drive that pulls an above-average share from the shared
+queue crosses at all. At the 50 Hz write/read rate ceiling (`STRESS_WRITE_RATE_HZ`/
+`STRESS_READ_RATE_HZ`) that is a ~16.7 min mount. Even when a crossing does happen it is not a
+failure mode, only overhead bounded to one re-queued fetch batch (≤5 000 jobs).
 
 Raising `batchesPerTape` further costs memory and PVC I/O: the drive holds the whole tape in RAM
-(~1 kB per file, ~200 MB per taped pod at 10 batches) and serialises it to the PVC on every unload
-(~99 MB). Keep `batchFiles` equal to `transfers.archive.fetchMaxFiles` in
+(~1 kB per file, ~50 MB per taped pod at 10 batches) and serialises it to the PVC on every unload
+(~25 MB). Keep `batchFiles` equal to `transfers.archive.fetchMaxFiles` in
 `presets/stress-scale-values.yaml`.
 
 The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `VtlDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
@@ -197,9 +201,9 @@ All stress-drive parameters are set in the `virtual-tape-library` chart `values.
 | Logical library name | **auto-derived**: `stress-lib-{i}` | — |
 | Changer lock timeout | `library.changerTimeoutMs` in `values.yaml` | `30000` ms |
 | Media type name | `library.mediaTypes[].name` | `STRESSTAPE` |
-| Tape capacity | **derived**: `vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile` | `99200080` (≈99 MB) |
+| Tape capacity | **derived**: `vol1Bytes + batchesPerTape × batchFiles × logicalBytesPerFile` | `24800080` (≈25 MB) |
 | Fetch batch per tape | `library.mediaTypes[].batchesPerTape` | `10` |
-| Files per fetch batch | `library.mediaTypes[].batchFiles` | `20000` |
+| Files per fetch batch | `library.mediaTypes[].batchFiles` | `5000` |
 | Tape footprint per file | `library.mediaTypes[].logicalBytesPerFile` | `496` bytes |
 | VID prefix | **auto-derived**: `S{i}` (library index) | — |
 | Simulated mount latency base | `library.mediaTypes[].mountDelayMs` | `15000` ms |

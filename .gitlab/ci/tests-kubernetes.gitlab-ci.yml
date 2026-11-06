@@ -509,14 +509,16 @@ stress-scale-test:
       # Scale test always uses VtlDrives: 100 drives, 4 libraries.
       # Override per-run via NUM_STRESS_DRIVES / NUM_STRESS_LIBRARIES CI variables.
       EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-100} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-4}"
-      # 250 files/s per drive instead of the chart default of 1000, for this job only. A tape holds
-      # 200 000 files, so a mount spends ~13 min transferring rather than ~3 min and the drives lose
-      # far less of the run to tape changes. 100 drives x 250 Hz = 25 kHz, still well above the rate
-      # the frontend can queue, which is the actual bottleneck. The read ceiling matters just as
-      # much: without it a retrieve mount reads a whole tape back at RAM speed and lasts seconds.
-      # Override per-run via STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ.
-      EXTRA_SPAWN_ARGS+=" --stress-write-rate-hz ${STRESS_WRITE_RATE_HZ:-250}"
-      EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-250}"
+      # 50 files/s per drive instead of the chart default of 1000, for this job only. A tape holds
+      # 200 000 files, so a mount spends ~67 min transferring rather than ~3 min and the drives lose
+      # far less of the run to tape changes. 100 drives x 50 Hz = 5 kHz aggregate ceiling, well below
+      # the previous 250 Hz (25 kHz) setting - this caps how fast the aggregate load can ramp once all
+      # 100 drives are mounted and transferring, easing the burst on the frontend/EOS MGM at startup
+      # rather than just the already-staggered mount-start times (STRESS_MOUNT_DELAY_MS below). The
+      # read ceiling matters just as much: without it a retrieve mount reads a whole tape back at RAM
+      # speed and lasts seconds. Override per-run via STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ.
+      EXTRA_SPAWN_ARGS+=" --stress-write-rate-hz ${STRESS_WRITE_RATE_HZ:-50}"
+      EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-50}"
       # Widen the mount-delay jitter spread to [5 s, 90 s] instead of the chart default [15 s,
       # 30 s]. What actually risks the test harness's no-progress detector (80 s: 8 intervals x
       # check_archive_interval_sec=10s, system-wide - it resets on ANY drive's progress) is many

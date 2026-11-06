@@ -83,14 +83,10 @@ taped:
             value: "1"
 
   logging:
-    # Raised from WARNING to INFO for this debugging session: needed to see
-    # ArchiveMount::reportJobsBatchTransferred()'s exception detail (logged at
-    # ERR, already visible at WARNING - this is for broader INFO-level context
-    # around the "move archive back to pending" / reportJobsBatchTransferred
-    # burst investigation, e.g. per-flush timing/outcome logs). Revert to
-    # WARNING once the investigation concludes - INFO is noticeably more
-    # verbose across 100 drives.
-    level: "INFO"
+    # Reverted to WARNING: the archive-failure investigation showed the fault is on the
+    # EOS disk side (XRootD open failures / disk-report path), not in taped, so INFO-level
+    # noise across 100 drives isn't buying anything here.
+    level: "WARNING"
 
   # Scale-test OTel export stagger: each of the 100 taped pods sleeps a
   # deterministic fraction of 10 s (hash(hostname) % 10) in an initContainer
@@ -121,10 +117,11 @@ taped:
     # Depth needed is small - with diskIoThreads=1 one file is read at a time and a 16-byte file
     # occupies exactly one buffer, so the pool size is itself the ceiling on files in flight (64).
     # Supply, not depth, is what limits these drives: they achieve ~50 files/s each - the per-drive
-    # share of the EOS MGM open rate with 100 drives competing, not the configured 250 Hz ceiling -
-    # i.e. ~20 ms per disk read, so the writer waits on EOS rather than on buffers. Worth trimming
-    # because the in-memory tape already costs
-    # ~200 MB per pod at batchesPerTape: 10 and the taped pods have no memory limit.
+    # share of the EOS MGM open rate with 100 drives competing, which is now also the configured
+    # ceiling (maxWriteRateHz/maxReadRateHz: 50; previously a 250 Hz ceiling sat above the ~50 Hz
+    # drives actually achieved) - i.e. ~20 ms per disk read, so the writer waits on EOS rather than
+    # on buffers. Worth trimming because the in-memory tape already costs
+    # ~50 MB per pod at batchesPerTape: 10, batchFiles: 5000 and the taped pods have no memory limit.
     bufferCount: 64
     bufferSizeBytes: 262144
     # 1 disk-I/O thread per drive keeps XRootD connection count proportional
@@ -140,12 +137,12 @@ taped:
       # virtual-tape-library chart therefore DERIVES the capacity as
       #   vol1Bytes + batchesPerTape * batchFiles * logicalBytesPerFile
       # which keeps a tape an exact whole number of these batches; at its batchesPerTape: 10 the
-      # re-queued tail is a tenth of a tape, and at 10 M files over 100 drives (~100 000 files
-      # per drive, half a tape) most drives never reach a boundary at all.
+      # re-queued tail is a tenth of a tape (see that chart's values.yaml for the current sizing
+      # and the up-to-date boundary-crossing-frequency analysis at this test's actual scale).
       #
       # Keep batchFiles in virtual-tape-library/values.yaml equal to fetchMaxFiles here.
       fetchMaxBytes: 80000000000
-      fetchMaxFiles: 20000
+      fetchMaxFiles: 5000
       # flushMaxFiles decoupled from fetchMaxFiles (debugging the 05:25-05:27 scheddb_stress
       # waiting bursts, which correlate with drives unmounting): suspected cause is
       # ArchiveMount::reportJobsBatchTransferred() reporting a 20 000-file batch to EOS's WFE in
@@ -386,36 +383,37 @@ maintd:
     # nothing but the age protecting it. What it must then exceed is the real interval between two
     # fetches of a HEALTHY drive:
     #   T_batch  = fetchMaxFiles / rate                       one fetch batch
-    #              20 000 / 250 Hz =  80 s at the configured ceiling
-    #              20 000 /  50 Hz = 400 s at the rate the drives actually achieve, which is set by
-    #                                the per-drive share of the EOS MGM open rate with 100 drives
-    #                                competing, not by maxWriteRateHz
+    #              5 000 / 50 Hz = 100 s, now the only case to compute: maxWriteRateHz is also
+    #              configured at 50, matching the achieved rate directly (previously a 250 Hz
+    #              ceiling sat above the ~50 Hz the drives actually achieved under 100-drive EOS
+    #              MGM contention, so the achieved-rate figure was the one that mattered).
     #   T_change = mountDelayMaxMs (worst case, not average) ~  90 s  tape change at ENOSPC
-    #   G_max    = T_batch + T_change                        ~ 490 s  longest healthy fetch gap
+    #   G_max    = T_batch + T_change                        ~ 190 s  longest healthy fetch gap
     #
     # T_change uses the jitter's CEILING, not its average: a single real tape change can draw
     # anywhere up to it, and using the average would intermittently misclassify a healthy drive that
     # happens to draw a long delay. Recompute if the [5 s, 90 s] override elsewhere in this file
     # changes.
     #
-    # age = 600 s is above the observed 400 s fetch interval with a 1.5x margin, and still far
-    # inside one mount cycle (a tape is 200 000 files, ~4 000 s at the observed rate), so a mount
+    # age = 600 s is a ~3.2x margin over G_max (190 s) and 60% of one mount cycle (a tape is
+    # 50 000 files, 1 000 s / 16.7 min at 50 Hz - see virtual-tape-library/values.yaml), so a mount
     # that really did die does not keep its work reserved for anything like as long as writing a
-    # tape takes. It is NOT the old "2 x G_max" (980 s): that rule treated the age as the only
-    # guard, which it is not, and doubling it again would slow recovery from genuinely dead mounts
-    # for no benefit while the drive-state guard is doing the primary work. The previous value, 340
-    # s, was derived from T_batch at the configured 250 Hz ceiling and sat BELOW the interval the
-    # drives actually fetch at - the one case the second guard exists to cover.
+    # tape takes. Kept deliberately large (the previous, pre-rate-change value) rather than tuned
+    # down to the computed minimum margin: T_batch/G_max above are rule-of-thumb estimates of the
+    # achieved per-drive rate, not a guaranteed figure, and a false "dead mount" classification of
+    # a healthy drive is more disruptive than the extra wait, so the choice errs toward a bigger
+    # cushion over G_max rather than the tightest value that still clears it.
     #
     # Recompute if STRESS_WRITE_RATE_HZ, fetchMaxFiles, the mount-delay jitter override, or the
-    # achieved per-drive rate changes: keep age comfortably above T_batch at the ACHIEVED rate.
+    # achieved per-drive rate changes: keep age comfortably above G_max at the ACHIEVED rate, and
+    # re-check it is still a healthy fraction of the mount cycle above.
     #
     # The active-queue group also runs ResubmitInactiveReportingRoutine on the same age, so a report
     # batch left flagged IS_REPORTING by a reporter that died mid-batch is retried within ~11 min
-    # (600 s age + 60 s poll) instead of the ~30-45 min the dev settings give it. That window grew
-    # with the age change above, and there are now two reporter pods per routine that can die
-    # holding up to batchSize flagged rows each - still a far smaller exposure than the dev default,
-    # but worth knowing when a run shows rows stuck in IS_REPORTING.
+    # (600 s age + 60 s poll) instead of the ~30-45 min the dev settings give it. There are two
+    # reporter pods per routine that can die holding up to batchSize flagged rows each - still a far
+    # smaller exposure than the dev default, but worth knowing when a run shows rows stuck in
+    # IS_REPORTING.
     #
     # batchSize is the LIMIT of one cleanup pass, and one pass runs per poll - the routine does
     # not loop internally. It has to exceed the number of rows a single dead mount leaves behind,
@@ -428,18 +426,18 @@ maintd:
     #
     # Rows left by one dead mount:
     #   MigrationTaskInjector fetches 2 x fetchMaxFiles on its first call, so the in-flight set
-    #   in the ACTIVE queue is up to 2 x 20 000 = 40 000 rows. The PENDING queue can hold the same
+    #   in the ACTIVE queue is up to 2 x 5 000 = 10 000 rows. The PENDING queue can hold the same
     #   number for that mount: requeueJobBatch(keepMountId = true) returns a job that failed
     #   inside a mount to PENDING with its MOUNT_ID intact, so if every job of a batch fails they
     #   all land there under the dead mount.
     #
-    # 50 000 covers that worst case with headroom while staying a sane single UPDATE (the
-    # statement is an indexed UPDATE ... FROM (SELECT ... LIMIT n FOR UPDATE SKIP LOCKED)). One
-    # pass then drains a dead mount and the next retires it. Throughput is 50 000 / 60 s ~ 833
-    # rows/s per queue, so even the pathological case - all 100 drives dying at once with full
-    # batches, ~4 M rows - is recovered in ~80 min rather than never. Raise the poll rate rather
-    # than the batch if that ever needs to be faster: bigger single transactions compete with the
-    # 100 drives hammering the same tables.
+    # 50 000 covers that worst case with headroom (10 000 vs the old 40 000 - even more now) while
+    # staying a sane single UPDATE (the statement is an indexed UPDATE ... FROM (SELECT ... LIMIT n
+    # FOR UPDATE SKIP LOCKED)). One pass then drains a dead mount and the next retires it.
+    # Throughput is 50 000 / 60 s ~ 833 rows/s per queue, so even the pathological case - all 100
+    # drives dying at once with full batches, ~1 M rows - is recovered in ~20 min rather than never.
+    # Raise the poll rate rather than the batch if that ever needs to be faster: bigger single
+    # transactions compete with the 100 drives hammering the same tables.
     userActiveQueueCleanup: &scaleCleanup
       replicas: 1
       sleepIntervalSecs: 60
