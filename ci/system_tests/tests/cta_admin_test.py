@@ -387,7 +387,10 @@ def test_cta_admin_tape_pool(cta_cli: CtaCliHost, disk_instance_name: str) -> No
 
 
 def test_cta_admin_drive(
-    cta_cli: CtaCliHost, cta_taped: CtaTapedHost, restart_expectations: RestartExpectations
+    cta_cli: CtaCliHost,
+    cta_taped: CtaTapedHost,
+    restart_expectations: RestartExpectations,
+    error_expectations: ErrorExpectations,
 ) -> None:
     pl_name = "test_cta_admin_tape_pl1"
     ll_name = "test_cta_admin_tape_ll1"
@@ -425,6 +428,13 @@ def test_cta_admin_drive(
         assert dr_updated3["comment"] == f"Updated {dr_name}"
 
         # Deleting the drive makes taped exit; Kubernetes restarts it and it registers the drive again.
+        error_expectations.expect(
+            {
+                "program": "cta-taped",
+                "tapeDrive": dr_name,
+                "message": "Drive is missing from the catalogue. Exiting.",
+            }
+        )
         with restart_expectations.expect_container_restarts(cta_taped):
             cta_cli.exec(f"cta-admin dr rm {dr_name}")
 
@@ -1307,5 +1317,4 @@ def test_cta_admin_failedrequest_ls_error_reporting(
 
 
 def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:
-    error_expectations.allow_message("In Scheduler::getDesiredDriveState(): no such drive")
     error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
