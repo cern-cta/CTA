@@ -255,7 +255,7 @@ cta tape list --all
 Bump the backend timeout in your config file:
 
 ```toml
-[backends.CLI]
+[backends.CTA_ADMIN]
 timeout = 120  # seconds, default 60
 ```
 

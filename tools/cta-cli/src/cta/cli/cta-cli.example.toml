@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-backend                 = "CLI"
+backend                 = "CTA_ADMIN"
 cta_catalogue_conn_file = "/etc/cta/cta-catalogue.conf"
 
 [display]
@@ -25,7 +25,7 @@ cta_catalogue_conn_file = "/etc/cta/cta-catalogue.conf"
     rotation_keep_files = 5
     date_format         = "%Y-%m-%d %H:%M:%S"
 
-[backends.CLI]
+[backends.CTA_ADMIN]
     exec_path = "/usr/bin/cta-admin"
     timeout   = 60
     # sss_keytab_file = "/etc/cta/tape-local.keytab"

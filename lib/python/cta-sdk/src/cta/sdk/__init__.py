@@ -9,7 +9,7 @@ available to interact with CTA resource.
 Example:
     ```python
     from cta.sdk import CtaClient, get_cta_client
-    cta_client = get_cta_client("CLI")
+    cta_client = get_cta_client("CTA_ADMIN")
     ```
 """
 
