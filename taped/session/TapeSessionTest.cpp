@@ -201,6 +201,10 @@ public:
 
   bool releaseToPool() override { return true; }
 
+  void prepareFailTransfer(const std::string& failureReason) override { (void) failureReason; }
+
+  void prepareFailReport(const std::string& failureReason) override { (void) failureReason; }
+
 private:
   std::atomic<unsigned int>& m_counter;
 };
@@ -245,6 +249,16 @@ public:
                               cta::log::LogContext&) override {}
 
   uint64_t requeueJobBatch(const std::list<std::string>&, cta::log::LogContext&) const override { return 0; }
+
+  void failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, cta::log::LogContext& lc) override {
+    (void) batch;
+    (void) lc;
+  }
+
+  void failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, cta::log::LogContext& lc) override {
+    (void) batch;
+    (void) lc;
+  }
 };
 
 template<typename Base>
