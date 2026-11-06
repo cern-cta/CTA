@@ -53,6 +53,8 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
   std::optional<TapeSessionFailure> currentErrorToCount;
+  // Preserve the observed size for diagnostics after the read context unwinds.
+  std::optional<size_t> diskFileSize;
   try {
     //we first check here to not even try to open the disk  if a previous task has failed
     //because the disk could the very reason why the previous one failed,
@@ -63,7 +65,8 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
     cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL).add("actualURL", sourceFile->URL());
     currentErrorToCount = TapeSessionFailure::DiskFileToReadSizeMismatch;
-    if (migratingFileSize != sourceFile->size()) {
+    diskFileSize = sourceFile->size();
+    if (migratingFileSize != *diskFileSize) {
       throw cta::exception::Exception("Mismatch between size given by the client "
                                       "and the real one");
     }
@@ -171,7 +174,12 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
     cta::log::ScopedParamContainer spc(lc);
     spc.add("blockID", blockId)
       .add(cta::semconv::log::exceptionMessage, e.getMessageValue())
-      .add("fileSize", m_archiveJob->archiveFile.fileSize);
+      .add("fileSize", m_archiveJob->archiveFile.fileSize)
+      .add("fileId", m_archiveJob->archiveFile.archiveFileID)
+      .add("path", m_archiveJob->srcURL);
+    if (diskFileSize) {
+      spc.add("diskFileSize", *diskFileSize);
+    }
     m_archiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(spc);
     lc.log(cta::log::ERR, "Exception while reading a file");
 

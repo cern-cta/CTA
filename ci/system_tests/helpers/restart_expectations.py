@@ -126,11 +126,14 @@ class RestartExpectations:
         key = ContainerKey(host.conn.namespace, snapshot.pod_uid, host.conn.container)
         assert key in self._baseline, f"Host is not tracked: {host.name}"
         yield
+        if count:
+            # The operation may return before Kubernetes observes the exit and restarts the container.
+            host.conn.wait_for_container_restart(snapshot, count=count)
         self._verify(target=key, count=count, replace_pod=replace_pod)
 
     @contextmanager
     def expect_container_restarts(self, host: RemoteHost, count: int = 1) -> Generator[None, None, None]:
-        """Allow exactly count container restarts during an operation, retaining the same pod."""
+        """Wait for exactly count container restarts and readiness on exit, retaining the same pod."""
         assert count > 0, "Expected restart count must be positive"
         with self._expect(host, count=count):
             yield

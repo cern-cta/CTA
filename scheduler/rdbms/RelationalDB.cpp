@@ -26,6 +26,7 @@
 #include "scheduler/rdbms/postgres/RetrieveJobSummary.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <charconv>
 #include <chrono>
 #include <mutex>
 #include <thread>
@@ -770,8 +771,8 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
 }
 
 void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
-  schedulerdb::Transaction txn(m_connPool, lc);
-  // extract the job_id
+  // Validate the entire ID before opening a transaction.
+  std::string_view jobIdText;
   bool isArchive = false;
   bool isRepack = false;
   uint64_t jobID = 0;
@@ -781,21 +782,27 @@ void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc
   constexpr std::string_view repackRetrievePrefix = "rr:";
   if (objectId.starts_with(archivePrefix)) {
     isArchive = true;
-    jobID = std::stoull(objectId.substr(archivePrefix.size()));
+    jobIdText = std::string_view(objectId).substr(archivePrefix.size());
   } else if (objectId.starts_with(retrievePrefix)) {
     isArchive = false;
-    jobID = std::stoull(objectId.substr(retrievePrefix.size()));
+    jobIdText = std::string_view(objectId).substr(retrievePrefix.size());
   } else if (objectId.starts_with(repackArchivePrefix)) {
     isArchive = true;
     isRepack = true;
-    jobID = std::stoull(objectId.substr(repackArchivePrefix.size()));
+    jobIdText = std::string_view(objectId).substr(repackArchivePrefix.size());
   } else if (objectId.starts_with(repackRetrievePrefix)) {
     isArchive = false;
     isRepack = true;
-    jobID = std::stoull(objectId.substr(repackRetrievePrefix.size()));
+    jobIdText = std::string_view(objectId).substr(repackRetrievePrefix.size());
   } else {
     throw exception::UserError("Invalid failed request object ID: " + objectId);
   }
+  const auto [end, error] = std::from_chars(jobIdText.data(), jobIdText.data() + jobIdText.size(), jobID);
+  if (error != std::errc() || end != jobIdText.data() + jobIdText.size()) {
+    throw exception::UserError("Invalid failed request object ID: " + objectId);
+  }
+
+  schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t deletedJobs = 0;
     if (isArchive) {

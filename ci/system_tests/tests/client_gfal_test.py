@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.hosts import EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.utils import find_line
@@ -348,5 +349,24 @@ def test_xrootd_activity_ends_up_in_eos_report(eos_client: EosClientHost, eos_mg
     assert "&activity=XRootD_Act&" in xrd_line, f"Activity not set correctly for XRootD: {xrd_line}"
 
 
-def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
-    error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:
+    error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+    # Temporary allowance for transient HTTPS upload size mismatches (CI job 85791354).
+    error_expectations.expect(
+        {
+            "program": "cta-taped",
+            "message": "Exception while reading a file",
+            "exception_message": "Mismatch between size given by the client and the real one",
+        },
+        count=None,
+    )
+    # These recovered transfers can leave an otherwise completed archive session in error.
+    error_expectations.expect(
+        {
+            "program": "cta-taped",
+            "message": "Reported end of archive session to client",
+            "status": "error",
+            "terminationReason": "completed",
+        },
+        count=None,
+    )
