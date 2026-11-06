@@ -86,8 +86,26 @@ class CtaCliHost(RemoteHost):
         not abort the whole ramp-up and strand every drive after it. Each drive therefore gets its
         own retries, and a drive that still fails after all of them is logged and skipped rather
         than raised, so the rest of the fleet still comes up.
+
+        The initial drive-listing call needs the same tolerance: this method is specifically the
+        fallback called from stress_test.py's monitor exception handlers when a K8s API call just
+        failed, so if the listing call itself hits that same flakiness with no retry, it raises
+        straight out of the exception handler that called it - the exact crash this method exists
+        to prevent, just moved one line earlier. If every attempt fails, re-raise (there is no
+        fleet to bring up without a listing), but a single transient blip must not abort the
+        caller's broader non-fatal recovery.
         """
-        drive_names = [d["driveName"] for d in json.loads(self.exec_with_output("cta-admin --json drive ls"))]
+        drive_names: list[str] = []
+        for attempt in range(1, retries + 1):
+            try:
+                drive_names = [d["driveName"] for d in json.loads(self.exec_with_output("cta-admin --json drive ls"))]
+                break
+            except Exception as e:
+                print(f"cta-admin drive ls failed (attempt {attempt}/{retries}): {type(e).__name__}: {e}")
+                if attempt < retries:
+                    time.sleep(retry_delay_secs)
+                else:
+                    raise
         for i, drive_name in enumerate(drive_names):
             if i > 0:
                 time.sleep(stagger_secs)
