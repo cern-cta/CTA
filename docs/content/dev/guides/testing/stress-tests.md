@@ -249,80 +249,74 @@ All M PVCs are mounted into **every** taped pod, so any pod can read any library
 
 ### Catalogue connection pooling at scale
 
-At the scale job's drive count (100 `taped` pods, plus `maintd`'s routine pods and the two
-frontends), the `cta_catalogue` pgbouncer pool is a hard constraint, not a tuning knob — and it
-behaves very differently from the `cta_scheduler` pool.
+On the CI/dev pgbouncer instances used for this job, `cta_catalogue`'s `[databases]` entry already
+runs `pool_mode=transaction` (verify with `SHOW CONFIG;`/the `[databases]` line on your own
+instance — this is a per-database override, not implied by pgbouncer's global `pool_mode` default,
+which is typically `session`). That lets pgbouncer multiplex many client connections over a small
+backend pool: a backend is only held for the duration of one transaction, then returned for another
+client to use — it is **not** pinned 1:1 to a client connection for as long as the client's socket
+stays open, the way `pool_mode=session` would pin it.
 
-**Why `cta_catalogue` cannot simply copy the scheduler DB's settings.** `cta_scheduler` runs
-pgbouncer in `pool_mode=transaction`, which lets pgbouncer multiplex many client connections over
-a small backend pool: a backend is only held for the duration of one transaction, then returned to
-the pool for another client. `cta_catalogue` was kept in `pool_mode=session` instead, because
+**Why this is safe despite catalogue using session-scoped temporary tables in places.**
 `PostgresCatalogue::createAndPopulateTempTableFxid`/`createAndPopulateTempTableArchiveFileIds`
 (`catalogue/rdbms/postgres/PostgresCatalogue.cpp`) create session-scoped temporary tables and hand
 the connection to a long-lived iterator (`RdbmsCatalogueGetArchiveFilesItor`) that issues further,
 separate statements against that same table over an unbounded period, with no enclosing
-transaction tying the sequence together. Under transaction-mode pooling, pgbouncer is free to hand
-a *different* backend to the next statement, and the temporary table simply would not exist there.
-
-In session mode, pgbouncer gives **no multiplexing credit at all**: every client connection a pod
-opens is pinned 1:1 to a Postgres backend for as long as the pod runs (`rdbms/ConnPool.cpp` opens
-connections lazily on demand, but never closes a healthy one — there is no idle-timeout or
-recycling). So `number_of_connections: N` per pod effectively means up to N permanently-held
-Postgres backends per pod, not a throughput-shaped pool. At 100 `taped` pods, even a floor of 1
-connection per pod (100 total) already consumes most environments' *entire* normal `cta_catalogue`
-backend budget, before `maintd` or the frontends get a single connection — this is why
-`stress-scale-values.yaml` overrides every consumer's catalogue `numberOfConnections` down to the
-minimum that is still believed safe (see the comments next to `taped.catalogue`,
-`maintd.routines.catalogue`, `frontend-wfe.conf.catalogue`, and `frontend-admin.conf.catalogue`
-in that file for the exact floor and its reasoning).
-
-**A narrower blocker than it first looks, and a path to transaction mode.** The session-scoped
-temp-table pattern above is *not* used anywhere on the main connection pool that `taped`/`maintd`
-exercise during normal archive/retrieve/report operation — it is isolated to
-`RdbmsCatalogue::m_archiveFileListingConnPool`, a separate, small pool (hardcoded to 1 connection
-in `taped/TapedApp.cpp`, 2 via `NB_ARCHIVE_FILE_LISTING_CONNS` elsewhere) used only by
-`cta-admin archive/tapefile ls --diskid`-style bulk listing, repack listing
-(`getArchiveFilesForRepackItor`), and bulk storage-class modification
-(`ArchiveFile()->modifyArchiveFileStorageClassId`, called only from `app/cta-admin-api`'s sync
-handlers). Every other temporary-table use on the main pool (e.g.
+transaction tying the sequence together — ordinarily unsafe under transaction-mode pooling, since
+pgbouncer is free to hand a *different* backend to the next statement and the temporary table
+would simply not exist there. This pattern is isolated to its own small connection pool,
+`RdbmsCatalogue::m_archiveFileListingConnPool` (hardcoded to 1 connection in `taped/TapedApp.cpp`,
+2 via `NB_ARCHIVE_FILE_LISTING_CONNS` elsewhere), used only by `cta-admin archive/tapefile ls
+--diskid`-style bulk listing, repack listing (`getArchiveFilesForRepackItor`), and bulk
+storage-class modification (`ArchiveFile()->modifyArchiveFileStorageClassId`, called only from
+`app/cta-admin-api`'s sync handlers) — never from `taped`/`maintd`'s archive/retrieve/report hot
+path. Every other temporary-table use on the main pool (e.g.
 `PostgresTapeFileCatalogue::filesWrittenToTape`'s `beginCreateTemporarySetDeferred`) is already
 correctly wrapped in an explicit `BEGIN`…`conn.commit()` in the same function — exactly the bounded
 shape transaction-mode pooling is designed for.
 
-The remaining obstacle is PostgreSQL's server-side **prepared statements**: `rdbms/StmtPool.cpp`
-caches statements prepared via `PQprepare` (`rdbms/wrapper/PostgresStmt.cpp`) and reuses them
-across separate transactions for performance. Transaction-mode pooling does not guarantee the same
-backend across two transactions from the same client, so a later `EXECUTE` of a statement named in
-a different, earlier transaction can hit Postgres's `prepared statement "..." does not exist`.
-PgBouncer ≥1.21 addresses exactly this with transparent prepared-statement passthrough
-(`max_prepared_statements` in `pgbouncer.ini`).
+The other thing transaction-mode pooling usually breaks is PostgreSQL's server-side **prepared
+statements**: `rdbms/StmtPool.cpp` caches statements prepared via `PQprepare`
+(`rdbms/wrapper/PostgresStmt.cpp`) and reuses them across separate transactions for performance,
+but transaction-mode pooling does not guarantee the same backend across two transactions from the
+same client, so a later `EXECUTE` of a statement named in a different, earlier transaction can hit
+Postgres's `prepared statement "..." does not exist`. PgBouncer ≥1.21 addresses this with
+transparent prepared-statement passthrough (`max_prepared_statements` in `pgbouncer.ini`) — check
+this is set on your instance (`pgbouncer --version`, then `SHOW CONFIG;`).
 
-So, to run `cta_catalogue` in `pool_mode=transaction` for a scale run (verify on your own pgbouncer
-instance before trusting a full run):
+**The one operational caveat this leaves:** do not run `cta-admin archive/tapefile ls --diskid`,
+`cta-admin archivefile ch storageclass`, or anything repack-related against an environment whose
+`cta_catalogue` pgbouncer entry is in `pool_mode=transaction` — those are the only operations that
+touch `m_archiveFileListingConnPool`, which still depends on session-scoped state and has not been
+moved to its own pool. If any of those commands have ever been run against such an environment,
+check `taped`/`maintd`/`frontend-admin` logs around that time for `prepared statement ... does not
+exist` or `relation "TEMP_..." does not exist` — that is the failure signature to look for.
+Splitting that pool onto its own `pool_mode=session` pgbouncer entry would remove this caveat, but
+needs a (mechanical, moderate-sized) change to thread a second `rdbms::Login` through
+`RdbmsCatalogue` and its callers — not implemented, since the scale test does not need it.
 
-1. Confirm the pgbouncer version is ≥1.21 (`pgbouncer --version`) and set
-  `max_prepared_statements` (e.g. `200`) in `pgbouncer.ini`'s `[pgbouncer]` section.
-2. Change the `cta_catalogue` entry's `pool_mode` to `transaction` in `[databases]` — leave the
-  global default and the scheduler DB's entry alone.
-3. Apply with `RELOAD;` on the admin console (not a restart — avoids a stuck
-  `systemctl stop pgbouncer`, which can hang for minutes under active traffic). To force already-
-  pooled backends opened under the old mode to cut over immediately rather than waiting for
-  `server_idle_timeout`/`server_lifetime` to recycle them: `PAUSE cta_catalogue; RESUME
-  cta_catalogue;`.
-4. Validate with a short run first, watching `taped`/`maintd` logs for `prepared statement ... does
-  not exist` or `relation "TEMP_..." does not exist`, before a full scale run.
-5. **Caveat:** do not run `cta-admin archive/tapefile ls --diskid`, `cta-admin archivefile ch
-  storageclass`, or anything repack-related against an environment running in this mode — those
-  are the only operations that touch `m_archiveFileListingConnPool`, which still depends on
-  session-scoped state and was not moved to its own pool (the scale test's own workload never
-  calls them, so this is a deliberate, scoped trade-off for this job, not a general-purpose fix).
-  Splitting that pool onto its own `pool_mode=session` pgbouncer entry would remove this caveat,
-  but needs a (mechanical, moderate-sized) change to thread a second `rdbms::Login` through
-  `RdbmsCatalogue` and its callers — not implemented, since the scale test does not need it.
+**What this means for `numberOfConnections`.** Under `pool_mode=transaction`, a pod's
+`numberOfConnections` client-side pool is *not* a count of permanently-held Postgres backends —
+unlike `pool_mode=session`, an open-but-idle client connection consumes no backend at all; only an
+*active* transaction does. `stress-scale-values.yaml` still overrides every consumer's catalogue
+`numberOfConnections` down to a conservative floor (see the comments next to `taped.catalogue`,
+`maintd.routines.catalogue`, `frontend-wfe.conf.catalogue`, and `frontend-admin.conf.catalogue` in
+that file). Two independent reasons support keeping it low regardless of transaction-mode pooling:
 
-If this is validated, the per-pod `numberOfConnections` floors in `stress-scale-values.yaml` can
-likely be raised back toward a more comfortable margin, since transaction mode removes the hard
-1:1 backend-per-connection pinning that forced them down to the current floor.
+- **Worst-case simultaneous-transaction bound.** If every pod's every connection happened to be
+  mid-transaction at the exact same instant, the total (100 `taped` pods × 1 + 7 `maintd` pods × 1
+  + 2 frontends × 5 = 117) already exceeds this environment's `pool_size=100` +
+  `reserve_pool_size=10` = 110 backend budget. In practice this full-simultaneity case is very
+  unlikely for a non-lockstep workload, and even if briefly hit, clients just wait up to
+  `query_wait_timeout` for a backend to free up rather than failing outright — but it is worth
+  being precise that today's numbers do not leave headroom against the theoretical worst case,
+  only against realistic load. Raising a pod's `numberOfConnections` back up (e.g. once a scale
+  run has been validated) directly raises this worst-case bound and should be checked against the
+  pgbouncer pool budget at the time, the same way as for `pool_mode=session`.
+- **A per-pod concurrency argument, unrelated to pgbouncer.** `taped`'s background
+  drive-state-report callback can fire from a different thread than its main fetch loop while a
+  transfer is in flight; serialising both over a small per-pod pool bounds the latency either can
+  add to the other, independent of how many backends pgbouncer has available.
 
 ## Monitor and evaluate
 
