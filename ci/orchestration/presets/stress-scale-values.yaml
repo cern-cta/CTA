@@ -277,8 +277,8 @@ maintd:
     # this test's load at the original 8000 x 2 replicas - up to 16 000 concurrent report RPCs per
     # burst - which is a far more plausible cause than anything on the taped/WFE side (see
     # docs/content/dev/guides/testing/stress-tests.md and this file's taped.catalogue comment for
-    # the ruled-out alternatives). 1500 x 1 replica cut that to 1500; 300 x 1 replica cuts it to
-    # 300, ~50x below where the FST unavailability was seen.
+    # the ruled-out alternatives). 1500 x 1 replica cut that to 1500; 400 x 1 replica cuts it to
+    # 400, ~40x below where the FST unavailability was seen.
     #
     # What that costs, deliberately. Per pass the routine does: one flagReportingJobsByStatus
     # transaction, the launch loop, the wait loop, one bulk setArchiveJobBatchReported, then
@@ -289,15 +289,28 @@ maintd:
     # exceed R whatever these two are set to. Calibrating R from the observed run (1 replica,
     # n=1500, S=500 ms -> ~500 files/s, i.e. ~2.5 s of non-sleep work per pass) gives R ~ 610/s per
     # pod, and therefore:
-    #     n=1500, S=500 ms  ~500/s   (what was measured)
-    #     n=1500, S=50 ms   ~590/s
-    #     n=300,  S=50 ms   ~510/s
-    #     n=300,  S=200 ms  ~405/s   (this setting)
-    # n=300/S=200 ms is chosen for the 5x smaller burst, accepting ~20% less reporting throughput
-    # than n=1500/S=500 ms. Note the arithmetic that does NOT apply: "batchSize x passes/s" (300 x
-    # 5 = 1500/s) assumes the report work itself is free, which the measured 2.5 s/pass says it is
-    # not. The previous comment in this block claimed 3000 files/s per pod on exactly that
-    # reasoning; the observed 500 files/s contradicted it.
+    #     n=1500, S=500 ms  ~500/s, burst 1500   (what was measured)
+    #     n=1000, S=200 ms  ~531/s, burst 1000
+    #     n=400,  S=100 ms  ~498/s, burst  400      (this setting)
+    #     n=300,  S=200 ms  ~405/s, burst  300
+    # n=400/S=100 ms beats both of the smaller-burst alternatives it replaces: ~23% more throughput
+    # than n=300/S=200 ms AND slightly fewer fetch transactions (1.24/s against 1.35/s), because a
+    # bigger batch amortises F and the sleep over more rows. Small batches are the wrong lever for
+    # protecting the DB - the sleep is the right one, and the row rate is identical either way since
+    # it just equals the throughput.
+    #
+    # iterSleepMs must stay NON-ZERO under pgsched whatever else changes here. The chart default of
+    # 0 is an objectstore-era default: here the fetch is a WRITE transaction on ARCHIVE_ACTIVE_QUEUE
+    # - the table 100 drives are already writing - and a pass keeps looping for the whole
+    # softTimeoutSecs (30 s, inherited from the chart), so S=0 means issuing those back to back for
+    # 30 s at a stretch. At S=100 ms the DB sees one fetch per ~800 ms, and the sleep is 12% of the
+    # cycle. Idle polling is NOT governed by this knob: an empty fetch breaks out of the pass before
+    # the sleep is reached, and sleepIntervalSecs (1 s, inherited) takes over.
+    #
+    # Note the arithmetic that does NOT apply: "batchSize x passes/s" (400 x 10 = 4000/s) assumes
+    # the report work itself is free, which the measured 2.5 s/pass says it is not. The comment this
+    # block replaced claimed 3000 files/s per pod on exactly that reasoning, while 500 files/s was
+    # being observed.
     #
     # Two things to re-measure before tuning this again, both from data the routine already logs
     # (getArchiveJobsToReportTime, asyncReportLaunchTime, reportCompletionTime,
@@ -307,18 +320,25 @@ maintd:
     #     eos-mgm.<ns>.svc.cluster.local with one XrdCl::FileSystem per job, so these pods are among
     #     the heaviest DNS resolvers in the deployment and R may rise on its own.
     #
-    # Also worth keeping in view: at ~0.5 kHz, reporting drains an order of magnitude slower than
-    # the drives can produce (100 drives x ~50 files/s each), so ARCHIVE_ACTIVE_QUEUE accumulates
-    # ToReport rows for most of the run. Only replicas lift the aggregate past R; that is left at 1
-    # on purpose while the MGM burst is still the suspect.
+    # Keep in view that reporting, not transferring, is the long pole of the run: the drives move
+    # 4 M files in ~13 min (100 x ~50 files/s), and reporting them at ~500/s takes ~2.2 h, with
+    # ARCHIVE_ACTIVE_QUEUE carrying the ToReport backlog throughout. Only replicas can lift the
+    # aggregate past R, and that is deliberately left at 1 while the MGM burst is still the suspect;
+    # R itself is most likely a global MGM ceiling rather than a per-pod one, since the measured run
+    # already had 1500 reports in flight and the MGM served them at only ~610/s. Running 1 vs 2
+    # replicas and comparing reportCompletionTime per pass would settle that in a single run.
+    #
+    # The two routines drain DIFFERENT queues, so their replicas never add up: during the archive
+    # phase diskReportRetrieve has nothing to do (empty fetch, immediate break, 1 s cycle sleep), so
+    # the archive-phase rate is whatever diskReportArchive alone delivers.
     diskReportArchive:
       replicas: 1
-      batchSize: 300
-      iterSleepMs: 200
+      batchSize: 400
+      iterSleepMs: 100
     diskReportRetrieve:
       replicas: 1
-      batchSize: 300
-      iterSleepMs: 200
+      batchSize: 400
+      iterSleepMs: 100
     # Repack is not used in scale tests; disable to avoid unnecessary DB polls
     # and free scheduler connections for the active archive/retrieve workload.
     repackExpand:
