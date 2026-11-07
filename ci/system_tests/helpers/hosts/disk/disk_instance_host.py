@@ -10,43 +10,56 @@ from system_tests.helpers.hosts.remote_host import RemoteHost
 
 class DiskInstanceHost(RemoteHost):
     @property
-    def instance_name(self) -> str: ...
+    def instance_name(self) -> str:
+        ...
 
     @property
-    def base_dir_path(self) -> Path: ...
+    def base_dir_path(self) -> Path:
+        ...
 
     @property
-    def archive_group(self) -> str: ...
+    def archive_group(self) -> str:
+        ...
 
     @property
-    def storage_class(self) -> str: ...
+    def storage_class(self) -> str:
+        ...
 
     @property
-    def webdav_url(self) -> str: ...
+    def webdav_url(self) -> str:
+        ...
 
-    def mkdir(self, directory: Path, parent: bool = True) -> None: ...
+    def mkdir(self, directory: Path, parent: bool = True) -> None:
+        ...
 
-    def force_remove_directory(self, directory: Path) -> None: ...
+    def force_remove_directory(self, directory: Path) -> None:
+        ...
 
-    def num_files_in_directory(self, directory: Path) -> int: ...
+    def num_files_in_directory(self, directory: Path) -> int:
+        ...
 
-    def num_files_on_tape_only(self, directory: Path) -> int: ...
+    def num_files_on_tape_only(self, directory: Path) -> int:
+        ...
 
-    def num_files_on_disk_only(self, directory: Path) -> int: ...
+    def num_files_on_disk_only(self, directory: Path) -> int:
+        ...
 
-    def list_entries_in_directory(self, directory: Path) -> list[str]: ...
+    def list_entries_in_directory(self, directory: Path) -> list[str]:
+        ...
 
-    def list_files_in_directory(self, directory: Path) -> list[str]: ...
+    def list_files_in_directory(self, directory: Path) -> list[str]:
+        ...
 
-    def list_subdirectories_in_directory(self, directory: Path) -> list[str]: ...
+    def list_subdirectories_in_directory(self, directory: Path) -> list[str]:
+        ...
 
     # Eventually we should move this method to a more central place
     def wait_for_archival_in_directory(
-        self,
-        archive_dir_path: Path,
-        check_archive_interval_sec: int,
-        *,
-        max_no_progress_intervals: int = 3,
+            self,
+            archive_dir_path: Path,
+            check_archive_interval_sec: int,
+            *,
+            max_no_progress_intervals: int = 3,
     ) -> tuple[int, float]:
         # Few problems to solve here:
         # Not all files might be archived for whatever reason (it's a stress test; errors are bound to happen)
@@ -126,11 +139,11 @@ class DiskInstanceHost(RemoteHost):
         return missing_archives, loss_percent
 
     def wait_for_retrieval_in_directory(
-        self,
-        archive_dir_path: Path,
-        check_retrieve_interval_sec: int,
-        *,
-        max_no_progress_intervals: int = 3,
+            self,
+            archive_dir_path: Path,
+            check_retrieve_interval_sec: int,
+            *,
+            max_no_progress_intervals: int = 3,
     ) -> tuple[int, float]:
         directories = self.list_subdirectories_in_directory(archive_dir_path)
 
@@ -192,8 +205,16 @@ class DiskInstanceHost(RemoteHost):
         if consecutive_no_progress_intervals >= max_no_progress_intervals:
             print(f"No progress for {max_no_progress_intervals} consecutive intervals, waiting for retrieval stopped")
 
-        loss_percent = (missing_retrievals / initial_tape_only) * 100
+        retrieved_during_wait = initial_tape_only - missing_retrievals
+        files_with_disk_copy = total_files - missing_retrievals
+        loss_percent = (
+            (missing_retrievals / total_files) * 100
+            if total_files > 0 else 0.0
+        )
 
-        print(f"{initial_tape_only - missing_retrievals}/{initial_tape_only} files retrieved from tape")
+        print(f"Retrieved during wait: {retrieved_during_wait}")
+        print(f"Files with disk copies: {files_with_disk_copy}/{total_files}")
+        print(f"Files still tape-only: {missing_retrievals}")
+        print(f"Retrieval loss: {loss_percent:.2f}%")
 
         return missing_retrievals, loss_percent
