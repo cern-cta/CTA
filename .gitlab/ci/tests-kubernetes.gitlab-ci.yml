@@ -590,11 +590,12 @@ stress-scale-test:
 
 # Same scale as stress-scale-test, but deliberately engineers failures instead of avoiding them:
 # end-of-tape re-queuing (overflowFraction raised well above the base preset's rare-boundary
-# target), VtlDrive's one-time transfer/retrieve fault injection, and mid-run pod kills of a
-# taped mount and a diskReportArchive/diskReportRetrieve batch. The point is proving maintd's
-# cleanup routines actually recover that work - every file must still end up archived and
-# retrieved despite all of it. See presets/stress-scale-fail-values.yaml and
-# tests/stress_scale_fail_test.py for the detailed design.
+# target), VtlDrive's one-time transfer/retrieve fault injection, and mid-run pod kills of up to
+# 10 taped mounts and 2 diskReportArchive/diskReportRetrieve batches at once. The point is
+# proving maintd's cleanup routines actually recover that work - every file must still end up
+# archived and retrieved (within the same loss tolerance as stress-scale-test) despite all of it.
+# See presets/stress-scale-fail-values.yaml and tests/stress_scale_fail_test.py for the detailed
+# design.
 stress-scale-fail-test:
   allow_failure: true
   interruptible: false

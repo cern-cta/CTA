@@ -28,15 +28,18 @@
 #      file always has at least 2 attempts left after it. Combined with (1) costing nothing, no
 #      file can ever exhaust its retry budget from these two mechanisms alone.
 #
-#   3. Deliberate mid-run disruption: the test harness itself kills a taped pod mid-mount and a
-#      diskReportArchive/diskReportRetrieve pod mid-batch (see the stress-scale-fail-test CI
-#      job's pytest invocation), to prove the maintd cleanup routines
-#      (Archive/RetrieveInactiveMountActiveQueueRoutine, ResubmitInactiveReportingRoutine) are
-#      what actually recovers that work, not just the job's own graceful-shutdown path.
+#   3. Deliberate mid-run disruption: the test harness itself kills up to 10 taped pods mid-mount
+#      and 2 diskReportArchive/diskReportRetrieve pods mid-batch, all roughly at once (see
+#      NUM_MOUNTS_TO_DISRUPT/NUM_REPORT_BATCHES_TO_DISRUPT in tests/stress_scale_fail_test.py and
+#      the stress-scale-fail-test CI job's pytest invocation), to prove the maintd cleanup
+#      routines (Archive/RetrieveInactiveMountActiveQueueRoutine, ResubmitInactiveReportingRoutine)
+#      actually recover that work under multiple simultaneous losses, not just the job's own
+#      graceful-shutdown path.
 #
-# The test's final assertion is that every one of total_files ends up visible in the catalogue
-# with zero rows left behind in any *_FAILED_QUEUE or stuck IS_REPORTING - i.e. that the retry
-# budget was never exhausted and the cleanup routines did their job. See
+# The test's final assertions are that archival/retrieval loss stays within the same
+# max_acceptable_loss_percent tolerance as stress-scale-test, AND that zero rows are left behind
+# in any *_FAILED_QUEUE or stuck IS_REPORTING - i.e. that the cleanup routines did their job even
+# for whatever (if anything) the tolerance above allowed to be lost. See
 # tests/stress_scale_fail_test.py.
 #
 # What is intentionally UNCHANGED from stress-scale-values.yaml
