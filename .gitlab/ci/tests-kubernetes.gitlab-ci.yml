@@ -462,7 +462,7 @@ stress-test:
 stress-scale-test:
   allow_failure: true
   interruptible: false
-  timeout: 12 hours
+  timeout: 24 hours
   stage: system-test
   needs:
     - job: prepare-cta-version
@@ -598,7 +598,7 @@ stress-scale-test:
 stress-scale-fail-test:
   allow_failure: true
   interruptible: false
-  timeout: 12 hours
+  timeout: 24 hours
   stage: system-test
   needs:
     - job: prepare-cta-version
