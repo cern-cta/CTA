@@ -251,17 +251,6 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
              "In ArchiveMount::setJobBatchTransferred(): Finished ArchiveJobQueueRow::updateJobStatus() for "
              "the job list provided.");
     }
-    // Refresh this mount's liveness heartbeat here too, not just on fetch (getNextJobBatch()):
-    // without this, a mount that is busy writing/reporting an already-fetched batch for longer
-    // than inactiveTimeLimit looks "dead" to the inactive-mount reclaim routine purely because it
-    // has not fetched new work recently, even though it is about to commit this very report. The
-    // reclaim query only grabs rows still in AJS_ToTransferForUser, so it cannot touch jobs this
-    // call has already flipped to AJS_ToReportToUserForSuccess above — but it CAN reclaim and
-    // re-queue a job for this mount in the window between the file being written and this commit,
-    // causing it to be re-transferred and double-counted. This UPSERT is self-throttled to once
-    // every 5s (see updateMountQueueLastFetch()), so piggybacking it on this transaction costs
-    // nothing extra on the common path.
-    postgres::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack, true /* isArchive */);
     txn.setRowCountForTelemetry(totalRows);
     txn.commit();
     // After processing, return the job object to the job pool for re-use
@@ -273,6 +262,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
       "reporting. Aborting the transaction."
       + ex.getMessageValue());
   }
+  refreshMountLivenessHeartbeat(lc);
 }
 
 void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
@@ -316,8 +306,6 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
       .add("updatedRows", nrows)
       .add("jobListSize", jobIDsList.size())
       .log(log::INFO, "In ArchiveMount::updateRepackJobSuccess(): Finished DB report for job list provided.");
-    // See the equivalent comment in setJobBatchTransferred() above — same mount-liveness race.
-    postgres::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack, true /* isArchive */);
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
@@ -327,6 +315,24 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
       "In schedulerdb::ArchiveMount::updateRepackJobSuccess(): Failed to update job status for "
       "reporting. Aborting the transaction."
       + ex.getMessageValue());
+  }
+  refreshMountLivenessHeartbeat(lc);
+}
+
+void ArchiveMount::refreshMountLivenessHeartbeat(log::LogContext& lc) {
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    auto nmountrows =
+      postgres::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack, true /* isArchive */);
+    txn.commit();
+    if (nmountrows < 1) {
+      lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: did not update any row.");
+    }
+  } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: failed to update table.");
+    txn.abort();
   }
 }
 

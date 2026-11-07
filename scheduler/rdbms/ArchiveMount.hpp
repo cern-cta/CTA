@@ -108,6 +108,16 @@ private:
 
   void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                               log::LogContext& lc);
+
+  /*
+   * Refresh MOUNT_QUEUE_LAST_FETCH for this mount outside of (and after) any other transaction,
+   * so a mount busy reporting an already-fetched batch does not look inactive to the dead-mount
+   * reclaim routine purely for not having fetched new work recently. Runs in its own transaction
+   * deliberately: piggybacking this self-throttled UPSERT onto another transaction would overwrite
+   * that transaction's query-summary/row-count telemetry (see updateMountQueueLastFetch()).
+   * Non-fatal on failure, same as the equivalent call in getNextJobBatch().
+   */
+  void refreshMountLivenessHeartbeat(log::LogContext& lc);
   /*
    * Setting a batch of REPACK mount jobs to state which informs
    * the Scheduler that they are ready for reporting
