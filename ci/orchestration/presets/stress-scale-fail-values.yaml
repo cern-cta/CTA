@@ -10,7 +10,10 @@
 # ----------------------
 # stress-scale-test proves CTA can sustain a target throughput. This test proves CTA RECOVERS
 # from a representative mix of failures without losing any file, by deliberately engineering
-# three independent failure classes into the same run:
+# three independent failure classes into the same run. Classes 1 and 2 are OFF by default (the
+# stress-scale-fail-test CI job's STRESS_OVERFLOW_FRACTION/STRESS_TRANSFER_FAILURE_RATE/
+# STRESS_RETRIEVE_FAILURE_RATE all default to "no injection") - set them explicitly via "Play
+# with variables" to exercise them; class 3 (mid-run pod kills) always runs:
 #
 #   1. Tape-boundary overflow (end-of-tape re-queues). Driven by
 #      --stress-overflow-fraction on create_instance.sh (NOT set here - it targets the

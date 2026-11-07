@@ -29,11 +29,21 @@ data:
            a starting point. An explicit capacityBytes wins, for media types which do not want the
            derivation - and when set, library.overflowFractionOverride below has no effect, same
            as the rate/delay overrides it sits alongside. */}}
+    {{- /* Every *Override field below is resolved with "ne (kindOf X) string", not Sprig's
+           `default`: `default` falls back whenever the override is ANY zero value for its type
+           (0, 0.0, false), which is indistinguishable from "not set" - so an explicit
+           --set ...Override=0 would silently be ignored and the media type's own value used
+           instead. Every *Override field defaults to the string "" in values.yaml, and --set
+           always produces a non-string (numeric/bool) value for a real override, so checking the
+           KIND instead correctly honours an explicit 0/0.0/false override. */}}
     {{- $capacityBytes := .capacityBytes }}
     {{- if not $capacityBytes }}
-      {{- $overflowFraction := $.Values.library.overflowFractionOverride | default .overflowFraction }}
+      {{- $overflowFraction := .overflowFraction }}
+      {{- if ne (kindOf $.Values.library.overflowFractionOverride) "string" }}
+        {{- $overflowFraction = $.Values.library.overflowFractionOverride }}
+      {{- end }}
       {{- if or (not .batchFiles) (not $overflowFraction) (not .logicalBytesPerFile) }}
-        {{- fail (printf "media type %s needs either capacityBytes or batchFiles + overflowFraction + logicalBytesPerFile" .name) }}
+        {{- fail (printf "media type %s needs either capacityBytes, or batchFiles + logicalBytesPerFile + a non-zero overflowFraction (0 is not a valid fraction - it would divide by zero deriving the tape's capacity; omit the override to use the media type's own overflowFraction instead, or set an explicit capacityBytes to bypass the derivation entirely)" .name) }}
       {{- end }}
       {{- /* Go template pipe semantics append the piped value as the FINAL argument, so
              round's (value, precision) signature must be called directly rather than piped
@@ -50,23 +60,52 @@ data:
            would silently fall back to its unlimited default and the tape would never fill. */}}
     capacityBytes  = {{ int64 $capacityBytes }}
     vidPrefix      = "S{{ $i }}"
-    {{- /* Every optional number ends in "| default 0": a media type that omits the key would
-           otherwise render "key = " and the TOML would not parse, which VtlDrive only discovers
-           at drive startup. */}}
-    mountDelayMs   = {{ $.Values.library.mountDelayMsOverride | default .mountDelayMs | default 0 }}
-    mountDelayMaxMs = {{ $.Values.library.mountDelayMaxMsOverride | default .mountDelayMaxMs | default 0 }}
+    {{- /* Every optional number ends in "| default 0": a media type that omits the key AND whose
+           override is unset would otherwise render "key = " and the TOML would not parse, which
+           VtlDrive only discovers at drive startup. This last-resort `default` is safe precisely
+           because it only ever sees .mountDelayMs/.maxWriteRateHz/etc (the media type's own
+           field), never the *Override value - the override itself was already resolved above/
+           below by kind, not by truthiness. */}}
+    {{- $mountDelayMs := .mountDelayMs }}
+    {{- if ne (kindOf $.Values.library.mountDelayMsOverride) "string" }}
+      {{- $mountDelayMs = $.Values.library.mountDelayMsOverride }}
+    {{- end }}
+    mountDelayMs   = {{ $mountDelayMs | default 0 }}
+    {{- $mountDelayMaxMs := .mountDelayMaxMs }}
+    {{- if ne (kindOf $.Values.library.mountDelayMaxMsOverride) "string" }}
+      {{- $mountDelayMaxMs = $.Values.library.mountDelayMaxMsOverride }}
+    {{- end }}
+    mountDelayMaxMs = {{ $mountDelayMaxMs | default 0 }}
     {{- /* library.max{Write,Read}RateHzOverride, persistOnFlushOverride and
            {transfer,retrieve}FailureRateOverride all apply to every media type, for the same
            reason: --set library.mediaTypes[0].maxWriteRateHz=N cannot be used, since Helm
            replaces a list element instead of merging into it, silently dropping the media type's
-           name and capacity inputs. Note that an override equal to the field's own zero value
-           (0, 0.0 or false) is indistinguishable from "no override set" and falls back to the
-           media type's own value: disable one of these there, not via its Override here. */}}
-    maxWriteRateHz = {{ $.Values.library.maxWriteRateHzOverride | default .maxWriteRateHz | default 0 }}
-    maxReadRateHz  = {{ $.Values.library.maxReadRateHzOverride | default .maxReadRateHz | default 0 }}
-    persistOnFlush = {{ $.Values.library.persistOnFlushOverride | default .persistOnFlush | default false }}
-    transferFailureRate = {{ $.Values.library.transferFailureRateOverride | default .transferFailureRate | default 0.0 }}
-    retrieveFailureRate = {{ $.Values.library.retrieveFailureRateOverride | default .retrieveFailureRate | default 0.0 }}
+           name and capacity inputs. */}}
+    {{- $maxWriteRateHz := .maxWriteRateHz }}
+    {{- if ne (kindOf $.Values.library.maxWriteRateHzOverride) "string" }}
+      {{- $maxWriteRateHz = $.Values.library.maxWriteRateHzOverride }}
+    {{- end }}
+    maxWriteRateHz = {{ $maxWriteRateHz | default 0 }}
+    {{- $maxReadRateHz := .maxReadRateHz }}
+    {{- if ne (kindOf $.Values.library.maxReadRateHzOverride) "string" }}
+      {{- $maxReadRateHz = $.Values.library.maxReadRateHzOverride }}
+    {{- end }}
+    maxReadRateHz  = {{ $maxReadRateHz | default 0 }}
+    {{- $persistOnFlush := .persistOnFlush }}
+    {{- if ne (kindOf $.Values.library.persistOnFlushOverride) "string" }}
+      {{- $persistOnFlush = $.Values.library.persistOnFlushOverride }}
+    {{- end }}
+    persistOnFlush = {{ $persistOnFlush | default false }}
+    {{- $transferFailureRate := .transferFailureRate }}
+    {{- if ne (kindOf $.Values.library.transferFailureRateOverride) "string" }}
+      {{- $transferFailureRate = $.Values.library.transferFailureRateOverride }}
+    {{- end }}
+    transferFailureRate = {{ $transferFailureRate | default 0.0 }}
+    {{- $retrieveFailureRate := .retrieveFailureRate }}
+    {{- if ne (kindOf $.Values.library.retrieveFailureRateOverride) "string" }}
+      {{- $retrieveFailureRate = $.Values.library.retrieveFailureRateOverride }}
+    {{- end }}
+    retrieveFailureRate = {{ $retrieveFailureRate | default 0.0 }}
     count          = {{ .count }}
     {{- end }}
 {{- end }}

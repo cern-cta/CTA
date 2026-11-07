@@ -533,6 +533,17 @@ stress-scale-test:
       # spread. Override per-run via STRESS_MOUNT_DELAY_MS / STRESS_MOUNT_DELAY_MAX_MS.
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-ms ${STRESS_MOUNT_DELAY_MS:-5000}"
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-max-ms ${STRESS_MOUNT_DELAY_MAX_MS:-90000}"
+      # This job does not deliberately engineer failures (see stress-scale-fail-test for that), so
+      # these three default to off: 0 for the two failure-injection rates (a valid, safe "no
+      # injection" value - see VtlDrive.hpp's MediaTypeInfo), and UNSET (not 0) for overflow
+      # fraction, since 0 there divides by zero deriving the tape's capacity and fails the chart
+      # render instead - omitting the flag leaves the media type's own overflowFraction (0.01) in
+      # place, which is what "no deliberate overflow stress" actually means for this field.
+      # Override per-run via STRESS_OVERFLOW_FRACTION / STRESS_TRANSFER_FAILURE_RATE /
+      # STRESS_RETRIEVE_FAILURE_RATE (e.g. to reproduce a stress-scale-fail-test scenario here).
+      [[ -n "${STRESS_OVERFLOW_FRACTION}" ]] && EXTRA_SPAWN_ARGS+=" --stress-overflow-fraction ${STRESS_OVERFLOW_FRACTION}"
+      EXTRA_SPAWN_ARGS+=" --stress-transfer-failure-rate ${STRESS_TRANSFER_FAILURE_RATE:-0}"
+      EXTRA_SPAWN_ARGS+=" --stress-retrieve-failure-rate ${STRESS_RETRIEVE_FAILURE_RATE:-0}"
       # File count and prequeue settings come from test_pgsched_params.toml.
       # CI variables allow per-run overrides via "Play with variables".
       [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"
@@ -588,14 +599,16 @@ stress-scale-test:
     paths:
       - test_logs
 
-# Same scale as stress-scale-test, but deliberately engineers failures instead of avoiding them:
-# end-of-tape re-queuing (overflowFraction raised well above the base preset's rare-boundary
-# target), VtlDrive's one-time transfer/retrieve fault injection, and mid-run pod kills of up to
-# 10 taped mounts and 2 diskReportArchive/diskReportRetrieve batches at once. The point is
-# proving maintd's cleanup routines actually recover that work - every file must still end up
-# archived and retrieved (within the same loss tolerance as stress-scale-test) despite all of it.
-# See presets/stress-scale-fail-values.yaml and tests/stress_scale_fail_test.py for the detailed
-# design.
+# Same scale as stress-scale-test, built to deliberately engineer failures instead of avoiding
+# them - end-of-tape re-queuing (overflowFraction raised well above the base preset's rare-
+# boundary target), VtlDrive's one-time transfer/retrieve fault injection, and mid-run pod kills
+# of up to 10 taped mounts and 2 diskReportArchive/diskReportRetrieve batches at once - though the
+# overflow/transfer/retrieve injections are OFF by default (see the job's own STRESS_* defaults
+# below); set them via "Play with variables" to actually exercise those paths, the mid-run pod
+# kills run either way. The point is proving maintd's cleanup routines actually recover that work
+# - every file must still end up archived and retrieved (within the same loss tolerance as
+# stress-scale-test) despite all of it. See presets/stress-scale-fail-values.yaml and
+# tests/stress_scale_fail_test.py for the detailed design.
 stress-scale-fail-test:
   allow_failure: true
   interruptible: false
@@ -656,20 +669,26 @@ stress-scale-fail-test:
       EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-50}"
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-ms ${STRESS_MOUNT_DELAY_MS:-5000}"
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-max-ms ${STRESS_MOUNT_DELAY_MAX_MS:-90000}"
-      # The three deliberate failure injections this job exists to test. Defaults chosen per
-      # presets/stress-scale-fail-values.yaml's design comment:
-      #   - overflow-fraction 0.20: ~20% of each drive's files re-queued at a tape boundary
-      #     (vs stress-scale-test's 0.05) - retry-NEUTRAL (requeueJobBatch preserves retry
-      #     counters), so this alone can never cause a permanent loss, only extra DB round trips.
+      # The three deliberate failure injections this job exists to test - OFF by default (0 for
+      # the two failure rates; UNSET, not 0, for overflow fraction, which divides by zero at 0 and
+      # fails the chart render instead - see library-conf-configmap.yaml). Deliberately not
+      # pre-armed: a run with no "Play with variables" overrides exercises only the mid-run pod
+      # kills (test_disrupt_archive_mount/test_disrupt_report_batch), not these three - set them
+      # explicitly to actually exercise tape-boundary overflow and/or transfer/retrieve faults.
+      # Previously validated values for that, per presets/stress-scale-fail-values.yaml's design
+      # comment:
+      #   - overflow-fraction 0.20: ~20% of each drive's files re-queued at a tape boundary -
+      #     retry-NEUTRAL (requeueJobBatch preserves retry counters), so this alone can never
+      #     cause a permanent loss, only extra DB round trips.
       #   - transfer/retrieve-failure-rate 0.02/0.02: 2% of archived/retrieved files get a
       #     synthetic fault, injected AT MOST ONCE per file for its whole lifetime (see
       #     VtlDrive::maybeInjectFault()'s one-time atomic marker) - so it costs a file exactly
       #     one of its ArchiveRequest::TOTAL_RETRIES=2 retries, never all of them.
       # Override per-run via STRESS_OVERFLOW_FRACTION / STRESS_TRANSFER_FAILURE_RATE /
       # STRESS_RETRIEVE_FAILURE_RATE.
-      EXTRA_SPAWN_ARGS+=" --stress-overflow-fraction ${STRESS_OVERFLOW_FRACTION:-0.20}"
-      EXTRA_SPAWN_ARGS+=" --stress-transfer-failure-rate ${STRESS_TRANSFER_FAILURE_RATE:-0.02}"
-      EXTRA_SPAWN_ARGS+=" --stress-retrieve-failure-rate ${STRESS_RETRIEVE_FAILURE_RATE:-0.02}"
+      [[ -n "${STRESS_OVERFLOW_FRACTION}" ]] && EXTRA_SPAWN_ARGS+=" --stress-overflow-fraction ${STRESS_OVERFLOW_FRACTION}"
+      EXTRA_SPAWN_ARGS+=" --stress-transfer-failure-rate ${STRESS_TRANSFER_FAILURE_RATE:-0}"
+      EXTRA_SPAWN_ARGS+=" --stress-retrieve-failure-rate ${STRESS_RETRIEVE_FAILURE_RATE:-0}"
       # File count and prequeue settings come from test_pgsched_params.toml, same as
       # stress-scale-test. CI variables allow per-run overrides via "Play with variables".
       [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"

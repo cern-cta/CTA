@@ -44,26 +44,40 @@ library:
   # their own maxWriteRateHz / maxReadRateHz. This is how create_instance.sh
   # --stress-write-rate-hz and --stress-read-rate-hz reach the chart: a --set on
   # library.mediaTypes[0].maxWriteRateHz would replace the whole list element and drop the media
-  # type's name and capacity inputs with it. Empty leaves each media type's own value in place.
+  # type's name and capacity inputs with it.
+  #
+  # The empty string "" here is the ONLY "not set" value: the template
+  # (library-conf-configmap.yaml) checks the override's KIND, not its truthiness, so an explicit
+  # --set ...Override=0 (or 0.0, or false for persistOnFlushOverride) is honoured as that literal
+  # value rather than silently falling back to the media type's own value - only leaving this at
+  # "" (the default below) actually leaves the media type's own value in place.
   maxWriteRateHzOverride: ""
   maxReadRateHzOverride: ""
   # Same override mechanism, for the floor and ceiling of the mount-delay jitter window (see
-  # mountDelayMs on each media type below). Empty leaves each media type's own value in place;
-  # mountDelayMaxMsOverride alone (floor left unset) still falls back to 2x whatever floor is in
-  # effect, override or not.
+  # mountDelayMs on each media type below); mountDelayMaxMsOverride alone (floor left unset) still
+  # falls back to 2x whatever floor is in effect, override or not.
   mountDelayMsOverride: ""
   mountDelayMaxMsOverride: ""
   # Same override mechanism again, for VtlDrive's failure-scenario fault injection and its
-  # eager-persist option (see the media type fields below and taped/drive/VtlDrive.hpp). Empty
-  # leaves each media type's own value in place; these stay empty/false for every normal
-  # deployment and test, and are set only by the dedicated failure-scenario test job.
+  # eager-persist option (see the media type fields below and taped/drive/VtlDrive.hpp). These
+  # stay at "" (unset) for every normal deployment and test, and are set only by the dedicated
+  # failure-scenario test job - which defaults them to 0/false too unless explicitly overridden
+  # via "Play with variables", since 0/0.0/false are themselves valid, safe values for these three
+  # (unlike overflowFractionOverride below, 0 here just means "no injection", not a division).
   persistOnFlushOverride: ""
   transferFailureRateOverride: ""
   retrieveFailureRateOverride: ""
   # Same override mechanism, for the derived-capacity re-queue-fraction target (see
-  # mediaTypes[].overflowFraction below and the template's derivation comment). Empty leaves each
-  # media type's own value in place. Only meaningful when the media type does not set an explicit
-  # capacityBytes (which bypasses the derivation, and so this override, entirely).
+  # mediaTypes[].overflowFraction below and the template's derivation comment). Only meaningful
+  # when the media type does not set an explicit capacityBytes (which bypasses the derivation, and
+  # so this override, entirely).
+  #
+  # UNLIKE the other overrides above, 0 is never a valid explicit value here: filesPerTape =
+  # batchFiles / (2 * overflowFraction) divides by it, so an explicit --set
+  # library.overflowFractionOverride=0 is now caught by the template's own validation and fails
+  # the chart render with a clear message, rather than either silently falling back (the old bug)
+  # or dividing by zero. Leave this at "" (unset) to use the media type's own overflowFraction -
+  # that is the correct way to express "no deliberate tape-boundary stress", not an explicit 0.
   overflowFractionOverride: ""
 
   # Media type definitions — shared across all libraries.

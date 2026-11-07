@@ -8,11 +8,13 @@ and the stress-scale-fail-test CI job), but deliberately engineers three indepen
 classes into the run instead of avoiding them:
 
   1. Tape-boundary overflow (--stress-overflow-fraction, set on create_instance.sh, not in this
-     file): retry-NEUTRAL, see ArchiveJobQueueRow::requeueJobBatch().
+     file): retry-NEUTRAL, see ArchiveJobQueueRow::requeueJobBatch(). OFF by default on the CI
+     job (STRESS_OVERFLOW_FRACTION unset) — set it explicitly to exercise this path.
   2. VtlDrive's one-time transfer/retrieve fault injection (--stress-transfer-failure-rate /
      --stress-retrieve-failure-rate): consumes exactly one of a file's limited retries, never more
      — see taped/drive/VtlDrive.hpp's MediaTypeInfo::transferFailureRate and
-     maybeInjectFault()'s one-time atomic marker.
+     maybeInjectFault()'s one-time atomic marker. OFF by default on the CI job (both rates 0) —
+     set them explicitly to exercise this path.
   3. Deliberate mid-run pod kills, done HERE (test_disrupt_archive_mount and
      test_disrupt_report_batch below): up to NUM_MOUNTS_TO_DISRUPT taped pods killed mid-mount,
      up to NUM_REPORT_BATCHES_TO_DISRUPT diskReportArchive/diskReportRetrieve pods killed
