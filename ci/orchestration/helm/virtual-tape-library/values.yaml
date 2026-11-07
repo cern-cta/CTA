@@ -113,7 +113,7 @@ library:
       # plus the payload (16 bytes in the stress tests, see test_pgsched_params.toml). File marks
       # consume no capacity. vol1Bytes is the single 80-byte VOL1 label at the start of the tape.
       batchFiles: 5000
-      overflowFraction: 0.05
+      overflowFraction: 0.01
       logicalBytesPerFile: 496
       vol1Bytes: 80
       mountDelayMs: 15000
