@@ -19,6 +19,8 @@ server:
           options:
             - name: ndots
               value: "1"
+            - name: attempts
+              value: "2"
 
     xrd:
       # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
