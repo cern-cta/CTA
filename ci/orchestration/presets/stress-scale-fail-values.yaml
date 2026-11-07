@@ -63,28 +63,35 @@ maintd:
     # shortens from stress-scale-values.yaml's ~16.7 min to ~4.2 min (12 500 / 50 Hz = 250 s).
     # G_max (T_batch + T_change ~ 190 s, see stress-scale-values.yaml's derivation - unaffected,
     # since it depends on fetchMaxFiles/rate and mountDelayMaxMs, neither of which changed here)
-    # is now 76% of the mount cycle itself, where at the base preset's 0.05 it was only 19%. The
-    # base preset's two goals - a generous margin over G_max (there, ~3.2x) AND staying well
-    # inside the mount cycle (there, 60%) - are no longer simultaneously achievable: at this
-    # overflow fraction, any age with a 3x+ margin over G_max (570 s+) is itself 2+ mount cycles,
-    # which is exactly the "waits through several healthy-mount-equivalents before reclaiming a
-    # dead one" problem the base preset's comment warns against. 600 s (unchanged from the base
-    # preset) would be 2.4 cycles.
+    # is now 76% of the mount cycle itself, where at the base preset's 0.05 it was only 19%.
     #
-    # 240 s is the resolution: it keeps the SAME kind of margin the base preset enforces, just
-    # measured against the binding constraint here. Over G_max it is only ~1.26x (thinner than
-    # the base preset's ~3.2x) and it is 96% of the mount cycle (not "comfortably inside" either)
-    # - but accepting a thinner margin is specifically safe for THIS test and would not be for
-    # the base scale test: neither failure class this test injects (end-of-tape overflow,
-    # VtlDrive's one-time fault injection) can ever exhaust a file's retry budget regardless of
-    # how long reclaim takes (see the top-of-file comment), so a slower-than-ideal reclaim costs
-    # this run some wall-clock time, never a lost file. Do not reuse 240 s as a general template
-    # for a different overflowFraction without rechecking both ratios above - the right age value
-    # is a property of the G_max/cycle relationship at the specific overflowFraction in use, not
-    # a constant.
+    # A thinner-than-base-preset margin was tried here (240 s, ~1.26x G_max, 96% of the mount
+    # cycle) on the reasoning that neither failure class this test injects (end-of-tape overflow,
+    # VtlDrive's one-time fault injection) can ever exhaust a file's retry budget regardless of how
+    # long reclaim takes, so a slower reclaim should only cost wall-clock time, never a lost file.
+    # In practice that margin was too thin: stacking the deliberate taped/report-pod disruptions
+    # (tests/stress_scale_fail_test.py's test_disrupt_archive_mount/test_disrupt_report_batch) adds
+    # a real DB-contention spike on top of it, long enough to push even a STILL-HEALTHY mount's
+    # apparent last-fetch age past 240 s - triggering ArchiveInactiveMountActiveQueueRoutine to
+    # reclaim that live mount's ARCHIVE_ACTIVE_QUEUE rows out from under it mid-batch. The mount
+    # then finds its own in-flight jobs no longer match the DB state when it tries to report them,
+    # has nothing left to do, and ends - triggering an immediate remount - which is what showed up
+    # as frequent archive mount/unmount churn and near-zero net throughput in practice, not file
+    # loss. (It also risks a file being written and reported twice if a reclaimed job keeps running
+    # to completion in the original mount's session - see scheduler/rdbms/ArchiveMount.cpp's
+    # refreshMountLivenessHeartbeat(), which closes the equivalent race for mounts busy reporting,
+    # but not for one simply busy writing when reclaim fires.)
+    #
+    # 600 s restores the base preset's own value, same margin discipline it uses elsewhere, chosen
+    # over keeping 240 s now that the disruption tests are paced with real recovery windows
+    # (MIN_SECS_SINCE_DRIVES_UP/MIN_SECS_SINCE_PREVIOUS_DISRUPTION in stress_scale_fail_test.py) -
+    # false-positive reclaim of a healthy mount is worse for this test's actual goal (proving clean
+    # recovery from each disruption) than a slower genuine reclaim. Do not reuse 240 s (or re-derive
+    # a different thin value) as a general template without accounting for the disruption tests'
+    # own DB load, not just the steady-state G_max/cycle relationship at the overflowFraction in use.
     userActiveQueueCleanup: &failCleanup
       replicas: 1
       sleepIntervalSecs: 60
       batchSize: 50000
-      ageForCollectionSecs: 240
+      ageForCollectionSecs: 600
     userPendingQueueCleanup: *failCleanup
