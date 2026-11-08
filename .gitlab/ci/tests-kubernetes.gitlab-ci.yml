@@ -535,7 +535,7 @@ stress-scale-test:
       # stress-scale-values.yaml's transfers.archive.fetchMaxFiles comment).
       STRESS_SCALE_TOTAL_FILES_DEFAULT=10000000
       FILES_PER_TAPE_FAIR_SHARE=$(( ${STRESS_TOTAL_FILES:-$STRESS_SCALE_TOTAL_FILES_DEFAULT} / ${NUM_STRESS_DRIVES:-100} ))
-      FILES_PER_TAPE_DEFAULT=$(( FILES_PER_TAPE_FAIR_SHARE * 11 / 10 ))
+      FILES_PER_TAPE_DEFAULT=$(( FILES_PER_TAPE_FAIR_SHARE * 12 / 10 ))
       EXTRA_SPAWN_ARGS+=" --stress-files-per-tape ${STRESS_FILES_PER_TAPE:-${FILES_PER_TAPE_DEFAULT}}"
       # Defaults to 10M here (not test_pgsched_params.toml's 4M) to match the tape sizing above.
       # CI variables allow per-run overrides via "Play with variables".
