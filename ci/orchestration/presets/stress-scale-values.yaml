@@ -122,8 +122,13 @@ taped:
     # share of the EOS MGM open rate with 100 drives competing, which is now also the configured
     # ceiling (maxWriteRateHz/maxReadRateHz: 50; previously a 250 Hz ceiling sat above the ~50 Hz
     # drives actually achieved) - i.e. ~20 ms per disk read, so the writer waits on EOS rather than
-    # on buffers. Worth trimming because the in-memory tape already costs
-    # ~50 MB per pod at overflowFraction: 0.05, batchFiles: 5000 and the taped pods have no memory limit.
+    # on buffers. Worth trimming because the in-memory tape already costs real RAM too: it grows
+    # only with files ACTUALLY written during a mount (InMemoryTape resizes its block vector on
+    # demand - see taped/drive/InMemoryTape.cpp - not pre-allocated to the tape's nominal
+    # capacityBytes/filesPerTape), so the real cost here tracks this run's actual per-drive share
+    # (total_files / drive count) at roughly 1 kB/file, not whatever capacity override happens to
+    # be configured - and the taped pods have no memory limit, so that real cost is worth keeping
+    # an eye on regardless of which capacity knob (filesPerTapeOverride/overflowFraction) is set.
     bufferCount: 64
     bufferSizeBytes: 262144
     # 1 disk-I/O thread per drive keeps XRootD connection count proportional

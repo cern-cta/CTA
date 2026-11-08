@@ -38,10 +38,13 @@ data:
     {{- /* Three ways to arrive at a tape's capacity, in priority order:
              1. The media type's own explicit capacityBytes - wins outright, skips everything else.
              2. library.filesPerTapeOverride - a direct "this many files per tape" figure, for
-                callers (e.g. stress-scale-test) that want to size capacity from their own
-                target (their actual drive count and total file count), not from a re-queue
-                FRACTION - see create_instance.sh --stress-files-per-tape. Skips the
-                overflowFraction math entirely; batchFiles/overflowFraction become irrelevant.
+                callers (e.g. stress-scale-test) that want to pick capacity directly rather than
+                via a re-queue FRACTION - see create_instance.sh --stress-files-per-tape. Skips
+                the overflowFraction math entirely; batchFiles/overflowFraction become
+                irrelevant to THIS path (stress-scale-test's own default for this override is
+                still derived from batchFiles and a target fraction - see that job's comment in
+                tests-kubernetes.gitlab-ci.yml - but that derivation happens before the chart is
+                invoked, not here).
              3. The overflowFraction-based derivation (original behaviour, still the default for
                 any caller that sets neither of the above) - this is what
                 stress-scale-fail-test uses exclusively, via --stress-overflow-fraction, to

@@ -550,28 +550,40 @@ stress-scale-test:
       # knob at all). filesPerTapeOverride bypasses the overflowFraction derivation entirely (see
       # library-conf-configmap.yaml and values.yaml's own comments on the two mechanisms).
       #
-      # Sized to MARGIN x this run's average per-drive file share, not an absolute number: a
-      # drive reaches end-of-tape only if its own share of total_files exceeds filesPerTape, so
-      # what matters is the ratio to the average share, not the raw file count. MARGIN=10 means a
-      # drive would need to pull over 10x its fair share from the shared queue before ever
-      # crossing a tape boundary - comfortably beyond any imbalance this scheduler produces in
-      # practice. (The previous overflowFraction-derived sizing, 0.01 -> 250 000 files/tape at
-      # this job's own 4 000 000-file/100-drive defaults, was itself already ~6.25x margin - this
-      # replaces that with an explicit, driver-count/total-files-aware equivalent, rather than a
-      # fraction that has to be hand-recomputed whenever either input changes.)
+      # Derived SOLELY from the fetch batch size (fetchMaxFiles) and a target re-queue fraction -
+      # deliberately NOT from drive count or total_files, which have no bearing on what fraction
+      # of a FULL tape's files would be re-queued at a boundary (that fraction is a property of
+      # batchFiles vs. tape size alone - see the overflowFraction formula these two mechanisms
+      # share, library-conf-configmap.yaml's own comment). batchFiles here MUST match
+      # transfers.archive.fetchMaxFiles AND transfers.retrieve.fetchMaxFiles in
+      # stress-scale-values.yaml (both 5000, kept equal to each other there) and
+      # library.mediaTypes[].batchFiles in virtual-tape-library/values.yaml - all three are
+      # independent config values that happen to need the same number; this job hardcodes 5000 to
+      # match rather than reading it from either file (bash cannot parse those YAML files here).
       #
-      # Mount write/read rate (STRESS_WRITE_RATE_HZ/STRESS_READ_RATE_HZ above) has NO bearing on
-      # whether a drive reaches end-of-tape - only on how long a mount that does reach it takes to
-      # do so - so it is deliberately not part of this formula.
+      # filesPerTape = batchFiles x K, where K = 1 / (2 x target fraction). Solving the
+      # overflowFraction formula backwards for a 1-in-10 000 (0.01%) target - ten times below the
+      # "well below 0.1%" (one-per-mille) bound this job aims for - gives K = 1 / (2 x 0.0001) =
+      # 5000, an integer, so filesPerTape = batchFiles x 5000 needs only integer bash arithmetic.
+      # Check: overflowFraction = batchFiles / (2 x filesPerTape) = batchFiles / (2 x batchFiles x
+      # 5000) = 1 / (2 x 5000) = 1 / 10 000 = 0.0001 - the batchFiles terms cancel, so the
+      # resulting fraction is exactly the 0.01% target regardless of batchFiles' actual value; K
+      # (not batchFiles) is what encodes the target.
       #
-      # Costs RAM: VtlDrive holds the whole tape in memory per drive, roughly 1 kB/file (see
-      # values.yaml), so raising MARGIN or total_files raises per-pod memory proportionally -
-      # watch the node if overriding either upward by a lot. Override the derived value directly
-      # per-run via STRESS_FILES_PER_TAPE if the defaults below do not fit a specific run.
-      FILES_PER_TAPE_TOTAL_FILES="${STRESS_TOTAL_FILES:-4000000}"
-      FILES_PER_TAPE_DRIVES="${NUM_STRESS_DRIVES:-100}"
-      FILES_PER_TAPE_MARGIN=10
-      FILES_PER_TAPE_DEFAULT=$(( FILES_PER_TAPE_MARGIN * FILES_PER_TAPE_TOTAL_FILES / FILES_PER_TAPE_DRIVES ))
+      # Write/read rate (STRESS_WRITE_RATE_HZ/STRESS_READ_RATE_HZ above) has NO bearing on the
+      # re-queue FRACTION itself (that is a ratio of two file counts, rate-independent) - only on
+      # how long a mount that actually reached end-of-tape would take to do so. At this target the
+      # nominal mount length implied by capacity/rate is deliberately enormous (25 000 000 files /
+      # 50 Hz default rate = ~5.8 days) - that is fine, not a cost: VtlDrive's in-memory tape
+      # grows only with files ACTUALLY written (InMemoryTape::writeBlock resizes its block vector
+      # on demand; saveTape()/loadTape() only ever touch written blocks - see taped/drive/
+      # InMemoryTape.cpp and VtlDrive.cpp), so a nominal capacity/mount-length ceiling that no
+      # drive will ever realistically approach costs no extra RAM or PVC I/O. The ceiling existing
+      # at all is the point: no drive in this job's run gets anywhere near it, so none ever
+      # reaches end-of-tape, which is exactly "avoid overflow in the scale stress test."
+      FILES_PER_TAPE_BATCH_FILES=5000
+      FILES_PER_TAPE_TARGET_OVERFLOW_FRACTION_INVERSE_HALF=5000
+      FILES_PER_TAPE_DEFAULT=$(( FILES_PER_TAPE_BATCH_FILES * FILES_PER_TAPE_TARGET_OVERFLOW_FRACTION_INVERSE_HALF ))
       EXTRA_SPAWN_ARGS+=" --stress-files-per-tape ${STRESS_FILES_PER_TAPE:-${FILES_PER_TAPE_DEFAULT}}"
       # File count and prequeue settings come from test_pgsched_params.toml.
       # CI variables allow per-run overrides via "Play with variables".
