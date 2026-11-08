@@ -102,6 +102,11 @@ taped:
   startup:
     staggerMaxSeconds: 10
 
+  # For 40 Hz stress drive, we want at least 5 min mount time
+  mounts:
+    minimumQueuedBytes: 2000000
+    minimumQueuedFiles: 12000
+
   transfers:
     # Buffer pool. Costs bufferCount * bufferSizeBytes of RAM per taped pod: the pool is per
     # drive session (MigrationMemoryManager/RecallMemoryManager are instantiated inside the
@@ -150,7 +155,7 @@ taped:
       #
       # Keep batchFiles in virtual-tape-library/values.yaml equal to fetchMaxFiles here.
       fetchMaxBytes: 80000000000
-      fetchMaxFiles: 5000
+      fetchMaxFiles: 2000
       # flushMaxFiles is deliberately decoupled from fetchMaxFiles. ArchiveMount::
       # reportJobsBatchTransferred() reports one flush batch to EOS's WFE in a single XRootD call;
       # if that throws (one bad file is enough), every job in it falls back to a slow per-job
@@ -203,7 +208,9 @@ taped:
       # Retrieve has no tape-capacity co-design forcing a number of its own (it reads a fixed,
       # already-written tape), so matching archive's is purely for this shared-age reason.
       fetchMaxBytes: 80000000000
-      fetchMaxFiles: 5000
+      fetchMaxFiles: 2000
+      flushMaxBytes: 80000000000
+      flushMaxFiles: 2000
 
   scheduler:
     # Drives refresh tape status at most once per 60 s. A tape switch
@@ -469,9 +476,9 @@ maintd:
     # transactions compete with the 100 drives hammering the same tables.
     userActiveQueueCleanup: &scaleCleanup
       replicas: 1
-      sleepIntervalSecs: 60
-      batchSize: 50000
-      ageForCollectionSecs: 600
+      sleepIntervalSecs: 30
+      batchSize: 30000
+      ageForCollectionSecs: 900
     userPendingQueueCleanup: *scaleCleanup
 
   # NOTE: there used to be a catalogue.numberOfConnections override here too. Also removed, same

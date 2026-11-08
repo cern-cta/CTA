@@ -94,7 +94,7 @@ maintd:
     # own DB load, not just the steady-state G_max/cycle relationship at the overflowFraction in use.
     userActiveQueueCleanup: &failCleanup
       replicas: 1
-      sleepIntervalSecs: 60
-      batchSize: 50000
-      ageForCollectionSecs: 600
+      sleepIntervalSecs: 30
+      batchSize: 30000
+      ageForCollectionSecs: 900
     userPendingQueueCleanup: *failCleanup
