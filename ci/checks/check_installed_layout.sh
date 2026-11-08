@@ -135,6 +135,7 @@ if [[ "$package_format" == rpm ]]; then
   [[ -x /usr/lib/udev/cta-udev ]] || fail "not executable: /usr/lib/udev/cta-udev"
   require_file /usr/lib/udev/rules.d/62-cta.rules cta-udev
   require_document /usr/share/man/man8/cta-udev.8cta cta-udev
+  require_document /usr/share/doc/cta-udev/examples/cta-udev.example.ini cta-udev
 fi
 
 log_task "Checking service units and configuration ($package_format)..."
@@ -162,7 +163,6 @@ examples=(
   cta-lib-catalogue:cta-catalogue.example.conf
   cta-lib-scheduler:cta-scheduler.example.conf
   cta-lib-telemetry:cta-otel.example.yaml
-  cta-udev:cta-udev.example.ini
 )
 for example in "${examples[@]}"; do
   package=${example%%:*}
