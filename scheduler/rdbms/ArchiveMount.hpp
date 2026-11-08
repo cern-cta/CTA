@@ -13,6 +13,7 @@
 #include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <list>
 #include <memory>
@@ -112,13 +113,28 @@ private:
 
   /*
    * Refresh MOUNT_QUEUE_LAST_FETCH for this mount outside of (and after) any other transaction,
-   * so a mount busy reporting an already-fetched batch does not look inactive to the dead-mount
-   * reclaim routine purely for not having fetched new work recently. Runs in its own transaction
-   * deliberately: piggybacking this self-throttled UPSERT onto another transaction would overwrite
-   * that transaction's query-summary/row-count telemetry (see updateMountQueueLastFetch()).
-   * Non-fatal on failure, same as the equivalent call in getNextJobBatch().
+   * so the dead-mount reclaim routine never mistakes this mount for inactive while it is still
+   * genuinely fetching OR reporting. The single call site for both: getNextJobBatch() calls this
+   * after its own fetch, and setJobBatchTransferred()/setRepackJobBatchTransferred() call it
+   * after a successful report - unifying what were previously two separate, duplicated
+   * implementations. Runs in its own transaction deliberately: piggybacking this UPSERT onto
+   * the caller's own transaction would overwrite ITS query-summary/row-count telemetry (see
+   * updateMountQueueLastFetch()). Non-fatal on failure.
+   *
+   * Skips the DB round-trip entirely if called again within 5s of this mount's own last attempt
+   * from EITHER call site (tracked by m_lastHeartbeatRefreshEpoch below) - the UPSERT's own WHERE
+   * clause already makes a call inside that window a guaranteed no-op server-side, but it still
+   * costs a full transaction/round-trip to find that out. At small flushMaxFiles/fetchMaxFiles,
+   * a fetch and the report that follows it land close together often enough that skipping
+   * client-side matters for scheduler-DB load at scale (100 drives, 2 call sites each).
    */
   void refreshMountLivenessHeartbeat(log::LogContext& lc);
+
+  // Last epoch-second this mount attempted the heartbeat UPSERT above (0 = never), set BEFORE the
+  // attempt so two near-simultaneous callers (getNextJobBatch runs on a different thread than
+  // setJobBatchTransferred - see MigrationTaskInjector/MigrationReportPacker) only ever race to
+  // skip, never to double-call: the harmless outcome either way.
+  std::atomic<std::time_t> m_lastHeartbeatRefreshEpoch {0};
   /*
    * Setting a batch of REPACK mount jobs to state which informs
    * the Scheduler that they are ready for reporting
