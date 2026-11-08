@@ -662,26 +662,49 @@ stress-scale-fail-test:
       EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-50}"
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-ms ${STRESS_MOUNT_DELAY_MS:-5000}"
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-max-ms ${STRESS_MOUNT_DELAY_MAX_MS:-90000}"
-      # The three deliberate failure injections this job exists to test - OFF by default (0 for
-      # the two failure rates; UNSET, not 0, for overflow fraction, which divides by zero at 0 and
-      # fails the chart render instead - see library-conf-configmap.yaml). Deliberately not
-      # pre-armed: a run with no "Play with variables" overrides exercises only the mid-run pod
-      # kills (test_disrupt_archive_mount/test_disrupt_report_batch), not these three - set them
-      # explicitly to actually exercise tape-boundary overflow and/or transfer/retrieve faults.
-      # Previously validated values for that, per presets/stress-scale-fail-values.yaml's design
-      # comment:
-      #   - overflow-fraction 0.20: ~20% of each drive's files re-queued at a tape boundary -
-      #     retry-NEUTRAL (requeueJobBatch preserves retry counters), so this alone can never
-      #     cause a permanent loss, only extra DB round trips.
-      #   - transfer/retrieve-failure-rate 0.02/0.02: 2% of archived/retrieved files get a
-      #     synthetic fault, injected AT MOST ONCE per file for its whole lifetime (see
-      #     VtlDrive::maybeInjectFault()'s one-time atomic marker) - so it costs a file exactly
-      #     one of its ArchiveRequest::TOTAL_RETRIES=2 retries, never all of them.
-      # Override per-run via STRESS_OVERFLOW_FRACTION / STRESS_TRANSFER_FAILURE_RATE /
-      # STRESS_RETRIEVE_FAILURE_RATE.
-      [[ -n "${STRESS_OVERFLOW_FRACTION}" ]] && EXTRA_SPAWN_ARGS+=" --stress-overflow-fraction ${STRESS_OVERFLOW_FRACTION}"
+      # The three deliberate failure injections this job exists to test - OFF by default.
+      # Deliberately not pre-armed: a run with no "Play with variables" overrides exercises only
+      # the mid-run pod kills (test_disrupt_archive_mount/test_disrupt_report_batch), not these
+      # three - set them explicitly to exercise tape-boundary overflow and/or transfer/retrieve
+      # faults. transfer/retrieve-failure-rate: 2% injects a one-time synthetic fault (AT MOST
+      # ONCE per file for its whole lifetime - VtlDrive::maybeInjectFault()'s atomic marker), so
+      # it costs a file exactly one of its 2 retries, never all of them.
       EXTRA_SPAWN_ARGS+=" --stress-transfer-failure-rate ${STRESS_TRANSFER_FAILURE_RATE:-0}"
       EXTRA_SPAWN_ARGS+=" --stress-retrieve-failure-rate ${STRESS_RETRIEVE_FAILURE_RATE:-0}"
+      # Tape-boundary overflow: same filesPerTapeOverride mechanism as stress-scale-test (see
+      # that job's comment), but deliberately sized BELOW each drive's fair share instead of
+      # above it, by STRESS_OVERFLOW_FRACTION percent:
+      #   filesPerTape = fair_share x (1 - STRESS_OVERFLOW_FRACTION/100)
+      # A drive getting exactly its fair share is then guaranteed to need a second tape - the
+      # whole point of this job. Only computed when STRESS_OVERFLOW_FRACTION is explicitly set
+      # (unset = off, same as the two failure rates above); the chart's own overflowFraction
+      # fallback (0.01) applies otherwise, same as any caller that sets no capacity override.
+      #
+      # The resulting mount cycle (filesPerTape / rate) and the maintd ageForCollectionSecs
+      # margin over it (presets/stress-scale-fail-values.yaml - keep FAIL_AGE_FOR_COLLECTION_SECS
+      # below in sync with that file's ageForCollectionSecs by hand, bash cannot read the YAML
+      # here) are NOT re-derived here: unlike stress-scale-test's single validated default, this
+      # fraction is meant to be varied per run, so the margin must be checked for whatever
+      # total_files/drives/fraction is actually used - a fraction large enough to shrink the
+      # cycle close to that age risks reclaiming a still-healthy mount (the exact failure mode
+      # already seen once with too thin a margin on this job).
+      if [[ -n "${STRESS_OVERFLOW_FRACTION}" ]]; then
+        FAIL_AGE_FOR_COLLECTION_SECS=900
+        FAIL_FAIR_SHARE=$(( ${STRESS_TOTAL_FILES:-4000000} / ${NUM_STRESS_DRIVES:-100} ))
+        FILES_PER_TAPE_FAIL_DEFAULT=$(( FAIL_FAIR_SHARE * (100 - STRESS_OVERFLOW_FRACTION) / 100 ))
+        FAIL_MOUNT_CYCLE_SECS=$(( FILES_PER_TAPE_FAIL_DEFAULT / ${STRESS_WRITE_RATE_HZ:-50} ))
+        # Warn loudly if THIS run's cycle makes the static age margin unsafe (>80% of cycle),
+        # rather than silently risking the false-positive-reclaim failure mode already hit once
+        # on this job (age too close to the mount cycle reclaims a still-healthy mount mid-batch).
+        if (( FAIL_MOUNT_CYCLE_SECS > 0 && FAIL_AGE_FOR_COLLECTION_SECS * 100 / FAIL_MOUNT_CYCLE_SECS > 80 )); then
+          echo "WARNING: fail-test tape capacity ${FILES_PER_TAPE_FAIL_DEFAULT} files/tape gives a ~${FAIL_MOUNT_CYCLE_SECS}s mount cycle - ageForCollectionSecs=${FAIL_AGE_FOR_COLLECTION_SECS}s is $(( FAIL_AGE_FOR_COLLECTION_SECS * 100 / FAIL_MOUNT_CYCLE_SECS ))% of it (>80%). Lower STRESS_OVERFLOW_FRACTION, raise STRESS_TOTAL_FILES, or lower ageForCollectionSecs in presets/stress-scale-fail-values.yaml before trusting this run." >&2
+        else
+          echo "Fail-test tape capacity: ${FILES_PER_TAPE_FAIL_DEFAULT} files/tape (fair share ${FAIL_FAIR_SHARE}, ${STRESS_OVERFLOW_FRACTION}% below); mount cycle ~${FAIL_MOUNT_CYCLE_SECS}s."
+        fi
+        EXTRA_SPAWN_ARGS+=" --stress-files-per-tape ${STRESS_FILES_PER_TAPE:-${FILES_PER_TAPE_FAIL_DEFAULT}}"
+      elif [[ -n "${STRESS_FILES_PER_TAPE}" ]]; then
+        EXTRA_SPAWN_ARGS+=" --stress-files-per-tape ${STRESS_FILES_PER_TAPE}"
+      fi
       # File count and prequeue settings come from test_pgsched_params.toml, same as
       # stress-scale-test. CI variables allow per-run overrides via "Play with variables".
       [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"
