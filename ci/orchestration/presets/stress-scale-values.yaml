@@ -442,8 +442,8 @@ maintd:
     # BOTH mount types, and re-check it is still a healthy fraction of the mount cycle above.
     #
     # The active-queue group also runs ResubmitInactiveReportingRoutine on the same age, so a report
-    # batch left flagged IS_REPORTING by a reporter that died mid-batch is retried within ~11 min
-    # (600 s age + 60 s poll) instead of the ~30-45 min the dev settings give it. Up to three
+    # batch left flagged IS_REPORTING by a reporter that died mid-batch is retried within ~15 min
+    # (900 s age + 10 s poll) instead of the ~30-45 min the dev settings give it. Up to three
     # diskReportArchive pods and two diskReportRetrieve pods can die holding up to batchSize flagged
     # rows each - still a far smaller exposure than the dev default, but worth knowing when a run
     # shows rows stuck in IS_REPORTING.
@@ -460,20 +460,22 @@ maintd:
     # Rows left by one dead mount:
     #   MigrationTaskInjector (archive) and RecallTaskInjector (retrieve) both fetch
     #   2 x fetchMaxFiles on their first call, so the in-flight set in the ACTIVE queue is up to
-    #   2 x 5 000 = 10 000 rows for either mount type now that their fetchMaxFiles match (see
-    #   transfers.retrieve above - at the old retrieve fetchMaxFiles of 20 000 this would have been
-    #   40 000, leaving far less headroom below). The PENDING queue can hold the same number for
-    #   that mount: requeueJobBatch(keepMountId = true) returns a job that failed inside a mount to
-    #   PENDING with its MOUNT_ID intact, so if every job of a batch fails they all land there under
-    #   the dead mount.
+    #   2 x 4 000 = 8 000 rows for either mount type, now that their fetchMaxFiles match (see
+    #   transfers.retrieve above). The PENDING queue can hold the same number for that mount:
+    #   requeueJobBatch(keepMountId = true) returns a job that failed inside a mount to PENDING
+    #   with its MOUNT_ID intact, so if every job of a batch fails they all land there under the
+    #   dead mount.
     #
-    # 50 000 covers that worst case with headroom (10 000 vs the old 40 000 - even more now) while
-    # staying a sane single UPDATE (the statement is an indexed UPDATE ... FROM (SELECT ... LIMIT n
-    # FOR UPDATE SKIP LOCKED)). One pass then drains a dead mount and the next retires it.
-    # Throughput is 50 000 / 60 s ~ 833 rows/s per queue, so even the pathological case - all 100
-    # drives dying at once with full batches, ~1 M rows - is recovered in ~20 min rather than never.
-    # Raise the poll rate rather than the batch if that ever needs to be faster: bigger single
-    # transactions compete with the 100 drives hammering the same tables.
+    # 12 000 covers that worst case (8 000) with 1.5x headroom - enough for one dead mount to fully
+    # drain in a single pass, though no longer several at once the way the old 30 000/50 000 did -
+    # while staying a sane single UPDATE (the statement is an indexed UPDATE ... FROM (SELECT ...
+    # LIMIT n FOR UPDATE SKIP LOCKED)). That's the deliberate trade from raising the poll rate
+    # instead: a dead mount's backlog beyond one mount's worth now drains over a couple of passes
+    # (20 s apart) rather than needing to fit a single, bigger, slower transaction that competes
+    # harder with the 100 drives hammering the same tables. Throughput is 12 000 / 10 s = 1 200
+    # rows/s per queue (up from 30 000/30 s = 1 000, and the original 50 000/60 s ~ 833), so even
+    # the pathological case - all 100 drives dying at once with full batches, ~800 000 rows
+    # (100 x 8 000) - is recovered in ~11 min.
     userActiveQueueCleanup: &scaleCleanup
       replicas: 1
       sleepIntervalSecs: 10
