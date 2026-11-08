@@ -155,7 +155,7 @@ taped:
       #
       # Keep batchFiles in virtual-tape-library/values.yaml equal to fetchMaxFiles here.
       fetchMaxBytes: 80000000000
-      fetchMaxFiles: 2000
+      fetchMaxFiles: 4000
       # flushMaxFiles is deliberately decoupled from fetchMaxFiles. ArchiveMount::
       # reportJobsBatchTransferred() reports one flush batch to EOS's WFE in a single XRootD call;
       # if that throws (one bad file is enough), every job in it falls back to a slow per-job
@@ -164,7 +164,7 @@ taped:
       # report rate at the time; unaffected by fetchMaxFiles above or G_max/ageForCollectionSecs
       # below.
       flushMaxBytes: 80000000000
-      flushMaxFiles: 2000
+      flushMaxFiles: 8000
       # Underfill-driven dismount MUST stay enabled here. A mounted drive -
       # idle or not - counts toward the VO's writeMaxDrives cap
       # (Scheduler::getExistingAndNextMounts() counts any drive whose status is
@@ -208,9 +208,9 @@ taped:
       # Retrieve has no tape-capacity co-design forcing a number of its own (it reads a fixed,
       # already-written tape), so matching archive's is purely for this shared-age reason.
       fetchMaxBytes: 80000000000
-      fetchMaxFiles: 2000
+      fetchMaxFiles: 4000
       flushMaxBytes: 80000000000
-      flushMaxFiles: 2000
+      flushMaxFiles: 8000
 
   scheduler:
     # Drives refresh tape status at most once per 60 s. A tape switch
