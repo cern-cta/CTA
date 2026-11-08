@@ -108,23 +108,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
     timings.addToLog(logParams);
     lc.log(cta::log::INFO, "In RetrieveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
   }
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  try {
-    auto nmountrows = postgres::updateMountQueueLastFetch(txn,
-                                                          mountInfo.mountId,
-                                                          true /* isActive */,
-                                                          m_isRepack,
-                                                          false /* isArchive */);
-    txn.commit();
-    if (nmountrows < 1) {
-      lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): did not update any row.");
-    }
-  } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): failed to update table.");
-    txn.abort();
-  }
+  refreshMountLivenessHeartbeat(lc);
   return ret;
 }
 
@@ -287,28 +271,38 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
   if (!jobIDs_reportToUser.empty()) {
     updateRetrieveJobStatusWrapper(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
   }
-  // Refresh this mount's liveness heartbeat here too, not just on fetch (getNextJobBatch()) — see
-  // the equivalent comment in ArchiveMount::setJobBatchTransferred() for the race this closes.
-  // Separate transaction, mirroring getNextJobBatch()'s own heartbeat update: the status updates
-  // above each run their own transaction via updateRetrieveJobStatusWrapper(), so there is no
-  // single transaction here to piggyback on. Self-throttled to once every 5s, and non-fatal on
-  // failure, like the fetch-path call.
-  {
-    cta::schedulerdb::Transaction txn(m_connPool, lc);
-    try {
-      postgres::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack, false /* isArchive */);
-      txn.commit();
-    } catch (exception::Exception& ex) {
-      cta::log::ScopedParamContainer params(lc);
-      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-      lc.log(cta::log::WARNING, "In RetrieveMount::setJobBatchTransferred(): failed to update mount heartbeat.");
-      txn.abort();
-    }
-  }
+  // Refresh this mount's liveness heartbeat here too, not just on fetch (getNextJobBatch()) - see
+  // refreshMountLivenessHeartbeat()'s own comment for the race this closes and why it is gated.
+  refreshMountLivenessHeartbeat(lc);
   // After processing - we free the memory object
   // in case the flush and DB update failed, we still want to clean the jobs from memory
   // (they need to be garbage collected in case of a crash)
   recycleTransferredJobs(jobsBatch, lc);
+}
+
+void RetrieveMount::refreshMountLivenessHeartbeat(log::LogContext& lc) {
+  // Mirrors the UPSERT's own 5s self-throttle (updateMountQueueLastFetch()'s WHERE clause) but
+  // client-side, to skip the round-trip itself rather than pay for one that is a guaranteed
+  // server-side no-op - see ArchiveMount::refreshMountLivenessHeartbeat()'s equivalent comment.
+  const std::time_t now = cta::utils::getCurrentEpochTime();
+  const std::time_t last = m_lastHeartbeatRefreshEpoch.exchange(now);
+  if (now - last < 5) {
+    return;
+  }
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    auto nmountrows =
+      postgres::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack, false /* isArchive */);
+    txn.commit();
+    if (nmountrows < 1) {
+      lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): did not update any row.");
+    }
+  } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): failed to update table.");
+    txn.abort();
+  }
 }
 
 void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) {
