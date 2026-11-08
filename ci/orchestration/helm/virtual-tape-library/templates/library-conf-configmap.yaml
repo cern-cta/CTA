@@ -13,22 +13,21 @@ data:
     name             = "stress-lib-{{ $i }}"
     changerTimeoutMs = {{ $.Values.library.changerTimeoutMs }}
     {{- range $.Values.library.mediaTypes }}
-    {{- /* Derive the capacity from the fraction of a drive's files expected to be re-queued at
-           each tape-fill boundary (overflowFraction), rather than from a whole-batch count: a
-           drive fetches fixed-size batches of batchFiles without regard to the tape's remaining
-           space, so when ENOSPC ends a session, whatever was already fetched but not yet written
-           - up to one batch's worth - goes back to the queue. Averaged over where in the last
-           batch the boundary happens to fall, that is overflowFraction = (batchFiles / 2) /
-           filesPerTape, i.e. filesPerTape = batchFiles / (2 * overflowFraction).
+    {{- /* overflowFraction derives a tape's capacity from the fraction of a drive's files
+           expected to be re-queued at each tape-fill boundary, rather than from a whole-batch
+           count: a drive fetches fixed-size batches of batchFiles without regard to the tape's
+           remaining space, so when ENOSPC ends a session, whatever was already fetched but not
+           yet written - up to one batch's worth - goes back to the queue. Averaged over where in
+           the last batch the boundary happens to fall, that is overflowFraction = (batchFiles /
+           2) / filesPerTape, i.e. filesPerTape = batchFiles / (2 * overflowFraction).
            filesPerTape need not be, and generally will not be, a whole multiple of batchFiles -
            that is the point of specifying the fraction directly (e.g. 0.05 or 0.15) instead of an
            integer batch count, which could previously only hit a handful of discrete fractions
            (1/(2*N) for integer N). The target is only approximate regardless: the formula's
            "averaged over where the boundary falls" assumption is itself an estimate, not a
            guarantee, so treat the actually observed re-queue rate as the ground truth and this as
-           a starting point. An explicit capacityBytes wins, for media types which do not want the
-           derivation - and when set, library.overflowFractionOverride below has no effect, same
-           as the rate/delay overrides it sits alongside. */}}
+           a starting point. See the three-way priority list below for when this derivation
+           actually runs. */}}
     {{- /* Every *Override field below is resolved with "ne (kindOf X) string", not Sprig's
            `default`: `default` falls back whenever the override is ANY zero value for its type
            (0, 0.0, false), which is indistinguishable from "not set" - so an explicit
@@ -36,21 +35,39 @@ data:
            instead. Every *Override field defaults to the string "" in values.yaml, and --set
            always produces a non-string (numeric/bool) value for a real override, so checking the
            KIND instead correctly honours an explicit 0/0.0/false override. */}}
+    {{- /* Three ways to arrive at a tape's capacity, in priority order:
+             1. The media type's own explicit capacityBytes - wins outright, skips everything else.
+             2. library.filesPerTapeOverride - a direct "this many files per tape" figure, for
+                callers (e.g. stress-scale-test) that want to size capacity from their own
+                target (their actual drive count and total file count), not from a re-queue
+                FRACTION - see create_instance.sh --stress-files-per-tape. Skips the
+                overflowFraction math entirely; batchFiles/overflowFraction become irrelevant.
+             3. The overflowFraction-based derivation (original behaviour, still the default for
+                any caller that sets neither of the above) - this is what
+                stress-scale-fail-test uses exclusively, via --stress-overflow-fraction, to
+                deliberately engineer frequent re-queues. */}}
     {{- $capacityBytes := .capacityBytes }}
     {{- if not $capacityBytes }}
-      {{- $overflowFraction := .overflowFraction }}
-      {{- if ne (kindOf $.Values.library.overflowFractionOverride) "string" }}
-        {{- $overflowFraction = $.Values.library.overflowFractionOverride }}
+      {{- if ne (kindOf $.Values.library.filesPerTapeOverride) "string" }}
+        {{- if not .logicalBytesPerFile }}
+          {{- fail (printf "media type %s needs logicalBytesPerFile to use library.filesPerTapeOverride" .name) }}
+        {{- end }}
+        {{- $capacityBytes = add (default 80 .vol1Bytes) (mul (int64 $.Values.library.filesPerTapeOverride) .logicalBytesPerFile) }}
+      {{- else }}
+        {{- $overflowFraction := .overflowFraction }}
+        {{- if ne (kindOf $.Values.library.overflowFractionOverride) "string" }}
+          {{- $overflowFraction = $.Values.library.overflowFractionOverride }}
+        {{- end }}
+        {{- if or (not .batchFiles) (not $overflowFraction) (not .logicalBytesPerFile) }}
+          {{- fail (printf "media type %s needs either capacityBytes, filesPerTapeOverride, or batchFiles + logicalBytesPerFile + a non-zero overflowFraction (0 is not a valid fraction - it would divide by zero deriving the tape's capacity; omit the override to use the media type's own overflowFraction instead, or set an explicit capacityBytes/filesPerTapeOverride to bypass the derivation entirely)" .name) }}
+        {{- end }}
+        {{- /* Go template pipe semantics append the piped value as the FINAL argument, so
+               round's (value, precision) signature must be called directly rather than piped
+               into - "X | round 0" would call round(0, X), the wrong argument order. */}}
+        {{- $filesPerTapeFloat := divf (float64 .batchFiles) (mulf 2.0 $overflowFraction) }}
+        {{- $filesPerTape := round $filesPerTapeFloat 0 | int64 }}
+        {{- $capacityBytes = add (default 80 .vol1Bytes) (mul $filesPerTape .logicalBytesPerFile) }}
       {{- end }}
-      {{- if or (not .batchFiles) (not $overflowFraction) (not .logicalBytesPerFile) }}
-        {{- fail (printf "media type %s needs either capacityBytes, or batchFiles + logicalBytesPerFile + a non-zero overflowFraction (0 is not a valid fraction - it would divide by zero deriving the tape's capacity; omit the override to use the media type's own overflowFraction instead, or set an explicit capacityBytes to bypass the derivation entirely)" .name) }}
-      {{- end }}
-      {{- /* Go template pipe semantics append the piped value as the FINAL argument, so
-             round's (value, precision) signature must be called directly rather than piped
-             into - "X | round 0" would call round(0, X), the wrong argument order. */}}
-      {{- $filesPerTapeFloat := divf (float64 .batchFiles) (mulf 2.0 $overflowFraction) }}
-      {{- $filesPerTape := round $filesPerTapeFloat 0 | int64 }}
-      {{- $capacityBytes = add (default 80 .vol1Bytes) (mul $filesPerTape .logicalBytesPerFile) }}
     {{- end }}
 
     [[library.mediaTypes]]

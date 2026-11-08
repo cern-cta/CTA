@@ -69,8 +69,8 @@ library:
   retrieveFailureRateOverride: ""
   # Same override mechanism, for the derived-capacity re-queue-fraction target (see
   # mediaTypes[].overflowFraction below and the template's derivation comment). Only meaningful
-  # when the media type does not set an explicit capacityBytes (which bypasses the derivation, and
-  # so this override, entirely).
+  # when the media type does not set an explicit capacityBytes AND filesPerTapeOverride (below) is
+  # unset - both bypass this derivation entirely.
   #
   # UNLIKE the other overrides above, 0 is never a valid explicit value here: filesPerTape =
   # batchFiles / (2 * overflowFraction) divides by it, so an explicit --set
@@ -78,51 +78,58 @@ library:
   # the chart render with a clear message, rather than either silently falling back (the old bug)
   # or dividing by zero. Leave this at "" (unset) to use the media type's own overflowFraction -
   # that is the correct way to express "no deliberate tape-boundary stress", not an explicit 0.
+  #
+  # Deliberately exercised by stress-scale-fail-test ONLY (via --stress-overflow-fraction), to
+  # make tape-boundary re-queuing frequent on purpose. stress-scale-test instead sizes capacity
+  # directly from filesPerTapeOverride below, which is immune to the divide-by-zero concern and
+  # is what actually eliminates overflow there - see that field's own comment.
   overflowFractionOverride: ""
+  # Directly sets how many files a tape can hold, bypassing the overflowFraction derivation (and
+  # its batchFiles/overflowFraction/logicalBytesPerFile inputs) entirely - same effect as setting
+  # an explicit capacityBytes on the media type, but expressed in FILES, the unit the
+  # overflowFraction math already reasons in, rather than bytes. This is how
+  # create_instance.sh --stress-files-per-tape (and so stress-scale-test's own default sizing,
+  # computed from its actual drive count/total-file count with a safety margin - see that job's
+  # own comment) reaches the chart. Leave at "" (unset) for the normal overflowFraction-derived
+  # capacity (e.g. stress-scale-fail-test, which never sets this).
+  #
+  # 0 is a valid explicit value here (immediately fails every mount with ENOSPC - not useful, but
+  # not a division, so it renders rather than erroring): unlike overflowFractionOverride, this
+  # field is a file COUNT, not a fraction in a divisor.
+  filesPerTapeOverride: ""
 
   # Media type definitions — shared across all libraries.
   # setup_stress_drives_test.py reads these and registers them in the CTA catalogue.
   mediaTypes:
     - name: STRESSTAPE
-      # Capacity is DERIVED, not hardcoded: the template computes it from overflowFraction, the
-      # fraction of a drive's files expected to be re-queued at each tape-fill boundary, rather
-      # than from a whole-batch count - see the template's own comment for the exact formula and
-      # why a fraction (any value, e.g. 0.05 or 0.15) is more directly meaningful here than an
-      # integer batch count ever was. Set capacityBytes explicitly only to bypass the derivation
-      # entirely.
+      # Capacity is DERIVED from overflowFraction below ONLY as a fallback - every job that cares
+      # about its actual capacity sets an explicit override instead (see library.*Override above):
+      # stress-scale-test sets filesPerTapeOverride (from its own drive/file-count target, see
+      # that job's comment), stress-scale-fail-test sets overflowFractionOverride (deliberately,
+      # to make re-queuing frequent). batchFiles/overflowFraction below therefore only matter for
+      # a caller that sets neither override - see the template's own comment for the exact
+      # overflowFraction formula.
       #
-      # Sized above this test's average per-drive share so tape-boundary crossings stay rare
-      # rather than routine: test_pgsched_params.toml has total_files = 4 000 000 over 100 drives,
-      # ~40 000 files/drive on average, so overflowFraction: 0.05 derives ~50 000 files/tape,
-      # keeping the average drive inside a single tape (above-average-share drives can still
-      # cross, but that is the exception, not the norm). At the 50 Hz write/read ceiling
-      # (STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ in tests-kubernetes.gitlab-ci.yml, which also
-      # matches the per-drive rate these drives actually achieve under 100-drive EOS MGM
-      # contention) that is a ~16.7 min mount (50 000 / 50 Hz = 1 000 s). Recompute batchFiles,
-      # overflowFraction and ageForCollectionSecs below if the rate, total_files, drive count, or
-      # target average headroom changes.
-      #
-      # Why the re-queue fraction matters
-      # ----------------------------------
+      # Why tape-boundary overflow matters at all
+      # ------------------------------------------
       # A drive fetches work in batches of transfers.archive.fetchMaxFiles and pipelines the next
       # fetch while writing the current one; nothing limits a fetch to the tape's remaining space.
       # When the tape fills, ENOSPC ends the session and every job already fetched but not yet
       # written goes back to the queue. Those jobs are not failures - they are re-queued, and
-      # re-queueing costs a scheduler round trip per job. The waste per tape boundary is about one
-      # fetch batch whatever the tape size, so what matters is the ratio to total files on the
-      # tape: overflowFraction: 0.05 keeps it to a twentieth - and with capacity sized above the
-      # average per-drive share (above), most drives never reach a boundary at all, so in
-      # practice crossings, and their bounded re-queue cost, stay rare. A dedicated
-      # failure-scenario test that WANTS frequent, deliberate re-queues (to exercise that recovery
-      # path and the cleanup routines) sets this much higher instead, via the
-      # --stress-overflow-fraction create_instance.sh flag (overflowFractionOverride below) - see
-      # the stress-scale-fail-test CI job.
+      # re-queueing costs a scheduler round trip per job, bounded to about one fetch batch's worth
+      # per boundary. Sizing capacity well above a drive's expected per-run share (stress-scale-
+      # test's filesPerTapeOverride) keeps crossings rare to the point of practical elimination;
+      # sizing it deliberately small relative to that share (stress-scale-fail-test's
+      # overflowFractionOverride) makes them frequent on purpose, to exercise that recovery path
+      # and the cleanup routines.
       #
-      # Raising capacity further costs memory and PVC I/O: the whole tape is held in RAM by the
-      # drive (~1 kB per file, so ~50 MB per taped pod here) and is serialised to the PVC on every
-      # unload (~25 MB here). The taped pods have no memory limit, so keep an eye on the node.
+      # Raising capacity costs memory and PVC I/O: the whole tape is held in RAM by the drive
+      # (roughly 1 kB per file - e.g. ~244 MB per taped pod at this file's own 250 000-file
+      # fallback) and is serialised to the PVC on every unload. The taped pods have no memory
+      # limit, so keep an eye on the node when raising either override.
       #
-      # batchFiles MUST equal transfers.archive.fetchMaxFiles in stress-scale-values.yaml.
+      # batchFiles MUST equal transfers.archive.fetchMaxFiles in stress-scale-values.yaml -
+      # relevant only to the overflowFraction fallback path above, not to filesPerTapeOverride.
       # logicalBytesPerFile is the tape footprint of one file: 6 ANSI label blocks of 80 bytes
       # plus the payload (16 bytes in the stress tests, see test_pgsched_params.toml). File marks
       # consume no capacity. vol1Bytes is the single 80-byte VOL1 label at the start of the tape.
@@ -146,11 +153,15 @@ library:
       # non-zero only in a dedicated failure-scenario preset, e.g. stress-scale-fail-values.yaml.
       transferFailureRate: 0.0
       retrieveFailureRate: 0.0
-      # Tapes per library. At the derived capacity (~25 MB for 50 000 files), this test's actual
-      # 4 000 000-file run (test_pgsched_params.toml: total_files) needs ~80 tapes in total,
-      # ~20 per library with 4 libraries; 100 gives ~5x headroom over the minimum and ensures
-      # every drive in a library can always find a free tape slot. Recompute if total_files or
-      # the tape capacity above changes. Tapes are only materialised on the PVC as they are
+      # Tapes per library. At this fallback capacity (~124 MB for 250 000 files), a 4 000 000-file
+      # run needs ~16 tapes in total (~4 per library with 4 libraries) at minimum; count: 100
+      # gives generous headroom and ensures every drive in a library can always find a free tape
+      # slot regardless of which capacity override (if any) is actually in effect for a given
+      # job - stress-scale-test's filesPerTapeOverride in particular makes capacity, and so the
+      # minimum tape count, considerably larger (see that job's own comment); 100/library stays
+      # comfortably above the minimum either way for the file counts these jobs actually use.
+      # Recompute if total_files, drive count or capacity changes enough to matter. Tapes are
+      # only materialised on the PVC as they are
       # written, so the unused ones cost nothing.
       count: 100
 

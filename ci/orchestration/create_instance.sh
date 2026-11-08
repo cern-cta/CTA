@@ -44,6 +44,7 @@ usage() {
   echo "      --stress-transfer-failure-rate <f>: Fraction (0.0-1.0) of archived files the virtual drives inject a one-time synthetic transfer fault for. Overrides the media type's transferFailureRate. For failure-scenario testing; leave unset for normal stress/scale runs. Requires --no-hardware-drives."
   echo "      --stress-retrieve-failure-rate <f>: Fraction (0.0-1.0) of retrieved files the virtual drives inject a one-time synthetic read fault for. Overrides the media type's retrieveFailureRate. For failure-scenario testing; leave unset for normal stress/scale runs. Requires --no-hardware-drives."
   echo "      --stress-overflow-fraction <f>:  Target fraction of a drive's files re-queued at each tape-fill boundary; determines the derived tape capacity. Overrides the media type's overflowFraction. Raise for failure-scenario testing (e.g. 0.20) to deliberately exercise ENOSPC re-queuing; leave unset for normal stress/scale runs. 0 is not a valid fraction (it would divide by zero deriving tape capacity) and fails the chart render with a clear error - omit this flag instead to use the media type's own overflowFraction. Requires --no-hardware-drives."
+  echo "      --stress-files-per-tape <n>:     Directly sets how many files a tape can hold, bypassing the overflowFraction derivation entirely (and --stress-overflow-fraction, if also given - this flag wins). Overrides the media type's capacity in FILES rather than bytes. For sizing tape capacity well above a drive's expected per-run file share, so ENOSPC/tape-boundary re-queuing is practically eliminated (e.g. stress-scale-test); leave unset to use the overflowFraction-derived capacity instead (e.g. stress-scale-fail-test, which wants frequent re-queuing). Requires --no-hardware-drives."
   exit 1
 }
 
@@ -151,6 +152,10 @@ EOF
   if [[ -n "${stress_overflow_fraction}" ]]; then
     echo "  Overriding overflowFraction with ${stress_overflow_fraction} (derived tape capacity changes accordingly)."
     extra_flags+=("--set" "library.overflowFractionOverride=${stress_overflow_fraction}")
+  fi
+  if [[ -n "${stress_files_per_tape}" ]]; then
+    echo "  Overriding tape capacity with ${stress_files_per_tape} files/tape (bypasses overflowFraction entirely)."
+    extra_flags+=("--set" "library.filesPerTapeOverride=${stress_files_per_tape}")
   fi
   helm upgrade --install virtual-tape-library helm/virtual-tape-library \
     --namespace "${namespace}" \
@@ -326,6 +331,7 @@ create_instance() {
   stress_transfer_failure_rate=""
   stress_retrieve_failure_rate=""
   stress_overflow_fraction=""
+  stress_files_per_tape=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -421,6 +427,9 @@ create_instance() {
         shift ;;
       --stress-overflow-fraction)
         stress_overflow_fraction="$2"
+        shift ;;
+      --stress-files-per-tape)
+        stress_files_per_tape="$2"
         shift ;;
       *)
         die_usage "Unsupported argument: $1"

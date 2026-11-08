@@ -509,14 +509,16 @@ stress-scale-test:
       # Scale test always uses VtlDrives: 100 drives, 4 libraries.
       # Override per-run via NUM_STRESS_DRIVES / NUM_STRESS_LIBRARIES CI variables.
       EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-100} --num-stress-libraries ${NUM_STRESS_LIBRARIES:-4}"
-      # 50 files/s per drive instead of the chart default of 1000, for this job only. A tape holds
-      # 200 000 files, so a mount spends ~67 min transferring rather than ~3 min and the drives lose
-      # far less of the run to tape changes. 100 drives x 50 Hz = 5 kHz aggregate ceiling, well below
-      # the previous 250 Hz (25 kHz) setting - this caps how fast the aggregate load can ramp once all
-      # 100 drives are mounted and transferring, easing the burst on the frontend/EOS MGM at startup
-      # rather than just the already-staggered mount-start times (STRESS_MOUNT_DELAY_MS below). The
-      # read ceiling matters just as much: without it a retrieve mount reads a whole tape back at RAM
-      # speed and lasts seconds. Override per-run via STRESS_WRITE_RATE_HZ / STRESS_READ_RATE_HZ.
+      # 50 files/s per drive instead of the chart default of 1000, for this job only. 100 drives x
+      # 50 Hz = 5 kHz aggregate ceiling, well below the previous 250 Hz (25 kHz) setting - this
+      # caps how fast the aggregate load can ramp once all 100 drives are mounted and
+      # transferring, easing the burst on the frontend/EOS MGM at startup rather than just the
+      # already-staggered mount-start times (STRESS_MOUNT_DELAY_MS below). The read ceiling
+      # matters just as much: without it a retrieve mount reads a whole tape back at RAM speed and
+      # lasts seconds. Note this does NOT determine whether a drive ever fills a tape (that is a
+      # question of total files fetched vs. capacity, see FILES_PER_TAPE below) - only how long a
+      # mount that DOES fill one takes to do so. Override per-run via STRESS_WRITE_RATE_HZ /
+      # STRESS_READ_RATE_HZ.
       EXTRA_SPAWN_ARGS+=" --stress-write-rate-hz ${STRESS_WRITE_RATE_HZ:-50}"
       EXTRA_SPAWN_ARGS+=" --stress-read-rate-hz ${STRESS_READ_RATE_HZ:-50}"
       # Widen the mount-delay jitter spread to [5 s, 90 s] instead of the chart default [15 s,
@@ -534,16 +536,43 @@ stress-scale-test:
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-ms ${STRESS_MOUNT_DELAY_MS:-5000}"
       EXTRA_SPAWN_ARGS+=" --stress-mount-delay-max-ms ${STRESS_MOUNT_DELAY_MAX_MS:-90000}"
       # This job does not deliberately engineer failures (see stress-scale-fail-test for that), so
-      # these three default to off: 0 for the two failure-injection rates (a valid, safe "no
-      # injection" value - see VtlDrive.hpp's MediaTypeInfo), and UNSET (not 0) for overflow
-      # fraction, since 0 there divides by zero deriving the tape's capacity and fails the chart
-      # render instead - omitting the flag leaves the media type's own overflowFraction (0.01) in
-      # place, which is what "no deliberate overflow stress" actually means for this field.
-      # Override per-run via STRESS_OVERFLOW_FRACTION / STRESS_TRANSFER_FAILURE_RATE /
+      # these two default to 0 - a valid, safe "no injection" value (see VtlDrive.hpp's
+      # MediaTypeInfo). Override per-run via STRESS_TRANSFER_FAILURE_RATE /
       # STRESS_RETRIEVE_FAILURE_RATE (e.g. to reproduce a stress-scale-fail-test scenario here).
-      [[ -n "${STRESS_OVERFLOW_FRACTION}" ]] && EXTRA_SPAWN_ARGS+=" --stress-overflow-fraction ${STRESS_OVERFLOW_FRACTION}"
+      # Tape-boundary overflow is NOT exposed on this job at all (no STRESS_OVERFLOW_FRACTION
+      # here) - see FILES_PER_TAPE below for how this job instead sizes capacity to avoid overflow
+      # altogether; overflowFraction-driven overflow is stress-scale-fail-test's job specifically.
       EXTRA_SPAWN_ARGS+=" --stress-transfer-failure-rate ${STRESS_TRANSFER_FAILURE_RATE:-0}"
       EXTRA_SPAWN_ARGS+=" --stress-retrieve-failure-rate ${STRESS_RETRIEVE_FAILURE_RATE:-0}"
+      # Tape capacity: set directly in FILES, not via overflowFraction, so a drive effectively
+      # never reaches end-of-tape during this job's run (that failure/recovery path belongs to
+      # stress-scale-fail-test, via its own overflowFractionOverride - this job does not use that
+      # knob at all). filesPerTapeOverride bypasses the overflowFraction derivation entirely (see
+      # library-conf-configmap.yaml and values.yaml's own comments on the two mechanisms).
+      #
+      # Sized to MARGIN x this run's average per-drive file share, not an absolute number: a
+      # drive reaches end-of-tape only if its own share of total_files exceeds filesPerTape, so
+      # what matters is the ratio to the average share, not the raw file count. MARGIN=10 means a
+      # drive would need to pull over 10x its fair share from the shared queue before ever
+      # crossing a tape boundary - comfortably beyond any imbalance this scheduler produces in
+      # practice. (The previous overflowFraction-derived sizing, 0.01 -> 250 000 files/tape at
+      # this job's own 4 000 000-file/100-drive defaults, was itself already ~6.25x margin - this
+      # replaces that with an explicit, driver-count/total-files-aware equivalent, rather than a
+      # fraction that has to be hand-recomputed whenever either input changes.)
+      #
+      # Mount write/read rate (STRESS_WRITE_RATE_HZ/STRESS_READ_RATE_HZ above) has NO bearing on
+      # whether a drive reaches end-of-tape - only on how long a mount that does reach it takes to
+      # do so - so it is deliberately not part of this formula.
+      #
+      # Costs RAM: VtlDrive holds the whole tape in memory per drive, roughly 1 kB/file (see
+      # values.yaml), so raising MARGIN or total_files raises per-pod memory proportionally -
+      # watch the node if overriding either upward by a lot. Override the derived value directly
+      # per-run via STRESS_FILES_PER_TAPE if the defaults below do not fit a specific run.
+      FILES_PER_TAPE_TOTAL_FILES="${STRESS_TOTAL_FILES:-4000000}"
+      FILES_PER_TAPE_DRIVES="${NUM_STRESS_DRIVES:-100}"
+      FILES_PER_TAPE_MARGIN=10
+      FILES_PER_TAPE_DEFAULT=$(( FILES_PER_TAPE_MARGIN * FILES_PER_TAPE_TOTAL_FILES / FILES_PER_TAPE_DRIVES ))
+      EXTRA_SPAWN_ARGS+=" --stress-files-per-tape ${STRESS_FILES_PER_TAPE:-${FILES_PER_TAPE_DEFAULT}}"
       # File count and prequeue settings come from test_pgsched_params.toml.
       # CI variables allow per-run overrides via "Play with variables".
       [[ -n "${STRESS_TOTAL_FILES}" ]] && EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES}"
