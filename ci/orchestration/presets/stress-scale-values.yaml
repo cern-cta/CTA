@@ -476,8 +476,8 @@ maintd:
     # transactions compete with the 100 drives hammering the same tables.
     userActiveQueueCleanup: &scaleCleanup
       replicas: 1
-      sleepIntervalSecs: 30
-      batchSize: 30000
+      sleepIntervalSecs: 10
+      batchSize: 12000
       ageForCollectionSecs: 900
     userPendingQueueCleanup: *scaleCleanup
 
