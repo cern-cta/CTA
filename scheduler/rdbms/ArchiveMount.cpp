@@ -106,23 +106,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     timings.addToLog(logParams);
     lc.log(cta::log::INFO, "In ArchiveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
   }
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  try {
-    auto nmountrows = postgres::updateMountQueueLastFetch(txn,
-                                                          mountInfo.mountId,
-                                                          true /* isActive */,
-                                                          m_isRepack,
-                                                          true /* isArchive */);
-    txn.commit();
-    if (nmountrows < 1) {
-      lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: did not update any row.");
-    }
-  } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: failed to update table.");
-    txn.abort();
-  }
+  refreshMountLivenessHeartbeat(lc);
   return ret;
 }
 
@@ -320,10 +304,23 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
 }
 
 void ArchiveMount::refreshMountLivenessHeartbeat(log::LogContext& lc) {
+  // Mirrors the UPSERT's own 5s self-throttle (updateMountQueueLastFetch()'s WHERE clause) but
+  // client-side, to skip the round-trip itself rather than pay for one that is a guaranteed
+  // server-side no-op. Set BEFORE the attempt, not after: two callers racing in from different
+  // threads (see the member's own comment) then both see the updated timestamp and at most one
+  // proceeds - the alternative (set after) lets both through every time, defeating the point.
+  const std::time_t now = cta::utils::getCurrentEpochTime();
+  const std::time_t last = m_lastHeartbeatRefreshEpoch.exchange(now);
+  if (now - last < 5) {
+    return;
+  }
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
-    auto nmountrows =
-      postgres::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack, true /* isArchive */);
+    auto nmountrows = postgres::updateMountQueueLastFetch(txn,
+                                                          mountInfo.mountId,
+                                                          true /* isActive */,
+                                                          m_isRepack,
+                                                          true /* isArchive */);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: did not update any row.");
