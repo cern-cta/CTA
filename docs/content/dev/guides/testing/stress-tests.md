@@ -120,32 +120,29 @@ payload (16 bytes in the stress tests). File marks consume no capacity.
 
 This matters because a drive pipelines its next fetch while writing the current batch, and nothing
 limits a fetch to the tape's remaining space: when the tape fills, ENOSPC ends the session and
-every job already fetched but not yet written goes back to the queue. Those jobs are re-queued,
-not failed, but each costs a scheduler round trip. The waste per tape boundary is about one fetch
-batch's worth, averaged over where in the last batch the boundary happens to fall — this ratio
-(`overflowFraction = batchFiles / (2 × filesPerTape)`) is a property of the fetch batch size and
-the tape's capacity alone — independent of drive count or total file count.
+every job already fetched but not yet written goes back to the queue (a scheduler round trip per
+job, not a failure).
 
 A dedicated failure-scenario test that WANTS frequent re-queues sets `overflowFraction` high on
 purpose (e.g. `0.20`), to exercise that recovery path and the cleanup routines deliberately — see
 `presets/stress-scale-fail-values.yaml`. `stress-scale-test`, conversely, wants overflow
-*eliminated*: it overrides capacity directly via `library.filesPerTapeOverride`
-(`--stress-files-per-tape`), sized from `batchFiles` and a target re-queue fraction well below
-0.1% (one-per-mille) — not from drive count or total files either, since the fraction that matters
-is relative to a full tape's capacity, not to this run's workload. See that CI job's own comment
-in `tests-kubernetes.gitlab-ci.yml` for the exact derivation. The chart's own `overflowFraction`
-default (0.01) only applies as a fallback, for any caller that sets neither override.
+*avoided*: it overrides capacity directly via `library.filesPerTapeOverride`
+(`--stress-files-per-tape`), computed by the CI job as **1.1 × each drive's expected fair share**
+of `total_files` (`total_files / drive count`) — comfortable margin without an unrealistically
+large tape, so a drive's tape essentially never reaches its end. See that job's own comment in
+`tests-kubernetes.gitlab-ci.yml`. The chart's own `overflowFraction` default (`0.01`) only applies
+as a fallback, for any caller that sets neither override.
 
 Raising capacity (via either override) costs **no extra** memory or PVC I/O by itself: `VtlDrive`'s
 in-memory tape (`InMemoryTape`) grows its block vector only as files are *actually* written, and
 serialises only those written blocks to the PVC on unload — never the nominal
-`capacityBytes`/`filesPerTape` ceiling. The real memory cost tracks how many files a drive
-*actually* transfers during a run (bounded by `total_files` / drive count, roughly 1 kB/file), not
-how large the configured capacity is — a capacity override far beyond what any drive will
-realistically write, as `stress-scale-test` now uses to eliminate overflow, costs nothing extra.
-Keep `batchFiles` (in `virtual-tape-library/values.yaml`) equal to
+`capacityBytes`/`filesPerTape` ceiling.
+
+`batchFiles` (in `virtual-tape-library/values.yaml`) is only read by the `overflowFraction`
+fallback path, not by `filesPerTapeOverride` — keep it equal to
 `transfers.archive.fetchMaxFiles`/`transfers.retrieve.fetchMaxFiles` in
-`presets/stress-scale-values.yaml`.
+`presets/stress-scale-values.yaml` (both `5000`, unchanged by `stress-scale-test`'s capacity
+override).
 
 The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `VtlDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
 

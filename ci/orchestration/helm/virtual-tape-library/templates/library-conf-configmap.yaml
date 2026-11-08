@@ -14,41 +14,22 @@ data:
     changerTimeoutMs = {{ $.Values.library.changerTimeoutMs }}
     {{- range $.Values.library.mediaTypes }}
     {{- /* overflowFraction derives a tape's capacity from the fraction of a drive's files
-           expected to be re-queued at each tape-fill boundary, rather than from a whole-batch
-           count: a drive fetches fixed-size batches of batchFiles without regard to the tape's
-           remaining space, so when ENOSPC ends a session, whatever was already fetched but not
-           yet written - up to one batch's worth - goes back to the queue. Averaged over where in
-           the last batch the boundary happens to fall, that is overflowFraction = (batchFiles /
-           2) / filesPerTape, i.e. filesPerTape = batchFiles / (2 * overflowFraction).
-           filesPerTape need not be, and generally will not be, a whole multiple of batchFiles -
-           that is the point of specifying the fraction directly (e.g. 0.05 or 0.15) instead of an
-           integer batch count, which could previously only hit a handful of discrete fractions
-           (1/(2*N) for integer N). The target is only approximate regardless: the formula's
-           "averaged over where the boundary falls" assumption is itself an estimate, not a
-           guarantee, so treat the actually observed re-queue rate as the ground truth and this as
-           a starting point. See the three-way priority list below for when this derivation
-           actually runs. */}}
-    {{- /* Every *Override field below is resolved with "ne (kindOf X) string", not Sprig's
-           `default`: `default` falls back whenever the override is ANY zero value for its type
-           (0, 0.0, false), which is indistinguishable from "not set" - so an explicit
-           --set ...Override=0 would silently be ignored and the media type's own value used
-           instead. Every *Override field defaults to the string "" in values.yaml, and --set
-           always produces a non-string (numeric/bool) value for a real override, so checking the
-           KIND instead correctly honours an explicit 0/0.0/false override. */}}
-    {{- /* Three ways to arrive at a tape's capacity, in priority order:
-             1. The media type's own explicit capacityBytes - wins outright, skips everything else.
-             2. library.filesPerTapeOverride - a direct "this many files per tape" figure, for
-                callers (e.g. stress-scale-test) that want to pick capacity directly rather than
-                via a re-queue FRACTION - see create_instance.sh --stress-files-per-tape. Skips
-                the overflowFraction math entirely; batchFiles/overflowFraction become
-                irrelevant to THIS path (stress-scale-test's own default for this override is
-                still derived from batchFiles and a target fraction - see that job's comment in
-                tests-kubernetes.gitlab-ci.yml - but that derivation happens before the chart is
-                invoked, not here).
-             3. The overflowFraction-based derivation (original behaviour, still the default for
-                any caller that sets neither of the above) - this is what
-                stress-scale-fail-test uses exclusively, via --stress-overflow-fraction, to
-                deliberately engineer frequent re-queues. */}}
+           expected to be re-queued at each tape-fill boundary: a drive fetches fixed-size
+           batches of batchFiles regardless of remaining space, so at ENOSPC whatever was
+           fetched but not yet written (up to one batch) goes back to the queue. Averaged over
+           where the boundary falls, overflowFraction = (batchFiles/2) / filesPerTape, i.e.
+           filesPerTape = batchFiles / (2 * overflowFraction). An estimate, not a guarantee -
+           treat the actually observed re-queue rate as ground truth. */}}
+    {{- /* Every *Override field is resolved with "ne (kindOf X) string", not Sprig's `default`:
+           `default` treats ANY zero value (0, 0.0, false) as "not set", so an explicit
+           --set ...Override=0 would be silently ignored. Each *Override field defaults to the
+           string "" here, and --set always produces a non-string for a real override, so
+           checking the KIND instead correctly honours an explicit 0/0.0/false. */}}
+    {{- /* Capacity, in priority order: (1) the media type's own capacityBytes - wins outright.
+           (2) library.filesPerTapeOverride - a direct file count, bypassing overflowFraction
+           entirely (stress-scale-test: 1.1x each drive's fair share, computed by the CI job -
+           see tests-kubernetes.gitlab-ci.yml). (3) the overflowFraction derivation above, the
+           default for any caller setting neither (stress-scale-fail-test: 20%, deliberately). */}}
     {{- $capacityBytes := .capacityBytes }}
     {{- if not $capacityBytes }}
       {{- if ne (kindOf $.Values.library.filesPerTapeOverride) "string" }}

@@ -137,38 +137,27 @@ taped:
     diskIoThreads: 1
 
     archive:
-      # fetchMaxFiles and the tape capacity are co-designed. The drive pipelines the next fetch
-      # while writing the current batch and nothing limits a fetch to the tape's remaining
-      # space, so when ENOSPC ends the session every job already fetched but not yet written is
-      # re-queued - about one fetch batch per tape boundary, whatever the tape size. The
-      # virtual-tape-library chart therefore DERIVES the capacity from overflowFraction, the target
-      # fraction of a drive's files re-queued at each boundary: at its overflowFraction: 0.05 the
-      # re-queued tail is a twentieth of a tape (see that chart's values.yaml for the current sizing
-      # and the up-to-date boundary-crossing-frequency analysis at this test's actual scale).
+      # A drive pipelines its next fetch while writing the current batch, with nothing limiting a
+      # fetch to the tape's remaining space: at ENOSPC, whatever was fetched but not yet written
+      # (up to one batch) is re-queued. This job avoids that by sizing the tape well above each
+      # drive's expected file share (filesPerTapeOverride, set directly by the CI job from
+      # total_files/drive-count with a 1.1x margin - see tests-kubernetes.gitlab-ci.yml) so a
+      # drive's tape essentially never reaches its end in the first place - fetchMaxFiles stays
+      # at the chart default here regardless, since it only matters for a crossing that this
+      # margin is meant to prevent happening at all. stress-scale-fail-test wants the opposite
+      # (frequent, deliberate crossings) via its own overflowFraction override - unaffected by
+      # this value either way.
       #
       # Keep batchFiles in virtual-tape-library/values.yaml equal to fetchMaxFiles here.
       fetchMaxBytes: 80000000000
       fetchMaxFiles: 5000
-      # flushMaxFiles decoupled from fetchMaxFiles (debugging the 05:25-05:27 scheddb_stress
-      # waiting bursts, which correlate with drives unmounting): suspected cause is
-      # ArchiveMount::reportJobsBatchTransferred() reporting a 20 000-file batch to EOS's WFE in
-      # one XRootD call - if that throws for ANY reason (one bad file is enough), every job in
-      # the batch falls back to MigrationReportPacker's per-job path
-      # (ArchiveRdbJob::failTransfer -> requeueJobToMount -> requeueFailedJob), each issuing its
-      # own individual "move archive back to pending" query - turning one failure into up to
-      # 20 000 single-row DB calls instead of 1 bulk call. A smaller flush bounds that worst case
-      # without changing total throughput: flush size does not gate the aggregate file-report rate
-      # (that is set by how fast the drives transfer, not by how their reports are chunked) - it
-      # only changes how that work is split into EOS report calls. At the ~50 files/s per drive the
-      # drives actually achieve - the per-drive share of the EOS MGM open rate with 100 drives
-      # competing, not the configured maxWriteRateHz=250 ceiling - the aggregate is ~5 000 files/s:
-      # 2000 (10x smaller) means one call every ~40 s per drive, ~2.5 calls/s aggregate across 100
-      # drives, each covering 2000 files - still 5x above the 1 kHz floor this job targets,
-      # and bounds a single EOS/catalogue failure to 2000 individual fallback queries instead of
-      # 20 000. If EOS WFE is still the bottleneck at this size, halve it again rather than
-      # chasing 1 - too small trades the opposite way (per-call overhead dominating).
-      # fetchMaxFiles is unaffected: it is co-designed with the tape-capacity derivation above and
-      # with G_max/ageForCollectionSecs further below, neither of which depend on flush size.
+      # flushMaxFiles is deliberately decoupled from fetchMaxFiles. ArchiveMount::
+      # reportJobsBatchTransferred() reports one flush batch to EOS's WFE in a single XRootD call;
+      # if that throws (one bad file is enough), every job in it falls back to a slow per-job
+      # retry path. A smaller flush bounds that worst case without reducing throughput - report
+      # chunking, not transfer speed, is all it changes. 2000 was sized against the aggregate
+      # report rate at the time; unaffected by fetchMaxFiles above or G_max/ageForCollectionSecs
+      # below.
       flushMaxBytes: 80000000000
       flushMaxFiles: 2000
       # Underfill-driven dismount MUST stay enabled here. A mounted drive -
@@ -207,25 +196,12 @@ taped:
         recoveryThresholdPercent: 40
 
     retrieve:
-      # Matched to archive.fetchMaxFiles rather than left at the chart's historical 20 000: this
-      # value was never revisited when the drive rate/tape sizing below was redesigned for 50 Hz,
-      # and at 20 000 it was quietly incoherent with that redesign in two ways.
-      #
-      # 1. T_batch = fetchMaxFiles / rate = 20 000 / 50 Hz = 400 s, so G_max (T_batch + T_change)
-      #    = 490 s - against the SAME ageForCollectionSecs (scheduler.userActiveQueueCleanup
-      #    below) used for archive's dead-mount detection. RoutineRunnerFactory.cpp spawns
-      #    ArchiveInactiveMountActiveQueueRoutine AND RetrieveInactiveMountActiveQueueRoutine from
-      #    that one age value, so it has to clear BOTH mount types' G_max, not just archive's. At
-      #    5000 (matching archive), T_batch drops to 100 s and G_max to 190 s, giving the same
-      #    healthy ~3x+ margin on both sides instead of a ~1.2x margin on retrieve alone.
-      # 2. RecallTaskInjector fetches 2 x fetchMaxFiles on its first call, same as
-      #    MigrationTaskInjector - at 20 000 that is up to 40 000 rows a dead retrieve mount leaves
-      #    in RETRIEVE_ACTIVE_QUEUE, eating most of userActiveQueueCleanup's batchSize: 50000
-      #    single-pass headroom. At 5000 it drops to 10 000, matching archive's worst case.
-      #
-      # Retrieve has no tape-capacity/ENOSPC co-design forcing a particular number the way archive
-      # does (a retrieve mount reads a fixed, already-written tape, not a growing one), so there is
-      # no reason for it to differ from archive's rate-matched cadence at all.
+      # MUST match archive.fetchMaxFiles: RoutineRunnerFactory.cpp spawns both
+      # Archive/RetrieveInactiveMountActiveQueueRoutine from the SAME ageForCollectionSecs
+      # (below), so that one age has to clear G_max (= fetchMaxFiles/rate + T_change) for BOTH
+      # mount types. At 5000, T_batch=100s, G_max=190s - a healthy ~3x margin either way.
+      # Retrieve has no tape-capacity co-design forcing a number of its own (it reads a fixed,
+      # already-written tape), so matching archive's is purely for this shared-age reason.
       fetchMaxBytes: 80000000000
       fetchMaxFiles: 5000
 
@@ -447,19 +423,12 @@ maintd:
     # happens to draw a long delay. Recompute if the [5 s, 90 s] override elsewhere in this file
     # changes.
     #
-    # age = 600 s is a ~3.2x margin over G_max (190 s) and 60% of one mount cycle (a tape is
-    # 50 000 files, 1 000 s / 16.7 min at 50 Hz - see virtual-tape-library/values.yaml; a retrieve
-    # mount pulling a full tape's worth back is the same order of magnitude), so a mount that really
-    # did die does not keep its work reserved for anything like as long as a healthy mount takes.
-    # Do NOT chase a bigger margin by raising age further without re-checking this fraction: at,
-    # say, 900 s it would be 90% of the mount cycle - comfortably clearing G_max is not enough on
-    # its own if it also stops being "far inside" the cycle, which is the other half of what this
-    # guard is for. T_batch/G_max are rule-of-thumb estimates of the achieved per-drive rate, not a
-    # guaranteed figure, which is why 600 s was kept at its pre-rate-change value (a healthy
-    # multiple of G_max) rather than tuned down to the tightest value that still clears it - but the
-    # mount-cycle ceiling means that slack cannot be spent by raising age indefinitely; it is spent
-    # by keeping G_max itself small (i.e. keeping fetchMaxFiles aligned across archive and retrieve,
-    # as above).
+    # age = 600 s is a ~3.2x margin over G_max (190 s). As a fraction of one mount cycle: at
+    # stress-scale-test's filesPerTapeOverride default (110 000 files, 1.1x a drive's fair share
+    # at 10M files/100 drives - see tests-kubernetes.gitlab-ci.yml), a mount is ~2200 s/36.7 min
+    # at 50 Hz, so 600 s is ~27% of it - comfortably inside, with real margin to spare. Recompute
+    # this fraction if total_files, drive count, or the margin change enough to shrink the cycle
+    # close to G_max.
     #
     # Recompute if STRESS_WRITE_RATE_HZ, either fetchMaxFiles, the mount-delay jitter override, or
     # the achieved per-drive rate changes: keep age comfortably above G_max at the ACHIEVED rate for
