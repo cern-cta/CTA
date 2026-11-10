@@ -88,7 +88,15 @@ spec:
     analysis:
       description: "C/C++ analysis mode: Valgrind or compiler sanitizers."
       type: string
-      options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
+      options:
+        [
+          "none",
+          "valgrind",
+          "address",
+          "undefined",
+          "address,undefined",
+          "thread",
+        ]
       default: "none"
 
     cmake-build-type:
@@ -154,7 +162,6 @@ spec:
       type: boolean
       default: false
 ---
-
 stages:
   - .pre
   - trigger
@@ -172,7 +179,6 @@ stages:
 # User-facing settings are defined as inputs. Internal variables expose their effective values to included templates
 # when workflow rules may override the selected input.
 variables:
-
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
   PIPELINE_IMAGE_VERSION: "2026-10-26-16163779"
@@ -191,9 +197,9 @@ variables:
   IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
   # Trivy does not use the proxy on purpose as registries.conf takes care of that during image building
-  IMAGE_TRIVY: "docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c"  # 0.69.3
+  IMAGE_TRIVY: "docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c" # 0.69.3
   IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest"
-  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767"  # v2.0.11
+  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767" # v2.0.11
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
@@ -219,8 +225,16 @@ variables:
   DOCKER_PIPELINE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
   DOCKER_RELEASE_LOGIN_USERNAME: "nonempty"
   DOCKER_RELEASE_LOGIN_PASSWORD: $REGISTRY_TOKEN_OPERATIONS_PUSH
-  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty"  # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
+  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
   DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
+  # GitLab PyPI package registries, addressed by URL-encoded project path.
+  # Tokens need the write_package_registry scope (write_registry only covers containers).
+  PYPI_RELEASE_REGISTRY_URL: "${CI_API_V4_URL}/projects/cta%2Feoscta-operations%2Fregistry/packages/pypi"
+  PYPI_PUBLIC_REGISTRY_URL: "${CI_API_V4_URL}/projects/cta%2Fpublic_registry/packages/pypi"
+  PYPI_RELEASE_LOGIN_USERNAME: "nonempty"
+  PYPI_RELEASE_LOGIN_PASSWORD: $REGISTRY_TOKEN_OPERATIONS_PUSH
+  PYPI_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens ignore the username, but uv requires one with a password
+  PYPI_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
 
   # Git checkout
   GIT_STRATEGY: "fetch"
@@ -258,7 +272,7 @@ default:
     - !reference [.merge-train-guard, before_script]
 
 workflow:
-  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$ENABLE_ORACLE_SUPPORT - Analysis:$[[ inputs.analysis ]]'
+  name: "$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$ENABLE_ORACLE_SUPPORT - Analysis:$[[ inputs.analysis ]]"
   auto_cancel:
     on_new_commit: interruptible
   rules:
@@ -290,11 +304,11 @@ workflow:
       changes:
         compare_to: "refs/heads/$CI_DEFAULT_BRANCH"
         paths:
-          - '**/*'
+          - "**/*"
       variables:
         ENABLE_SCCACHE: "true"
         BUILD_CACHE_POLICY: "pull-push"
-        CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
+        CACHE_BRANCH: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
         GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
     # Default-branch push pipelines provide the target-branch test-report baseline.
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "parent_pipeline")
@@ -302,8 +316,8 @@ workflow:
         on_new_commit: none
       variables:
         ENABLE_SCCACHE: "true"
-        BUILD_CACHE_POLICY: "push"  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
-        CACHE_BRANCH: '$CI_COMMIT_BRANCH'
+        BUILD_CACHE_POLICY: "push" # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
+        CACHE_BRANCH: "$CI_COMMIT_BRANCH"
         ENABLE_SBOM_GENERATION: "true"
         GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
     # Maintenance commits need an exact-commit pipeline before RC/final tagging.
