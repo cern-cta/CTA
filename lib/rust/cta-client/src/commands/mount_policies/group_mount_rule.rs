@@ -49,6 +49,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the group mount rules (`groupmountrule ls`).
     #[proto(Groupmountrule.SubcmdLs)]
+    #[item(GmrlsItem: GroupMountRuleLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

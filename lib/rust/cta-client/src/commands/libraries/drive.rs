@@ -32,6 +32,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists drives (`drive ls`).
     #[proto(Drive.SubcmdLs)]
+    #[item(DrlsItem: DriveLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Regular expression matching the drive names; all drives by default

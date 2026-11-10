@@ -39,6 +39,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the administrators (`admin ls`).
     #[proto(Admin.SubcmdLs)]
+    #[item(AdlsItem: AdminLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

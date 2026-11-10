@@ -125,6 +125,7 @@ impl EndpointConfig {
 
 /// A [`tonic`] interceptor that adds `authorization: Bearer <token>` to every
 /// request sent through the intercepted service.
+#[derive(Clone)]
 pub struct AuthorizationInterceptor {
     token: MetadataValue<tonic::metadata::Ascii>,
 }

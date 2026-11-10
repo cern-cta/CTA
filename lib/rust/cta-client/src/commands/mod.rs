@@ -18,9 +18,12 @@
 //! let cmd: AdminCmd = rm.into();
 //! ```
 
-use cta_protobuf::cta::admin::{
-    AdminCmd,
-    admin_cmd::{Cmd, SubCmd},
+use cta_protobuf::cta::{
+    admin::{
+        AdminCmd,
+        admin_cmd::{Cmd, SubCmd},
+    },
+    xrd::data::Data,
 };
 
 // One folder per area; the command modules are re-exported here
@@ -53,8 +56,24 @@ pub trait TypedAdminCmd: Into<AdminCmd> {
     /// Protobuf subcommand ([`SubCmd::SubcmdNone`] for commands without one)
     const SUBCMD: SubCmd;
     /// Whether the frontend answers with a stream (`GenericAdminStream`) rather than a single response (`Admin`): every
-    /// `ls`, and the commands without subcommand (`showqueues`, `version`)
-    const STREAMING: bool = matches!(Self::SUBCMD, SubCmd::SubcmdLs | SubCmd::SubcmdNone);
+    /// `ls`, and the commands without subcommand (`showqueues`, `version`). Streaming commands also implement
+    /// [`StreamingAdminCmd`].
+    const STREAMING: bool;
+}
+
+/// A typed admin command answered with a stream of records, implemented by
+/// [`define_typed_admin_cmd!`](crate::define_typed_admin_cmd) for the commands with an `#[item(Variant: Type)]`.
+pub trait StreamingAdminCmd: TypedAdminCmd {
+    /// The protobuf record of each item of the stream (e.g. [`TapePoolLsItem`](cta_protobuf::cta::admin::TapePoolLsItem)
+    /// for `tapepool ls`)
+    type Item: std::fmt::Debug + serde::Serialize + Send + 'static;
+
+    /// Extracts the record of a stream frame, giving the frame back if it carries a record of another kind.
+    ///
+    /// # Errors
+    ///
+    /// Returns `data` itself (boxed, as the enum is large) when it is not a [`Self::Item`].
+    fn item(data: Data) -> Result<Self::Item, Box<Data>>;
 }
 
 /// The client version sent in the `client_version` field of every admin command.

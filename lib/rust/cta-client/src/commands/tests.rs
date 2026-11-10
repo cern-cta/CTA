@@ -11,10 +11,10 @@ use cta_protobuf::cta::admin::{
 };
 
 use super::{
-    TypedAdminCmd, activity_mount_rule, admin, archive_route, disk_instance, disk_instance_space,
-    disk_system, drive, failed_request, group_mount_rule, logical_library, media_type,
-    mount_policy, physical_library, recycle_tape_file, repack, requester_mount_rule, show_queues,
-    storage_class, tape, tape_file, tape_pool, version, virtual_organization,
+    StreamingAdminCmd, TypedAdminCmd, activity_mount_rule, admin, archive_route, disk_instance,
+    disk_instance_space, disk_system, drive, failed_request, group_mount_rule, logical_library,
+    media_type, mount_policy, physical_library, recycle_tape_file, repack, requester_mount_rule,
+    show_queues, storage_class, tape, tape_file, tape_pool, version, virtual_organization,
 };
 use crate::commands::{CLIENT_VERSION, PROTOBUF_TAG};
 
@@ -47,6 +47,7 @@ fn typed_pairs() -> Vec<(Cmd, SubCmd, bool)> {
         pair::<disk_system::Rm>(),
         pair::<disk_system::Ls>(),
         pair::<recycle_tape_file::Ls>(),
+        pair::<recycle_tape_file::Restore>(),
         pair::<tape_file::Ch>(),
         pair::<tape_file::Rm>(),
         pair::<tape_file::Ls>(),
@@ -135,8 +136,8 @@ fn boolean(key: BoolKey, value: bool) -> OptionBoolean {
 #[test]
 fn commands_are_unique() {
     let pairs = typed_pairs();
-    // the (command, subcommand) pairs of `cta-admin`, see `cmdOptions` in `tools/CtaAdminCmdParser.hpp`
-    assert_eq!(pairs.len(), 82);
+    // 82 (command, subcommand) pairs from CLI plus `recycletf restore`
+    assert_eq!(pairs.len(), 83);
     for (i, (cmd, subcmd, _)) in pairs.iter().enumerate() {
         assert!(
             !pairs[..i].iter().any(|(c, s, _)| (c, s) == (cmd, subcmd)),
@@ -157,6 +158,35 @@ fn streaming_commands() {
     const { assert!(!tape::Reclaim::STREAMING) };
     const { assert!(!drive::Up::STREAMING) };
     const { assert!(!repack::Err::STREAMING) };
+}
+
+/// The record of each streaming command is the one of its `#[item]`, any other record is given back
+#[test]
+fn streaming_items() {
+    use cta_protobuf::cta::{
+        admin::{FailedRequestLsItem, FailedRequestLsSummary, TapeLsItem, VersionItem},
+        xrd::data::Data,
+    };
+
+    let tape = TapeLsItem {
+        vid: "V01001".into(),
+        ..Default::default()
+    };
+    assert_eq!(
+        tape::Ls::item(Data::TalsItem(tape.clone())).unwrap().vid,
+        "V01001"
+    );
+    assert!(matches!(
+        tape::Ls::item(Data::VersionItem(VersionItem::default())),
+        Err(other) if matches!(*other, Data::VersionItem(_))
+    ));
+    assert!(version::Version::item(Data::VersionItem(VersionItem::default())).is_ok());
+    // `failedrequest ls` and `failedrequest ls --summary` share a pair, not a record type
+    assert!(failed_request::Ls::item(Data::FrlsItem(FailedRequestLsItem::default())).is_ok());
+    assert!(
+        failed_request::Summary::item(Data::FrlsSummary(FailedRequestLsSummary::default())).is_ok()
+    );
+    assert!(failed_request::Summary::item(Data::FrlsItem(FailedRequestLsItem::default())).is_err());
 }
 
 #[test]
@@ -259,4 +289,89 @@ fn failed_request_summary() {
         ]
     );
     assert!(cmd.option_str.is_empty());
+}
+
+/// The `(command, subcommand)` pairs of a table of the admin API (`app/cta-admin-api`), read from its
+/// C++ source: the `{AdminCmd::CMD_..., AdminCmd::SUBCMD_...}` keys between `<table> = {` and the closing `};`.
+///
+/// This is a bit of a fragile test, but it gives us an important validation that the refactored admin API (`cta-client`)
+/// is consistent with the C++ implementation of the admin API (`app/cta-admin-api`). In a future Rust implementation of
+/// the admin API, we could use the same source to generate both server and client code.
+fn server_table(source: &str, table: &str) -> Vec<(Cmd, SubCmd)> {
+    let start = source
+        .find(&format!("{table} = {{"))
+        .unwrap_or_else(|| panic!("{table} not found"));
+    let body = &source[start..];
+    let body = &body[..body.find("\n};").expect("end of the table")];
+    body.split("{AdminCmd::")
+        .skip(1)
+        .map(|entry| {
+            let (cmd, rest) = entry.split_once(',').expect("a (cmd, subcmd) pair");
+            let subcmd = rest
+                .trim_start()
+                .strip_prefix("AdminCmd::")
+                .and_then(|s| s.split('}').next())
+                .expect("a subcommand");
+            (
+                Cmd::from_str_name(cmd.trim()).unwrap_or_else(|| panic!("unknown command {cmd}")),
+                SubCmd::from_str_name(subcmd.trim())
+                    .unwrap_or_else(|| panic!("unknown subcommand {subcmd}")),
+            )
+        })
+        .collect()
+}
+
+/// Check that `STREAMING` routes each command to the service implementing it on the admin API: streaming commands
+/// to `STREAM_CMD_TABLE` (`GenericAdminStream`), the others to `SYNC_CMD_TABLE` (`Admin`).
+#[test]
+fn streaming_matches_admin_api() {
+    let stream_table = server_table(
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../app/cta-admin-api/src/commands/stream/StreamFactory.cpp"
+        )),
+        "STREAM_CMD_TABLE",
+    );
+    let sync_table = server_table(
+        include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../app/cta-admin-api/src/commands/sync/SyncCmdRegistry.cpp"
+        )),
+        "SYNC_CMD_TABLE",
+    );
+    assert_eq!(stream_table.len(), 23);
+
+    let typed = typed_pairs();
+    let mut unimplemented = Vec::new();
+    for (cmd, subcmd, streaming) in &typed {
+        let (table, other) = if *streaming {
+            (&stream_table, &sync_table)
+        } else {
+            (&sync_table, &stream_table)
+        };
+        assert!(
+            !other.contains(&(*cmd, *subcmd)),
+            "{cmd:?} {subcmd:?} (streaming: {streaming}) is in the wrong table of the admin API"
+        );
+        if !table.contains(&(*cmd, *subcmd)) {
+            unimplemented.push((*cmd, *subcmd));
+        }
+    }
+    // `cta-admin repack err` exists, but the frontend never implemented it
+    assert_eq!(unimplemented, [(Cmd::Repack, SubCmd::SubcmdErr)]);
+
+    // every streaming command of the admin API has a typed command
+    for (cmd, subcmd) in &stream_table {
+        assert!(
+            typed.iter().any(|(c, s, _)| (c, s) == (cmd, subcmd)),
+            "{cmd:?} {subcmd:?} has no typed command"
+        );
+    }
+    // the unary commands of the admin API without a typed command: `archivefile ch`, kept for
+    // `cta-eos-namespace-inject` and not available in `cta-admin`
+    let untyped: Vec<_> = sync_table
+        .iter()
+        .filter(|(cmd, subcmd)| !typed.iter().any(|(c, s, _)| (c, s) == (cmd, subcmd)))
+        .collect();
+    assert_eq!(untyped, [&(Cmd::Archivefile, SubCmd::SubcmdCh)]);
 }

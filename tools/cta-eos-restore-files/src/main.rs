@@ -8,6 +8,7 @@
 
 mod cli;
 mod cmd;
+mod cta;
 mod env;
 mod eos;
 mod output;
@@ -108,7 +109,8 @@ async fn main() -> anyhow::Result<()> {
     match run_commands(args).await {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("{e}");
+            // the alternate Display form prints the chain of causes
+            eprintln!("{e:#}");
             log::error!("{e:?}");
             std::process::exit(1);
         }

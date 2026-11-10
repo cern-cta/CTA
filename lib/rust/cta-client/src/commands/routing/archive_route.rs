@@ -55,6 +55,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the archive routes (`archiveroute ls`).
     #[proto(Archiveroute.SubcmdLs)]
+    #[item(ArlsItem: ArchiveRouteLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

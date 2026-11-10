@@ -55,6 +55,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists tape pools (`tapepool ls`); without filters, lists all of them.
     #[proto(Tapepool.SubcmdLs)]
+    #[item(TplsItem: TapePoolLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Only the tape pool with this name

@@ -4,7 +4,7 @@
 //! Rendering of recycle-bin listings to stdout.
 use std::{borrow::Cow, io::IsTerminal};
 
-use cta_client::{errors::Error, types::File};
+use cta_client::types::File;
 use serde_json::json;
 use tokio::pin;
 use tokio_stream::{Stream, StreamExt};
@@ -96,7 +96,7 @@ fn paint(color: bool, code: &str, s: &str) -> String {
 
 /// Renders the recycle-bin items of `iter` to stdout as a table.
 pub async fn output_as_table(
-    stream: impl Stream<Item = Result<File, Error>>,
+    stream: impl Stream<Item = anyhow::Result<File>>,
 ) -> anyhow::Result<()> {
     let table = TablePrinter::new([
         ("archive_file_id", 16),
@@ -146,7 +146,9 @@ fn item_to_json(item: &File) -> serde_json::Value {
 
 /// Prints each item of `files` as a line of JSON.
 /// Each line is a complete JSON object representing one deleted file record.
-pub async fn output_as_json(stream: impl Stream<Item = Result<File, Error>>) -> anyhow::Result<()> {
+pub async fn output_as_json(
+    stream: impl Stream<Item = anyhow::Result<File>>,
+) -> anyhow::Result<()> {
     pin!(stream);
 
     while let Some(file) = stream.next().await {

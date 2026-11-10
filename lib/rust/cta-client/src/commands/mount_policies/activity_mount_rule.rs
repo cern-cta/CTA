@@ -55,6 +55,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the activity mount rules (`activitymountrule ls`).
     #[proto(Activitymountrule.SubcmdLs)]
+    #[item(AmrlsItem: ActivityMountRuleLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

@@ -47,6 +47,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists storage classes (`storageclass ls`).
     #[proto(Storageclass.SubcmdLs)]
+    #[item(SclsItem: StorageClassLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Only the storage class with this name

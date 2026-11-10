@@ -16,8 +16,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     tonic_prost_build::configure()
         // keep the file descriptor set, as pbjson-build needs it below
         .file_descriptor_set_path(&descriptor_path)
-        // do not build server bindings, as we only have client apps for now
-        .build_server(false)
+        // server bindings are not needed in client code
+        .build_server(env::var_os("CARGO_FEATURE_SERVER").is_some())
         // box these types, as the differences between variants can be quite big
         .boxed("StreamResponse.contents.header")
         .boxed("StreamResponse.contents.data")

@@ -5,24 +5,26 @@ use std::collections::HashMap;
 
 use anyhow::Context;
 use cta_client::{
-    client::{CtaGrpcClient, StreamingClientType},
+    admin::AdminClient,
     errors::ChecksumTypeError,
-    types::{Checksum, ChecksumType, DiskFile, File, FileSelector},
+    types::{Checksum, ChecksumType, DiskFile, File},
 };
 use cta_grpc_common::EndpointConfig;
 use eos_client::EosEndpointMap;
 use eos_protobuf::eos::rpc::{MdId, Type};
 use tokio_stream::StreamExt;
 
-use crate::{cli::CommonOptions, eos::restore_deleted_file};
+use crate::{cli::CommonOptions, cta, eos::restore_deleted_file};
 
 async fn do_sanity_check(
-    streaming_client: &mut CtaGrpcClient<StreamingClientType>,
+    client: &AdminClient,
     endpoint_map: &mut EosEndpointMap,
     file: File,
 ) -> anyhow::Result<()> {
     // Let's get the metadata
-    let tape_file = streaming_client.get_file(file.archive_file.id).await?;
+    let tape_file = cta::get_file(client, file.archive_file.id)
+        .await?
+        .with_context(|| format!("File {} not found in CTA", file.archive_file.id))?;
     let DiskFile {
         id: disk_id,
         instance: disk_instance,
@@ -121,18 +123,8 @@ pub(crate) async fn command(
     endpoint_map: &mut EosEndpointMap,
     common: CommonOptions,
 ) -> anyhow::Result<()> {
-    let mut streaming_client = CtaGrpcClient::new_streaming(config).await?;
-    let mut deleted_files = streaming_client
-        .list_deleted_files(
-            FileSelector::builder()
-                .maybe_vid(common.vid)
-                .maybe_disk_instance(common.disk_instance)
-                .maybe_archive_file_id(common.archive_file_id)
-                .maybe_copy_number(common.copy_number)
-                .maybe_file_ids(common.file_ids)
-                .build(),
-        )
-        .await?;
+    let client = AdminClient::connect(config).await?;
+    let mut deleted_files = cta::list_deleted_files(&client, common.recycle_bin_query()).await?;
 
     while let Some(file) = deleted_files.next().await {
         let mut file = file?;
@@ -157,12 +149,11 @@ pub(crate) async fn command(
             file.disk_file.id = new_disk_file_id.to_string();
         };
 
-        let mut sync_client = CtaGrpcClient::new_unary(config).await?;
-        sync_client.restore_deleted_file_copy(&file).await?;
+        cta::restore_deleted_file_copy(&client, &file).await?;
 
         log::info!("Running a sanity check on the recovered file...");
 
-        do_sanity_check(&mut streaming_client, endpoint_map, file).await?;
+        do_sanity_check(&client, endpoint_map, file).await?;
         println!("Sanity check OK.");
     }
     Ok(())

@@ -55,6 +55,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the disk systems (`disksystem ls`).
     #[proto(Disksystem.SubcmdLs)]
+    #[item(DslsItem: DiskSystemLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }
