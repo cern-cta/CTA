@@ -53,6 +53,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the disk instance spaces (`diskinstancespace ls`).
     #[proto(Diskinstancespace.SubcmdLs)]
+    #[item(DislsItem: DiskInstanceSpaceLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

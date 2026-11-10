@@ -77,6 +77,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the physical libraries (`physicallibrary ls`).
     #[proto(Physicallibrary.SubcmdLs)]
+    #[item(PllsItem: PhysicalLibraryLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

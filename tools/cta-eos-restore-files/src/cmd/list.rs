@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use cta_client::{client::CtaGrpcClient, types::FileSelector};
+use cta_client::admin::AdminClient;
 use cta_grpc_common::EndpointConfig;
 
 use crate::{
     cli::CommonOptions,
+    cta,
     output::{output_as_json, output_as_table},
 };
 
@@ -14,24 +15,14 @@ pub(crate) async fn command(
     options: CommonOptions,
     json: bool,
 ) -> anyhow::Result<()> {
-    let mut client = CtaGrpcClient::new_streaming(config).await?;
+    let client = AdminClient::connect(config).await?;
 
     // Print header for table output
     if !json {
         println!("Listing deleted files in CTA Catalogue:");
     }
 
-    let files = client
-        .list_deleted_files(
-            FileSelector::builder()
-                .maybe_vid(options.vid)
-                .maybe_disk_instance(options.disk_instance)
-                .maybe_archive_file_id(options.archive_file_id)
-                .maybe_copy_number(options.copy_number)
-                .maybe_file_ids(options.file_ids)
-                .build(),
-        )
-        .await?;
+    let files = cta::list_deleted_files(&client, options.recycle_bin_query()).await?;
 
     // Process stream based on output format (collection vs rendering)
     if json {

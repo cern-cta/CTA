@@ -59,6 +59,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the virtual organisations (`virtualorganization ls`).
     #[proto(Virtualorganization.SubcmdLs)]
+    #[item(VolsItem: VirtualOrganizationLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

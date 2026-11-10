@@ -10,11 +10,10 @@
 //!
 //! | Module | Description |
 //! | ------ | ----------- |
-//! | [`commands`] | Typed admin commands, converted into admin command protobufs ([`commands::TypedAdminCmd`]) |
-//! | [`client`] | CTA frontend client in unary and streaming flavours ([`client::CtaGrpcClient`]) |
-//! | [`types`] | Domain types wrapping protobuf representations ([`types::File`], [`types::Checksum`], [`types::ChecksumType`]) |
-//! | [`stream`] | Streaming adapters, most notably [`stream::StreamResponseExt`] |
-//! | [`errors`] | Error types raised by client operations ([`errors::Error`]) |
+//! | [`admin`] | Client for `cta-admin-api` ([`admin::AdminClient`]) |
+//! | [`commands`] | Typed admin commands, converted into admin command protobufs ([`commands::TypedAdminCmd`]), with the record type of the streaming ones ([`commands::StreamingAdminCmd`]) |
+//! | [`types`] | Domain types built from the protobuf records ([`types::File`], [`types::Checksum`], [`types::ChecksumType`]) |
+//! | [`errors`] | Error types raised by client operations ([`errors::AdminError`]) |
 //! | [`macros`] | Helper macros, most notably [`admin_cmd!`] for building admin-command payloads |
 
 //!
@@ -23,13 +22,8 @@
 //! Listing the contents of the CTA tape-file recycle bin:
 //!
 //! ```no_run
-//! use cta_client::{
-//!     admin_cmd,
-//!     client::CtaGrpcClient,
-//!     stream::StreamResponseExt,
-//! };
+//! use cta_client::{admin::AdminClient, commands::recycle_tape_file};
 //! use cta_grpc_common::{EndpointConfig, JwtAuth};
-//! use cta_protobuf::cta::admin::AdminCmd;
 //! use tokio_stream::StreamExt;
 //!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,14 +34,12 @@
 //!     None,
 //! );
 //!
-//! let mut client = CtaGrpcClient::new_streaming(&config).await?;
+//! let client = AdminClient::connect(&config).await?;
 //!
-//! let mut cmd = admin_cmd! (Recycletapefile.SubcmdLs {});
-//!
-//! let mut response_stream = client.raw_admin_cmd(cmd).await?;
-//! let mut items = response_stream.stream_response();
+//! let mut items = client.stream(recycle_tape_file::Ls::default()).await?;
 //! while let Some(item) = items.next().await {
-//!     println!("{:#?}", item?);
+//!     let item = item?; // a `RecycleTapeFileLsItem`
+//!     println!("{} {}", item.vid, item.disk_file_path);
 //! }
 //! # Ok(())
 //! # }
@@ -55,11 +47,10 @@
 
 #![warn(missing_docs)]
 
-pub mod client;
+pub mod admin;
 pub mod commands;
 pub mod errors;
 pub mod macros;
-pub mod stream;
 pub mod types;
 
 #[cfg(test)]

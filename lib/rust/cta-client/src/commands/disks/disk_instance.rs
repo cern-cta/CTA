@@ -39,6 +39,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the disk instances (`diskinstance ls`).
     #[proto(Diskinstance.SubcmdLs)]
+    #[item(DilsItem: DiskInstanceLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

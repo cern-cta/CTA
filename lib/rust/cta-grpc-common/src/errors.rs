@@ -13,11 +13,11 @@ pub enum Error {
     #[error("IO Error: {0}")]
     IO(std::io::Error),
     /// The remote service returned an error status for a call.
-    #[error("gRPC Status Error: {0:?}")]
+    #[error("gRPC Status Error ({:?}): {}", .0.code(), .0.message())]
     Status(#[from] tonic::Status),
     /// The channel could not be established, or TLS could not be configured.
-    #[error("gRPC Transport Error: {0:?}")]
-    Transport(tonic::transport::Error),
+    #[error("gRPC Transport Error: {0}")]
+    Transport(#[source] tonic::transport::Error),
     /// The token cannot be represented as a gRPC metadata value.
     #[error("Invalid Metadata: {0}")]
     InvalidMetadata(#[from] InvalidMetadataValue),

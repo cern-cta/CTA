@@ -150,27 +150,53 @@ macro_rules! admin_cmd {
 /// }
 /// ```
 ///
+/// `#[item(Variant: Type)]` marks a streaming command, answered with records of the given
+/// [`Data`](cta_protobuf::cta::xrd::data::Data) variant and type. It makes the struct implement
+/// [`StreamingAdminCmd`](crate::commands::StreamingAdminCmd) and sets
+/// [`TypedAdminCmd::STREAMING`](crate::commands::TypedAdminCmd::STREAMING):
+///
+/// ```
+/// # use cta_client::define_typed_admin_cmd;
+/// use cta_client::commands::{StreamingAdminCmd, TypedAdminCmd};
+/// use cta_protobuf::cta::{admin::DriveLsItem, xrd::data::Data};
+///
+/// define_typed_admin_cmd! {
+///     /// Lists drives
+///     #[proto(Drive.SubcmdLs)]
+///     #[item(DrlsItem: DriveLsItem)]
+///     pub struct DriveLs {}
+/// }
+///
+/// assert!(DriveLs::STREAMING);
+/// let record = DriveLs::item(Data::DrlsItem(DriveLsItem::default())).unwrap();
+/// assert_eq!(record, DriveLsItem::default());
+/// ```
+///
 /// [`AdminCmd`]: cta_protobuf::cta::admin::AdminCmd
 /// [`bon`]: https://docs.rs/bon
 #[macro_export]
 macro_rules! define_typed_admin_cmd {
-    // struct attributes: take `#[proto(Command.SubCommand)]` out, keep the others
-    (@attrs [$($meta:tt)*] [] #[proto($cmd:ident . $sub_cmd:ident)] $($rest:tt)*) => {
-        $crate::define_typed_admin_cmd!(@attrs [$($meta)*] [$cmd $sub_cmd] $($rest)*);
+    // struct attributes: take `#[proto(Command.SubCommand)]` and `#[item(Variant: Type)]` out, keep the others
+    (@attrs [$($meta:tt)*] [] [$($item:tt)*] #[proto($cmd:ident . $sub_cmd:ident)] $($rest:tt)*) => {
+        $crate::define_typed_admin_cmd!(@attrs [$($meta)*] [$cmd $sub_cmd] [$($item)*] $($rest)*);
     };
-    (@attrs [$($meta:tt)*] [$($proto:tt)*] #[$m:meta] $($rest:tt)*) => {
-        $crate::define_typed_admin_cmd!(@attrs [$($meta)* #[$m]] [$($proto)*] $($rest)*);
+    (@attrs [$($meta:tt)*] [$($proto:tt)*] [] #[item($variant:ident : $type:ident)] $($rest:tt)*) => {
+        $crate::define_typed_admin_cmd!(@attrs [$($meta)*] [$($proto)*] [$variant $type] $($rest)*);
     };
-    (@attrs [$($meta:tt)*] [$cmd:ident $sub_cmd:ident] $vis:vis struct $name:ident { $($fields:tt)* }) => {
-        $crate::define_typed_admin_cmd!(@munch [$($meta)* $vis $name $cmd $sub_cmd] [] [] $($fields)*);
+    (@attrs [$($meta:tt)*] [$($proto:tt)*] [$($item:tt)*] #[$m:meta] $($rest:tt)*) => {
+        $crate::define_typed_admin_cmd!(@attrs [$($meta)* #[$m]] [$($proto)*] [$($item)*] $($rest)*);
     };
-    (@attrs [$($meta:tt)*] [] $vis:vis struct $name:ident $($rest:tt)*) => {
+    (@attrs [$($meta:tt)*] [$cmd:ident $sub_cmd:ident] [$($item:tt)*]
+        $vis:vis struct $name:ident { $($fields:tt)* }) => {
+        $crate::define_typed_admin_cmd!(@munch [$($meta)* $vis $name $cmd $sub_cmd [$($item)*]] [] [] $($fields)*);
+    };
+    (@attrs [$($meta:tt)*] [] [$($item:tt)*] $vis:vis struct $name:ident $($rest:tt)*) => {
         compile_error!(concat!("missing `#[proto(Command.SubCommand)]` on `", stringify!($name), "`"));
     };
 
     // base case: no fields left, emit the struct and its conversion
     (
-        @munch [$(#[$meta:meta])* $vis:vis $name:ident $cmd:ident $sub_cmd:ident]
+        @munch [$(#[$meta:meta])* $vis:vis $name:ident $cmd:ident $sub_cmd:ident [$($item:tt)*]]
         [$($struct_field:tt)*]
         [$(($field:ident $type:ident [$($opt:tt)?] $key:ident))*]
     ) => {
@@ -193,6 +219,28 @@ macro_rules! define_typed_admin_cmd {
             const CMD: ::cta_protobuf::cta::admin::admin_cmd::Cmd = ::cta_protobuf::cta::admin::admin_cmd::Cmd::$cmd;
             const SUBCMD: ::cta_protobuf::cta::admin::admin_cmd::SubCmd =
                 ::cta_protobuf::cta::admin::admin_cmd::SubCmd::$sub_cmd;
+            const STREAMING: bool = $crate::define_typed_admin_cmd!(@streaming $($item)*);
+        }
+
+        $crate::define_typed_admin_cmd!(@item $name $($item)*);
+    };
+
+    // streaming commands: those with an `#[item(Variant: Type)]`
+    (@streaming) => { false };
+    (@streaming $variant:ident $type:ident) => { true };
+    (@item $name:ident) => {};
+    (@item $name:ident $variant:ident $type:ident) => {
+        impl $crate::commands::StreamingAdminCmd for $name {
+            type Item = ::cta_protobuf::cta::admin::$type;
+
+            fn item(
+                data: ::cta_protobuf::cta::xrd::data::Data,
+            ) -> Result<Self::Item, Box<::cta_protobuf::cta::xrd::data::Data>> {
+                match data {
+                    ::cta_protobuf::cta::xrd::data::Data::$variant(item) => Ok(item),
+                    other => Err(Box::new(other)),
+                }
+            }
         }
     };
 
@@ -254,6 +302,6 @@ macro_rules! define_typed_admin_cmd {
 
     // Entry point
     ($($input:tt)*) => {
-        $crate::define_typed_admin_cmd!(@attrs [] [] $($input)*);
+        $crate::define_typed_admin_cmd!(@attrs [] [] [] $($input)*);
     };
 }

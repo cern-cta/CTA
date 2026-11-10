@@ -86,6 +86,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists tapes (`tape ls`).
     #[proto(Tape.SubcmdLs)]
+    #[item(TalsItem: TapeLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Only the tape with this volume identifier

@@ -49,6 +49,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the logical libraries (`logicallibrary ls`).
     #[proto(Logicallibrary.SubcmdLs)]
+    #[item(LllsItem: LogicalLibraryLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Only the disabled (`true`) or enabled (`false`) libraries

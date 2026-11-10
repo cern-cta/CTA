@@ -46,6 +46,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists tape files (`tapefile ls`).
     #[proto(Tapefile.SubcmdLs)]
+    #[item(TflsItem: TapeFileLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Only the files of this tape

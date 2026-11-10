@@ -317,14 +317,9 @@ name = "cta-client"
 version = "0.1.0"
 dependencies = [
  "bon",
- "bytes",
  "chrono",
  "cta-grpc-common",
  "cta-protobuf",
- "http-body",
- "http-body-util",
- "log",
- "prost",
  "serde",
  "serde_json",
  "strum",
@@ -332,7 +327,6 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic",
- "tonic-prost",
  "url",
 ]
 

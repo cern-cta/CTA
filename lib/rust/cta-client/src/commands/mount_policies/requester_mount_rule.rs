@@ -49,6 +49,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the requester mount rules (`requestermountrule ls`).
     #[proto(Requestermountrule.SubcmdLs)]
+    #[item(RmrlsItem: RequesterMountRuleLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

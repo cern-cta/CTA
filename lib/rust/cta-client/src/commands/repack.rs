@@ -40,6 +40,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the repack requests in progress (`repack ls`).
     #[proto(Repack.SubcmdLs)]
+    #[item(RelsItem: RepackLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Only the request of this tape

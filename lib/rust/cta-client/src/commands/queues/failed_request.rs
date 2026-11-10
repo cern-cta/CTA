@@ -4,16 +4,24 @@
 //! Failed request commands
 
 use bon::Builder;
-use cta_protobuf::cta::admin::{
-    AdminCmd,
-    admin_cmd::{Cmd, SubCmd},
+use cta_protobuf::cta::{
+    admin::{
+        AdminCmd, FailedRequestLsSummary,
+        admin_cmd::{Cmd, SubCmd},
+    },
+    xrd::data::Data,
 };
 
-use crate::{admin_cmd, commands::TypedAdminCmd, define_typed_admin_cmd};
+use crate::{
+    admin_cmd,
+    commands::{StreamingAdminCmd, TypedAdminCmd},
+    define_typed_admin_cmd,
+};
 
 define_typed_admin_cmd! {
     /// Lists the failed requests (`failedrequest ls`). See [`Summary`] for their totals.
     #[proto(Failedrequest.SubcmdLs)]
+    #[item(FrlsItem: FailedRequestLsItem)]
     #[derive(Default)]
     pub struct Ls {
         /// Only the archive requests
@@ -59,6 +67,18 @@ impl From<Summary> for AdminCmd {
 impl TypedAdminCmd for Summary {
     const CMD: Cmd = Cmd::Failedrequest;
     const SUBCMD: SubCmd = SubCmd::SubcmdLs;
+    const STREAMING: bool = true;
+}
+
+impl StreamingAdminCmd for Summary {
+    type Item = FailedRequestLsSummary;
+
+    fn item(data: Data) -> Result<Self::Item, Box<Data>> {
+        match data {
+            Data::FrlsSummary(item) => Ok(item),
+            other => Err(Box::new(other)),
+        }
+    }
 }
 
 define_typed_admin_cmd! {

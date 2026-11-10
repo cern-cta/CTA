@@ -26,8 +26,8 @@
   tonic           = { workspace = true, features = ["tls-native-roots", "tls-ring"] }
   tokio-stream    = { workspace = true }
   thiserror       = { workspace = true }
-  log             = { workspace = true }
   serde           = { workspace = true, features = ["derive"] }
+  serde_json      = { workspace = true }
   url             = { workspace = true }
   strum           = { workspace = true, features = ["derive"] }
 
@@ -35,9 +35,7 @@
   serde_json = { workspace = true }
 
 [dev-dependencies]
-  tokio          = { workspace = true, features = ["macros", "rt", "fs"] }
-  prost          = { workspace = true }
-  tonic-prost    = { workspace = true }
-  bytes          = { workspace = true }
-  http-body      = { workspace = true }
-  http-body-util = { workspace = true }
+  # server traits for the mock frontends of the tests
+  cta-protobuf   = { workspace = true, features = ["server"] }
+  tokio          = { workspace = true, features = ["macros", "rt", "net"] }
+  tokio-stream   = { workspace = true, features = ["net"] }

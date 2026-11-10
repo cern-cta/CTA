@@ -20,6 +20,10 @@
 [lints]
   workspace = true
 
+[features]
+  # Generate the gRPC server traits too (not needed in clients)
+  server = []
+
 [dependencies]
   tonic       = { workspace = true }
   prost       = { workspace = true }

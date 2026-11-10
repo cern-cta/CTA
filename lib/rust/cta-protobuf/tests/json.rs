@@ -19,7 +19,7 @@ macro_rules! cta_admin_jsonl {
     ($file:literal) => {
         include_str!(concat!(
             env!("CARGO_MANIFEST_DIR"),
-            "/../../python/cta-sdk/tests/unit/cta/sdk/daos/cli/data/",
+            "/../../python/cta-sdk/tests/unit/cta/sdk/daos/cta_admin/data/",
             $file
         ))
     };

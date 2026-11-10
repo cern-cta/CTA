@@ -1,205 +1,71 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use cta_grpc_common::test_utils::{corrupt_streaming_response, streaming_response};
-use cta_protobuf::cta::{
-    admin::RecycleTapeFileLsItem,
-    xrd::{
-        Data as XrdData, Response as XrdResponse, StreamResponse, data::Data,
-        response::ResponseType, stream_response::Contents,
-    },
-};
-use tokio_stream::StreamExt;
+use crate::types::{File, hex_to_byte_array};
 
-use crate::{errors::Error, stream::StreamResponseExt, types::hex_to_byte_array};
+mod file {
+    use cta_protobuf::cta::admin::{RecycleTapeFileLsItem, TapeFileLsItem, tape_file_ls_item};
 
-/// A `StreamResponse` carrying just a header with the given response type.
-fn header(r#type: ResponseType) -> StreamResponse {
-    StreamResponse {
-        contents: Some(Contents::Header(Box::new(XrdResponse {
-            r#type: r#type.into(),
-            ..Default::default()
-        }))),
-    }
-}
-
-/// A `StreamResponse` carrying a recycle-bin item with the given VID.
-fn rtfls_item(vid: &str) -> StreamResponse {
-    StreamResponse {
-        contents: Some(Contents::Data(Box::new(XrdData {
-            data: Some(Data::RtflsItem(RecycleTapeFileLsItem {
-                vid: vid.into(),
-                ..Default::default()
-            })),
-        }))),
-    }
-}
-
-/// A `StreamResponse` whose data frame carries no payload at all.
-fn empty_data() -> StreamResponse {
-    StreamResponse {
-        contents: Some(Contents::Data(Box::new(XrdData { data: None }))),
-    }
-}
-
-mod cta_stream {
     use super::*;
+    use crate::errors::TapeFileLsItemConversionError;
 
-    #[tokio::test]
-    async fn yields_payloads_after_success_header() {
-        let mut response = streaming_response(&[
-            header(ResponseType::RspSuccess),
-            rtfls_item("V01001"),
-            rtfls_item("V01002"),
-        ]);
+    #[test]
+    fn from_tape_file_ls_item() {
+        let item = TapeFileLsItem {
+            af: Some(tape_file_ls_item::ArchiveFile {
+                archive_id: 42,
+                ..Default::default()
+            }),
+            df: Some(tape_file_ls_item::DiskFile {
+                disk_id: "7".into(),
+                ..Default::default()
+            }),
+            tf: Some(tape_file_ls_item::TapeFile {
+                vid: "V01001".into(),
+                copy_nb: 1,
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
 
-        let items: Vec<_> = response
-            .stream_response()
-            .collect::<Result<Vec<_>, _>>()
-            .await
-            .expect("stream should succeed");
+        let file = File::try_from(item).unwrap();
 
-        let vids: Vec<_> = items
-            .iter()
-            .map(|d| match d {
-                Data::RtflsItem(item) => item.vid.clone(),
-                other => panic!("unexpected payload: {other:#?}"),
-            })
-            .collect();
-
-        assert_eq!(vids, ["V01001", "V01002"]);
+        assert_eq!(file.archive_file.id, 42);
+        assert_eq!(file.disk_file.id, "7");
+        assert_eq!(file.tape_file.vid, "V01001");
+        assert!(file.disk_file.id_when_deleted.is_none());
     }
 
-    #[tokio::test]
-    async fn failing_header_is_error() {
-        let mut response =
-            streaming_response(&[header(ResponseType::RspErrUser), rtfls_item("V01001")]);
+    #[test]
+    fn rejects_incomplete_tape_file_ls_item() {
+        let item = TapeFileLsItem {
+            af: Some(Default::default()),
+            df: Some(Default::default()),
+            tf: None,
+            ..Default::default()
+        };
 
-        let first = response
-            .stream_response()
-            .next()
-            .await
-            .expect("stream should yield an item");
+        let error = File::try_from(item).unwrap_err();
 
-        match first {
-            Err(Error::UnexpectedResponseType(t)) => assert_eq!(t, ResponseType::RspErrUser),
-            other => panic!("expected a CtaStreamError, got {other:#?}"),
-        }
+        assert!(matches!(error, TapeFileLsItemConversionError(ref field) if field == "tape_file"));
     }
 
-    #[tokio::test]
-    async fn skips_frames_without_payload() {
-        let mut response = streaming_response(&[
-            header(ResponseType::RspSuccess),
-            empty_data(),
-            rtfls_item("V01001"),
-            empty_data(),
-        ]);
+    #[test]
+    fn from_recycle_tape_file_ls_item() {
+        let item = RecycleTapeFileLsItem {
+            vid: "L85033".into(),
+            archive_file_id: 7,
+            disk_file_id: "9".into(),
+            disk_file_id_when_deleted: "8".into(),
+            ..Default::default()
+        };
 
-        let items: Vec<_> = response
-            .stream_response()
-            .collect::<Result<Vec<_>, _>>()
-            .await
-            .expect("stream should succeed");
+        let file = File::try_from(item).unwrap();
 
-        assert_eq!(items.len(), 1, "only the frame with a payload is yielded");
-    }
-
-    #[tokio::test]
-    async fn empty_body_is_error() {
-        let mut response = streaming_response::<StreamResponse>(&[]);
-
-        let first = response.stream_response().next().await;
-
-        match first {
-            Some(Err(Error::UnexpectedResponseType(ResponseType::RspErrUser))) => {
-                // Correct: error for missing header
-            }
-            other => panic!("expected CtaStreamError for missing header, got {other:#?}"),
-        }
-    }
-
-    #[tokio::test]
-    async fn decoding_failure_is_rpc_error() {
-        let mut response = corrupt_streaming_response::<StreamResponse>();
-
-        let first = response
-            .stream_response()
-            .next()
-            .await
-            .expect("stream should yield an item");
-
-        assert!(
-            matches!(first, Err(Error::Rpc(_))),
-            "expected a GrpcError, got {first:#?}"
-        );
-    }
-
-    #[tokio::test]
-    async fn rejects_data_before_header() {
-        let mut response = streaming_response(&[
-            rtfls_item("V01001"), // Data first, no header
-            header(ResponseType::RspSuccess),
-        ]);
-
-        let first = response
-            .stream_response()
-            .next()
-            .await
-            .expect("stream should yield an item");
-
-        match first {
-            Err(Error::UnexpectedResponseType(ResponseType::RspErrUser)) => {
-                // Correct: error for data before header
-            }
-            other => panic!("expected CtaStreamError for data before header, got {other:#?}"),
-        }
-    }
-
-    #[tokio::test]
-    async fn rejects_multiple_headers() {
-        let mut response = streaming_response(&[
-            header(ResponseType::RspSuccess),
-            header(ResponseType::RspSuccess), // Second header
-        ]);
-
-        let _first = response.stream_response().next().await;
-
-        // First header is ok (doesn't yield)
-        let second = response
-            .stream_response()
-            .next()
-            .await
-            .expect("stream should yield an item");
-
-        match second {
-            Err(Error::UnexpectedResponseType(ResponseType::RspErrUser)) => {
-                // Correct: error for duplicate header
-            }
-            other => panic!("expected CtaStreamError for duplicate header, got {other:#?}"),
-        }
-    }
-
-    #[tokio::test]
-    async fn valid_sequence_yields_all_data() {
-        let mut response = streaming_response(&[
-            header(ResponseType::RspSuccess),
-            rtfls_item("V01001"),
-            rtfls_item("V01002"),
-            StreamResponse { contents: None }, // Proper EOF
-        ]);
-
-        let items: Vec<_> = response
-            .stream_response()
-            .collect::<Result<Vec<_>, _>>()
-            .await
-            .expect("stream should succeed");
-
-        assert_eq!(
-            items.len(),
-            2,
-            "both items yielded, stream properly terminated"
-        );
+        assert_eq!(file.tape_file.vid, "L85033");
+        assert_eq!(file.archive_file.id, 7);
+        assert_eq!(file.disk_file.id, "9");
+        assert_eq!(file.disk_file.id_when_deleted.as_deref(), Some("8"));
     }
 }
 

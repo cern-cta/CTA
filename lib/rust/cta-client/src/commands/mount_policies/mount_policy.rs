@@ -55,6 +55,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the mount policies (`mountpolicy ls`).
     #[proto(Mountpolicy.SubcmdLs)]
+    #[item(MplsItem: MountPolicyLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

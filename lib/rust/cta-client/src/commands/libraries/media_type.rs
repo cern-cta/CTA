@@ -65,6 +65,7 @@ define_typed_admin_cmd! {
 define_typed_admin_cmd! {
     /// Lists the media types (`mediatype ls`).
     #[proto(Mediatype.SubcmdLs)]
+    #[item(MtlsItem: MediaTypeLsItem)]
     #[derive(Default)]
     pub struct Ls {}
 }

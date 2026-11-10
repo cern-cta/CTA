@@ -7,7 +7,6 @@
 
 use std::{convert::TryFrom, num::ParseIntError};
 
-use bon::Builder;
 use chrono::{DateTime, Utc};
 use cta_protobuf::cta::admin::{RecycleTapeFileLsItem, TapeFileLsItem};
 use serde::Serialize;
@@ -164,27 +163,6 @@ impl TryFrom<&cta_protobuf::cta::admin::Checksum> for Checksum {
                 .map_err(|e| ChecksumTypeError::Parse(e.to_string()))?,
         })
     }
-}
-
-/// Establishes the filtering criteria for a query on the catalogue.
-/// Default case (all `None`) means "all elements".
-#[derive(Debug, Default, Builder)]
-pub struct FileSelector {
-    /// Archive ID - ID in CTA catalogue
-    #[builder(into)]
-    pub archive_file_id: Option<u64>,
-    /// Volume ID (ID of tape)
-    #[builder(into)]
-    pub vid: Option<String>,
-    /// Number of copy (normally used together with VID)
-    #[builder(into)]
-    pub copy_number: Option<u64>,
-    /// Disk instance (e.g. EOS instance name)
-    #[builder(into)]
-    pub disk_instance: Option<String>,
-    /// Disk file IDs (normally used together with `disk_instance`)
-    #[builder(into)]
-    pub file_ids: Option<Vec<String>>,
 }
 
 /// Owner (user/group) of a namespace entry.
