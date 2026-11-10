@@ -278,6 +278,106 @@ publish-images-public:
     matrix:
       - TARGET_NAME: *cta-image-targets
 
+# =========================================================================
+#  Publish Python packages
+# =========================================================================
+
+.publish-python:
+  stage: release
+  needs:
+    - job: prepare-cta-version
+      artifacts: true
+    - job: build-python
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: on_success
+  image:
+    name: $IMAGE_DEFAULT
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    PYPI_PUBLISH_URL: ""
+    UV_PUBLISH_USERNAME: ""
+    UV_PUBLISH_PASSWORD: ""
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - |
+      if [[ -z "$PYPI_PUBLISH_URL" ]]; then
+        echo "Destination PyPI registry is not configured"
+        exit 1
+      fi
+      if [[ -z "$UV_PUBLISH_USERNAME" || -z "$UV_PUBLISH_PASSWORD" ]]; then
+        echo "Destination PyPI registry credentials are not configured"
+        exit 1
+      fi
+    - compgen -G "build/python/*.whl" > /dev/null || { echo "No wheels found in build/python"; exit 1; }
+  script:
+    - echo "Publishing Python packages to ${PYPI_PUBLISH_URL}"
+    - ls -l build/python/
+    # --check-url skips files already present with identical content, so retries are idempotent.
+    - |
+      uv publish \
+        --publish-url "$PYPI_PUBLISH_URL" \
+        --check-url "${PYPI_PUBLISH_URL}/simple" \
+        build/python/*
+  after_script:
+    - |
+      if [[ -z "${CI_COMMIT_TAG:-}" ]]; then exit 0; fi
+      case "$CI_JOB_STATUS" in
+        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published the Python packages to ${PYPI_REGISTRY_NAME}." ;;
+        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish the Python packages to ${PYPI_REGISTRY_NAME}." ;;
+        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
+      esac
+      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
+
+publish-python-private:
+  extends: .publish-python
+  needs:
+    - job: prepare-cta-version
+      artifacts: true
+    - job: internal-release-cta
+      optional: true # Present on tags; branch publication does not publish RPMs.
+    - job: build-python
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: on_success
+    - when: manual
+      allow_failure: true
+  variables:
+    PYPI_REGISTRY_NAME: "the private operations PyPI registry"
+    PYPI_PUBLISH_URL: $PYPI_RELEASE_REGISTRY_URL
+    UV_PUBLISH_USERNAME: $PYPI_RELEASE_LOGIN_USERNAME
+    UV_PUBLISH_PASSWORD: $PYPI_RELEASE_LOGIN_PASSWORD
+
+publish-python-public:
+  extends: .publish-python
+  needs:
+    - job: prepare-cta-version
+      artifacts: true
+    - job: public-release-cta-stable
+      artifacts: true
+    - job: build-python
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /\.(dev|rc)[1-9][0-9]*$/'
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: on_success
+  variables:
+    PYPI_REGISTRY_NAME: "the public PyPI registry"
+    PYPI_PUBLISH_URL: $PYPI_PUBLIC_REGISTRY_URL
+    UV_PUBLISH_USERNAME: $PYPI_PUBLIC_LOGIN_USERNAME
+    UV_PUBLISH_PASSWORD: $PYPI_PUBLIC_LOGIN_PASSWORD
+  before_script:
+    - |
+      if [[ "${STABLE_PUBLISHED_CTA_IMAGE_TAG:-}" != "${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}" ]]; then
+        echo "Public Python packages require successful stable publication of $CTA_IMAGE_TAG."
+        exit 1
+      fi
+    - !reference [.publish-python, before_script]
+
 # Publish validated documentation independently of RPM and image publication.
 publish-docs:
   interruptible: false
