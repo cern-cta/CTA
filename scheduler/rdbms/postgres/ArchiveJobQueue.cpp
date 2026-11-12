@@ -1092,17 +1092,17 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   for (size_t i = 0; i < jobs.size(); ++i) {
     const auto* row = jobs[i];
     const std::string s = std::to_string(i);
-    // keepMountId: stay on same mount if within-mount retry budget not exhausted; meant to also
-    // force a new mount when the SESSION itself crashed, by matching free-text failureLogs
-    // against a log message from TapeWriteSingleThread's crash-cleanup path. Currently dead: no
-    // log message containing this text exists anywhere in the codebase today (checked -
-    // TapeWriteSingleThread's actual crash-path logging is in requeueUnprocessedTasks(), worded
-    // differently), so failedTaskQueue is always false. Matches ArchiveRdbJob.cpp's failTransfer()
-    // single-job equivalent, whose own comment already flags this as a placeholder - fix both
-    // together if fixing either.
-    const bool failedTaskQueue = row->failureLogs.value_or("").find(
-      "In TapeWriteSingleThread::run(): cleaning failed task queue") != std::string::npos;
-    const bool keepMountId = (row->retriesWithinMount < row->maxRetriesWithinMount) && !failedTaskQueue;
+    // keepMountId: stay on same mount if within-mount retry budget not exhausted. Removed a dead
+    // "force a new mount if the SESSION itself crashed" check that matched failureLogs against a
+    // TapeWriteSingleThread log message which is never actually produced (see git history for
+    // details) - it could not have worked by construction either: a crash orphans jobs via
+    // TapeWriteSingleThread::requeueUnprocessedTasks() -> ArchiveMount::requeueJobBatch(), a
+    // separate path that never reaches this query. The case it was trying to cover - a job left
+    // pinned to a mount that dies later - is already handled by the garbage collector
+    // (ArchiveInactiveMountPendingQueueRoutine), which resets MOUNT_ID once it detects the mount
+    // is gone. Matches ArchiveRdbJob.cpp's failTransfer() single-job equivalent, which had the
+    // same (equally dead) check. Retrieve's equivalent never had this check at all.
+    const bool keepMountId = row->retriesWithinMount < row->maxRetriesWithinMount;
     stmt.bindUint64(":JID" + s, row->jobId);
     stmt.bindUint32(":TR" + s, row->totalRetries);
     stmt.bindUint32(":RWM" + s, row->retriesWithinMount);
