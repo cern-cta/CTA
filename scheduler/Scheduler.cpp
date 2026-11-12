@@ -3255,6 +3255,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
     cta::RetrieveJob* job;
     std::string reason;
   };
+
   std::vector<PgschedFailedReport> pgschedFailedReports;
 #endif
 

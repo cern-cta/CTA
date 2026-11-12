@@ -249,6 +249,7 @@ public:
 
 #ifdef CTA_PGSCHED
     void prepareFailTransfer(const std::string&) override { throw cta::exception::NotImplementedException(); }
+
     void prepareFailReport(const std::string&) override { throw cta::exception::NotImplementedException(); }
 #endif
 
@@ -332,6 +333,7 @@ public:
                                 log::LogContext& lc) override {
       throw cta::exception::NotImplementedException("For RelationalDB compatibility only");
     }
+
     void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>&, cta::log::LogContext&) override {
       throw cta::exception::NotImplementedException();
     }
@@ -354,6 +356,7 @@ public:
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
 #ifdef CTA_PGSCHED
     void prepareFailTransfer(const std::string&) override { throw cta::exception::NotImplementedException(); }
+
     void prepareFailReport(const std::string&) override { throw cta::exception::NotImplementedException(); }
 #endif
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
@@ -564,8 +567,7 @@ public:
                                          log::LogContext& lc) override;
 
 #ifdef CTA_PGSCHED
-  void failRetrieveJobBatchReport(std::vector<SchedulerDatabase::RetrieveJob*>& batch,
-                                  log::LogContext& lc) override {
+  void failRetrieveJobBatchReport(std::vector<SchedulerDatabase::RetrieveJob*>& batch, log::LogContext& lc) override {
     throw cta::exception::NotImplementedException();
   }
 #endif

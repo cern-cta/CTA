@@ -242,8 +242,7 @@ public:
   int successCount = 0;
   int failureCount = 0;
 
-  explicit MockRetrieveMountWithBatch(cta::catalogue::Catalogue& catalogue)
-      : cta::MockRetrieveMount(catalogue) {}
+  explicit MockRetrieveMountWithBatch(cta::catalogue::Catalogue& catalogue) : cta::MockRetrieveMount(catalogue) {}
 
   void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                               cta::log::LogContext&) override {
@@ -253,8 +252,7 @@ public:
     }
   }
 
-  void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs,
-                         cta::log::LogContext&) override {
+  void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, cta::log::LogContext&) override {
     flushCount++;
     lastBatchSize = jobs.size();
     failureCount += static_cast<int>(jobs.size());

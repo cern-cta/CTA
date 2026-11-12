@@ -221,10 +221,9 @@ void cta::ArchiveMount::failTransferBatch(std::vector<std::unique_ptr<cta::Archi
 // prepareFailTransfer() is called here to update in-memory retry counters before
 // delegating to the DB-level batch.
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::failTransferBatch(
-    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
-    const std::string& failureReason,
-    cta::log::LogContext& lc) {
+void cta::ArchiveMount::failTransferBatch(std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
+                                          const std::string& failureReason,
+                                          cta::log::LogContext& lc) {
   // Keep unique_ptr ownership alive in a local vector while passing raw pointers.
   std::vector<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> owned;
   std::vector<cta::SchedulerDatabase::ArchiveJob*> rawPtrs;
@@ -236,7 +235,9 @@ void cta::ArchiveMount::failTransferBatch(
     owned.back()->prepareFailTransfer(failureReason);
     rawPtrs.push_back(owned.back().get());
   }
-  if (rawPtrs.empty()) return;
+  if (rawPtrs.empty()) {
+    return;
+  }
   m_dbMount->failTransferBatch(rawPtrs, lc);
 }
 
@@ -247,10 +248,9 @@ void cta::ArchiveMount::failTransferBatch(
 // are on tape and in the catalogue; the scheduler-DB state update is what failed.
 // prepareFailReport() is called here to update in-memory report-retry counters.
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::failReportBatch(
-    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
-    const std::string& failureReason,
-    cta::log::LogContext& lc) {
+void cta::ArchiveMount::failReportBatch(std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
+                                        const std::string& failureReason,
+                                        cta::log::LogContext& lc) {
   std::vector<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> owned;
   std::vector<cta::SchedulerDatabase::ArchiveJob*> rawPtrs;
   owned.reserve(dbJobs.size());
@@ -261,7 +261,9 @@ void cta::ArchiveMount::failReportBatch(
     owned.back()->prepareFailReport(failureReason);
     rawPtrs.push_back(owned.back().get());
   }
-  if (rawPtrs.empty()) return;
+  if (rawPtrs.empty()) {
+    return;
+  }
   m_dbMount->failReportBatch(rawPtrs, lc);
 }
 #endif  // CTA_PGSCHED

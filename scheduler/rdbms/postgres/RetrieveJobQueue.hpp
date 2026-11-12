@@ -903,9 +903,8 @@ public:
    * @param isRepack true if these are repack jobs
    * @return         Number of rows updated
    */
-  static uint64_t failTransferBatchExceedRetries(Transaction& txn,
-                                                 const std::vector<RetrieveJobQueueRow*>& jobs,
-                                                 bool isRepack);
+  static uint64_t
+  failTransferBatchExceedRetries(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs, bool isRepack);
 
   /**
    * Batch-moves jobs from the active queue to the pending queue (requeue after failure).
@@ -917,9 +916,8 @@ public:
    * @param isRepack true if these are repack jobs
    * @return         Number of rows inserted into pending queue
    */
-  static uint64_t failTransferBatchRequeue(Transaction& txn,
-                                           const std::vector<RetrieveJobQueueRow*>& jobs,
-                                           bool isRepack);
+  static uint64_t
+  failTransferBatchRequeue(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs, bool isRepack);
 
   // failReportBatchRequeue: batch UPDATE for jobs where report retries are not exhausted.
   // Resets IS_REPORTING=FALSE, updates TOTAL_REPORT_RETRIES and REPORT_FAILURE_LOG.
