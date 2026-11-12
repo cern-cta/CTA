@@ -54,6 +54,7 @@ cta_image_tag=""
 # Build
 build_container_restarted=false
 reset=false
+refresh_build_container=false
 clean_build_dirs=false
 enable_sccache=true
 skip_debug_packages=true
@@ -255,7 +256,9 @@ Usage:
 
 Options:
   -r, --reset                       Recreate the persistent build container
-                                    and rebuild the source packages.
+                                    and clean build/<platform>/.
+      --refresh-build-container     Recreate the build container while preserving
+                                    build output, then rerun CMake.
       --clean-build-dirs            Remove build/<platform>/.
       --build-generator <generator> CMake generator
                                     ["Unix Makefiles", "Ninja"].
@@ -513,6 +516,10 @@ parse_options() {
       --clean-build-dirs)
         require_command "$1" "$command" build up debug all
         clean_build_dirs=true
+        ;;
+      --refresh-build-container)
+        require_command "$1" "$command" build up debug all
+        refresh_build_container=true
         ;;
       --disable-sccache)
         require_command "$1" "$command" build up debug all
@@ -790,6 +797,22 @@ remove_container() {
   return 0
 }
 
+# Warn about stale or unlabelled containers without changing the reuse policy.
+warn_build_dockerfile_changed() {
+  local -r container_name="$1"
+  local -r expected_fingerprint="$2"
+  local recorded_fingerprint
+
+  if ! recorded_fingerprint=$(podman container inspect "$container_name" \
+      | jq -r '.[0].Config.Labels["ch.cern.cta.build-dockerfile-sha256"] // empty'); then
+    log_warn "Could not check build Dockerfile freshness for '${container_name}'."
+  elif [[ -z $recorded_fingerprint ]]; then
+    log_warn "Build container has no Dockerfile fingerprint; freshness cannot be checked. Run 'cta-dev build --platform ${platform} --refresh-build-container' to recreate it with one."
+  elif [[ $recorded_fingerprint != "$expected_fingerprint" ]]; then
+    log_warn "Build Dockerfile has changed since this container was created. If you encounter build issues, run 'cta-dev build --platform ${platform} --refresh-build-container'."
+  fi
+}
+
 # Serialize the effective build configuration as JSON for reuse checks.
 create_build_configuration() {
   local -r xrootd_ssi_version="$1"
@@ -861,6 +884,10 @@ build_cta() {
   local -r build_command=(podman build)
   local -r build_dockerfile="ci/docker/cta/${platform}/build.Dockerfile"
   local -r source_package_directory=$(package_directory source)
+  local dockerfile_fingerprint
+  # Record the Dockerfile contents, including uncommitted edits.
+  dockerfile_fingerprint=$(sha256sum "$build_dockerfile" | cut -d ' ' -f 1) \
+    || die "Failed to fingerprint build Dockerfile."
 
   local rebuild_source_packages=false
   local reinstall_source_packages=false
@@ -991,8 +1018,8 @@ build_cta() {
     reinstall_source_packages=true
   fi
 
-  # Remove the project-specific container if reset is requested.
-  if [[ "${reset}" = true ]]; then
+  # Replace only this worktree's container when requested.
+  if [[ $reset == true || $refresh_build_container == true ]]; then
     if container_exists "$build_container_name"; then
       log_task "Removing build container ${build_container_name}..."
       remove_container "$build_container_name" \
@@ -1010,9 +1037,11 @@ build_cta() {
       || die "Failed to inspect existing build container '${build_container_name}'."
     case "$current_container_status" in
       running)
+        warn_build_dockerfile_changed "$build_container_name" "$dockerfile_fingerprint"
         log_task "Reusing running build container: ${build_container_name}"
         ;;
       created|exited|stopped)
+        warn_build_dockerfile_changed "$build_container_name" "$dockerfile_fingerprint"
         log_task "Starting existing stopped build container ${build_container_name}..."
         podman start "$build_container_name" >/dev/null \
           || die "Failed to start existing build container '${build_container_name}'."
@@ -1033,6 +1062,7 @@ build_cta() {
     log_task "Starting build container ${build_container_name}..."
     local run_output
     if ! run_output=$(podman run -dit --rm --name "${build_container_name}" \
+      --label "ch.cern.cta.build-dockerfile-sha256=${dockerfile_fingerprint}" \
       -v "${project_root}:${mount_basedir}:z" \
       "${build_image_name}" \
       /bin/bash 2>&1); then
@@ -1080,6 +1110,7 @@ build_cta() {
   if [[ $state_matches_configuration == true \
       && $previous_build_successful == true \
       && $rebuild_source_packages == false \
+      && $build_container_restarted == false \
       && -f "${project_root}/build/${platform}/CMakeCache.txt" \
       && $clean_build_dirs == false ]] \
       && grep -qx 'CTA_BUILD_MODE:STRING=binary-package' "${project_root}/build/${platform}/CMakeCache.txt"; then

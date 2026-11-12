@@ -29,6 +29,7 @@ _ctadev() {
 
     local build_opts="
         --reset
+        --refresh-build-container
         --clean-build-dirs
         --disable-sccache
         --enable-unit-tests
