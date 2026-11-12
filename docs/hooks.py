@@ -10,20 +10,13 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
+from mkdocs.config.defaults import MkDocsConfig
 from mkdocs.structure.pages import Page
 from mkdocs.structure.toc import AnchorLink
 
 log = logging.getLogger("mkdocs.hooks")
-
-
-class MkDocsConfig(Protocol):
-    """The configuration interface used by these hooks."""
-
-    config_file_path: str
-
-    def __getitem__(self, key: str) -> Any: ...
 
 
 def on_config(config: MkDocsConfig) -> MkDocsConfig:
@@ -60,23 +53,17 @@ def on_pre_build(config: MkDocsConfig) -> None:
         cwd=root,
         check=True,
     )
-    output_dir = root / "build/docs/generated/api/rust"
-    output_dir.parent.mkdir(parents=True, exist_ok=True)
-    # remove the old dir
-    if output_dir.exists():
-        log.debug("Removing old Rust docs at %s", output_dir)
-        shutil.rmtree(output_dir)
-    shutil.move(root / "target/doc", output_dir)
-    log.info("Rust docs generated at %s", output_dir)
+    log.info("Rust docs generated at %s", root / "target/doc")
 
 
 def on_post_build(config: MkDocsConfig) -> None:
     root = Path(config.config_file_path).resolve().parent.parent
-    source = root / "build/docs/generated/api/rust"
+    source = root / "target/doc"
     destination = Path(config["site_dir"]) / "api/rust"
     if destination.exists():
         shutil.rmtree(destination)
-    shutil.move(source, destination)
+    # Preserve Cargo's output for subsequent documentation builds.
+    shutil.copytree(source, destination)
     log.info("Rust docs published to %s", destination)
 
 
