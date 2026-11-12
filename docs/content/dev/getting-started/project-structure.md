@@ -44,7 +44,7 @@ This reorganization is not yet complete. The map below describes where code live
 | `.gitlab-ci.yml` and `.gitlab/ci/` | GitLab pipeline configuration and jobs. |
 | `.pre-commit-config.yaml` | Local contribution checks. |
 | `docs/content/` | Documentation pages, grouped into `concepts/`, `ops/`, and `dev/`. |
-| `docs/mkdocs.yml` | Site navigation and build configuration. |
+| `zensical.toml` | Site navigation and build configuration. |
 
 Use [cta-dev Reference](../guides/tools-and-environment/cta-dev.md), [Testing CTA](../guides/testing/index.md), and [Documentation Changes](../contributing/documentation.md) for task-specific guidance.
 
