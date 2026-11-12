@@ -1,13 +1,7 @@
 {# SPDX-FileCopyrightText: 2026 CERN
    SPDX-License-Identifier: GPL-3.0-or-later
    Zensical header with a shorter visible site label. #}
-{% set class = "md-header" %}
-{% if "navigation.tabs.sticky" in features %}
-  {% set class = class ~ " md-header--shadow md-header--lifted" %}
-{% elif "navigation.tabs" not in features %}
-  {% set class = class ~ " md-header--shadow" %}
-{% endif %}
-<header class="{{ class }}" data-md-component="header">
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
     <a href="{{ config.extra.homepage | d(nav.homepage.url, true) | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
       {% include "partials/logo.html" %}
@@ -35,17 +29,8 @@
         </div>
       </div>
     </div>
-    {% if config.theme.palette %}
-      {% if not config.theme.palette is mapping %}
-        {% include "partials/palette.html" %}
-      {% endif %}
-    {% endif %}
-    {% if not config.theme.palette is mapping %}
-      {% include "partials/javascripts/palette.html" %}
-    {% endif %}
-    {% if config.extra.alternate %}
-      {% include "partials/alternate.html" %}
-    {% endif %}
+    {% include "partials/palette.html" %}
+    {% include "partials/javascripts/palette.html" %}
     {% if "search" in config.plugins %}
       {% set search = config.plugins["search"] | attr("config") %}
       {% if search.enabled %}
@@ -63,9 +48,5 @@
       {% endif %}
     </div>
   </nav>
-  {% if "navigation.tabs.sticky" in features %}
-    {% if "navigation.tabs" in features %}
-      {% include "partials/tabs.html" %}
-    {% endif %}
-  {% endif %}
+  {% include "partials/tabs.html" %}
 </header>
