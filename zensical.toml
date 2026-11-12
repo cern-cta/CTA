@@ -345,6 +345,7 @@
               { "Repack Workflows" = "dev/internals/shared-state/scheduler-db/postgresql/repack-workflows.md" },
               { "Mount Scheduling" = "dev/internals/shared-state/scheduler-db/postgresql/mount-scheduling.md" },
               { "Opportunistic Batching" = "dev/internals/shared-state/scheduler-db/postgresql/opportunistic-batching.md" },
+              { "Failure Handling" = "dev/internals/shared-state/scheduler-db/postgresql/failure-handling.md" },
               { "Garbage Collection" = "dev/internals/shared-state/scheduler-db/postgresql/garbage-collection.md" },
             ] },
           ] },
