@@ -4,39 +4,43 @@ This page covers site configuration and publication. For page edits, local previ
 
 ## Site configuration
 
-MkDocs Material builds the site. Paths below are relative to `docs/` unless stated otherwise.
+Zensical builds the site with Python 3.12. Paths below are relative to the repository root.
 
 | Location | Purpose |
 | --- | --- |
-| `mkdocs.yml` | Site configuration and navigation |
-| `requirements.txt` | Python dependencies |
-| `content/stylesheets/extra.css`, `overrides/` | Shared styling and template overrides |
-| `content/assets/images/` | Shared images and favicons |
-| `hooks.py` | Generated content and include handling |
-| `content/api/python/` | Python API reference module pages |
-| `ci/docs/` (repository root) | Publication scripts and tests |
+| `zensical.toml` | Site configuration, navigation, Markdown extensions, and theme |
+| `pyproject.toml`, `uv.lock` | Shared dependency declarations, cooldown policy, and lockfile; docs use the `docs` group |
+| `docs/.python-version`, `docs/.venv/` | Python 3.12 selection and separate docs environment |
+| `docs/build.py` | Generate the command manual and Rust reference, then invoke Zensical |
+| `docs/zensical_content.py` | Repository substitutions, manual metadata stripping, and diagram defaults |
+| `docs/content/stylesheets/extra.css`, `docs/overrides/` | CTA branding |
+| `docs/content/api/python/` | Python API reference module pages |
 
-Restart `mkdocs serve` after changing hooks; live reload does not reload the Python module.
+Restart the preview after changing the build helper, Markdown extension, or generated-reference inputs. Markdown, stylesheet, and template edits reload automatically.
+
+For environment setup, see [Preview locally](../documentation.md#preview-locally). Update the `docs` dependency group in `pyproject.toml` and regenerate `uv.lock` with `uv lock`.
 
 ### Generated references
 
-The build generates the Python reference with `mkdocstrings` and the Rust reference with `cargo doc`.
-Both are included in each published documentation version under `api/python/` and `api/rust/`.
+`docs/build.py` generates the command manual in `build/docs/generated/` and runs `cargo doc`. It copies Rust output into the ignored `docs/content/api/rust/` directory so Zensical includes it in both builds and previews. `--skip-rust` reuses existing `target/doc/` output; it still regenerates the manual.
 
-Keep `requirements.txt` and the repository root’s `pyproject.toml` docs group synchronized, and update `uv.lock` after dependency changes.
+The Python API reference uses `mkdocstrings`. Its Python 3.9 inventory matches the supported CTA API, independently of the docs builder’s Python 3.12 runtime.
+
+The final site is written to `build/docs/site/`. Generated references must be prepared before invoking Zensical directly.
+
+### Theme
+
+Theme customizations live in `docs/content/stylesheets/extra.css` and `docs/overrides/`. Self-hosted fonts and their licenses are under `docs/content/assets/fonts/`. Keep template overrides small so upstream theme updates remain easy to adopt.
 
 ### Diagram colors
 
-Mermaid colors are configured in `content/stylesheets/extra.css`. Prefer the default theme colors and check diagrams in both light and dark mode after styling changes.
-
-### Fonts
-
-Self-hosted fonts and their licenses live in `content/assets/fonts/`, sourced from:
-
-- [Atkinson Hyperlegible Next](https://github.com/googlefonts/atkinson-hyperlegible-next/tree/7925f50f649b3813257faf2f4c0b381011f434f1/fonts/webfonts)
-- [Atkinson Hyperlegible Mono](https://github.com/googlefonts/atkinson-hyperlegible-next-mono/tree/154d50362016cc3e873eb21d242cd0772384c8f9/fonts/webfonts)
+Mermaid colors are defined in `docs/content/stylesheets/extra.css`. The Markdown extension sets sequence arrowheads to follow the selected palette. Check diagrams in both light and dark modes after changes.
 
 ## Publishing
+
+!!! warning "CI migration pending"
+
+    The existing build and publication jobs still invoke MkDocs and `mike` and are not compatible with this setup. They are intentionally left for a separate migration. The workflow below documents the legacy publication behavior, not a supported Zensical deployment command.
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.
 

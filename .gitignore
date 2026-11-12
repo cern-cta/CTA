@@ -105,3 +105,7 @@ Pipfile.lock
 # NPM for dev tooling
 package-lock.json
 node_modules/
+
+# Generated documentation assets and Zensical cache
+/docs/content/api/rust/
+/.cache/
