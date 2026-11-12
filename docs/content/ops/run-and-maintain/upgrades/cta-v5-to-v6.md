@@ -47,7 +47,7 @@ Link the validated steps to [Catalogue Schema Upgrades](catalogue-schema/index.m
 
 ## Container deployments
 
-TODO: Document image and chart version selection, configuration and secret changes, volume migration, and rollout order.
+TODO: Document image version selection, configuration and secret changes, volume migration, and rollout order.
 For service identities and volume ownership, see [Docker Images](../../deploy-and-configure/deployment/installation/docker-images.md#configure-and-run-services).
 
 ## Upgrade sequence
