@@ -30,6 +30,8 @@ service:
   enabled: true # Set to false if relying on hostnetwork/localhost
 
 pod:
+  # Match the numeric group IDs of the host tape devices.
+  supplementalGroups: [33]
   extraSpec:
     terminationGracePeriodSeconds: 60
 

@@ -38,7 +38,7 @@ spec:
         runAsUser: 1000 # cta
         runAsGroup: 1000 # cta
         fsGroup: 1000 # cta
-        supplementalGroups: [33] # tape
+        supplementalGroups: {{ .Values.pod.supplementalGroups | toJson }}
       containers:
       - name: cta-rmcd
         image: {{ include "rmcd.image" . }}
