@@ -277,6 +277,10 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   return nrows;
 };
 
+// The SQL below sets FAILURE_LOG = :FAILURE_LOG with a plain assignment, no SQL-side
+// concatenation: :FAILURE_LOG is bound from failureLogs.value_or(""), which updateJobRowFailureLog()
+// already appended the new entry onto the value loaded from this same column - appending again
+// in SQL would duplicate the old text.
 uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
   RetrieveJobStatus newStatus;
   std::string repack_table_name_prefix = "";
@@ -293,7 +297,7 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
         LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
-        FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG,
+        FAILURE_LOG = :FAILURE_LOG,
         LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
         WHERE JOB_ID = :JOB_ID
     )SQL";
@@ -335,6 +339,10 @@ void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 };
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
+// The SQL below selects :FAILURE_LOG AS FAILURE_LOG with a plain reference, no SQL-side
+// concatenation: :FAILURE_LOG is bound from failureLogs.value_or(""), which already contains
+// the row's old FAILURE_LOG text plus the new entry (updateJobRowFailureLog() appends onto a
+// field loaded from this same column) - concatenating again here would duplicate the old text.
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                RetrieveJobStatus newStatus,
                                                bool keepMountId,
@@ -490,7 +498,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       M.LOGICAL_LIBRARY,
       M.ACTIVITY,
       M.DISK_SYSTEM_NAME,
-      M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
+      :FAILURE_LOG AS FAILURE_LOG,
       :RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
       :TOTAL_RETRIES AS TOTAL_RETRIES,
       :LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
@@ -1459,6 +1467,10 @@ uint64_t RetrieveJobQueueRow::deleteFailedRetrieveJob(Transaction& txn, uint64_t
 }
 
 #ifdef CTA_PGSCHED
+// The SQL below sets FAILURE_LOG = d.failure_log with a plain assignment, no SQL-side
+// concatenation: d.failure_log (bound from row->failureLogs.value_or("")) already has
+// a.FAILURE_LOG's old text plus the new entry appended in memory (updateJobRowFailureLog()) -
+// concatenating again here would duplicate the old text.
 uint64_t RetrieveJobQueueRow::failTransferBatchExceedRetries(
     Transaction& txn,
     const std::vector<RetrieveJobQueueRow*>& jobs,
@@ -1489,7 +1501,7 @@ uint64_t RetrieveJobQueueRow::failTransferBatchExceedRetries(
     TOTAL_RETRIES = d.total_retries,
     RETRIES_WITHIN_MOUNT = d.retries_within_mount,
     LAST_MOUNT_WITH_FAILURE = d.last_mount_with_failure,
-    FAILURE_LOG = COALESCE(a.FAILURE_LOG, '') || d.failure_log,
+    FAILURE_LOG = d.failure_log,
     LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   FROM per_job d
   WHERE a.JOB_ID = d.job_id
@@ -1513,6 +1525,10 @@ uint64_t RetrieveJobQueueRow::failTransferBatchExceedRetries(
   return nrows1;
 }
 
+// The SQL below selects d.failure_log with a plain reference, no SQL-side concatenation:
+// d.failure_log (bound from row->failureLogs.value_or("")) already contains m.FAILURE_LOG's old
+// text plus the new entry, since updateJobRowFailureLog() appends onto a field that was itself
+// loaded from this same column - concatenating again here would duplicate the old text.
 uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
     Transaction& txn,
     const std::vector<RetrieveJobQueueRow*>& jobs,
@@ -1597,7 +1613,7 @@ uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
     m.MAX_TOTAL_RETRIES, m.MAX_RETRIES_WITHIN_MOUNT, m.TOTAL_REPORT_RETRIES, m.MAX_REPORT_RETRIES,
     d.vid, m.ALTERNATE_FSEQS, m.ALTERNATE_BLOCK_IDS, m.ALTERNATE_VIDS, m.ALTERNATE_COPY_NBS,
     m.DRIVE, m.HOST, m.LOGICAL_LIBRARY, m.ACTIVITY, m.DISK_SYSTEM_NAME,
-    COALESCE(m.FAILURE_LOG, '') || d.failure_log,
+    d.failure_log,
     d.retries_within_mount, d.total_retries, d.last_mount_with_failure,
     :STATUS,
     CASE WHEN d.retries_within_mount > 0 THEN m.MOUNT_ID ELSE NULL END
@@ -1630,8 +1646,10 @@ uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
 
 uint64_t RetrieveJobQueueRow::failReportBatchRequeue(
     Transaction& txn,
-    const std::vector<RetrieveJobQueueRow*>& jobs) {
+    const std::vector<RetrieveJobQueueRow*>& jobs,
+    bool isRepack) {
   if (jobs.empty()) return 0;
+  const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
@@ -1646,7 +1664,8 @@ uint64_t RetrieveJobQueueRow::failReportBatchRequeue(
   sql += values_rows;
   sql += R"SQL(
   )
-  UPDATE RETRIEVE_ACTIVE_QUEUE a
+  UPDATE )SQL";
+  sql += repack_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE a
   SET
     TOTAL_REPORT_RETRIES = d.total_report_retries,
     IS_REPORTING = FALSE,
@@ -1673,8 +1692,10 @@ uint64_t RetrieveJobQueueRow::failReportBatchRequeue(
 
 uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(
     Transaction& txn,
-    const std::vector<RetrieveJobQueueRow*>& jobs) {
+    const std::vector<RetrieveJobQueueRow*>& jobs,
+    bool isRepack) {
   if (jobs.empty()) return 0;
+  const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
@@ -1690,7 +1711,8 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(
   sql += values_rows;
   sql += R"SQL(
   )
-  UPDATE RETRIEVE_ACTIVE_QUEUE a
+  UPDATE )SQL";
+  sql += repack_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE a
   SET
     TOTAL_REPORT_RETRIES = d.total_report_retries,
     IS_REPORTING = FALSE,
@@ -1713,13 +1735,13 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(
   const auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
 
-  // Step 2: move updated rows to RETRIEVE_FAILED_QUEUE
+  // Step 2: move updated rows to (REPACK_)RETRIEVE_FAILED_QUEUE
   std::vector<std::string> jobIds;
   jobIds.reserve(jobs.size());
   for (const auto* row : jobs) {
     jobIds.push_back(std::to_string(row->jobId));
   }
-  moveJobBatchToFailedQueueTable(txn, jobIds, false /* isRepack=false, user jobs only */);
+  moveJobBatchToFailedQueueTable(txn, jobIds, isRepack);
 
   return nrows;
 }

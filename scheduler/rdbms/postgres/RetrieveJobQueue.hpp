@@ -918,14 +918,16 @@ public:
 
   // failReportBatchRequeue: batch UPDATE for jobs where report retries are not exhausted.
   // Resets IS_REPORTING=FALSE, updates TOTAL_REPORT_RETRIES and REPORT_FAILURE_LOG.
-  // No table move — job stays in RETRIEVE_ACTIVE_QUEUE for retry.
+  // No table move — job stays in (REPACK_)RETRIEVE_ACTIVE_QUEUE for retry.
   static uint64_t failReportBatchRequeue(Transaction& txn,
-                                         const std::vector<RetrieveJobQueueRow*>& jobs);
+                                         const std::vector<RetrieveJobQueueRow*>& jobs,
+                                         bool isRepack);
 
   // failReportBatchExceedRetries: batch UPDATE counters for jobs that have exhausted report
-  // retries or have NoReportRequired, then batch-moves them to RETRIEVE_FAILED_QUEUE.
+  // retries or have NoReportRequired, then batch-moves them to (REPACK_)RETRIEVE_FAILED_QUEUE.
   static uint64_t failReportBatchExceedRetries(Transaction& txn,
-                                               const std::vector<RetrieveJobQueueRow*>& jobs);
+                                               const std::vector<RetrieveJobQueueRow*>& jobs,
+                                               bool isRepack);
 #endif
 };
 };  // namespace cta::schedulerdb::postgres

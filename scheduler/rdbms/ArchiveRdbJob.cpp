@@ -202,8 +202,13 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
     return;
   }
 
-  // decide if the failure comes from full tape or failed task queue - then avoid re-queueing to the same mount
-  // for the moment this is driven by failureReason - needs more robust design in the future !
+  // Meant to force a new mount when the SESSION itself crashed (not just this one file), by
+  // matching free-text failureReason against a log message from TapeWriteSingleThread's
+  // crash-cleanup path. Currently dead: no log message containing this text exists anywhere in
+  // the codebase (checked - TapeWriteSingleThread's actual crash-path logging is in
+  // requeueUnprocessedTasks(), worded differently), so failedTaskQueue is always false and this
+  // never fires. Matches ArchiveJobQueue.cpp's failTransferBatchRequeue(), which copies the same
+  // (equally dead) check for consistency with this one - fix both together if fixing either.
   const bool failedTaskQueue =
     failureReason.find("In TapeWriteSingleThread::run(): cleaning failed task queue") != std::string::npos;
   if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount || failedTaskQueue) {

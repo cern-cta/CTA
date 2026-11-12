@@ -336,9 +336,10 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
 #endif
   }
 #ifdef CTA_PGSCHED
-  // Piggyback: flush accumulated failed jobs on every tape flush event.
-  // The only gap is failures that arrive after the last tape flush — those are held until
-  // ReportEndofSession fires, which is guaranteed.
+  // Flush accumulated failed jobs on every tape flush event. NOT reached if
+  // reportSuccessfulJobsBatch() throws in the branch above (normal, no prior error): that
+  // exception propagates out of WorkerThread::run()'s loop, ending the reporting thread before
+  // ReportEndofSession's own flushFailedJobs() call ever runs. See c_failedJobsBatchMax / GC.
   reportPacker.flushFailedJobs(reportPacker.m_lc);
 #endif
 }
@@ -458,16 +459,10 @@ void MigrationReportPacker::reportSuccessfulJobsBatch(cta::log::LogContext& lc) 
     lc.log(cta::log::INFO,
            "In MigrationReportPacker::reportSuccessfulJobsBatch(): successfully reported batch of archive jobs to disk.");
   } catch (const cta::ArchiveMount::FailedReportCatalogueUpdate& ex) {
-    // The catalogue update failed before any DB state was changed, so these jobs
-    // have not been recorded anywhere and must be re-queued as transfer failures.
-    //
-    // Pgsched: batch all failedToReportArchiveJobs in one failTransferBatch() call
-    //          (prepareFailTransfer is called inside the facade for each job).
-    //          Re-throw so the caller (ReportFlush::execute) can react; in the normal
-    //          path this terminates the worker; in the error-recovery path the caller's
-    //          try/catch absorbs it so flushFailedJobs() still runs.
-    //
-    // Objectstore: update each job individually (existing behaviour unchanged).
+    // Catalogue update failed before any DB state changed: re-queue these jobs as transfer
+    // failures. Pgsched batches them in one failTransferBatch() call; re-thrown below so the
+    // caller can react (terminates the worker in the normal path, absorbed in error-recovery).
+    // Objectstore updates each job individually (unchanged).
 #ifdef CTA_PGSCHED
     m_archiveMount->failTransferBatch(failedToReportArchiveJobs, ex.getMessageValue(), lc);
 #else
@@ -495,17 +490,10 @@ void MigrationReportPacker::reportSuccessfulJobsBatch(cta::log::LogContext& lc) 
 #endif
     throw;
   } catch (const cta::ArchiveMount::FailedReportMoveToQueue& ex) {
-    // The catalogue update succeeded but the scheduler-DB state update (setJobBatchTransferred)
-    // failed.  These jobs are on tape and in the catalogue; only the queue-state transition
-    // was lost.  They must go through the report-failure path (not transfer-failure).
-    //
-    // Pgsched: batch all failedToReportArchiveJobs in one failReportBatch() call
-    //          (prepareFailReport is called inside the facade for each job).
-    //          Jobs that have exhausted report retries go to ARCHIVE_FAILED_QUEUE;
-    //          the rest have IS_REPORTING reset for the next report attempt.
-    //          Re-throw for the same reason as FailedReportCatalogueUpdate above.
-    //
-    // Objectstore: update each job individually (existing behaviour unchanged).
+    // Catalogue update succeeded but the scheduler-DB queue-state transition failed: these jobs
+    // are on tape and catalogued, so they go through the report-failure path, not transfer-
+    // failure. Pgsched batches them in one failReportBatch() call; re-thrown for the same reason
+    // as FailedReportCatalogueUpdate above. Objectstore updates each job individually (unchanged).
 #ifdef CTA_PGSCHED
     m_archiveMount->failReportBatch(failedToReportArchiveJobs, ex.getMessageValue(), lc);
 #else

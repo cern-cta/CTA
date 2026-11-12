@@ -48,7 +48,6 @@ std::string cta::ArchiveMount::getVid() const {
 // getDrive
 //------------------------------------------------------------------------------
 std::string cta::ArchiveMount::getDrive() const {
-  if (!m_dbMount) return "";
   return m_dbMount->mountInfo.drive;
 }
 

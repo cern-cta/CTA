@@ -406,14 +406,15 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepa
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
         LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
-        FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG,
+        FAILURE_LOG = :FAILURE_LOG,
         LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   )SQL";
-  // For multi-copy user archive requests, failing one copy terminally means the
-  // whole request cannot meet its redundancy goal — mark all copies as failed so
-  // the archive request is retried from scratch.  The drive thread for the
-  // sibling copy may still be writing; updateMultiCopyJobSuccess guards against
-  // overwriting this terminal status (see AND aj2.STATUS <> STATUS_FAILED there).
+  // Plain assignment, not FAILURE_LOG || :FAILURE_LOG: :FAILURE_LOG is bound from
+  // failureLogs.value_or(""), which updateJobRowFailureLog() already appended the new entry onto
+  // the value loaded from this same column - appending again in SQL would duplicate the old text.
+  // Multi-copy user requests: fail all copies together, since the request can no longer meet
+  // its redundancy goal. updateMultiCopyJobSuccess guards against a still-writing sibling copy
+  // overwriting this terminal status.
   if (reqJobCount > 1 && !isRepack) {
     sql += R"SQL(
         WHERE ARCHIVE_REQUEST_ID = :ARCHIVE_REQUEST_ID
@@ -465,6 +466,10 @@ void ArchiveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 };
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
+// The SQL below selects :FAILURE_LOG AS FAILURE_LOG with a plain reference, no SQL-side
+// concatenation: :FAILURE_LOG is bound from failureLogs.value_or(""), which already contains
+// the row's old FAILURE_LOG text plus the new entry (updateJobRowFailureLog() appends onto a
+// field loaded from this same column) - concatenating again here would duplicate the old text.
 uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               ArchiveJobStatus newStatus,
                                               bool keepMountId,
@@ -605,7 +610,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
             :TOTAL_RETRIES AS TOTAL_RETRIES,
             :RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
             :LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
-            FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
+            :FAILURE_LOG AS FAILURE_LOG,
   )SQL";
   if (!keepMountId) {
     sql += " NULL AS MOUNT_ID";
@@ -1002,6 +1007,11 @@ uint64_t ArchiveJobQueueRow::deleteFailedArchiveJob(Transaction& txn, uint64_t j
   return nrows;
 }
 
+// The SQL below selects d.failure_log AS FAILURE_LOG with a plain reference, no SQL-side
+// concatenation: d.failure_log (bound from row->failureLogs.value_or("")) already contains
+// m.FAILURE_LOG's old text plus the new entry, since updateJobRowFailureLog() appends onto a
+// field that was itself loaded from this same column - concatenating again here would
+// duplicate the old text.
 uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
                                                       const std::vector<ArchiveJobQueueRow*>& jobs,
                                                       bool isRepack) {
@@ -1069,7 +1079,7 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   m.VID, m.DRIVE, m.HOST, m.MOUNT_TYPE, m.LOGICAL_LIBRARY,
   :PENDING_STATUS::ARCHIVE_JOB_STATUS AS STATUS,
   d.total_retries, d.retries_within_mount, d.last_mount,
-  COALESCE(m.FAILURE_LOG, '') || d.failure_log AS FAILURE_LOG,
+  d.failure_log AS FAILURE_LOG,
   CASE WHEN d.keep_mount THEN m.MOUNT_ID ELSE NULL END AS MOUNT_ID
   FROM moved m
   JOIN per_job d ON m.JOB_ID = d.job_id
@@ -1082,8 +1092,14 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   for (size_t i = 0; i < jobs.size(); ++i) {
     const auto* row = jobs[i];
     const std::string s = std::to_string(i);
-    // keepMountId: stay on same mount if within-mount retry budget not exhausted;
-    // force new mount when the session itself failed (cleaning failed task queue)
+    // keepMountId: stay on same mount if within-mount retry budget not exhausted; meant to also
+    // force a new mount when the SESSION itself crashed, by matching free-text failureLogs
+    // against a log message from TapeWriteSingleThread's crash-cleanup path. Currently dead: no
+    // log message containing this text exists anywhere in the codebase today (checked -
+    // TapeWriteSingleThread's actual crash-path logging is in requeueUnprocessedTasks(), worded
+    // differently), so failedTaskQueue is always false. Matches ArchiveRdbJob.cpp's failTransfer()
+    // single-job equivalent, whose own comment already flags this as a placeholder - fix both
+    // together if fixing either.
     const bool failedTaskQueue = row->failureLogs.value_or("").find(
       "In TapeWriteSingleThread::run(): cleaning failed task queue") != std::string::npos;
     const bool keepMountId = (row->retriesWithinMount < row->maxRetriesWithinMount) && !failedTaskQueue;
@@ -1102,6 +1118,10 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   return nrows;
 }
 
+// The SQL below sets FAILURE_LOG = d.failure_log with a plain assignment, no SQL-side
+// concatenation: d.failure_log (bound from row->failureLogs.value_or("")) already has
+// a.FAILURE_LOG's old text plus the new entry appended in memory (updateJobRowFailureLog()) -
+// concatenating again here would duplicate the old text.
 uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
                                                             const std::vector<ArchiveJobQueueRow*>& jobs,
                                                             bool isRepack) {
@@ -1110,10 +1130,8 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   const ArchiveJobStatus newStatus = isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForFailure
                                               : ArchiveJobStatus::AJS_ToReportToUserForFailure;
 
-  // Build per-row VALUES CTE with numbered bind params.
-  // For non-repack multi-copy requests (req_job_count > 1) we must fail ALL copies of the
-  // same archive request atomically (matching the WHERE ARCHIVE_REQUEST_ID semantics of the
-  // single-job path).  Repack always uses per-JOB_ID semantics (copies are independent).
+  // Non-repack multi-copy requests fail all copies atomically, by ARCHIVE_REQUEST_ID (matching
+  // the single-job path); repack copies are independent and use per-JOB_ID semantics.
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
     if (i > 0) values_rows += ",\n    ";
@@ -1137,7 +1155,7 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
     TOTAL_RETRIES = d.total_retries,
     RETRIES_WITHIN_MOUNT = d.retries_within_mount,
     LAST_MOUNT_WITH_FAILURE = d.last_mount,
-    FAILURE_LOG = COALESCE(a.FAILURE_LOG, '') || d.failure_log,
+    FAILURE_LOG = d.failure_log,
     LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   FROM per_job d
   WHERE (d.req_job_count = 1 AND a.JOB_ID = d.job_id)
@@ -1172,11 +1190,8 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   if (jobs.empty()) return 0;
   const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
-  // Build per-row VALUES CTE: (job_id, total_report_retries, report_failure_log,
-  //                             archive_request_id, req_job_count)
-  // For non-repack multi-copy requests (req_job_count > 1) we must move ALL copies
-  // of the same archive request atomically, matching the individual failReport()
-  // → moveJobToFailedQueueTable() semantics. Repack always has req_job_count = 1.
+  // Non-repack multi-copy requests move all copies atomically, by ARCHIVE_REQUEST_ID (matching
+  // single-job failReport()); repack always has req_job_count = 1.
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
     if (i > 0) values_rows += ",\n    ";
@@ -1185,9 +1200,7 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
                  + "::TEXT, :REQID" + s + "::BIGINT, :RJC" + s + "::SMALLINT)";
   }
 
-  // Atomically update STATUS to ReadyForDeletion and move to failed queue in one CTE.
-  // For multi-copy requests the WHERE clause matches all sibling copies by
-  // ARCHIVE_REQUEST_ID so the entire request is moved atomically.
+  // Update STATUS to ReadyForDeletion and move to failed queue in one CTE.
   std::string sql = R"SQL(
   WITH per_job(job_id, total_report_retries, report_failure_log,
                archive_request_id, req_job_count) AS (
