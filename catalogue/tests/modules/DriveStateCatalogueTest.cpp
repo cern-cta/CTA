@@ -1708,10 +1708,10 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedByRoutineStatusUpdate
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
       .reportDriveStatus(driveInfo,
-                        cta::common::dataStructures::MountType::NoMount,
-                        cta::common::dataStructures::DriveStatus::Up,
-                        now,
-                        dummyLc);
+                         cta::common::dataStructures::MountType::NoMount,
+                         cta::common::dataStructures::DriveStatus::Up,
+                         now,
+                         dummyLc);
   }
 
   // NEXT_* must be unchanged — the routine update must not wipe the marker.
@@ -1757,16 +1757,16 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedDuringTransferringSta
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
       .reportDriveStatus(driveInfo,
-                        cta::common::dataStructures::MountType::ArchiveForUser,
-                        cta::common::dataStructures::DriveStatus::Transferring,
-                        now,
-                        dummyLc,
-                        1 /* mountSessionId */,
-                        1024 * 1024 /* byteTransferred */,
-                        10 /* filesTransferred */,
-                        "VID002",
-                        "pool2",
-                        "vo2");
+                         cta::common::dataStructures::MountType::ArchiveForUser,
+                         cta::common::dataStructures::DriveStatus::Transferring,
+                         now,
+                         dummyLc,
+                         1 /* mountSessionId */,
+                         1024 * 1024 /* byteTransferred */,
+                         10 /* filesTransferred */,
+                         "VID002",
+                         "pool2",
+                         "vo2");
   }
 
   // NEXT_* must survive the stats update.
@@ -1812,10 +1812,10 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypeClearedOnStatusTransitionInCas
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
       .reportDriveStatus(driveInfo,
-                        cta::common::dataStructures::MountType::NoMount,
-                        cta::common::dataStructures::DriveStatus::Starting,
-                        now,
-                        dummyLc);
+                         cta::common::dataStructures::MountType::NoMount,
+                         cta::common::dataStructures::DriveStatus::Starting,
+                         now,
+                         dummyLc);
   }
 
   // NEXT_* must be cleared: the drive is now counted via driveStatus (Pass 1),
