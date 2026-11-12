@@ -238,8 +238,8 @@ class K8sConnection(RemoteConnection):
                 and current.container_id
                 and current.container_id != before.container_id
                 and current.ready
-                and current.last_termination is not None
             ):
+                # Termination metadata may be absent even after a successful, ready restart.
                 return current
             if time.monotonic() >= deadline:
                 raise TimeoutError(f"Container did not restart and become ready within {timeout_secs}s: {current}")

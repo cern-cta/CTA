@@ -43,6 +43,7 @@
 #include "tests/TempFile.hpp"
 
 #include <atomic>
+#include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <dirent.h>
@@ -869,6 +870,18 @@ public:
     // Bound failures involving virtual hardware and in-memory queues. Neither
     // a robot nor a disk server is contacted by these scenarios.
     alarm(5);
+    // TSan starts a persistent helper on the first thread creation in this death-test child.
+    // Initialize threading before measuring the baseline without allowing extra session threads.
+    pid_t warmupTid = 0;
+    std::thread([&warmupTid] { warmupTid = gettid(); }).join();
+    const auto warmupTask = "/proc/self/task/" + std::to_string(warmupTid);
+    const auto warmupDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+    // join() can precede removal of the warmup thread's proc entry.
+    while (access(warmupTask.c_str(), F_OK) == 0 && std::chrono::steady_clock::now() < warmupDeadline) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    ASSERT_EQ(-1, access(warmupTask.c_str(), F_OK)) << "Warmup thread did not finish kernel teardown";
+    ASSERT_EQ(ENOENT, errno);
     const auto threadsBefore = transferTestThreadCount();
     cta::log::StringLogger logger("dummy", "transferFailureTest", cta::log::DEBUG);
     Mount mount(getCatalogue(), point);
