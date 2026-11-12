@@ -160,8 +160,7 @@ public:
    * write failures (ReportError path) and skipped-file failures (ReportSkipped path).
    * prepareFailTransfer() must have been called on each job before this call.
    */
-  virtual void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs,
-                                 cta::log::LogContext& lc);
+  virtual void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs, cta::log::LogContext& lc);
 
   /**
    * Batch-fail the unwrapped DB-level jobs returned in failedToReportArchiveJobs when

@@ -1853,9 +1853,11 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
 // RelationalDB::getNextFailedRetrieveRepackReportBatch() - aggregate FILE_COUNT/FILE_BYTES
 // counters there, not per-job FAILURE_LOG text, so this function's duplication fix above does
 // not apply to repack at all. No isRepack split here on purpose - see the two functions above.
-void RelationalDB::failRetrieveJobBatchReport(
-    std::vector<SchedulerDatabase::RetrieveJob*>& batch, log::LogContext& lc) {
-  if (batch.empty()) return;
+void RelationalDB::failRetrieveJobBatchReport(std::vector<SchedulerDatabase::RetrieveJob*>& batch,
+                                              log::LogContext& lc) {
+  if (batch.empty()) {
+    return;
+  }
 
   std::vector<schedulerdb::postgres::RetrieveJobQueueRow*> exceed, requeue;
   for (auto* dbJob : batch) {
@@ -1865,27 +1867,25 @@ void RelationalDB::failRetrieveJobBatchReport(
         "In RelationalDB::failRetrieveJobBatchReport(): unexpected job type (not RetrieveRdbJob)");
     }
     auto* row = &rdbJob->m_jobRow;
-    const bool isExceed =
-      (dbJob->reportType == SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired
-       || row->totalReportRetries >= row->maxReportRetries);
+    const bool isExceed = (dbJob->reportType == SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired
+                           || row->totalReportRetries >= row->maxReportRetries);
     (isExceed ? exceed : requeue).push_back(row);
   }
 
   {
     cta::log::ScopedParamContainer params(lc);
-    params.add("batchSize", batch.size())
-          .add("nExceededRetries", exceed.size())
-          .add("nRequeued", requeue.size());
-    lc.log(log::INFO,
-           "In RelationalDB::failRetrieveJobBatchReport(): processing failed retrieve report batch.");
+    params.add("batchSize", batch.size()).add("nExceededRetries", exceed.size()).add("nRequeued", requeue.size());
+    lc.log(log::INFO, "In RelationalDB::failRetrieveJobBatchReport(): processing failed retrieve report batch.");
   }
 
   schedulerdb::Transaction txn(m_connPool, lc);
   try {
-    if (!requeue.empty())
+    if (!requeue.empty()) {
       schedulerdb::postgres::RetrieveJobQueueRow::failReportBatchRequeue(txn, requeue);
-    if (!exceed.empty())
+    }
+    if (!exceed.empty()) {
       schedulerdb::postgres::RetrieveJobQueueRow::failReportBatchExceedRetries(txn, exceed);
+    }
     txn.commit();
   } catch (...) {
     txn.abort();

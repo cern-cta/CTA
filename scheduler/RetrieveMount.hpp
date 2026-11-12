@@ -210,8 +210,7 @@ public:
     * @param failedJobs The jobs to fail
     * @param lc log context
     */
-  virtual void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& failedJobs,
-                                 cta::log::LogContext& lc);
+  virtual void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& failedJobs, cta::log::LogContext& lc);
 #endif
   /**
   * Re-queues batch of jobs

@@ -1015,19 +1015,22 @@ uint64_t ArchiveJobQueueRow::deleteFailedArchiveJob(Transaction& txn, uint64_t j
 uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
                                                       const std::vector<ArchiveJobQueueRow*>& jobs,
                                                       bool isRepack) {
-  if (jobs.empty()) return 0;
+  if (jobs.empty()) {
+    return 0;
+  }
   const std::string repack_prefix = isRepack ? "REPACK_" : "";
-  const std::string pending_status =
-    isRepack ? to_string(ArchiveJobStatus::AJS_ToTransferForRepack)
-             : to_string(ArchiveJobStatus::AJS_ToTransferForUser);
+  const std::string pending_status = isRepack ? to_string(ArchiveJobStatus::AJS_ToTransferForRepack) :
+                                                to_string(ArchiveJobStatus::AJS_ToTransferForUser);
 
   // Build per-row VALUES CTE with numbered bind params
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
-    values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::SMALLINT, :RWM" + s
-                 + "::SMALLINT, :LMF" + s + "::BIGINT, :FL" + s + "::TEXT, :KM" + s + "::BOOL)";
+    values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::SMALLINT, :RWM" + s + "::SMALLINT, :LMF" + s + "::BIGINT, :FL"
+                   + s + "::TEXT, :KM" + s + "::BOOL)";
   }
 
   std::string sql = R"SQL(
@@ -1056,7 +1059,9 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   )
   INSERT INTO )SQL";
   sql += repack_prefix + "ARCHIVE_PENDING_QUEUE (";
-  if (isRepack) sql += "\n  REPACK_REQUEST_ID,";
+  if (isRepack) {
+    sql += "\n  REPACK_REQUEST_ID,";
+  }
   sql += R"SQL(
   JOB_ID, ARCHIVE_REQUEST_ID, REQUEST_JOB_COUNT, TAPE_POOL, MOUNT_POLICY, PRIORITY,
   MIN_ARCHIVE_REQUEST_AGE, ARCHIVE_FILE_ID, SIZE_IN_BYTES, COPY_NB, START_TIME,
@@ -1068,7 +1073,9 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   STATUS, TOTAL_RETRIES, RETRIES_WITHIN_MOUNT, LAST_MOUNT_WITH_FAILURE, FAILURE_LOG, MOUNT_ID
   )
   SELECT )SQL";
-  if (isRepack) sql += "\n  m.REPACK_REQUEST_ID,";
+  if (isRepack) {
+    sql += "\n  m.REPACK_REQUEST_ID,";
+  }
   sql += R"SQL(
   m.JOB_ID, m.ARCHIVE_REQUEST_ID, m.REQUEST_JOB_COUNT, m.TAPE_POOL, m.MOUNT_POLICY, m.PRIORITY,
   m.MIN_ARCHIVE_REQUEST_AGE, m.ARCHIVE_FILE_ID, m.SIZE_IN_BYTES, m.COPY_NB, m.START_TIME,
@@ -1125,20 +1132,23 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
 uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
                                                             const std::vector<ArchiveJobQueueRow*>& jobs,
                                                             bool isRepack) {
-  if (jobs.empty()) return 0;
+  if (jobs.empty()) {
+    return 0;
+  }
   const std::string repack_prefix = isRepack ? "REPACK_" : "";
-  const ArchiveJobStatus newStatus = isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForFailure
-                                              : ArchiveJobStatus::AJS_ToReportToUserForFailure;
+  const ArchiveJobStatus newStatus =
+    isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForFailure : ArchiveJobStatus::AJS_ToReportToUserForFailure;
 
   // Non-repack multi-copy requests fail all copies atomically, by ARCHIVE_REQUEST_ID (matching
   // the single-job path); repack copies are independent and use per-JOB_ID semantics.
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
-    values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::SMALLINT, :RWM" + s
-                 + "::SMALLINT, :LMF" + s + "::BIGINT, :FL" + s + "::TEXT"
-                 + ", :REQID" + s + "::BIGINT, :RJC" + s + "::SMALLINT)";
+    values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::SMALLINT, :RWM" + s + "::SMALLINT, :LMF" + s + "::BIGINT, :FL"
+                   + s + "::TEXT" + ", :REQID" + s + "::BIGINT, :RJC" + s + "::SMALLINT)";
   }
 
   std::string sql = R"SQL(
@@ -1187,17 +1197,21 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
 uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
                                                           const std::vector<ArchiveJobQueueRow*>& jobs,
                                                           bool isRepack) {
-  if (jobs.empty()) return 0;
+  if (jobs.empty()) {
+    return 0;
+  }
   const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
   // Non-repack multi-copy requests move all copies atomically, by ARCHIVE_REQUEST_ID (matching
   // single-job failReport()); repack always has req_job_count = 1.
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
-    values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s
-                 + "::TEXT, :REQID" + s + "::BIGINT, :RJC" + s + "::SMALLINT)";
+    values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT, :REQID" + s + "::BIGINT, :RJC"
+                   + s + "::SMALLINT)";
   }
 
   // Update STATUS to ReadyForDeletion and move to failed queue in one CTE.
@@ -1245,13 +1259,17 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
 uint64_t ArchiveJobQueueRow::failReportBatchRequeue(Transaction& txn,
                                                     const std::vector<ArchiveJobQueueRow*>& jobs,
                                                     bool isRepack) {
-  if (jobs.empty()) return 0;
+  if (jobs.empty()) {
+    return 0;
+  }
   const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
   // Build per-row VALUES CTE: (job_id, total_report_retries, report_failure_log)
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
     values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT)";
   }

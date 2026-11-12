@@ -540,14 +540,13 @@ public:
   enum class ThrowMode { None, CatalogueUpdate, MoveToQueue };
   ThrowMode throwMode = ThrowMode::None;
 
-  explicit MockArchiveMountWithBatch(cta::catalogue::Catalogue& catalogue)
-      : cta::MockArchiveMount(catalogue) {}
+  explicit MockArchiveMountWithBatch(cta::catalogue::Catalogue& catalogue) : cta::MockArchiveMount(catalogue) {}
 
-  void reportJobsBatchTransferred(
-      std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
-      std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
-      std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
-      cta::log::LogContext& lc) override {
+  void
+  reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
+                             std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
+                             std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
+                             cta::log::LogContext& lc) override {
     while (!successfulArchiveJobs.empty()) {
       if (auto* mj = dynamic_cast<cta::MockArchiveJob*>(successfulArchiveJobs.front().get())) {
         mj->reportJobSucceeded();
@@ -567,8 +566,7 @@ public:
     }
   }
 
-  void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& jobs,
-                         cta::log::LogContext&) override {
+  void failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& jobs, cta::log::LogContext&) override {
     flushCount++;
     lastBatchSize = jobs.size();
     failureCount += static_cast<int>(jobs.size());
@@ -578,7 +576,6 @@ public:
       }
     }
   }
-
 };
 
 TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedAccumulateSmallBatch) {
@@ -632,7 +629,8 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedBa
 
   const drive::compressionStats stats;
   mrp.reportFlush(stats, lc);  // flushes remaining 1 job
-  mrp.reportEndOfSession(daemon::MigrationReportPacker::SessionEndReason::Completed, lc);  // flushFailedJobs called again but empty → no-op
+  mrp.reportEndOfSession(daemon::MigrationReportPacker::SessionEndReason::Completed,
+                         lc);  // flushFailedJobs called again but empty → no-op
   mrp.waitThread();
 
   // Two flushes: mid-session at batch size 600 (batch-size threshold), then at reportFlush
@@ -701,7 +699,8 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedSu
   const drive::compressionStats stats;
   mrp.reportFlush(stats, lc);
 
-  mrp.reportEndOfSession(daemon::MigrationReportPacker::SessionEndReason::Completed, lc);  // both accumulators empty → no additional calls
+  mrp.reportEndOfSession(daemon::MigrationReportPacker::SessionEndReason::Completed,
+                         lc);  // both accumulators empty → no additional calls
   mrp.waitThread();
 
   // Single flush reported both 3 successes and 3 failures; end-of-session is clean
@@ -797,8 +796,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedCa
   MockArchiveMountWithBatch tam(*m_catalogue);
   tam.throwMode = MockArchiveMountWithBatch::ThrowMode::CatalogueUpdate;
 
-  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedCatalogueUpdateFailurePropagates",
-                             cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedCatalogueUpdateFailurePropagates", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   daemon::TapeSessionTracker mrpTracker;
   daemon::MigrationReportPacker mrp(&tam, lc, mrpTracker);
@@ -817,8 +815,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedCa
 
   // The exception must have been logged by the worker thread.
   const std::string logOutput = log.getLog();
-  ASSERT_NE(std::string::npos,
-            logOutput.find("Received a CTA exception while reporting archive mount results"))
+  ASSERT_NE(std::string::npos, logOutput.find("Received a CTA exception while reporting archive mount results"))
     << "Expected CTA exception log from worker thread; got: " << logOutput;
 }
 
@@ -829,8 +826,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedMo
   MockArchiveMountWithBatch tam(*m_catalogue);
   tam.throwMode = MockArchiveMountWithBatch::ThrowMode::MoveToQueue;
 
-  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedMoveToQueueFailurePropagates",
-                             cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedMoveToQueueFailurePropagates", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   daemon::TapeSessionTracker mrpTracker;
   daemon::MigrationReportPacker mrp(&tam, lc, mrpTracker);
@@ -845,8 +841,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedMo
   mrp.waitThread();
 
   const std::string logOutput = log.getLog();
-  ASSERT_NE(std::string::npos,
-            logOutput.find("Received a CTA exception while reporting archive mount results"))
+  ASSERT_NE(std::string::npos, logOutput.find("Received a CTA exception while reporting archive mount results"))
     << "Expected CTA exception log from worker thread; got: " << logOutput;
 }
 
@@ -857,8 +852,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedMo
   MockArchiveMountWithBatch tam(*m_catalogue);
   tam.throwMode = MockArchiveMountWithBatch::ThrowMode::MoveToQueue;
 
-  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedMoveToQueueFailureInErrorRecovery",
-                             cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedMoveToQueueFailureInErrorRecovery", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   daemon::TapeSessionTracker mrpTracker;
   daemon::MigrationReportPacker mrp(&tam, lc, mrpTracker);
@@ -878,8 +872,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedMo
   mrp.waitThread();
 
   const std::string logOutput = log.getLog();
-  ASSERT_NE(std::string::npos,
-            logOutput.find("failed to report successful jobs in error-recovery path"))
+  ASSERT_NE(std::string::npos, logOutput.find("failed to report successful jobs in error-recovery path"))
     << "Expected error-recovery absorption log; got: " << logOutput;
   ASSERT_EQ(1, tam.flushCount);
   ASSERT_EQ(1, tam.failureCount);
@@ -893,8 +886,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedCa
   MockArchiveMountWithBatch tam(*m_catalogue);
   tam.throwMode = MockArchiveMountWithBatch::ThrowMode::CatalogueUpdate;
 
-  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedCatalogueFailureInErrorRecovery",
-                             cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "MigrationReportPackerPgschedCatalogueFailureInErrorRecovery", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   daemon::TapeSessionTracker mrpTracker;
   daemon::MigrationReportPacker mrp(&tam, lc, mrpTracker);
@@ -919,8 +911,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedCa
 
   const std::string logOutput = log.getLog();
   // The absorbed catalogue failure must be ERR-logged by ReportFlush::execute.
-  ASSERT_NE(std::string::npos,
-            logOutput.find("failed to report successful jobs in error-recovery path"))
+  ASSERT_NE(std::string::npos, logOutput.find("failed to report successful jobs in error-recovery path"))
     << "Expected error-recovery absorption log; got: " << logOutput;
   // The accumulated failed job must still have been flushed via flushFailedJobs().
   ASSERT_EQ(1, tam.flushCount);

@@ -332,9 +332,10 @@ void ArchiveMount::refreshMountLivenessHeartbeat(log::LogContext& lc) {
   }
 }
 
-void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch,
-                                     log::LogContext& lc) {
-  if (batch.empty()) return;
+void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) {
+  if (batch.empty()) {
+    return;
+  }
 
   std::vector<postgres::ArchiveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
   for (auto* dbJob : batch) {
@@ -354,22 +355,26 @@ void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Archive
   {
     cta::log::ScopedParamContainer params(lc);
     params.add("batchSize", batch.size())
-          .add("nExceededRetries", exceedUser.size() + exceedRepack.size())
-          .add("nRequeued", requeueUser.size() + requeueRepack.size());
+      .add("nExceededRetries", exceedUser.size() + exceedRepack.size())
+      .add("nRequeued", requeueUser.size() + requeueRepack.size());
     lc.log(log::INFO, "In ArchiveMount::failTransferBatch(): processing failed archive job batch.");
   }
 
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t totalRows = 0;
-    if (!exceedUser.empty())
+    if (!exceedUser.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
-    if (!exceedRepack.empty())
+    }
+    if (!exceedRepack.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
-    if (!requeueUser.empty())
+    }
+    if (!requeueUser.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
-    if (!requeueRepack.empty())
+    }
+    if (!requeueRepack.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+    }
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailTransferBatchArchive);
     txn.setRowCountForTelemetry(totalRows);
     txn.commit();
@@ -379,8 +384,7 @@ void ArchiveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Archive
   }
 }
 
-void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch,
-                                   log::LogContext& lc) {
+void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) {
   // Called after FailedReportMoveToQueue: the tape write and catalogue update succeeded,
   // but setJobBatchTransferred() failed.  prepareFailReport() has already incremented
   // each job's totalReportRetries and updated reportFailureLogs in memory.
@@ -396,7 +400,9 @@ void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJo
   // fails, not from the separate disk/EOS-report routine - and repack archive files genuinely
   // go through setRepackJobBatchTransferred() at that same point. Do not assume archive and
   // retrieve are symmetric here; they operate at different layers.
-  if (batch.empty()) return;
+  if (batch.empty()) {
+    return;
+  }
 
   std::vector<postgres::ArchiveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
   for (auto* dbJob : batch) {
@@ -406,7 +412,7 @@ void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJo
     }
     auto* row = &rdbJob->m_jobRow;
     const bool exceed = (rdbJob->reportType == SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired)
-                     || (row->totalReportRetries >= row->maxReportRetries);
+                        || (row->totalReportRetries >= row->maxReportRetries);
     if (exceed) {
       (rdbJob->isRepack ? exceedRepack : exceedUser).push_back(row);
     } else {
@@ -417,22 +423,26 @@ void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJo
   {
     cta::log::ScopedParamContainer params(lc);
     params.add("batchSize", batch.size())
-          .add("nTerminalFailures", exceedUser.size() + exceedRepack.size())
-          .add("nRetryReport", requeueUser.size() + requeueRepack.size());
+      .add("nTerminalFailures", exceedUser.size() + exceedRepack.size())
+      .add("nRetryReport", requeueUser.size() + requeueRepack.size());
     lc.log(log::INFO, "In ArchiveMount::failReportBatch(): processing failed report batch.");
   }
 
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t totalRows = 0;
-    if (!exceedUser.empty())
+    if (!exceedUser.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failReportBatchExceedRetries(txn, exceedUser, false);
-    if (!exceedRepack.empty())
+    }
+    if (!exceedRepack.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failReportBatchExceedRetries(txn, exceedRepack, true);
-    if (!requeueUser.empty())
+    }
+    if (!requeueUser.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failReportBatchRequeue(txn, requeueUser, false);
-    if (!requeueRepack.empty())
+    }
+    if (!requeueRepack.empty()) {
       totalRows += postgres::ArchiveJobQueueRow::failReportBatchRequeue(txn, requeueRepack, true);
+    }
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailReportBatchArchive);
     txn.setRowCountForTelemetry(totalRows);
     txn.commit();

@@ -336,9 +336,10 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
   }
 }
 
-void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
-                                      log::LogContext& lc) {
-  if (batch.empty()) return;
+void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch, log::LogContext& lc) {
+  if (batch.empty()) {
+    return;
+  }
 
   std::vector<postgres::RetrieveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
   for (auto* dbJob : batch) {
@@ -358,22 +359,26 @@ void RetrieveMount::failTransferBatch(std::vector<cta::SchedulerDatabase::Retrie
   {
     cta::log::ScopedParamContainer params(lc);
     params.add("batchSize", batch.size())
-          .add("nExceededRetries", exceedUser.size() + exceedRepack.size())
-          .add("nRequeued", requeueUser.size() + requeueRepack.size());
+      .add("nExceededRetries", exceedUser.size() + exceedRepack.size())
+      .add("nRequeued", requeueUser.size() + requeueRepack.size());
     lc.log(log::INFO, "In RetrieveMount::failTransferBatch(): processing failed retrieve job batch.");
   }
 
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t totalRows = 0;
-    if (!exceedUser.empty())
+    if (!exceedUser.empty()) {
       totalRows += postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedUser, false);
-    if (!exceedRepack.empty())
+    }
+    if (!exceedRepack.empty()) {
       totalRows += postgres::RetrieveJobQueueRow::failTransferBatchExceedRetries(txn, exceedRepack, true);
-    if (!requeueUser.empty())
+    }
+    if (!requeueUser.empty()) {
       totalRows += postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueUser, false);
-    if (!requeueRepack.empty())
+    }
+    if (!requeueRepack.empty()) {
       totalRows += postgres::RetrieveJobQueueRow::failTransferBatchRequeue(txn, requeueRepack, true);
+    }
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailTransferBatchRetrieve);
     txn.setRowCountForTelemetry(totalRows);
     txn.commit();

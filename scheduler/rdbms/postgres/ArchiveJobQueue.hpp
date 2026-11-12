@@ -1092,18 +1092,16 @@ VALUES )SQL";
    * (already updated in-memory by prepareFailTransfer).
    * keepMountId is decided per-row based on retriesWithinMount < maxRetriesWithinMount.
    */
-  static uint64_t failTransferBatchRequeue(Transaction& txn,
-                                           const std::vector<ArchiveJobQueueRow*>& jobs,
-                                           bool isRepack);
+  static uint64_t
+  failTransferBatchRequeue(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
 
   /**
    * Batch UPDATE of the active queue to ToReportToUser/RepackForFailure for jobs that
    * have exhausted their total retry limit.  Reads retry counters directly from each
    * row's m_jobRow (already updated in-memory by prepareFailTransfer).
    */
-  static uint64_t failTransferBatchExceedRetries(Transaction& txn,
-                                                 const std::vector<ArchiveJobQueueRow*>& jobs,
-                                                 bool isRepack);
+  static uint64_t
+  failTransferBatchExceedRetries(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
 
   /**
    * Batch UPDATE + INSERT for jobs that have exhausted their report-retry budget
@@ -1112,9 +1110,8 @@ VALUES )SQL";
    * Reads totalReportRetries and reportFailureLogs from each row's m_jobRow
    * (already updated in-memory by prepareFailReport).
    */
-  static uint64_t failReportBatchExceedRetries(Transaction& txn,
-                                               const std::vector<ArchiveJobQueueRow*>& jobs,
-                                               bool isRepack);
+  static uint64_t
+  failReportBatchExceedRetries(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
 
   /**
    * Batch UPDATE for jobs that still have report retries remaining: resets
@@ -1122,8 +1119,6 @@ VALUES )SQL";
    * Reads totalReportRetries and reportFailureLogs from each row's m_jobRow
    * (already updated in-memory by prepareFailReport).
    */
-  static uint64_t failReportBatchRequeue(Transaction& txn,
-                                         const std::vector<ArchiveJobQueueRow*>& jobs,
-                                         bool isRepack);
+  static uint64_t failReportBatchRequeue(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
 };
 };  // namespace cta::schedulerdb::postgres

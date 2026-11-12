@@ -425,11 +425,12 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
 //------------------------------------------------------------------------------
 #ifdef CTA_PGSCHED
 void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
-  if (m_failedArchiveJobs.empty()) return;
+  if (m_failedArchiveJobs.empty()) {
+    return;
+  }
   cta::log::ScopedParamContainer params(lc);
   params.add("failedBatchSize", m_failedArchiveJobs.size());
-  lc.log(cta::log::INFO,
-         "In MigrationReportPacker::flushFailedJobs(): flushing batch of failed archive jobs.");
+  lc.log(cta::log::INFO, "In MigrationReportPacker::flushFailedJobs(): flushing batch of failed archive jobs.");
   try {
     m_archiveMount->failTransferBatch(m_failedArchiveJobs, lc);
   } catch (const cta::exception::Exception& ex) {
@@ -447,17 +448,19 @@ void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
 // reportSuccessfulJobsBatch
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportSuccessfulJobsBatch(cta::log::LogContext& lc) {
-  if (m_successfulArchiveJobs.empty() && m_skippedFiles.empty()) return;
+  if (m_successfulArchiveJobs.empty() && m_skippedFiles.empty()) {
+    return;
+  }
   std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
   try {
     cta::utils::Timer t;
     cta::log::ScopedParamContainer params(lc);
     params.add("successfulBatchSize", m_successfulArchiveJobs.size());
-    m_archiveMount->reportJobsBatchTransferred(m_successfulArchiveJobs, m_skippedFiles,
-                                               failedToReportArchiveJobs, lc);
+    m_archiveMount->reportJobsBatchTransferred(m_successfulArchiveJobs, m_skippedFiles, failedToReportArchiveJobs, lc);
     params.add("reportJobsBatchTime", t.secs()).add("failedToReportBatchSize", failedToReportArchiveJobs.size());
-    lc.log(cta::log::INFO,
-           "In MigrationReportPacker::reportSuccessfulJobsBatch(): successfully reported batch of archive jobs to disk.");
+    lc.log(
+      cta::log::INFO,
+      "In MigrationReportPacker::reportSuccessfulJobsBatch(): successfully reported batch of archive jobs to disk.");
   } catch (const cta::ArchiveMount::FailedReportCatalogueUpdate& ex) {
     // Catalogue update failed before any DB state changed: re-queue these jobs as transfer
     // failures. Pgsched batches them in one failTransferBatch() call; re-thrown below so the
@@ -475,8 +478,9 @@ void MigrationReportPacker::reportSuccessfulJobsBatch(cta::log::LogContext& lc) 
         params.add("fileId", archiveJob->archiveFile.archiveFileID)
           .add("latestError", archiveJob->latestError)
           .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-        lc.log(cta::log::WARNING,
-               "In MigrationReportPacker::reportSuccessfulJobsBatch(): failed to failTransfer: job not in objectstore.");
+        lc.log(
+          cta::log::WARNING,
+          "In MigrationReportPacker::reportSuccessfulJobsBatch(): failed to failTransfer: job not in objectstore.");
       } catch (const cta::exception::Exception&) {
         cta::log::ScopedParamContainer params(lc);
         params.add("fileId", archiveJob->archiveFile.archiveFileID)

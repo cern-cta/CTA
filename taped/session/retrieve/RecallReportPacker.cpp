@@ -70,8 +70,7 @@ RecallReportPacker::~RecallReportPacker() {
   if (!m_failedRetrieveJobs.empty()) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("failedJobsLostInQueue", m_failedRetrieveJobs.size());
-    m_lc.log(cta::log::WARNING,
-             "In RecallReportPacker::~RecallReportPacker(): failed jobs lost in queue.");
+    m_lc.log(cta::log::WARNING, "In RecallReportPacker::~RecallReportPacker(): failed jobs lost in queue.");
   }
 #endif
 }
@@ -226,8 +225,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) 
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
       .add("fileId", m_failedRetrieveJob ? m_failedRetrieveJob->archiveFile.archiveFileID : 0);
-    reportPacker.m_lc.log(cta::log::ERR,
-                          "In RecallReportPacker::ReportError::execute(): prepareFailTransfer threw.");
+    reportPacker.m_lc.log(cta::log::ERR, "In RecallReportPacker::ReportError::execute(): prepareFailTransfer threw.");
   }
 #else
   try {
@@ -396,11 +394,12 @@ void RecallReportPacker::WorkerThread::run() {
 //------------------------------------------------------------------------------
 #ifdef CTA_PGSCHED
 void RecallReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
-  if (m_failedRetrieveJobs.empty()) return;
+  if (m_failedRetrieveJobs.empty()) {
+    return;
+  }
   cta::log::ScopedParamContainer params(lc);
   params.add("failedJobsBatchSize", m_failedRetrieveJobs.size());
-  lc.log(cta::log::INFO,
-         "In RecallReportPacker::flushFailedJobs(): flushing batch of failed retrieve jobs.");
+  lc.log(cta::log::INFO, "In RecallReportPacker::flushFailedJobs(): flushing batch of failed retrieve jobs.");
   try {
     m_retrieveMount->failTransferBatch(m_failedRetrieveJobs, lc);
   } catch (const cta::exception::Exception& ex) {

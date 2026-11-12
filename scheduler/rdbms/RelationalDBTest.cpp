@@ -1296,9 +1296,8 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchRequeue) {
     ASSERT_EQ(0u, rset.columnUint64("CNT"));
   }
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM ARCHIVE_PENDING_QUEUE"
-      " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM ARCHIVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -1352,9 +1351,8 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchExceedRetries) {
 
   auto conn = db.getRelationalDB().getConn();
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
-      " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -1403,9 +1401,8 @@ TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue) {
     ASSERT_EQ(0u, rset.columnUint64("CNT"));
   }
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM RETRIEVE_PENDING_QUEUE"
-      " WHERE STATUS = 'RJS_ToTransferForUser'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM RETRIEVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'RJS_ToTransferForUser'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -1450,9 +1447,8 @@ TEST_P(RelationalDBTest, retrieveFailTransferBatchExceedRetries) {
 
   auto conn = db.getRelationalDB().getConn();
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE"
-      " WHERE STATUS = 'RJS_ToReportToUserForFailure'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'RJS_ToReportToUserForFailure'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -1504,17 +1500,15 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchRequeue_multiCopy) {
   auto conn = db.getRelationalDB().getConn();
   // Failed copy is requeued; the other copy stays in the active queue untouched
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
-      " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
   }
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM ARCHIVE_PENDING_QUEUE"
-      " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT, MAX(TOTAL_RETRIES) AS MAX_RETRIES FROM ARCHIVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
@@ -1570,9 +1564,8 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchExceedRetries_multiCopy) {
   // Both copies must be flagged for failure — the untouched copy is collaterally failed via
   // the ARCHIVE_REQUEST_ID match in failTransferBatchExceedRetries
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
-      " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -1601,8 +1594,7 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchRequeue_withinMountExhausted) {
   // MAX_TOTAL_RETRIES stays at 2, so the job is still eligible for a retry on a new mount.
   {
     auto conn = db.getRelationalDB().getConn();
-    auto stmt = conn.createStmt(
-      "UPDATE ARCHIVE_PENDING_QUEUE SET MAX_RETRIES_WITHIN_MOUNT = 1");
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_RETRIES_WITHIN_MOUNT = 1");
     stmt.executeNonQuery();
   }
 
@@ -1630,9 +1622,8 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchRequeue_withinMountExhausted) {
   auto conn = db.getRelationalDB().getConn();
   // Job requeued for a different mount: MOUNT_ID must be NULL
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE"
-      " WHERE STATUS = 'AJS_ToTransferForUser' AND MOUNT_ID IS NULL");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser' AND MOUNT_ID IS NULL");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
@@ -1657,8 +1648,7 @@ TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue_withinMountExhausted) 
 
   {
     auto conn = db.getRelationalDB().getConn();
-    auto stmt = conn.createStmt(
-      "UPDATE RETRIEVE_PENDING_QUEUE SET MAX_RETRIES_WITHIN_MOUNT = 1");
+    auto stmt = conn.createStmt("UPDATE RETRIEVE_PENDING_QUEUE SET MAX_RETRIES_WITHIN_MOUNT = 1");
     stmt.executeNonQuery();
   }
 
@@ -1676,9 +1666,8 @@ TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue_withinMountExhausted) 
 
   auto conn = db.getRelationalDB().getConn();
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM RETRIEVE_PENDING_QUEUE"
-      " WHERE STATUS = 'RJS_ToTransferForUser' AND MOUNT_ID IS NULL");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'RJS_ToTransferForUser' AND MOUNT_ID IS NULL");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
@@ -1710,9 +1699,8 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchMixed) {
   // A2 and A3 keep the default maxTotalRetries=2 and go to the requeue path.
   {
     auto conn = db.getRelationalDB().getConn();
-    auto stmt = conn.createStmt(
-      "UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1"
-      " WHERE DISK_FILE_ID = 'diskFile-A1'");
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1"
+                                " WHERE DISK_FILE_ID = 'diskFile-A1'");
     stmt.executeNonQuery();
   }
 
@@ -1744,18 +1732,16 @@ TEST_P(RelationalDBTest, archiveFailTransferBatchMixed) {
   auto conn = db.getRelationalDB().getConn();
   // A1 exceeded total retries → stays in active queue flagged for failure report
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
-      " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
   }
   // A2, A3 are requeued for another attempt
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE"
-      " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -1798,8 +1784,7 @@ TEST_P(RelationalDBTest, archiveFailTransferBatch_persistsFailureLog) {
 
   auto conn = db.getRelationalDB().getConn();
   {
-    auto stmt = conn.createStmt(
-      "SELECT FAILURE_LOG FROM ARCHIVE_PENDING_QUEUE WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto stmt = conn.createStmt("SELECT FAILURE_LOG FROM ARCHIVE_PENDING_QUEUE WHERE STATUS = 'AJS_ToTransferForUser'");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     const auto log = rset.columnString("FAILURE_LOG");
@@ -1849,9 +1834,8 @@ TEST_P(RelationalDBTest, archiveFailReportBatchRequeue) {
   auto conn = db.getRelationalDB().getConn();
   // Job must remain in ARCHIVE_ACTIVE_QUEUE with IS_REPORTING=FALSE, TOTAL_REPORT_RETRIES=1.
   {
-    auto stmt = conn.createStmt(
-      "SELECT TOTAL_REPORT_RETRIES, IS_REPORTING, TOTAL_RETRIES"
-      " FROM ARCHIVE_ACTIVE_QUEUE");
+    auto stmt = conn.createStmt("SELECT TOTAL_REPORT_RETRIES, IS_REPORTING, TOTAL_RETRIES"
+                                " FROM ARCHIVE_ACTIVE_QUEUE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("TOTAL_REPORT_RETRIES"));
@@ -1918,8 +1902,8 @@ TEST_P(RelationalDBTest, archiveFailReportBatchExceedRetries) {
   }
   // Job must appear in ARCHIVE_FAILED_QUEUE with TOTAL_REPORT_RETRIES=1.
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT, MAX(TOTAL_REPORT_RETRIES) AS MAX_RR FROM ARCHIVE_FAILED_QUEUE");
+    auto stmt =
+      conn.createStmt("SELECT COUNT(*) AS CNT, MAX(TOTAL_REPORT_RETRIES) AS MAX_RR FROM ARCHIVE_FAILED_QUEUE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
@@ -1999,9 +1983,8 @@ TEST_P(RelationalDBTest, archiveFailReportBatchMixed) {
   // A2 and A3 keep the default maxReportRetries=2 → requeue path.
   {
     auto conn = db.getRelationalDB().getConn();
-    auto stmt = conn.createStmt(
-      "UPDATE ARCHIVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = 1"
-      " WHERE DISK_FILE_ID = 'diskFile-A1'");
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = 1"
+                                " WHERE DISK_FILE_ID = 'diskFile-A1'");
     stmt.executeNonQuery();
   }
 
@@ -2039,8 +2022,7 @@ TEST_P(RelationalDBTest, archiveFailReportBatchMixed) {
   }
   // A2, A3 have retries left → still in ARCHIVE_ACTIVE_QUEUE with IS_REPORTING=FALSE.
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -2148,8 +2130,8 @@ TEST_P(RelationalDBTest, archiveFailReportBatch_persistsReportFailureLog) {
 
   auto conn = db.getRelationalDB().getConn();
   {
-    auto stmt = conn.createStmt(
-      "SELECT REPORT_FAILURE_LOG, FAILURE_LOG FROM ARCHIVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
+    auto stmt =
+      conn.createStmt("SELECT REPORT_FAILURE_LOG, FAILURE_LOG FROM ARCHIVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     const auto reportLog = rset.columnString("REPORT_FAILURE_LOG");
@@ -2167,7 +2149,8 @@ TEST_P(RelationalDBTest, archiveFailReportBatch_persistsReportFailureLog) {
 // maxReportRetriesOverride: if set, overrides MAX_REPORT_RETRIES in RETRIEVE_PENDING_QUEUE before
 // getNextJobBatch moves rows to the active queue, so the in-memory value matches the DB.
 static std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>
-setupRetrieveJobForReportFailureTesting(cta::RelationalDBTestWrapper& db, cta::log::LogContext& lc,
+setupRetrieveJobForReportFailureTesting(cta::RelationalDBTestWrapper& db,
+                                        cta::log::LogContext& lc,
                                         uint64_t archiveFileId = 333,
                                         std::optional<uint32_t> maxReportRetriesOverride = std::nullopt) {
   using namespace cta;
@@ -2194,7 +2177,9 @@ setupRetrieveJobForReportFailureTesting(cta::RelationalDBTestWrapper& db, cta::l
     job->prepareFailTransfer("initial transfer failure");
   }
   std::vector<SchedulerDatabase::RetrieveJob*> transferBatch;
-  for (auto& job : jobs) transferBatch.push_back(job.get());
+  for (auto& job : jobs) {
+    transferBatch.push_back(job.get());
+  }
   mount->failTransferBatch(transferBatch, lc);
   // Job is now RJS_ToReportToUserForFailure in RETRIEVE_ACTIVE_QUEUE
 
@@ -2222,9 +2207,8 @@ TEST_P(RelationalDBTest, retrieveFailReportBatchRequeue) {
   auto conn = db.getRelationalDB().getConn();
   // Job must remain in RETRIEVE_ACTIVE_QUEUE with IS_REPORTING=FALSE, TOTAL_REPORT_RETRIES=1.
   {
-    auto stmt = conn.createStmt(
-      "SELECT TOTAL_REPORT_RETRIES, IS_REPORTING, TOTAL_RETRIES"
-      " FROM RETRIEVE_ACTIVE_QUEUE");
+    auto stmt = conn.createStmt("SELECT TOTAL_REPORT_RETRIES, IS_REPORTING, TOTAL_RETRIES"
+                                " FROM RETRIEVE_ACTIVE_QUEUE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("TOTAL_REPORT_RETRIES"));
@@ -2269,8 +2253,8 @@ TEST_P(RelationalDBTest, retrieveFailReportBatchExceedRetries) {
   }
   // Job must appear in RETRIEVE_FAILED_QUEUE with TOTAL_REPORT_RETRIES=1.
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT, MAX(TOTAL_REPORT_RETRIES) AS MAX_RR FROM RETRIEVE_FAILED_QUEUE");
+    auto stmt =
+      conn.createStmt("SELECT COUNT(*) AS CNT, MAX(TOTAL_REPORT_RETRIES) AS MAX_RR FROM RETRIEVE_FAILED_QUEUE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
@@ -2341,9 +2325,8 @@ TEST_P(RelationalDBTest, retrieveFailReportBatchMixed) {
   // queue so the value loaded into memory by getNextRetrieveJobsToReportBatch is correct.
   {
     auto conn = db.getRelationalDB().getConn();
-    auto stmt = conn.createStmt(
-      "UPDATE RETRIEVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = 1"
-      " WHERE DISK_FILE_ID = 'diskFile-A1'");
+    auto stmt = conn.createStmt("UPDATE RETRIEVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = 1"
+                                " WHERE DISK_FILE_ID = 'diskFile-A1'");
     stmt.executeNonQuery();
   }
 
@@ -2355,7 +2338,9 @@ TEST_P(RelationalDBTest, retrieveFailReportBatchMixed) {
     job->prepareFailTransfer("initial transfer failure");
   }
   std::vector<SchedulerDatabase::RetrieveJob*> transferBatch;
-  for (auto& job : jobs) transferBatch.push_back(job.get());
+  for (auto& job : jobs) {
+    transferBatch.push_back(job.get());
+  }
   mount->failTransferBatch(transferBatch, lc);
 
   auto reportJobs = db.getNextRetrieveJobsToReportBatch(10, lc);
@@ -2378,8 +2363,7 @@ TEST_P(RelationalDBTest, retrieveFailReportBatchMixed) {
   }
   // A2, A3 have retries left → still in RETRIEVE_ACTIVE_QUEUE with IS_REPORTING=FALSE.
   {
-    auto stmt = conn.createStmt(
-      "SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(2u, rset.columnUint64("CNT"));
@@ -2406,8 +2390,8 @@ TEST_P(RelationalDBTest, retrieveFailReportBatch_persistsReportFailureLog) {
 
   auto conn = db.getRelationalDB().getConn();
   {
-    auto stmt = conn.createStmt(
-      "SELECT REPORT_FAILURE_LOG, FAILURE_LOG FROM RETRIEVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
+    auto stmt =
+      conn.createStmt("SELECT REPORT_FAILURE_LOG, FAILURE_LOG FROM RETRIEVE_ACTIVE_QUEUE WHERE IS_REPORTING = FALSE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     const auto reportLog = rset.columnString("REPORT_FAILURE_LOG");

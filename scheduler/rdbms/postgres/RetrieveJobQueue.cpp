@@ -1471,21 +1471,24 @@ uint64_t RetrieveJobQueueRow::deleteFailedRetrieveJob(Transaction& txn, uint64_t
 // concatenation: d.failure_log (bound from row->failureLogs.value_or("")) already has
 // a.FAILURE_LOG's old text plus the new entry appended in memory (updateJobRowFailureLog()) -
 // concatenating again here would duplicate the old text.
-uint64_t RetrieveJobQueueRow::failTransferBatchExceedRetries(
-    Transaction& txn,
-    const std::vector<RetrieveJobQueueRow*>& jobs,
-    bool isRepack) {
-  if (jobs.empty()) return 0;
+uint64_t RetrieveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
+                                                             const std::vector<RetrieveJobQueueRow*>& jobs,
+                                                             bool isRepack) {
+  if (jobs.empty()) {
+    return 0;
+  }
   const std::string repack_prefix = isRepack ? "REPACK_" : "";
-  const RetrieveJobStatus newStatus = isRepack ? RetrieveJobStatus::RJS_ToReportToRepackForFailure
-                                               : RetrieveJobStatus::RJS_ToReportToUserForFailure;
+  const RetrieveJobStatus newStatus =
+    isRepack ? RetrieveJobStatus::RJS_ToReportToRepackForFailure : RetrieveJobStatus::RJS_ToReportToUserForFailure;
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
-    values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::INTEGER, :RWM" + s
-                 + "::INTEGER, :LMWF" + s + "::BIGINT, :FL" + s + "::TEXT)";
+    values_rows += "(:JID" + s + "::BIGINT, :TR" + s + "::INTEGER, :RWM" + s + "::INTEGER, :LMWF" + s + "::BIGINT, :FL"
+                   + s + "::TEXT)";
   }
 
   std::string sql = R"SQL(
@@ -1529,27 +1532,24 @@ uint64_t RetrieveJobQueueRow::failTransferBatchExceedRetries(
 // d.failure_log (bound from row->failureLogs.value_or("")) already contains m.FAILURE_LOG's old
 // text plus the new entry, since updateJobRowFailureLog() appends onto a field that was itself
 // loaded from this same column - concatenating again here would duplicate the old text.
-uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
-    Transaction& txn,
-    const std::vector<RetrieveJobQueueRow*>& jobs,
-    bool isRepack) {
-  if (jobs.empty()) return 0;
+uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
+                                                       const std::vector<RetrieveJobQueueRow*>& jobs,
+                                                       bool isRepack) {
+  if (jobs.empty()) {
+    return 0;
+  }
   const std::string repack_prefix = isRepack ? "REPACK_" : "";
   const std::string queue_type = isRepack ? "REPACK_RETRIEVE_PENDING" : "RETRIEVE_PENDING";
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
-    values_rows += "(:JID" + s + "::BIGINT"
-                 + ", :TR" + s + "::INTEGER"
-                 + ", :RWM" + s + "::INTEGER"
-                 + ", :LMWF" + s + "::BIGINT"
-                 + ", :FL" + s + "::TEXT"
-                 + ", :VID" + s + "::TEXT"
-                 + ", :FSEQ" + s + "::BIGINT"
-                 + ", :CNB" + s + "::SMALLINT"
-                 + ", :BID" + s + "::BIGINT)";
+    values_rows += "(:JID" + s + "::BIGINT" + ", :TR" + s + "::INTEGER" + ", :RWM" + s + "::INTEGER" + ", :LMWF" + s
+                   + "::BIGINT" + ", :FL" + s + "::TEXT" + ", :VID" + s + "::TEXT" + ", :FSEQ" + s + "::BIGINT"
+                   + ", :CNB" + s + "::SMALLINT" + ", :BID" + s + "::BIGINT)";
   }
 
   // keep_mount is true when retries_within_mount > 0:
@@ -1644,13 +1644,16 @@ uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
   return nrows2;
 }
 
-uint64_t RetrieveJobQueueRow::failReportBatchRequeue(Transaction& txn,
-                                                     const std::vector<RetrieveJobQueueRow*>& jobs) {
-  if (jobs.empty()) return 0;
+uint64_t RetrieveJobQueueRow::failReportBatchRequeue(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs) {
+  if (jobs.empty()) {
+    return 0;
+  }
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
     values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT)";
   }
@@ -1687,12 +1690,16 @@ uint64_t RetrieveJobQueueRow::failReportBatchRequeue(Transaction& txn,
 }
 
 uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
-                                                            const std::vector<RetrieveJobQueueRow*>& jobs) {
-  if (jobs.empty()) return 0;
+                                                           const std::vector<RetrieveJobQueueRow*>& jobs) {
+  if (jobs.empty()) {
+    return 0;
+  }
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
-    if (i > 0) values_rows += ",\n    ";
+    if (i > 0) {
+      values_rows += ",\n    ";
+    }
     const std::string s = std::to_string(i);
     values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT)";
   }
