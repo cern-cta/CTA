@@ -21,6 +21,11 @@ from typing import Any
 
 from publish import publication_decision, release_key
 
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
+
 
 class VersionTests(unittest.TestCase):
     def test_canonical_versions(self):
@@ -54,6 +59,7 @@ class VersionTests(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("mike") and shutil.which("zensical"), "Run in the docs environment")
 class PublicationTests(unittest.TestCase):
+    @override
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

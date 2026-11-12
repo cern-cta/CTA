@@ -5,11 +5,19 @@
 
 import json
 import re
+import sys
 from pathlib import Path
+from typing import Any
 
+from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.postprocessors import Postprocessor
 from markdown.preprocessors import Preprocessor
+
+if sys.version_info >= (3, 12):
+    from typing import override
+else:
+    from typing_extensions import override
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -27,12 +35,14 @@ def repository_content(text: str, root: Path) -> str:
 
 
 class RepositoryContent(Preprocessor):
-    def run(self, lines):
+    @override
+    def run(self, lines: list[str]) -> list[str]:
         return repository_content("\n".join(lines), ROOT).splitlines()
 
 
 class DiagramDefaults(Postprocessor):
-    def run(self, text):
+    @override
+    def run(self, text: str) -> str:
         # Sequence arrowheads need currentColor to follow the selected palette.
         return re.sub(
             r'(<pre class="mermaid"><code>)(\s*sequenceDiagram\b)',
@@ -42,10 +52,11 @@ class DiagramDefaults(Postprocessor):
 
 
 class CTAContent(Extension):
-    def extendMarkdown(self, md):
+    @override
+    def extendMarkdown(self, md: Markdown) -> None:
         md.preprocessors.register(RepositoryContent(md), "cta_repository", 35)
         md.postprocessors.register(DiagramDefaults(md), "cta_diagrams", 0)
 
 
-def makeExtension(**kwargs):
+def makeExtension(**kwargs: Any) -> CTAContent:  # noqa: N802 - name required by Python-Markdown
     return CTAContent(**kwargs)

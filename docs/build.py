@@ -17,13 +17,13 @@ def prepare(skip_rust: bool) -> None:
     """Generate the manual and expose Rust reference files as static site assets."""
     manual = ROOT / "build/docs/generated/cta-admin.1cta.md"
     manual.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
+    subprocess.run(  # noqa: S603
         [sys.executable, "compile_man_md.py", "cta-admin.1cta.md.in", str(manual)],
         cwd=ROOT / "tools",
         check=True,
     )
     if not skip_rust:
-        subprocess.run(["cargo", "doc", "-q", "--no-deps", "--workspace"], cwd=ROOT, check=True)
+        subprocess.run(["cargo", "doc", "-q", "--no-deps", "--workspace"], cwd=ROOT, check=True)  # noqa: S607
     rust = ROOT / "target/doc"
     if not (rust / "index.html").is_file():
         raise FileNotFoundError("Rust reference missing: run without --skip-rust first")
@@ -40,7 +40,7 @@ def main() -> None:
     args, extra = parser.parse_known_args()
     os.chdir(ROOT)
     prepare(args.skip_rust)
-    subprocess.run([sys.executable, "-m", "zensical", args.command, *extra], check=True)
+    subprocess.run([sys.executable, "-m", "zensical", args.command, *extra], check=True)  # noqa: S603
 
 
 if __name__ == "__main__":
