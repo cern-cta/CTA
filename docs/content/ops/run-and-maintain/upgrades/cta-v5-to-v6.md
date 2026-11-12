@@ -38,7 +38,7 @@ Systemd manages ownership of the directories declared by `RuntimeDirectory=` and
 Review locally managed unit overrides and configuration permissions before restarting.
 For runtime and log directories managed outside systemd, update CTA-owned files and directories from `cta:tape` to `cta:cta` while the affected services are stopped.
 Keep tape devices and tape-access tools in the `tape` group.
-For container deployments, follow the identity and volume guidance in [Docker Images](../../deploy-and-configure/deployment/installation/docker-images.md#configure-and-run-services).
+For container deployments, also review the [container migration steps](#container-deployments) below.
 
 ## Catalogue and scheduler
 
@@ -48,7 +48,12 @@ Link the validated steps to [Catalogue Schema Upgrades](catalogue-schema/index.m
 ## Container deployments
 
 TODO: Document image version selection, configuration and secret changes, volume migration, and rollout order.
-For service identities and volume ownership, see [Docker Images](../../deploy-and-configure/deployment/installation/docker-images.md#configure-and-run-services).
+
+When upgrading from images that use `tape` as the primary group, check existing writable volumes for ownership and permissions compatible with `cta:cta`.
+Migrate existing CTA-owned runtime and log files on mounted volumes while the affected containers are stopped.
+
+Confirm that `cta-taped` and `cta-rmcd` receive the host device group as a supplementary group when the replacement containers are launched.
+For container identity and device-access settings, see [Docker Images](../../deploy-and-configure/deployment/installation/docker-images.md#storage-and-hardware-access).
 
 ## Upgrade sequence
 

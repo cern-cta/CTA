@@ -25,8 +25,8 @@ Supplementary groups are assigned when containers are launched.
 
 TODO: Document persistent and temporary storage, writable runtime directories, permissions, and device access for tape services. Installing packages inside an image does not provide the host's systemd directory management.
 
-When upgrading from images that use `tape` as the primary group, check existing writable volumes for ownership and permissions compatible with `cta:cta`.
-Migrate existing CTA-owned runtime and log files on mounted volumes while the affected containers are stopped.
+Writable runtime and log volumes must allow access by the container's configured UID and GID.
+
 Keep host tape devices in the `tape` group and ensure their numeric group ID matches the container's supplementary group.
 For standalone Docker or Podman containers running `cta-taped` or `cta-rmcd`, pass `--group-add 33` when the device group ID is 33; otherwise use the device's actual group ID.
 Device mappings and any required capabilities must also be configured.
