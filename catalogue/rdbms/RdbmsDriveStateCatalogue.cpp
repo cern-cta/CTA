@@ -765,7 +765,32 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(
 bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   const std::string driveStatusStr = common::dataStructures::TapeDrive::stateToString(tapeDrive.driveStatus);
 
-  // Case 1 : Drive status stays the same
+  // Case 1 (relevant for pgsched only): drive status is UNCHANGED — update
+  // host, library, optional transfer stats, and (conditionally) the pending-
+  // mount marker.
+  //
+  // Why pgsched only:
+  //   pgsched uses a per-library PostgreSQL advisory lock, so schedulers for
+  //   different logical libraries hold different locks and run in parallel.
+  //   OStoreDB instead uses a single global lock that serialises all scheduling
+  //   decisions; additionally, OStoreDB::TapeMountDecisionInfo::createArchiveMount
+  //   and createRetrieveMount do not call updateTapeDriveStatus at all, so the
+  //   NEXT_* logic below is never reached from the OStoreDB path.
+  //
+  // The race (pgsched):
+  //   getExistingAndNextMounts() (Scheduler.cpp) counts active mounts in two
+  //   passes. Pass 1 covers drives in {Starting, Mounting, Transferring, …} via
+  //   driveStatus — correct once taped has reported Starting. Pass 2 covers
+  //   drives where NEXT_MOUNT_TYPE != NO_MOUNT — this fills the window between
+  //   the scheduler committing a mount (advisory lock released, drive still Up)
+  //   and taped calling reportDriveStatus(Starting) seconds to minutes later.
+  //   Without NEXT_*, any scheduler that reads DRIVE_STATE in that window sees
+  //   the drive as Up with no pending mount, under-counts VO active mounts, and
+  //   may schedule a second mount, violating readMaxDrives / writeMaxDrives.
+  //   NEXT_* is written on a separate autocommit catalogue connection before
+  //   commit() releases the advisory lock, so same-library schedulers (which
+  //   wait for the lock) and concurrent different-library schedulers (which read
+  //   DRIVE_STATE independently) both see the marker.
   std::string sql = R"SQL(
     UPDATE DRIVE_STATE SET
       HOST = :HOST,
@@ -777,6 +802,22 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,
       FILES_TRANSFERED_IN_SESSION = :FILES_TRANSFERED_IN_SESSION,
       SESSION_ELAPSED_TIME = CASE WHEN SESSION_START_TIME IS NULL THEN 0 ELSE :REPORT_TIME - SESSION_START_TIME END,
+    )SQL";
+  }
+  // Why conditional on nextMountType != NoMount:
+  //   TapeDrivesCatalogueState helpers (setDriveStarting, setDriveTransfering,
+  //   …) build a fresh TapeDrive struct and leave nextMountType at its default
+  //   (NoMount). Updating NEXT_* unconditionally would wipe the marker on every
+  //   routine status report (e.g. Transferring bytes update), defeating the fix.
+  //   Only TapeMountDecisionInfo::createArchiveMount / createRetrieveMount
+  //   explicitly set nextMountType to a real type, so the condition reaches
+  //   exactly the right callers without any interface changes.
+  if (tapeDrive.nextMountType != common::dataStructures::MountType::NoMount) {
+    sql += R"SQL(
+      NEXT_MOUNT_TYPE = :NEXT_MOUNT_TYPE,
+      NEXT_VID = :NEXT_VID,
+      NEXT_TAPE_POOL = :NEXT_TAPE_POOL,
+      NEXT_VO = :NEXT_VO,
     )SQL";
   }
   sql += R"SQL(
@@ -802,6 +843,22 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     stmt.bindUint64(":BYTES_TRANSFERED_IN_SESSION", tapeDrive.bytesTransferedInSession.value());
     stmt.bindUint64(":FILES_TRANSFERED_IN_SESSION", tapeDrive.filesTransferedInSession.value());
     stmt.bindUint64(":REPORT_TIME", tapeDrive.transferStartTime.value());
+  }
+  if (tapeDrive.nextMountType != common::dataStructures::MountType::NoMount) {
+    // Bind NULL (not "") for unset companion fields, matching Case 2 which hardcodes
+    // NEXT_VID/NEXT_TAPE_POOL/NEXT_VO to NULL.  Keeps SQL semantics consistent so
+    // IS NULL readers behave the same regardless of which update path wrote the row.
+    auto bindOptional = [&stmt](const std::string& field, const std::optional<std::string>& val) {
+      if (val && !val->empty()) {
+        stmt.bindString(field, *val);
+      } else {
+        stmt.bindString(field, std::nullopt);
+      }
+    };
+    stmt.bindString(":NEXT_MOUNT_TYPE", common::dataStructures::toString(tapeDrive.nextMountType));
+    bindOptional(":NEXT_VID", tapeDrive.nextVid);
+    bindOptional(":NEXT_TAPE_POOL", tapeDrive.nextTapePool);
+    bindOptional(":NEXT_VO", tapeDrive.nextVo);
   }
   stmt.executeNonQuery();
 
@@ -890,6 +947,21 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       USER_COMMENT = :USER_COMMENT,
     )SQL";
   }
+  // Always clear the pending-mount marker on any status transition.
+  //
+  // When taped reports Starting (Up→Starting), the drive enters Pass 1 of
+  // getExistingAndNextMounts() (counted via driveStatus). If NEXT_* were left
+  // set, the same mount would be counted twice — once via NEXT_MOUNT_TYPE and
+  // once via MOUNT_TYPE — doubling the apparent VO load and preventing further
+  // legitimate mounts. Hardcoding NO_MOUNT/NULL here avoids touching
+  // TapeDrivesCatalogueState::setDriveStarting() and every other transition
+  // helper; any status change automatically clears the marker.
+  sql += R"SQL(
+    NEXT_MOUNT_TYPE = 'NO_MOUNT',
+    NEXT_VID = NULL,
+    NEXT_TAPE_POOL = NULL,
+    NEXT_VO = NULL,
+  )SQL";
   // Remove last ',' character
   sql.erase(sql.find_last_of(','), 1);
   sql += R"SQL(

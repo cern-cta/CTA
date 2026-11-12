@@ -5,6 +5,8 @@
 
 #include "scheduler/rdbms/TapeMountDecisionInfo.hpp"
 
+#include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/rdbms/ArchiveMount.hpp"
@@ -79,6 +81,22 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     am.mountInfo.priority = mount.priority;
     am.setIsRepack(m_lc);
 
+    // Write the pending mount to the catalogue drive state BEFORE releasing the advisory lock.
+    // This closes the race window where a concurrent scheduler for the same logical library
+    // could see zero next-mounts, compute the VO active-mount count as below the limit, and
+    // schedule a second mount — violating readMaxDrives / writeMaxDrives.
+    if (auto optDrive = m_RelationalDB.m_catalogue.DriveState()->getTapeDrive(driveName); optDrive.has_value()) {
+      auto drive = optDrive.value();
+      drive.nextMountType = mount.type;
+      drive.nextVid = tape.vid;
+      drive.nextTapePool = tape.tapePool;
+      drive.nextVo = tape.vo;
+      if (!drive.lastModificationLog.has_value()) {
+        drive.lastModificationLog = common::dataStructures::EntryLog("NO_USER", drive.host, ::time(nullptr));
+      }
+      m_RelationalDB.m_catalogue.DriveState()->updateTapeDriveStatus(drive);
+    }
+
     // release the named lock on the DB,
     // so that other tape servers can query the job summary
     commit();
@@ -112,7 +130,23 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
 
   // Get the next Mount Id
   auto newMountId = cta::schedulerdb::postgres::MountsRow::getNextMountID(*m_txn);
+
   try {
+    // Write the pending mount to the catalogue drive state BEFORE releasing the advisory lock.
+    // This closes the race window where a concurrent scheduler for the same logical library
+    // could see zero next-mounts, compute the VO active-mount count as below the limit, and
+    // schedule a second mount — violating readMaxDrives / writeMaxDrives.
+    if (auto optDrive = m_RelationalDB.m_catalogue.DriveState()->getTapeDrive(driveName); optDrive.has_value()) {
+      auto drive = optDrive.value();
+      drive.nextMountType = mount.type;
+      drive.nextVid = mount.vid;
+      drive.nextTapePool = mount.tapePool;
+      drive.nextVo = mount.vo;
+      if (!drive.lastModificationLog.has_value()) {
+        drive.lastModificationLog = common::dataStructures::EntryLog("NO_USER", drive.host, ::time(nullptr));
+      }
+      m_RelationalDB.m_catalogue.DriveState()->updateTapeDriveStatus(drive);
+    }
     commit();
   } catch (exception::Exception& ex) {
     m_lc.log(cta::log::ERR,

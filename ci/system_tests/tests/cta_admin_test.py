@@ -1317,4 +1317,9 @@ def test_cta_admin_failedrequest_ls_error_reporting(
 
 
 def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:
+    error_expectations.allow_message("In Scheduler::getDesiredDriveState(): no such drive")
     error_expectations.allow_message("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
+    # test_cta_admin_failedrequest_rm_invalid_object_id intentionally sends malformed object IDs;
+    # the server's catch-all handler logs at ERR level before returning "Error processing gRPC Admin request".
+    error_expectations.allow_message("Sync admin command failed")
+    error_expectations.allow_message("Streaming admin command failed")

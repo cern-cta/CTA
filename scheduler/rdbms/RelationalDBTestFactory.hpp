@@ -66,6 +66,9 @@ public:
   // Gives tests access to RelationalDB methods which are not part of the SchedulerDatabase
   // interface that this class otherwise exposes through SchedulerDatabaseDecorator.
   RelationalDB& getRelationalDB() { return m_RelationalDB; }
+
+  // Gives tests access to the catalogue (e.g. to inspect drive state after mount creation).
+  cta::catalogue::Catalogue& getCatalogue() { return m_catalogue; }
 };
 
 /**
