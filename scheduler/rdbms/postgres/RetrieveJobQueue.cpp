@@ -1654,12 +1654,9 @@ uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(
   return nrows2;
 }
 
-uint64_t RetrieveJobQueueRow::failReportBatchRequeue(
-    Transaction& txn,
-    const std::vector<RetrieveJobQueueRow*>& jobs,
-    bool isRepack) {
+uint64_t RetrieveJobQueueRow::failReportBatchRequeue(Transaction& txn,
+                                                     const std::vector<RetrieveJobQueueRow*>& jobs) {
   if (jobs.empty()) return 0;
-  const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
@@ -1674,8 +1671,7 @@ uint64_t RetrieveJobQueueRow::failReportBatchRequeue(
   sql += values_rows;
   sql += R"SQL(
   )
-  UPDATE )SQL";
-  sql += repack_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE a
+  UPDATE RETRIEVE_ACTIVE_QUEUE a
   SET
     TOTAL_REPORT_RETRIES = d.total_report_retries,
     IS_REPORTING = FALSE,
@@ -1700,12 +1696,9 @@ uint64_t RetrieveJobQueueRow::failReportBatchRequeue(
   return nrows;
 }
 
-uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(
-    Transaction& txn,
-    const std::vector<RetrieveJobQueueRow*>& jobs,
-    bool isRepack) {
+uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
+                                                            const std::vector<RetrieveJobQueueRow*>& jobs) {
   if (jobs.empty()) return 0;
-  const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
@@ -1721,8 +1714,7 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(
   sql += values_rows;
   sql += R"SQL(
   )
-  UPDATE )SQL";
-  sql += repack_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE a
+  UPDATE RETRIEVE_ACTIVE_QUEUE a
   SET
     TOTAL_REPORT_RETRIES = d.total_report_retries,
     IS_REPORTING = FALSE,
@@ -1745,13 +1737,13 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(
   const auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
 
-  // Step 2: move updated rows to (REPACK_)RETRIEVE_FAILED_QUEUE
+  // Step 2: move updated rows to RETRIEVE_FAILED_QUEUE
   std::vector<std::string> jobIds;
   jobIds.reserve(jobs.size());
   for (const auto* row : jobs) {
     jobIds.push_back(std::to_string(row->jobId));
   }
-  moveJobBatchToFailedQueueTable(txn, jobIds, isRepack);
+  moveJobBatchToFailedQueueTable(txn, jobIds, false /* isRepack: never true here, see caller's comment */);
 
   return nrows;
 }
