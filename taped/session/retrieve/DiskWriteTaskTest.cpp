@@ -67,8 +67,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
-                         cta::log::LogContext& lc) override {
+  void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch, cta::log::LogContext& lc) override {
     throw cta::exception::NotImplementedException();
   }
 };
