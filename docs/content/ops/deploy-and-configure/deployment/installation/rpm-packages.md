@@ -102,8 +102,8 @@ The exact contents depend on the selected CTA package. The following locations f
 | Manual pages | `/usr/share/man` | Command documentation, possibly compressed by the build system |
 | Licenses | `/usr/share/licenses` | `COPYING`, installed for every CTA package as RPM license material |
 | Package documentation | `/usr/share/doc` | Documentation, including the generated `CHANGELOG.md` |
-| Example configuration | `/etc/cta/*.example.*` | Vendor examples, refreshed by package upgrades |
-| Logging schema | `/etc/cta/cta-logging.schema.json` | Machine-readable log schema for CTA |
+| Example configuration | `/usr/share/doc/<package>/examples/*.example.*` | Vendor examples, refreshed by package upgrades |
+| Logging schema | `/usr/share/cta/cta-logging.schema.json` | Machine-readable log schema for CTA |
 | Repository definitions | `/etc/yum.repos.d` | CTA repository files installed by `cta-release` |
 | Repository keys | `/etc/pki/rpm-gpg` | Package-signing keys installed by `cta-release` |
 | Version lock configuration | `/etc/yum/pluginconf.d/versionlock.cta` | CTA dependency version locks installed by `cta-release` |

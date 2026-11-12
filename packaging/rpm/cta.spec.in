@@ -159,7 +159,7 @@ Provides the daemon that manages tape drives and tape I/O for CTA.
 %{_libdir}/libctatapedrao.so.*
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
 %{_bindir}/cta-taped
-%doc %{_docdir}/cta/cta-taped.example.toml
+%doc %{_docdir}/cta-taped/examples/cta-taped.example.toml
 %{_mandir}/man1/cta-taped.1*
 %{_unitdir}/cta-taped.service
 
@@ -223,6 +223,7 @@ Obsoletes: cta-frontend-grpc < %{version}-%{release}
 Provides the admin gRPC API serving the administration commands of CTA.
 %files -n cta-admin-api
 %license COPYING
+%config(noreplace) %{_sysconfdir}/logrotate.d/cta-admin-api
 %{_bindir}/cta-admin-api
 %{_unitdir}/cta-admin-api.service
 %doc %{_docdir}/cta-admin-api/examples/cta-admin-api.example.toml
@@ -256,6 +257,7 @@ Obsoletes: cta-frontend-grpc < %{version}-%{release}
 Provides the workflow gRPC API handling EOS archive, retrieve and delete requests for CTA.
 %files -n cta-workflow-api
 %license COPYING
+%config(noreplace) %{_sysconfdir}/logrotate.d/cta-workflow-api
 %{_bindir}/cta-workflow-api
 %{_unitdir}/cta-workflow-api.service
 %doc %{_docdir}/cta-workflow-api/examples/cta-workflow-api.example.toml
