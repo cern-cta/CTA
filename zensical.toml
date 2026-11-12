@@ -357,7 +357,7 @@ custom_dir = "docs/overrides"
 logo = "assets/images/cta-logo.png"
 favicon = "assets/images/favicon.ico"
 font = false
-features = ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune", "announce.dismiss"]
+features = ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune"]
 palette = [
     { "media" = "(prefers-color-scheme: light)", "scheme" = "default", "primary" = "custom", "accent" = "custom", "toggle" = { "icon" = "material/white-balance-sunny", "name" = "Switch to dark mode" } },
     { "media" = "(prefers-color-scheme: dark)", "scheme" = "slate", "primary" = "custom", "accent" = "custom", "toggle" = { "icon" = "material/brightness-3", "name" = "Switch to light mode" } },
