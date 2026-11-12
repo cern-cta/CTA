@@ -7,7 +7,7 @@
 ALLOWED_PREFIXES = %w[
   [frontend] [scheduler] [taped] [rmcd] [maintd]
   [catalogue] [libs] [runtime]
-  [build] [packaging] [ci]
+  [build] [packaging] [ci] [docs]
   [tools] [misc]
 ]
 

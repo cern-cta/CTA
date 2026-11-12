@@ -37,7 +37,7 @@ version = 1
 # Misc files that are tedious to attach copyright to
 [[annotations]]
     path = [
-        ".python-version",
+        "**/.python-version",
         "**/.gitkeep",
         "**/.clang-format-ignore",
         ".gitattributes",
