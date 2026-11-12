@@ -201,6 +201,10 @@ Compilation runs in a persistent container specific to the worktree and platform
 Packages and intermediate files remain in `build/<platform>/` in the checkout.
 Build configuration and success state are recorded separately for each platform in `build/.cta-dev-state/<platform>.json`, so switching platforms preserves incremental builds.
 
+Build containers record a hash of the platform's build Dockerfile.
+Before reuse, `cta-dev` warns if the Dockerfile changed or the container has no recorded hash, then continues normally.
+If needed, recreate the container with `cta-dev build --platform <platform> --refresh-build-container`.
+
 - An unchanged configuration after a successful build reuses the output and skips CMake configuration.
 - Changing the scheduler, Oracle support, or build generator cleans the platform's build directory and regenerates source packages.
 - Other build-option changes rerun the necessary configuration. Changing repository mode refreshes build dependencies.
@@ -217,11 +221,17 @@ cta-dev build --clean-build-dirs
 # Also recreate the persistent build container.
 cta-dev build --reset
 
+# Recreate the container and rerun CMake while preserving build output.
+cta-dev build --refresh-build-container
+
 # Force source package installation.
 cta-dev build --force-install
 ```
 
 `--reset` implies `--clean-build-dirs`. It does not remove deployments or unrelated containers.
+`--refresh-build-container` rebuilds the image, recreates the container, reinstalls build dependencies, and reruns CMake without requesting a clean build.
+Normal configuration-change checks can still require cleaning the build directory.
+Caches stored inside the old container are lost; use `--reset` when toolchain changes require a clean rebuild.
 
 ## Troubleshooting
 
