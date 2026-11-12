@@ -8,10 +8,14 @@ if [ "$1" = configure ]; then
     if ! getent group tape >/dev/null; then
         addgroup --system tape
     fi
+    if ! getent group cta >/dev/null; then
+        addgroup --system cta
+    fi
     if ! getent passwd cta >/dev/null; then
-        adduser --system --ingroup tape --no-create-home --home /nonexistent \
+        adduser --system --ingroup cta --no-create-home --home /nonexistent \
             --shell /usr/sbin/nologin cta
     fi
+
 fi
 
 #DEBHELPER#

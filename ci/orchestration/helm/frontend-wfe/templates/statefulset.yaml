@@ -35,8 +35,8 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsUser: 1000 # cta
-        runAsGroup: 33 # tape
-        fsGroup: 33 # tape
+        runAsGroup: 1000 # cta
+        fsGroup: 1000 # cta
       containers:
       - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}

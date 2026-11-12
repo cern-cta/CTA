@@ -79,11 +79,11 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
     # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
     microdnf install -y shadow-utils util-linux tar jq sudo procps-ng && \
-    # Ensure consistent user ID for CTA services
-    # cta-runtime adds this user already, but it gives no guarantees on its ID.
-    # We need the ID to be stable for Kubernetes.
-    # Tape group already exists by default with gid 33
-    useradd -m -u 1000 -g tape cta && \
+    # Ensure consistent user and group IDs for CTA services
+    # cta-runtime adds this user already, but it gives no guarantees on its IDs.
+    # We need the IDs to be stable for Kubernetes.
+    groupadd -g 1000 cta && \
+    useradd -m -u 1000 -g cta cta && \
     # Ensure cta-versionlock can update the versionlock file (file needs to exist)
     mkdir -p /etc/yum/pluginconf.d && \
     touch /etc/yum/pluginconf.d/versionlock.list && \
@@ -94,7 +94,7 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
     chmod 0440 /etc/sudoers.d/cta && \
     # For runtime state configured with --runtime-dir
-    install -d -o cta -g tape -m 0750 /run/cta && \
+    install -d -o cta -g cta -m 0750 /run/cta && \
     # Prevent parallel service builds from sharing the base image's RPM lock
     rm -f "$(rpm --eval '%{_dbpath}')/.rpm.lock"
 
@@ -108,6 +108,9 @@ COPY --from=repo-builder /rpms/.rpm-hash /tmp/cta-rpm-hash
 #  SERVICE cta-taped
 # =========================================================================
 FROM base AS cta-taped
+
+# Only hardware-facing service images grant tape-device access.
+RUN usermod -a -G tape cta
 
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
@@ -129,6 +132,9 @@ CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict"
 #  SERVICE cta-rmcd
 # =========================================================================
 FROM base AS cta-rmcd
+
+# Only hardware-facing service images grant tape-device access.
+RUN usermod -a -G tape cta
 
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT

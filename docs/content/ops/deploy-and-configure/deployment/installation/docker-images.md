@@ -16,11 +16,20 @@ TODO: Document the published registry, service images, release tags, architectur
 
 ## Configure and run services
 
-TODO: Document entrypoints, configuration and credential mounts, networking, database connectivity, and service identities. Keep shared settings in [Service Runtime](../../configuration/service-runtime.md).
+TODO: Document entrypoints, configuration and credential mounts, networking, and database connectivity. Keep shared settings in [Service Runtime](../../configuration/service-runtime.md).
+
+The EL9 and EL10 service images use UID and GID 1000 for `cta`.
+Only the `cta-taped` and `cta-rmcd` images add `tape` as a supplementary group.
+The Helm workloads set `runAsUser`, `runAsGroup`, and `fsGroup` to 1000; only the taped and rmcd workloads include tape GID 33 in `supplementalGroups`.
+Deploy images with matching charts; when building from source, rebuild the images before deploying the updated charts.
 
 ## Storage and hardware access
 
 TODO: Document persistent and temporary storage, writable runtime directories, permissions, and device access for tape services. Installing packages inside an image does not provide the host's systemd directory management.
+
+When upgrading from images that use `tape` as the primary group, check existing writable volumes for ownership and permissions compatible with `cta:cta`.
+For volumes whose ownership is not managed by Kubernetes, migrate CTA-owned runtime and log files while the affected workloads are stopped.
+Keep host tape devices in the `tape` group and ensure their numeric group ID matches the pod's supplementary group.
 
 ## Logging, health, and shutdown
 

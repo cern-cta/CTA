@@ -9,7 +9,8 @@ After=network-online.target
 [Service]
 Type=exec
 User=cta
-Group=tape
+Group=cta
+SupplementaryGroups=tape
 
 RuntimeDirectory=cta/taped
 RuntimeDirectoryMode=0750
