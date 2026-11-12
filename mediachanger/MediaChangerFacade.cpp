@@ -15,6 +15,9 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <syncstream>
+#include <system_error>
 #include <thread>
 #include <toml++/toml.hpp>
 #include <unistd.h>
@@ -35,13 +38,25 @@ namespace {
 
 // RAII guard for the single-changer robot lock (changer/.lock).
 // Lock file is created with O_CREAT|O_EXCL (atomic on POSIX).
-// Callers spin-wait with 50 ms backoff up to timeoutMs (default 30 s).
+// Callers spin-wait with 50 ms backoff. A lock file untouched for >= timeoutMs (the library's
+// configured changerTimeoutMs, default 30 s — sized for a near-instant rename, so anything still
+// holding it that long is not a legitimate mount/dismount in progress) is treated as abandoned by
+// a crashed/OOM-killed holder and stolen rather than failed on forever: this RAII guard only ever
+// renames the tape file it was given, never writes shared content, so stealing a lock a holder
+// merely slow (not actually dead) is still safe — it just reopens one window of contention on the
+// rename, not a data-integrity problem. A separate, larger absolute ceiling still gives up for
+// real if repeated steals do not clear it (e.g. a genuine bug re-creating the lock faster than
+// this can recover).
 struct ChangerGuard {
   const std::filesystem::path lockPath;
 
   ChangerGuard(const std::filesystem::path& changerDir, int timeoutMs) : lockPath(changerDir / ".lock") {
-    constexpr int kRetryMs = 50;
-    for (int waited = 0;; waited += kRetryMs) {
+    constexpr auto kRetry = std::chrono::milliseconds(50);
+    const auto staleAfter = std::chrono::milliseconds(timeoutMs);
+    const auto giveUpAfter = staleAfter * 10;
+
+    const auto waitStart = std::chrono::steady_clock::now();
+    for (;;) {
       int fd = ::open(lockPath.c_str(), O_CREAT | O_EXCL | O_WRONLY, 0644);
       if (fd >= 0) {
         ::close(fd);
@@ -51,12 +66,22 @@ struct ChangerGuard {
         throw cta::exception::Exception("StressMediaChanger: cannot acquire changer lock at " + lockPath.string() + ": "
                                         + std::strerror(errno));
       }
-      if (waited >= timeoutMs) {
-        throw cta::exception::Exception("StressMediaChanger: timeout (" + std::to_string(timeoutMs / 1000)
-                                        + " s) waiting for changer lock at " + lockPath.string()
-                                        + " — another mount/dismount is stuck or a previous run left a stale lock");
+      if (std::chrono::steady_clock::now() - waitStart >= giveUpAfter) {
+        throw cta::exception::Exception(
+          "StressMediaChanger: giving up after "
+          + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(giveUpAfter).count())
+          + " s waiting for changer lock at " + lockPath.string()
+          + " — repeated steal attempts did not clear it, something beyond a crashed holder is wrong");
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(kRetryMs));
+      std::error_code ec;
+      const auto mtime = std::filesystem::last_write_time(lockPath, ec);
+      if (!ec && std::filesystem::file_time_type::clock::now() - mtime >= staleAfter) {
+        std::osyncstream(std::cerr) << "WARNING cta-taped StressMediaChanger stealing stale changer lock at "
+                                    << lockPath.string() << " (untouched for >= " << timeoutMs
+                                    << " ms — holder likely crashed or was OOM-killed)\n";
+        std::filesystem::remove(lockPath, ec);  // ignore failure: another waiter may already have removed it
+      }
+      std::this_thread::sleep_for(kRetry);
     }
   }
 
