@@ -4,11 +4,9 @@
 
 set -euo pipefail
 
-export PATH="/opt/docs/bin:$PATH"
-
-# For now just a convenience script so that we don't have to rebuild the pipeline images
-if [[ ! -f /opt/docs-requirements.txt ]] || ! cmp --silent docs/requirements.txt /opt/docs-requirements.txt; then
-  python3 -m venv --clear build/docs/venv
-  uv pip sync --python build/docs/venv/bin/python docs/requirements.txt
-  export PATH="$CI_PROJECT_DIR/build/docs/venv/bin:$PATH"
-fi
+# Always use the checkout's lockfile, including on older pipeline images.
+export UV_PROJECT_ENVIRONMENT="$CI_PROJECT_DIR/docs/.venv"
+uv sync --locked --only-group docs --python 3.12
+export PATH="$UV_PROJECT_ENVIRONMENT/bin:$PATH"
+# Make repository Markdown extensions importable by mike and Zensical.
+export PYTHONPATH="$CI_PROJECT_DIR${PYTHONPATH:+:$PYTHONPATH}"

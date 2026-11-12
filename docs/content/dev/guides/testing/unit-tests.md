@@ -59,7 +59,7 @@ The `unit-test-python` CI job currently runs:
 python -m pytest ci --ignore=ci/system_tests
 ```
 
-This covers Python tooling tests under `ci/`, including release tooling and documentation publication. It is not repository-wide Python test discovery. The documentation publication tests need the MkDocs/mike environment prepared by `ci/docs/prepare-environment.sh`; consult `.gitlab/ci/tests.gitlab-ci.yml` for the job's current setup.
+This covers Python tooling tests under `ci/`, including release tooling and documentation publication. It is not repository-wide Python test discovery. Publication integration tests run separately in `build-docs` using the Python 3.12 docs group and the Zensical-compatible `mike` fork. They are skipped when those tools are unavailable in the general unit-test environment.
 
 With the required dependencies installed, run a narrower suite, for example:
 

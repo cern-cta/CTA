@@ -73,11 +73,11 @@ Preview the affected pages, check their links and navigation, and inspect diagra
 docs/.venv/bin/python docs/build.py build
 ```
 
-The strict Zensical build must pass before submission. The repository-root `zensical.toml` is the site configuration. CI build and publishing jobs have not yet been migrated to Zensical. Use the normal [contribution workflow](index.md) for review.
+The strict Zensical build must pass before submission. The repository-root `zensical.toml` is the site configuration. Use the normal [contribution workflow](index.md) for review.
 
 ## When changes appear online
 
-The legacy publishing workflow (pending migration to Zensical) publishes from protected release tags, with one documentation version per minor release series (for example, `6.12`). A subsequent release in that series updates the same documentation version; `latest` points to the highest published series.
+Documentation is published from protected release tags, with one documentation version per minor release series (for example, `6.12`). A subsequent release in that series updates the same documentation version; `latest` points to the highest published series.
 
 Merging a documentation change into `main` does not publish it immediately. It appears online when the documentation publication job succeeds for a release tag containing the change. Until then, use the local preview to see it. Readers selecting an older documentation version continue to see the documentation published for that series.
 

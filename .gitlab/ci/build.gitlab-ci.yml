@@ -245,10 +245,13 @@ build-docs:
     - source ci/docs/prepare-environment.sh
   script:
     - python -m unittest discover --start-directory ci/docs --pattern 'test_*.py'
-    - mkdocs build --strict --config-file docs/mkdocs.yml
+    - python docs/build.py build --clean
   artifacts:
     paths:
       - build/docs/site/
+      # mike rebuilds with the release-series URL; reuse generated references.
+      - build/docs/generated/
+      - docs/content/api/rust/
     expire_in: 7 days
 
 build-python:

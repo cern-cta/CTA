@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.9"
 resolution-markers = [
     "python_full_version == '3.12.*'",
@@ -46,6 +46,7 @@ dev = [
 docs = [
     { name = "griffe", marker = "python_full_version == '3.12.*'", specifier = "==1.14.0" },
     { name = "markdown", marker = "python_full_version == '3.12.*'", specifier = "==3.9" },
+    { name = "mike", marker = "python_full_version == '3.12.*'", git = "https://github.com/squidfunk/mike" },
     { name = "mkdocs-autorefs", marker = "python_full_version == '3.12.*'", specifier = "==1.4.2" },
     { name = "mkdocstrings", marker = "python_full_version == '3.12.*'", specifier = "==0.30.1" },
     { name = "mkdocstrings-python", marker = "python_full_version == '3.12.*'", specifier = "==1.18.2" },
@@ -104,6 +105,9 @@ unit-tests = [
     { name = "pyyaml" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
+
+[manifest.group-requires-python]
+docs = ">=3.12,<3.13"
 
 [[package]]
 name = "attrs"
@@ -1806,6 +1810,15 @@ wheels = [
 ]
 
 [[package]]
+name = "inversion"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cd/b5/e2d34bdeb088e3d28f5466c7c687126bba8337dcc0997c6c0ae40d4c4add/inversion-1.0.1.tar.gz", hash = "sha256:39b0d99da7924bcb21fc3e96ef2ac85dc83346461f74dd6a758ecaff3c75bb8e", size = 27028, upload-time = "2026-10-15T16:02:08.716Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/16/78/d1caf51e136f98eef9f45fd417a21f2389bf8042e8d8f3f1ed7832a500ca/inversion-1.0.1-py3-none-any.whl", hash = "sha256:a8b7b7bb1bef85318179421ef11e5222bd492f477373f0dcb80f323f8b0595d2", size = 19846, upload-time = "2026-10-15T16:02:07.701Z" },
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2107,6 +2120,17 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/3a/41/580bb4006e3ed0361b8151a01d324fb03f420815446c7def45d02f74c270/mergedeep-1.3.4.tar.gz", hash = "sha256:0096d52e9dad9939c3d975a774666af186eda617e6ca84df4c94dec30004f2a8", size = 4661, upload-time = "2021-02-05T18:55:30.623Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/19/04f9b178c2d8a15b076c8b5140708fa6ffc5601fb6f1e975537072df5b2a/mergedeep-1.3.4-py3-none-any.whl", hash = "sha256:70775750742b25c0d8f36c55aed03d24c3384d17c951b3175d898bd778ef0307", size = 6354, upload-time = "2021-02-05T18:55:29.583Z" },
+]
+
+[[package]]
+name = "mike"
+version = "2.2.0+zensical.0.1.0"
+source = { git = "https://github.com/squidfunk/mike#2d4ad799442f4592db8ad53b179bfb33db8c69ac" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "pyparsing" },
+    { name = "verspec" },
+    { name = "zensical" },
 ]
 
 [[package]]
@@ -2450,6 +2474,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ad/17/2db4b414de89659144488e0d9c6c0bf0c8395841dc12d81d0532cc6ef310/pymdown_extensions-11.0.2.tar.gz", hash = "sha256:9506fcbe66fa355a775b768084334238dd6805020ac4b92bea0c0dda6f8f223d", size = 855419, upload-time = "2026-08-22T19:28:47.236Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a6/43/9f45ec4d14e596efc32c925a78104934790438b0c0628b70d741016734ad/pymdown_extensions-11.0.2-py3-none-any.whl", hash = "sha256:259910762019732caa1dfd76f3faa62c59f191d46573e80bcb1d13c0f675bbe5", size = 269929, upload-time = "2026-08-22T19:28:45.389Z" },
+]
+
+[[package]]
+name = "pyparsing"
+version = "3.3.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/11/b213bebff182584360cb8d17c72c1677fec5c5c228de439e63bcf8ab1c8f/pyparsing-3.3.3.tar.gz", hash = "sha256:928ae7e20211f3b6f3915a72f06a0cfd29ab9d24279dd6346b6b1a7146397d36", size = 1050487, upload-time = "2026-09-20T20:59:05.609Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl", hash = "sha256:ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4", size = 126420, upload-time = "2026-09-20T20:59:04.025Z" },
 ]
 
 [[package]]
@@ -3386,6 +3419,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/c7/24/5f1b3bdffd70275f6661c76461e25f024d5a38a46f04aaca912426a2b1d3/urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed", size = 435556, upload-time = "2026-01-07T16:24:43.925Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4", size = 131584, upload-time = "2026-01-07T16:24:42.685Z" },
+]
+
+[[package]]
+name = "verspec"
+version = "0.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "inversion" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7f/e3/cf3dcb426ca8dcc1421478e75582e1fea1d37e11522e31670c4e1b26701e/verspec-0.2.1.tar.gz", hash = "sha256:2046ea165be01b3ff4a8c2319d0ced57b1d7673fb05b38a75367531acde3b534", size = 1893, upload-time = "2026-10-15T15:33:24.979Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e6/9d/b0f5248cdaae8c34a779db8cb282b6ebab760cfa349f05f5d0bb2530e508/verspec-0.2.1-py3-none-any.whl", hash = "sha256:bc192db9f51ba0c14cd3874167656f84aca1736bef002385299dab675b07377d", size = 2632, upload-time = "2026-10-15T15:33:24.111Z" },
 ]
 
 [[package]]

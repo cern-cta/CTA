@@ -38,9 +38,9 @@ Mermaid colors are defined in `docs/content/stylesheets/extra.css`. The Markdown
 
 ## Publishing
 
-!!! warning "CI migration pending"
+CI installs the locked `docs` group with Python 3.12. `build-docs` runs the publication integration tests and the strict Zensical build. The publication job reuses the generated manual and Rust reference artifacts, then rebuilds through the Zensical-compatible `mike` fork to set the release-series URLs.
 
-    The existing build and publication jobs still invoke MkDocs and `mike` and are not compatible with this setup. They are intentionally left for a separate migration. The workflow below documents the legacy publication behavior, not a supported Zensical deployment command.
+The fork is declared in `pyproject.toml`; `uv.lock` records its exact revision. It preserves the existing `gl-pages` layout, `public/versions.json`, old version directories, and `latest` redirects. Older MkDocs versions remain available; only the published minor series is replaced. Existing numeric series must have `source_tag` and `source_commit` metadata; publication refuses to overwrite a series with unknown provenance.
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.
 

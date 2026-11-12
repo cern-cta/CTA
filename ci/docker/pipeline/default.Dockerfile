@@ -9,7 +9,6 @@ RUN dnf install -y epel-release && \
     uv pip install --exclude-newer "14 days" --no-cache-dir -U --system --only-binary :all: jsonschema && \
     dnf clean all --enablerepo=\*
 
-# Keep the docs toolchain isolated from other default-image Python utilities.
-COPY docs/requirements.txt /opt/docs-requirements.txt
-RUN python3 -m venv /opt/docs && \
-    uv pip sync --python /opt/docs/bin/python /opt/docs-requirements.txt
+# Jobs install the docs group from their checkout's shared uv.lock.
+# Cache the interpreter in the image; older images can download it via uv sync.
+RUN uv python install 3.12

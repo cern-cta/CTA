@@ -429,3 +429,8 @@ show_symbol_type_toc = true
 [project.plugins.mkdocstrings.handlers.python.options.docstring_options]
 warn_unknown_params = false
 warn_missing_types = false
+
+# Preserve the existing mike version selector and published aliases.
+[project.extra.version]
+provider = "mike"
+alias = true

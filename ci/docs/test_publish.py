@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Exercise release ordering and real mike publication against a local Git remote."""
+"""Exercise release ordering and Zensical/mike publication against a local Git remote."""
 
 # Use unittest for the temporary-repository integration tests.
 # ruff: noqa: PT009, PT027
@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -18,7 +20,6 @@ from pathlib import Path
 from typing import Any
 
 from publish import publication_decision, release_key
-from typing_extensions import override
 
 
 class VersionTests(unittest.TestCase):
@@ -51,8 +52,8 @@ class VersionTests(unittest.TestCase):
             publication_decision("v6.2.4-1", "new", versions)
 
 
+@unittest.skipUnless(shutil.which("mike") and shutil.which("zensical"), "Run in the docs environment")
 class PublicationTests(unittest.TestCase):
-    @override
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -68,16 +69,17 @@ class PublicationTests(unittest.TestCase):
         self.command("git", "config", "user.email", "docs-test@example.invalid")
         self.command("git", "remote", "add", "origin", str(self.remote))
         (self.repo / "docs/content").mkdir(parents=True)
-        (self.repo / "docs/mkdocs.yml").write_text(
-            "site_name: Test\nsite_url: https://example.invalid/\n"
-            "docs_dir: content\nsite_dir: ../build/docs/site\nstrict: true\n"
+        (self.repo / "zensical.toml").write_text(
+            '[project]\nsite_name = "Test"\nsite_url = "https://example.invalid/"\n'
+            'docs_dir = "docs/content"\nsite_dir = "build/docs/site"\nstrict = true\n'
+            '[project.extra.version]\nprovider = "mike"\nalias = true\n'
         )
         (self.repo / "docs/content/index.md").write_text("# Test documentation\n")
-        self.command("git", "add", "docs")
+        self.command("git", "add", "docs", "zensical.toml")
         self.command("git", "commit", "--message", "Source")
         self.command("git", "checkout", "--orphan", "gl-pages")
-        self.command("git", "rm", "-r", "--force", "docs")
-        for version in ["v4", "v5"]:
+        self.command("git", "rm", "-r", "--force", "docs", "zensical.toml")
+        for version in ["v4", "v5", "6.0"]:
             directory = self.repo / "public" / version
             directory.mkdir(parents=True)
             (directory / "index.html").write_text(f"Historical {version}")
@@ -85,6 +87,12 @@ class PublicationTests(unittest.TestCase):
         (self.repo / "public/versions.json").write_text(
             json.dumps(
                 [
+                    {
+                        "version": "6.0",
+                        "title": "6.0",
+                        "aliases": [],
+                        "properties": {"source_tag": "v6.0.0", "source_commit": "historical-mkdocs-commit"},
+                    },
                     {"version": "v5", "title": "v5", "aliases": ["latest"]},
                     {"version": "v4", "title": "v4", "aliases": []},
                 ]
@@ -127,6 +135,15 @@ class PublicationTests(unittest.TestCase):
         self.assertIn("latest/", (output / "index.html").read_text())
         self.assertIn("6.1/", (output / "latest/index.html").read_text())
         self.assertFalse((output / "latest").is_symlink())
+        current = (output / "6.1/index.html").read_text()
+        self.assertIn("zensical-", current)
+        self.assertIn("zensical-", (output / "6.0/index.html").read_text())
+        self.assertIn("https://example.invalid/6.1/", current)
+        settings = re.search(r'<script id="__config" type="application/json">(.*?)</script>', current)
+        assert settings is not None, "Missing Zensical client configuration"
+        self.assertEqual(json.loads(settings.group(1))["version"]["provider"], "mike")
+        historical = next(version for version in versions if version["version"] == "v4")
+        self.assertEqual(historical, {"version": "v4", "title": "v4", "aliases": []})
         previous = self.command("git", "rev-parse", "gl-pages").stdout
         self.deploy("v6.1.0.0-1")
         self.assertEqual(previous, self.command("git", "rev-parse", "gl-pages").stdout)
@@ -142,17 +159,17 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(next(entry["version"] for entry in versions if "latest" in entry["aliases"]), "6.1")
 
     def test_missing_snippet_prevents_publication(self):
-        config = self.repo / "docs/mkdocs.yml"
+        config = self.repo / "zensical.toml"
         with config.open("a") as stream:
-            stream.write("markdown_extensions:\n  - pymdownx.snippets:\n      check_paths: true\n")
+            stream.write('[project.markdown_extensions."pymdownx.snippets"]\ncheck_paths = true\n')
         (self.repo / "docs/content/index.md").write_text('--8<-- "missing-file.md"\n')
-        self.command("git", "add", "docs")
+        self.command("git", "add", "docs", "zensical.toml")
         self.command("git", "commit", "--message", "Missing snippet")
         self.command("git", "tag", "v6.1.0.0-1")
         previous = self.command("git", "ls-remote", "origin", "gl-pages").stdout
         result = self.command(sys.executable, str(self.publisher), "--tag", "v6.1.0.0-1", check=False)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Snippet at path 'missing-file.md' could not be found", result.stdout)
+        self.assertIn("missing-file.md", result.stdout)
         self.assertEqual(previous, self.command("git", "ls-remote", "origin", "gl-pages").stdout)
 
 

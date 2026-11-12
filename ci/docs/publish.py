@@ -69,7 +69,7 @@ def publish(tag: str, remote: str, branch: str) -> None:
     series, should_publish, latest = publication_decision(tag, commit, versions)
     common = [
         "--config-file",
-        "docs/mkdocs.yml",
+        "zensical.toml",
         "--branch",
         branch,
         "--remote",

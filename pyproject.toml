@@ -23,9 +23,14 @@
 [tool.uv.dependency-groups]
     docs = { requires-python = ">=3.12,<3.13" }
 
+# Zensical-compatible mike; uv.lock records the exact revision.
+[tool.uv.sources]
+    mike = { git = "https://github.com/squidfunk/mike" }
+
 [dependency-groups]
     docs = [
         "zensical==0.1.1",
+        "mike",
         "mkdocstrings-python==1.18.2",
         "mkdocstrings==0.30.1",
         "mkdocs-autorefs==1.4.2",
