@@ -108,9 +108,6 @@ COPY --from=repo-builder /rpms/.rpm-hash /tmp/cta-rpm-hash
 # =========================================================================
 FROM base AS cta-taped
 
-# Only hardware-facing service images grant tape-device access.
-RUN usermod -a -G tape cta
-
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
@@ -131,9 +128,6 @@ CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict"
 #  SERVICE cta-rmcd
 # =========================================================================
 FROM base AS cta-rmcd
-
-# Only hardware-facing service images grant tape-device access.
-RUN usermod -a -G tape cta
 
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT

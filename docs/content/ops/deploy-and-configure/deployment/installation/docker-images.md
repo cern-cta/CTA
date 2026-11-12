@@ -19,7 +19,7 @@ TODO: Document the published registry, service images, release tags, architectur
 TODO: Document entrypoints, configuration and credential mounts, networking, and database connectivity. Keep shared settings in [Service Runtime](../../configuration/service-runtime.md).
 
 The EL9 and EL10 service images use UID and GID 1000 for `cta`.
-Only the `cta-taped` and `cta-rmcd` images add `tape` as a supplementary group.
+Supplementary groups are assigned when containers are launched.
 The Helm workloads set `runAsUser`, `runAsGroup`, and `fsGroup` to 1000; only the taped and rmcd workloads include tape GID 33 in `supplementalGroups`.
 Deploy images with matching charts; when building from source, rebuild the images before deploying the updated charts.
 
@@ -29,7 +29,9 @@ TODO: Document persistent and temporary storage, writable runtime directories, p
 
 When upgrading from images that use `tape` as the primary group, check existing writable volumes for ownership and permissions compatible with `cta:cta`.
 For volumes whose ownership is not managed by Kubernetes, migrate CTA-owned runtime and log files while the affected workloads are stopped.
-Keep host tape devices in the `tape` group and ensure their numeric group ID matches the pod's supplementary group.
+Keep host tape devices in the `tape` group and ensure their numeric group ID matches the container's supplementary group.
+For standalone Docker or Podman containers running `cta-taped` or `cta-rmcd`, pass `--group-add 33` when the device group ID is 33; otherwise use the device's actual group ID.
+Device mappings and any required capabilities must also be configured.
 
 ## Logging, health, and shutdown
 
