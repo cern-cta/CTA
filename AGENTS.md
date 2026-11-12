@@ -7,12 +7,12 @@ Ask when unresolved ambiguity materially affects scope or correctness.
 
 ## Finding the relevant code
 
-Use [Project Structure](docs/content/dev/getting-started/project-structure.md) to locate components and [Development](docs/content/dev/index.md) for workflows and architecture.
+Use [Development](docs/content/dev/index.md) for workflows and architecture.
 Build defaults, language versions and platform configuration live in `project.json`; compiler options live in the root `CMakeLists.txt`.
 
-- `app/` contains the admin and workflow API services; `frontend/grpc/` contains the `cta-admin` client.
-- Shared service infrastructure lives under `lib/runtime/` and `lib/cpp/`; reusable authentication belongs in `lib/cpp/cta-grpc-server/`.
-- `catalogue/cta-catalogue-schema/` is the catalogue schema submodule; see the schema policy under [Source constraints](#source-constraints).
+The intended layout places reusable libraries under `lib/<language>/`, command-line tools under `tools/`, and service applications under `app/`.
+This layout is still being adopted: substantial code remains in top-level directories such as `common/`, `catalogue/`, `scheduler/` and `taped/`.
+Consult [Project Structure](docs/content/dev/getting-started/project-structure.md) and inspect the checkout for current locations; do not infer that code has moved to its intended destination.
 
 Scope searches to relevant source directories and read targeted symbols or line ranges rather than entire large files.
 Exclude `build/`, `build_rpm/`, `build_srpm/`, `target/` and other generated trees from normal source searches; they can contain extracted source copies.
@@ -96,13 +96,13 @@ Use appropriate schema checks or deployment/system tests when the change require
 
 ## Source constraints
 
-- **Catalogue schema:** changes are exceptional and normally undertaken only at a developer's explicit instruction.
+- **Catalogue schema:** `catalogue/cta-catalogue-schema/` is a submodule; changes are exceptional and normally undertaken only at a developer's explicit instruction.
   Implement general features against the existing schema rather than assuming it can be changed.
   If a schema change would significantly improve the solution or simplify the implementation, explain the benefit to the developer before proceeding with that change.
   Schema changes require coordinated Liquibase migration work and deployment testing; follow [Schema Development](docs/content/dev/internals/components/catalogue/schema-development.md).
 - **C++ naming:** use the `m_` prefix for class data members.
-- **Layering:** `common/` must not include headers from higher layers such as `frontend/`, `scheduler/` or `taped/`.
-  Move shared types down into `common/` when needed.
+- **Layering:** the common library must not depend on higher layers such as frontend, scheduler or tape-daemon code, regardless of directory layout.
+  Move shared types into the common library when needed.
 - **Configuration:** TOML loading uses reflection through `lib/runtime/include/runtime/config/ConfigLoader.hpp`.
   Config fields use snake_case matching the TOML keys; keep `memberCount()` equal to the number of data members.
 - **Errors:** user/configuration errors throw `cta::exception::UserError` with actionable context such as the file path and offending value.
