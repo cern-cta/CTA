@@ -128,6 +128,14 @@
 .md-typeset a:hover,
 .md-typeset a:focus-visible { text-decoration: underline; }
 
+/* Preserve the original panel surfaces and orange hover/focus border. */
+.md-typeset .grid.cards > ul > li { background: var(--cta-surface); }
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid.cards > ul > li:focus-within {
+  border-color: #f3681e;
+  box-shadow: none;
+}
+
 /* Shared CERN/CTA footer identity. */
 .md-footer { border-top: 1px solid var(--cta-dark-border); }
 .cta-footer { background: var(--md-footer-bg-color); color: #b4c0c6; }
@@ -163,6 +171,16 @@
   border-bottom: 1px solid var(--cta-dark-border);
 }
 .md-header .md-tabs { background: transparent; color: #f2f5f6; }
+
+/* Let the link fill the tab, including the space around its label. */
+.md-tabs__item { padding: 0; }
+.md-tabs__link {
+  align-items: center;
+  height: 100%;
+  margin-top: 0;
+  padding: 0 .6rem;
+  outline-offset: -.15rem;
+}
 
 /* Rubber-band scrolling exposes the root canvas beyond the page edges.
  * Keep that canvas dark; paint the reading surface with the selected palette.
