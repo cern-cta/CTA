@@ -25,7 +25,7 @@ Inspect the available environment before choosing commands; verify missing-inclu
 For setup, platform options and full pipeline commands, consult [CTA development environment](docs/content/dev/guides/tools-and-environment/cta-dev.md) and `ci/cta-dev.sh <command> --help`.
 
 `cta-dev.sh build` uses a packaging tree under `build/<platform>/`; RPM builds compile an extracted source copy, so editing the checkout does not update that copy.
-Use a separate compile tree against the live sources for the fast loop below.
+Do not configure or rebuild `build/<platform>/` by hand; use a separate compile tree such as `build/dev-<platform>/` against the live sources for the fast loop below.
 The repository is mounted at `/shared/CTA` in the build container.
 The EL9 image already selects its compiler through `PATH`, `CC` and `CXX`; use `cmake3` there.
 
@@ -36,7 +36,8 @@ For a new compile tree, `CTA_BUILD_MODE=compile` is the default and `CTA_VERSION
 The following EL9 example builds and tests authentication; select targets and test filters appropriate to the change.
 
 ```bash
-# Find the build container (or use docker).
+# Find the build container (or use docker); cta-dev.sh names it
+# cta-build<checkout path with / replaced by ->-<platform>, e.g. cta-build-home-user-CTA-el9.
 podman ps -a --filter name=cta-build
 
 # Configure once against the live sources.
@@ -54,6 +55,10 @@ Discover build targets with `ninja -t targets all` in the compile tree and tests
 Unit tests are compiled into shared libraries linked into `tests/cta-unit-tests`.
 Add new test files to the relevant unit-test library in the component's `CMakeLists.txt`.
 There is no `ctest` registration: invoke the appropriate runner in `tests/` directly.
+
+The scheduler backend is a build-time choice (`CTA_USE_PGSCHED` in the root `CMakeLists.txt`), and code differs between the objectstore and PostgreSQL configurations.
+The PostgreSQL scheduler is replacing the objectstore scheduler, but the objectstore scheduler is still in production: do not regress or remove its support.
+When changing `scheduler/` or code that depends on it, also build and test a second compile tree configured with the other value when relevant.
 
 ### Deployment and system tests
 
