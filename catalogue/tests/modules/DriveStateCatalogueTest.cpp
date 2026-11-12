@@ -1697,9 +1697,9 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedByRoutineStatusUpdate
   drive.lastModificationLog = cta::common::dataStructures::EntryLog("admin_user_name", "admin_host", now);
   m_catalogue->DriveState()->updateTapeDriveStatus(drive);
 
-  // Simulate TapeDrivesCatalogueState::reportDriveState() for an Up drive without
-  // active tape activity -- mapToDriveStatus maps this to DriveStatus::Up, so the
-  // underlying updateTapeDriveStatus sees the same status (Case 1, routine update).
+  // Simulate TapeDrivesCatalogueState::reportDriveStatus() for an Up drive without
+  // active tape activity: status stays Up, so the underlying updateTapeDriveStatus
+  // sees the same status (Case 1, routine update).
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveName;
   driveInfo.host = tapeDrive.host;
@@ -1707,8 +1707,10 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedByRoutineStatusUpdate
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
-      .reportDriveState(driveInfo,
-                        {.state = cta::common::dataStructures::ReportedDriveState::Up, .reportTime = now},
+      .reportDriveStatus(driveInfo,
+                        cta::common::dataStructures::MountType::NoMount,
+                        cta::common::dataStructures::DriveStatus::Up,
+                        now,
                         dummyLc);
   }
 
@@ -1745,9 +1747,8 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedDuringTransferringSta
   drive.lastModificationLog = cta::common::dataStructures::EntryLog("admin_user_name", "admin_host", now);
   m_catalogue->DriveState()->updateTapeDriveStatus(drive);
 
-  // Simulate a periodic bytes/files stats report (Transferring->Transferring).
-  // Up + TapeSessionState::Transferring maps to DriveStatus::Transferring, which
-  // matches the current drive status and so goes through Case 1.
+  // Simulate a periodic bytes/files stats report (Transferring->Transferring),
+  // which matches the current drive status and so goes through Case 1.
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveName;
   driveInfo.host = tapeDrive.host;
@@ -1755,22 +1756,17 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypePreservedDuringTransferringSta
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
-      .reportDriveState(driveInfo,
-                        {
-                          .state = cta::common::dataStructures::ReportedDriveState::Up,
-                          .tapeSession =
-                            cta::common::dataStructures::TapeSessionReport {
-                                                                            .state = cta::common::dataStructures::TapeSessionState::Transferring,
-                                                                            .mountType = cta::common::dataStructures::MountType::ArchiveForUser,
-                                                                            .mountSessionId = 1,
-                                                                            .bytesTransferred = 1024 * 1024,
-                                                                            .filesTransferred = 10,
-                                                                            .vid = "VID002",
-                                                                            .tapePool = "pool2",
-                                                                            .vo = "vo2"},
-                          .reportTime = now
-    },
-                        dummyLc);
+      .reportDriveStatus(driveInfo,
+                        cta::common::dataStructures::MountType::ArchiveForUser,
+                        cta::common::dataStructures::DriveStatus::Transferring,
+                        now,
+                        dummyLc,
+                        1 /* mountSessionId */,
+                        1024 * 1024 /* byteTransferred */,
+                        10 /* filesTransferred */,
+                        "VID002",
+                        "pool2",
+                        "vo2");
   }
 
   // NEXT_* must survive the stats update.
@@ -1808,8 +1804,6 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypeClearedOnStatusTransitionInCas
             m_catalogue->DriveState()->getTapeDrive(driveName).value().nextMountType);
 
   // Simulate taped reporting Starting (Up->Starting, status change triggers Case 2).
-  // Preparing with no tapeSession maps to DriveStatus::Starting, a status change
-  // from the current Up, so the update goes through Case 2.
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = driveName;
   driveInfo.host = tapeDrive.host;
@@ -1817,8 +1811,10 @@ TEST_P(cta_catalogue_DriveStateTest, nextMountTypeClearedOnStatusTransitionInCas
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     cta::TapeDrivesCatalogueState(*m_catalogue)
-      .reportDriveState(driveInfo,
-                        {.state = cta::common::dataStructures::ReportedDriveState::Preparing, .reportTime = now},
+      .reportDriveStatus(driveInfo,
+                        cta::common::dataStructures::MountType::NoMount,
+                        cta::common::dataStructures::DriveStatus::Starting,
+                        now,
                         dummyLc);
   }
 
