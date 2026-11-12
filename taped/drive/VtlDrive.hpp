@@ -42,13 +42,14 @@ namespace cta::tape::drive {
  *      block stream from the file into m_tape.  An empty file means a blank tape.
  *   3. The full transfer runs via m_tape in-memory block I/O. flush() is an in-memory no-op by
  *      default — the file on disk is stale until step 4 — unless the media type's
- *      persistOnFlush is set, in which case flush() also serialises m_tape to disk
- *      immediately (see MediaTypeInfo::persistOnFlush). If the media type's
- *      transferFailureRate/retrieveFailureRate is set, each file's first HDR1 block may throw a
- *      synthetic I/O error instead of transferring (see MediaTypeInfo::transferFailureRate and
- *      maybeInjectFault()), for failure-scenario testing.
- *   4. DataTransferSession calls unloadTape(): VtlDrive serialises m_tape
- *      back to the same file, then marks the tape as absent.
+ *      persistOnFlush is set, in which case flush() also INCREMENTALLY appends to disk
+ *      whatever blocks were written since the last persist (see MediaTypeInfo::persistOnFlush
+ *      and saveTape()). If the media type's transferFailureRate/retrieveFailureRate is set, each
+ *      file's first HDR1 block may throw a synthetic I/O error instead of transferring (see
+ *      MediaTypeInfo::transferFailureRate and maybeInjectFault()), for failure-scenario testing.
+ *   4. DataTransferSession calls unloadTape(): VtlDrive persists m_tape to the same file — a
+ *      full rewrite if persistOnFlush never ran this mount, or the final incremental append if
+ *      it did — then marks the tape as absent.
  *   5. MediaChangerFacade::dismountTape(vid) acquires the changer lock and
  *      renames VID.tape: drives/<driveName>/ → changer/ → slots/.
  *
@@ -162,7 +163,10 @@ public:
 
   /**
    * In-memory flush, plus an eager saveTape() when the current cartridge's media type has
-   * persistOnFlush enabled (default off — see MediaTypeInfo::persistOnFlush).
+   * persistOnFlush enabled (default off — see MediaTypeInfo::persistOnFlush). That eager save is
+   * INCREMENTAL (appends only the blocks written since the last persist — see saveTape()), so
+   * repeated flushes during one mount cost roughly one full tape's worth of writing in total,
+   * not one full tape per flush.
    */
   void flush(void) override;
 
@@ -265,9 +269,11 @@ public:
     uint32_t maxReadRateHz = 0;
     // Off by default: the tape is deliberately in-memory-only until unloadTape() calls
     // saveTape(), so a session never pays disk I/O mid-transfer. Set true to make flush()
-    // durable immediately (see flush() below) — e.g. for a run where losing in-flight data to
-    // a pod restart or an unload-time saveTape() failure is unacceptable even at the cost of
-    // the extra PVC I/O.
+    // durable immediately (see flush() below) — e.g. for a run where losing in-flight data to a
+    // pod restart or an unload-time saveTape() failure is unacceptable. Each flush's save is
+    // INCREMENTAL (see saveTape()), so this does not multiply total PVC I/O for the mount the
+    // way a repeated full rewrite would — the main cost is in frequency/latency (one extra
+    // write-lock round trip per flush) rather than extra bytes moved.
     bool persistOnFlush = false;
     // Fault injection for failure-scenario testing, off by default (0.0). On the first HDR1
     // block of a write/read, with probability transferFailureRate/retrieveFailureRate (a stable
@@ -307,6 +313,13 @@ private:
   uint32_t m_maxReadRateHz = 0;
   // Set from MediaTypeInfo::persistOnFlush at each waitUntilReady call; see flush().
   bool m_persistOnFlush = false;
+  // Incremental-save bookkeeping for saveTape() (only consulted/updated when m_persistOnFlush is
+  // set — see saveTape()). m_persistedBlockCount is how many of m_tape.blocks() are already
+  // durable in m_currentTapePath; m_headerPersisted is whether the magic+version header has been
+  // written yet (false only for a brand-new blank tape's very first save). Both are reset by
+  // waitUntilReady() right after loadTape() populates m_tape from whatever was already on disk.
+  uint64_t m_persistedBlockCount = 0;
+  bool m_headerPersisted = false;
   // Set from MediaTypeInfo::transferFailureRate/retrieveFailureRate at each waitUntilReady call;
   // see maybeInjectFault().
   double m_transferFailureRate = 0.0;
@@ -354,6 +367,14 @@ private:
   /// drives and taped pod restarts.
   bool tryClaimFaultOnce(const char* kind, const std::string& fileIdHex) const;
 
+  /// Temporary diagnostic logging for the stress-scale test (see CTA-1775): writes a single
+  /// WARNING-tagged line to stderr (picked up by `kubectl logs` like everything else the pod
+  /// writes to stderr). Deliberately does NOT go through cta::log::Logger: that would mean
+  /// threading a logger through DriveInterface::createDrive(), shared with every hardware-drive
+  /// call site, for a diagnostic only VtlDrive needs. Note this means these lines never reach
+  /// the structured /var/log/cta/cta-taped.log file, only the pod's raw stderr stream.
+  void logStep(const std::string& msg) const;
+
   // Per-drive RNG for jittering mount delay; seeded from drive name XOR current time.
   std::mt19937 m_rng;
 
@@ -361,11 +382,31 @@ private:
   static constexpr uint32_t k_magic = 0x43544150;  // 'CTAP'
   static constexpr uint32_t k_version = 1;
 
-  // Serialise m_tape to m_currentTapePath via an atomic tmp+rename.
-  void saveTape() const;
+  // Persists m_tape to m_currentTapePath, after first acquiring a per-library
+  // write-serialization lock (see WriteSerializationGuard in VtlDrive.cpp) so that concurrent
+  // saves from other drives in the SAME library do not all hit the shared PVC at once — many
+  // drives landing on one volume at the same moment is what turns a save into a multi-minute
+  // stall under stress-test load.
+  //
+  // Two strategies, chosen by m_persistOnFlush (see that field and flush()):
+  //  - false (default): full rewrite via an atomic tmp+rename, exactly as before — unloadTape()
+  //    is this cartridge's only save, so there is nothing to make incremental.
+  //  - true: incremental append — writes only the blocks in m_tape.blocks() from
+  //    m_persistedBlockCount onward (and the magic+version header first, if !m_headerPersisted),
+  //    directly onto m_currentTapePath. Safe to append without a tmp+rename: every earlier
+  //    append already left the file ending exactly on a block boundary, so a crash mid-append
+  //    can only ever leave an incomplete FINAL block, never corrupt an already-flushed one — see
+  //    loadTape()'s tolerance for exactly that. Not const any more: updates
+  //    m_persistedBlockCount/m_headerPersisted.
+  void saveTape();
 
   // Deserialise from tapePath into m_tape.  Clears m_tape first.
   // An empty file leaves m_tape empty (blank tape).
+  // Tolerates a truncated FINAL block (short data or short trailer): stops there and keeps
+  // everything parsed up to it, rather than throwing. The only way a non-empty file ends up
+  // truncated is a crash/OOM-kill mid-append from an earlier persistOnFlush save (see
+  // saveTape()) — every block before the truncated one was already fully written and flushed by
+  // an earlier, completed call, so dropping just the incomplete tail is safe and correct.
   void loadTape(const std::filesystem::path& tapePath);
 
   // Parse baseDir/config/<lib>/library.toml.  Populates m_mediaTypes.

@@ -12,12 +12,117 @@
 #include <fcntl.h>
 #include <fstream>
 #include <functional>
+#include <iostream>
 #include <map>
+#include <syncstream>
+#include <system_error>
 #include <thread>
 #include <toml++/toml.hpp>
 #include <unistd.h>
 
 namespace cta::tape::drive {
+
+namespace {
+
+// RAII guard serialising VtlDrive::saveTape() writes across every drive sharing one library's
+// PVC (see CTA-1775): a lock file under contents/<lib>/changer/, same O_CREAT|O_EXCL idiom as
+// mediachanger's ChangerGuard. Deliberately a SEPARATE lock file from that one's changer/.lock,
+// not a reuse of it: ChangerGuard's timeout (changerTimeoutMs, default 30 s) is sized for an
+// near-instant rename, not a save that can legitimately take minutes under concurrent PVC load —
+// reusing it here would make healthy mounts/dismounts on OTHER drives throw spurious "changer
+// lock timeout" errors while one drive is still saving.
+struct WriteSerializationGuard {
+  const std::filesystem::path lockPath;
+
+  explicit WriteSerializationGuard(const std::filesystem::path& libraryContentsDir)
+      : lockPath(libraryContentsDir / "changer" / ".write.lock") {
+    constexpr auto kRetry = std::chrono::milliseconds(50);
+    // A lock file older than this was almost certainly left by a holder that crashed or was
+    // OOM-killed mid-save, not one still legitimately writing (saves have been observed taking
+    // minutes under PVC contention, but nowhere near this long — and after this lock removes
+    // that contention, an individual save's duration is just its own size/throughput, nothing
+    // else). Stealing it is safe even if this heuristic is occasionally wrong: every drive
+    // writes to its OWN uniquely-named tmp file (never a shared one), so a mistaken steal from a
+    // merely-slow holder just re-creates one window of ordinary contention, not corruption.
+    constexpr auto kStaleAfter = std::chrono::minutes(10);
+    // Absolute ceiling across every steal attempt, in case something keeps re-creating and
+    // abandoning the lock faster than this loop can recover (a real bug, not a one-off crash) —
+    // give up for real rather than spin forever.
+    constexpr auto kGiveUpAfter = std::chrono::minutes(30);
+
+    const auto waitStart = std::chrono::steady_clock::now();
+    for (;;) {
+      int fd = ::open(lockPath.c_str(), O_CREAT | O_EXCL | O_WRONLY, 0644);
+      if (fd >= 0) {
+        ::close(fd);
+        return;
+      }
+      if (errno != EEXIST) {
+        throw cta::exception::Exception("VtlDrive: cannot acquire write-serialization lock at " + lockPath.string()
+                                        + ": " + std::strerror(errno));
+      }
+      if (std::chrono::steady_clock::now() - waitStart >= kGiveUpAfter) {
+        throw cta::exception::Exception(
+          "VtlDrive: giving up after " + std::to_string(kGiveUpAfter.count())
+          + " min waiting for write-serialization lock at " + lockPath.string()
+          + " — repeated steal attempts did not clear it, something beyond a crashed holder is wrong");
+      }
+      std::error_code ec;
+      const auto mtime = std::filesystem::last_write_time(lockPath, ec);
+      if (!ec && std::filesystem::file_time_type::clock::now() - mtime >= kStaleAfter) {
+        std::osyncstream(std::cerr) << "WARNING cta-taped VtlDrive stealing stale write-serialization lock at "
+                                    << lockPath.string() << " (untouched for >= " << kStaleAfter.count()
+                                    << " min — holder likely crashed or was OOM-killed)\n";
+        std::filesystem::remove(lockPath, ec);  // ignore failure: another waiter may already have removed it
+      }
+      std::this_thread::sleep_for(kRetry);
+    }
+  }
+
+  ~WriteSerializationGuard() noexcept {
+    try {
+      std::filesystem::remove(lockPath);
+    } catch (...) {}
+  }
+
+  WriteSerializationGuard(const WriteSerializationGuard&) = delete;
+  WriteSerializationGuard& operator=(const WriteSerializationGuard&) = delete;
+};
+
+// Serialises [magic+version, if includeHeader] + blocks[firstBlock..] into ONE contiguous
+// buffer, so saveTape() can hand it to the OS as a single write() instead of several per block
+// (size prefix, data, trailer) — on network-backed PVC storage classes, where every write()
+// carries its own request/round-trip overhead regardless of size, that is thousands of tiny
+// requests competing for the volume's IOPS ceiling instead of one big sequential one.
+std::string serializeTapeChunk(bool includeHeader,
+                               uint32_t magic,
+                               uint32_t version,
+                               const std::vector<cta::tape::drive::InMemoryTape::Block>& blocks,
+                               size_t firstBlock) {
+  size_t total = includeHeader ? sizeof(magic) + sizeof(version) : 0;
+  for (size_t i = firstBlock; i < blocks.size(); ++i) {
+    total += 2 * sizeof(uint64_t) + blocks[i].data.size();
+  }
+  std::string buf;
+  buf.reserve(total);
+  const auto append32 = [&](uint32_t v) { buf.append(reinterpret_cast<const char*>(&v), sizeof(v)); };
+  const auto append64 = [&](uint64_t v) { buf.append(reinterpret_cast<const char*>(&v), sizeof(v)); };
+  if (includeHeader) {
+    append32(magic);
+    append32(version);
+  }
+  for (size_t i = firstBlock; i < blocks.size(); ++i) {
+    const auto& block = blocks[i];
+    append64(block.data.size());
+    if (!block.data.empty()) {
+      buf.append(block.data.data(), block.data.size());
+    }
+    append64(block.remainingSpaceAfter);
+  }
+  return buf;
+}
+
+}  // namespace
 
 // Binary format for .tape files:
 //
@@ -45,6 +150,12 @@ VtlDrive::VtlDrive(std::string driveName, std::string logicalLibraryName, std::f
   // Pre-allocate for large stress-test tapes (~320 k files at 470 bytes each).
   m_tape.reserve(512'000);
   parseLibraryConf();
+  logStep("init: drive created, logicalLibrary=" + m_logicalLibrary + " baseDir=" + m_baseDir.string());
+}
+
+void VtlDrive::logStep(const std::string& msg) const {
+  std::osyncstream(std::cerr) << "WARNING cta-taped VtlDrive drive=" << m_driveName << " lib=" << m_logicalLibrary
+                              << " " << msg << '\n';
 }
 
 void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
@@ -76,6 +187,7 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   }
 
   const std::string vid = tapeFile.stem().string();
+  logStep("mount: found tape vid=" + vid + " in " + driveDir.string());
 
   // Look up per-media-type properties from the VID prefix.
   const MediaTypeInfo info = infoForVid(vid);
@@ -89,9 +201,12 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   if (info.mountDelayMs > 0) {
     const uint64_t maxDelay = info.mountDelayMaxMs > 0 ? info.mountDelayMaxMs : 2u * info.mountDelayMs;
     std::uniform_int_distribution<uint64_t> dist(info.mountDelayMs, maxDelay);
-    std::this_thread::sleep_for(std::chrono::milliseconds(dist(m_rng)));
+    const uint64_t delayMs = dist(m_rng);
+    logStep("mount: vid=" + vid + " sleeping " + std::to_string(delayMs) + " ms mount-delay jitter");
+    std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
   }
 
+  logStep("mount: vid=" + vid + " jitter done, reading tape from disk");
   m_tape.setCapacity(info.capacityBytes);
   m_maxWriteRateHz = info.maxWriteRateHz;
   m_maxReadRateHz = info.maxReadRateHz;
@@ -103,6 +218,12 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   loadTape(tapeFile);
   m_currentTapePath = tapeFile;
   m_tape.resetPosition();
+  // Incremental-save bookkeeping (see saveTape()): whatever loadTape() just populated m_tape
+  // with IS what is already durable on disk for this cartridge, header included unless the file
+  // was blank. Must be set here, before the VOL1 synthesis below adds an in-memory-only block
+  // that is not yet on disk.
+  m_persistedBlockCount = m_tape.blocks().size();
+  m_headerPersisted = !m_tape.isTapeBlank();
 
   // Synthesize a VOL1 label on a blank tape so WriteSession does not reject it.
   // Inlined to avoid a ctatapedfile link dependency on ctatapeddrive.
@@ -156,10 +277,12 @@ void VtlDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   // it would make the first file of every cartridge pay the mount delay a second time.
   m_lastWriteBlockTime = {};
   m_lastReadBlockTime = {};
+  logStep("mount: vid=" + vid + " ready, tape loaded");
 }
 
 void VtlDrive::unloadTape() {
   if (!m_currentTapePath.empty()) {
+    logStep("unload: dismount requested for vid=" + m_currentTapePath.stem().string());
     saveTape();
     m_currentTapePath.clear();
   }
@@ -168,7 +291,16 @@ void VtlDrive::unloadTape() {
 
 void VtlDrive::flush(void) {
   m_tape.flush();
-  if (m_persistOnFlush && !m_currentTapePath.empty()) {
+  // Skip entirely, lock included, ONLY when the block count is EXACTLY unchanged since the last
+  // persist (e.g. the end-of-data flush right after a threshold flush already caught
+  // everything) — saveTape() would otherwise still acquire the per-library lock for a
+  // zero-byte append, needlessly contending with other drives for nothing. Deliberately not
+  // "<=": a block count that went DOWN (the repositioning edge case saveTape() itself guards
+  // against) must still reach saveTape() so its own full-rewrite fallback can fix the on-disk
+  // file — skipping here on "<=" would hide that case from ever being corrected until
+  // unloadTape() finally runs.
+  if (m_persistOnFlush && !m_currentTapePath.empty() && m_tape.blocks().size() != m_persistedBlockCount) {
+    logStep("flush: persistOnFlush set, eager-saving vid=" + m_currentTapePath.stem().string() + " mid-session");
     saveTape();
   }
 }
@@ -330,39 +462,100 @@ void VtlDrive::readExactBlock(void* data, size_t count, const std::string& ctx) 
   }
 }
 
-void VtlDrive::saveTape() const {
-  const auto tmpPath = std::filesystem::path(m_currentTapePath.string() + ".tmp");
+void VtlDrive::saveTape() {
+  const std::string vid = m_currentTapePath.stem().string();
+  const auto& blocks = m_tape.blocks();
 
-  {
-    std::ofstream f(tmpPath, std::ios::binary | std::ios::trunc);
+  logStep("save: vid=" + vid + " waiting for per-library write-serialization lock");
+  const auto lockWaitStart = std::chrono::steady_clock::now();
+  const WriteSerializationGuard writeGuard(m_baseDir / "contents" / m_logicalLibrary);
+  const auto lockWaitMs =
+    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lockWaitStart).count();
+  const auto saveStart = std::chrono::steady_clock::now();
+
+  // blocks.size() can in principle shrink below m_persistedBlockCount: InMemoryTape::writeBlock()
+  // does m_blocks.resize(m_currentPosition + 1), which DISCARDS everything past the current
+  // position if the drive ever repositions backward and writes (real tape semantics). Archive
+  // sessions write at EOD in practice, so this should not happen, but if it ever did, the blocks
+  // already appended to disk from an earlier flush would be stale and incremental appending
+  // would corrupt the file — fall back to a full rewrite in that case instead, which is always
+  // correct regardless of how m_tape got to its current state.
+  if (m_persistOnFlush && blocks.size() >= m_persistedBlockCount) {
+    // Incremental: append only the blocks written since the last persist (m_persistedBlockCount
+    // onward), directly onto m_currentTapePath — no tmp+rename. Safe to resume from: every
+    // earlier append already left the file ending exactly on a block boundary, so the only risk
+    // window is THIS call's own write, and a crash during it leaves at worst an incomplete
+    // trailing block, never corrupts a previously-flushed one (see loadTape()).
+    const uint64_t newBlocks = blocks.size() - m_persistedBlockCount;
+    logStep("save: vid=" + vid + " lock acquired after " + std::to_string(lockWaitMs) + " ms, appending "
+            + std::to_string(newBlocks) + " new block(s) (persistOnFlush)");
+
+    // One buffer, one write() — see serializeTapeChunk()'s comment for why this beats one
+    // write() call per block.
+    const std::string chunk = serializeTapeChunk(!m_headerPersisted, k_magic, k_version, blocks, m_persistedBlockCount);
+
+    // Recorded BEFORE writing so a failed/partial append (e.g. ENOSPC partway through a large
+    // chunk — ofstream::write() gives no way to know how many bytes of a failed write actually
+    // landed) can be rolled back to exactly this size. Without this, a partial append that still
+    // reports failure would leave garbage bytes on disk that m_persistedBlockCount does not know
+    // about; a RETRY would then append the same blocks again, AFTER that garbage, corrupting the
+    // file in a way loadTape()'s truncated-tail tolerance cannot recover from (the garbage is not
+    // at the very end, it is sandwiched between valid data and the retried blocks).
+    const uint64_t preWriteSize = std::filesystem::file_size(m_currentTapePath);
+
+    std::ofstream f(m_currentTapePath, std::ios::binary | std::ios::app);
     if (!f) {
-      throw cta::exception::Exception("VtlDrive::saveTape: cannot open " + tmpPath.string() + " for writing");
+      throw cta::exception::Exception("VtlDrive::saveTape: cannot open " + m_currentTapePath.string()
+                                      + " for appending");
     }
-
-    const auto write32 = [&](uint32_t v) { f.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
-    const auto write64 = [&](uint64_t v) { f.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
-
-    write32(k_magic);
-    write32(k_version);
-
-    for (const auto& block : m_tape.blocks()) {
-      const uint64_t sz = block.data.size();
-      write64(sz);
-      if (sz > 0) {
-        f.write(block.data.data(), static_cast<std::streamsize>(sz));
-      }
-      write64(block.remainingSpaceAfter);
-    }
-
+    f.write(chunk.data(), static_cast<std::streamsize>(chunk.size()));
     f.flush();
     if (!f) {
-      std::filesystem::remove(tmpPath);
-      throw cta::exception::Exception("VtlDrive::saveTape: I/O error writing " + tmpPath.string()
+      f.close();
+      std::error_code ec;
+      std::filesystem::resize_file(m_currentTapePath, preWriteSize, ec);  // best effort; see comment above
+      throw cta::exception::Exception("VtlDrive::saveTape: I/O error appending to " + m_currentTapePath.string()
                                       + " (disk full? check shared volume space)");
     }
+    m_headerPersisted = true;
+    m_persistedBlockCount = blocks.size();
+  } else {
+    // Full rewrite via an atomic tmp+rename: unloadTape() is this cartridge's only save, so
+    // there is nothing from an earlier call in this mount to build on incrementally.
+    logStep("save: vid=" + vid + " lock acquired after " + std::to_string(lockWaitMs)
+            + " ms, writing full tape to disk");
+    const auto tmpPath = std::filesystem::path(m_currentTapePath.string() + ".tmp");
+
+    // One buffer, one write() — see serializeTapeChunk()'s comment for why this beats one
+    // write() call per block. This does mean holding a second, full copy of the tape's
+    // serialized bytes in memory for the duration of the write (on top of m_tape itself) —
+    // acceptable at this test's tape sizes; worth revisiting if tapes get much larger.
+    const std::string chunk = serializeTapeChunk(/*includeHeader=*/true, k_magic, k_version, blocks, 0);
+
+    {
+      std::ofstream f(tmpPath, std::ios::binary | std::ios::trunc);
+      if (!f) {
+        throw cta::exception::Exception("VtlDrive::saveTape: cannot open " + tmpPath.string() + " for writing");
+      }
+
+      f.write(chunk.data(), static_cast<std::streamsize>(chunk.size()));
+
+      f.flush();
+      if (!f) {
+        std::filesystem::remove(tmpPath);
+        throw cta::exception::Exception("VtlDrive::saveTape: I/O error writing " + tmpPath.string()
+                                        + " (disk full? check shared volume space)");
+      }
+    }
+
+    std::filesystem::rename(tmpPath, m_currentTapePath);
+    m_headerPersisted = true;
+    m_persistedBlockCount = blocks.size();
   }
 
-  std::filesystem::rename(tmpPath, m_currentTapePath);
+  const auto saveMs =
+    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - saveStart).count();
+  logStep("save: vid=" + vid + " written to disk in " + std::to_string(saveMs) + " ms, releasing lock");
 }
 
 void VtlDrive::loadTape(const std::filesystem::path& tapePath) {
@@ -402,12 +595,23 @@ void VtlDrive::loadTape(const std::filesystem::path& tapePath) {
       block.data.resize(sz);
       f.read(block.data.data(), static_cast<std::streamsize>(sz));
       if (!f) {
-        throw cta::exception::Exception("VtlDrive::loadTape: truncated block in " + tapePath.string());
+        // Cut short mid-block: only possible if an earlier persistOnFlush save (see saveTape())
+        // was interrupted by a crash/OOM-kill while appending. Every block before this one was
+        // already fully written and flushed by an earlier, COMPLETED save call, so it is safe —
+        // and correct — to drop just this incomplete tail rather than failing the whole tape.
+        logStep("load: vid=" + tapePath.stem().string() + " dropping incomplete trailing block in "
+                + tapePath.string() + " (" + std::to_string(blocks.size())
+                + " complete block(s) kept) — an earlier save was likely interrupted mid-append");
+        break;
       }
     }
     f.read(reinterpret_cast<char*>(&block.remainingSpaceAfter), sizeof(block.remainingSpaceAfter));
     if (!f) {
-      throw cta::exception::Exception("VtlDrive::loadTape: truncated block in " + tapePath.string());
+      // Same reasoning as above: the block's data was complete but its trailer was cut short.
+      logStep("load: vid=" + tapePath.stem().string() + " dropping incomplete trailing block in "
+              + tapePath.string() + " (" + std::to_string(blocks.size())
+              + " complete block(s) kept) — an earlier save was likely interrupted mid-append");
+      break;
     }
     blocks.push_back(std::move(block));
   }

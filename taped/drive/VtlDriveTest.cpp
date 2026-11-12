@@ -8,11 +8,13 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <thread>
 #include <unistd.h>
 #include <vector>
 
@@ -525,6 +527,238 @@ TEST_F(VtlDriveTest, MultipleBlocksAndFilemarksRoundTrip) {
     EXPECT_EQ("file body", std::string(buf, static_cast<size_t>(n)));
     EXPECT_NO_THROW(drv2.readFileMark("test"));  // FM
   }
+}
+
+// =========================================================================
+//  Incremental persistence (persistOnFlush), the write-serialization lock,
+//  and their interplay with loadTape()'s crash tolerance (see CTA-1775).
+// =========================================================================
+
+namespace {
+// On-disk cost of one serialized block: 8-byte size prefix + data + 8-byte trailer.
+constexpr uint64_t blockCost(size_t dataSize) {
+  return 2 * sizeof(uint64_t) + dataSize;
+}
+constexpr uint64_t kHeaderCost = 2 * sizeof(uint32_t);  // magic + version
+constexpr uint64_t kVol1Cost = blockCost(80);
+}  // namespace
+
+TEST_F(VtlDriveTest, IncrementalPersistAppendsOnlyNewBlocksAcrossMultipleFlushes) {
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, /*persistOnFlush=*/true);
+  const std::string vid = "ST0010";
+  mountBlankTape(vid);
+  const fs::path tapeFile = driveDir() / (vid + ".tape");
+
+  const std::string block1 = "AAAA";      // 4 bytes
+  const std::string block2 = "BBBBBB";    // 6 bytes
+
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);  // tape = [VOL1], position = 0, nothing on disk yet
+
+  char vol1buf[80] = {};
+  drv.readBlock(vol1buf, sizeof(vol1buf));  // skip VOL1, position → 1
+
+  drv.writeBlock(block1.data(), block1.size());
+  drv.flush();
+  // First persist: header + VOL1 + block1, all in one go (header not yet written before this).
+  const uint64_t afterFirstFlush = kHeaderCost + kVol1Cost + blockCost(block1.size());
+  EXPECT_EQ(afterFirstFlush, fs::file_size(tapeFile)) << "first flush must write header+VOL1+block1 exactly once";
+
+  drv.writeBlock(block2.data(), block2.size());
+  drv.flush();
+  // Second persist must be a pure append of block2 alone: no repeated header, no rewritten VOL1
+  // or block1. If saveTape() were ever rewriting from scratch here, this size would differ.
+  const uint64_t afterSecondFlush = afterFirstFlush + blockCost(block2.size());
+  EXPECT_EQ(afterSecondFlush, fs::file_size(tapeFile)) << "second flush must append only block2's bytes";
+
+  // Nothing new since the last flush: unloadTape() must still succeed (and is a no-op append),
+  // leaving the file size unchanged.
+  drv.unloadTape();
+  EXPECT_EQ(afterSecondFlush, fs::file_size(tapeFile)) << "a save with nothing new must not change the file";
+
+  // Reload from scratch and verify every block survived, in order.
+  VtlDrive drv2(m_drive, m_lib, m_baseDir);
+  drv2.waitUntilReady(30);
+  char reloadedVol1[80] = {};
+  drv2.readBlock(reloadedVol1, sizeof(reloadedVol1));
+  char buf[32] = {};
+  ssize_t n = drv2.readBlock(buf, sizeof(buf));
+  EXPECT_EQ(block1, std::string(buf, static_cast<size_t>(n)));
+  n = drv2.readBlock(buf, sizeof(buf));
+  EXPECT_EQ(block2, std::string(buf, static_cast<size_t>(n)));
+}
+
+TEST_F(VtlDriveTest, FlushSkipsTheLockWhenNothingIsNewSinceLastPersist) {
+  // Regression guard for the flush()-level early-exit: calling flush() twice in a row with no
+  // write in between must not touch the on-disk file a second time (it would otherwise still
+  // acquire the write-serialization lock for a pointless zero-byte append).
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, /*persistOnFlush=*/true);
+  const std::string vid = "ST0011";
+  mountBlankTape(vid);
+  const fs::path tapeFile = driveDir() / (vid + ".tape");
+
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);
+  drv.flush();
+  const auto sizeAfterFirstFlush = fs::file_size(tapeFile);
+  EXPECT_GT(sizeAfterFirstFlush, 0u);
+
+  const auto mtimeAfterFirstFlush = fs::last_write_time(tapeFile);
+  drv.flush();  // nothing written since the flush above
+  EXPECT_EQ(sizeAfterFirstFlush, fs::file_size(tapeFile));
+  EXPECT_EQ(mtimeAfterFirstFlush, fs::last_write_time(tapeFile))
+    << "a no-op flush must not touch the file at all, not even a same-size rewrite";
+}
+
+TEST_F(VtlDriveTest, PersistOnFlushFallsBackToFullRewriteIfTapeIsRewoundAndOverwritten) {
+  // InMemoryTape::writeBlock() does m_blocks.resize(m_currentPosition + 1), which DISCARDS
+  // everything past the current position on a backward reposition + write (real tape
+  // semantics). saveTape() must detect that its persisted-block count no longer makes sense and
+  // fall back to a full rewrite rather than corrupt the file by blindly appending from a stale
+  // offset.
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, /*persistOnFlush=*/true);
+  const std::string vid = "ST0012";
+  mountBlankTape(vid);
+  const fs::path tapeFile = driveDir() / (vid + ".tape");
+
+  const std::string block1 = "AAAA";
+  const std::string block2 = "BBBBBB";
+  const std::string rewritten = "ZZZZZZZZZZ";  // 10 bytes
+
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);  // tape = [VOL1], position = 0
+
+  char vol1buf[80] = {};
+  drv.readBlock(vol1buf, sizeof(vol1buf));  // position → 1
+
+  drv.writeBlock(block1.data(), block1.size());  // position → 2, tape = [VOL1, block1]
+  drv.flush();                                   // persisted = 2
+
+  drv.writeBlock(block2.data(), block2.size());  // position → 3, tape = [VOL1, block1, block2]
+  drv.flush();                                   // persisted = 3
+  const auto sizeBeforeRewind = fs::file_size(tapeFile);
+  EXPECT_EQ(kHeaderCost + kVol1Cost + blockCost(block1.size()) + blockCost(block2.size()), sizeBeforeRewind);
+
+  // Rewind to right after VOL1 and overwrite: tape becomes [VOL1, rewritten] (size 2), discarding
+  // block1 and block2 — now BELOW the persisted count of 3 from the flush above.
+  drv.positionToLogicalObject(1);
+  drv.writeBlock(rewritten.data(), rewritten.size());
+
+  drv.flush();
+  // Must be a full rewrite of exactly the current (shrunk) state: header + VOL1 + rewritten,
+  // nothing left over from the discarded block1/block2 — a buggy incremental append would instead
+  // have left the file at sizeBeforeRewind or larger, with the old bytes still present.
+  const uint64_t expectedAfterFallback = kHeaderCost + kVol1Cost + blockCost(rewritten.size());
+  EXPECT_EQ(expectedAfterFallback, fs::file_size(tapeFile))
+    << "a rewind-and-overwrite must trigger a full rewrite, not a corrupting incremental append";
+
+  drv.unloadTape();
+  EXPECT_EQ(expectedAfterFallback, fs::file_size(tapeFile)) << "nothing new since the fallback rewrite";
+
+  // Reload and verify the content matches the CORRECTED state, with nothing stale surviving.
+  VtlDrive drv2(m_drive, m_lib, m_baseDir);
+  drv2.waitUntilReady(30);
+  char reloadedVol1[80] = {};
+  drv2.readBlock(reloadedVol1, sizeof(reloadedVol1));
+  char buf[32] = {};
+  const ssize_t n = drv2.readBlock(buf, sizeof(buf));
+  EXPECT_EQ(rewritten, std::string(buf, static_cast<size_t>(n)));
+}
+
+TEST_F(VtlDriveTest, LoadTapeToleratesTruncatedTrailingBlockFromAnInterruptedAppend) {
+  // Simulates a crash/OOM-kill mid-append (see saveTape()'s incremental path): the tape file ends
+  // with an incomplete block. loadTape() must keep everything parsed up to that point rather than
+  // throwing and bricking the whole tape.
+  const std::string vid = "ST0013";
+  mountBlankTape(vid);
+  const fs::path tapeFile = driveDir() / (vid + ".tape");
+  const std::string payload = "this payload gets cut short by a simulated crash";
+
+  {
+    VtlDrive drv(m_drive, m_lib, m_baseDir);
+    drv.waitUntilReady(30);
+    char vol1buf[80] = {};
+    drv.readBlock(vol1buf, sizeof(vol1buf));
+    drv.writeBlock(payload.data(), payload.size());
+    drv.unloadTape();  // full rewrite: header + VOL1 + payload, all intact
+  }
+
+  // Truncate partway through the payload block's DATA span, simulating a crash after the size
+  // prefix was written but before all the data (and the trailer) made it to disk.
+  const uint64_t truncateAt = kHeaderCost + kVol1Cost + sizeof(uint64_t) /* payload size prefix */
+                             + payload.size() / 2;
+  ASSERT_LT(truncateAt, fs::file_size(tapeFile));
+  fs::resize_file(tapeFile, truncateAt);
+
+  // Loading must not throw, and must keep exactly the VOL1 block (the only one fully intact).
+  VtlDrive drv2(m_drive, m_lib, m_baseDir);
+  EXPECT_NO_THROW(drv2.waitUntilReady(30));
+  EXPECT_FALSE(drv2.isTapeBlank());
+
+  // Prove exactly one block survived by immediately re-saving with nothing read/written: a full
+  // rewrite of "whatever is currently in memory" must land at exactly header+VOL1, not header+
+  // VOL1+some remnant of the truncated payload.
+  drv2.unloadTape();
+  EXPECT_EQ(kHeaderCost + kVol1Cost, fs::file_size(tapeFile))
+    << "loadTape() must have dropped the incomplete trailing block entirely";
+}
+
+TEST_F(VtlDriveTest, WriteSerializationLockBlocksUntilAnExistingLockIsReleased) {
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, /*persistOnFlush=*/true);
+  const std::string vid = "ST0014";
+  mountBlankTape(vid);
+  const fs::path lockPath = changerDir() / ".write.lock";
+
+  // Simulate another drive in the same library already mid-save.
+  { std::ofstream(lockPath, std::ios::binary); }
+  ASSERT_TRUE(fs::exists(lockPath));
+
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);
+  const std::string payload = "data";
+  drv.writeBlock(payload.data(), payload.size());
+
+  std::atomic<bool> saveDone {false};
+  std::thread saver([&] {
+    drv.flush();  // persistOnFlush=true: must block on the lock above
+    saveDone = true;
+  });
+
+  // Give the save every chance to race ahead incorrectly; it must still be blocked.
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  EXPECT_FALSE(saveDone.load()) << "save proceeded without waiting for the existing lock";
+
+  fs::remove(lockPath);  // release, as the "other drive" finishing would
+  saver.join();
+  EXPECT_TRUE(saveDone.load());
+  EXPECT_GT(fs::file_size(driveDir() / (vid + ".tape")), 0u);
+}
+
+TEST_F(VtlDriveTest, WriteSerializationLockStealsALockOlderThanTenMinutes) {
+  writeLibraryConf(m_baseDir, m_lib, m_vidPrefix, k_defaultCapacity, 0, 0, 0, 0, /*persistOnFlush=*/true);
+  const std::string vid = "ST0015";
+  mountBlankTape(vid);
+  const fs::path lockPath = changerDir() / ".write.lock";
+
+  { std::ofstream(lockPath, std::ios::binary); }
+  // Backdate well past the 10-minute staleness threshold, simulating a holder that crashed long
+  // ago rather than one still legitimately (if slowly) writing.
+  fs::last_write_time(lockPath, fs::file_time_type::clock::now() - std::chrono::minutes(11));
+
+  VtlDrive drv(m_drive, m_lib, m_baseDir);
+  drv.waitUntilReady(30);
+  const std::string payload = "data";
+  drv.writeBlock(payload.data(), payload.size());
+
+  const auto start = std::chrono::steady_clock::now();
+  EXPECT_NO_THROW(drv.flush());
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+  // The steal check runs on the very first retry (~50 ms), nowhere near the 10 minute threshold
+  // a non-stealing wait would have blocked for.
+  EXPECT_LT(elapsed, std::chrono::seconds(5)) << "stale lock was not stolen promptly";
+  EXPECT_FALSE(fs::exists(lockPath))
+    << "the guard's own (stolen-then-acquired) lock must have been released on completion";
+  EXPECT_GT(fs::file_size(driveDir() / (vid + ".tape")), 0u);
 }
 
 }  // namespace unitTests
