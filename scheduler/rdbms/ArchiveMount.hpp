@@ -17,9 +17,9 @@
 #include <cstdint>
 #include <list>
 #include <memory>
-#include <vector>
 #include <optional>
 #include <time.h>
+#include <vector>
 
 namespace cta::schedulerdb {
 
