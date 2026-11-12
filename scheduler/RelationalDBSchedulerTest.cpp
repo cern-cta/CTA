@@ -4045,14 +4045,14 @@ TEST_P(SchedulerTest, archiveMountPolicyMinRequestAgeIsRespected) {
   {
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
-      driveInfo,
-      {.state = cta::common::dataStructures::ReportedDriveState::Down},
-      lc);
-    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
-      driveInfo,
-      {.state = cta::common::dataStructures::ReportedDriveState::Up},
-      lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Down,
+                                lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Up,
+                                lc);
   }
 
   {
@@ -4132,14 +4132,14 @@ TEST_P(SchedulerTest, retrieveMountPolicyMinRequestAgeIsRespected) {
   cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
   {
     // This first initialization is normally done by the dataSession function.
-    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
-      driveInfo,
-      {.state = cta::common::dataStructures::ReportedDriveState::Down},
-      lc);
-    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
-      driveInfo,
-      {.state = cta::common::dataStructures::ReportedDriveState::Up},
-      lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Down,
+                                lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Up,
+                                lc);
   }
 
   // The file to retrieve has to be on tape first. It is kept small on purpose, so that the
@@ -4181,7 +4181,7 @@ TEST_P(SchedulerTest, retrieveMountPolicyMinRequestAgeIsRespected) {
     auto mount = scheduler.getNextMount(s_libraryName, driveName, lc);
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount->getMountType());
-    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
+    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
 
     std::unique_ptr<cta::ArchiveMount> archiveMount(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
@@ -4200,10 +4200,10 @@ TEST_P(SchedulerTest, retrieveMountPolicyMinRequestAgeIsRespected) {
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
     archiveMount->complete();
-    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
-      driveInfo,
-      {.state = cta::common::dataStructures::ReportedDriveState::Up},
-      lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Up,
+                                lc);
   }
 
   {
@@ -4301,14 +4301,14 @@ TEST_P(SchedulerTest, archiveForRepackMountPolicyMinRequestAgeIsRespected) {
   {
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
-      driveInfo,
-      {.state = cta::common::dataStructures::ReportedDriveState::Down},
-      lc);
-    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
-      driveInfo,
-      {.state = cta::common::dataStructures::ReportedDriveState::Up},
-      lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Down,
+                                lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Up,
+                                lc);
   }
 
   auto* dbWrapper = dynamic_cast<cta::RelationalDBTestWrapper*>(&getSchedulerDB());
