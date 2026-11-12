@@ -1,0 +1,431 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Paths are relative to the repository root.
+[project]
+docs_dir = "docs/content"
+site_dir = "build/docs/site"
+strict = true
+watch = ["project.json", "CHANGELOG.md", "docs/includes", "tools", "catalogue", "frontend/grpc", "taped", "maintd", "mediachanger/rmcd", "lib/python", "lib/telemetry"]
+site_name = "CTA Documentation"
+site_description = "Operator and developer documentation for the CERN Tape Archive (CTA) system"
+site_author = "CERN Tape Archive Team"
+site_url = "https://cta.docs.cern.ch"
+repo_name = "cta/CTA"
+repo_url = "https://gitlab.cern.ch/cta/CTA"
+extra_css = ["stylesheets/extra.css"]
+copyright = "Copyright &copy; 2026 CERN"
+# Navigation follows the reader journey: Concepts, Operations, Development, Reference.
+nav = [
+    { "Home" = "index.md" },
+    { "Concepts" = [
+        { "Introduction" = "concepts/index.md" },
+        { "Components" = [
+            { "Overview" = "concepts/components/index.md" },
+            { "Authentication" = "concepts/components/authentication.md" },
+            { "Services" = [
+                { "Workflow Frontend" = "concepts/components/workflow-frontend.md" },
+                { "Admin Frontend" = "concepts/components/admin-frontend.md" },
+                { "Tape Daemon" = "concepts/components/tape-daemon.md" },
+                { "Media Changer Daemon" = "concepts/components/media-changer-daemon.md" },
+                { "Maintenance Daemon" = "concepts/components/maintenance-daemon.md" },
+            ] },
+            { "Databases & Backends" = [
+                { "Catalogue" = "concepts/components/catalogue.md" },
+                { "Scheduler" = "concepts/components/scheduler.md" },
+            ] },
+            { "Disk System" = "concepts/components/disk-system.md" },
+        ] },
+        { "Data Management" = [
+            { "Storage Model" = "concepts/data-management/storage-model.md" },
+            { "File Workflows" = "concepts/data-management/index.md" },
+            { "Archival" = "concepts/data-management/archival.md" },
+            { "Retrieval" = "concepts/data-management/retrieval.md" },
+            { "Scheduling" = "concepts/data-management/scheduling.md" },
+            { "Deletion" = "concepts/data-management/deletion.md" },
+            { "Repack" = "concepts/data-management/repack.md" },
+            { "Recycle Bin" = "concepts/data-management/recycle-bin.md" },
+            { "Data Integrity" = "concepts/data-management/data-integrity.md" },
+        ] },
+        { "Tape Infrastructure" = [
+            { "Tape Media" = "concepts/tape/media/index.md" },
+            { "Tape Drives" = "concepts/tape/drives.md" },
+            { "Tape Libraries" = "concepts/tape/libraries.md" },
+            { "Tape Servers" = "concepts/tape/servers.md" },
+            { "Tape Lifecycle" = "concepts/tape/lifecycle.md" },
+            { "Recommended Access Order" = "concepts/tape/rao.md" },
+            { "Tape Formats" = [
+                { "Tape Labels" = "concepts/tape/media/labels.md" },
+                { "CTA Tape Format" = "concepts/tape/media/format.md" },
+            ] },
+        ] },
+        { "Glossary" = "concepts/glossary.md" },
+    ] },
+    { "Operations" = [
+        { "Introduction" = "ops/index.md" },
+        { "Deploy & Configure" = [
+            { "Installation & Deployment" = [
+                { "Planning & Prerequisites" = "ops/deploy-and-configure/deployment/planning.md" },
+                { "Installation Methods" = [
+                    { "Overview" = "ops/deploy-and-configure/deployment/installation/index.md" },
+                    { "RPM Packages" = "ops/deploy-and-configure/deployment/installation/rpm-packages.md" },
+                    { "Docker Images" = "ops/deploy-and-configure/deployment/installation/docker-images.md" },
+                ] },
+                { "Tape Server Setup" = "ops/deploy-and-configure/deployment/tape-servers.md" },
+                { "Stable Drive Identities & udev" = "ops/deploy-and-configure/deployment/udev-rules.md" },
+                { "cta-udev Setup" = "ops/deploy-and-configure/deployment/cta-udev.md" },
+                { "Initialisation & Verification" = "ops/deploy-and-configure/deployment/initialisation.md" },
+            ] },
+            { "Configuration" = [
+                { "Service Runtime" = "ops/deploy-and-configure/configuration/service-runtime.md" },
+                { "Authentication" = "ops/deploy-and-configure/configuration/authentication.md" },
+                { "Services" = [
+                    { "Workflow Frontend" = "ops/deploy-and-configure/configuration/workflow-frontend.md" },
+                    { "Admin Frontend" = "ops/deploy-and-configure/configuration/admin-frontend.md" },
+                    { "Tape Daemon" = "ops/deploy-and-configure/configuration/tape-daemon.md" },
+                    { "Maintenance Daemon" = "ops/deploy-and-configure/configuration/maintenance-daemon.md" },
+                    { "Media Changer Daemon" = "ops/deploy-and-configure/configuration/media-changer-daemon.md" },
+                ] },
+                { "Databases & Backends" = [
+                    { "Catalogue" = "ops/deploy-and-configure/configuration/catalogue.md" },
+                    { "Scheduler" = "ops/deploy-and-configure/configuration/scheduler.md" },
+                ] },
+            ] },
+            { "Disk System Integration" = [
+                { "Introduction" = "ops/deploy-and-configure/integrations/index.md" },
+                { "EOS" = "ops/deploy-and-configure/integrations/eos.md" },
+                { "dCache" = "ops/deploy-and-configure/integrations/dcache.md" },
+            ] },
+        ] },
+        { "Run & Maintain" = [
+            { "Administration" = [
+                { "Introduction" = "ops/run-and-maintain/administration/index.md" },
+                { "Services" = "ops/run-and-maintain/administration/services.md" },
+                { "Tapes, Drives & Libraries" = "ops/run-and-maintain/administration/tapes-and-drives.md" },
+                { "Media Initialisation" = "ops/run-and-maintain/administration/media-initialisation.md" },
+                { "Storage Policies" = "ops/run-and-maintain/administration/storage-policies.md" },
+                { "Scheduling & Queues" = "ops/run-and-maintain/administration/requests.md" },
+                { "Repacking Tapes" = "ops/run-and-maintain/administration/repack.md" },
+                { "Performance & Capacity" = "ops/run-and-maintain/administration/performance.md" },
+                { "EOS" = [
+                    { "Performance & Disk Layout" = "ops/run-and-maintain/administration/eos/performance.md" },
+                    { "Buffer Cleanup" = "ops/run-and-maintain/administration/eos/buffer-cleanup.md" },
+                ] },
+            ] },
+            { "Monitoring" = [
+                { "Health Checks & Alerts" = "ops/run-and-maintain/monitoring/health-and-alerts.md" },
+                { "Logging" = "ops/run-and-maintain/monitoring/logging.md" },
+                { "Tape Session Diagnostics" = "ops/run-and-maintain/monitoring/tape-session-diagnostics.md" },
+                { "Metrics" = "ops/run-and-maintain/monitoring/metrics.md" },
+                { "Catalogue Statistics" = "ops/run-and-maintain/monitoring/catalogue-statistics.md" },
+            ] },
+            { "Upgrades" = [
+                { "Upgrading CTA" = "ops/run-and-maintain/upgrades/cta.md" },
+                { "Upgrading CTA Catalogue schema" = [
+                    { "Introduction" = "ops/run-and-maintain/upgrades/catalogue-schema/index.md" },
+                    { "Automated procedure" = "ops/run-and-maintain/upgrades/catalogue-schema/automated.md" },
+                    { "Manual procedure" = "ops/run-and-maintain/upgrades/catalogue-schema/manual.md" },
+                ] },
+                { "Scheduler Schema Upgrades" = "ops/run-and-maintain/upgrades/scheduler-schema.md" },
+                { "Upgrading Disk System" = "ops/run-and-maintain/upgrades/disk-system.md" },
+            ] },
+        ] },
+        { "Troubleshooting" = [
+            { "Troubleshooting" = "ops/troubleshooting/troubleshooting.md" },
+            { "Tape Daemon" = "ops/troubleshooting/tape-daemon.md" },
+            { "Failed & Stuck Requests" = "ops/troubleshooting/failed-requests.md" },
+            { "Recycle Bin & File Recovery" = "ops/troubleshooting/file-recovery.md" },
+        ] },
+        { "Tools & Reference" = [
+            { "Tool Index" = "ops/tools/index.md" },
+            { "cta" = "ops/tools/cta.md" },
+            { "cta Usage" = "ops/tools/cta-usage.md" },
+            { "Installation & Shared Configuration" = "ops/tools/installation-and-configuration.md" },
+            { "Administration" = [
+                { "cta-admin" = "ops/tools/cta-admin.md" },
+                { "cta-ops-admin" = "ops/tools/cta-ops-admin.md" },
+                { "cta-versionlock" = "ops/tools/cta-versionlock.md" },
+            ] },
+            { "Database & Schema Management" = [
+                { "cta-catalogue-admin-user-create" = "ops/tools/cta-catalogue-admin-user-create.md" },
+                { "cta-catalogue-schema-create" = "ops/tools/cta-catalogue-schema-create.md" },
+                { "cta-database-poll" = "ops/tools/cta-database-poll.md" },
+                { "cta-scheduler-schema-create" = "ops/tools/cta-scheduler-schema-create.md" },
+                { "cta-scheduler-schema-drop" = "ops/tools/cta-scheduler-schema-drop.md" },
+                { "cta-catalogue-schema-set-production" = "ops/tools/cta-catalogue-schema-set-production.md" },
+                { "cta-catalogue-schema-verify" = "ops/tools/cta-catalogue-schema-verify.md" },
+                { "cta-catalogue-schema-drop" = "ops/tools/cta-catalogue-schema-drop.md" },
+            ] },
+            { "Tape Operations" = [
+                { "cta-readtp" = "ops/tools/cta-readtp.md" },
+                { "cta-tape-label" = "ops/tools/cta-tape-label.md" },
+                { "cta-smc" = "ops/tools/cta-smc.md" },
+                { "cta-ops-repack (ATRESYS)" = "ops/tools/repack-automation.md" },
+                { "cta-ops-drive-config-generate" = "ops/tools/cta-ops-drive-config-generate.md" },
+                { "cta-ops-pool-supply" = "ops/tools/cta-ops-pool-supply.md" },
+                { "cta-ops-tape-verify" = "ops/tools/tape-verification.md" },
+            ] },
+            { "Monitoring & Statistics" = [
+                { "cta-statistics-save" = "ops/tools/cta-statistics-save.md" },
+                { "cta-statistics-update" = "ops/tools/cta-statistics-update.md" },
+                { "cta-ops-drive-environmentals" = "ops/tools/cta-ops-drive-environmentals.md" },
+                { "cta-ops-data-monitoring" = "ops/tools/cta-ops-data-monitoring.md" },
+            ] },
+            { "Scheduler Management & Diagnostics" = [
+                { "cta-objectstore-collect-orphaned-object" = "ops/tools/cta-objectstore-collect-orphaned-object.md" },
+                { "cta-objectstore-create-missing-repack-index" = "ops/tools/cta-objectstore-create-missing-repack-index.md" },
+                { "cta-objectstore-dereference-removed-queues" = "ops/tools/cta-objectstore-dereference-removed-queues.md" },
+                { "cta-objectstore-initialize" = "ops/tools/cta-objectstore-initialize.md" },
+                { "cta-objectstore-list" = "ops/tools/cta-objectstore-list.md" },
+                { "cta-objectstore-reset" = "ops/tools/cta-objectstore-reset.md" },
+                { "cta-objectstore-dump-object" = "ops/tools/cta-objectstore-dump-object.md" },
+            ] },
+            { "Disk-system Tools" = [
+                { "cta-ops-eos" = "ops/tools/cta-ops-eos.md" },
+            ] },
+            { "Disk-system Reference" = [
+                { "EOS File Attributes" = "ops/tools/eos-file-attributes.md" },
+            ] },
+            { "Service Manuals" = [
+                { "cta-admin-api" = "ops/tools/service-manuals/cta-admin-api.md" },
+                { "cta-workflow-api" = "ops/tools/service-manuals/cta-workflow-api.md" },
+                { "cta-taped" = "ops/tools/service-manuals/cta-taped.md" },
+                { "cta-maintd" = "ops/tools/service-manuals/cta-maintd.md" },
+                { "cta-rmcd" = "ops/tools/service-manuals/cta-rmcd.md" },
+            ] },
+        ] },
+    ] },
+    { "Development" = [
+        { "Introduction" = "dev/index.md" },
+        { "Getting Started" = [
+            { "Prerequisites & Access" = "dev/getting-started/prerequisites.md" },
+            { "Project Structure" = "dev/getting-started/project-structure.md" },
+            { "Environment Setup" = "dev/getting-started/environment-setup.md" },
+            { "Archive & Retrieve Walkthrough" = "dev/getting-started/archive-retrieve-walkthrough.md" },
+            { "Your First Change" = "dev/getting-started/first-change.md" },
+        ] },
+        { "Contributing" = [
+            { "Overview" = "dev/contributing/index.md" },
+            { "Through CERN GitLab" = "dev/contributing/gitlab.md" },
+            { "Through GitHub" = "dev/contributing/github.md" },
+            { "Changelog Entries" = "dev/contributing/changelog.md" },
+            { "Documentation Changes" = "dev/contributing/documentation.md" },
+            { "For Maintainers" = [
+                { "Overview" = "dev/contributing/maintainers/index.md" },
+                { "Importing GitHub Contributions" = "dev/contributing/maintainers/github-contributions.md" },
+                { "Release Procedure" = "dev/contributing/maintainers/releases.md" },
+                { "Catalogue Schema Releases" = "dev/contributing/maintainers/catalogue-schema-releases.md" },
+                { "Documentation Site" = "dev/contributing/maintainers/documentation-site.md" },
+                { "CTA Dependencies" = "dev/contributing/maintainers/dependencies.md" },
+                { "CI Maintenance" = "dev/contributing/maintainers/ci-maintenance.md" },
+                { "Repository Administration" = "dev/contributing/maintainers/repository-administration.md" },
+            ] },
+        ] },
+        { "Development Guides" = [
+            { "Overview" = "dev/guides/index.md" },
+            { "Development Tools & Environment" = [
+                { "cta-dev Reference" = "dev/guides/tools-and-environment/cta-dev.md" },
+                { "Development & Test Environment" = "dev/guides/tools-and-environment/environment.md" },
+                { "Virtual Tape Library" = "dev/guides/tools-and-environment/virtual-tape-library.md" },
+                { "Working with Development Pods" = "dev/guides/tools-and-environment/development-pods.md" },
+                { "Debugging" = "dev/guides/tools-and-environment/debugging.md" },
+                { "Pre-commit Hooks" = "dev/guides/tools-and-environment/pre-commit.md" },
+                { "Building Images & Packages" = "dev/guides/tools-and-environment/building-images-and-packages.md" },
+            ] },
+            { "Python Libraries & Tools" = [
+                { "Overview" = "dev/guides/python/index.md" },
+                { "cta-sdk" = [
+                    { "Overview" = "dev/guides/python/cta-sdk/index.md" },
+                    { "Usage" = "dev/guides/python/cta-sdk/api-usage.md" },
+                ] },
+                { "cta-tapeserver-sdk" = [
+                    { "Overview" = "dev/guides/python/cta-tapeserver-sdk/index.md" },
+                    { "Usage" = "dev/guides/python/cta-tapeserver-sdk/api-usage.md" },
+                ] },
+                { "cta-common" = [
+                    { "Overview" = "dev/guides/python/cta-common/index.md" },
+                    { "Usage" = "dev/guides/python/cta-common/api-usage.md" },
+                ] },
+                { "Extending cta" = "dev/guides/python/cta-cli.md" },
+            ] },
+            { "Testing & CI" = [
+                { "Testing CTA" = "dev/guides/testing/index.md" },
+                { "Unit Tests" = "dev/guides/testing/unit-tests.md" },
+                { "System Tests" = "dev/guides/testing/system-tests.md" },
+                { "Stress Tests" = "dev/guides/testing/stress-tests.md" },
+                { "CI Overview" = "dev/guides/testing/ci/index.md" },
+                { "CI Pipelines" = "dev/guides/testing/ci/pipelines.md" },
+            ] },
+            { "Conventions" = [
+                { "Overview" = "dev/guides/conventions/index.md" },
+                { "Coding Conventions" = [
+                    { "General" = "dev/guides/conventions/coding/general.md" },
+                    { "C++" = "dev/guides/conventions/coding/cpp.md" },
+                    { "Python" = "dev/guides/conventions/coding/python.md" },
+                    { "Rust" = "dev/guides/conventions/coding/rust.md" },
+                    { "Bash" = "dev/guides/conventions/coding/bash.md" },
+                    { "Copyright" = "dev/guides/conventions/coding/copyright.md" },
+                ] },
+                { "RPM Packaging" = "dev/guides/conventions/rpm-packaging.md" },
+                { "Versioning" = "dev/guides/conventions/versioning.md" },
+                { "GitLab CI" = "dev/guides/conventions/gitlab.md" },
+                { "Container Images" = "dev/guides/conventions/container-images.md" },
+                { "Helm & Orchestration" = "dev/guides/conventions/orchestration.md" },
+            ] },
+            { "Disk System Integrations" = [
+                { "Overview" = "dev/guides/integrations/index.md" },
+                { "EOS" = [
+                    { "Developing with EOS" = "dev/guides/integrations/eos/environment-setup.md" },
+                    { "Archive Integration" = "dev/guides/integrations/eos/archival.md" },
+                    { "Retrieve Integration" = "dev/guides/integrations/eos/retrieval.md" },
+                    { "Deletion Integration" = "dev/guides/integrations/eos/deletion.md" },
+                ] },
+                { "Developing with dCache" = "dev/guides/integrations/dcache.md" },
+            ] },
+            { "Instrumentation" = [
+                { "Overview" = "dev/guides/instrumentation/index.md" },
+                { "Logging" = "dev/guides/instrumentation/logging.md" },
+                { "Metrics" = "dev/guides/instrumentation/metrics.md" },
+                { "Metrics Conventions" = "dev/guides/instrumentation/semantic-conventions.md" },
+                { "Testing Metrics" = "dev/guides/instrumentation/testing.md" },
+                { "Language Guides" = [
+                    { "C++" = "dev/guides/instrumentation/cpp.md" },
+                ] },
+            ] },
+        ] },
+        { "Implementation Internals" = [
+            { "Overview" = "dev/internals/index.md" },
+            { "Interfaces & Protocols" = "dev/internals/interfaces.md" },
+            { "Workflow Implementation" = [
+                { "Overview" = "dev/internals/workflows/index.md" },
+                { "Archival" = "dev/internals/workflows/archival.md" },
+                { "Retrieval" = "dev/internals/workflows/retrieval.md" },
+                { "Scheduling" = "dev/internals/workflows/scheduling.md" },
+                { "Deletion" = "dev/internals/workflows/deletion.md" },
+                { "Repack" = "dev/internals/workflows/repack.md" },
+                { "Recycle Bin" = "dev/internals/workflows/recycle-bin.md" },
+            ] },
+            { "Components" = [
+                { "Catalogue" = [
+                    { "Overview" = "dev/internals/components/catalogue/index.md" },
+                    { "Schema Development" = "dev/internals/components/catalogue/schema-development.md" },
+                    { "Compatible Changes" = "dev/internals/components/catalogue/compatible-changes.md" },
+                    { "Incompatible Changes" = "dev/internals/components/catalogue/incompatible-changes.md" },
+                    { "New Schema Version" = "dev/internals/components/catalogue/new-version.md" },
+                    { "Naming" = "dev/internals/components/catalogue/naming.md" },
+                    { "Migration Scripts" = "dev/internals/components/catalogue/migration-scripts.md" },
+                    { "Testing Migrations" = "dev/internals/components/catalogue/testing.md" },
+                ] },
+                { "Scheduler" = [
+                    { "Overview" = "dev/internals/components/scheduler/index.md" },
+                    { "PostgreSQL Scheduler" = "dev/internals/components/scheduler/postgresql.md" },
+                    { "Backend Schema" = "dev/internals/components/scheduler/schema.md" },
+                    { "Workflow Integration" = "dev/internals/components/scheduler/workflow.md" },
+                    { "Opportunistic Batching" = "dev/internals/components/scheduler/opportunistic-batching.md" },
+                    { "VO Mount-Limit Race" = "dev/internals/components/scheduler/vo-mount-limit-race.md" },
+                    { "Garbage Collection Routines" = "dev/internals/components/scheduler/garbage-collection.md" },
+                ] },
+                { "Workflow Frontend" = "dev/internals/components/workflow-frontend.md" },
+                { "Admin Frontend" = "dev/internals/components/admin-frontend.md" },
+                { "Tape Daemon" = "dev/internals/components/tape-daemon.md" },
+                { "Maintenance Daemon" = "dev/internals/components/maintenance-daemon.md" },
+                { "Media Changer Daemon" = "dev/internals/components/media-changer-daemon.md" },
+            ] },
+            { "Shared Libraries" = [
+                { "Overview" = "dev/internals/shared-libraries.md" },
+                { "Service Runtime" = "dev/internals/service-runtime.md" },
+                { "Telemetry Internals" = "dev/internals/telemetry.md" },
+                { "Readiness & Liveness" = "dev/internals/health-checks.md" },
+            ] },
+        ] },
+    ] },
+    { "Changelog" = "changelog.md" },
+    { "Reference" = [
+        { "Overview" = "dev/internals/reference.md" },
+        { "Python API" = [
+            { "Overview" = "api/python/index.md" },
+            { "cta-sdk" = ["api/python/cta-sdk/index.md", "api/python/cta-sdk/reference/client.md", "api/python/cta-sdk/reference/daos.md", "api/python/cta-sdk/reference/exceptions.md", "api/python/cta-sdk/reference/factory.md", "api/python/cta-sdk/reference/models.md", "api/python/cta-sdk/reference/units.md", "api/python/cta-sdk/reference/workflow.md"] },
+            { "cta-tapeserver-sdk" = ["api/python/cta-tapeserver-sdk/index.md", "api/python/cta-tapeserver-sdk/reference/controller-providers.md", "api/python/cta-tapeserver-sdk/reference/controllers.md", "api/python/cta-tapeserver-sdk/reference/exceptions.md", "api/python/cta-tapeserver-sdk/reference/infrastructure-repository.md"] },
+            { "cta-common" = ["api/python/cta-common/reference.md"] },
+            { "cta-cli" = ["api/python/cta-cli/index.md", "api/python/cta-cli/reference/commands.md", "api/python/cta-cli/reference/config.md", "api/python/cta-cli/reference/display.md", "api/python/cta-cli/reference/entrypoint.md", "api/python/cta-cli/reference/models.md"] },
+        ] },
+    ] },
+]
+
+[project.theme]
+custom_dir = "docs/overrides"
+logo = "assets/images/cta-logo.png"
+favicon = "assets/images/favicon.ico"
+font = false
+features = ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune", "announce.dismiss"]
+palette = [
+    { "media" = "(prefers-color-scheme: light)", "scheme" = "default", "primary" = "custom", "accent" = "custom", "toggle" = { "icon" = "material/white-balance-sunny", "name" = "Switch to dark mode" } },
+    { "media" = "(prefers-color-scheme: dark)", "scheme" = "slate", "primary" = "custom", "accent" = "custom", "toggle" = { "icon" = "material/brightness-3", "name" = "Switch to light mode" } },
+]
+variant = "modern"
+
+[project.theme.icon.admonition]
+terminal = "octicons/command-palette-16"
+
+[project.markdown_extensions.abbr]
+
+[project.markdown_extensions.admonition]
+
+[project.markdown_extensions.attr_list]
+
+[project.markdown_extensions.md_in_html]
+
+[project.markdown_extensions.def_list]
+
+[project.markdown_extensions.footnotes]
+
+[project.markdown_extensions."pymdownx.smartsymbols"]
+
+[project.markdown_extensions."pymdownx.inlinehilite"]
+
+[project.markdown_extensions."pymdownx.emoji"]
+emoji_index = "zensical.extensions.emoji.twemoji"
+emoji_generator = "zensical.extensions.emoji.to_svg"
+
+[project.markdown_extensions."pymdownx.highlight"]
+
+[project.markdown_extensions."pymdownx.snippets"]
+check_paths = true
+auto_append = ["docs/includes/abbreviations.md"]
+base_path = ["."]
+
+[project.markdown_extensions."pymdownx.tabbed"]
+alternate_style = true
+
+[project.markdown_extensions."pymdownx.details"]
+
+[project.markdown_extensions."pymdownx.superfences"]
+custom_fences = [
+    { "name" = "mermaid", "class" = "mermaid", "format" = "pymdownx.superfences.fence_code_format" },
+]
+
+[project.markdown_extensions.toc]
+permalink = "#"
+toc_depth = 3
+
+[project.markdown_extensions."docs.zensical_content"]
+
+[project.plugins.search]
+
+[project.plugins.autorefs]
+
+[project.plugins.mkdocstrings.handlers.python]
+paths = ["lib/python/cta-sdk/src", "lib/python/cta-tapeserver-sdk/src", "lib/python/cta-common/src", "tools/cta-cli/src"]
+inventories = ["https://docs.python.org/3.9/objects.inv"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+allow_inspection = false
+show_if_no_docstring = true
+docstring_style = "google"
+show_root_heading = true
+show_root_full_path = true
+show_symbol_type_toc = true
+
+[project.plugins.mkdocstrings.handlers.python.options.docstring_options]
+warn_unknown_params = false
+warn_missing_types = false

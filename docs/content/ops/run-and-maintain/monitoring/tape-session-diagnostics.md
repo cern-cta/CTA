@@ -7,7 +7,7 @@ For shared log configuration and formats, see [Logging](logging.md).
 ## Tape session logging
 
 Tape session logs describe both the daemon's transfer outcome and the hardware diagnostics collected from the drive.
-The [tape daemon concepts](../../../concepts/components/tape-daemon.md#tape-session-failures-and-counters) explain what constitutes a session failure and how that differs from drive reusability.
+The [tape daemon concepts](../../../concepts/components/tape-daemon.md#tape-session-failures-and-event-counters) explain what constitutes a session failure and how that differs from drive reusability.
 The field names below describe the current implementation; consult the [log schema](logging.md#log-schema) when building monitoring integrations.
 
 ### Final session summary

@@ -12,21 +12,18 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 
 ## Preview locally
 
-Install the Rust toolchain specified by `rust-toolchain.toml` as well as Python 3.9 or later.
-The build generates the Rust and Python API references automatically.
+Install the Rust toolchain specified by `rust-toolchain.toml` as well as Python 3.12.
+The build helper prepares the generated references before starting Zensical.
 The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
 
-From the repository root:
+Install `uv`, then from the repository root:
 
 ```bash
-cd docs
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-mkdocs serve
+UV_PROJECT_ENVIRONMENT=docs/.venv uv sync --locked --only-group docs --python 3.12
+docs/.venv/bin/python docs/build.py serve
 ```
 
-Open <http://127.0.0.1:8000/>. For later sessions, enter `docs/`, activate the same environment, and run `mkdocs serve`.
+Open <http://127.0.0.1:8000/>. The site is written to `build/docs/site/`. Pass `--skip-rust` to reuse an existing `target/doc/` when iterating on prose. For later sessions, run `docs/.venv/bin/python docs/build.py serve` from the repository root. Repeat the sync command after pulling dependency updates; it installs only the docs group into its own environment.
 
 ## Organize the content
 
@@ -40,7 +37,7 @@ Choose the section by its audience:
 
 Keep source-level implementation details, such as class-by-class descriptions, function walkthroughs, and algorithm internals, beside the code rather than in the documentation site. General architecture belongs here when it explains component responsibilities, interfaces, or how the system fits together.
 
-Use `docs/mkdocs.yml` and its scope comments to place pages in the navigation. Use lowercase hyphenated filenames, `index.md` for section landing pages, and relative links between pages. Use descriptive component names for guides and executable names for command references. An explicit front-matter `title` can clarify a short or ambiguous navigation label.
+Use the repository-root `zensical.toml` to place pages in the navigation. Use lowercase hyphenated filenames, `index.md` for section landing pages, and relative links between pages. Use descriptive component names for guides and executable names for command references. An explicit front-matter `title` can clarify a short or ambiguous navigation label.
 
 Keep diagram files beside their pages. For Mermaid diagrams, use the default theme colors where possible; these adapt to light and dark mode. See [Diagram colors](maintainers/documentation-site.md#diagram-colors) when custom styling is needed. Moving a page changes its URL: update navigation, incoming and outgoing links, and asset paths together.
 
@@ -70,17 +67,17 @@ Maintain one source for each explanation. When moving a guide into `docs/`, repl
 
 ## Check before submitting
 
-Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From `docs/`, with the Python environment activated, run:
+Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From the repository root, run:
 
 ```bash
-mkdocs build --strict
+docs/.venv/bin/python docs/build.py build
 ```
 
-The strict build must pass before submission. Use the normal [contribution workflow](index.md) for review.
+The strict Zensical build must pass before submission. The repository-root `zensical.toml` is the site configuration. CI build and publishing jobs have not yet been migrated to Zensical. Use the normal [contribution workflow](index.md) for review.
 
 ## When changes appear online
 
-Documentation is published from protected release tags, with one documentation version per minor release series (for example, `6.12`). A subsequent release in that series updates the same documentation version; `latest` points to the highest published series.
+The legacy publishing workflow (pending migration to Zensical) publishes from protected release tags, with one documentation version per minor release series (for example, `6.12`). A subsequent release in that series updates the same documentation version; `latest` points to the highest published series.
 
 Merging a documentation change into `main` does not publish it immediately. It appears online when the documentation publication job succeeds for a release tag containing the change. Until then, use the local preview to see it. Readers selecting an older documentation version continue to see the documentation published for that series.
 

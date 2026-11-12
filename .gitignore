@@ -101,3 +101,8 @@ Pipfile.lock
 
 # Generated Debian packaging state
 /debian/
+
+
+# Generated documentation assets and Zensical cache
+/docs/content/api/rust/
+/.cache/

@@ -4,17 +4,12 @@ hide:
   - toc
 ---
 
-<div class="cta-home" markdown>
-
 ![CTA logo](assets/images/cta-logo.png)
 
-<div class="spacer-xl"></div>
-# <span class="landing-title">CERN Tape Archive Documentation</span>
+# CERN Tape Archive Documentation
 
 Technical documentation for understanding, deploying, operating and developing **CERN Tape Archive (CTA)**.
 CTA manages tape storage alongside a disk system such as [EOS](https://eos.web.cern.ch/) or [dCache](https://www.dcache.org/).
-
-Select the documentation version matching your deployment.
 
 ## Getting started
 
@@ -68,5 +63,3 @@ Choose a starting point below.
 - [Main CTA website](https://cta.web.cern.ch/) — Project background, presentations, and publications.
 - [Source code](https://gitlab.cern.ch/cta/CTA) — Browse the repository and contribute.
 - [Changelog](changelog.md) — Features, fixes, and changes in each release.
-
-</div>
