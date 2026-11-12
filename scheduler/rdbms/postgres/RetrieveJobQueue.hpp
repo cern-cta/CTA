@@ -918,16 +918,15 @@ public:
 
   // failReportBatchRequeue: batch UPDATE for jobs where report retries are not exhausted.
   // Resets IS_REPORTING=FALSE, updates TOTAL_REPORT_RETRIES and REPORT_FAILURE_LOG.
-  // No table move — job stays in (REPACK_)RETRIEVE_ACTIVE_QUEUE for retry.
-  static uint64_t failReportBatchRequeue(Transaction& txn,
-                                         const std::vector<RetrieveJobQueueRow*>& jobs,
-                                         bool isRepack);
+  // No table move — job stays in RETRIEVE_ACTIVE_QUEUE for retry.
+  // No isRepack parameter: this disk/EOS report-failure path never receives a repack job -
+  // see RelationalDB::failRetrieveJobBatchReport()'s comment for why.
+  static uint64_t failReportBatchRequeue(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs);
 
   // failReportBatchExceedRetries: batch UPDATE counters for jobs that have exhausted report
-  // retries or have NoReportRequired, then batch-moves them to (REPACK_)RETRIEVE_FAILED_QUEUE.
-  static uint64_t failReportBatchExceedRetries(Transaction& txn,
-                                               const std::vector<RetrieveJobQueueRow*>& jobs,
-                                               bool isRepack);
+  // retries or have NoReportRequired, then batch-moves them to RETRIEVE_FAILED_QUEUE.
+  // No isRepack parameter - see failReportBatchRequeue() above.
+  static uint64_t failReportBatchExceedRetries(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs);
 #endif
 };
 };  // namespace cta::schedulerdb::postgres

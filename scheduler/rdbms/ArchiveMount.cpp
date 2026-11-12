@@ -388,6 +388,14 @@ void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJo
   // Jobs that have exhausted their report-retry budget (or need no report) are moved
   // to ARCHIVE_FAILED_QUEUE.  Jobs that still have retries remaining have IS_REPORTING
   // reset to FALSE so the flagging loop picks them up for another attempt.
+  //
+  // The isRepack split below is live, unlike RelationalDB::failRetrieveJobBatchReport()'s
+  // retrieve equivalent (which never sees a repack job - see that function's comment): this is
+  // called from MigrationReportPacker::reportSuccessfulJobsBatch()'s catch when the live mount
+  // session's own setJobBatchTransferred()/setRepackJobBatchTransferred() DB state transition
+  // fails, not from the separate disk/EOS-report routine - and repack archive files genuinely
+  // go through setRepackJobBatchTransferred() at that same point. Do not assume archive and
+  // retrieve are symmetric here; they operate at different layers.
   if (batch.empty()) return;
 
   std::vector<postgres::ArchiveJobQueueRow*> exceedUser, exceedRepack, requeueUser, requeueRepack;
