@@ -16,6 +16,8 @@
 #include "taped/session/archive/TapeWriteSingleThread.hpp"
 #include "taped/session/archive/TapeWriteTask.hpp"
 
+#include <stop_token>
+
 namespace cta::tape::daemon {
 
 /**
@@ -47,7 +49,8 @@ public:
                         uint64_t byteSizeThreshold,
                         const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                         TapeSessionTracker& tracker,
-                        const cta::log::LogContext& lc);
+                        const cta::log::LogContext& lc,
+                        std::stop_token drainToken = {});
 
   /**
    * Wait for the inner thread to finish
@@ -251,6 +254,9 @@ private:
 
   /// First injected file's sequence, used by TapeSession to initialize the tape writer.
   uint64_t m_firstFseqToWrite = 0;
+
+  /// Stop scheduler fetching while allowing acquired jobs to drain.
+  std::stop_token m_drainToken;
 };
 
 }  // namespace cta::tape::daemon

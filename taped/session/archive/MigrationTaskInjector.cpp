@@ -25,7 +25,8 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
                                              uint64_t byteSizeThreshold,
                                              const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                                              TapeSessionTracker& tracker,
-                                             const cta::log::LogContext& lc)
+                                             const cta::log::LogContext& lc,
+                                             std::stop_token drainToken)
     : m_thread(*this),
       m_memManager(mm),
       m_tapeWriter(tapeWriter),
@@ -35,7 +36,8 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
       m_maxBytes(byteSizeThreshold),
       m_unmountPolicy(unmountPolicy),
       m_tracker(tracker),
-      m_lc(lc) {}
+      m_lc(lc),
+      m_drainToken(drainToken) {}
 
 //------------------------------------------------------------------------------
 //injectBulkMigrations
@@ -103,6 +105,10 @@ void MigrationTaskInjector::requestInjection(bool lastCall) {
 bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
   std::list<std::unique_ptr<cta::ArchiveJob>> jobs;
   noFilesToMigrate = false;
+  if (m_drainToken.stop_requested()) {
+    noFilesToMigrate = true;
+    return false;
+  }
   // Preserve the original exception for session failure handling.
   // First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
   // (it is applied to ArchiveForUser and ArchiveForRepack batches)
@@ -319,12 +325,21 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
 void MigrationTaskInjector::WorkerThread::run() {
   m_parent.m_lc.push(Param("thread", "MigrationTaskInjector"));
   m_parent.m_lc.log(cta::log::INFO, "Starting MigrationTaskInjector thread");
+  bool producersFinished = false;
   try {
+    // Wake a blocked injector without impersonating the workers' finish notification.
+    std::stop_callback wakeOnDrain(m_parent.m_drainToken, [&] { m_parent.requestInjection(false); });
     while (true) {
       if (m_parent.m_errorFlag) {
         throw cta::tape::daemon::ErrorFlag();
       }
       Request req = m_parent.m_queue.pop();
+      if (m_parent.m_drainToken.stop_requested()) {
+        producersFinished = req.end;
+        m_parent.m_lc.log(cta::log::INFO, "Drain requested: ending archive job fetching");
+        m_parent.signalEndDataMovement();
+        break;
+      }
       m_parent.m_lc.log(cta::log::DEBUG,
                         "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive mount");
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
@@ -405,7 +420,7 @@ void MigrationTaskInjector::WorkerThread::run() {
      * m_diskWriter might still want some more task (the threshold could be crossed),
      * so we discard everything that might still be in the queue
      */
-  bool stillReading = true;
+  bool stillReading = !producersFinished;
   while (stillReading) {
     Request req = m_parent.m_queue.pop();
     if (req.end) {

@@ -131,7 +131,7 @@ TapeSession::TapeSession(log::Logger& log,
       m_mediaChanger(mc),
       m_catalogue(catalogue) {}
 
-TapeSessionResult TapeSession::execute() {
+TapeSessionResult TapeSession::execute(std::stop_token drainToken) {
   telemetry::metrics::setMountType(common::dataStructures::MountType::NoMount);
   // Clear the active mount after session finalization and worker shutdown.
   const utils::ScopeExit mountScope(
@@ -165,12 +165,12 @@ TapeSessionResult TapeSession::execute() {
     switch (m_volInfo.mountType) {
       case common::dataStructures::MountType::Retrieve:
         scopedReporter.start();
-        executeRead(lc, dynamic_cast<RetrieveMount&>(m_tapeMount), state);
+        executeRead(lc, dynamic_cast<RetrieveMount&>(m_tapeMount), state, drainToken);
         break;
       case common::dataStructures::MountType::ArchiveForUser:
       case common::dataStructures::MountType::ArchiveForRepack:
         scopedReporter.start();
-        executeWrite(lc, dynamic_cast<ArchiveMount&>(m_tapeMount), state);
+        executeWrite(lc, dynamic_cast<ArchiveMount&>(m_tapeMount), state, drainToken);
         break;
       case common::dataStructures::MountType::Label:
         throw exception::NotImplementedException();
@@ -217,7 +217,10 @@ TapeSessionResult TapeSession::execute() {
   return state.result;
 }
 
-void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrieveMount, ExecutionState& state) {
+void TapeSession::executeRead(log::LogContext& logContext,
+                              RetrieveMount& retrieveMount,
+                              ExecutionState& state,
+                              std::stop_token drainToken) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
@@ -265,7 +268,8 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
                                         m_transfersConfig.retrieve.fetch_max_files,
                                         m_transfersConfig.retrieve.fetch_max_bytes,
                                         *m_tapeSessionTracker,
-                                        logContext);
+                                        logContext,
+                                        drainToken);
 
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
@@ -339,7 +343,10 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   }
 }
 
-void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiveMount, ExecutionState& state) {
+void TapeSession::executeWrite(log::LogContext& logContext,
+                               ArchiveMount& archiveMount,
+                               ExecutionState& state,
+                               std::stop_token drainToken) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
@@ -388,7 +395,8 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
                                               m_transfersConfig.archive.fetch_max_bytes,
                                               archiveDismountPolicy,
                                               *m_tapeSessionTracker,
-                                              logContext);
+                                              logContext,
+                                              drainToken);
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
   utils::Timer startupTimer;

@@ -21,6 +21,7 @@
 #include "taped/system/Wrapper.hpp"
 
 #include <memory>
+#include <stop_token>
 
 namespace cta::tape::daemon {
 
@@ -48,8 +49,9 @@ public:
   ///
   /// Assignments with no work may finish without mounting a tape. The caller can attempt recovery if this throws.
   /// Exit the process immediately if workers cannot be confirmed stopped, avoiding unsafe cleanup.
+  /// A drain request stops fetching new jobs; acquired jobs and normal cleanup still finish.
   /// @return Whether the assignment succeeded and, separately, whether the drive can accept more work.
-  TapeSessionResult execute();
+  TapeSessionResult execute(std::stop_token drainToken = {});
 
   /// Return read-only tracking state, valid for this session's lifetime.
   const TapeSessionTracker& tracker() const { return *m_tapeSessionTracker; }
@@ -85,7 +87,10 @@ private:
   ///
   /// Record whether the pipeline completes the scheduler mount and whether the drive can be reused.
   /// execute() completes empty or rejected mounts.
-  void executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount, ExecutionState& state);
+  void executeRead(cta::log::LogContext& logContext,
+                   cta::RetrieveMount& retrieveMount,
+                   ExecutionState& state,
+                   std::stop_token drainToken);
 
   /// Configure requested RAO unless the tape label format is incompatible.
   void configureRAO(cta::log::LogContext& logContext, RecallTaskInjector& taskInjector);
@@ -94,7 +99,10 @@ private:
   ///
   /// Record whether the pipeline completes the scheduler mount and whether the drive can be reused.
   /// execute() completes empty mounts.
-  void executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount, ExecutionState& state);
+  void executeWrite(cta::log::LogContext& logContext,
+                    cta::ArchiveMount& archiveMount,
+                    ExecutionState& state,
+                    std::stop_token drainToken);
 
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
 
