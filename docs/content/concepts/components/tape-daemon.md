@@ -228,6 +228,7 @@ For fatal failures and abrupt termination, see [Failure scenarios](#failure-scen
 
 On SIGTERM or SIGINT, the daemon stops fetching new job batches.
 Already-acquired jobs, including those returned by an in-progress fetch, finish through the normal transfer, reporting and tape cleanup paths before exit.
+Idle polling waits wake on a stop request.
 Blocking operations are not interrupted, so shutdown has no fixed deadline.
 
 ### Drive session lifetime

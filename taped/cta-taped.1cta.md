@@ -47,7 +47,8 @@ Configuration failures before catalogue access and failures to validate drive ow
 
 SIGTERM and SIGINT (Ctrl-C) request an exit and stop an active tape session from fetching further job batches.
 Already-fetched jobs, including jobs returned by an in-progress fetch, drain through the normal transfer, reporting, and tape cleanup paths before exit.
-Sleeping or blocking operations are not interrupted, so this does not impose a shutdown deadline.
+Idle polling waits wake on a stop request.
+Blocking operations are not interrupted, so this does not impose a shutdown deadline.
 Full graceful shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.
 Crashes, allocation or logging failures, stuck cartridges, and robot communication failures can prevent cleanup or state publication.
 

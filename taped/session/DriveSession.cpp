@@ -11,6 +11,7 @@
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/ExceptionLogging.hpp"
 #include "common/semconv/Logging.hpp"
+#include "common/utils/InterruptibleSleep.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -25,7 +26,6 @@
 #include <chrono>
 #include <exception>
 #include <optional>
-#include <unistd.h>
 
 namespace cta::tape::daemon {
 using common::dataStructures::DriveReport;
@@ -167,7 +167,7 @@ void DriveSession::run(std::stop_token stopToken) {
         break;
       }
       if (result.action == IterationAction::RetryAfterDelay && !stopToken.stop_requested()) {
-        ::sleep(m_config.mounts.idle_scheduling_interval_secs);
+        utils::interruptibleSleep(stopToken, std::chrono::seconds(m_config.mounts.idle_scheduling_interval_secs));
       }
     }
     {
