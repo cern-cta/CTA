@@ -32,7 +32,8 @@ Section: libs
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Description: CERN Tape Archive catalogue libraries
- Provides catalogue libraries, PostgreSQL and SQLite plugins, and configuration examples.
+ Provides catalogue libraries, PostgreSQL and SQLite plugins,
+ and configuration examples.
 
 Package: cta-lib-scheduler
 Section: libs
@@ -87,7 +88,8 @@ Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Recommends: systemd, logrotate
 Description: CERN Tape Archive workflow gRPC API
- Provides the workflow gRPC API handling EOS archive, retrieve and delete requests for CTA.
+ Provides the workflow gRPC API handling EOS archive, retrieve and delete
+ requests for CTA.
 
 Package: cta-rmcd
 Architecture: amd64
@@ -98,7 +100,7 @@ Description: CERN Tape Archive remote media changer daemon
 
 Package: cta-eosdf
 Architecture: all
-Depends: ${misc:Depends}, bash, sed, xrootd-client
+Depends: ${misc:Depends}, xrootd-client
 Description: CERN Tape Archive EOS disk buffer space reporter
  Provides a command-line tool that reports free space in an EOS disk buffer.
 
