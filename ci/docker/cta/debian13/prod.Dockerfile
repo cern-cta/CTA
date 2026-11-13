@@ -33,6 +33,7 @@ FROM debian:13-slim AS base
 ARG CTA_DEPENDENCY_REPOSITORY=https://cta-public-repo.web.cern.ch/testing/cta-6/debian
 ARG SUPPRESS_BUILD_SERVICE_STDOUT=false
 ARG ENABLE_ORACLE_SUPPORT=false
+# Accepted for the shared build interface; this YUM repository option does not apply to Debian.
 ARG ENABLE_INTERNAL_REPOS=false
 
 COPY build-service.sh /usr/local/bin/build-service.sh

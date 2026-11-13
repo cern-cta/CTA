@@ -5,7 +5,6 @@ set -euo pipefail
 
 SUPPRESS_BUILD_SERVICE_STDOUT=${SUPPRESS_BUILD_SERVICE_STDOUT:-false}
 ENABLE_ORACLE_SUPPORT=${ENABLE_ORACLE_SUPPORT:-false}
-ENABLE_INTERNAL_REPOS=${ENABLE_INTERNAL_REPOS:-false}
 
 if [[ "${SUPPRESS_BUILD_SERVICE_STDOUT}" == 1 || "${SUPPRESS_BUILD_SERVICE_STDOUT,,}" == true ]]; then
     exec 1>/dev/null
@@ -13,10 +12,6 @@ fi
 
 if [[ "${ENABLE_ORACLE_SUPPORT}" == 1 || "${ENABLE_ORACLE_SUPPORT,,}" == true ]]; then
     echo 'Debian images do not support Oracle.' >&2
-    exit 1
-fi
-if [[ "${ENABLE_INTERNAL_REPOS}" == 1 || "${ENABLE_INTERNAL_REPOS,,}" == true ]]; then
-    echo 'Debian images use the public dependency repository only.' >&2
     exit 1
 fi
 
