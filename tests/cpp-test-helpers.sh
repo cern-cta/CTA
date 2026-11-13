@@ -11,6 +11,8 @@
 run_cpp_test() {
   local name="$1" output_dir="${CTA_TEST_OUTPUT_DIR:-$PWD}"
   shift
+  # Read by callers after all tests and cleanup have completed.
+  # shellcheck disable=SC2034
   GTEST_OUTPUT="xml:${output_dir}/test-results/${name}.xml" \
     "$@" 2>&1 | tee "${output_dir}/test-logs/${name}.log" || test_status=1
 }
