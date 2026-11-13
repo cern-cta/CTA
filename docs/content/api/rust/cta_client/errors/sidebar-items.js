@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ArchiveFileConversionError","ChecksumTypeError","Error","RecycleTapeFileConversionError"],"struct":["TapeFileLsItemConversionError"]};

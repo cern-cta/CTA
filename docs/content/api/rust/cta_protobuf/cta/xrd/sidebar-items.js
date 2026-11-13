@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["alert","cta_rpc_client","cta_rpc_stream_client","data","negotiation_client","request","response","stream_response"],"struct":["Alert","Data","KerberosAuthenticationRequest","KerberosAuthenticationResponse","Request","Response","StreamResponse"]};

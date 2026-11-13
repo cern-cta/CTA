@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["workflow"],"struct":["Client","Metadata","Notification","Transport","Workflow"]};
