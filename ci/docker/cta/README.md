@@ -23,7 +23,6 @@ The CTA container images are multi-stage images. The Dockerfile defines several 
 - `cta-tools`
 
 The build requires a directory containing the CTA binary packages.
-For Debian 13 commands and image contents, see [Building Images & Packages](../../../docs/content/dev/guides/tools-and-environment/building-images-and-packages.md#debian-13-images).
 
 ### Using the build script (recommended)
 
