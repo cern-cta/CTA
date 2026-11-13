@@ -87,6 +87,7 @@ system-tests = [
     { name = "packaging", specifier = ">=24.0" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 type-check = [
@@ -105,6 +106,7 @@ type-check = [
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
     { name = "pytest-cov" },
     { name = "pyyaml" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 unit-tests = [
