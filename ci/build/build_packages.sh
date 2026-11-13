@@ -379,10 +379,11 @@ install_build_dependencies() {
   case "$package_format" in
     rpm) install_rpm_build_dependencies "$package_dir" ;;
     deb)
-      local sources=("$package_dir/"*.dsc)
-      [[ -f "${sources[0]}" ]] || die "No Debian source packages found in $package_dir."
+      # Older versions can remain in the output directory with incompatible dependency pins.
+      local source_package="$package_dir/cta_${cta_version}.dsc"
+      [[ -f "$source_package" ]] || die "Debian source package $source_package does not exist."
       apt-get update
-      apt-get build-dep -y --no-install-recommends "${sources[@]}"
+      apt-get build-dep -y --no-install-recommends "$source_package"
       ;;
     *) die "No dependency installer is implemented for package format $package_format." ;;
   esac
