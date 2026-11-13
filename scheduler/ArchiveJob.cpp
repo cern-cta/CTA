@@ -177,6 +177,13 @@ void cta::ArchiveJob::transferFailed(const std::string& failureReason, log::LogC
 void cta::ArchiveJob::prepareFailTransfer(const std::string& failureReason) {
   m_dbJob->prepareFailTransfer(failureReason);
 }
+
+//------------------------------------------------------------------------------
+// ArchiveJob::prepareFailReport
+//------------------------------------------------------------------------------
+void cta::ArchiveJob::prepareFailReport(const std::string& failureReason) {
+  m_dbJob->prepareFailReport(failureReason);
+}
 #endif  // CTA_PGSCHED
 
 //------------------------------------------------------------------------------

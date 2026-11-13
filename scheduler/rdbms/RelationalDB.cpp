@@ -530,6 +530,48 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   return;
 }
 
+void RelationalDB::failArchiveJobBatchReport(std::vector<SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) {
+  if (batch.empty()) {
+    return;
+  }
+
+  // Archive jobs reaching this point were fetched by getNextArchiveJobsToReportBatch(), which
+  // only ever returns user jobs (repack reporting never goes through disk/EOS reporting) - no
+  // isRepack bucketing needed here, unlike ArchiveMount::failReportBatch().
+  std::vector<schedulerdb::postgres::ArchiveJobQueueRow*> exceed, requeue;
+  for (auto* dbJob : batch) {
+    auto* rdbJob = dynamic_cast<schedulerdb::ArchiveRdbJob*>(dbJob);
+    if (!rdbJob) {
+      throw exception::Exception(
+        "In RelationalDB::failArchiveJobBatchReport(): unexpected job type (not ArchiveRdbJob)");
+    }
+    auto* row = &rdbJob->m_jobRow;
+    const bool isExceed = (dbJob->reportType == SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired
+                           || row->totalReportRetries >= row->maxReportRetries);
+    (isExceed ? exceed : requeue).push_back(row);
+  }
+
+  {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("batchSize", batch.size()).add("nExceededRetries", exceed.size()).add("nRequeued", requeue.size());
+    lc.log(log::INFO, "In RelationalDB::failArchiveJobBatchReport(): processing failed archive report batch.");
+  }
+
+  schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    if (!requeue.empty()) {
+      schedulerdb::postgres::ArchiveJobQueueRow::failReportBatchRequeue(txn, requeue, false);
+    }
+    if (!exceed.empty()) {
+      schedulerdb::postgres::ArchiveJobQueueRow::failReportBatchExceedRetries(txn, exceed, false);
+    }
+    txn.commit();
+  } catch (...) {
+    txn.abort();
+    throw;
+  }
+}
+
 std::list<SchedulerDatabase::RetrieveQueueStatistics>
 RelationalDB::getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                                          const std::set<std::string>& vidsToConsider) {

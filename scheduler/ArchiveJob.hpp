@@ -110,6 +110,12 @@ public:
    * via ArchiveMount::failTransferBatch().
    */
   virtual void prepareFailTransfer(const std::string& failureReason);
+
+  /**
+   * Prepares the in-memory job state for batch report-failure handling.
+   * Updates report failure log and increments totalReportRetries without DB access.
+   */
+  virtual void prepareFailReport(const std::string& failureReason);
 #endif
 
   /**

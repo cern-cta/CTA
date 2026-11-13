@@ -347,6 +347,18 @@ public:
                                           utils::Timer& t,
                                           log::LogContext& lc) = 0;
 
+#ifdef CTA_PGSCHED
+  /**
+   * Batch-fail reporting for archive jobs whose user notification failed.
+   * prepareFailReport() must have been called on each job before this call to update
+   * in-memory retry counters and failure logs.
+   * Jobs that have exhausted their report retries (or have NoReportRequired) are moved
+   * to ARCHIVE_FAILED_QUEUE; others are requeued with IS_REPORTING=FALSE.
+   * pgsched only — objectstore handles this job by job via failReport().
+   */
+  virtual void failArchiveJobBatchReport(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
+#endif
+
   /*============ Retrieve  management: user side ============================*/
 
   /**

@@ -3098,6 +3098,15 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
                                        log::LogContext& lc) {
   utils::Timer ttel;
 
+#ifdef CTA_PGSCHED
+  struct PgschedFailedReport {
+    cta::ArchiveJob* job;
+    std::string reason;
+  };
+
+  std::vector<PgschedFailedReport> pgschedFailedReports;
+#endif
+
   // Create the reporters
   struct JobAndReporter {
     std::unique_ptr<disk::DiskReporter> reporter;
@@ -3125,6 +3134,9 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
         .add("reportType", j->reportType())
         .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to launch reporter.");
+#ifdef CTA_PGSCHED
+      pgschedFailedReports.push_back({j.get(), ex.getMessageValue()});
+#else
       try {
         j->reportFailed(ex.getMessageValue(), lc);
       } catch (const cta::exception::NoSuchObject& ex) {
@@ -3135,6 +3147,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
                "In Scheduler::reportArchiveJobsBatch(): failed to reportFailed the job because it does not exist in "
                "the objectstore.");
       }
+#endif
     }
   }
   timingList.insertAndReset("asyncReportLaunchTime", t);
@@ -3149,6 +3162,9 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
         .add("reportType", current.archiveJob->reportType())
         .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to report.");
+#ifdef CTA_PGSCHED
+      pgschedFailedReports.push_back({current.archiveJob, ex.getMessageValue()});
+#else
       try {
         current.archiveJob->reportFailed(ex.getMessageValue(), lc);
       } catch (const cta::exception::NoSuchObject& ex) {
@@ -3159,6 +3175,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
                "In Scheduler::reportArchiveJobsBatch(): failed to reportFailed the current job because it does not "
                "exist in the objectstore.");
       }
+#endif
     }
   }
   std::list<SchedulerDatabase::ArchiveJob*> reportedDbJobs;
@@ -3166,8 +3183,27 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
   timingList.insertAndReset("reportCompletionTime", t);
-  utils::Timer tscheddb;
   uint64_t scheddbReportedJobCount = reportedDbJobs.size();
+#ifdef CTA_PGSCHED
+  if (!pgschedFailedReports.empty()) {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failedDbJobs;
+    failedDbJobs.reserve(pgschedFailedReports.size());
+    for (auto& f : pgschedFailedReports) {
+      f.job->prepareFailReport(f.reason);
+      failedDbJobs.push_back(f.job->m_dbJob.get());
+    }
+    try {
+      m_db.failArchiveJobBatchReport(failedDbJobs, lc);
+    } catch (const cta::exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(lc);
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+      lc.log(log::ERR,
+             "In Scheduler::reportArchiveJobsBatch(): failArchiveJobBatchReport threw; "
+             "failed report jobs will be rescued by GC.");
+    }
+  }
+#endif
+  utils::Timer tscheddb;
   m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
   auto ttel_scheddb = tscheddb.msecs();
   timingList.insertAndReset("reportRecordInSchedDbTime", t);

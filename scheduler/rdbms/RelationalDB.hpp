@@ -139,6 +139,8 @@ public:
                                   utils::Timer& t,
                                   log::LogContext& lc) override;
 
+  void failArchiveJobBatchReport(std::vector<SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) override;
+
   std::list<SchedulerDatabase::RetrieveQueueCleanupInfo>
   getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
 
