@@ -463,6 +463,12 @@ public:
                                   utils::Timer& t,
                                   log::LogContext& lc) override;
 
+#ifdef CTA_PGSCHED
+  void failArchiveJobBatchReport(std::vector<SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) override {
+    throw cta::exception::NotImplementedException();
+  }
+#endif
+
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
   void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override;
