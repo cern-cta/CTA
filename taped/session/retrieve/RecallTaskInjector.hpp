@@ -132,7 +132,8 @@ public:
    */
   void initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
 
-  void waitForPromise() const;
+  /// Wait for drive access, propagating tape startup failure.
+  void waitForPromise();
 
   void setPromise();
 
@@ -276,6 +277,8 @@ private:
    */
   std::promise<void> m_raoPromise;
   std::future<void> m_raoFuture;
+  // Protected by m_producerProtection; either readiness or termination fulfills the promise, never both.
+  bool m_raoPromiseSet = false;
 
   std::promise<void> m_firstTasksInjectedPromise;
   std::future<void> m_firstTasksInjectedFuture;

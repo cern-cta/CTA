@@ -14,6 +14,7 @@
 #include "taped/scsi/Structures.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <exception>
 #include <optional>
 #include <stdexcept>
 #include <stdint.h>
@@ -29,6 +30,12 @@ namespace cta::tape::daemon {
 void RecallTaskInjector::finish() {
   cta::threading::MutexLocker ml(m_producerProtection);
   m_queue.push(Request());
+  // A tape startup failure must also release an injector waiting for RAO drive access.
+  if (m_raoManager.useRAO() && !m_raoPromiseSet) {
+    m_raoPromise.set_exception(
+      std::make_exception_ptr(std::runtime_error("Tape thread ended before RAO drive access")));
+    m_raoPromiseSet = true;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -65,16 +72,21 @@ void RecallTaskInjector::initRAO(const cta::tape::rao::RAOParams& dataConfig, ct
 //------------------------------------------------------------------------------
 //waitForPromise
 //------------------------------------------------------------------------------
-void RecallTaskInjector::waitForPromise() const {
-  m_raoFuture.wait();
+void RecallTaskInjector::waitForPromise() {
+  m_raoFuture.get();
 }
 
 //------------------------------------------------------------------------------
 //setPromise
 //------------------------------------------------------------------------------
 void RecallTaskInjector::setPromise() {
+  cta::threading::MutexLocker ml(m_producerProtection);
+  if (m_raoPromiseSet) {
+    return;
+  }
   try {
     m_raoPromise.set_value();
+    m_raoPromiseSet = true;
   } catch (const std::exception& exc) {
     throw cta::exception::Exception(std::string("In RecallTaskInjector::setPromise() got std::exception: ")
                                     + exc.what());
