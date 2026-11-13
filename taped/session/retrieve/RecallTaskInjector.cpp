@@ -14,7 +14,6 @@
 #include "taped/scsi/Structures.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
-#include <exception>
 #include <optional>
 #include <stdexcept>
 #include <stdint.h>
@@ -30,12 +29,6 @@ namespace cta::tape::daemon {
 void RecallTaskInjector::finish() {
   cta::threading::MutexLocker ml(m_producerProtection);
   m_queue.push(Request());
-  // A tape startup failure must also release an injector waiting for RAO drive access.
-  if (m_raoManager.useRAO() && !m_raoPromiseSet) {
-    m_raoPromise.set_exception(
-      std::make_exception_ptr(std::runtime_error("Tape thread ended before RAO drive access")));
-    m_raoPromiseSet = true;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -70,27 +63,14 @@ void RecallTaskInjector::initRAO(const cta::tape::rao::RAOParams& dataConfig, ct
 }
 
 //------------------------------------------------------------------------------
-//waitForPromise
+//waitForRAOReady
 //------------------------------------------------------------------------------
-void RecallTaskInjector::waitForPromise() {
-  m_raoFuture.get();
+bool RecallTaskInjector::waitForRAOReady() {
+  return m_raoFuture.get();
 }
 
-//------------------------------------------------------------------------------
-//setPromise
-//------------------------------------------------------------------------------
-void RecallTaskInjector::setPromise() {
-  cta::threading::MutexLocker ml(m_producerProtection);
-  if (m_raoPromiseSet) {
-    return;
-  }
-  try {
-    m_raoPromise.set_value();
-    m_raoPromiseSet = true;
-  } catch (const std::exception& exc) {
-    throw cta::exception::Exception(std::string("In RecallTaskInjector::setPromise() got std::exception: ")
-                                    + exc.what());
-  }
+void RecallTaskInjector::setRAOReady(bool ready) {
+  m_raoPromise.set_value(ready);
 }
 
 /**
@@ -423,11 +403,13 @@ void RecallTaskInjector::WorkerThread::run() {
     // The worker drains acquired jobs and signals end-of-data.
     std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
     if (m_parent.m_raoManager.useRAO()) {
-      /* RecallTaskInjector is waiting to have access to the drive in order
-     * to perform the RAO query;
-     * This waitForPromise() call means that the drive is mounted
-     */
-      m_parent.waitForPromise();
+      // Startup failure releases the workers without attempting RAO on an unavailable drive.
+      if (!m_parent.waitForRAOReady()) {
+        m_parent.m_lc.log(cta::log::INFO, "Tape thread ended before RAO drive access");
+        m_parent.signalEndDataMovement();
+        m_parent.setFirstTasksInjectedPromise();
+        return;
+      }
       try {
         m_parent.m_raoManager.setEnterpriseRAOUdsLimits(m_parent.m_drive.getLimitUDS());
         LogContext::ScopedParam sp(m_parent.m_lc,
