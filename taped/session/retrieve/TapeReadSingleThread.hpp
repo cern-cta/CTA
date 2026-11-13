@@ -66,6 +66,7 @@ private:
     cta::utils::Timer& m_timer;
     std::optional<MountedTape>& m_mountedTape;
     const std::optional<DriveCleaner::CleanupResult>& m_cleanupResult;
+    bool m_raoReady = false;
 
   public:
     TapeThreadFinalizer(TapeReadSingleThread& parent,
@@ -76,6 +77,9 @@ private:
           m_timer(timer),
           m_mountedTape(mountedTape),
           m_cleanupResult(cleanupResult) {}
+
+    /// Grant RAO access and suppress failure notification on scope exit.
+    void setRAOReady();
 
     ~TapeThreadFinalizer();
   };
