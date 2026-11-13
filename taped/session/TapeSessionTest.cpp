@@ -200,9 +200,11 @@ public:
 
   bool releaseToPool() override { return true; }
 
+#ifdef CTA_PGSCHED
   void prepareFailTransfer(const std::string& failureReason) override { (void) failureReason; }
 
   void prepareFailReport(const std::string& failureReason) override { (void) failureReason; }
+#endif  // CTA_PGSCHED
 
 private:
   std::atomic<unsigned int>& m_counter;
