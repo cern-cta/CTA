@@ -1,2 +1,0 @@
-createSrcSidebar('[["cta_client",["",[],["client.rs","errors.rs","lib.rs","macros.rs","stream.rs","types.rs"]]],["cta_grpc_common",["",[],["errors.rs","lib.rs","rpc.rs","test_utils.rs","utils.rs"]]],["cta_protobuf",["",[],["lib.rs"]]],["eos_client",["",[],["client.rs","errors.rs","lib.rs","macros.rs"]]],["eos_protobuf",["",[],["lib.rs"]]]]');
-//{"start":19,"fragment_lengths":[92,87,36,70,36]}

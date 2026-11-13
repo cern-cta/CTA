@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Subcmd"],"mod":["ls_share","operate_share"],"struct":["LsShare","OperateShare"]};

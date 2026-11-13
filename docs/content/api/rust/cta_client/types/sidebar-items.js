@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ChecksumType","HexDecodeError"],"fn":["hex_to_byte_array"],"struct":["ArchiveFile","Checksum","DiskFile","File","FileSelector","FileSelectorBuilder","Owner","TapeFile"]};

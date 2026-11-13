@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["recycle_response","version_response"],"struct":["AclResponse","ErrorResponse","FileResponse","QuotaResponse","RecycleResponse","ShareAccess","ShareInfo","ShareResponse","VersionResponse"]};

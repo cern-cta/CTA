@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["console","rpc","traffic_shaping"]};

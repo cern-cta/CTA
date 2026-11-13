@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Error"],"fn":["validate_scheme"],"mod":["test_utils","utils"],"struct":["AuthorizationInterceptor","EndpointConfig","JwtAuth"]};
