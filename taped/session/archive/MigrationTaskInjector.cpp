@@ -26,7 +26,7 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
                                              const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                                              TapeSessionTracker& tracker,
                                              const cta::log::LogContext& lc,
-                                             std::stop_token drainToken)
+                                             std::stop_token stopToken)
     : m_thread(*this),
       m_memManager(mm),
       m_tapeWriter(tapeWriter),
@@ -37,7 +37,7 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
       m_unmountPolicy(unmountPolicy),
       m_tracker(tracker),
       m_lc(lc),
-      m_drainToken(drainToken) {}
+      m_stopToken(stopToken) {}
 
 //------------------------------------------------------------------------------
 //injectBulkMigrations
@@ -105,7 +105,7 @@ void MigrationTaskInjector::requestInjection(bool lastCall) {
 bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
   std::list<std::unique_ptr<cta::ArchiveJob>> jobs;
   noFilesToMigrate = false;
-  if (m_drainToken.stop_requested()) {
+  if (m_stopToken.stop_requested()) {
     noFilesToMigrate = true;
     return false;
   }
@@ -327,14 +327,16 @@ void MigrationTaskInjector::WorkerThread::run() {
   m_parent.m_lc.log(cta::log::INFO, "Starting MigrationTaskInjector thread");
   bool producersFinished = false;
   try {
-    // Wake a blocked injector without impersonating the workers' finish notification.
-    std::stop_callback wakeOnDrain(m_parent.m_drainToken, [&] { m_parent.requestInjection(false); });
+    // Wake up a blocked worker.
+    // requestInjection only wakes the worker and tells it to look for work. The stop token prevents actual fetching.
+    // The worker drains acquired jobs and signals end-of-data.
+    std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
     while (true) {
       if (m_parent.m_errorFlag) {
         throw cta::tape::daemon::ErrorFlag();
       }
       Request req = m_parent.m_queue.pop();
-      if (m_parent.m_drainToken.stop_requested()) {
+      if (m_parent.m_stopToken.stop_requested()) {
         producersFinished = req.end;
         m_parent.m_lc.log(cta::log::INFO, "Drain requested: ending archive job fetching");
         m_parent.signalEndDataMovement();

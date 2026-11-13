@@ -68,7 +68,7 @@ public:
                      uint64_t maxBytesPerRequest,
                      TapeSessionTracker& tracker,
                      const cta::log::LogContext& lc,
-                     std::stop_token drainToken = {})
+                     std::stop_token stopToken = {})
       : m_thread(*this),
         m_memManager(mm),
         m_tapeReader(tapeReader),
@@ -80,7 +80,7 @@ public:
         m_maxBatchBytes(maxBytesPerRequest),
         m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()),
         m_tracker(tracker),
-        m_drainToken(drainToken) {}
+        m_stopToken(stopToken) {}
 
   virtual ~RecallTaskInjector() = default;
 
@@ -293,7 +293,7 @@ private:
   TapeSessionTracker& m_tracker;
 
   /// Stop scheduler fetching while allowing acquired jobs to drain.
-  std::stop_token m_drainToken;
+  std::stop_token m_stopToken;
 };
 
 }  // namespace daemon
