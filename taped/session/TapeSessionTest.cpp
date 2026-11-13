@@ -377,9 +377,10 @@ public:
 // Supply one valid file synchronously, then fail the worker's next fetch.
 class AsyncFetchFailingArchiveDbMount : public FailingTransferArchiveDbMount {
 public:
-  explicit AsyncFetchFailingArchiveDbMount(unitTests::TempFile& source)
+  explicit AsyncFetchFailingArchiveDbMount(unitTests::TempFile& source, std::stop_source* drain = nullptr)
       : FailingTransferArchiveDbMount(TransferFailurePoint::None),
-        m_source(source) {}
+        m_source(source),
+        m_drain(drain) {}
 
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>
   getNextJobBatch(uint64_t, uint64_t, cta::log::LogContext&) override {
@@ -392,18 +393,24 @@ public:
     job->srcURL = "file://" + m_source.path();
     std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> jobs;
     jobs.emplace_back(std::move(job));
+    if (m_drain) {
+      m_drain->request_stop();
+    }
     return jobs;
   }
 
 private:
   unitTests::TempFile& m_source;
+  std::stop_source* m_drain;
 };
 
 class AsyncFetchFailingArchiveMount : public FailingTransferMount<cta::MockArchiveMount> {
 public:
-  AsyncFetchFailingArchiveMount(cta::catalogue::Catalogue& catalogue, unitTests::TempFile& source)
+  AsyncFetchFailingArchiveMount(cta::catalogue::Catalogue& catalogue,
+                                unitTests::TempFile& source,
+                                std::stop_source* drain = nullptr)
       : FailingTransferMount(catalogue, TransferFailurePoint::None) {
-    m_dbMount = std::make_unique<AsyncFetchFailingArchiveDbMount>(source);
+    m_dbMount = std::make_unique<AsyncFetchFailingArchiveDbMount>(source, drain);
   }
 
   void setTapeMounted(cta::log::LogContext&) const override { ++mountedAttempts; }
@@ -1233,6 +1240,68 @@ TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessfu
         expectedFailures[static_cast<size_t>(TapeSessionFailure::TaskInjection)] = 1;
         EXPECT_EQ(expectedFailures, session.tracker().outcomeSnapshot().failures);
         EXPECT_EQ(2, mount.archiveFetchAttempts());
+        EXPECT_EQ(1, mount.reportedJobs);
+        EXPECT_EQ(1, mount.archiveJobDestructions());
+        EXPECT_EQ(1, mount.completionAttempts);
+        EXPECT_EQ(1, session.tracker().stats().tape.filesCount);
+        EXPECT_EQ(1, countLogMessages(logger.getLog(), "Cleaner dismounted tape"));
+      }
+      alarm(0);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+// A fetch already in progress is drained, flushed and reported before shutdown.
+TEST_P(TapeSessionTest, ArchiveDrainDuringFetchCompletesAcquiredJob) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      alarm(10);
+      {
+        cta::log::StringLogger logger("dummy", "asyncFetchFailureTest", cta::log::DEBUG);
+        unitTests::TempFile source;
+        source.randomFill(1000);
+        std::stop_source drain;
+        AsyncFetchFailingArchiveMount mount(getCatalogue(), source, &drain);
+
+        cta::tape::System::mockWrapper system;
+        system.delegateToFake();
+        system.disableGMockCallsCounting();
+        system.fake.setupForVirtualDriveSLC6();
+        auto* drive = new cta::tape::drive::FakeDrive();
+        system.fake.m_pathToDrive["/dev/nst0"] = drive;
+        cta::tape::tapeFile::LabelSession::label(drive, s_vid, false);
+        drive->rewind();
+        cta::common::dataStructures::DriveInfo info("T10D6116",
+                                                    "host",
+                                                    "TestLogicalLibrary",
+                                                    "/dev/tape_T10D6116",
+                                                    "dummy");
+        cta::mediachanger::RmcProxy proxy;
+        cta::mediachanger::MediaChangerFacade changer(proxy, logger);
+
+        TransfersConfig config;
+        config.buffer_count = 2;
+        config.buffer_size_bytes = 1024;
+        config.disk_io_threads = 1;
+        config.archive.fetch_max_files = 1;
+        config.archive.fetch_max_bytes = 1024;
+        config.archive.flush_max_files = 1;
+        config.archive.flush_max_bytes = 1024;
+        config.encryption.enabled = false;
+        // Keep this transfer test independent of external key scripts and catalogue encryption settings.
+        config.encryption.external_key_script.clear();
+        config.no_block_move_timeout_secs = 600;
+        TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
+
+        const auto result = session.execute(drain.get_token());
+        EXPECT_TRUE(result.successful);
+        EXPECT_TRUE(result.driveReusable);
+        TapeSessionFailureCounts expectedFailures {};
+        EXPECT_EQ(expectedFailures, session.tracker().outcomeSnapshot().failures);
+        EXPECT_EQ(1, mount.archiveFetchAttempts());
         EXPECT_EQ(1, mount.reportedJobs);
         EXPECT_EQ(1, mount.archiveJobDestructions());
         EXPECT_EQ(1, mount.completionAttempts);

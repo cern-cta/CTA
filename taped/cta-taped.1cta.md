@@ -45,8 +45,9 @@ They preserve existing operator or failure reasons and return failure if down pu
 Shutdown does not perform additional hardware cleanup or wait indefinitely for database recovery.
 Configuration failures before catalogue access and failures to validate drive ownership cannot guarantee down publication.
 
-SIGTERM and SIGINT (Ctrl-C) request an exit between scheduling iterations or polling attempts.
-An active tape session finishes before exit; sleeps and blocking operations are not interrupted.
+SIGTERM and SIGINT (Ctrl-C) request an exit and stop an active tape session from fetching further job batches.
+Already-fetched jobs, including jobs returned by an in-progress fetch, drain through the normal transfer, reporting, and tape cleanup paths before exit.
+Sleeping or blocking operations are not interrupted, so this does not impose a shutdown deadline.
 Full graceful shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.
 Crashes, allocation or logging failures, stuck cartridges, and robot communication failures can prevent cleanup or state publication.
 
