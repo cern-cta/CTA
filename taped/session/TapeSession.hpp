@@ -49,9 +49,9 @@ public:
   ///
   /// Assignments with no work may finish without mounting a tape. The caller can attempt recovery if this throws.
   /// Exit the process immediately if workers cannot be confirmed stopped, avoiding unsafe cleanup.
-  /// A drain request stops fetching new jobs; acquired jobs and normal cleanup still finish.
+  /// A stop request currently stops fetching new jobs; acquired jobs and normal cleanup still finish.
   /// @return Whether the assignment succeeded and, separately, whether the drive can accept more work.
-  TapeSessionResult execute(std::stop_token drainToken = {});
+  TapeSessionResult execute(std::stop_token stopToken = {});
 
   /// Return read-only tracking state, valid for this session's lifetime.
   const TapeSessionTracker& tracker() const { return *m_tapeSessionTracker; }
@@ -90,7 +90,7 @@ private:
   void executeRead(cta::log::LogContext& logContext,
                    cta::RetrieveMount& retrieveMount,
                    ExecutionState& state,
-                   std::stop_token drainToken);
+                   std::stop_token stopToken);
 
   /// Configure requested RAO unless the tape label format is incompatible.
   void configureRAO(cta::log::LogContext& logContext, RecallTaskInjector& taskInjector);
@@ -102,7 +102,7 @@ private:
   void executeWrite(cta::log::LogContext& logContext,
                     cta::ArchiveMount& archiveMount,
                     ExecutionState& state,
-                    std::stop_token drainToken);
+                    std::stop_token stopToken);
 
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
 

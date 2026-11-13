@@ -50,7 +50,7 @@ public:
                         const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                         TapeSessionTracker& tracker,
                         const cta::log::LogContext& lc,
-                        std::stop_token drainToken = {});
+                        std::stop_token stopToken = {});
 
   /**
    * Wait for the inner thread to finish
@@ -256,7 +256,7 @@ private:
   uint64_t m_firstFseqToWrite = 0;
 
   /// Stop scheduler fetching while allowing acquired jobs to drain.
-  std::stop_token m_drainToken;
+  std::stop_token m_stopToken;
 };
 
 }  // namespace cta::tape::daemon
