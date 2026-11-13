@@ -159,6 +159,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   process/threading/ThreadingTests.cpp
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
+  utils/InterruptibleSleepTest.cpp
   utils/ScopeExitTest.cpp
   utils/UtilsTest.cpp
   json/test/JSONCTestObject.cpp
