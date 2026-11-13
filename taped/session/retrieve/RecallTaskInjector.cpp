@@ -277,7 +277,7 @@ void RecallTaskInjector::injectBulkRecalls() {
 bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
   noFilesToRecall = false;
   // Retained jobs still need injection even after scheduler fetching stops.
-  if (m_drainToken.stop_requested()) {
+  if (m_stopToken.stop_requested()) {
     noFilesToRecall = m_jobs.empty();
     return !m_jobs.empty();
   }
@@ -368,7 +368,7 @@ bool RecallTaskInjector::WorkerThread::popRecalls() {
     }
 
     if (m_parent.m_jobs.empty()) {
-      if (req.lastCall || m_parent.m_drainToken.stop_requested()) {
+      if (req.lastCall || m_parent.m_stopToken.stop_requested()) {
         m_parent.m_lc.log(cta::log::INFO, "No more file to recall: triggering the end of session.");
         m_parent.signalEndDataMovement();
         return false;
@@ -406,8 +406,10 @@ void RecallTaskInjector::WorkerThread::run() {
 
   bool producersFinished = false;
   try {
-    // The worker owns draining and end markers; the callback only wakes its queue.
-    std::stop_callback wakeOnDrain(m_parent.m_drainToken, [&] { m_parent.requestInjection(false); });
+    // Wake up a blocked worker.
+    // requestInjection only wakes the worker and tells it to look for work. The stop token prevents actual fetching.
+    // The worker drains acquired jobs and signals end-of-data.
+    std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
     if (m_parent.m_raoManager.useRAO()) {
       /* RecallTaskInjector is waiting to have access to the drive in order
      * to perform the RAO query;
