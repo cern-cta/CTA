@@ -8,7 +8,7 @@ from typing import Any, Optional
 import pytest
 
 from system_tests.helpers.connections.k8s_connection import K8sConnection
-from system_tests.helpers.hosts import CtaAdminApiHost, RemoteHost
+from system_tests.helpers.hosts import CatalogueToolsHost, RemoteHost
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
@@ -61,9 +61,9 @@ def test_multiple_versions_supported(project_json: dict[str, Any]) -> None:
     )
 
 
-def test_catalogue_version_is_from_version(cta_admin_api: CtaAdminApiHost, catalogue_from_version: str) -> None:
+def test_catalogue_version_is_from_version(catalogue_tools: CatalogueToolsHost, catalogue_from_version: str) -> None:
     # First check the current version is equal to the "from" version
-    assert cta_admin_api.get_schema_version() == catalogue_from_version, (
+    assert catalogue_tools.get_schema_version() == catalogue_from_version, (
         'Catalogue version should be equal to the "from" version before any updates'
     )
 
@@ -128,26 +128,26 @@ def test_tag_liquibase(catalogue_updater: RemoteHost) -> None:
 
 
 def test_liquibase_update(
-    cta_admin_api: CtaAdminApiHost, catalogue_updater: RemoteHost, catalogue_to_version: str
+    catalogue_tools: CatalogueToolsHost, catalogue_updater: RemoteHost, catalogue_to_version: str
 ) -> None:
     catalogue_updater.exec("/launch_liquibase.sh update")
 
     # Now the current version should be equal to the "to" version
-    assert cta_admin_api.get_schema_version() == catalogue_to_version, (
+    assert catalogue_tools.get_schema_version() == catalogue_to_version, (
         'Catalogue version should be equal to the "to" version after rollback'
     )
-    cta_admin_api.verify_schema()
+    catalogue_tools.verify_schema()
 
 
 def test_liquibase_rollback(
-    cta_admin_api: CtaAdminApiHost, catalogue_updater: RemoteHost, catalogue_from_version: str
+    catalogue_tools: CatalogueToolsHost, catalogue_updater: RemoteHost, catalogue_from_version: str
 ) -> None:
     catalogue_updater.exec('/launch_liquibase.sh "rollback --tag=test_update"')
     # Check the current version is equal to the "from" version again
-    assert cta_admin_api.get_schema_version() == catalogue_from_version, (
+    assert catalogue_tools.get_schema_version() == catalogue_from_version, (
         'Catalogue version should be equal to the "from" version after rollback'
     )
-    cta_admin_api.verify_schema()
+    catalogue_tools.verify_schema()
 
 
 def test_cleanup_catalogue_updater(env: TestEnv, namespace: Optional[str]) -> None:

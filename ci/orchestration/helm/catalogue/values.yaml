@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Shared by catalogue reset and the maintenance tools pod.
 resetImage:
   registry: gitlab-registry.cern.ch
   repository: cta/ctageneric/cta-tools
@@ -10,6 +11,10 @@ resetImage:
     - reg-ctageneric
 
 resetCatalogue: false
+
+# Direct database access for system-test setup, verification and teardown.
+tools:
+  enabled: true
 
 schemaVersion: ""
 

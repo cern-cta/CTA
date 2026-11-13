@@ -29,6 +29,9 @@ setup -> selected suite -> verification -> teardown
 ```
 
 Setup prepares the catalogue, tapes, and disk-system resources.
+Catalogue maintenance runs in the dedicated `catalogue-tools` pod supplied by the CI catalogue chart, using the same `cta-tools` image as the catalogue reset Job.
+This pod mounts the catalogue configuration for schema verification, initial admin creation, migration checks and teardown.
+For connection-file deployments, configure a `catalogue_tools` host with these tools and `/etc/cta/cta-catalogue.conf`.
 Verification checks for unexpected errors, core dumps, and restarts.
 Teardown cleans test resources.
 

@@ -11,6 +11,7 @@ from kubernetes.client import ApiException, V1Pod
 from .connections.k8s_connection import K8sConnection
 from .connections.remote_connection import RemoteConnection
 from .connections.ssh_connection import SSHConnection
+from .hosts.catalogue_tools_host import CatalogueToolsHost
 from .hosts.cta_admin_api_host import CtaAdminApiHost
 from .hosts.cta_cli_host import CtaCliHost
 from .hosts.cta_maintd_host import CtaMaintdHost
@@ -43,7 +44,11 @@ class TestEnv:
         dcache_client_conns: Sequence[RemoteConnection] = [],
         dcache_conns: Sequence[RemoteConnection] = [],
         scheduler_postgres_conns: Sequence[RemoteConnection] = [],
+        catalogue_tools_conns: Sequence[RemoteConnection] = [],
     ) -> None:
+        self.catalogue_tools: Sequence[CatalogueToolsHost] = [
+            CatalogueToolsHost(conn) for conn in catalogue_tools_conns
+        ]
         self.cta_cli: Sequence[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
         self.cta_admin_api: Sequence[CtaAdminApiHost] = [CtaAdminApiHost(conn) for conn in cta_admin_api_conns]
         self.cta_workflow_api: Sequence[CtaWorkflowApiHost] = [
@@ -123,6 +128,9 @@ class TestEnv:
         except ApiException as e:
             raise RuntimeError(f"Failed to query namespace {namespace}: {e}") from e
         return TestEnv(
+            catalogue_tools_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=catalogue-tools", "catalogue-tools"
+            ),
             cta_cli_conns=TestEnv.get_k8s_connections_by_selector(
                 namespace, "app.kubernetes.io/component=cli", "cta-cli"
             ),
@@ -203,6 +211,11 @@ class TestEnv:
             return connections
 
         return TestEnv(
+            catalogue_tools_conns=(
+                create_connections(connection_config, "catalogue_tools")
+                if "catalogue_tools" in connection_config
+                else []
+            ),
             cta_cli_conns=create_connections(connection_config, "cta_cli"),
             cta_admin_api_conns=create_connections(connection_config, "cta_admin_api"),
             cta_workflow_api_conns=create_connections(connection_config, "cta_workflow_api"),

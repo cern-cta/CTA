@@ -3,7 +3,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
-from system_tests.helpers.hosts import CtaAdminApiHost
+from system_tests.helpers.hosts import CatalogueToolsHost
 from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_env import TestEnv
 
@@ -12,10 +12,10 @@ from system_tests.helpers.test_env import TestEnv
 # =========================================================================
 
 
-def test_cleanup_catalogue(cta_admin_api: CtaAdminApiHost) -> None:
-    schema_version = cta_admin_api.get_schema_version()
-    cta_admin_api.exec("echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf")
-    cta_admin_api.exec(f"cta-catalogue-schema-create -v {schema_version} /etc/cta/cta-catalogue.conf")
+def test_cleanup_catalogue(catalogue_tools: CatalogueToolsHost) -> None:
+    schema_version = catalogue_tools.get_schema_version()
+    catalogue_tools.exec("echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf")
+    catalogue_tools.exec(f"cta-catalogue-schema-create -v {schema_version} /etc/cta/cta-catalogue.conf")
 
 
 def test_restart_cta(env: TestEnv, restart_expectations: RestartExpectations) -> None:

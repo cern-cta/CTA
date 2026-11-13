@@ -1,0 +1,45 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if .Values.tools.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalogue-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: catalogue-tools
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: catalogue-tools
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      {{- include "catalogueReset.imagePullSecrets" . | nindent 8 }}
+      containers:
+        - name: catalogue-tools
+          image: {{ include "catalogueReset.image" . }}
+          imagePullPolicy: {{ .Values.resetImage.pullPolicy }}
+          # Keep maintenance tools available across setup, migration and teardown.
+          command: ["sleep", "infinity"]
+          securityContext:
+            allowPrivilegeEscalation: false
+          {{- if .Values.resources }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: catalogue-config
+              mountPath: /etc/cta/cta-catalogue.conf
+              subPath: cta-catalogue.conf
+              readOnly: true
+      volumes:
+        - name: catalogue-config
+          configMap:
+            name: cta-catalogue-conf
+{{- end }}

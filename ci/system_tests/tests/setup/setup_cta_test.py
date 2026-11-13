@@ -4,7 +4,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
-from system_tests.helpers.hosts import CtaAdminApiHost, CtaCliHost, CtaRmcdHost, DiskInstanceHost
+from system_tests.helpers.hosts import CatalogueToolsHost, CtaCliHost, CtaRmcdHost, DiskInstanceHost
 from system_tests.helpers.test_env import TestEnv
 
 # =========================================================================
@@ -23,12 +23,12 @@ def test_kinit_cta_admin(env: TestEnv, krb5_realm: str) -> None:
 # =========================================================================
 
 
-def test_verify_catalogue(cta_admin_api: CtaAdminApiHost) -> None:
-    cta_admin_api.exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
+def test_verify_catalogue(catalogue_tools: CatalogueToolsHost) -> None:
+    catalogue_tools.exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
 
 
-def test_add_admins(cta_admin_api: CtaAdminApiHost, cta_cli: CtaCliHost) -> None:
-    cta_admin_api.exec(
+def test_add_admins(catalogue_tools: CatalogueToolsHost, cta_cli: CtaCliHost) -> None:
+    catalogue_tools.exec(
         "cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1"
     )
     print("Adding user ctaadmin2 as CTA admin")

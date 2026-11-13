@@ -14,6 +14,7 @@ import pytest
 from _pytest.fixtures import SubRequest
 from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.hosts import (
+    CatalogueToolsHost,
     CtaAdminApiHost,
     CtaCliHost,
     CtaMaintdHost,
@@ -277,6 +278,14 @@ def cta_rmcd(env: TestEnv) -> CtaRmcdHost:
 @pytest.fixture(scope="session")
 def cta_maintd(env: TestEnv) -> CtaMaintdHost:
     return env.cta_maintd[0]
+
+
+@pytest.fixture(scope="session")
+def catalogue_tools(env: TestEnv) -> CatalogueToolsHost:
+    assert env.catalogue_tools, (
+        "Catalogue tools host is required; deploy the catalogue tools pod or configure catalogue_tools"
+    )
+    return env.catalogue_tools[0]
 
 
 @pytest.fixture(scope="session")

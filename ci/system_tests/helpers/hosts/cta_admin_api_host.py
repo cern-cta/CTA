@@ -16,11 +16,3 @@ class CtaAdminApiHost(RemoteHost):
     @cached_property
     def log_file_path(self) -> Path:
         return Path("/var") / "log" / "cta" / "cta-admin-api.log"
-
-    def get_schema_version(self) -> str:
-        return self.exec_with_output(
-            r"cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf | grep -o -E '[0-9]+\.[0-9]'"
-        )
-
-    def verify_schema(self) -> str:
-        return self.exec_with_output(r"cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
