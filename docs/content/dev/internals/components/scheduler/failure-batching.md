@@ -4,16 +4,20 @@
 
 # Batching failed-job reports
 
-Reporting a transfer failure back to the scheduler DB is on the same hot path as a successful
-transfer, but it used to pay for it file by file: each failed read or write cost its own scheduler-DB
-round trip, serializing DB connection usage exactly when a drive or library is already in trouble
-(many files failing in quick succession). Batching merges many jobs' failure reports into one SQL
-statement, the same idea as [opportunistic batching](opportunistic-batching.md) applied to the
-report path instead of the queueing path.
+Reporting a failure back to the scheduler DB is on the same hot path as reporting a success, but it
+used to pay for it file by file: each failed read, write, or report cost its own scheduler-DB round
+trip, serializing DB connection usage exactly when a drive, library, or disk endpoint is already in
+trouble (many files failing in quick succession). Batching merges many jobs' failure reports into
+one SQL statement, the same idea as [opportunistic batching](opportunistic-batching.md) applied to
+the report path instead of the queueing path.
 
-This is implemented for the postgres scheduler backend (pgsched) only. The objectstore backend
-always reports file by file; its `prepareFailTransfer()`/`failTransferBatch()` are unimplemented
-stubs (`NotImplementedException`) for exactly this reason — see
+This page covers two related but distinct mechanisms, built the same way but triggered from
+different places: batching *transfer*-retry decisions below, and
+[batching *report*-retry decisions](#batching-failed-report-retries) further down.
+
+Both are implemented for the postgres scheduler backend (pgsched) only. The objectstore backend
+always reports file by file; its `prepareFailTransfer()`/`failTransferBatch()` (and the report-side
+equivalents) are unimplemented stubs (`NotImplementedException`) for exactly this reason — see
 [Why the single-job path still exists](#why-the-single-job-path-still-exists) below.
 
 ```mermaid
@@ -78,14 +82,69 @@ correctly additive.
 ### Repack reporting is a separate mechanism entirely
 
 Repack's failure *reporting* to the operator (aggregate `FILE_COUNT`/`FILE_BYTES` stats per repack
-request) is architecturally unrelated to anything above: `getNextFailedArchiveRepackReportBatch()` /
+request) is architecturally unrelated to anything on this page: `getNextFailedArchiveRepackReportBatch()` /
 `getNextFailedRetrieveRepackReportBatch()` work off aggregate counters via
 `moveFailedRepackJobBatchToFailedQueueTable()` + `RepackRequestTrackingRow::updateRepackRequestFailuresBatch()`.
 There is no per-job `FAILURE_LOG` concatenation and no retry-count concept there; it never reaches
-disk/EOS reporting at all. What this page describes is purely the *transfer*-retry mechanism
+disk/EOS reporting at all. What this section describes is purely the *transfer*-retry mechanism
 (deciding whether a failed job gets another attempt or is given up on) — repack jobs go through it
 exactly like user jobs, but repack's own *reporting* of the outcome to the operator is a different
-layer downstream.
+layer downstream. Repack does, however, reach the *other* batching mechanism this page covers —
+see [Batching failed report retries](#batching-failed-report-retries) below.
+
+## Batching failed report retries
+
+A second, distinct batching mechanism covers a different kind of failure: not the tape transfer
+itself, but the two things that happen *after* a transfer succeeds — persisting that success to
+the scheduler DB, and (for user jobs only) reporting it back to EOS. Both reuse the same
+in-memory-accumulation idea (`prepareFailReport()`, the report-side mirror of
+`prepareFailTransfer()` above) and the same per-bucket SQL shape
+(`failReportBatchRequeue()`/`failReportBatchExceedRetries()`), but are triggered from two
+different places:
+
+```mermaid
+flowchart TB
+    S1(("ArchiveMount::reportJobsBatchTransferred()\nthrows FailedReportMoveToQueue")) --> FB["ArchiveMount::failReportBatch()\n(bucket by isRepack x exceeded report-retries)"]
+    S2(("Scheduler::report{Archive,Retrieve}JobsBatch()\nEOS/disk report call fails")) -->|"prepareFailReport\n(user jobs only)"| FB2["RelationalDB::fail{Archive,Retrieve}JobBatchReport()"]
+    FB --> RR["failReportBatchRequeue()"]
+    FB --> EE["failReportBatchExceedRetries()"]
+    FB2 --> RR
+    FB2 --> EE
+
+    classDef action fill:#3498db,color:#ffffff,stroke:#333,stroke-width:1px;
+    class FB,FB2,RR,EE action;
+```
+
+1. **Mount-level bookkeeping failure** (`ArchiveMount::failReportBatch()`, called from
+   `MigrationReportPacker::reportSuccessfulJobsBatch()`'s `FailedReportMoveToQueue` catch): the
+   tape write and catalogue update both succeeded, but the live mount's own
+   `setJobBatchTransferred()`/`setRepackJobBatchTransferred()` DB write failed. This is the one
+   place repack jobs reach report-failure batching — see below. Retrieve has no equivalent: it
+   never writes to the catalogue, so there is no comparable two-phase write to recover from.
+2. **Disk-report failure** (`RelationalDB::failArchiveJobBatchReport()` /
+   `failRetrieveJobBatchReport()`, called from `Scheduler::reportArchiveJobsBatch()` /
+   `reportRetrieveJobsBatch()`): the job's success was already persisted, but the later,
+   independent EOS/disk report of it then failed. Repack never reaches this path —
+   `getNextArchiveJobsToReportBatch()` only ever selects user jobs, since repack never reports to
+   disk/EOS at all (see [above](#repack-reporting-is-a-separate-mechanism-entirely)).
+
+Both funnel into the same `ArchiveJobQueueRow`/`RetrieveJobQueueRow`::`failReportBatchRequeue()`/
+`failReportBatchExceedRetries()` pair, bucketed the same way as the transfer-failure path above:
+under budget requeues (`IS_REPORTING = FALSE`, retry counters bumped, status otherwise unchanged);
+over budget — or `NoReportRequired`, which is permanently true for every repack job — is terminal.
+
+### Repack's "terminal" failure here isn't a failure
+
+For repack, landing in the "exceeded report retries" bucket doesn't mean the *job* failed — it
+means the DB *write* of an already-successful transfer failed repeatedly. Recovery means replaying
+that write via `updateRepackJobSuccess()`, exactly like the single-job path
+(`ArchiveRdbJob::failReport()` → `updateJobStatusForFailedReport()`) already does, not moving the
+row to `ARCHIVE_FAILED_QUEUE`: only `updateRepackJobSuccess()` knows whether a multi-copy request's
+other copies have also succeeded, and bypassing it would risk
+`getNextSuccessfulArchiveRepackReportBatch()` deleting the source file before every copy exists.
+`ArchiveJobQueueRow::failReportBatchExceedRetries()` branches on `isRepack` for exactly this reason
+— the non-repack branch's UPDATE+INSERT+DELETE sequence (a genuine terminal failure, moving the row
+to `ARCHIVE_FAILED_QUEUE`) does not apply to repack at all.
 
 ## Two different batch sizes, on purpose
 
