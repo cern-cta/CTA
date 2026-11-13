@@ -1,6 +1,7 @@
 # Upgrading CTA
 
 Review the [changelog](../../../changelog.md) for the versions covered by your upgrade.
+For the major-version migration, see [Upgrading from CTA v5 to CTA v6](cta-v5-to-v6.md).
 
 Upgrading CTA is relatively easy as CTA is the tape backend and separated from direct interactions with archival service users **except when upgrading the workflow `cta-frontend`**.
 

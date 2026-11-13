@@ -8,7 +8,7 @@
     # With rename-based rotation, this directory must be on the same physical device as the active logs.
     olddir /var/log/cta/old
     # Rotate files as the service account instead of root.
-    su cta tape
+    su cta cta
 
     # Rotate logs hourly when the other rotation conditions are satisfied.
     hourly
@@ -21,7 +21,7 @@
     minsize 1G
 
     # Create a new active log immediately after rotation.
-    create 0644 cta tape
+    create 0644 cta cta
 
     # Compress old versions of log files.
     compress

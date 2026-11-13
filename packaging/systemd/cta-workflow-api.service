@@ -9,7 +9,7 @@ After=network-online.target
 [Service]
 Type=exec
 User=cta
-Group=tape
+Group=cta
 
 RuntimeDirectory=cta/workflow-api
 RuntimeDirectoryMode=0750

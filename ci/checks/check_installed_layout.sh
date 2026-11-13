@@ -27,8 +27,11 @@ rust_tools=(
 
 # Add runtime-library services here to check binaries, manuals, units, log rotation and TOML examples.
 services=(
+  cta-admin-api
+  cta-workflow-api
   cta-maintd
   cta-rmcd
+  cta-taped
 )
 
 # Account for RPM lib64 and Debian multiarch library directories.
@@ -106,11 +109,11 @@ require_document() {
 
 # Accept user-command or system-administration manuals, including compressed pages.
 require_manual() {
-  local tool=$1 section path
+  local tool=$1 package=${2:-} section path
   for section in 1 8; do
     path="/usr/share/man/man$section/$tool.$section"
     if [[ -f "$path" || -f "$path.gz" ]]; then
-      require_document "$path"
+      require_document "$path" "$package"
       return
     fi
   done
@@ -122,7 +125,7 @@ log_task "Checking commands and manuals ($package_format)..."
 # Commands must be executable and ship manuals.
 # FHS binaries: https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch04s04.html
 # Manuals: https://www.debian.org/doc/debian-policy/ch-docs.html#manual-pages
-for tool in "${tools[@]}" "${rust_tools[@]}" "${services[@]}"; do
+for tool in "${tools[@]}" "${rust_tools[@]}"; do
   require_file "/usr/bin/$tool"
   [[ -x "/usr/bin/$tool" ]] || fail "not executable: /usr/bin/$tool"
   require_manual "$tool"
@@ -143,14 +146,18 @@ log_task "Checking service units and configuration ($package_format)..."
 # Services ship vendor units under /usr/lib/systemd/system.
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/Systemd/
 for service in "${services[@]}"; do
-  require_file "/usr/lib/systemd/system/$service.service"
+  # Service binaries, manuals and units belong to the service's own package.
+  require_file "/usr/bin/$service" "$service"
+  [[ -x "/usr/bin/$service" ]] || fail "not executable: /usr/bin/$service"
+  require_manual "$service" "$service"
+  require_file "/usr/lib/systemd/system/$service.service" "$service"
 done
 
 # Administrator-editable log rotation settings belong under /etc.
 # Configuration: https://www.debian.org/doc/debian-policy/ch-files.html#location
 # Log rotation: https://www.debian.org/doc/debian-policy/ch-opersys.html#log-files
 for service in "${services[@]}"; do
-  require_config "/etc/logrotate.d/$service"
+  require_config "/etc/logrotate.d/$service" "$service"
 done
 
 log_task "Checking examples and their package ownership ($package_format)..."
@@ -160,6 +167,8 @@ log_task "Checking examples and their package ownership ($package_format)..."
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/#_documentation
 examples=(
   cta-admin:cta-admin.example.conf
+  cta-admin-api:jwt-revoke-list.example.toml
+  cta-workflow-api:jwt-revoke-list.example.toml
   cta-lib-catalogue:cta-catalogue.example.conf
   cta-lib-scheduler:cta-scheduler.example.conf
   cta-lib-telemetry:cta-otel.example.yaml
@@ -207,7 +216,7 @@ log_task "Checking runtime libraries ($package_format)..."
 # Check versioned runtime libraries without hardcoding the current ABI version.
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/#_shared_libraries
 # Debian: https://www.debian.org/doc/debian-policy/ch-sharedlibs.html#run-time-shared-libraries
-for library in libctacommon libctacatalogue libctascheduler; do
+for library in libctacommon libctacatalogue libctascheduler libctaruntime; do
   mapfile -t paths < <(grep -E "^${libdir}/${library}\.so\.[0-9]" <<< "$files")
   ((${#paths[@]})) || fail "missing versioned $library in $libdir"
   for path in "${paths[@]}"; do

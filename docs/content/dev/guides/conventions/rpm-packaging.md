@@ -13,7 +13,7 @@ The packaging sources are:
 
 ### Configuration and documentation
 
-- Packaged example files such as `/etc/cta/*.example.*` MUST NOT be marked `%config(noreplace)`. They are vendor documentation and SHOULD be replaced on upgrade so that they describe the installed software version.
+- Packaged example files such as `/usr/share/doc/<package>/examples/*.example.*` MUST NOT be marked `%config(noreplace)`. They are vendor documentation and SHOULD be replaced on upgrade so that they describe the installed software version.
 - Packages MUST NOT copy an example automatically to the live configuration path. Operators or configuration management must supply deployment-specific values and validate the live file with `--config-strict --config-check` before starting the service.
 - Working, administrator-owned configuration MUST remain distinct from packaged examples. Package scriptlets MUST NOT automatically restore obsolete `.rpmsave` files.
 - `COPYING` MUST be installed with `%license`, not as ordinary documentation.

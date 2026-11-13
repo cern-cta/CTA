@@ -82,7 +82,7 @@ class TestRuntimeDeployment:
 
         # Start with an empty replacement so an earlier reopen message cannot satisfy this check.
         daemon.exec(f"sudo mv {log_file} {rotated}")
-        daemon.exec(f"sudo install -o cta -g tape -m 0644 /dev/null {log_file}")
+        daemon.exec(f"sudo install -o cta -g cta -m 0644 /dev/null {log_file}")
         daemon.exec(f"kill -s HUP {pid}")
 
         # FileLogger writes this message after reopening; /proc FD access requires unavailable capabilities.

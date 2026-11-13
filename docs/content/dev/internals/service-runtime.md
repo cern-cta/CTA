@@ -227,13 +227,16 @@ A service unit should follow this pattern, replacing `<service>` with the servic
 ```systemd
 [Service]
 User=cta
-Group=tape
+Group=cta
 RuntimeDirectory=cta/<service>
 RuntimeDirectoryMode=0750
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755
 ExecStart=/usr/bin/cta-<service> --config=/etc/cta/cta-<service>.toml --config-strict --runtime-dir=/run/cta/<service> --log-file=/var/log/cta/cta-<service>.log
 ```
+
+The service account uses `cta` as its primary group.
+Only `cta-taped` and `cta-rmcd` add `SupplementaryGroups=tape` to access tape hardware.
 
 For file logging, rotate by renaming the active file and then use `systemctl kill --kill-whom=main --signal=HUP <unit>` to make the service reopen it. Do not expose this as `ExecReload` unless the application genuinely reloads its configuration: operators reasonably expect `systemctl reload` to apply configuration changes. Do not use `copytruncate`: runtime-based applications refresh their log file descriptor on `SIGHUP`. Use `delaycompress` so compression cannot race with writes made before the signal is processed. If rotated files use an `olddir`, it must be on the same filesystem as the active log.
 

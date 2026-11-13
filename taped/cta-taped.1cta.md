@@ -426,7 +426,7 @@ Overridden by **xrootd.sss_keytab_path**.
 
 */etc/cta/cta-taped.toml*
 
-:   Default configuration file. See */usr/share/doc/cta/cta-taped.example.toml*.
+:   Default configuration file. See */usr/share/doc/cta-taped/examples/cta-taped.example.toml*.
 
 */etc/cta/cta-catalogue.conf*
 

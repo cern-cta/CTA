@@ -17,15 +17,7 @@ foreach(service cta-admin-api cta-workflow-api cta-maintd cta-rmcd cta-taped)
   string(REPLACE "/etc/sysconfig" "${CTA_SERVICE_ENV_DIR}" unit "${unit}")
   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${service}.service" "${unit}")
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${service}.service" DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
+  install(FILES "logrotate/${service}.logrotate"
+    DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/logrotate.d
+    RENAME ${service})
 endforeach()
-
-# cta-admin-api and cta-workflow-api do not come with a logrotate file yet
-install(FILES logrotate/cta-maintd.logrotate
-  DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/logrotate.d
-  RENAME cta-maintd)
-install(FILES logrotate/cta-rmcd.logrotate
-  DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/logrotate.d
-  RENAME cta-rmcd)
-install(FILES logrotate/cta-taped.logrotate
-  DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/logrotate.d
-  RENAME cta-taped)

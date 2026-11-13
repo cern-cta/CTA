@@ -69,11 +69,11 @@ COPY --from=cern-ca /etc/ssl/certs/CERN-bundle.pem /etc/pki/ca-trust/source/anch
 # hadolint ignore=DL3040,DL3041
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    # Ensure consistent user ID for CTA services
-    # cta-runtime adds this user already, but it gives no guarantees on its ID.
-    # We need the ID to be stable for Kubernetes.
-    # Tape group already exists by default with gid 33
-    useradd -m -u 1000 -g tape cta && \
+    # Ensure consistent user and group IDs for CTA services
+    # cta-runtime adds this user already, but it gives no guarantees on its IDs.
+    # We need the IDs to be stable for Kubernetes.
+    groupadd -g 1000 cta && \
+    useradd -m -u 1000 -g cta cta && \
     # Ensure cta-versionlock can update the versionlock file (file needs to exist)
     mkdir -p /etc/yum/pluginconf.d && \
     touch /etc/yum/pluginconf.d/versionlock.list && \
@@ -93,7 +93,7 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
     chmod 0440 /etc/sudoers.d/cta && \
     # For runtime state configured with --runtime-dir
-    install -d -o cta -g tape -m 0750 /run/cta && \
+    install -d -o cta -g cta -m 0750 /run/cta && \
     # Prevent parallel service builds from sharing the base image's RPM lock
     rm -f "$(rpm --eval '%{_dbpath}')/.rpm.lock"
 

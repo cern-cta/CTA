@@ -36,8 +36,9 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsUser: 1000 # cta
-        runAsGroup: 33 # tape
-        fsGroup: 33
+        runAsGroup: 1000 # cta
+        fsGroup: 1000 # cta
+        supplementalGroups: {{ .Values.pod.supplementalGroups | toJson }}
       containers:
       - name: cta-rmcd
         image: {{ include "rmcd.image" . }}

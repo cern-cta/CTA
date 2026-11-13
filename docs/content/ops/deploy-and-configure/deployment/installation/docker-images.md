@@ -16,11 +16,20 @@ TODO: Document the published registry, service images, release tags, architectur
 
 ## Configure and run services
 
-TODO: Document entrypoints, configuration and credential mounts, networking, database connectivity, and service identities. Keep shared settings in [Service Runtime](../../configuration/service-runtime.md).
+TODO: Document entrypoints, configuration and credential mounts, networking, and database connectivity. Keep shared settings in [Service Runtime](../../configuration/service-runtime.md).
+
+The EL9 and EL10 service images use UID and GID 1000 for `cta`.
+Supplementary groups are assigned when containers are launched.
 
 ## Storage and hardware access
 
 TODO: Document persistent and temporary storage, writable runtime directories, permissions, and device access for tape services. Installing packages inside an image does not provide the host's systemd directory management.
+
+Writable runtime and log volumes must allow access by the container's configured UID and GID.
+
+Keep host tape devices in the `tape` group and ensure their numeric group ID matches the container's supplementary group.
+For standalone Docker or Podman containers running `cta-taped` or `cta-rmcd`, pass `--group-add 33` when the device group ID is 33; otherwise use the device's actual group ID.
+Device mappings and any required capabilities must also be configured.
 
 ## Logging, health, and shutdown
 

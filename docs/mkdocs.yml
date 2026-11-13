@@ -257,6 +257,7 @@ nav:
           # Transition installed software and schemas; developing migrations belongs in Development.
           - "Upgrades":
               - "Upgrading CTA": ops/run-and-maintain/upgrades/cta.md
+              - "CTA v5 to CTA v6": ops/run-and-maintain/upgrades/cta-v5-to-v6.md
               # Run and verify catalogue migrations; schema design and script authorship belong in Development.
               - "Upgrading CTA Catalogue schema":
                   - "Introduction": ops/run-and-maintain/upgrades/catalogue-schema/index.md
