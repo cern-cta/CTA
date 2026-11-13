@@ -213,7 +213,7 @@ build_target() {
   active_build_pids[$!]=1
 }
 
-# Warm the base and its RPM repository dependency before parallel service builds.
+# Warm the base and its package repository dependency before parallel service builds.
 base_cache_ref="cta/ctageneric/cta-build-base-cache:${image_tag}"
 
 log_task "Building base to populate the shared stage cache..."

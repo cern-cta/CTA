@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["recycle_info"],"struct":["RecycleInfo"]};

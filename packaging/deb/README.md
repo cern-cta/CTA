@@ -3,6 +3,7 @@
 - Debian 13 amd64; PostgreSQL catalogue and scheduler only.
 - Build dependency: debhelper ≥ 13.25 from `trixie-backports`, using compatibility level 13.
 - `cta` installs the services and tools; development files and tests are separate packages.
+- `cta-eosdf` supplies the EOS free-space script and XRootD client dependency independently of the other tools; `cta-tools` depends on it.
 - Services are not enabled or started on first installation.
 
 | File | Purpose |

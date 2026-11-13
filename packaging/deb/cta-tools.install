@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-usr/bin/cta-eosdf.sh
 usr/bin/cta-readtp
 usr/bin/cta-tape-label
 usr/bin/cta-smc
@@ -16,7 +15,6 @@ usr/bin/cta-database-poll
 usr/bin/cta-scheduler-schema-create
 usr/bin/cta-scheduler-schema-drop
 usr/bin/cta-eos-restore-files
-usr/share/man/man1/cta-eosdf.sh.1
 usr/share/man/man1/cta-readtp.1
 usr/share/man/man1/cta-tape-label.1
 usr/share/man/man1/cta-smc.1

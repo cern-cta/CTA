@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Subcmd"],"mod":["configure_proto","disabled_proto","ls_proto","show_proto"],"struct":["ConfigureProto","DisabledProto","LsProto","RefreshProto","ShowProto","TypeProto","WeightProto"]};

@@ -63,8 +63,6 @@ unit-test-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
     - !reference [.python-workspace, rules]
   script:
     # Documentation publication and system tests run in their own environments.
@@ -87,8 +85,6 @@ unit-test-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
     - changes:
         - "**/*.rs"
         - "**/Cargo.toml"

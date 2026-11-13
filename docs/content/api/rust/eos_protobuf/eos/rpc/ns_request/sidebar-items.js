@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Command"],"mod":["acl_request","recycle_request","share_request","version_request"],"struct":["AclRequest","ChmodRequest","ChownRequest","MkdirRequest","QuotaRequest","RecycleRequest","RenameRequest","RmRequest","RmdirRequest","SetXAttrRequest","ShareRequest","SymlinkRequest","TokenRequest","TouchRequest","UnlinkRequest","VersionRequest"]};

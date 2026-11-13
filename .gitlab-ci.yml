@@ -280,7 +280,7 @@ workflow:
     # Preserve push filtering for Debian while selecting its supported build variant.
     - if: '"$[[ inputs.platform ]]" == "debian13" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_BRANCH !~ /^release\//'
       when: never
-    # Debian currently supports package builds with the PostgreSQL scheduler only.
+    # Debian supports the PostgreSQL scheduler only.
     - if: '"$[[ inputs.platform ]]" == "debian13" && $PIPELINE_TYPE == "DEFAULT"'
       variables:
         SCHEDULER_TYPE: "pgsched"
@@ -375,8 +375,6 @@ include:
         when: never
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
         when: never
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
-        when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
     inputs:
       platform: $[[ inputs.platform ]]
@@ -393,8 +391,6 @@ include:
   - local: .gitlab/ci/build-image.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
-        when: never
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - when: always
     inputs:
@@ -425,8 +421,6 @@ include:
       enable-opportunistic-batching: $[[ inputs.enable-opportunistic-batching ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
-        when: never
       # SBOMs are only relevant in the default pipeline
       - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
   - local: .gitlab/ci/release.gitlab-ci.yml
@@ -449,8 +443,6 @@ include:
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
         when: never
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
-        when: never
       - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
         when: never
       # Reporting is selected by pipeline source rather than pipeline type, so keep it available to regressions.
@@ -458,7 +450,5 @@ include:
   - local: .gitlab/ci/.post.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
-        when: never
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - when: always

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RecycleType","Subcmd"],"mod":["config_proto"],"struct":["ConfigProto","LsProto","ProjectProto","PurgeProto","RestoreProto"]};

@@ -3,7 +3,7 @@
 Each platform directory contains:
 
 - `build.Dockerfile` and `test.Dockerfile`: platform-specific CI execution images.
-- `prod.Dockerfile`: shared stages and targets for CTA service, tools, and debug images built from RPMs.
+- `prod.Dockerfile`: shared stages and targets for CTA service, tools, and debug images built from RPMs or Debian packages.
 - `build-service.sh`: package installation and cleanup shared by the image targets.
 - `etc/yum.repos.d-{public,internal}/`: package repository definitions used by the builds.
 
@@ -22,7 +22,8 @@ The CTA container images are multi-stage images. The Dockerfile defines several 
 - `cta-workflow-api`
 - `cta-tools`
 
-The build requires a directory containing the CTA RPMs.
+The build requires a directory containing the CTA binary packages.
+For Debian 13 commands and image contents, see [Building Images & Packages](../../../docs/content/dev/guides/tools-and-environment/building-images-and-packages.md#debian-13-images).
 
 ### Using the build script (recommended)
 
