@@ -1720,7 +1720,7 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
     txn.commit();
     log::ScopedParamContainer(lc)
       .add("nrows", nrows)
-      .log(log::INFO, "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): updated repack request statistics.");
+      .log(log::INFO, "In RelationalDB::getNextFailedArchiveRepackReportBatch(): updated repack request statistics.");
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add(semconv::log::exceptionMessage, ex.getMessageValue());
