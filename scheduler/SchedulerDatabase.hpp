@@ -646,6 +646,9 @@ public:
     cta::common::dataStructures::RetrieveRequest retrieveRequest;
     std::optional<std::string> diskSystemName;
     uint32_t selectedCopyNb = 0;
+    // Set once per job in ArchiveRdbJob::initialize()/RetrieveRdbJob::initialize() from the owning
+    // mount's own m_isRepack (ArchiveMount::getNextJobBatch()), and never recomputed afterwards - stays
+    // correct for this object's whole lifecycle (transfer -> bookkeeping -> failTransfer()/failReport()).
     bool isRepack = false;
     /** Set the job successful (async). Wait() and end of report happen in RetrieveMount::flushAsyncSuccessReports() */
     virtual void asyncSetSuccessful() = 0;
