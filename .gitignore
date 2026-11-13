@@ -101,3 +101,7 @@ Pipfile.lock
 
 # Generated Debian packaging state
 /debian/
+
+# NPM for dev tooling
+package-lock.json
+node_modules/
