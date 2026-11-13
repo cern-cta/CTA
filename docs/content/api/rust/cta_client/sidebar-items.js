@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":[["admin_cmd",1]],"mod":["client","errors","macros","stream","types"]};

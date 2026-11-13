@@ -663,13 +663,6 @@ parse_options() {
       unsupported_argument "Debian 13 requires --scheduler-type pgsched and Oracle support disabled."
     enable_internal_repos=false
     internal_repos_forced_public=true
-
-    # Debian runtime images are not available yet; fail before starting a package build.
-    case "$command" in
-      images|up|debug|all)
-        unsupported_argument "Debian 13 currently supports package builds only; use 'cta-dev build --platform debian13'."
-        ;;
-    esac
   fi
 
   case "$sanitizers" in

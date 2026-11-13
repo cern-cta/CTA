@@ -62,8 +62,6 @@ unit-test-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
     - !reference [.python-workspace, rules]
   script:
     # Root test discovery includes CI and imported suites, and excludes system tests.
@@ -86,8 +84,6 @@ unit-test-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
     - changes:
         - "**/*.rs"
         - "**/Cargo.toml"

@@ -96,9 +96,17 @@ Recommends: systemd, logrotate
 Description: CERN Tape Archive remote media changer daemon
  Provides the remote media changer daemon and its service configuration.
 
+Package: cta-eosdf
+Architecture: all
+Depends: ${misc:Depends}, bash, sed, xrootd-client
+Breaks: cta-tools (<< ${source:Version})
+Replaces: cta-tools (<< ${source:Version})
+Description: CERN Tape Archive EOS disk buffer space reporter
+ Provides a command-line tool that reports free space in an EOS disk buffer.
+
 Package: cta-tools
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), libcap2-bin, xrootd-client, cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version}), cta-admin (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), libcap2-bin, cta-eosdf (= ${source:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version}), cta-admin (= ${binary:Version})
 Description: CERN Tape Archive administrative tools
  Provides administration, database schema, tape and EOS tools
  with their manuals.
