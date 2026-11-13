@@ -982,7 +982,7 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
 
   // Copy 1 transfers and its catalogue update succeeds, but the scheduler-DB bookkeeping write
   // fails. Copy 2 has not even been dispatched yet.
-  auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-REPACK-MULTICOPY-DESTA");
+  auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-MULTICOPY-DESTA");
   auto jobsA = mountA->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsA.size());
   jobsA.front()->failReport("simulated scheduler bookkeeping write failure for copy 1", lc);
@@ -1018,7 +1018,7 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
 
   // Now copy 2 transfers, its catalogue update succeeds, and its scheduler-DB bookkeeping write
   // fails too - this is the last copy, so the recovery must complete the whole request.
-  auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-REPACK-MULTICOPY-DESTB");
+  auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-MULTICOPY-DESTB");
   auto jobsB = mountB->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsB.size());
   jobsB.front()->failReport("simulated scheduler bookkeeping write failure for copy 2", lc);
