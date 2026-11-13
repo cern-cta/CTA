@@ -873,7 +873,10 @@ public:
   }
 
   template<typename Mount>
-  void checkExceptionCleanup(TransferFailurePoint point, bool cleanupFails = false, bool repack = false) {
+  void checkExceptionCleanup(TransferFailurePoint point,
+                             bool cleanupFails = false,
+                             bool repack = false,
+                             bool useRAO = false) {
     // Bound failures involving virtual hardware and in-memory queues. Neither
     // a robot nor a disk server is contacted by these scenarios.
     alarm(5);
@@ -950,7 +953,7 @@ public:
     config.archive.fetch_max_bytes = 1024;
     config.retrieve.fetch_max_files = 1;
     config.retrieve.fetch_max_bytes = 1024;
-    config.retrieve.rao.enabled = false;
+    config.retrieve.rao.enabled = useRAO;
     config.encryption.enabled = false;
     config.no_block_move_timeout_secs = 600;
     cta::mediachanger::RmcProxy proxy;
@@ -1086,6 +1089,9 @@ public:
           tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::DiskSpaceReservationTestFailure)]);
       }
       if (workerStarts) {
+        if (useRAO) {
+          EXPECT_NE(std::string::npos, logger.getLog().find("Tape thread ended before RAO drive access"));
+        }
         EXPECT_EQ(1, mount.mountedAttempts);
         EXPECT_NE(std::string::npos, logger.getLog().find("injected mounted publication failure"));
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
@@ -1735,6 +1741,18 @@ TEST_P(TapeSessionTest, RetrieveRequeueStandardFailureCleansUp) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::RequeueStandard);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+// Tape startup fails before granting RAO access; all workers must still join within the helper's deadline.
+TEST_P(TapeSessionTest, RetrieveRAOStartupFailureCleansUp) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::TapeMountedCta, false, false, true);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),
