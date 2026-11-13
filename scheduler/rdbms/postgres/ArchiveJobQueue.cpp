@@ -872,8 +872,15 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
   /* if this was the final reporting failure,
    * move the row to failed jobs and delete the entry from the queue
    * for multi-copy archive requests, all requests will be handled via the moveJobToFailedQueueTable()
+   *
+   * Must check newStatus (what was just written above), not status (this row's pre-call
+   * in-memory value, loaded before this call and never updated to match) - checking status here
+   * meant this branch only fired by coincidence (a row already ReadyForDeletion before the
+   * call), so the move-and-delete step was never reached for a genuine
+   * ToReportToUserForFailure -> ReadyForDeletion transition, leaving the row stuck in
+   * ARCHIVE_ACTIVE_QUEUE indefinitely once report retries were exhausted.
    */
-  if (status == ArchiveJobStatus::ReadyForDeletion) {
+  if (newStatus == ArchiveJobStatus::ReadyForDeletion) {
     return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
   }
   return stmt.getNbAffectedRows();
