@@ -18,10 +18,12 @@
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <limits>
 #include <list>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
 
 namespace unitTests {
@@ -1200,21 +1202,18 @@ TEST_P(RelationalDBTest, archiveMountHeartbeatRefreshedOnReportNotJustFetch) {
   ASSERT_EQ(1u, jobs.size());
   const uint64_t mountId = mount->getMountInfo().mountId;
 
-  // getNextJobBatch() just refreshed the heartbeat to "now" - age it artificially, as if this
-  // mount had instead spent a long time writing/reporting since its last fetch, well past both
-  // the 50s gc_delay used below and refreshMountLivenessHeartbeat()'s own 5s self-throttle.
-  {
-    auto conn = db.getRelationalDB().getConn();
-    auto stmt = conn.createStmt(
-      "UPDATE MOUNT_QUEUE_LAST_FETCH SET LAST_UPDATE_TIME = LAST_UPDATE_TIME - 100 WHERE MOUNT_ID = :MOUNT_ID");
-    stmt.bindUint64(":MOUNT_ID", mountId);
-    stmt.executeNonQuery();
-  }
+  // refreshMountLivenessHeartbeat() self-throttles to one DB round-trip per 5s, tracked by an
+  // in-process atomic on the mount object (m_lastHeartbeatRefreshEpoch) - not by reading the DB
+  // row back. Faking staleness by writing MOUNT_QUEUE_LAST_FETCH directly would leave that
+  // atomic still "fresh", so the report call below would skip its own round-trip as a no-op and
+  // never actually refresh the row - wait out the real window instead, exactly as a mount that
+  // spent a long time writing/reporting since its last fetch would.
+  std::this_thread::sleep_for(std::chrono::seconds(6));
 
-  // Sanity check the staleness simulation: with only the fetch-time heartbeat (now artificially
-  // aged), this mount is already a dead-mount candidate for the active queue.
+  // Sanity check: 6s since the only heartbeat (the fetch above) already exceeds this 3s
+  // gc_delay, so without a report-time refresh this mount is already a dead-mount candidate.
   {
-    auto deadBefore = db.getRelationalDB().getDeadMounts(50, lc);
+    auto deadBefore = db.getRelationalDB().getDeadMounts(3, lc);
     ASSERT_NE(deadBefore.archiveActive.end(),
               std::find(deadBefore.archiveActive.begin(), deadBefore.archiveActive.end(), mountId));
   }
@@ -1223,7 +1222,7 @@ TEST_P(RelationalDBTest, archiveMountHeartbeatRefreshedOnReportNotJustFetch) {
   mount->setJobBatchTransferred(jobs, lc);
 
   {
-    auto deadAfter = db.getRelationalDB().getDeadMounts(50, lc);
+    auto deadAfter = db.getRelationalDB().getDeadMounts(3, lc);
     ASSERT_EQ(deadAfter.archiveActive.end(),
               std::find(deadAfter.archiveActive.begin(), deadAfter.archiveActive.end(), mountId));
   }
