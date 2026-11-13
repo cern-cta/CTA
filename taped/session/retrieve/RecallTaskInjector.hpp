@@ -132,10 +132,11 @@ public:
    */
   void initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
 
-  /// Wait for drive access, propagating tape startup failure.
-  void waitForPromise();
+  /// Wait for tape startup; false means the drive could not be made ready for RAO.
+  bool waitForRAOReady();
 
-  void setPromise();
+  /// Publish the startup outcome exactly once from the tape thread.
+  void setRAOReady(bool ready);
 
   /**
    * This method will tell the TapeReadSingleThread that the
@@ -271,14 +272,9 @@ private:
    */
   unsigned int m_fetched = 0;
 
-  /**
-   * The promise for reordering the read tasks according to RAO by the
-   * RecallTaskInjector. The tasks to be run are placed in the m_tasks queue
-   */
-  std::promise<void> m_raoPromise;
-  std::future<void> m_raoFuture;
-  // Protected by m_producerProtection; either readiness or termination fulfills the promise, never both.
-  bool m_raoPromiseSet = false;
+  // The tape thread publishes true when RAO may access the drive, or false on startup failure.
+  std::promise<bool> m_raoPromise;
+  std::future<bool> m_raoFuture;
 
   std::promise<void> m_firstTasksInjectedPromise;
   std::future<void> m_firstTasksInjectedFuture;

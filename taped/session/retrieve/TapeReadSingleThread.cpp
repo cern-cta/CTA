@@ -58,12 +58,21 @@ void TapeReadSingleThread::startThreadsWithInjector(RecallTaskInjector& injector
   TapeSingleThreadInterface<TapeReadTask>::startThreads();
 }
 
+void TapeReadSingleThread::TapeThreadFinalizer::setRAOReady() {
+  m_this.m_taskInjector->setRAOReady(true);
+  m_raoReady = true;
+}
+
 //------------------------------------------------------------------------------
 //TapeThreadFinalizer::~TapeThreadFinalizer()
 //------------------------------------------------------------------------------
 TapeReadSingleThread::TapeThreadFinalizer::~TapeThreadFinalizer() {
   try {
     m_this.m_taskInjector->finish();
+    // Only the tape thread publishes readiness, including failure before the normal handoff.
+    if (m_this.m_useRAO && !m_raoReady) {
+      m_this.m_taskInjector->setRAOReady(false);
+    }
   } catch (...) {
     m_this.m_tracker.recordFailure(TapeSessionFailure::WorkerSignalling);
     // Still clean the drive; failed signalling does not guarantee injector shutdown.
@@ -273,7 +282,7 @@ void TapeReadSingleThread::run() {
       }
       if (m_useRAO) {
         /* Give the RecallTaskInjector access to the drive to perform RAO query */
-        m_taskInjector->setPromise();
+        finalizer.setRAOReady();
       }
       // Then we have to initialise the tape read session
       currentErrorToCount = TapeSessionFailure::TapesCheckLabelBeforeReading;
