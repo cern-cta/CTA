@@ -141,6 +141,7 @@ system-tests = [
     { name = "packaging", specifier = ">=24.0" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 type-check = [
@@ -195,6 +196,7 @@ type-check = [
     { name = "requests", specifier = "==2.32.5" },
     { name = "ruff", specifier = "==0.14.9" },
     { name = "six", specifier = "==1.17.0" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "typing-extensions", specifier = "==4.15.0" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
     { name = "urllib3", specifier = "==2.6.3" },
