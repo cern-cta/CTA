@@ -37,7 +37,8 @@ An operator Down request lets active work and cleanup finish before the drive is
 
 SIGTERM and SIGINT request shutdown and stop an active tape session from fetching further job batches.
 Already-fetched jobs, including jobs returned by an in-progress fetch, drain through the normal transfer, reporting, and tape cleanup paths before exit.
-Sleeping or blocking operations are not interrupted, so this does not impose a shutdown deadline.
+Idle polling waits wake on a stop request.
+Blocking operations are not interrupted, so this does not impose a shutdown deadline.
 Crashes, blocked operations and hardware failures can prevent cleanup or catalogue state publication.
 See the CERN Tape Archive documentation for startup, shutdown and cleanup guarantees.
 
