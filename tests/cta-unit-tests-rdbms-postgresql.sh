@@ -40,6 +40,9 @@ if (( EUID != 0 )); then
   exit 1
 fi
 
+# shellcheck source=tests/cpp-test-helpers.sh
+source "$(dirname "$0")/cpp-test-helpers.sh"
+
 test_command=(cta-unit-tests-rdbms)
 [[ "$analysis" != valgrind ]] || test_command=(valgrind "${test_command[@]}")
 for command in initdb pg_ctl createuser createdb runuser cta-catalogue-schema-create "${test_command[@]}"; do
@@ -70,15 +73,18 @@ cleanup() {
 trap cleanup EXIT
 
 chown postgres:postgres "$work_dir"
+# The postgres user may not be able to read the caller's working directory.
+cd "$work_dir"
 runuser -u postgres -- initdb --auth=trust -D "$data_dir"
 # Keep the Unix socket inside the temporary directory instead of relying on distribution defaults.
-runuser -u postgres -- pg_ctl start -w -t 10 -D "$data_dir" -l "$postgres_log" -o "-k $work_dir"
+runuser -u postgres -- pg_ctl start -w -t 60 -D "$data_dir" -l "$postgres_log" -o "-k $work_dir"
 runuser -u postgres -- createuser --host "$work_dir" cta
 # Database ownership permits schema creation with PostgreSQL 15+ defaults.
 runuser -u postgres -- createdb --host "$work_dir" --owner=cta cta
 printf 'postgresql:postgresql://cta@localhost/cta\n' > "$catalogue_config"
 cta-catalogue-schema-create "$catalogue_config"
 
-# pipefail preserves test failures while tee retains output for the CI artifact.
-GTEST_OUTPUT="xml:$output_dir/test-results/cta-unit-tests-rdbms.xml" \
-  "${test_command[@]}" "$catalogue_config" 2>&1 | tee "$output_dir/test-logs/cta-unit-tests-rdbms.log"
+export CTA_TEST_OUTPUT_DIR="$output_dir"
+test_status=0
+run_cpp_test cta-unit-tests-rdbms "${test_command[@]}" "$catalogue_config"
+exit "$test_status"

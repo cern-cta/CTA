@@ -10,7 +10,7 @@ Rules-Requires-Root: no
 Package: cta
 Section: metapackages
 Architecture: amd64
-Depends: ${misc:Depends}, cta-taped (= ${binary:Version}), cta-maintd (= ${binary:Version}), cta-admin-api (= ${binary:Version}), cta-workflow-api (= ${binary:Version}), cta-rmcd (= ${binary:Version}), cta-tools (= ${binary:Version})
+Depends: ${misc:Depends}, cta-taped (= ${binary:Version}), cta-maintd (= ${binary:Version}), cta-admin-api (= ${binary:Version}), cta-workflow-api (= ${binary:Version}), cta-rmcd (= ${binary:Version}), cta-tools (= ${binary:Version}), cta-eosdf (= ${binary:Version})
 Description: CERN Tape Archive services and tools
  Convenience package installing all CTA services and administrative tools.
 
@@ -106,7 +106,7 @@ Package: cta-tools
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), libcap2-bin, cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version}), cta-admin (= ${binary:Version})
 Description: CERN Tape Archive administrative tools
- Provides administration, database schema, tape and EOS tools
+ Provides administration, database schema and tape tools
  with their manuals.
 
 Package: cta-tests
