@@ -103,8 +103,7 @@ securityContext:
 pod:
   # Match the numeric group IDs of the host tape devices.
   supplementalGroups: [33]
-  extraSpec:
-    terminationGracePeriodSeconds: 1
+  extraSpec: {}
 
 extraEnv: null
 

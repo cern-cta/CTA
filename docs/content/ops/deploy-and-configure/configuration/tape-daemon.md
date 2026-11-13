@@ -97,6 +97,9 @@ Use the `[transfers.encryption]` section of the [annotated example](#example-con
 
 An orderly restart waits for the active tape session to finish.
 Allow enough service-stop time for transfers and cleanup; see [Requests to stop](../../../concepts/components/tape-daemon.md#requests-to-stop).
+The packaged systemd unit uses `TimeoutStopSec=12h` to allow long transfers and cleanup while bounding the wait for shutdown.
+After 12 hours, systemd forcibly terminates the daemon even if it is still making progress.
+Locally maintained units, including per-drive templates, need the same setting to allow this draining period.
 To roll back configuration, restore the previous file, validate it, and restart the affected service.
 
 ## Example configuration
