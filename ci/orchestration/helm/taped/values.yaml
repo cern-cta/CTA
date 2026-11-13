@@ -101,8 +101,7 @@ securityContext:
   privileged: true # To get access to /dev/
 
 pod:
-  extraSpec:
-    terminationGracePeriodSeconds: 1
+  extraSpec: {}
 
 extraEnv: null
 
