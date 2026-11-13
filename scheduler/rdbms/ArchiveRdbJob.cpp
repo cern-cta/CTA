@@ -37,11 +37,8 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   srcURL = std::move(m_jobRow.srcUrl);
   archiveReportURL = std::move(m_jobRow.archiveReportURL);
   errorReportURL = std::move(m_jobRow.archiveErrorReportURL);
-  // latestError is what ArchiveJob::exceptionThrowingReportURL() base64-encodes into the
-  // mgm.errmsg= of a failure report, so leaving it empty means EOS is told a file failed with no
-  // reason attached. OStoreDB populates it (OStoreDB.cpp, `aj->latestError = j.latestError`);
-  // this backend never did, and the row carries the same information in FAILURE_LOG. Copied, not
-  // moved: failTransfer() logs it and updateJobRowFailureLog() appends to it after this point.
+  // latestError mirrors FAILURE_LOG so exceptionThrowingReportURL() has a failure reason to
+  // report to EOS. Copied, not moved: failTransfer()/updateJobRowFailureLog() still append to it.
   latestError = m_jobRow.failureLogs.value_or("");
 
   archiveFile.archiveFileID = m_jobRow.archiveFileID;
@@ -218,10 +215,9 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     cta::utils::Timer t;
     uint64_t deletionCount = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      // the job will be moved to FAILED_QUEUE table, and deleted from the ACTIVE_QUEUE.
-      // (for a repack job this instead recovers a lost updateRepackJobSuccess() write via
-      // updateJobStatusForFailedReport() - see that function for why; a multi-copy request
-      // completing its last copy here legitimately updates more than one row)
+      // USER: moves the row to FAILED_QUEUE and deletes it from ACTIVE.
+      // REPACK: recovers a lost updateRepackJobSuccess() write instead (see that function) -
+      // completing a multi-copy request's last copy here legitimately updates more than one row.
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion, isRepack);
       deletionCount = nrows;
       if (isRepack ? nrows < 1 : nrows != 1) {

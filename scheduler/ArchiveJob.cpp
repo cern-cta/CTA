@@ -83,17 +83,13 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
     case SchedulerDatabase::ArchiveJob::ReportType::FailureReport: {
       std::string failureReason = m_dbJob->latestError;
 #ifdef CTA_PGSCHED
-      // A failure with no recorded reason must still be reportable. Throwing here makes the job
-      // permanently unreportable: the reporting routine re-selects it on every pass, EOS never
-      // learns the archive failed, and the job only leaves the queue once maxReportRetries is
-      // exhausted. A missing reason is a bookkeeping gap on our side, not a reason to withhold the
-      // failure from the disk instance, so report it with an explicit placeholder instead.
+      // A missing reason must not make the job permanently unreportable (EOS would never learn
+      // the archive failed). Use an explicit placeholder instead of throwing.
       if (failureReason.empty()) {
         failureReason = "no failure reason recorded";
       }
 #else
-      // Objectstore keeps its pre-existing strict behaviour: this change is scoped to the postgres
-      // scheduler, where ArchiveRdbJob::initialize() is what populates latestError.
+      // Objectstore keeps its pre-existing strict behaviour.
       if (failureReason.empty()) {
         throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): empty failure reason.");
       }

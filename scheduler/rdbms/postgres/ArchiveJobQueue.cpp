@@ -877,31 +877,20 @@ ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobS
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   txn.setRowCountForTelemetry(1);
   stmt.executeNonQuery();
-  /* USER job, final reporting failure: move the row to ARCHIVE_FAILED_QUEUE and delete it from
-   * ACTIVE (multi-copy requests all go via moveJobToFailedQueueTable()). Must check newStatus
-   * (just written above), not status (stale in-memory value) - checking status used to only fire
-   * by coincidence, leaving the row stuck in ARCHIVE_ACTIVE_QUEUE forever once retries exhausted.
+  /* USER job: on the terminal failure (newStatus=ReadyForDeletion), move the row to
+   * ARCHIVE_FAILED_QUEUE via moveJobToFailedQueueTable(), multi-copy requests included. Checks
+   * newStatus, not status (stale in-memory value) - status missed the real transition and left
+   * rows stuck in ARCHIVE_ACTIVE_QUEUE forever once retries were exhausted.
    *
-   * REPACK job: "failed report" here means the DB WRITE failed, not that the job failed: repack
-   * transfer failures are handled entirely separately (updateFailedJobStatus(), never this
-   * function), so the only thing failReport() ever reports for a repack job is a SUCCESS whose
-   * own write (updateRepackJobSuccess()) failed to persist - recovering that lost write is what
-   * newStatus=ReadyForDeletion means here. updateRepackJobSuccess() is multi-copy-aware: for a
-   * request with REQUEST_JOB_COUNT > 1 it only moves ALL copies to ReadyForDeletion once every
-   * copy has reported success, otherwise it marks just this one row AJS_ToReportToRepackForSuccess
-   * and leaves the rest alone. Forcing ReadyForDeletion onto this single row directly (as a plain
-   * UPDATE would) breaks that: it would let a not-yet-complete multi-copy request be picked up by
-   * getNextSuccessfulArchiveRepackReportBatch() and have its source file deleted before every
-   * copy actually exists. Calling updateRepackJobSuccess() instead reuses that coordination
-   * exactly as the original (failed) write would have.
-   *
-   * This is a second, independent attempt (fresh connection, via failReport()'s own Transaction)
-   * at the same write that already failed once - not a retry loop, just one more try. If it
-   * fails too, the exception propagates to failReport()'s own try/catch, which logs and aborts;
-   * nothing is left to retry it again here. The row stays at its pre-transfer status and is
-   * picked up later by the dead-mount GC routine once this mount ends, which requeues it for a
-   * fresh transfer - i.e. on a second failure here, recovery costs one duplicate tape write
-   * rather than losing the job.
+   * REPACK job: repack transfer failures never reach this function (updateFailedJobStatus()
+   * handles those). The only way here is updateRepackJobSuccess() itself failing to persist an
+   * already-successful transfer, so newStatus=ReadyForDeletion means "recover that lost write",
+   * not "report a failure". STATUS is left for updateRepackJobSuccess() to set, since only it
+   * knows whether a multi-copy request's other copies have also succeeded - forcing
+   * ReadyForDeletion here directly would let getNextSuccessfulArchiveRepackReportBatch() delete
+   * the source file before every copy exists. A second failure on this recovery attempt (fresh
+   * connection, same write) is caught by failReport()'s own try/catch and falls back to
+   * dead-mount GC: one wasted re-transfer, not lost data, not a retry loop.
    */
   if (isRepack && newStatus == ArchiveJobStatus::ReadyForDeletion) {
     return ArchiveJobQueueRow::updateRepackJobSuccess(txn, {std::to_string(jobId)});

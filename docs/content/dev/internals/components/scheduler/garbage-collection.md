@@ -128,6 +128,15 @@ stateDiagram-v2
 
 Catalogue query gives us set of active mount IDs which are recorded as sessionId in the DRIVE_STATE table. Whenever session finishes, crashes, drive is put down etc., the drive state is updated and the session ID is set to nullopt. At this point we are sure no session processes are taking care of picking up more jobs and we can safely clean all jobs in ACTIVE table which have IS_REPORTING False and status of type *ToTransfer*. Also, we can clean any potential jobs from the PENDING table which would have this specific mount ID assigned since no mount would pick them up anymore (they could be present after a workflow decided to requeue the job on the same mount e.g.). A `MOUNT_QUEUE_LAST_FETCH` table has been created and is being updated anytime a mount fetches new jobs, of when a specific job for specific mount ID has been requeued to the `PENDING` table for the same mount ID (separate use-case). If the heartbeat of unique (`MOUNT_ID`, `QUEUE_TYPE`) combination gets too old, we check if the session still exists in the catalogue and if not, a cleanup is triggered.
 
+## Heartbeat refresh: on report, not just on fetch
+
+`MOUNT_QUEUE_LAST_FETCH` was originally refreshed only by `getNextJobBatch()` (fetch). That left a race: a mount can spend a long time writing and reporting an already-fetched batch without fetching again, so its heartbeat goes stale purely because it is busy, not because it is dead. If that staleness exceeds the GC delay before the report commits, the active-queue reclaim routine (`*InactiveMountQueueRoutine` above) can grab and requeue a job this mount is still actively reporting, sending it to be re-transferred and double-counted - even though the mount is perfectly alive.
+
+The fix refreshes the heartbeat from the report path too: `setJobBatchTransferred()`/`setRepackJobBatchTransferred()` (archive and retrieve) now call the same self-throttled `updateMountQueueLastFetch()` UPSERT that fetch already used, via a shared `refreshMountLivenessHeartbeat()` helper on each mount class. Two details matter:
+
+- **Own transaction.** `updateMountQueueLastFetch()` sets this transaction's query-summary/row-count telemetry. Piggybacking it onto the caller's own report transaction would overwrite that transaction's real telemetry with the heartbeat's, so it always runs in its own transaction, after the caller's commits.
+- **Client-side self-throttle.** The UPSERT's own `WHERE` clause already makes a call within 5s of the last one a guaranteed no-op server-side, but finding that out still costs a full round-trip. At small `fetchMaxFiles`/`flushMaxFiles`, a fetch and the report that follows it land close together often enough for this to matter at scale (100 drives, two call sites each), so each mount object also tracks its own last-attempt epoch and skips the round-trip entirely when called again inside that window.
+
 
 
 

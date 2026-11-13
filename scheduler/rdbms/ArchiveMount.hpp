@@ -100,28 +100,22 @@ private:
                               log::LogContext& lc);
 
   /*
-   * Refresh MOUNT_QUEUE_LAST_FETCH for this mount outside of (and after) any other transaction,
-   * so the dead-mount reclaim routine never mistakes this mount for inactive while it is still
-   * genuinely fetching OR reporting. The single call site for both: getNextJobBatch() calls this
-   * after its own fetch, and setJobBatchTransferred()/setRepackJobBatchTransferred() call it
-   * after a successful report - unifying what were previously two separate, duplicated
-   * implementations. Runs in its own transaction deliberately: piggybacking this UPSERT onto
-   * the caller's own transaction would overwrite ITS query-summary/row-count telemetry (see
-   * updateMountQueueLastFetch()). Non-fatal on failure.
+   * Refreshes MOUNT_QUEUE_LAST_FETCH for this mount so the dead-mount reclaim routine never
+   * mistakes it for inactive while still fetching OR reporting. Called from getNextJobBatch()
+   * after fetch, and from setJobBatchTransferred()/setRepackJobBatchTransferred() after a
+   * successful report. Runs in its own transaction: piggybacking onto the caller's transaction
+   * would overwrite its query-summary/row-count telemetry (see updateMountQueueLastFetch()).
+   * Non-fatal on failure.
    *
-   * Skips the DB round-trip entirely if called again within 5s of this mount's own last attempt
-   * from EITHER call site (tracked by m_lastHeartbeatRefreshEpoch below) - the UPSERT's own WHERE
-   * clause already makes a call inside that window a guaranteed no-op server-side, but it still
-   * costs a full transaction/round-trip to find that out. At small flushMaxFiles/fetchMaxFiles,
-   * a fetch and the report that follows it land close together often enough that skipping
-   * client-side matters for scheduler-DB load at scale (100 drives, 2 call sites each).
+   * Skips the round-trip if called again within 5s (tracked by m_lastHeartbeatRefreshEpoch) -
+   * the UPSERT's own WHERE clause already makes that call a server-side no-op, but finding that
+   * out still costs a full round-trip. Matters at scale: small flushMaxFiles/fetchMaxFiles make
+   * a fetch and its following report land close together often enough for this to add up.
    */
   void refreshMountLivenessHeartbeat(log::LogContext& lc);
 
-  // Last epoch-second this mount attempted the heartbeat UPSERT above (0 = never), set BEFORE the
-  // attempt so two near-simultaneous callers (getNextJobBatch runs on a different thread than
-  // setJobBatchTransferred - see MigrationTaskInjector/MigrationReportPacker) only ever race to
-  // skip, never to double-call: the harmless outcome either way.
+  // Epoch-second of this mount's last heartbeat attempt (0 = never), set BEFORE the attempt so
+  // near-simultaneous callers from different threads only ever race to skip, never to double-call.
   std::atomic<std::time_t> m_lastHeartbeatRefreshEpoch {0};
   /*
    * Setting a batch of REPACK mount jobs to state which informs

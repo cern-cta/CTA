@@ -678,12 +678,10 @@ uint64_t getRepackRequestId(cta::RelationalDB& relationalDb, const std::string& 
   return rset.columnUint64("REPACK_REQUEST_ID");
 }
 
-// Covers: "repack transfer fails, but has retries left" - the job must be requeued for another
-// attempt, not reported as a failure yet. At the DB layer this is the same path a repack
-// catalogue-update failure takes too: MigrationReportPacker.cpp catches FailedReportCatalogueUpdate
-// and FailedReportMoveToQueue separately, but only the latter calls failReport() (see the
-// bookkeeping-recovery test below) - a catalogue-update failure calls failTransfer(), exactly
-// like a physical transfer failure, so one test covers both.
+// Covers: repack transfer fails with retries left - requeued, not reported as a failure yet.
+// Also covers a repack catalogue-update failure: MigrationReportPacker.cpp routes that through
+// failTransfer() too (only FailedReportMoveToQueue reaches failReport(), see the
+// bookkeeping-recovery test below), so this one test exercises both scenarios.
 TEST_P(RelationalDBTest, repackArchiveTransferFailureIsRequeuedBeforeExceedingRetries) {
   using namespace cta;
 
@@ -834,13 +832,11 @@ TEST_P(RelationalDBTest, repackArchiveTransferFailureExceedsRetriesMovesToFailed
   ASSERT_EQ(sizeInBytes, repackInfo.failedBytesToArchive);
 }
 
-// Covers: repack transfer AND the catalogue update both succeed, but the write that records
-// that fact in the scheduler DB fails (ArchiveMount::reportJobsBatchTransferred()'s
-// catalogue_updated gate: failReport() is unreachable unless the catalogue write already
-// committed - see MigrationReportPacker.cpp's two separate catch blocks). This is the bug fixed
-// in ArchiveJobQueueRow::updateJobStatusForFailedReport(): it must recover the lost write (the
-// row ends up ReadyForDeletion, exactly as the original write would have done) rather than
-// either silently no-op against the wrong table, or mislabel a real success as a failure.
+// Covers: repack transfer and catalogue update both succeed, but the write recording that in
+// the scheduler DB fails - failReport() is only reachable once the catalogue write already
+// committed (ArchiveMount::reportJobsBatchTransferred()'s catalogue_updated gate). This is the
+// bug fixed in updateJobStatusForFailedReport(): it must recover the lost write (row ends up
+// ReadyForDeletion) rather than no-op against the wrong table or mislabel a success as a failure.
 TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversAsSuccessAndAccounts) {
   using namespace cta;
 
@@ -924,12 +920,10 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversAsSuccessA
 }
 
 // Covers the multi-copy case of the same bug: updateRepackJobSuccess() only moves ALL copies of
-// a REQUEST_JOB_COUNT > 1 request to ReadyForDeletion once every copy has reported success;
-// until then it marks just the reporting copy AJS_ToReportToRepackForSuccess and leaves the
-// others alone. Recovering copy 1's bookkeeping-write failure must not jump straight to
-// ReadyForDeletion while copy 2 hasn't even transferred yet - that would let
-// getNextSuccessfulArchiveRepackReportBatch() delete the repack's source file out from under the
-// still-pending copy 2.
+// a REQUEST_JOB_COUNT > 1 request to ReadyForDeletion once every copy has reported success -
+// until then it marks just the reporting copy AJS_ToReportToRepackForSuccess. Recovering copy
+// 1's failure must not jump straight to ReadyForDeletion while copy 2 hasn't transferred yet,
+// or getNextSuccessfulArchiveRepackReportBatch() would delete the source file prematurely.
 TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyCorrectly) {
   using namespace cta;
 
@@ -1164,12 +1158,11 @@ TEST_P(RelationalDBTest, createArchiveMountSetsNextMountTypeBeforeLockRelease) {
   ASSERT_EQ("vidB", optDrive->nextVid.value_or(""));
 }
 
-// Regression test: a mount busy writing/reporting an already-fetched batch must not look
-// inactive to the dead-mount reclaim routine just because it has not fetched new work
-// recently - refreshMountLivenessHeartbeat() must run on report (setJobBatchTransferred()),
-// not just on fetch (getNextJobBatch()). Before that fix, the window between a file being
-// written and this call's commit let the reclaim routine grab and re-queue the job, causing
-// it to be re-transferred and double-counted.
+// Regression test: a mount busy reporting an already-fetched batch must not look inactive to
+// the dead-mount reclaim routine for not having fetched new work recently -
+// refreshMountLivenessHeartbeat() must also run on report, not just on fetch. Before the fix,
+// the window between a file being written and the report's commit let the reclaim routine
+// grab and re-queue the job, causing a duplicate re-transfer.
 TEST_P(RelationalDBTest, archiveMountHeartbeatRefreshedOnReportNotJustFetch) {
   using namespace cta;
 

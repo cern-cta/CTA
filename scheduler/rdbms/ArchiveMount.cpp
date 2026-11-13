@@ -304,11 +304,10 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
 }
 
 void ArchiveMount::refreshMountLivenessHeartbeat(log::LogContext& lc) {
-  // Mirrors the UPSERT's own 5s self-throttle (updateMountQueueLastFetch()'s WHERE clause) but
-  // client-side, to skip the round-trip itself rather than pay for one that is a guaranteed
-  // server-side no-op. Set BEFORE the attempt, not after: two callers racing in from different
-  // threads (see the member's own comment) then both see the updated timestamp and at most one
-  // proceeds - the alternative (set after) lets both through every time, defeating the point.
+  // Mirrors updateMountQueueLastFetch()'s own 5s self-throttle, client-side, to skip the
+  // round-trip itself instead of paying for one that's a guaranteed server-side no-op. Set
+  // BEFORE the attempt so two callers racing from different threads only ever race to skip,
+  // never to both proceed (see m_lastHeartbeatRefreshEpoch's own comment).
   const std::time_t now = cta::utils::getCurrentEpochTime();
   const std::time_t last = m_lastHeartbeatRefreshEpoch.exchange(now);
   if (now - last < 5) {
