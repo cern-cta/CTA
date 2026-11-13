@@ -50,6 +50,7 @@
         "kubernetes>=35.0.0,<36",
         "oauthlib>=3.2.2",
         "fastjsonschema>=2.21.2",
+        "tomli>=2.0.1; python_version < '3.11'",
     ]
     system-tests = [
         "kubernetes>=35.0.0,<36",
@@ -57,6 +58,7 @@
         "pytest-asyncio>=1.2.0",
         "oauthlib>=3.2.2",
         "fastjsonschema>=2.21.2",
+        "tomli>=2.0.1; python_version < '3.11'",
         "packaging>=24.0",
         "typing-extensions>=4.4.0",
     ]

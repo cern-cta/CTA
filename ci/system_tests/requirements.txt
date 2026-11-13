@@ -5,3 +5,4 @@ oauthlib>=3.2.2
 fastjsonschema>=2.21.2
 packaging>=24.0
 typing-extensions>=4.4.0
+tomli>=2.0.1; python_version < "3.11"
