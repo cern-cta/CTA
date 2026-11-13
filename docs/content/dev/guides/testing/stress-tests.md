@@ -120,24 +120,29 @@ payload (16 bytes in the stress tests). File marks consume no capacity.
 
 This matters because a drive pipelines its next fetch while writing the current batch, and nothing
 limits a fetch to the tape's remaining space: when the tape fills, ENOSPC ends the session and
-every job already fetched but not yet written goes back to the queue. Those jobs are re-queued,
-not failed, but each costs a scheduler round trip. The waste per tape boundary is about one fetch
-batch's worth, averaged over where in the last batch the boundary happens to fall — hence
-`overflowFraction: 0.05` directly targets a twentieth of a tape's files being re-queued over the
-tape's lifetime. The resulting 50 000 files/tape is sized above this test's actual-scale average
-per-drive share (4 000 000 files over 100 drives, ~40 000 files/drive), so tape-boundary crossings
-stay rare rather than routine — only a drive that pulls an above-average share from the shared
-queue crosses at all. At the 50 Hz write/read rate ceiling (`STRESS_WRITE_RATE_HZ`/
-`STRESS_READ_RATE_HZ`) that is a ~16.7 min mount. Even when a crossing does happen it is not a
-failure mode, only overhead bounded to one re-queued fetch batch (≤5 000 jobs). A dedicated
-failure-scenario test that WANTS frequent re-queues sets `overflowFraction` much higher instead
-(e.g. `0.20`), to exercise that recovery path and the cleanup routines deliberately — see
-`presets/stress-scale-fail-values.yaml`.
+every job already fetched but not yet written goes back to the queue (a scheduler round trip per
+job, not a failure).
 
-Raising `overflowFraction` (and so shrinking the tape) costs memory and PVC I/O: the drive holds
-the whole tape in RAM (~1 kB per file, ~50 MB per taped pod at this default) and serialises it to
-the PVC on every unload (~25 MB). Keep `batchFiles` equal to `transfers.archive.fetchMaxFiles` in
-`presets/stress-scale-values.yaml`.
+A dedicated failure-scenario test that WANTS frequent re-queues sets `overflowFraction` high on
+purpose (e.g. `0.20`), to exercise that recovery path and the cleanup routines deliberately — see
+`presets/stress-scale-fail-values.yaml`. `stress-scale-test`, conversely, wants overflow
+*avoided*: it overrides capacity directly via `library.filesPerTapeOverride`
+(`--stress-files-per-tape`), computed by the CI job as **1.1 × each drive's expected fair share**
+of `total_files` (`total_files / drive count`) — comfortable margin without an unrealistically
+large tape, so a drive's tape essentially never reaches its end. See that job's own comment in
+`tests-kubernetes.gitlab-ci.yml`. The chart's own `overflowFraction` default (`0.01`) only applies
+as a fallback, for any caller that sets neither override.
+
+Raising capacity (via either override) costs **no extra** memory or PVC I/O by itself: `VtlDrive`'s
+in-memory tape (`InMemoryTape`) grows its block vector only as files are *actually* written, and
+serialises only those written blocks to the PVC on unload — never the nominal
+`capacityBytes`/`filesPerTape` ceiling.
+
+`batchFiles` (in `virtual-tape-library/values.yaml`) is only read by the `overflowFraction`
+fallback path, not by `filesPerTapeOverride` — keep it equal to
+`transfers.archive.fetchMaxFiles`/`transfers.retrieve.fetchMaxFiles` in
+`presets/stress-scale-values.yaml` (both `5000`, unchanged by `stress-scale-test`'s capacity
+override).
 
 The chart renders one `library-{i}.toml` key per library into a single ConfigMap; the pre-populate Job copies each key to its respective PVC. `library.name` and `vidPrefix` are **auto-derived from the library index** by the chart — they must not be overridden in `values.yaml`. `VtlDrive` reads the file at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
 
@@ -211,8 +216,9 @@ All stress-drive parameters are set in the `virtual-tape-library` chart `values.
 | Logical library name | **auto-derived**: `stress-lib-{i}` | — |
 | Changer lock timeout | `library.changerTimeoutMs` in `values.yaml` | `30000` ms |
 | Media type name | `library.mediaTypes[].name` | `STRESSTAPE` |
-| Tape capacity | **derived**: `vol1Bytes + (batchFiles / (2 × overflowFraction)) × logicalBytesPerFile` | `24800080` (≈25 MB) |
-| Re-queue fraction per tape | `library.mediaTypes[].overflowFraction` | `0.05` |
+| Tape capacity | **derived** (fallback only - see below): `vol1Bytes + (batchFiles / (2 × overflowFraction)) × logicalBytesPerFile` | `124000080` (≈118 MB) |
+| Re-queue fraction per tape | `library.mediaTypes[].overflowFraction` (fallback only) | `0.01` |
+| Direct capacity override (files) | `library.filesPerTapeOverride` / `--stress-files-per-tape` — bypasses the row above entirely | unset (`stress-scale-test` sets it; `stress-scale-fail-test` does not) |
 | Files per fetch batch | `library.mediaTypes[].batchFiles` | `5000` |
 | Tape footprint per file | `library.mediaTypes[].logicalBytesPerFile` | `496` bytes |
 | VID prefix | **auto-derived**: `S{i}` (library index) | — |
