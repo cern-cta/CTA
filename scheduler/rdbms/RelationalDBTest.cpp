@@ -17,6 +17,7 @@
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <list>
 #include <memory>
@@ -982,7 +983,7 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
 
   // Copy 1 transfers and its catalogue update succeeds, but the scheduler-DB bookkeeping write
   // fails. Copy 2 has not even been dispatched yet.
-  auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-REPACK-MULTICOPY-DESTA");
+  auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-MULTICOPY-DESTA");
   auto jobsA = mountA->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsA.size());
   jobsA.front()->failReport("simulated scheduler bookkeeping write failure for copy 1", lc);
@@ -1018,7 +1019,7 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
 
   // Now copy 2 transfers, its catalogue update succeeds, and its scheduler-DB bookkeeping write
   // fails too - this is the last copy, so the recovery must complete the whole request.
-  auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-REPACK-MULTICOPY-DESTB");
+  auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-MULTICOPY-DESTB");
   auto jobsB = mountB->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsB.size());
   jobsB.front()->failReport("simulated scheduler bookkeeping write failure for copy 2", lc);
@@ -1161,6 +1162,71 @@ TEST_P(RelationalDBTest, createArchiveMountSetsNextMountTypeBeforeLockRelease) {
   ASSERT_TRUE(optDrive.has_value());
   ASSERT_EQ(common::dataStructures::MountType::ArchiveForUser, optDrive->nextMountType);
   ASSERT_EQ("vidB", optDrive->nextVid.value_or(""));
+}
+
+// Regression test: a mount busy writing/reporting an already-fetched batch must not look
+// inactive to the dead-mount reclaim routine just because it has not fetched new work
+// recently - refreshMountLivenessHeartbeat() must run on report (setJobBatchTransferred()),
+// not just on fetch (getNextJobBatch()). Before that fix, the window between a file being
+// written and this call's commit let the reclaim routine grab and re-queue the job, causing
+// it to be re-transferred and double-counted.
+TEST_P(RelationalDBTest, archiveMountHeartbeatRefreshedOnReportNotJustFetch) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string tapePool = "heartbeatTapePool";
+  queueArchiveJob(db, lc, 991000, tapePool, "HB", 1000);
+  db.waitSubthreadsComplete();
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  const auto& potentialMount = mountInfo->potentialMounts.front();
+  ASSERT_EQ(common::dataStructures::MountType::ArchiveForUser, potentialMount.type);
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-HEARTBEAT";
+  tape.tapePool = tapePool;
+  tape.vo = "vo";
+  tape.mediaType = "T10k";
+  tape.vendor = "Oracle";
+  tape.capacityInBytes = 1'000'000'000ULL;
+  tape.labelFormat = common::dataStructures::Label::Format::CTA;
+
+  auto mount = mountInfo->createArchiveMount(potentialMount, tape, "drive", "library", "host");
+  auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobs.size());
+  const uint64_t mountId = mount->getMountInfo().mountId;
+
+  // getNextJobBatch() just refreshed the heartbeat to "now" - age it artificially, as if this
+  // mount had instead spent a long time writing/reporting since its last fetch, well past both
+  // the 50s gc_delay used below and refreshMountLivenessHeartbeat()'s own 5s self-throttle.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(
+      "UPDATE MOUNT_QUEUE_LAST_FETCH SET LAST_UPDATE_TIME = LAST_UPDATE_TIME - 100 WHERE MOUNT_ID = :MOUNT_ID");
+    stmt.bindUint64(":MOUNT_ID", mountId);
+    stmt.executeNonQuery();
+  }
+
+  // Sanity check the staleness simulation: with only the fetch-time heartbeat (now artificially
+  // aged), this mount is already a dead-mount candidate for the active queue.
+  {
+    auto deadBefore = db.getRelationalDB().getDeadMounts(50, lc);
+    ASSERT_NE(deadBefore.archiveActive.end(),
+              std::find(deadBefore.archiveActive.begin(), deadBefore.archiveActive.end(), mountId));
+  }
+
+  // The report call must refresh the heartbeat too, independently of fetch cadence.
+  mount->setJobBatchTransferred(jobs, lc);
+
+  {
+    auto deadAfter = db.getRelationalDB().getDeadMounts(50, lc);
+    ASSERT_EQ(deadAfter.archiveActive.end(),
+              std::find(deadAfter.archiveActive.begin(), deadAfter.archiveActive.end(), mountId));
+  }
 }
 
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
