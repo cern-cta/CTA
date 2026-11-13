@@ -60,6 +60,6 @@ Choose a starting point below.
 
 ## Project resources
 
-- [Main CTA website](https://cta.web.cern.ch/) — Project background, presentations, and publications.
-- [Source code](https://gitlab.cern.ch/cta/CTA) — Browse the repository and contribute.
-- [Changelog](changelog.md) — Features, fixes, and changes in each release.
+- [Main CTA website](https://cta.web.cern.ch/): project background, presentations, and publications.
+- [Source code](https://gitlab.cern.ch/cta/CTA): browse the repository and contribute.
+- [Changelog](changelog.md): features, fixes, and changes in each release.
