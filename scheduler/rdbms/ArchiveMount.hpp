@@ -93,8 +93,9 @@ public:
    * Batch-fail reporting for jobs whose catalogue write succeeded but whose scheduler-DB
    * state update failed (FailedReportMoveToQueue path).  prepareFailReport() must have
    * been called on each job before this method to update in-memory retry counters.
-   * Jobs that have exhausted report retries (or need no report) are moved to
-   * ARCHIVE_FAILED_QUEUE; the rest have IS_REPORTING reset so they will be retried.
+   * User jobs that have exhausted report retries are moved to ARCHIVE_FAILED_QUEUE; the
+   * rest have IS_REPORTING reset so they will be retried. Repack jobs always take the
+   * exhausted-retries branch regardless of counters - see the .cpp for why.
    */
   void failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) override;
   void setIsRepack(log::LogContext& logContext);

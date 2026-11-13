@@ -389,9 +389,21 @@ void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJo
   // but setJobBatchTransferred() failed.  prepareFailReport() has already incremented
   // each job's totalReportRetries and updated reportFailureLogs in memory.
   //
-  // Jobs that have exhausted their report-retry budget (or need no report) are moved
-  // to ARCHIVE_FAILED_QUEUE.  Jobs that still have retries remaining have IS_REPORTING
-  // reset to FALSE so the flagging loop picks them up for another attempt.
+  // Jobs that have exhausted their report-retry budget are moved to ARCHIVE_FAILED_QUEUE.
+  // Jobs that still have retries remaining have IS_REPORTING reset to FALSE so the flagging
+  // loop picks them up for another attempt. Repack jobs always take the "exceed" branch
+  // regardless of retry count - not because they failed, but because that branch's repack
+  // handling (failReportBatchExceedRetries()) is updateRepackJobSuccess(), i.e. "recover the
+  // lost write", which is safe and correct to call on every attempt.
+  //
+  // Deliberately keyed on isRepack, NOT reportType: every job reaching this function was
+  // fetched by getNextJobBatch() with STATUS still AJS_ToTransferFor{User,Repack} at
+  // initialize() time, which ArchiveRdbJob::initialize() maps to ReportType::NoReportRequired -
+  // and nothing re-evaluates reportType before this call (the transfer succeeding only changes
+  // what STATUS should become via the DB write that just failed, not this in-memory field). A
+  // reportType-based check would therefore be true for every job unconditionally, silently
+  // skipping the requeue bucket for user jobs too and sending a single transient write failure
+  // straight to ARCHIVE_FAILED_QUEUE without ever spending its report-retry budget.
   //
   // The isRepack split below is live, unlike RelationalDB::failRetrieveJobBatchReport()'s
   // retrieve equivalent (which never sees a repack job - see that function's comment): this is
@@ -411,8 +423,7 @@ void ArchiveMount::failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJo
       throw exception::Exception("In ArchiveMount::failReportBatch(): unexpected job type (not ArchiveRdbJob)");
     }
     auto* row = &rdbJob->m_jobRow;
-    const bool exceed = (rdbJob->reportType == SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired)
-                        || (row->totalReportRetries >= row->maxReportRetries);
+    const bool exceed = rdbJob->isRepack || (row->totalReportRetries >= row->maxReportRetries);
     if (exceed) {
       (rdbJob->isRepack ? exceedRepack : exceedUser).push_back(row);
     } else {

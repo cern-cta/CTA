@@ -2398,10 +2398,18 @@ TEST_P(RelationalDBTest, archiveFailReportBatchExceedRetries) {
   }
 }
 
-// A job with reportType=NoReportRequired must be treated identically to an
-// exceed-retries job — it must be moved to ARCHIVE_FAILED_QUEUE regardless of
-// how many report retries are left.
-TEST_P(RelationalDBTest, archiveFailReportBatch_noReportRequired) {
+// reportType must NOT influence ArchiveMount::failReportBatch()'s user/repack bucketing - only
+// isRepack and the retry counters may. reportType is derived purely from the row's STATUS at
+// initialize() time (see ArchiveRdbJob::initialize()'s switch), and every job reaching this
+// function was fetched by getNextJobBatch() while STATUS was still AJS_ToTransferForUser -
+// mapping to NoReportRequired - with nothing re-evaluating it before this call. A bucketing rule
+// that special-cased NoReportRequired therefore fired on every USER job unconditionally (not just
+// repack, where it happens to be the correct outcome), sending a single transient bookkeeping-
+// write failure straight to ARCHIVE_FAILED_QUEUE without ever spending its report-retry budget.
+// This test forces reportType to NoReportRequired directly (there is no real archive code path
+// that sets it to this value for a reason other than that staleness) and asserts the job is
+// requeued anyway, same as archiveFailReportBatchRequeue above.
+TEST_P(RelationalDBTest, archiveFailReportBatch_reportTypeIgnoredForUserBucketing) {
   using namespace cta;
 
   auto logger = makeLogger();
@@ -2428,26 +2436,27 @@ TEST_P(RelationalDBTest, archiveFailReportBatch_noReportRequired) {
   auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
   ASSERT_EQ(1u, jobs.size());
 
-  // Override reportType in memory to NoReportRequired (default maxReportRetries=2, so
-  // without this override the job would take the requeue path).
+  // Already NoReportRequired as fetched (see comment above); set explicitly so the test does not
+  // depend on that fetch-time detail to make its point.
   jobs.front()->reportType = SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired;
-  jobs.front()->prepareFailReport("no report required failure");
+  jobs.front()->prepareFailReport("report failure under budget despite NoReportRequired");
   std::vector<SchedulerDatabase::ArchiveJob*> batch = {jobs.front().get()};
   mount->failReportBatch(batch, lc);
 
   auto conn = db.getRelationalDB().getConn();
-  // Must be moved to ARCHIVE_FAILED_QUEUE, not retried.
+  // Requeued, not failed out: totalReportRetries=1 is under the default maxReportRetries=2.
   {
-    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE");
+    auto stmt = conn.createStmt("SELECT TOTAL_REPORT_RETRIES, IS_REPORTING FROM ARCHIVE_ACTIVE_QUEUE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
-    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+    ASSERT_EQ(1u, rset.columnUint64("TOTAL_REPORT_RETRIES"));
+    ASSERT_FALSE(rset.columnBool("IS_REPORTING"));
   }
   {
     auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_FAILED_QUEUE");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
-    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
   }
 }
 
