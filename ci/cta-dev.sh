@@ -811,7 +811,13 @@ create_build_configuration() {
   local -r xrootd_ssi_version="$1"
   local -r num_jobs="$2"
 
+  local project_fingerprint
+  # Dependency pins are inputs even when the command-line options are unchanged.
+  project_fingerprint=$(sha256sum "${project_root}/project.json" | cut -d ' ' -f 1) \
+    || die "Failed to fingerprint project.json."
+
   jq -cn \
+    --arg projectFingerprint "$project_fingerprint" \
     --arg platform "$platform" \
     --arg schedulerType "$scheduler_type" \
     --argjson oracleSupport "$oracle_support" \
@@ -827,7 +833,7 @@ create_build_configuration() {
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
-    '{platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
+    '{projectFingerprint: $projectFingerprint, platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
       enableSccache: $enableSccache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
       sanitizers: $sanitizers, runUnitTests: ($skipUnitTests | not),
@@ -876,7 +882,6 @@ build_cta() {
   local -r num_jobs=$(nproc --ignore=2)
   local -r build_command=(podman build)
   local -r build_dockerfile="ci/docker/cta/${platform}/build.Dockerfile"
-  local -r source_package_directory=$(package_directory source)
   local dockerfile_fingerprint
   # Record the Dockerfile contents, including uncommitted edits.
   dockerfile_fingerprint=$(sha256sum "$build_dockerfile" | cut -d ' ' -f 1) \
@@ -968,6 +973,7 @@ build_cta() {
         sanitizers) log_warn "Sanitizer mode changed: ${old_value} -> ${new_value}" ;;
         ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
         xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
+        projectFingerprint) log_warn "Project metadata changed; refreshing source packages and dependencies." ;;
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
           log_warn "Repository mode changed: internal repositories ${old_value} -> ${new_value}"
@@ -977,7 +983,7 @@ build_cta() {
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
        "enableSccache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "sanitizers",
-       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
+       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos", "projectFingerprint"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' <<<"$previous_configuration_json")
@@ -997,6 +1003,11 @@ build_cta() {
       fi
       automatic_clean_build_dirs=true
     fi
+  fi
+
+  if [[ $state_matches_configuration == false ]]; then
+    rebuild_source_packages=true
+    reinstall_source_packages=true
   fi
 
   if [[ $automatic_clean_build_dirs == true ]]; then
@@ -1071,7 +1082,6 @@ build_cta() {
 
   local package_command=binary
   local build_package_flags=()
-  local install_source_packages=false
 
   [[ $rebuild_source_packages == true ]] && package_command=all
 
@@ -1081,15 +1091,11 @@ build_cta() {
     build_configuration_json=$(jq -c --argjson internalRepos "$enable_internal_repos" \
       '.internalRepos = $internalRepos' <<<"$build_configuration_json")
     [[ $reinstall_source_packages == true ]] && log_task "Refreshing build dependencies from the regenerated source packages..."
-    install_source_packages=true
+    # Regenerate metadata before dependency installation, including forced installs and container restarts.
+    package_command=all
+    rebuild_source_packages=true
   fi
 
-  if [[ $package_command == binary && $install_source_packages == true ]]; then
-    build_package_flags+=(
-      --install-source-packages
-      --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
-    )
-  fi
   # Let the package builder clean both build output and generated packaging state inside the container.
   [[ $clean_build_dirs == true ]] && build_package_flags+=(--clean-build-dir)
   [[ $enable_debug_image == false ]] && build_package_flags+=(--skip-test-packages)
