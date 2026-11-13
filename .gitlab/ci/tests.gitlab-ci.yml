@@ -14,17 +14,37 @@ spec:
       default: "none"
 ---
 .setup-cta-install: &setup-cta-install
-  - mkdir -p ${CTAREPODIR}
-  - cp -r build/$[[ inputs.platform ]]/RPM ${CTAREPODIR}
-  - createrepo ${CTAREPODIR}
-  - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
-  - dnf -y --nogpgcheck install cta-release
-  - cta-versionlock apply
   - |
-    if $[[ inputs.enable-internal-repos ]]; then
-      cp -f ci/docker/cta/$[[ inputs.platform ]]/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+    mkdir -p "${CTAREPODIR}"
+    if [[ "$[[ inputs.platform ]]" == "debian13" ]]; then
+      # Resolve only the requested tests/tools and their dependencies from this build's artifacts.
+      shopt -s nullglob
+      packages=(build/debian13/DEB/*.deb build/debian13/DEB/*.ddeb)
+      if (( ${#packages[@]} == 0 )); then
+        echo "No Debian binary packages found in build/debian13/DEB" >&2
+        exit 1
+      fi
+      cp "${packages[@]}" "${CTAREPODIR}/"
+      (
+        cd "${CTAREPODIR}"
+        dpkg-scanpackages --multiversion . /dev/null > Packages
+        dpkg-scanpackages --multiversion --type ddeb . /dev/null >> Packages
+      )
+      printf 'deb [trusted=yes] file:%s ./\n' "${CTAREPODIR}" > /etc/apt/sources.list.d/cta-local-testing.list
+      apt-get update
+      DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cta-tests cta-tests-dbgsym cta-tools
+    else
+      cp -r build/$[[ inputs.platform ]]/RPM "${CTAREPODIR}"
+      createrepo "${CTAREPODIR}"
+      printf '[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://%s\ngpgcheck=0\nenabled=1\npriority=2\n' \
+        "${CTAREPODIR}" > /etc/yum.repos.d/cta-local-testing.repo
+      dnf -y --nogpgcheck install cta-release
+      cta-versionlock apply
+      if $[[ inputs.enable-internal-repos ]]; then
+        cp -f ci/docker/cta/$[[ inputs.platform ]]/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+      fi
+      dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo cta-catalogue-utils
     fi
-  - dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo
 
 .cpp-test:
   before_script:
@@ -143,8 +163,6 @@ unit-test-cta:
       optional: true
     - job: build-cta
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
@@ -163,42 +181,13 @@ unit-test-postgresql:
       optional: true
     - job: build-cta
   rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   script:
-    - dnf -y install cta-catalogue-utils
-    - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
-    - POSTGRESQL_LOG_DIR=/var/log/postgres
-    - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
-    - echo POSTGRESQL_LOG_DIR=${POSTGRESQL_LOG_DIR}
-    - mkdir -p ${POSTGRESQL_DATA_DIR}
-    - chown -R postgres:postgres ${POSTGRESQL_DATA_DIR}
-    - mkdir -p ${POSTGRESQL_LOG_DIR}
-    - chown -R postgres:postgres ${POSTGRESQL_LOG_DIR}
-    - mkdir /var/run/postgresql
-    - chown -R postgres:postgres /var/run/postgresql/
-    - runuser -u postgres -- initdb -D ${POSTGRESQL_DATA_DIR}
-    - runuser -u postgres -- pg_ctl start -w -t 10 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
-    - runuser -u postgres -- createuser -E cta
-    # Database ownership permits schema creation with PostgreSQL 15+ defaults.
-    - runuser -u postgres -- createdb --owner=cta cta
-    - CTA_CATALOGUE_CONF=$(mktemp)
-    - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
-    - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
-    - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
-    - |
-      if [[ "$[[ inputs.analysis ]]" == "valgrind" ]]; then
-        run_cpp_test cta-unit-tests-rdbms valgrind /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
-      else
-        run_cpp_test cta-unit-tests-rdbms /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
-      fi
-    - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
-    - exit "$test_status"
+    - bash tests/cta-unit-tests-rdbms-postgresql.sh --analysis "$[[ inputs.analysis ]]" --output-dir "$CI_PROJECT_DIR"
 
 unit-test-oracle:
   extends: .cpp-test
@@ -222,7 +211,6 @@ unit-test-oracle:
     # Note that this expects the full url; not a shortname relying on tnsnames
     ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
   script:
-    - dnf -y install cta-catalogue-utils
     - CTA_CATALOGUE_CONF=$(mktemp)
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}

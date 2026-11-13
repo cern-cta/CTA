@@ -6,10 +6,10 @@ FROM debian:13
 
 ARG CTA_DEPENDENCY_REPOSITORY=https://cta-public-repo.web.cern.ch/testing/cta-6/debian
 
-# CTA packages supply their runtime and test dependencies when installed by the test job.
+# Preinstall test infrastructure; CTA artifacts still supply their declared library dependencies.
 RUN test "$(dpkg --print-architecture)" = amd64 && \
     apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates postgresql && \
+      ca-certificates dpkg-dev postgresql util-linux valgrind && \
     rm -rf /var/lib/apt/lists/*
 
 # Match the build image's unsigned vendored dependency repository.

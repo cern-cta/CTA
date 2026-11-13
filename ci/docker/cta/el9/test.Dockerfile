@@ -3,5 +3,5 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-RUN dnf install -y createrepo epel-release almalinux-release-devel postgresql-server && \
+RUN dnf install -y createrepo epel-release almalinux-release-devel postgresql-server util-linux valgrind && \
     dnf clean all --enablerepo=\*

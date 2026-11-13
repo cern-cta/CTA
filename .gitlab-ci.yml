@@ -46,7 +46,8 @@ spec:
 
     custom-xrootd-version:
       description: |-
-        XRootD RPM versionlock value for regression pipelines.
+        XRootD RPM versionlock value for EL regression builds.
+        Debian regressions use the configured distribution packages; leave this empty for Debian.
 
         Include the epoch, package release, and platform when applicable: `1:5.8.4-1.PLATFORM`.
         Leave empty to use the version declared by the selected CTA ref.
@@ -202,10 +203,6 @@ variables:
 
   # Build and runtime defaults
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
-  # Variant jobs forward scheduler/Oracle settings as variables, avoiding variable-to-boolean input validation.
-  # Default to the inputs here, and let child variants override these effective build settings.
-  SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
-  ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
   ENABLE_SCCACHE: "false"
   BUILD_CACHE_POLICY: "pull"
 
@@ -265,16 +262,6 @@ workflow:
     # Generated documentation is published by the release job itself.
     - if: '$CI_COMMIT_BRANCH == "gl-pages"'
       when: never
-    # Preserve push filtering for Debian while selecting its supported build variant.
-    - if: '"$[[ inputs.platform ]]" == "debian13" && $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_COMMIT_BRANCH !~ /^release\//'
-      when: never
-    # Debian supports the PostgreSQL scheduler only.
-    - if: '"$[[ inputs.platform ]]" == "debian13" && $PIPELINE_TYPE == "DEFAULT"'
-      variables:
-        SCHEDULER_TYPE: "pgsched"
-        ENABLE_ORACLE_SUPPORT: "false"
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
     # Variant children forward their effective scheduler/Oracle configuration.
     - if: $CI_COMMIT_TAG
       auto_cancel:
@@ -323,6 +310,19 @@ workflow:
 # - The conditional file include below? The conditional includes are useful for skipping entire stages at once
 # - The rules: section of the job
 include:
+  # Select backend defaults without short-circuiting the shared workflow rules.
+  - local: .gitlab/ci/templates/backend-defaults.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.platform ]]" == "debian13"'
+    inputs:
+      scheduler-type: pgsched
+      enable-oracle-support: false
+  - local: .gitlab/ci/templates/backend-defaults.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.platform ]]" != "debian13"'
+    inputs:
+      scheduler-type: $[[ inputs.scheduler-type ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
   - local: .gitlab/ci/templates/common.gitlab-ci.yml
   - local: .gitlab/ci/.pre.gitlab-ci.yml
     inputs:
@@ -388,8 +388,6 @@ include:
       analysis: $[[ inputs.analysis ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
     rules:
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
-        when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]

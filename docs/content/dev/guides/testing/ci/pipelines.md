@@ -29,7 +29,11 @@ For a regression pipeline, the main inputs are:
 
 - `custom-cta-image-tag`: use an existing CTA image instead of building the selected Git revision. Leave empty to build that revision.
 - `custom-eos-image-tag`: select the EOS image to test.
-- `custom-xrootd-version`: select the XRootD package version for builds.
+- `custom-xrootd-version`: select the XRootD RPM version for EL builds; leave empty for Debian.
+
+Debian 13 supports both regression modes and automatically selects the PostgreSQL scheduler and catalogue.
+For existing Debian images, select a compatible PostgreSQL-only image tag.
+Automatic EOS selection uses an EL9 image independently of the CTA platform; an explicit EOS image tag is used unchanged.
 
 Use the input descriptions in the pipeline form for supported formats and defaults. Select compatible scheduler and Oracle settings for the chosen images. A dependency build option does not change packages already installed in an existing CTA image. The selected Git revision still determines the pipeline configuration and test code.
 
