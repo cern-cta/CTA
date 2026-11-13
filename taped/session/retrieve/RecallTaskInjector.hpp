@@ -18,6 +18,7 @@
 
 #include <future>
 #include <stdint.h>
+#include <stop_token>
 
 namespace cta::tape {
 
@@ -66,7 +67,8 @@ public:
                      uint64_t maxFilesPerRequest,
                      uint64_t maxBytesPerRequest,
                      TapeSessionTracker& tracker,
-                     const cta::log::LogContext& lc)
+                     const cta::log::LogContext& lc,
+                     std::stop_token drainToken = {})
       : m_thread(*this),
         m_memManager(mm),
         m_tapeReader(tapeReader),
@@ -77,7 +79,8 @@ public:
         m_maxBatchFiles(maxFilesPerRequest),
         m_maxBatchBytes(maxBytesPerRequest),
         m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()),
-        m_tracker(tracker) {}
+        m_tracker(tracker),
+        m_drainToken(drainToken) {}
 
   virtual ~RecallTaskInjector() = default;
 
@@ -214,7 +217,8 @@ private:
 
   private:
     RecallTaskInjector& m_parent;
-    void popRecalls();
+    /// Return whether the producer finish notification was consumed.
+    bool popRecalls();
   } m_thread;
 
   ///The memory manager for accessing memory blocks.
@@ -287,6 +291,9 @@ private:
   /** Reference to the session tracker, allowing reporting of errors to it.
    */
   TapeSessionTracker& m_tracker;
+
+  /// Stop scheduler fetching while allowing acquired jobs to drain.
+  std::stop_token m_drainToken;
 };
 
 }  // namespace daemon

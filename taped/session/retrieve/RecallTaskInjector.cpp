@@ -276,6 +276,11 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
   noFilesToRecall = false;
+  // Retained jobs still need injection even after scheduler fetching stops.
+  if (m_drainToken.stop_requested()) {
+    noFilesToRecall = m_jobs.empty();
+    return !m_jobs.empty();
+  }
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
    * oracle::occi::Number which is limited to ~56 bits precision
@@ -340,14 +345,14 @@ void RecallTaskInjector::deleteAllTasks() {
 //------------------------------------------------------------------------------
 //WorkerThread::popRecalls
 //------------------------------------------------------------------------------
-void RecallTaskInjector::WorkerThread::popRecalls() {
+bool RecallTaskInjector::WorkerThread::popRecalls() {
   while (1) {
     Request req = m_parent.m_queue.pop();
     if (req.end) {
       m_parent.m_lc.log(cta::log::INFO,
                         "Received an end notification from tape thread: triggering the end of session.");
       m_parent.signalEndDataMovement();
-      return;
+      return true;
     }
     m_parent.m_lc.log(cta::log::DEBUG, "RecallJobInjector:run: about to call client interface");
     LogContext::ScopedParam sp01(m_parent.m_lc,
@@ -363,10 +368,10 @@ void RecallTaskInjector::WorkerThread::popRecalls() {
     }
 
     if (m_parent.m_jobs.empty()) {
-      if (req.lastCall) {
+      if (req.lastCall || m_parent.m_drainToken.stop_requested()) {
         m_parent.m_lc.log(cta::log::INFO, "No more file to recall: triggering the end of session.");
         m_parent.signalEndDataMovement();
-        return;
+        return false;
       } else {
         m_parent.m_lc.log(cta::log::DEBUG,
                           "In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
@@ -399,7 +404,10 @@ void RecallTaskInjector::WorkerThread::run() {
     m_parent.setFirstTasksInjectedPromise();
   };
 
+  bool producersFinished = false;
   try {
+    // The worker owns draining and end markers; the callback only wakes its queue.
+    std::stop_callback wakeOnDrain(m_parent.m_drainToken, [&] { m_parent.requestInjection(false); });
     if (m_parent.m_raoManager.useRAO()) {
       /* RecallTaskInjector is waiting to have access to the drive in order
      * to perform the RAO query;
@@ -433,7 +441,7 @@ void RecallTaskInjector::WorkerThread::run() {
       m_parent.signalEndDataMovement();
       m_parent.setFirstTasksInjectedPromise();
     } else {
-      popRecalls();
+      producersFinished = popRecalls();
     }
   } catch (const cta::exception::Exception& ex) {
     handleFailure(ex.getMessageValue(), &ex);
@@ -447,7 +455,8 @@ void RecallTaskInjector::WorkerThread::run() {
    * m_diskWriter might still want some more task (the threshold could be crossed),
    * so we discard everything that might still be in the queue
    */
-  if (m_parent.m_queue.size() > 0) {
+  // A drain wakeup may follow the finish notification; do not wait for a second finish.
+  if (!producersFinished && m_parent.m_queue.size() > 0) {
     bool stillReading = true;
     while (stillReading) {
       Request req = m_parent.m_queue.pop();

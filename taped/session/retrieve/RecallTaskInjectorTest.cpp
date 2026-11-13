@@ -223,6 +223,173 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   }
 }
 
+TEST_F(cta_tape_daemonTest, RecallTaskInjectorDrainBeforeFetch) {
+  const int nbJobs = 15;
+  const int maxNbJobsInjectedAtOnce = 6;
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  RecallMemoryManager mm(50U, 50U, lc);
+  cta::tape::drive::FakeDrive drive;
+
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  cta::MockRetrieveMount trm(catalogue);
+  trm.createRetrieveJobs(nbJobs);
+
+  TapeSessionTracker tracker;
+  MockRecallReportPacker mrrp(&trm, lc, tracker);
+  FakeDiskWriteThreadPool diskWrite(mrrp, tracker, lc);
+  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
+  cta::tape::daemon::VolumeInfo volume;
+  volume.vid = "V12345";
+  volume.mountType = cta::common::dataStructures::MountType::Retrieve;
+  FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
+  std::stop_source drain;
+  daemon::RecallTaskInjector
+    rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc, drain.get_token());
+
+  drain.request_stop();
+  bool noFilesToRecall = false;
+  EXPECT_FALSE(rti.synchronousFetch(noFilesToRecall));
+  EXPECT_TRUE(noFilesToRecall);
+  EXPECT_EQ(0, trm.getJobs);
+  EXPECT_FALSE(tracker.hasFailures());
+}
+
+TEST_F(cta_tape_daemonTest, RecallTaskInjectorDrainWakesWorker) {
+  for (const bool producerAlreadyFinished : {false, true}) {
+    const int nbJobs = 15;
+    const int maxNbJobsInjectedAtOnce = 6;
+    cta::log::StringLogger log("dummy", "cta_tape_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    RecallMemoryManager mm(50U, 50U, lc);
+    cta::tape::drive::FakeDrive drive;
+
+    auto catalogue = cta::catalogue::DummyCatalogue();
+    cta::MockRetrieveMount trm(catalogue);
+    trm.createRetrieveJobs(nbJobs);
+
+    TapeSessionTracker tracker;
+    MockRecallReportPacker mrrp(&trm, lc, tracker);
+    FakeDiskWriteThreadPool diskWrite(mrrp, tracker, lc);
+    cta::log::DummyLogger dummyLog("dummy", "dummy");
+    cta::mediachanger::RmcProxy rmcProxy;
+    cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
+    cta::tape::daemon::VolumeInfo volume;
+    volume.vid = "V12345";
+    volume.mountType = cta::common::dataStructures::MountType::Retrieve;
+    FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
+    std::stop_source drain;
+    daemon::RecallTaskInjector
+      rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc, drain.get_token());
+
+    bool noFilesToRecall = false;
+    ASSERT_TRUE(rti.synchronousFetch(noFilesToRecall));
+    const int fetchedJobs = trm.getJobs;
+    if (producerAlreadyFinished) {
+      // Queue finish before the callback wakeup to exercise the terminal-notification race.
+      rti.finish();
+      drain.request_stop();
+    }
+    rti.startThreads();
+
+    // Consume initial work without requesting replenishment, leaving the injector waiting.
+    for (int i = 0; i < fetchedJobs; ++i) {
+      auto* tapeTask = tapeRead.m_tasks.pop();
+      auto* diskTask = diskWrite.m_tasks.pop();
+      EXPECT_NE(nullptr, tapeTask);
+      EXPECT_NE(nullptr, diskTask);
+      delete diskTask;
+      delete tapeTask;
+    }
+    drain.request_stop();
+    EXPECT_FALSE(drain.request_stop());
+    EXPECT_EQ(nullptr, tapeRead.m_tasks.pop());
+    EXPECT_EQ(nullptr, diskWrite.m_tasks.pop());
+    if (!producerAlreadyFinished) {
+      rti.finish();
+    }
+    rti.waitThreads();
+    EXPECT_EQ(fetchedJobs, trm.getJobs);
+    EXPECT_FALSE(tracker.hasFailures());
+  }
+}
+
+// Drain both injected tasks and the injector backlog without fetching replacements.
+TEST_F(cta_tape_daemonTest, RecallTaskInjectorDrainRetainedJobs) {
+  const int nbJobs = 15;
+  const int maxNbJobsInjectedAtOnce = 6;
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  RecallMemoryManager mm(50U, 50U, lc);
+  cta::tape::drive::FakeDrive drive;
+
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  std::stop_source drain;
+
+  class DrainingMount : public cta::MockRetrieveMount {
+  public:
+    DrainingMount(cta::catalogue::Catalogue& catalogue, std::stop_source& drain)
+        : cta::MockRetrieveMount(catalogue),
+          m_drain(drain) {}
+
+    std::list<std::unique_ptr<cta::RetrieveJob>>
+    getNextJobBatch(uint64_t files, uint64_t bytes, cta::log::LogContext& lc) override {
+      auto jobs = MockRetrieveMount::getNextJobBatch(files, bytes, lc);
+      // Force the acquired backlog to require multiple injection batches.
+      for (auto& job : jobs) {
+        job->archiveFile.fileSize = blockSize;
+      }
+      m_drain.request_stop();
+      return jobs;
+    }
+
+  private:
+    std::stop_source& m_drain;
+  } trm(catalogue, drain);
+
+  trm.createRetrieveJobs(nbJobs);
+
+  TapeSessionTracker tracker;
+  MockRecallReportPacker mrrp(&trm, lc, tracker);
+  FakeDiskWriteThreadPool diskWrite(mrrp, tracker, lc);
+  cta::log::DummyLogger dummyLog("dummy", "dummy");
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
+  cta::tape::daemon::VolumeInfo volume;
+  volume.vid = "V12345";
+  volume.mountType = cta::common::dataStructures::MountType::Retrieve;
+  FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
+  daemon::RecallTaskInjector
+    rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc, drain.get_token());
+
+  bool noFilesToRecall;
+  ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
+  ASSERT_FALSE(noFilesToRecall);
+
+  const int fetchedJobs = trm.getJobs;
+  EXPECT_EQ(maxNbJobsInjectedAtOnce, fetchedJobs);
+  rti.startThreads();
+
+  // Consume every acquired file and request replenishment as the tape worker would.
+  for (int i = 0; i < fetchedJobs; ++i) {
+    auto* tapeTask = tapeRead.m_tasks.pop();
+    auto* diskTask = diskWrite.m_tasks.pop();
+    EXPECT_NE(nullptr, tapeTask);
+    EXPECT_NE(nullptr, diskTask);
+    delete diskTask;
+    delete tapeTask;
+    rti.requestInjection(true);
+  }
+  EXPECT_EQ(nullptr, tapeRead.m_tasks.pop());
+  EXPECT_EQ(nullptr, diskWrite.m_tasks.pop());
+  rti.finish();
+  rti.waitThreads();
+  EXPECT_EQ(fetchedJobs, trm.getJobs);
+  EXPECT_FALSE(tracker.hasFailures());
+}
+
 TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
   cta::log::StringLogger log("dummy", "cta_tape_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
