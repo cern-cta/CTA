@@ -89,11 +89,14 @@ Add feature options such as `-DCTA_WITH_ORACLE=OFF` to either configuration comm
 
 ## Build container images (optional)
 
-Build service images from the RPMs, using the same version and build variant:
+Build service images from the packages, using the same version and build variant:
 
 ```bash
 ./ci/cta-dev.sh images --cta-version 6-local-test
 ```
+
+For another platform, pass the same `--platform` option to both `build` and `images`, for example `--platform el10` or `--platform debian13`.
+See [Build options](cta-dev.md#build-options) for supported configurations and package locations.
 
 This creates local Podman images for `cta-taped`, `cta-maintd`, `cta-rmcd`, `cta-admin-api`, `cta-workflow-api`, and `cta-tools`, under `localhost/cta/ctageneric/`, tagged `6-local-test` in this example:
 
@@ -102,29 +105,6 @@ podman images --filter reference='localhost/cta/ctageneric/*:6-local-test'
 ```
 
 If Minikube or k3s is available, the command also attempts to load the images into it. Otherwise, loading is skipped and the images remain in Podman.
-
-### Debian 13 images
-
-Build Debian packages and images with the same version:
-
-```bash
-./ci/cta-dev.sh build --platform debian13 --cta-version 6-local-test
-./ci/cta-dev.sh images --platform debian13 --cta-version 6-local-test
-```
-
-The image build consumes packages from `build/debian13/DEB/` and provides the same six targets as EL9/EL10, plus the optional `cta-debug` target.
-Debian images support amd64, the PostgreSQL scheduler and catalogue, and public dependency repositories only; Oracle is not supported.
-The default service account uses UID/GID 1000, matching the development deployment defaults.
-
-Service images start from `debian:13-slim` and install only their target packages without recommended dependencies such as systemd and logrotate.
-Package inputs, APT indexes and downloads stay outside the final image layers.
-The taped image includes the separate `cta-eosdf` package for EOS free-space queries.
-The `cta-taped` and `cta-rmcd` images omit the bundled CTA tools and external tape-format test readers; use `cta-tools` for administrative and tape utilities.
-Catalogue and scheduler utilities also reside in `cta-tools`, rather than the API images.
-The optional debug image installs the supplied packages, including any `.ddeb` debug-symbol packages, and GDB.
-
-Debian images are built and pushed to the CI registry; automatic public release promotion remains disabled.
-The full Kubernetes system-test suite also remains disabled for Debian because it assumes additional utilities in the service images.
 
 ## Push images to a registry
 
