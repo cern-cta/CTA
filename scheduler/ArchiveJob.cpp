@@ -81,9 +81,19 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
     case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
       return m_dbJob->archiveReportURL;
     case SchedulerDatabase::ArchiveJob::ReportType::FailureReport: {
-      if (m_dbJob->latestError.empty()) {
+      std::string failureReason = m_dbJob->latestError;
+#ifdef CTA_PGSCHED
+      // A missing reason must not make the job permanently unreportable (EOS would never learn
+      // the archive failed). Use an explicit placeholder instead of throwing.
+      if (failureReason.empty()) {
+        failureReason = "no failure reason recorded";
+      }
+#else
+      // Objectstore keeps its pre-existing strict behaviour.
+      if (failureReason.empty()) {
         throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): empty failure reason.");
       }
+#endif
       std::string base64ErrorReport;
       // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
       const bool noNewLineInBase64Output = false;
@@ -91,7 +101,7 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
       // Ownership of 'sink' resources is passed to 'CryptoPP::StringSink'
       auto encoder = std::make_unique<CryptoPP::Base64Encoder>(sink.release(), noNewLineInBase64Output);
       // Ownership of 'encoder' resources is passed to 'CryptoPP::StringSource'
-      CryptoPP::StringSource ss1(m_dbJob->latestError, true, encoder.release());
+      CryptoPP::StringSource ss1(failureReason, true, encoder.release());
       return m_dbJob->errorReportURL + base64ErrorReport;
     }
     case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:

@@ -106,23 +106,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     timings.addToLog(logParams);
     lc.log(cta::log::INFO, "In ArchiveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
   }
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  try {
-    auto nmountrows = postgres::updateMountQueueLastFetch(txn,
-                                                          mountInfo.mountId,
-                                                          true /* isActive */,
-                                                          m_isRepack,
-                                                          true /* isArchive */);
-    txn.commit();
-    if (nmountrows < 1) {
-      lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: did not update any row.");
-    }
-  } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: failed to update table.");
-    txn.abort();
-  }
+  refreshMountLivenessHeartbeat(lc);
   return ret;
 }
 
@@ -262,6 +246,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
       "reporting. Aborting the transaction."
       + ex.getMessageValue());
   }
+  refreshMountLivenessHeartbeat(lc);
 }
 
 void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
@@ -314,6 +299,36 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
       "In schedulerdb::ArchiveMount::updateRepackJobSuccess(): Failed to update job status for "
       "reporting. Aborting the transaction."
       + ex.getMessageValue());
+  }
+  refreshMountLivenessHeartbeat(lc);
+}
+
+void ArchiveMount::refreshMountLivenessHeartbeat(log::LogContext& lc) {
+  // Mirrors updateMountQueueLastFetch()'s own 5s self-throttle, client-side, to skip the
+  // round-trip itself instead of paying for one that's a guaranteed server-side no-op. Set
+  // BEFORE the attempt so two callers racing from different threads only ever race to skip,
+  // never to both proceed (see m_lastHeartbeatRefreshEpoch's own comment).
+  const std::time_t now = cta::utils::getCurrentEpochTime();
+  const std::time_t last = m_lastHeartbeatRefreshEpoch.exchange(now);
+  if (now - last < 5) {
+    return;
+  }
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    auto nmountrows = postgres::updateMountQueueLastFetch(txn,
+                                                          mountInfo.mountId,
+                                                          true /* isActive */,
+                                                          m_isRepack,
+                                                          true /* isArchive */);
+    txn.commit();
+    if (nmountrows < 1) {
+      lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: did not update any row.");
+    }
+  } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch: failed to update table.");
+    txn.abort();
   }
 }
 

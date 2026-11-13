@@ -15,6 +15,7 @@
 #include "scheduler/rdbms/RetrieveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <list>
 #include <memory>
@@ -87,6 +88,20 @@ private:
   void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                               log::LogContext& lc);
   bool m_isRepack = false;
+
+  /*
+   * Refreshes MOUNT_QUEUE_LAST_FETCH so the dead-mount reclaim routine never mistakes this mount
+   * for inactive while still fetching OR reporting. Called from getNextJobBatch() after fetch and
+   * setJobBatchTransferred() after a successful report. Runs in its own transaction (piggybacking
+   * would overwrite the caller's query-summary/row-count telemetry) and skips the round-trip if
+   * called again within 5s - see ArchiveMount::refreshMountLivenessHeartbeat()'s equivalent
+   * comment for the full rationale. Non-fatal on failure.
+   */
+  void refreshMountLivenessHeartbeat(log::LogContext& lc);
+
+  // Epoch-second of this mount's last heartbeat attempt (0 = never), set BEFORE the attempt so
+  // near-simultaneous callers from different threads only ever race to skip, never to double-call.
+  std::atomic<std::time_t> m_lastHeartbeatRefreshEpoch {0};
 };
 
 }  // namespace cta::schedulerdb

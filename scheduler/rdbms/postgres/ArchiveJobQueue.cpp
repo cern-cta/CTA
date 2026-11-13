@@ -849,19 +849,27 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
   return rset;
 }
 
-uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus) {
+uint64_t
+ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack) {
   // otherwise update the statistics and requeue the job
+  std::string repack_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
-      UPDATE ARCHIVE_ACTIVE_QUEUE SET
-        STATUS = :STATUS,
-        TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
+      UPDATE )SQL";
+  sql += repack_prefix + "ARCHIVE_ACTIVE_QUEUE SET ";
+  // For repack, STATUS is left for updateRepackJobSuccess() below to set correctly - see comment.
+  if (!isRepack) {
+    sql += "STATUS = :STATUS, ";
+  }
+  sql += R"SQL(TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
         REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG,
         LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
       WHERE JOB_ID = :JOB_ID
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(newStatus));
+  if (!isRepack) {
+    stmt.bindString(":STATUS", to_string(newStatus));
+  }
   stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
   stmt.bindBool(":IS_REPORTING", isReporting);
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
@@ -869,11 +877,25 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   txn.setRowCountForTelemetry(1);
   stmt.executeNonQuery();
-  /* if this was the final reporting failure,
-   * move the row to failed jobs and delete the entry from the queue
-   * for multi-copy archive requests, all requests will be handled via the moveJobToFailedQueueTable()
+  /* USER job: on the terminal failure (newStatus=ReadyForDeletion), move the row to
+   * ARCHIVE_FAILED_QUEUE via moveJobToFailedQueueTable(), multi-copy requests included. Checks
+   * newStatus, not status (stale in-memory value) - status missed the real transition and left
+   * rows stuck in ARCHIVE_ACTIVE_QUEUE forever once retries were exhausted.
+   *
+   * REPACK job: repack transfer failures never reach this function (updateFailedJobStatus()
+   * handles those). The only way here is updateRepackJobSuccess() itself failing to persist an
+   * already-successful transfer, so newStatus=ReadyForDeletion means "recover that lost write",
+   * not "report a failure". STATUS is left for updateRepackJobSuccess() to set, since only it
+   * knows whether a multi-copy request's other copies have also succeeded - forcing
+   * ReadyForDeletion here directly would let getNextSuccessfulArchiveRepackReportBatch() delete
+   * the source file before every copy exists. A second failure on this recovery attempt (fresh
+   * connection, same write) is caught by failReport()'s own try/catch and falls back to
+   * dead-mount GC: one wasted re-transfer, not lost data, not a retry loop.
    */
-  if (status == ArchiveJobStatus::ReadyForDeletion) {
+  if (isRepack && newStatus == ArchiveJobStatus::ReadyForDeletion) {
+    return ArchiveJobQueueRow::updateRepackJobSuccess(txn, {std::to_string(jobId)});
+  }
+  if (newStatus == ArchiveJobStatus::ReadyForDeletion && !isRepack) {
     return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
   }
   return stmt.getNbAffectedRows();

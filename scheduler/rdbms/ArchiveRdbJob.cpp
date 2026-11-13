@@ -37,6 +37,9 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   srcURL = std::move(m_jobRow.srcUrl);
   archiveReportURL = std::move(m_jobRow.archiveReportURL);
   errorReportURL = std::move(m_jobRow.archiveErrorReportURL);
+  // latestError mirrors FAILURE_LOG so exceptionThrowingReportURL() has a failure reason to
+  // report to EOS. Copied, not moved: failTransfer()/updateJobRowFailureLog() still append to it.
+  latestError = m_jobRow.failureLogs.value_or("");
 
   archiveFile.archiveFileID = m_jobRow.archiveFileID;
   archiveFile.creationTime = m_jobRow.creationTime;
@@ -76,6 +79,7 @@ void ArchiveRdbJob::reset() {
   srcURL.clear();            // Clearing source URL
   archiveReportURL.clear();  // Clearing the archive report URL
   errorReportURL.clear();    // Clearing the error report URL
+  latestError.clear();       // Clearing the last failure reason (pooled jobs are re-used)
 
   archiveFile.archiveFileID = 0;
   archiveFile.diskFileId.clear();
@@ -102,7 +106,7 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
                                              log::LogContext& lc,
                                              [[maybe_unused]] const std::string& reason) {
   if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser
-      || m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
+      && m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
     lc.log(log::WARNING,
            std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status)
              + std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure or "
@@ -211,10 +215,12 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     cta::utils::Timer t;
     uint64_t deletionCount = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      // the job will be moved to FAILED_QUEUE table, and deleted from the ACTIVE_QUEUE.
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
+      // USER: moves the row to FAILED_QUEUE and deletes it from ACTIVE.
+      // REPACK: recovers a lost updateRepackJobSuccess() write instead (see that function) -
+      // completing a multi-copy request's last copy here legitimately updates more than one row.
+      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion, isRepack);
       deletionCount = nrows;
-      if (nrows != 1) {
+      if (isRepack ? nrows < 1 : nrows != 1) {
         lc.log(log::WARNING,
                "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): reporting failed terminally, but "
                "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
@@ -223,7 +229,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     } else {
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
       m_jobRow.isReporting = false;
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
+      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status, isRepack);
       if (nrows != 1) {
         lc.log(
           log::WARNING,

@@ -1029,12 +1029,19 @@ VALUES )SQL";
    *
    * @param txn                  Transaction to use for this query
    * @param newStatus            Archive Job Status to select on
+   * @param isRepack             Whether this job belongs to a repack request - selects
+   *                             REPACK_ARCHIVE_ACTIVE_QUEUE and, on the terminal case, routes
+   *                             through updateRepackJobSuccess() instead of the move-to-failed-
+   *                             queue step (see .cpp for why)
    * @return                     Number of updated rows
    */
-  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus);
+  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack);
 
   /**
    * Move the job row to the ARCHIVE FAILED JOB TABLE
+   *
+   * Only ever called for user jobs (see updateJobStatusForFailedReport()'s !isRepack guard) -
+   * always targets plain ARCHIVE_ACTIVE_QUEUE/ARCHIVE_FAILED_QUEUE, no REPACK_ variant needed.
    *
    * @param txn                  Transaction to use for this query
    * @return nrows               The number of rows moved.

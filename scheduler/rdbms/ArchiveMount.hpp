@@ -13,6 +13,7 @@
 #include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <atomic>
 #include <cstdint>
 #include <list>
 #include <memory>
@@ -97,6 +98,25 @@ private:
 
   void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                               log::LogContext& lc);
+
+  /*
+   * Refreshes MOUNT_QUEUE_LAST_FETCH for this mount so the dead-mount reclaim routine never
+   * mistakes it for inactive while still fetching OR reporting. Called from getNextJobBatch()
+   * after fetch, and from setJobBatchTransferred()/setRepackJobBatchTransferred() after a
+   * successful report. Runs in its own transaction: piggybacking onto the caller's transaction
+   * would overwrite its query-summary/row-count telemetry (see updateMountQueueLastFetch()).
+   * Non-fatal on failure.
+   *
+   * Skips the round-trip if called again within 5s (tracked by m_lastHeartbeatRefreshEpoch) -
+   * the UPSERT's own WHERE clause already makes that call a server-side no-op, but finding that
+   * out still costs a full round-trip. Matters at scale: small flushMaxFiles/fetchMaxFiles make
+   * a fetch and its following report land close together often enough for this to add up.
+   */
+  void refreshMountLivenessHeartbeat(log::LogContext& lc);
+
+  // Epoch-second of this mount's last heartbeat attempt (0 = never), set BEFORE the attempt so
+  // near-simultaneous callers from different threads only ever race to skip, never to double-call.
+  std::atomic<std::time_t> m_lastHeartbeatRefreshEpoch {0};
   /*
    * Setting a batch of REPACK mount jobs to state which informs
    * the Scheduler that they are ready for reporting
