@@ -800,37 +800,6 @@ uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   return nrows;
 }
 
-uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs) {
-  std::string sqlpart;
-  for (const auto& piece : jobIDs) {
-    if (!sqlpart.empty()) {
-      sqlpart += ",";
-    }
-    sqlpart += piece;
-  }
-  std::string sql = R"SQL(
-    WITH REQUESTS_TO_MOVE AS (
-        SELECT DISTINCT ARCHIVE_REQUEST_ID
-        FROM ARCHIVE_ACTIVE_QUEUE
-            WHERE job_id IN (
-         )SQL";
-  sql += sqlpart;
-  sql += R"SQL()
-    ),
-    MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_ACTIVE_QUEUE
-            WHERE ARCHIVE_REQUEST_ID IN ( SELECT ARCHIVE_REQUEST_ID FROM REQUESTS_TO_MOVE )
-        RETURNING *
-    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;")SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveToFailed);
-  //txn.setRowCountForTelemetry(jobIDs.size());
-  stmt.executeNonQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  txn.setRowCountForTelemetry(nrows);
-  return nrows;
-}
-
 rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
@@ -1200,10 +1169,10 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   if (jobs.empty()) {
     return 0;
   }
-  const std::string repack_prefix = isRepack ? "REPACK_" : "";
 
   // Non-repack multi-copy requests move all copies atomically, by ARCHIVE_REQUEST_ID (matching
-  // single-job failReport()); repack always has req_job_count = 1.
+  // single-job failReport()); repack always has req_job_count = 1 (its multi-copy grouping is by
+  // ARCHIVE_FILE_ID, handled entirely inside updateRepackJobSuccess() below).
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
     if (i > 0) {
@@ -1214,7 +1183,59 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
                    + s + "::SMALLINT)";
   }
 
-  // Update STATUS to ReadyForDeletion and move to failed queue in one CTE.
+  if (isRepack) {
+    // REPACK: "exceeded report retries" here means the DB WRITE failed repeatedly, not that the
+    // job failed - repack transfer failures never reach this function (updateFailedJobStatus()
+    // handles those). The only way here is updateRepackJobSuccess() itself failing to persist an
+    // already-successful transfer, so this means "recover that lost write", not "report a
+    // failure" - mirrors ArchiveRdbJob::failReport()'s single-job handling of the same case.
+    // STATUS is intentionally NOT set by the UPDATE below: only updateRepackJobSuccess() knows
+    // whether a multi-copy request's other copies have also succeeded - moving straight to
+    // ARCHIVE_FAILED_QUEUE here (as the non-repack path below does) would let
+    // getNextSuccessfulArchiveRepackReportBatch() delete the source file before every copy exists.
+    std::string sql = R"SQL(
+    WITH per_job(job_id, total_report_retries, report_failure_log,
+                 archive_request_id, req_job_count) AS (
+      VALUES )SQL";
+    sql += values_rows;
+    sql += R"SQL(
+    )
+    UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE a SET
+      TOTAL_REPORT_RETRIES = d.total_report_retries,
+      IS_REPORTING = FALSE,
+      REPORT_FAILURE_LOG = d.report_failure_log,
+      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+    FROM per_job d
+    WHERE a.JOB_ID = d.job_id
+    )SQL";
+
+    auto stmt = txn.getConn().createStmt(sql);
+    for (size_t i = 0; i < jobs.size(); ++i) {
+      const auto* row = jobs[i];
+      const std::string s = std::to_string(i);
+      stmt.bindUint64(":JID" + s, row->jobId);
+      stmt.bindUint32(":TRR" + s, row->totalReportRetries);
+      stmt.bindString(":RFL" + s, row->reportFailureLogs.value_or(""));
+      stmt.bindUint64(":REQID" + s, row->reqId);
+      stmt.bindUint32(":RJC" + s, row->reqJobCount);
+    }
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbFailReportBatchArchive);
+    stmt.executeNonQuery();
+
+    std::vector<std::string> jobIds;
+    jobIds.reserve(jobs.size());
+    for (const auto* row : jobs) {
+      jobIds.push_back(std::to_string(row->jobId));
+    }
+    return ArchiveJobQueueRow::updateRepackJobSuccess(txn, jobIds);
+  }
+
+  // USER: update STATUS to ReadyForDeletion, move to failed queue, and delete the original row
+  // from the active queue - all in one CTE chain, one round trip. For multi-copy requests the
+  // WHERE clause matches all sibling copies by ARCHIVE_REQUEST_ID so the entire request is moved
+  // atomically. The final DELETE targets exactly the JOB_IDs returned by the INSERT, which
+  // already covers sibling copies pulled in via ARCHIVE_REQUEST_ID - without it, the row would be
+  // duplicated into ARCHIVE_FAILED_QUEUE but left behind (stuck forever) in ARCHIVE_ACTIVE_QUEUE.
   std::string sql = R"SQL(
   WITH per_job(job_id, total_report_retries, report_failure_log,
                archive_request_id, req_job_count) AS (
@@ -1223,8 +1244,7 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   sql += R"SQL(
   ),
   updated AS (
-    UPDATE )SQL";
-  sql += repack_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE a SET
+    UPDATE ARCHIVE_ACTIVE_QUEUE a SET
       STATUS = 'ReadyForDeletion'::ARCHIVE_JOB_STATUS,
       TOTAL_REPORT_RETRIES = d.total_report_retries,
       IS_REPORTING = FALSE,
@@ -1234,9 +1254,12 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
     WHERE (d.req_job_count = 1 AND a.JOB_ID = d.job_id)
        OR (d.req_job_count > 1 AND a.ARCHIVE_REQUEST_ID = d.archive_request_id)
     RETURNING a.*
+  ),
+  inserted AS (
+    INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM updated RETURNING JOB_ID
   )
-  INSERT INTO )SQL";
-  sql += repack_prefix + "ARCHIVE_FAILED_QUEUE SELECT * FROM updated";
+  DELETE FROM ARCHIVE_ACTIVE_QUEUE WHERE JOB_ID IN (SELECT JOB_ID FROM inserted)
+  )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
   for (size_t i = 0; i < jobs.size(); ++i) {

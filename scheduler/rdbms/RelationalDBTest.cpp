@@ -1085,6 +1085,122 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
   ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
 }
 
+// Covers the BATCH equivalent of repackArchiveBookkeepingReportFailureRecoversMultiCopyCorrectly:
+// ArchiveMount::failReportBatch() -> ArchiveJobQueueRow::failReportBatchExceedRetries(isRepack=true)
+// must route repack jobs through updateRepackJobSuccess() exactly like the single-job
+// ArchiveRdbJob::failReport() path, not the user-job move-to-ARCHIVE_FAILED_QUEUE path - even when
+// both copies of a multi-copy request are bunched into the SAME batch call together. Before this
+// fix, the batch path moved repack rows straight to REPACK_ARCHIVE_FAILED_QUEUE without deleting
+// the originals from REPACK_ARCHIVE_ACTIVE_QUEUE, duplicating every row and leaving the active
+// copy stuck there forever - this also masked the multi-copy premature-deletion risk, since the
+// row never reached ReadyForDeletion via updateRepackJobSuccess() at all.
+TEST_P(RelationalDBTest, repackArchiveBatchBookkeepingReportFailureRecoversMultiCopyCorrectly) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-REPACK-BATCHMULTI";
+  const std::string tapePoolA = "repackTapePoolBatchMultiA";
+  const std::string tapePoolB = "repackTapePoolBatchMultiB";
+  auto mountPolicy = makeMountPolicy(1000);
+  SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                      "/repack/buffer",
+                                                      common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+                                                      mountPolicy,
+                                                      false,
+                                                      10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  constexpr uint64_t archiveFileId = 990005;
+  constexpr uint64_t sizeInBytes = 12000;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolA,
+                                  sizeInBytes,
+                                  /*totalRetries=*/0,
+                                  /*maxTotalRetries=*/2,
+                                  /*totalReportRetries=*/0,
+                                  /*maxReportRetries=*/2,
+                                  /*copyNb=*/1,
+                                  /*requestJobCount=*/2);
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolB,
+                                  sizeInBytes,
+                                  /*totalRetries=*/0,
+                                  /*maxTotalRetries=*/2,
+                                  /*totalReportRetries=*/0,
+                                  /*maxReportRetries=*/2,
+                                  /*copyNb=*/2,
+                                  /*requestJobCount=*/2);
+  }
+
+  auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-BATCHMULTI-DESTA");
+  auto jobsA = mountA->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsA.size());
+  auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-BATCHMULTI-DESTB");
+  auto jobsB = mountB->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsB.size());
+
+  // Both copies' bookkeeping write fails and both land in ONE batch call together - the actual
+  // "bunching" this mechanism exists for, not two sequential single-job calls.
+  jobsA.front()->prepareFailReport("simulated scheduler bookkeeping write failure for copy 1");
+  jobsB.front()->prepareFailReport("simulated scheduler bookkeeping write failure for copy 2");
+  std::vector<SchedulerDatabase::ArchiveJob*> batch = {jobsA.front().get(), jobsB.front().get()};
+  mountA->failReportBatch(batch, lc);
+
+  {
+    // Both copies are ReadyForDeletion, still in REPACK_ARCHIVE_ACTIVE_QUEUE exactly once each -
+    // not moved, not duplicated.
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(
+      "SELECT COPY_NB, STATUS FROM REPACK_ARCHIVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY COPY_NB");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    for (int expectedCopyNb : {1, 2}) {
+      ASSERT_TRUE(rset.next());
+      ASSERT_EQ(static_cast<uint64_t>(expectedCopyNb), rset.columnUint64("COPY_NB"));
+      ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion), rset.columnString("STATUS"));
+    }
+    ASSERT_FALSE(rset.next());
+  }
+  {
+    // Neither copy was duplicated into REPACK_ARCHIVE_FAILED_QUEUE.
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt =
+      conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_FAILED_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("C"));
+  }
+
+  db.getNextSuccessfulArchiveRepackReportBatch(lc);
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt =
+      conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("C"));
+  }
+
+  const auto repackInfo = db.getRepackInfo(vid);
+  ASSERT_EQ(2u, repackInfo.archivedFiles);
+  ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
+}
+
 TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
   using namespace cta;
 

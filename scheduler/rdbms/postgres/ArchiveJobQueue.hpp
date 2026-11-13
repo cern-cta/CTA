@@ -1048,17 +1048,6 @@ VALUES )SQL";
    */
   uint64_t moveJobToFailedQueueTable(Transaction& txn);
 
-  /**
-   * Move the job rows to the ARCHIVE FAILED JOB TABLE
-   * (unused at the moment but shall be used for
-   * batched failed reports to disk)
-   *
-   * @param txn                  Transaction to use for this query
-   * @param jobIDs               List of job IDs as strings for the query
-   * @return nrows               The number of rows moved.
-   */
-  static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs);
-
   static rdbms::Rset moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit);
   /**
    * Increment Archive Request ID and return the new value
@@ -1104,11 +1093,17 @@ VALUES )SQL";
   failTransferBatchExceedRetries(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
 
   /**
-   * Batch UPDATE + INSERT for jobs that have exhausted their report-retry budget
-   * (or require no report): sets STATUS=ReadyForDeletion, IS_REPORTING=FALSE and
-   * moves each row from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_FAILED_QUEUE in one CTE.
-   * Reads totalReportRetries and reportFailureLogs from each row's m_jobRow
-   * (already updated in-memory by prepareFailReport).
+   * Batch handling for jobs that have exhausted their report-retry budget (or require no
+   * report). Reads totalReportRetries and reportFailureLogs from each row's m_jobRow (already
+   * updated in-memory by prepareFailReport).
+   *
+   * USER: a genuine terminal failure - UPDATE sets STATUS=ReadyForDeletion, IS_REPORTING=FALSE
+   * and moves each row from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_FAILED_QUEUE, all in one CTE.
+   *
+   * REPACK: "exceeded report retries" means the DB WRITE failed repeatedly, not that the job
+   * failed - delegates the STATUS transition to updateRepackJobSuccess(), exactly like the
+   * single-job ArchiveRdbJob::failReport() path, since only that function knows whether a
+   * multi-copy request's other copies have also succeeded.
    */
   static uint64_t
   failReportBatchExceedRetries(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
