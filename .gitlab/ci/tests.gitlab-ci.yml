@@ -59,13 +59,8 @@ spec:
     - |
       set -o pipefail
       test_status=0
-      # Record failures without skipping later tests or database cleanup.
-      run_cpp_test() {
-        local name="$1"
-        shift
-        GTEST_OUTPUT="xml:${CI_PROJECT_DIR}/test-results/${name}.xml" \
-          "$@" 2>&1 | tee "test-logs/${name}.log" || test_status=1
-      }
+      export CTA_TEST_OUTPUT_DIR="${CI_PROJECT_DIR}"
+      source tests/cpp-test-helpers.sh
   artifacts:
     when: always
     expire_in: 14 days

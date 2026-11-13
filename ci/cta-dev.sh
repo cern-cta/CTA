@@ -1082,6 +1082,7 @@ build_cta() {
 
   local package_command=binary
   local build_package_flags=()
+  local install_source_packages=false
 
   [[ $rebuild_source_packages == true ]] && package_command=all
 
@@ -1091,9 +1092,14 @@ build_cta() {
     build_configuration_json=$(jq -c --argjson internalRepos "$enable_internal_repos" \
       '.internalRepos = $internalRepos' <<<"$build_configuration_json")
     [[ $reinstall_source_packages == true ]] && log_task "Refreshing build dependencies from the regenerated source packages..."
-    # Regenerate metadata before dependency installation, including forced installs and container restarts.
-    package_command=all
-    rebuild_source_packages=true
+    install_source_packages=true
+  fi
+
+  if [[ $package_command == binary && $install_source_packages == true ]]; then
+    build_package_flags+=(
+      --install-source-packages
+      --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
+    )
   fi
 
   # Let the package builder clean both build output and generated packaging state inside the container.
