@@ -46,7 +46,8 @@ Shutdown does not perform additional hardware cleanup or wait indefinitely for d
 Configuration failures before catalogue access and failures to validate drive ownership cannot guarantee down publication.
 
 SIGTERM and SIGINT (Ctrl-C) request an exit and stop an active tape session from fetching further job batches.
-Already-fetched jobs, including jobs returned by an in-progress fetch, drain through the normal transfer, reporting, and tape cleanup paths before exit.
+Already-acquired archive jobs finish through the normal transfer, reporting and tape cleanup paths before exit.
+For retrieval, jobs already queued for transfer finish normally; fetched jobs not yet queued are returned to the scheduler, including those returned by an in-progress fetch after shutdown was requested.
 Idle polling waits wake on a stop request.
 Blocking operations are not interrupted, so this does not impose a shutdown deadline.
 Full graceful shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.

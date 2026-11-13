@@ -201,6 +201,20 @@ std::list<cta::RetrieveJob*> RecallTaskInjector::previewGetNextJobBatch(bool use
 //injectBulkRecalls
 //------------------------------------------------------------------------------
 void RecallTaskInjector::injectBulkRecalls() {
+  if (m_stopToken.stop_requested()) {
+    if (!m_jobs.empty()) {
+      log::ScopedParamContainer(m_lc)
+        .add("jobsToRequeue", m_jobs.size())
+        .log(log::INFO, "Shutdown requested: returning uninjected retrieve jobs to the scheduler");
+      m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+      m_files = 0;
+      m_bytes = 0;
+    }
+    signalEndDataMovement();
+    // The tape worker may still be waiting for its first batch.
+    setFirstTasksInjectedPromise();
+    return;
+  }
   uint32_t njobs = m_jobs.size();
   std::vector<uint64_t> raoOrder;
 
@@ -268,7 +282,7 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
   noFilesToRecall = false;
-  // Retained jobs still need injection even after scheduler fetching stops.
+  // Retained jobs must reach the injection step so they can be returned on shutdown.
   if (m_stopToken.stop_requested()) {
     noFilesToRecall = m_jobs.empty();
     return !m_jobs.empty();
@@ -341,6 +355,9 @@ bool RecallTaskInjector::WorkerThread::popRecalls() {
   while (1) {
     Request req = m_parent.m_queue.pop();
     if (req.end) {
+      if (m_parent.m_stopToken.stop_requested()) {
+        m_parent.injectBulkRecalls();
+      }
       m_parent.m_lc.log(cta::log::INFO,
                         "Received an end notification from tape thread: triggering the end of session.");
       m_parent.signalEndDataMovement();
@@ -400,7 +417,7 @@ void RecallTaskInjector::WorkerThread::run() {
   try {
     // Wake up a blocked worker.
     // requestInjection only wakes the worker and tells it to look for work. The stop token prevents actual fetching.
-    // The worker drains acquired jobs and signals end-of-data.
+    // The worker returns uninjected jobs and signals end-of-data behind queued tasks.
     std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
     if (m_parent.m_raoManager.useRAO()) {
       // Startup failure releases the workers without attempting RAO on an unavailable drive.

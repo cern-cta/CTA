@@ -227,7 +227,8 @@ The division of responsibility is explained under [Cleanup guarantees](#cleanup-
 For fatal failures and abrupt termination, see [Failure scenarios](#failure-scenarios).
 
 On SIGTERM or SIGINT, the daemon stops fetching new job batches.
-Already-acquired jobs, including those returned by an in-progress fetch, finish through the normal transfer, reporting and tape cleanup paths before exit.
+Already-acquired archive jobs finish through the normal transfer, reporting and tape cleanup paths before exit.
+For retrieval, jobs already queued for transfer finish normally; fetched jobs not yet queued are returned to the scheduler, including those returned by an in-progress fetch after shutdown was requested.
 Idle polling waits wake on a stop request.
 Blocking operations are not interrupted, so shutdown has no fixed deadline.
 

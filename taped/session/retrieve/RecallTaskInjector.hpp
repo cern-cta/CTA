@@ -291,7 +291,7 @@ private:
    */
   TapeSessionTracker& m_tracker;
 
-  /// Stop scheduler fetching while allowing acquired jobs to drain.
+  /// Stop scheduler fetching, return uninjected jobs, and drain queued tasks.
   std::stop_token m_stopToken;
 };
 
