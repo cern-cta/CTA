@@ -212,9 +212,12 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     uint64_t deletionCount = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
       // the job will be moved to FAILED_QUEUE table, and deleted from the ACTIVE_QUEUE.
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
+      // (for a repack job this instead recovers a lost updateRepackJobSuccess() write via
+      // updateJobStatusForFailedReport() - see that function for why; a multi-copy request
+      // completing its last copy here legitimately updates more than one row)
+      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion, isRepack);
       deletionCount = nrows;
-      if (nrows != 1) {
+      if (isRepack ? nrows < 1 : nrows != 1) {
         lc.log(log::WARNING,
                "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): reporting failed terminally, but "
                "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
@@ -223,7 +226,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     } else {
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
       m_jobRow.isReporting = false;
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
+      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status, isRepack);
       if (nrows != 1) {
         lc.log(
           log::WARNING,
