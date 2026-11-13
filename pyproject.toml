@@ -227,6 +227,10 @@
                 'PLR0912',
             ]
 
+            # Victim selection among equivalent pods/drives for failure-injection tests; not
+            # cryptographic.
+            'ci/system_tests/tests/stress_scale_fail_test.py' = ['S311']
+
             # System tests intentionally use temporary paths.
             'ci/system_tests/**/*.py' = ['S108']
 

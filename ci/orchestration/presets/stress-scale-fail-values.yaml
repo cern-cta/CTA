@@ -41,47 +41,34 @@
 #
 # What is intentionally UNCHANGED from stress-scale-values.yaml
 # ---------------------------------------------------------------
-# transfers.archive/retrieve.fetchMaxFiles stay at 5000: overflowFraction only changes the
-# DERIVED TAPE CAPACITY (filesPerTape = batchFiles / (2 * overflowFraction)), not batchFiles
-# itself, so T_batch = fetchMaxFiles / rate is unaffected and the existing
-# maintd.routines.userActiveQueueCleanup.ageForCollectionSecs margin over G_max (see that
-# preset's comment) still holds unchanged.
+# transfers.archive/retrieve.fetchMaxFiles/flushMaxFiles: inherited as-is (4000/8000). This job
+# still derives tape capacity from overflowFraction (via --stress-overflow-fraction, NOT set
+# here - it targets the virtual-tape-library chart, not this cta-chart overlay), unlike
+# stress-scale-test, which now sizes capacity directly via filesPerTapeOverride instead - the two
+# jobs deliberately use different, mutually-exclusive capacity mechanisms (see that chart's
+# values.yaml), so fetchMaxFiles changing on the base preset does not couple to this file's own
+# tape-boundary math below.
 #
 # What DOES change here
 # ----------------------
-# The mount cycle shortens (more frequent tape-fill boundaries by design), so
-# ageForCollectionSecs's margin over the MOUNT CYCLE (not over G_max, which is unaffected) is
-# recomputed below for the higher overflowFraction the CI job actually uses.
+# ageForCollectionSecs only, and only to stay in sync with the stress-scale-fail-test CI job's own
+# FAIL_AGE_FOR_COLLECTION_SECS bash variable (tests-kubernetes.gitlab-ci.yml), which that job
+# computes its own margin-safety WARNING against for whatever STRESS_OVERFLOW_FRACTION a run
+# actually uses - the two must be kept equal by hand, bash cannot read this YAML. batchSize and
+# sleepIntervalSecs are left at the base preset's defaults.
 
 maintd:
   routines:
-    # At the stress-scale-fail-test CI job's overflow fraction (0.20, see that job's
-    # --stress-overflow-fraction), filesPerTape = 5000 / (2 x 0.20) = 12 500, so the mount cycle
-    # shortens from stress-scale-values.yaml's ~16.7 min to ~4.2 min (12 500 / 50 Hz = 250 s).
-    # G_max (T_batch + T_change ~ 190 s, see stress-scale-values.yaml's derivation - unaffected,
-    # since it depends on fetchMaxFiles/rate and mountDelayMaxMs, neither of which changed here)
-    # is now 76% of the mount cycle itself, where at the base preset's 0.05 it was only 19%. The
-    # base preset's two goals - a generous margin over G_max (there, ~3.2x) AND staying well
-    # inside the mount cycle (there, 60%) - are no longer simultaneously achievable: at this
-    # overflow fraction, any age with a 3x+ margin over G_max (570 s+) is itself 2+ mount cycles,
-    # which is exactly the "waits through several healthy-mount-equivalents before reclaiming a
-    # dead one" problem the base preset's comment warns against. 600 s (unchanged from the base
-    # preset) would be 2.4 cycles.
-    #
-    # 240 s is the resolution: it keeps the SAME kind of margin the base preset enforces, just
-    # measured against the binding constraint here. Over G_max it is only ~1.26x (thinner than
-    # the base preset's ~3.2x) and it is 96% of the mount cycle (not "comfortably inside" either)
-    # - but accepting a thinner margin is specifically safe for THIS test and would not be for
-    # the base scale test: neither failure class this test injects (end-of-tape overflow,
-    # VtlDrive's one-time fault injection) can ever exhaust a file's retry budget regardless of
-    # how long reclaim takes (see the top-of-file comment), so a slower-than-ideal reclaim costs
-    # this run some wall-clock time, never a lost file. Do not reuse 240 s as a general template
-    # for a different overflowFraction without rechecking both ratios above - the right age value
-    # is a property of the G_max/cycle relationship at the specific overflowFraction in use, not
-    # a constant.
+    # ageForCollectionSecs here tracks tests-kubernetes.gitlab-ci.yml's FAIL_AGE_FOR_COLLECTION_SECS
+    # (keep the two equal by hand) rather than being derived from this file's own overflow fraction:
+    # STRESS_OVERFLOW_FRACTION is meant to be varied per run via "Play with variables", so a single
+    # value baked in here could not stay valid across runs anyway - that CI job instead WARNS at
+    # render time if the age is unsafely close (>80%) to the mount cycle a given run's actual
+    # fraction/total_files/drive-count/rate produce: too close, and a still-healthy mount's last-fetch
+    # age can be mistaken for a dead one mid-batch. See that job's comment for the full computation.
     userActiveQueueCleanup: &failCleanup
       replicas: 1
       sleepIntervalSecs: 60
       batchSize: 50000
-      ageForCollectionSecs: 240
+      ageForCollectionSecs: 900
     userPendingQueueCleanup: *failCleanup

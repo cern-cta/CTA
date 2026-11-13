@@ -473,8 +473,10 @@ def test_wait_for_retrieval(eos_mgm: EosMgmHost, stress_params: StressParams, te
 
 
 def test_verify_no_jobs_left_behind(scheduler_postgres: SchedulerPostgresHost) -> None:
-    """The real proof this test exists for: every queue the three failure classes can leave rows
-    in must be empty by the time archival and retrieval both report zero missing files.
+    """The real proof this test exists for.
+
+    Every queue the three failure classes can leave rows in must be empty by the time archival
+    and retrieval both report zero missing files.
 
     - ARCHIVE_FAILED_QUEUE / RETRIEVE_FAILED_QUEUE empty: no file permanently exhausted its retry
       budget (see the module docstring for why that should be structurally impossible here).
@@ -510,16 +512,18 @@ def test_verify_no_jobs_left_behind(scheduler_postgres: SchedulerPostgresHost) -
 
 
 def test_wait_for_dead_mount_recovery(scheduler_postgres: SchedulerPostgresHost) -> None:
-    """A narrower, earlier check than test_verify_no_jobs_left_behind: specifically waits for
-    MOUNT_QUEUE_LAST_FETCH to stop naming the mount test_disrupt_archive_mount killed, within a
-    bounded window derived from presets/stress-scale-fail-values.yaml's
-    userActiveQueueCleanup.ageForCollectionSecs (240 s) plus its poll interval (60 s). Run before
+    """A narrower, earlier check than test_verify_no_jobs_left_behind.
+
+    Specifically waits for MOUNT_QUEUE_LAST_FETCH to stop naming the mount
+    test_disrupt_archive_mount killed, within a bounded window derived from
+    presets/stress-scale-fail-values.yaml's
+    userActiveQueueCleanup.ageForCollectionSecs (900 s) plus its poll interval (60 s). Run before
     the final assertion so a timeout here points directly at
     ArchiveInactiveMountActiveQueueRoutine/RetrieveInactiveMountActiveQueueRoutine rather than
     being lumped into test_verify_no_jobs_left_behind's more general failure.
     """
-    # 240 s age + 60 s poll + 60 s margin for the pass itself to run and commit.
-    timeout_secs = 240 + 60 + 60
+    # 900 s age + 60 s poll + 60 s margin for the pass itself to run and commit.
+    timeout_secs = 900 + 60 + 60
     sql = "SELECT COUNT(*) FROM MOUNT_QUEUE_LAST_FETCH"
     with Timeout(timeout_secs) as t:
         count = -1
