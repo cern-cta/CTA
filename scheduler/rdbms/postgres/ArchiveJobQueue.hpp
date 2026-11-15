@@ -967,7 +967,20 @@ VALUES )SQL";
   static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::vector<std::string>& jobIDs);
 
   /**
-   * Update job status for repack jobs to success
+   * Update job status for repack jobs to success, reconciling a multi-copy request's completion.
+   *
+   * Sets the given jobIDs' own STATUS to AJS_ToReportToRepackForSuccess (or ReadyForDeletion
+   * directly for a REQUEST_JOB_COUNT=1 row, which has no siblings to wait for). For
+   * REQUEST_JOB_COUNT>1, also checks every sibling sharing the same ARCHIVE_FILE_ID that is
+   * already at AJS_ToReportToRepackForSuccess (locked FOR UPDATE to serialize against a sibling
+   * settling concurrently via its own call to this function): once every copy has reached that
+   * status, promotes the whole group to ReadyForDeletion together. Never touches a sibling that
+   * has not itself settled yet (still mid-transfer or pending, or one that transfer-failed and is
+   * sitting at AJS_ToReportToRepackForFailure instead - set directly by
+   * failTransferBatchExceedRetries(), never through this function). A failed sibling is therefore
+   * invisible to this check on purpose: this function only ever promotes an all-success group: a
+   * group where one copy has permanently failed is instead swept up, successes included, by
+   * getNextFailedArchiveRepackReportBatch()'s own completeness check (see that function).
    *
    * @param txn        Transaction to use for this query
    * @param jobIDs     List of jobID strings to select
@@ -1048,6 +1061,21 @@ VALUES )SQL";
    */
   uint64_t moveJobToFailedQueueTable(Transaction& txn);
 
+  /**
+   * Moves up to `limit` permanently-failed repack copies (STATUS=AJS_ToReportToRepackForFailure)
+   * to REPACK_ARCHIVE_FAILED_QUEUE, together with every sibling copy (by ARCHIVE_FILE_ID) that
+   * has itself already settled - success or failure. Only acts once every copy of a multi-copy
+   * request (REQUEST_JOB_COUNT of them) has settled: a still-mid-transfer sibling is never
+   * touched, since moving this row triggers the caller's disk-source deletion and that sibling
+   * may still need to read the source. REQUEST_JOB_COUNT=1 has no siblings, so it moves the
+   * instant it is itself a candidate.
+   *
+   * @param txn                  Transaction to use for this query
+   * @param limit                Max number of newly-failed candidate copies to consider per call
+   *                             (a complete multi-copy group may move more rows than this, once
+   *                             its surviving successful siblings are included)
+   * @return rset                REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL for every moved row
+   */
   static rdbms::Rset moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit);
   /**
    * Increment Archive Request ID and return the new value

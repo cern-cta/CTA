@@ -275,30 +275,33 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
     }
     sqlpart += piece;
   }
-  /* Settles reported repack archive jobs against their sibling copies.
+  /* For Repack, when we report success this query handles the check of all
+   * other replica rows/job with the same archive_file_id
+   * which needed to be archived too. If all the rows with the same archive_file_id
+   * are in AJS_ToReportToRepackForSuccess except the one being currently updated,
+   * then update all of them to ReadyForDeletion. This will signal the next step
+   * that the source file can be deleted from disk otherwise it updates the status
+   * just to AJS_ToReportToRepackForSuccess. If the required update status is anything
+   * else than AJS_ToReportToRepackForSuccess it just updates to that status.
    *
-   * The sibling group is (REPACK_REQUEST_ID, ARCHIVE_FILE_ID), not ARCHIVE_FILE_ID alone: the
-   * same file can sit in two repack requests at once (two tapes each holding one of its copies),
-   * and those rows are not siblings. A reported job is parked at AJS_ToReportToRepackForSuccess;
-   * only once every copy of the group has settled does the final UPDATE's WHERE widen beyond
-   * aj2.JOB_ID = tsm.JOB_ID and move the whole group to ReadyForDeletion, which is what later
-   * allows the source disk file to be deleted. A sibling still being written on another drive is
-   * never touched by someone else's settlement.
+   * The final UPDATE below is restricted to aj2.JOB_ID IN the targets themselves (always
+   * touched, whatever their prior status, since settling them is this call's own job) OR
+   * aj2.STATUS already = AJS_ToReportToRepackForSuccess (an already-settled sibling, safe to
+   * promote or re-affirm). It must NOT match a sibling purely by ARCHIVE_FILE_ID regardless of
+   * that sibling's own status: a sibling still mid-transfer (STATUS still AJS_ToTransferForRepack,
+   * actively owned by a live mount session on a different drive) sharing the same ARCHIVE_FILE_ID
+   * would otherwise also get matched and have its STATUS overwritten out from under that session.
+   * ready_for_deletion's sibling lookup is FOR UPDATE for the same reason in reverse: it serializes
+   * against a sibling's own concurrent call to this function finishing the same group at the same
+   * moment, rather than both transactions reading a stale "not yet complete" count.
    *
-   * INVARIANT: jobIDs holds at most one job per group. The sibling arm joins each settled sibling
-   * against every target row and UNION ALL does not deduplicate, so k targets of one group would
-   * count each settled sibling k times and HAVING COUNT(*) = MAX(REQUEST_JOB_COUNT) could never
-   * match - the group would never reach ReadyForDeletion and the repack never finishes. The
-   * invariant holds because a batch comes from one mount, a mount serves one tape pool, and
-   * distinct copy numbers must map to distinct tape pools (expansion rejects the request
-   * otherwise). If that routing rule is ever relaxed, deduplicate the sibling arm first.
-   *
-   * Known limits: this does not serialize two mounts settling different siblings of one group
-   * concurrently - each incomplete-path UPDATE touches only its own row, so both can read the
-   * other copy as unfinished and park, stranding the group short of ReadyForDeletion. The count
-   * is also success-only, and the failed-archive sweep deletes source buffer files without
-   * consulting siblings. The broader settlement rework (group-wide locking, fail/succeed
-   * together) is on the failure-batching branch (MR !1690).
+   * A transfer failure (AJS_ToReportToRepackForFailure, set directly by
+   * failTransferBatchExceedRetries(), not through this function) is deliberately invisible to the
+   * counting here: it is not a success-side "sibling for the moment", so a still-waiting
+   * successful copy correctly neither stalls nor gets promoted on its own - it is
+   * getNextFailedArchiveRepackReportBatch()'s own completeness check (see that function) that
+   * eventually sweeps up the whole group, successes included, once every copy has settled and at
+   * least one failed.
    */
   std::string sql = R"SQL(
   WITH updated_single_copy_jobs AS (
@@ -309,44 +312,49 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
   sql += R"SQL(
   ),
   target_success_multicopy AS (
-      SELECT JOB_ID, REPACK_REQUEST_ID, ARCHIVE_FILE_ID, STATUS, REQUEST_JOB_COUNT
+      SELECT JOB_ID, ARCHIVE_FILE_ID, STATUS, REQUEST_JOB_COUNT
       FROM REPACK_ARCHIVE_ACTIVE_QUEUE rscj2
       WHERE rscj2.REQUEST_JOB_COUNT > 1 AND rscj2.JOB_ID IN (
   )SQL";
   sql += sqlpart;
   sql += R"SQL( )
   ),
+  locked_siblings AS (
+    SELECT aj.JOB_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
+     FROM REPACK_ARCHIVE_ACTIVE_QUEUE aj
+     JOIN target_success_multicopy t USING (ARCHIVE_FILE_ID)
+     WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
+     FOR UPDATE
+  ),
   ready_for_deletion AS (
-    SELECT combined.REPACK_REQUEST_ID, combined.ARCHIVE_FILE_ID
+    SELECT combined.ARCHIVE_FILE_ID
     FROM (
-      SELECT t.JOB_ID, t.REPACK_REQUEST_ID, t.ARCHIVE_FILE_ID, t.STATUS, t.REQUEST_JOB_COUNT
+      SELECT t.JOB_ID, t.ARCHIVE_FILE_ID, t.STATUS, t.REQUEST_JOB_COUNT
       FROM target_success_multicopy t
 
       UNION ALL
 
-      SELECT aj.JOB_ID, aj.REPACK_REQUEST_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
-       FROM REPACK_ARCHIVE_ACTIVE_QUEUE aj
-       JOIN target_success_multicopy t USING (REPACK_REQUEST_ID, ARCHIVE_FILE_ID)
-       WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
+      SELECT ls.JOB_ID, ls.ARCHIVE_FILE_ID, ls.STATUS, ls.REQUEST_JOB_COUNT
+      FROM locked_siblings ls
      ) AS combined
-     GROUP BY combined.REPACK_REQUEST_ID, combined.ARCHIVE_FILE_ID
+     GROUP BY combined.ARCHIVE_FILE_ID
      HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
    )
   UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE aj2
   SET STATUS = CASE
-      WHEN rfd.REPACK_REQUEST_ID IS NOT NULL
+      WHEN rfd.ARCHIVE_FILE_ID IS NOT NULL
         THEN :STATUS_READY_FOR_DELETION2::ARCHIVE_JOB_STATUS
       ELSE :STATUS_SUCCESS::ARCHIVE_JOB_STATUS
   END
   FROM target_success_multicopy tsm
         LEFT JOIN ready_for_deletion rfd
-            ON rfd.REPACK_REQUEST_ID = tsm.REPACK_REQUEST_ID AND rfd.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
-  WHERE aj2.REPACK_REQUEST_ID = tsm.REPACK_REQUEST_ID
-    AND aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
-    AND (aj2.JOB_ID = tsm.JOB_ID OR rfd.REPACK_REQUEST_ID IS NOT NULL);
+            ON rfd.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
+  WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
+    AND (aj2.JOB_ID = tsm.JOB_ID OR aj2.STATUS = :STATUS_COND_REPLICAS2::ARCHIVE_JOB_STATUS);
   )SQL";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
+  stmt1.bindString(":STATUS_COND_REPLICAS2", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt1.bindString(":STATUS_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt1.bindString(":STATUS_READY_FOR_DELETION1", to_string(ArchiveJobStatus::ReadyForDeletion));
   stmt1.bindString(":STATUS_READY_FOR_DELETION2", to_string(ArchiveJobStatus::ReadyForDeletion));
@@ -819,17 +827,50 @@ uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
 }
 
 rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
+  /* A multi-copy request's failed copy cannot simply be moved on its own: a sibling copy may
+   * still be mid-transfer and needs the shared source file (deleted by the caller once this
+   * returns) to still exist. So this only moves a candidate's whole ARCHIVE_FILE_ID group once
+   * every copy (REQUEST_JOB_COUNT of them) has itself settled - success or failure - exactly
+   * mirroring updateRepackJobSuccess()'s own completeness check from the other direction. A
+   * surviving successful sibling (STATUS still AJS_ToReportToRepackForSuccess, never flipped -
+   * updateRepackJobSuccess() deliberately leaves a failed sibling invisible to its own check, see
+   * that function) is swept into REPACK_ARCHIVE_FAILED_QUEUE here too, alongside the copy that
+   * actually failed - the request's outcome is "failed" as a whole once any copy is.
+   *
+   * candidate_failed bounds and locks (SKIP LOCKED) the search the same way the single-copy
+   * version did. settled_siblings then locks (not skip-locked: this needs an authoritative
+   * view, and these rows are not the hot path a live mount session is writing) every row sharing
+   * one of those ARCHIVE_FILE_IDs that has ITSELF already settled - deliberately excluding a
+   * sibling still mid-transfer, which this must never touch - serializing against
+   * updateRepackJobSuccess()'s own concurrent completeness check for the same group.
+   * REQUEST_JOB_COUNT=1 has no siblings, so it is complete (and moved) the moment it is itself
+   * the candidate - no special case needed, the counting degenerates to the same result directly.
+   */
   std::string sql = R"SQL(
-    WITH MOVED_ROWS AS (
+    WITH candidate_failed AS (
+        SELECT JOB_ID, ARCHIVE_FILE_ID
+        FROM REPACK_ARCHIVE_ACTIVE_QUEUE
+        WHERE STATUS = :STATUS_FAILURE::ARCHIVE_JOB_STATUS
+        ORDER BY PRIORITY DESC, JOB_ID
+        LIMIT :LIMIT
+        FOR UPDATE SKIP LOCKED
+    ),
+    settled_siblings AS (
+        SELECT aj.JOB_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
+        FROM REPACK_ARCHIVE_ACTIVE_QUEUE aj
+        WHERE aj.ARCHIVE_FILE_ID IN (SELECT ARCHIVE_FILE_ID FROM candidate_failed)
+          AND aj.STATUS IN (:STATUS_SUCCESS::ARCHIVE_JOB_STATUS, :STATUS_FAILURE2::ARCHIVE_JOB_STATUS)
+        FOR UPDATE
+    ),
+    complete_failed_groups AS (
+        SELECT ARCHIVE_FILE_ID
+        FROM settled_siblings
+        GROUP BY ARCHIVE_FILE_ID
+        HAVING COUNT(*) >= MAX(REQUEST_JOB_COUNT)
+    ),
+    MOVED_ROWS AS (
         DELETE FROM REPACK_ARCHIVE_ACTIVE_QUEUE
-        WHERE JOB_ID IN (
-            SELECT JOB_ID
-            FROM REPACK_ARCHIVE_ACTIVE_QUEUE
-            WHERE STATUS = 'AJS_ToReportToRepackForFailure'
-            ORDER BY PRIORITY DESC, JOB_ID
-            LIMIT :LIMIT
-            FOR UPDATE SKIP LOCKED
-        )
+        WHERE ARCHIVE_FILE_ID IN (SELECT ARCHIVE_FILE_ID FROM complete_failed_groups)
         RETURNING *
     )
     INSERT INTO REPACK_ARCHIVE_FAILED_QUEUE
@@ -838,6 +879,9 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":LIMIT", limit);
+  stmt.bindString(":STATUS_FAILURE", to_string(ArchiveJobStatus::AJS_ToReportToRepackForFailure));
+  stmt.bindString(":STATUS_FAILURE2", to_string(ArchiveJobStatus::AJS_ToReportToRepackForFailure));
+  stmt.bindString(":STATUS_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRepackArchiveToFailed);
   auto rset = stmt.executeQuery();
   return rset;
@@ -1127,7 +1171,11 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
     isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForFailure : ArchiveJobStatus::AJS_ToReportToUserForFailure;
 
   // Non-repack multi-copy requests fail all copies atomically, by ARCHIVE_REQUEST_ID (matching
-  // the single-job path); repack copies are independent and use per-JOB_ID semantics.
+  // the single-job path); repack copies are independent and use per-JOB_ID semantics. A repack
+  // copy settling here while a sibling is still mid-transfer is fine: it just sits at
+  // AJS_ToReportToRepackForFailure until getNextFailedArchiveRepackReportBatch() finds every
+  // sibling (by ARCHIVE_FILE_ID) has also settled - see that function's own completeness check,
+  // which is what actually gates moving the group (and deleting its source file) - not this one.
   std::string values_rows;
   for (size_t i = 0; i < jobs.size(); ++i) {
     if (i > 0) {
