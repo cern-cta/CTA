@@ -714,6 +714,148 @@ TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDo
   }
 }
 
+// End-to-end: a MoveAndAddCopies repack's retrieve-to-archive transformation
+// (transformJobBatchToArchive(), via getNextSuccessfulRetrieveRepackReportBatch()) must produce
+// REQUEST_JOB_COUNT=2 on BOTH resulting archive rows (the moved copy via BASE_INSERT, the added
+// copy via ALTERNATE_INSERT) - not 1. REPACK_REARCHIVE_COPY_NBS is populated by
+// Scheduler::expandRepackRequest(): for MoveAndAddCopies, the first of its two "if" blocks
+// (type == MoveAndAddCopies || type == MoveOnly) inserts the MOVED copy's own copyNb into the
+// set, and the second (type == AddCopiesOnly || type == MoveAndAddCopies) inserts the new
+// ADDED copy's number into the SAME set - so for MoveAndAddCopies the column already lists
+// every copy, moved one included, and CARDINALITY(REPACK_REARCHIVE_COPY_NBS) is the right total
+// directly. This would be a real off-by-one (every row short by exactly the moved copy) if that
+// first block were AddCopiesOnly-only instead - it is worth a test precisely because
+// RetrieveRequest.cpp's own comment ("additional copies... requested copyNbs") reads as if it
+// were, which is what prompted checking this.
+//
+// Continues past the transform into a full multi-copy failure: one copy's transfer permanently
+// fails while the other succeeds, proving failReportBatchExceedRetries()/updateRepackJobSuccess()/
+// moveFailedRepackJobBatchToFailedQueueTable() correctly complete the group using the
+// REQUEST_JOB_COUNT the real transform pipeline produced - not a hand-picked test value.
+TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformProducesCorrectRequestJobCountForMultiCopy) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-XFORM-COUNT";
+  const std::string tapePoolMoved = "repackTapePoolXformMoved";
+  const std::string tapePoolAdded = "repackTapePoolXformAdded";
+  auto mountPolicy = makeMountPolicy(1000);
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest(
+    vid,
+    "/repack/buffer",
+    cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+    mountPolicy,
+    false,
+    10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  constexpr uint64_t archiveFileId = 990006;
+  constexpr uint64_t sizeInBytes = 13000;
+  {
+    // Insert the finished repack retrieve job directly, exactly as production's
+    // Scheduler::expandRepackRequest()/RetrieveRequest::insert() would have left it: copy 1 is
+    // the moved copy (retrieved from this VID), copy 2 is the added copy - both in
+    // REPACK_REARCHIVE_COPY_NBS, per the comment above.
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID, RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, ARCHIVE_FILE_ID,
+        CREATION_TIME, START_TIME, STORAGE_CLASS, SIZE_IN_BYTES, VID, TAPE_POOL, MOUNT_POLICY,
+        PRIORITY, MIN_RETRIEVE_REQUEST_AGE, COPY_NB, MOUNT_ID, REPACK_REARCHIVE_COPY_NBS,
+        REPACK_REARCHIVE_TAPE_POOLS
+      ) VALUES (
+        :REPACK_REQUEST_ID, 778, 1, :STATUS, :ARCHIVE_FILE_ID, 500, :START_TIME, :STORAGE_CLASS,
+        :SIZE_IN_BYTES, :VID, :TAPE_POOL_MOVED, 'mountPolicy', 1, 3600, 1, 42, '1,2',
+        :TAPE_POOLS_REARCHIVE
+      )
+    )SQL");
+    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
+    stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    stmt.bindUint64(":START_TIME", static_cast<uint64_t>(cta::utils::getCurrentEpochTime()) - 100000);
+    stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+    stmt.bindUint64(":SIZE_IN_BYTES", sizeInBytes);
+    stmt.bindString(":VID", vid);
+    stmt.bindString(":TAPE_POOL_MOVED", tapePoolMoved);
+    stmt.bindString(":TAPE_POOLS_REARCHIVE", tapePoolMoved + "," + tapePoolAdded);
+    stmt.executeNonQuery();
+  }
+
+  db.getNextSuccessfulRetrieveRepackReportBatch(lc);
+
+  {
+    // Both the moved copy (BASE_INSERT) and the added copy (ALTERNATE_INSERT) must carry
+    // REQUEST_JOB_COUNT=2 - the real total, not 1 (which an off-by-one missing the moved copy
+    // would produce).
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT COPY_NB, REQUEST_JOB_COUNT, TAPE_POOL FROM REPACK_ARCHIVE_PENDING_QUEUE "
+                                "WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID ORDER BY COPY_NB");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(2u, rset.columnUint64("REQUEST_JOB_COUNT"));
+    ASSERT_EQ(tapePoolMoved, rset.columnString("TAPE_POOL"));
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(2u, rset.columnUint64("REQUEST_JOB_COUNT"));
+    ASSERT_EQ(tapePoolAdded, rset.columnString("TAPE_POOL"));
+    ASSERT_FALSE(rset.next());
+  }
+
+  // Continue into a real multi-copy failure: the moved copy's transfer permanently fails while
+  // the added copy's transfer succeeds.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE REPACK_ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountMoved = createRepackArchiveMount(db, lc, tapePoolMoved, "V-XFORM-MOVED-DST");
+  auto jobsMoved = mountMoved->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsMoved.size());
+  jobsMoved.front()->failTransfer("simulated terminal transfer failure for moved copy", lc);
+
+  // The added copy's transfer succeeds. Driving a real repack transfer success all the way
+  // through reportJobsBatchTransferred() would need a full tape session (see this file's other
+  // repack tests); calling failReport() directly on a freshly-fetched job simulates the same
+  // outcome via its recovery path instead - for repack, reportType is always NoReportRequired at
+  // this point (see ArchiveMount::failReportBatch()'s own comment), so this always resolves
+  // through updateRepackJobSuccess(), i.e. a success, regardless of the reason string.
+  auto mountAdded = createRepackArchiveMount(db, lc, tapePoolAdded, "V-XFORM-ADDED-DST");
+  auto jobsAdded = mountAdded->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsAdded.size());
+  jobsAdded.front()->failReport("simulated scheduler bookkeeping write failure for added copy", lc);
+
+  db.getNextFailedArchiveRepackReportBatch(lc);
+
+  {
+    // Both copies end up in REPACK_ARCHIVE_FAILED_QUEUE together - the group's outcome is
+    // "failed" as a whole, correctly computed against the transform-produced REQUEST_JOB_COUNT=2.
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt =
+      conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_FAILED_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("C"));
+  }
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt =
+      conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("C"));
+  }
+}
+
 // Inserts a fixture row directly into REPACK_ARCHIVE_PENDING_QUEUE: driving a repack archive
 // job to this point through the scheduler would need a full tape session (see the retrieve
 // equivalent above). Only VID/DRIVE/HOST/MOUNT_TYPE/LOGICAL_LIBRARY/MOUNT_ID are omitted - those
