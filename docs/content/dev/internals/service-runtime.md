@@ -72,167 +72,56 @@ Configuration checking is split into three layers with distinct responsibilities
 
 ### Optional fields and feature activation
 
-Strict mode MUST require every applicable setting to be explicit, except where absence is a valid, documented state.
-Disabling a feature allows its configuration to be omitted.
-Enabling it requires its settings to be explicit again.
-
-#### When a field may be optional
-
-There are two valid reasons to make a field or section optional:
-
-- **It does not apply:** an explicit feature gate or mode selector makes it unnecessary.
-- **Absence has a meaning:** the application supports leaving it unset without choosing a fallback value.
-
-Use this table when classifying a field:
-
-| Field | May be omitted in strict mode? | Example |
-| --- | --- | --- |
-| Section for a disabled feature | Yes | Telemetry configuration when telemetry is disabled |
-| Section for an enabled feature | No | JWT configuration when JWT is enabled |
-| Setting with a default, used by an active feature | No | JWT cache refresh interval |
-| Required value with no sensible default | No | Kerberos keytab path |
-| Value with a supported absence state and no fallback | Yes | No additional certificate-chain file |
-| Integer setting supporting automatic sizing or delegation | No; explicitly supply `0` to select that behaviour | Worker count calculated from CPU count |
-
-For a field to remain optional when it applies, all of these requirements MUST hold:
-
-- Its documentation explains what absence means, and the application supports that state.
-- Its C++ initial state is `std::nullopt`.
-- Consumers preserve absence rather than substitute a default, including library, operating-system, scheduler or calculated defaults.
-  Check fallback code such as `value_or(default)`.
-- Supplied values receive the normal type and semantic checks.
-
-For example, an omitted token-revocation path can mean that no additional file is used.
-An omitted stack size that selects the operating-system default does not qualify.
-Use an explicit integer sentinel as described below.
-
-Empty strings, zero and empty collections are explicit values with their own validation rules.
-They do not generally mean “absent”.
-Strict mode still requires an explicit empty collection when that is the intended setting, for example `attributes = {}` for no additional logging attributes.
-Do not describe defaulted fields as optional.
-In example files, explain the strict-mode rule once in the header rather than repeating it for each setting.
+Strict mode requires every applicable setting explicitly, including settings with defaults.
+Use optional fields only for sections controlled by a feature or mode selector, or for values whose absence is a supported state.
+An optional value must start as `std::nullopt`, document what absence means, and preserve that state in consumers rather than substitute a fallback.
+Validate supplied values normally.
+Empty strings, zero and empty collections are explicit values, subject to their own validation rules.
 
 #### Example configuration comments
 
-Use the same format for each setting: a short operational description, `Type: <TOML type>; default: <value>.`, and an `Allowed: ...` line for constrained string values.
-Keep the introduction to the purpose of the file and one strict-mode rule; do not redefine “required” there.
-Lead setting descriptions with what the setting controls, then explain special values or a useful operational consequence.
-Avoid repeating the key name, metadata or an allowed-values list in prose.
-Keep shared rules at section level and longer explanations in the service documentation.
-Use `default: none; required` for settings that must be supplied whenever their section is active, even in non-strict mode.
-Use `default: none; optional` only for values that may be omitted even in an active section under strict mode, and explain what absence means.
-For defaulted fields, omit the requiredness label: the header explains that these fields are required in strict mode and defaulted otherwise.
-Describe whether a feature is optional, recommended or selected above its section, separately from the requiredness of its fields.
-An optional feature may have required settings.
-Describe units, special values such as `0`, and the consequences of changing a setting in the description.
-Document the actual accepted values and defaults from the configuration structs and validators, not from the example assignments.
+Describe each setting briefly, including units and special values, followed by `Type: <TOML type>; default: <value>.`.
+Add `Allowed: ...` for constrained strings.
+Use `default: none; required` for values required in either mode and `default: none; optional` when absence is supported in either mode.
+Explain the strict-mode rule once in the file header.
 
-Treat service examples as recommended starting configurations with deployment-specific placeholders, rather than minimal configurations or exact copies of every default.
-Show recommended optional features such as telemetry and health endpoints enabled, with their settings present.
-Keep numeric assignments equal to struct defaults where defaults exist; document any deployment-specific exception.
-A required numeric field without a valid default needs an explicitly illustrative value.
-If an alternative numeric value is generally preferable, reconsider the struct default rather than silently recommending different tuning in the example.
-Keep documented defaults accurate even when feature selections, logging attributes or deployment-specific values differ.
-Leave unused optional scalar settings and mutually exclusive alternatives commented out, with instructions for switching alternatives.
-Document free-form maps at the map level; example keys are not predefined configuration fields.
-Describe prerequisites and relationships between settings at section level.
-For feature lists, list the allowed names and any restrictions on combinations.
-Put service-specific settings first, such as the tape drive, maintenance routines or API listener and authentication.
-Follow them with shared dependencies in a consistent order: catalogue, scheduler and XRootD.
-Place logging, telemetry and health server settings at the end, in that order.
-Keep each parent table and its children together, and use the same order in objectstore and PostgreSQL variants.
-Show logging labels under `[logging.attributes]`, including an `instance` example; explain the map once rather than documenting arbitrary keys as predefined optional fields.
-Use two spaces for settings beneath a table, a blank line between settings, and comments above assignments.
-Expand inline tables when their members need individual descriptions.
-
-When updating examples, check the starting configuration and relevant enabled, disabled and alternative-feature variants with the matching service's strict configuration check.
-Keep validation coverage separate from recommendations about which features to enable.
-This detects stale keys and missing settings; it does not verify prose or claimed defaults.
+Examples should provide recommended starting configurations with clearly identified deployment-specific placeholders.
+Keep defaults and accepted values consistent with the configuration structs and validators.
+Group related settings, explain prerequisites at section level, and comment out unused alternatives.
+Check examples and supported feature variants with the service's `--config-strict --config-check` options.
 
 #### Automatic sizing and integer sentinels
 
-For integer settings that support automatic sizing or delegation to another component, use `0` to explicitly select that behaviour.
-Positive values specify a fixed value in the field's documented units.
-Keep the field integer-valued; do not introduce an `"auto"` string alternative or a separate policy field.
-Strict mode requires the field whenever it applies, including an explicit `0` when automatic behaviour is wanted.
-These settings are not optional merely because they support automatic behaviour.
-
-Document what `0` means for each field, including how the value is calculated or which component supplies it.
-Strict mode makes that choice explicit; it does not freeze the calculated result across environments or implementation changes.
-Validation must accept the documented sentinel and reject other invalid values.
-Consumers must resolve the sentinel before passing the value to an API that expects a positive count or size.
-
-For example:
-
-```toml
-[grpc]
-# Calculate the thread limit from the CPU count; a positive value fixes the limit.
-number_of_threads = 0
-
-[scheduler.client]
-number_of_threads = 500
-# Use the system's thread-stack size; a positive value specifies the size in MB.
-thread_stack_size_mb = 0
-```
-
-The scheduler client settings above apply to objectstore builds.
-The current gRPC calculation is eight times `std::thread::hardware_concurrency()`; a CPU count of zero is treated as one CPU, and the resulting thread limit is capped to the integer range supported by gRPC.
-
-Zero is not a universal spelling of “automatic”.
-Preserve other documented meanings, such as “unlimited”, and keep zero invalid for fields where it has no supported meaning.
-For `defaults.repack.max_files_to_select`, `0` means all files.
-This field is required in strict mode; it does not inherit a scheduler-selected limit.
+For integer settings supporting automatic sizing or system defaults, use an explicit `0` to select that behaviour and positive values for fixed counts or sizes.
+Strict mode still requires the setting.
+Document the meaning of the sentinel, validate it, and resolve it before calling an API that requires a positive value.
+Preserve other documented meanings of zero, such as “unlimited”.
 
 #### How features are enabled
 
-Use `enabled_features` and `enabled_experimental_features` at the service root for stable and experimental service-wide capabilities.
-For nested behaviour, use a domain-specific selector in the parent, such as `transfers.retrieve.rao_enabled`, `transfers.encryption_enabled`, or `routines.enabled_routines`.
-Do not add empty experimental lists to nested sections.
-Classify telemetry and PostgreSQL workflow batching as experimental; health endpoints, maintenance routines, encryption and RAO are stable.
-Experimental means the interface may change incompatibly or be removed; selecting a feature in the experimental list is the explicit opt-in.
-Use a more specific name where helpful, such as `auth.enabled_methods` for authentication.
-For mutually exclusive alternatives, use one mode selector, such as `transport = "tcp"` or `"unix"`.
-Do not put an `enabled` flag inside the section it controls.
+Use root `enabled_features` and `enabled_experimental_features` lists for stable and experimental service-wide capabilities.
+Both default to empty in non-strict mode and must be explicit in strict mode.
+Experimental interfaces may change incompatibly or be removed.
+For nested behaviour, put a domain-specific selector in the parent, such as `auth.enabled_methods` or `transfers.encryption_enabled`.
+Use a mode selector for mutually exclusive alternatives, such as `transport = "tcp"` or `"unix"`.
 
-**Activation lists:**
+Declare a static `features` tuple using `stableFeature(name, member)` and `experimentalFeature(name, member)` to associate names with optional sections.
+Initialise the validation result with `validateFeatures(*this)`, then merge ordinary child validations as shown below.
+The helper validates feature names, maturity, duplicates, section presence and section contents.
+Selections are unordered; supplied sections never enable features implicitly, and inactive sections are rejected in both modes.
+When promoting a feature, change its descriptor to `stableFeature`, keep its section path, and document the move to `enabled_features`.
 
-- Strict mode requires both root feature lists, including `[]` when no features of that class are enabled, and all applicable nested selectors.
-- In non-strict mode, both feature lists default to empty.
-- Declare a static `features` tuple on each service config, using `stableFeature(name, member)` or `experimentalFeature(name, member)` to associate each name with its optional section.
-  Call `validateFeatures(*this)` to validate names, maturity, duplicates and section presence from that declaration.
-- A feature cannot appear in both lists.
-- On promotion to stable, change its descriptor to `stableFeature`; configurations must move the selection to `enabled_features`.
-  Keep its settings section at the same path and document the migration.
-- Unknown and duplicate names are errors in both modes.
-- List order has no meaning.
+Declare maintenance routines with `routine(name, member)`, omitting the member for routines without settings.
+Initialise `enabled_routines` with `featureNames(routines)` and validate with `validateRoutines(*this, enabled_routines, routines)`.
+Consumers should use validated optional sections or named descriptors with `featureEnabled()`.
 
-Keep defaults in configuration member initialisers, including populated routine sections.
-Declare routines once in a static tuple with `routine(name, member)`, omitting the member for routines without settings.
-Initialise `enabled_routines` with `featureNames(routines)` so every declared routine is enabled by default, and validate with `validateRoutines(*this, enabled_routines, routines)`.
-Consumers should use validated optional sections or pass a named descriptor to `featureEnabled()` rather than repeat string literals.
-`RoutinesConfig::isSectionEnabled(name)` lets the loader distinguish selected defaults from inactive sections.
-The loader parses non-optional members before optional sections, so selection is independent of declaration and TOML key order.
-For configs defining this hook, omitted selected sections retain their member initializers only in non-strict mode; strict mode requires the sections and their settings explicitly.
-Omitted inactive sections are cleared, and explicitly supplied inactive sections are rejected in both modes.
-Configs without the hook retain the usual optional-field absence semantics.
-The hook must classify every optional member in its config; it must not introduce fallback values or mutate configuration.
-
-**Sections must match the selection in both modes:**
-
-| Selection | Required configuration |
-| --- | --- |
-| Feature enabled | Its section must be explicit in strict mode. Non-strict mode may use a section default declared by the config and selected through `isSectionEnabled()`. |
-| Feature disabled | Its section must be absent. |
-| Mode selected | The applicable section must be present; sections for other modes must be absent. |
-
-A supplied section never enables a feature implicitly.
-
-The [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/configuration/) also separates extension configuration from activation.
-CTA additionally rejects sections for disabled features so that supplied configuration cannot silently remain unused.
+Keep defaults in configuration member initialisers.
+Configs with default-enabled sections provide `isSectionEnabled(name)` to classify every optional member without modifying configuration.
+The loader parses selectors first, then preserves omitted selected sections' initialisers in non-strict mode; strict mode requires those sections explicitly.
+Omitted inactive sections are cleared.
+Without this hook, omitted optional fields become `std::nullopt`.
 
 ## Application configuration
-
-The following example describes the current application interface.
 
 ```c++
 struct CustomConfig final {
@@ -259,15 +148,16 @@ struct CustomConfig final {
   // If this number is not consistent with the actual number of members, it won't compile
   static constexpr std::size_t memberCount() { return 9; }
 
+  // Associate each feature with its settings section.
+  static constexpr auto features =
+    std::tuple {cta::runtime::experimentalFeature("telemetry", &CustomConfig::telemetry),
+                cta::runtime::stableFeature("health_server", &CustomConfig::health_server)};
+
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
-    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
-    result.merge("", cta::runtime::validateFeatureLists(
-      enabled_features, enabled_experimental_features, {"health_server"}, {"telemetry"}));
     result.merge("xrootd", xrootd.validate());
     result.merge("customConf", customConf.validate());
     return result;

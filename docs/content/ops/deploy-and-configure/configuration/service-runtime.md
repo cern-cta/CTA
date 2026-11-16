@@ -17,24 +17,8 @@ Services that use the CTA Runtime Library support the `--config-strict` flag whi
 - Every provided config value MUST be a valid config entry. That means it will fail when entries are present that are not consumed by CTA. This mitigates (1) and (2).
 - Every applicable setting MUST be explicit, including settings with defaults. Genuinely optional values and sections for disabled features may be absent. This mitigates (2) and (3).
 
-Select stable optional capabilities through `enabled_features` and experimental ones through `enabled_experimental_features` at the service root.
-Telemetry and PostgreSQL workflow batching are experimental; health endpoints, maintenance routines, encryption and RAO are stable.
-Authentication uses `auth.enabled_methods`.
-Supply a section for each selected feature with configurable settings and omit sections for disabled features.
-Nested selectors use domain-specific names: `routines.enabled_routines`, `transfers.encryption_enabled` and `transfers.retrieve.rao_enabled`.
-Maintenance enables all supported routines by default in non-strict mode, retaining their default settings; an explicit routine list selects a subset.
-Strict mode requires that list and every selected routine section explicitly.
-Unknown or duplicate feature names and mismatches between selections and sections are errors in both modes.
-Strict mode requires both feature lists, including `[]` when none of that class are enabled.
-A feature in the wrong list is rejected with instructions to move it; the same applies when a feature becomes stable.
-Experimental interfaces may change or be removed; selecting them explicitly opts into that instability.
-Both APIs default to JWT authentication in non-strict mode when `auth.enabled_methods` is omitted; the `[auth.jwt]` section is still required.
-
-For integer settings that support automatic sizing or system defaults, explicitly set `0` to select that behaviour.
-For example, `grpc.number_of_threads = 0` selects eight threads per detected CPU, and `scheduler.client.thread_stack_size_mb = 0` uses the system's thread-stack size in objectstore builds.
-Positive values fix the count or size.
-The meaning of zero is specific to each field: `defaults.repack.max_files_to_select = 0` means all files.
-An explicit automatic setting may produce different values on different hosts or software versions.
+Settings that support automatic sizing or system defaults still require an explicit value in strict mode, such as `grpc.number_of_threads = 0`.
+Consult each setting's description for the meaning of zero and other special values.
 
 It is possible to check the validity of a config beforehand using the `--config-check` flag, which can be combined with the `--config-strict` flag. This checks the configuration and exits without starting the service.
 `--config-check` cannot be combined with `--runtime-dir`, so checking configuration does not overwrite a service's runtime snapshots.
@@ -43,9 +27,8 @@ It is highly recommended to use `--config-strict` when deploying CTA to ensure o
 
 ## Using the example configurations
 
-The packaged examples are recommended starting configurations, with deployment-specific names, endpoints and credential paths to replace.
-They are not minimal files and need not reproduce every default: recommended optional features such as telemetry and health endpoints are enabled, and logging attributes illustrate a deployment label.
-Numeric values normally match the struct defaults; a required value with no default, such as the objectstore scheduler thread count, is explicitly illustrative.
+The packaged examples are recommended starting configurations.
+Replace deployment-specific names, endpoints and credential paths, and select the features your service needs.
 
 Field comments distinguish three cases:
 
@@ -55,21 +38,20 @@ Field comments distinguish three cases:
 | `default: none; required` | Must be supplied in either mode. |
 | `default: none; optional` | May be omitted in either mode; the description explains the effect. |
 
-Feature optionality is separate from field requiredness.
-For example, telemetry is optional but recommended; selecting it requires a configuration-file path.
+Select service-wide capabilities through root `enabled_features` and `enabled_experimental_features` lists.
+Telemetry and PostgreSQL workflow batching are experimental; their interfaces may change or be removed.
+Strict mode requires both lists, including `[]` when empty; non-strict mode defaults both to empty.
+Supply settings for selected features and remove sections for disabled features, including their child tables.
+Unknown names, duplicates and selections in the wrong list are rejected.
 
-To disable optional service-wide features, set the root lists to empty and remove their sections:
+To disable a feature, remove its name from the appropriate list and remove its configuration section.
+For example, disabling telemetry requires removing `"telemetry"` from `enabled_experimental_features` and removing `[telemetry]`.
+See [Metrics](../../run-and-maintain/monitoring/metrics.md) and [Health and Alerts](../../run-and-maintain/monitoring/health-and-alerts.md) for complete activation examples.
 
-```toml
-enabled_features = []
-enabled_experimental_features = []
-```
-
-For example, remove `[telemetry]`, `[health_server]` and `[health_server.tcp]` when disabling telemetry and health endpoints.
-Retain the service's other required settings and authentication configuration.
-Nested selectors are independent: set `transfers.retrieve.rao_enabled = false` and remove `[transfers.retrieve.rao]` to disable RAO, or set `transfers.encryption_enabled = false` and remove `[transfers.encryption]` to disable tape encryption.
-Selecting fewer maintenance routines requires removing the deselected routine sections; `routines.enabled_routines = []` performs no maintenance work.
-These edits reduce the starting configuration without maintaining a separate minimal example for each strict-mode and feature combination.
+Nested selectors work independently: authentication uses `auth.enabled_methods`, maintenance uses `routines.enabled_routines`, and tape transfers use `transfers.encryption_enabled` and `transfers.retrieve.rao_enabled`.
+Their sections must also match the selections in both modes.
+In non-strict mode, maintenance defaults to all supported routines with their default settings, and both APIs default to JWT authentication, requiring `[auth.jwt]`.
+In strict mode, supply each selector and its selected sections explicitly.
 
 ## Environment Variables
 

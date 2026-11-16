@@ -23,20 +23,14 @@ The old keys are not aliases for the new schema; validate the migrated file with
 | `transfers.encryption.enabled` | `transfers.encryption_enabled = true`; retain the section only when enabled. |
 | `transfers.retrieve.rao.enabled` | `transfers.retrieve.rao_enabled = true`; retain the section only when enabled. |
 
-Remove `[experimental]` after migrating its flags.
-If using the intermediate single-list schema, move `telemetry` and `opportunistic_batching` from `enabled_features` to `enabled_experimental_features`.
-Strict mode requires both feature lists at the service root.
-For nested settings, replace `routines.enabled_features` with `routines.enabled_routines`, `transfers.enabled_features` with `transfers.encryption_enabled`, and `transfers.retrieve.enabled_features` with `transfers.retrieve.rao_enabled`.
-Remove nested `enabled_experimental_features` lists.
-In non-strict mode, an omitted `routines.enabled_routines` enables all routines supported by the scheduler backend, using their struct defaults; set an explicit subset or `[]` to override this.
-Preserve previously intended selections, including routines, encryption and RAO that were enabled by default; use the new lists or boolean selectors as appropriate.
-Omitted `enabled_features` and `enabled_experimental_features` lists default to empty in non-strict mode; `auth.enabled_methods` defaults to `["jwt"]` for both APIs.
-Supplied inactive sections are rejected in both modes.
+Remove `[experimental]` after migrating its flags and remove sections for disabled features.
+Preserve your intended selections, including routines, encryption and RAO that were previously enabled by default.
+Supply both root feature lists in strict mode.
+See [Service Runtime](../../deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for selection rules and non-strict defaults.
 
-Explicitly set `grpc.number_of_threads = 0` to preserve automatic sizing and, in objectstore API configurations, `scheduler.client.thread_stack_size_mb = 0` to preserve the system stack size.
-For `defaults.repack.max_files_to_select`, use `0` to select all files, which was the previous omission behaviour despite examples describing a scheduler default.
-Retain positive values when a fixed count, size or limit is intended.
-Remove placeholder values for genuinely optional files that are not used.
+Set `grpc.number_of_threads = 0` to preserve automatic sizing and, in objectstore API configurations, `scheduler.client.thread_stack_size_mb = 0` to preserve the system stack size.
+Set `defaults.repack.max_files_to_select = 0` to preserve the previous omission behaviour of selecting all files.
+Retain positive values where a fixed count, size or limit is intended.
 
 ## Test upgrade path
 
