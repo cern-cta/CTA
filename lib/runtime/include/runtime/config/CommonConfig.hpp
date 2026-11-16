@@ -184,10 +184,7 @@ struct HealthServerConfig final {
     if (transport != "tcp" && transport != "unix") {
       result.addError("transport", "must be one of [tcp, unix]");
     }
-    validateFeature(result,
-                    transport == "tcp" ? std::vector<std::string> {"tcp"} : std::vector<std::string> {},
-                    "tcp",
-                    tcp);
+    validateFeature(result, transport == "tcp", "tcp", tcp);
     return result;
   }
 };

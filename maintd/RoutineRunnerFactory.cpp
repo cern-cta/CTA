@@ -51,37 +51,32 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   std::vector<std::unique_ptr<IRoutine>> routines;
 
   // Add Disk Reporter for Archive
-  if (m_config.routines.disk_report_archive.has_value()) {
-    routines.push_back(
-      std::make_unique<DiskReportArchiveRoutine>(m_lc,
-                                                 m_resources.getScheduler(),
-                                                 m_config.routines.disk_report_archive->batch_size,
-                                                 m_config.routines.disk_report_archive->soft_timeout_secs,
-                                                 m_config.routines.disk_report_archive->iter_sleep_ms));
+  if (const auto& config = m_config.routines.disk_report_archive) {
+    routines.push_back(std::make_unique<DiskReportArchiveRoutine>(m_lc,
+                                                                  m_resources.getScheduler(),
+                                                                  config->batch_size,
+                                                                  config->soft_timeout_secs,
+                                                                  config->iter_sleep_ms));
   }
 
   // Add Disk Reporter for Retrieve
-  if (m_config.routines.disk_report_retrieve.has_value()) {
-    routines.push_back(
-      std::make_unique<DiskReportRetrieveRoutine>(m_lc,
-                                                  m_resources.getScheduler(),
-                                                  m_config.routines.disk_report_retrieve->batch_size,
-                                                  m_config.routines.disk_report_retrieve->soft_timeout_secs,
-                                                  m_config.routines.disk_report_retrieve->iter_sleep_ms));
+  if (const auto& config = m_config.routines.disk_report_retrieve) {
+    routines.push_back(std::make_unique<DiskReportRetrieveRoutine>(m_lc,
+                                                                   m_resources.getScheduler(),
+                                                                   config->batch_size,
+                                                                   config->soft_timeout_secs,
+                                                                   config->iter_sleep_ms));
   }
 
   // Add Repack Expansion
-  if (m_config.routines.repack_expand.has_value()) {
-    routines.push_back(std::make_unique<RepackExpandRoutine>(m_lc,
-                                                             m_resources.getScheduler(),
-                                                             m_config.routines.repack_expand->max_to_expand));
+  if (const auto& config = m_config.routines.repack_expand) {
+    routines.push_back(std::make_unique<RepackExpandRoutine>(m_lc, m_resources.getScheduler(), config->max_to_expand));
   }
 
   // Add Repack Reporting
-  if (m_config.routines.repack_report.has_value()) {
-    routines.push_back(std::make_unique<RepackReportRoutine>(m_lc,
-                                                             m_resources.getScheduler(),
-                                                             m_config.routines.repack_report->soft_timeout_secs));
+  if (const auto& config = m_config.routines.repack_report) {
+    routines.push_back(
+      std::make_unique<RepackReportRoutine>(m_lc, m_resources.getScheduler(), config->soft_timeout_secs));
   }
 
 /*
@@ -103,90 +98,82 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                                m_resources.getCatalogue()));
   }
   // Add Queue Cleanup
-  if (m_config.routines.queue_cleanup.has_value()) {
+  if (const auto& config = m_config.routines.queue_cleanup) {
     routines.push_back(std::make_unique<QueueCleanupRoutine>(m_lc,
                                                              m_resources.getSchedDb(),
                                                              m_resources.getCatalogue(),
-                                                             m_config.routines.queue_cleanup->batch_size));
+                                                             config->batch_size));
   }
 #else
   // Add User Archive and Retrieve Active Queue Cleanup
-  if (m_config.routines.user_active_queue_cleanup.has_value()) {
-    routines.push_back(std::make_unique<ArchiveInactiveMountActiveQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.user_active_queue_cleanup->batch_size,
-      m_config.routines.user_active_queue_cleanup->age_for_collection_secs));
-    routines.push_back(std::make_unique<RetrieveInactiveMountActiveQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.user_active_queue_cleanup->batch_size,
-      m_config.routines.user_active_queue_cleanup->age_for_collection_secs));
-    routines.push_back(std::make_unique<ResubmitInactiveReportingRoutine>(
-      m_lc,
-      m_resources.getSchedDb(),
-      m_config.routines.user_active_queue_cleanup->batch_size,
-      m_config.routines.user_active_queue_cleanup->age_for_collection_secs));
+  if (const auto& config = m_config.routines.user_active_queue_cleanup) {
+    routines.push_back(std::make_unique<ArchiveInactiveMountActiveQueueRoutine>(m_lc,
+                                                                                m_resources.getCatalogue(),
+                                                                                m_resources.getSchedDb(),
+                                                                                config->batch_size,
+                                                                                config->age_for_collection_secs));
+    routines.push_back(std::make_unique<RetrieveInactiveMountActiveQueueRoutine>(m_lc,
+                                                                                 m_resources.getCatalogue(),
+                                                                                 m_resources.getSchedDb(),
+                                                                                 config->batch_size,
+                                                                                 config->age_for_collection_secs));
+    routines.push_back(std::make_unique<ResubmitInactiveReportingRoutine>(m_lc,
+                                                                          m_resources.getSchedDb(),
+                                                                          config->batch_size,
+                                                                          config->age_for_collection_secs));
   }
   // Add Repack Archive and Repack Retrieve Active Queue Cleanup
-  if (m_config.routines.repack_active_queue_cleanup.has_value()) {
-    routines.push_back(std::make_unique<RepackArchiveInactiveMountActiveQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.repack_active_queue_cleanup->batch_size,
-      m_config.routines.repack_active_queue_cleanup->age_for_collection_secs));
-    routines.push_back(std::make_unique<RepackRetrieveInactiveMountActiveQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.repack_active_queue_cleanup->batch_size,
-      m_config.routines.repack_active_queue_cleanup->age_for_collection_secs));
+  if (const auto& config = m_config.routines.repack_active_queue_cleanup) {
+    routines.push_back(std::make_unique<RepackArchiveInactiveMountActiveQueueRoutine>(m_lc,
+                                                                                      m_resources.getCatalogue(),
+                                                                                      m_resources.getSchedDb(),
+                                                                                      config->batch_size,
+                                                                                      config->age_for_collection_secs));
+    routines.push_back(
+      std::make_unique<RepackRetrieveInactiveMountActiveQueueRoutine>(m_lc,
+                                                                      m_resources.getCatalogue(),
+                                                                      m_resources.getSchedDb(),
+                                                                      config->batch_size,
+                                                                      config->age_for_collection_secs));
   }
   // Add User Archive and Repack Retrieve Pending Queue Cleanup
-  if (m_config.routines.user_pending_queue_cleanup.has_value()) {
-    routines.push_back(std::make_unique<ArchiveInactiveMountPendingQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.user_pending_queue_cleanup->batch_size,
-      m_config.routines.user_pending_queue_cleanup->age_for_collection_secs));
-    routines.push_back(std::make_unique<RetrieveInactiveMountPendingQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.user_pending_queue_cleanup->batch_size,
-      m_config.routines.user_pending_queue_cleanup->age_for_collection_secs));
+  if (const auto& config = m_config.routines.user_pending_queue_cleanup) {
+    routines.push_back(std::make_unique<ArchiveInactiveMountPendingQueueRoutine>(m_lc,
+                                                                                 m_resources.getCatalogue(),
+                                                                                 m_resources.getSchedDb(),
+                                                                                 config->batch_size,
+                                                                                 config->age_for_collection_secs));
+    routines.push_back(std::make_unique<RetrieveInactiveMountPendingQueueRoutine>(m_lc,
+                                                                                  m_resources.getCatalogue(),
+                                                                                  m_resources.getSchedDb(),
+                                                                                  config->batch_size,
+                                                                                  config->age_for_collection_secs));
   }
   // Add Repack Archive and Repack Retrieve Pending Queue Cleanup
-  if (m_config.routines.repack_pending_queue_cleanup.has_value()) {
-    routines.push_back(std::make_unique<RepackArchiveInactiveMountPendingQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.repack_pending_queue_cleanup->batch_size,
-      m_config.routines.repack_pending_queue_cleanup->age_for_collection_secs));
-    routines.push_back(std::make_unique<RepackRetrieveInactiveMountPendingQueueRoutine>(
-      m_lc,
-      m_resources.getCatalogue(),
-      m_resources.getSchedDb(),
-      m_config.routines.repack_pending_queue_cleanup->batch_size,
-      m_config.routines.repack_pending_queue_cleanup->age_for_collection_secs));
+  if (const auto& config = m_config.routines.repack_pending_queue_cleanup) {
+    routines.push_back(
+      std::make_unique<RepackArchiveInactiveMountPendingQueueRoutine>(m_lc,
+                                                                      m_resources.getCatalogue(),
+                                                                      m_resources.getSchedDb(),
+                                                                      config->batch_size,
+                                                                      config->age_for_collection_secs));
+    routines.push_back(
+      std::make_unique<RepackRetrieveInactiveMountPendingQueueRoutine>(m_lc,
+                                                                       m_resources.getCatalogue(),
+                                                                       m_resources.getSchedDb(),
+                                                                       config->batch_size,
+                                                                       config->age_for_collection_secs));
   }
   // Add Scheduler Maintenance Cleanup
-  if (m_config.routines.scheduler_maintenance_cleanup.has_value()) {
-    routines.push_back(std::make_unique<DeleteOldFailedQueuesRoutine>(
-      m_lc,
-      m_resources.getSchedDb(),
-      m_config.routines.scheduler_maintenance_cleanup->batch_size,
-      m_config.routines.scheduler_maintenance_cleanup->age_for_deletion_secs));
-    routines.push_back(std::make_unique<CleanMountLastFetchTimeRoutine>(
-      m_lc,
-      m_resources.getSchedDb(),
-      m_config.routines.scheduler_maintenance_cleanup->batch_size,
-      m_config.routines.scheduler_maintenance_cleanup->age_for_deletion_secs));
+  if (const auto& config = m_config.routines.scheduler_maintenance_cleanup) {
+    routines.push_back(std::make_unique<DeleteOldFailedQueuesRoutine>(m_lc,
+                                                                      m_resources.getSchedDb(),
+                                                                      config->batch_size,
+                                                                      config->age_for_deletion_secs));
+    routines.push_back(std::make_unique<CleanMountLastFetchTimeRoutine>(m_lc,
+                                                                        m_resources.getSchedDb(),
+                                                                        config->batch_size,
+                                                                        config->age_for_deletion_secs));
     // Disk system sleep entry cleanup rides along with the rest of the scheduler maintenance
     // cleanup above rather than getting its own routine group and deployment. Mount decisions
     // already ignore an entry once its own SLEEP_TIME/LAST_UPDATE_TIME has elapsed, independently
