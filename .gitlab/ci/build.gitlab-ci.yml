@@ -257,13 +257,17 @@ build-python:
   needs:
     - job: prepare-cta-version
       artifacts: true
-      optional: true # Existing-image pipelines do not prepare a build version.
     - job: check-merge-train-duplicate
       optional: true
   rules:
-    - if: '$PIPELINE_TYPE != "DEFAULT"'
+    - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - !reference [.python-workspace, rules]
+    # Keep the build available manually for MRs without Python-related changes.
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true
+    - when: on_success
   script:
     # uv builds each wheel from its source archive, checking generated-file inclusion.
     - uv build --all-packages --out-dir build/python
