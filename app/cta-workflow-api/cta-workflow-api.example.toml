@@ -1,23 +1,19 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-####################################################################################################
-#
 # CTA Workflow API Service Configuration
-#
-####################################################################################################
 
-# This is an example, not a ready-to-run configuration. Copy it to your config dir, replace all
-# deployment-specific values, and validate it before starting the service.
+# Copy this example and replace deployment-specific names, endpoints and credential paths.
+# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
+# Include feature sections only when enabled, with all their required settings.
 
 # Name of the CTA instance. Used to validate the authentication tokens. It also gets sent with gRPC responses.
-# (string, REQUIRED)
+# Type: string; default: none; required.
 instance_name = "CI_local"
 
-
-# Defaults documented below apply only in non-strict mode.
-# Strict mode requires all applicable settings except genuinely optional values.
-# Optional sections must match this list. Disabled features are shown as commented examples below.
+# Optional features to enable; include the matching sections below.
+# Type: array of strings; default: [].
+# Allowed: "telemetry" (no duplicates).
 enabled_features = []
 
 [catalogue]
@@ -27,20 +23,18 @@ enabled_features = []
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
   # See /usr/share/doc/cta/cta-catalogue.example.conf for further details.
-  # This setting is required.
+  # Type: string; default: "/etc/cta/cta-catalogue.conf".
   config_file = "/etc/cta/cta-catalogue.conf"
 
-[catalogue.client]
-  # Number of connections in the catalogue connection pool. Must be greater than zero.
-  # Default: 10
-  # (integer, required in strict mode)
-  number_of_connections = 10
-
+  [catalogue.client]
+    # Number of connections in the catalogue connection pool. Must be greater than zero.
+    # Type: integer; default: 10.
+    number_of_connections = 10
 
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:
   # `[ceph|postgres][User|Repack]:`
-  # (string, REQUIRED)
+  # Type: string; default: none; required.
   backend_name = "cephUser"
 
   # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
@@ -49,165 +43,146 @@ enabled_features = []
   #   rados://user@pool:namespace
   #   file:///path/to/objectstore
   # See /usr/share/doc/cta/cta-scheduler.example.conf for further details.
-  # This setting is required.
-  # (file path, REQUIRED)
+  # Type: string; default: "/etc/cta/cta-scheduler.conf".
   config_file = "/etc/cta/cta-scheduler.conf"
 
-  # Maximum age of cached tape statistics used when deciding whether work warrants a mount.
+  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
   # Lower values reflect scheduler changes sooner but increase backend queries. Must be greater than zero.
-  # Default: 600
-  # (time in seconds, required in strict mode)
+  # Type: integer; default: 600.
   tape_cache_max_age_secs = 600
 
-  # Maximum age of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. Must be greater than zero. Default: 10
-  # (integer, required in strict mode)
+  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries. Must be greater than zero.
+  # Type: integer; default: 10.
   retrieve_queue_cache_max_age_secs = 10
 
+  # Object store-specific scheduler options
+  [scheduler.client]
+    # Size of the scheduler DB thread pool. Must be greater than zero.
+    # Type: integer; default: none; required.
+    number_of_threads = 500
 
-# Object store-specific scheduler options
-[scheduler.client]
-  # Size of the scheduler DB thread pool. Must be greater than zero.
-  # (integer, REQUIRED)
-  number_of_threads = 500
-
-  # Stack size, in MB, of each scheduler DB thread. Must be greater than zero.
-  # Set to 0 to use the system's thread-stack size.
-  # (integer, required in strict mode)
-  thread_stack_size_mb = 1
-
+    # Stack size of each scheduler DB thread, in MiB (1,048,576 bytes).
+    # Set to 0 to use the system's thread-stack size.
+    # Type: integer; default: 0.
+    thread_stack_size_mb = 0
 
 [requests.archive]
-  # Whether 0-length files are rejected. Default: true
-  # (boolean, required in strict mode)
+  # Whether 0-length files are rejected.
+  # Type: boolean; default: true.
   zero_length_files_forbidden = true
 
   # VOs which are exempt from the 0-length file restriction.
-  # (list of strings, required in strict mode)
+  # Type: array of strings; default: [].
   zero_length_vo_exceptions = []
-
 
 [requests.prepare]
   # Name of the mount policy used for verification requests.
-  # (string, required in strict mode)
+  # Type: string; default: "".
   verification_mount_policy = ""
 
-
 [logging]
-  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
-  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
-  # If omitted, INFO is used.
-  # (string, required in strict mode)
+  # Minimum severity written to the log. More verbose levels increase log volume.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
   level = "INFO"
 
-  # Log format. Possible values are "json" and "kv" (key-value).
-  # If omitted, json is used.
-  # (string, required in strict mode)
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
   format = "json"
 
-  # The following key-value pairs are arbitrarily named and added to all log lines.
-  # They have no other side-effects and can be used for log filtering. e.g.
-  #
+  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Type: table of strings; default: {}.
   [logging.attributes]
-    instance = "CI_local"
-    sched_backend = "vfsCI"
+    # Type: string; default: none; optional.
+    # instance = "CI_local"
 
+    # Type: string; default: none; optional.
+    # sched_backend = "vfsCI"
 
 [grpc]
-  # TCP port the gRPC server listens on. Defaults to 50051.
-  # (integer, required in strict mode)
+  # TCP port the gRPC server listens on.
+  # Type: integer; default: 50051.
   port = 50051
 
   # Maximum number of worker threads used by the gRPC server.
   # Set to 0 for automatic sizing: eight times the detected CPU count (at least one CPU).
-  # (integer, required in strict mode)
-  number_of_threads = 32
+  # Type: integer; default: 0.
+  number_of_threads = 0
 
   [grpc.tls]
     # Filesystem path to the server private key (PEM).
-    # (file path, REQUIRED)
+    # Type: string; default: none; required.
     server_key_path = "/path/to/your/private-key.pem"
+
     # Filesystem path to the server certificate (PEM).
-    # (file path, REQUIRED)
+    # Type: string; default: none; required.
     server_cert_path = "/path/to/your/certificate.pem"
+
     # Optional CA chain file (PEM) forming the full certificate chain presented to clients.
-    # Useful for debugging/testing.
-    # (file path, optional)
+    # For mTLS, configure the CA used to verify client certificates.
+    # Type: string; default: none; optional.
     # chain_cert_path = "/etc/cta/ca-chain.pem"
 
-
-#############################################
-# Authentication
-#############################################
-#
-# Exactly one of JWT or mTLS must be enabled.
-#
-# JWT (JSON Web Token) authentication.
-
+# Authentication: enable exactly one of JWT or mTLS, and include its matching section.
 [auth]
+  # Authentication methods to enable; include the matching sections below.
+  # Type: array of strings; default: ["jwt"].
+  # Allowed: "jwt", "mtls" (exactly one).
   enabled_methods = ["jwt"]
-[auth.jwt]
 
+  [auth.jwt]
+    # URI of the JWKS document used to verify JWT signatures; supports file:// and https://.
+    # Type: string; default: none; required.
+    jwks_uri = "file:///etc/cta/jwks.json"
 
-  # URI to the JWKS document that contains public keys used to verify JWT signatures.
-  # Supported schemes: `file://` and `https://`.
-  # Examples:
-  #   file:///etc/cta/jwks.json
-  #   https://example.com/.well-known/jwks.json
-  #
-  # (uri, REQUIRED if enabled)
-  jwks_uri = "file:///etc/cta/jwks.json"
+    # Expected issuer (iss claim); tokens with a different issuer are rejected.
+    # Type: string; default: none; required.
+    expected_issuer = "cta"
 
-  # The expected `iss` (issuer) claim value present in incoming JWTs. Tokens with a different
-  # `iss` will be rejected.
-  # (string, REQUIRED if enabled)
-  expected_issuer = "cta"
+    # Expected audience (aud claim); use a distinct audience for each service.
+    # Type: string; default: none; required.
+    expected_audience = "cta-workflow-api"
 
-  # The expected `aud` (audience) claim value. Use a unique audience per service to avoid
-  # token reuse across components.
-  # (string, REQUIRED if enabled)
-  expected_audience = "cta-workflow-api"
+    # Minimum accepted token generation (gen claim); raise it to invalidate older tokens.
+    # Type: integer; default: 0.
+    min_generation = 0
 
-  # Minimum token generation (`gen` claim) accepted. Tokens with a lower `gen` are rejected.
-  # Use to mass-invalidate old tokens. Default: 0.
-  # (integer, required in strict mode)
-  min_generation = 0
+    # JWKS refresh interval in seconds; shorter intervals detect key rotations sooner.
+    # Type: integer; default: 600.
+    cache_refresh_interval = 600
 
-  # How often (TTL) the JWKS cache is refreshed by fetching the JWKS URI. Default: 600
-  # (10 minutes). Set lower when key rotation is frequent.
-  # (time in seconds, required in strict mode)
-  cache_refresh_interval = 600
+    # HTTP timeout in seconds when retrieving the JWKS document.
+    # Type: integer; default: 60.
+    jwks_total_timeout = 60
 
-  # TTL for an individual cached public key. Use a non-zero value to force periodic re-validation
-  # of keys if you rotate them. Default: 0 (never expires).
-  # (time in seconds, required in strict mode)
-  pub_key_timeout = 0
+    # Cached public-key lifetime in seconds; 0 means never expires.
+    # Type: integer; default: 0.
+    pub_key_timeout = 0
 
-  # HTTP/network timeout when fetching the JWKS file. Default: 60. Lower values make the service
-  # fail faster on unreachable endpoints.
-  # (time in seconds, required in strict mode)
-  jwks_total_timeout = 60
+    # Path to an additional token-revocation file; omitted means no additional file is consulted.
+    # Type: string; default: none; optional.
+    # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
-  # Path to a TOML file containing a list of revoked tokens (by `jti`). If present, the frontend
-  # will consult this list in addition to signature checks. Useful for immediate token revocation
-  # without changing key material.
-  # (file path, optional)
-  # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
+    # Telemetry (experimental)
+    # Add "telemetry" to the root enabled_features list, then uncomment this section.
+    # [telemetry]
+    #   # Path to the OpenTelemetry SDK declarative configuration file.
+    #   # Type: string; default: none; required.
+    #   config_file = "/etc/cta/cta-otel.yaml"
 
+    #   # Behaviour when telemetry initialization fails.
+    #   # Type: string; default: "warn".
+    #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+    #   on_init_failure = "warn"
 
-# Telemetry (experimental)
-# Add "telemetry" to the root enabled_features list, then uncomment this section.
-# [telemetry]
-#   # Path to the OpenTelemetry SDK declarative configuration file.
-#   config_file = "/etc/cta/cta-otel.yaml"
-#   # "warn" continues without telemetry if initialization fails; "fatal" aborts startup.
-#   on_init_failure = "warn"
-
-
-# Mutual TLS authentication
-# Set auth.enabled_methods to ["mtls"], comment out [auth.jwt], and uncomment this section.
-# Configure grpc.tls.chain_cert_path with the CA used to verify client certificates.
-# [auth.mtls]
-#   # Match certificate identities to the disk instance named in the request.
-#   [auth.mtls.aliases]
-#     ctaeos = ["eos-mgm.example.org"]
+    # Mutual TLS authentication
+    # Set auth.enabled_methods to ["mtls"], comment out [auth.jwt], and uncomment this section.
+    # Configure grpc.tls.chain_cert_path with the CA used to verify client certificates.
+    # [auth.mtls]
+    #   # Match certificate identities to the disk instance named in the request.
+    #   # Type: table of arrays of strings; default: {}.
+    # [auth.mtls.aliases]
+    #   # Type: array of strings; default: none; optional.
+    #   ctaeos = ["eos-mgm.example.org"]

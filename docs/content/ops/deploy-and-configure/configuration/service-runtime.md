@@ -21,6 +21,7 @@ Optional capabilities are selected through `enabled_features` at their parent, o
 Supply a section for each selected feature with configurable settings and omit sections for disabled features.
 Unknown or duplicate feature names and mismatches between selections and sections are errors in both modes.
 Strict mode requires the selection list, including `[]` when none are enabled.
+Both APIs default to JWT authentication in non-strict mode when `auth.enabled_methods` is omitted; the `[auth.jwt]` section is still required.
 
 For integer settings that support automatic sizing or system defaults, explicitly set `0` to select that behaviour.
 For example, `grpc.number_of_threads = 0` selects eight threads per detected CPU (at least one CPU), and `scheduler.client.thread_stack_size_mb = 0` uses the system's thread-stack size in objectstore builds.

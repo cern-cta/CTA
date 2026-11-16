@@ -78,7 +78,8 @@ struct KerberosAuthConfig final {
 
 /// @brief Authentication config of the admin API
 struct AdminAuthConfig final {
-  std::vector<std::string> enabled_methods;
+  /// JWT is the non-strict default; strict mode requires an explicit selection.
+  std::vector<std::string> enabled_methods = {"jwt"};
   /// JWT auth config (optional)
   std::optional<JwtAuthConfig> jwt;
   /// Kerberos auth config (optional)
@@ -96,7 +97,8 @@ struct AdminAuthConfig final {
 
 /// @brief Authentication config of the WFE API
 struct WfeAuthConfig final {
-  std::vector<std::string> enabled_methods;
+  /// JWT is the non-strict default; strict mode requires an explicit selection.
+  std::vector<std::string> enabled_methods = {"jwt"};
   /// JWT auth config (optional)
   std::optional<JwtAuthConfig> jwt;
   /// mTLS auth config (optional)

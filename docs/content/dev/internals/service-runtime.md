@@ -109,7 +109,25 @@ Use an explicit integer sentinel as described below.
 Empty strings, zero and empty collections are explicit values with their own validation rules.
 They do not generally mean “absent”.
 Strict mode still requires an explicit empty collection when that is the intended setting, for example `attributes = {}` for no additional logging attributes.
-Describe defaulted fields as “required in strict mode; defaulted in non-strict mode” rather than “optional”.
+Do not describe defaulted fields as optional.
+In example files, explain the strict-mode rule once in the header rather than repeating it for each setting.
+
+#### Example configuration comments
+
+Use the same format for each setting: a short operational description, `Type: <TOML type>; default: <value>.`, and an `Allowed: ...` line for constrained string values.
+Use `default: none; required` for settings that must be supplied even in non-strict mode, and `default: none; optional` for settings with a supported absence state.
+Describe units, special values such as `0`, and the consequences of changing a setting in the description.
+Document the actual accepted values and defaults from the configuration structs and validators, not from the example assignments.
+
+Keep example assignments equal to defaults unless a deployment-specific value is needed.
+Leave optional scalar settings and disabled feature sections commented out, with activation instructions above each feature section.
+Describe prerequisites and relationships between settings at section level.
+For feature lists, list the allowed names and any restrictions on combinations.
+Use two spaces for settings beneath a table, a blank line between settings, and comments above assignments.
+Expand inline tables when their members need individual descriptions.
+
+When updating examples, check the base configuration and variants that activate the commented sections with the matching service's strict configuration check.
+This detects stale keys and missing settings; it does not verify prose or claimed defaults.
 
 #### Automatic sizing and integer sentinels
 

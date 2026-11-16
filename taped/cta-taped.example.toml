@@ -1,73 +1,69 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-####################################################################################################
-#
 # CTA Taped Service Configuration
-#
-####################################################################################################
 
+# Copy this example and replace deployment-specific names, endpoints and credential paths.
+# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
+# Include feature sections only when enabled, with all their required settings.
 
-# Identifies the tape drive controlled by this cta-taped process.
-
-# Defaults documented below apply only in non-strict mode.
-# Strict mode requires all applicable settings except genuinely optional values.
-# Optional sections must match this list. Disabled features are shown as commented examples below.
+# Optional features to enable; include the matching sections below.
+# Type: array of strings; default: [].
+# Allowed: "telemetry", "health_server" (no duplicates).
 enabled_features = []
 
 [drive]
   # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
-  # This value is required and has no useful default.
+  # Type: string; default: none; required.
   name = "example-drive"
 
   # Path to the non-rewinding character device used to access the tape drive, for example /dev/nst0.
   # Use a persistent device symlink, such as one under /dev/tape/by-id, to avoid device-name changes across
-  # reboots. Site-specific udev rules may provide other persistent paths, such as /dev/tape/by-name/<drive-name> 
+  # reboots. Site-specific udev rules may provide other persistent paths, such as /dev/tape/by-name/<drive-name>
   # as populated by cta-udev.
-  # This value is required and has no useful default.
+  # Type: string; default: none; required.
   device = "/dev/tape/by-id/example-drive"
 
   # SCSI media-changer address associated with the drive. It is normally "smc" followed by the drive
   # ordinal reported by `cta-smc -q D`, for example "smc0".
-  # This value is required and has no useful default.
+  # Type: string; default: none; required.
   control_path = "smc0"
 
   # CTA logical-library name to which this drive belongs. It must match an existing logical library in
-  # the catalogue. 
-  # This value is required and has no useful default.
+  # the catalogue.
+  # Type: string; default: none; required.
   logical_library_name = "example-library"
 
-[drive.lifecycle]
-  # Automatically eject any cartridge in the drive when the drive transitions from Down to Up.
-  # When false, only empty drives are allowed to go Up. The drive will put itself Down if it finds a cartridge 
-  # in the drive, requiring an operator to eject the cartridge and put the drive Up again.
-  # If omitted, false is used.
-  eject_on_up = false
+  [drive.lifecycle]
+    # Automatically eject any cartridge in the drive when the drive transitions from Down to Up.
+    # When false, only empty drives are allowed to go Up. The drive will put itself Down if it finds a cartridge
+    # in the drive, requiring an operator to eject the cartridge and put the drive Up again.
+    # Type: boolean; default: false.
+    eject_on_up = false
 
-# First registration means that no catalogue entry exists for this drive name.
-[drive.lifecycle.registration]
-  # Set the desired state to Up when this drive is first registered.
-  # When false, set the desired state to Down and wait for an operator Up request.
-  # If omitted, false is used.
-  desired_up = false
+    # First registration means that no catalogue entry exists for this drive name.
+    [drive.lifecycle.registration]
+      # Set the desired state to Up when this drive is first registered.
+      # When false, set the desired state to Down and wait for an operator Up request.
+      # Type: boolean; default: false.
+      desired_up = false
 
-# These options select which existing drives may start automatically when cta-taped starts.
-# They inspect the desired state saved in the catalogue.
-[drive.lifecycle.startup]
-  # When the desired state is Up, preserve it and attempt to bring the drive Up.
-  # This can resume operation after a crash or honour an Up request made before startup.
-  # When false, set the drive Down and require a new operator Up request.
-  # Starting a drive that contains a cartridge also requires drive.lifecycle.eject_on_up = true.
-  # If omitted, false is used.
-  preserve_desired_up = false
+    # These options select which existing drives may start automatically when cta-taped starts.
+    # They inspect the desired state saved in the catalogue.
+    [drive.lifecycle.startup]
+      # When the desired state is Up, preserve it and attempt to bring the drive Up.
+      # This can resume operation after a crash or honour an Up request made before startup.
+      # When false, set the drive Down and require a new operator Up request.
+      # Starting a drive that contains a cartridge also requires drive.lifecycle.eject_on_up = true.
+      # Type: boolean; default: false.
+      preserve_desired_up = false
 
-  # Automatically request Up for eligible existing Down drives when cta-taped starts.
-  # Only drives recorded as Down because the daemon was stopping are eligible.
-  # Drives marked Down by an operator or failure remain Down.
-  # Drive preparation must succeed before tape work begins.
-  # If omitted, false is used.
-  auto_up = false
-
+      # Automatically request Up for eligible existing Down drives when cta-taped starts.
+      # Only drives recorded as Down because the daemon was stopping are eligible.
+      # Drives marked Down by an operator or failure remain Down.
+      # Drive preparation must succeed before tape work begins.
+      # Type: boolean; default: false.
+      auto_up = false
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -76,144 +72,154 @@ enabled_features = []
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
   # See /etc/cta/cta-catalogue.example.conf for further details.
-  # This setting is required.
+  # Type: string; default: "/etc/cta/cta-catalogue.conf".
   config_file = "/etc/cta/cta-catalogue.conf"
-
 
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
+  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser".
+  # Type: string; default: none; required.
   backend_name = "cephUser"
+
   # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
   # specifies how to connect to the scheduler backend.
   # Examples:
   #   rados://user@pool:namespace
   #   file:///path/to/objectstore
   # See /etc/cta/cta-scheduler.example.conf for further details.
-  # This setting is required.
+  # Type: string; default: "/etc/cta/cta-scheduler.conf".
   config_file = "/etc/cta/cta-scheduler.conf"
-  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
-  tape_cache_max_age_secs = 600
-  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. If omitted, 10 is used.
-  retrieve_queue_cache_max_age_secs = 10
 
+  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries.
+  # Type: integer; default: 600.
+  tape_cache_max_age_secs = 600
+
+  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries.
+  # Type: integer; default: 10.
+  retrieve_queue_cache_max_age_secs = 10
 
 # Controls when cta-taped requests work from the scheduler and how long the physical mount may take.
 # Session timeout checks affect liveness only; they do not terminate or recover sessions.
-# Preparing, Finalizing and controller operations are not checked by liveness.
-
+# Controller operations are not checked by these session timeouts.
 [mounts]
   # Minimum amount of queued archive or retrieve data, in bytes, required before the scheduler considers
   # the queue large enough to start a tape mount. A mount can still start below this threshold when the
   # applicable catalogue mount-rule timeout expires. This is combined with minimum_queued_files using OR
   # semantics: reaching either threshold is sufficient. Increasing it favors fuller mounts but may add latency.
-  # If omitted, 500000000000 bytes (500 GB) is used.
+  # Type: integer; default: 500000000000.
   minimum_queued_bytes = 500000000000
 
   # Minimum number of queued archive or retrieve files required before the scheduler considers the queue
   # large enough to start a tape mount. This is combined with minimum_queued_bytes using OR semantics.
   # Increasing it favors fuller mounts of small files but may add latency.
-  # If omitted, 10000 is used.
+  # Type: integer; default: 10000.
   minimum_queued_files = 10000
 
-  # Maximum time, in seconds, allowed for selecting the next mount. On expiry, the request logs a warning 
-  # and is retried. 
-  # If omitted, 900 is used.
+  # Maximum time, in seconds, allowed for selecting the next mount. On expiry, the request logs a warning
+  # and is retried.
+  # Type: integer; default: 900.
   get_next_mount_timeout_secs = 900
 
   # Delay, in seconds, before retrying when no mount is available or scheduling fails.
   # Also applied after a failed tape session if the drive remains reusable; successful sessions do not wait.
   # Lower values react faster to new work but increase scheduler polling; higher values reduce polling but
-  # may add mount-start latency. 
-  # If omitted, 10 is used.
+  # may add mount-start latency.
+  # Type: integer; default: 10.
   idle_scheduling_interval_secs = 10
 
   # Delay, in seconds, before polling the catalogue for the desired drive state again while the drive is Down.
   # Lower values make cta-taped react faster when an operator sets the drive Up but increase catalogue polling.
-  # If omitted, 5 is used.
+  # Type: integer; default: 5.
   drive_state_poll_interval_secs = 5
 
-  # Delay before checking again for a logical library that does not yet exist.
-  # If omitted, 5 is used.
+  # Delay in seconds before checking again for a logical library that does not yet exist.
+  # Type: integer; default: 5.
   logical_library_poll_interval_secs = 5
 
-  # Maximum time in Mounting before liveness becomes unhealthy.
-  # If omitted, 900 is used.
+  # Maximum time, in seconds, in Mounting before liveness becomes unhealthy.
+  # Type: integer; default: 900.
   mount_timeout_secs = 900
 
-  # Maximum time in Loading before liveness becomes unhealthy.
+  # Maximum time, in seconds, in Loading before liveness becomes unhealthy.
   # Also limits the existing physical drive readiness wait, whose failure starts cleanup.
-  # If omitted, 900 is used.
+  # Type: integer; default: 900.
   tape_load_timeout_secs = 900
 
-  # Maximum time in Unloading before liveness becomes unhealthy. Must be positive.
+  # Maximum time, in seconds, in Unloading before liveness becomes unhealthy. Must be positive.
   # Covers drive acquisition, readiness waiting, configuration reset, rewind, label reading and unload.
-  # If omitted, 900 is used.
+  # Type: integer; default: 900.
   tape_unload_timeout_secs = 900
 
-  # Maximum time in Unmounting before liveness becomes unhealthy.
-  # If omitted, 900 is used.
+  # Maximum time, in seconds, in Unmounting before liveness becomes unhealthy.
+  # Type: integer; default: 900.
   unmount_timeout_secs = 900
 
-  # Maximum time in Preparing or Finalizing before liveness becomes unhealthy.
-  # Each must be positive and defaults to 900 seconds.
+  # Maximum time, in seconds, in Preparing, in seconds, before liveness becomes unhealthy.
+  # Type: integer; default: 900.
   preparing_timeout_secs = 900
-  finalizing_timeout_secs = 900
 
+  # Maximum time, in seconds, in Finalizing, in seconds, before liveness becomes unhealthy.
+  # Type: integer; default: 900.
+  finalizing_timeout_secs = 900
 
 # Controls resources and inactivity limits shared by archive and retrieve data-transfer sessions.
 [transfers]
-  enabled_features = ["encryption"]
+  # Optional features to enable; include the matching sections below.
+  # Type: array of strings; default: [].
+  # Allowed: "encryption" (no duplicates).
+  enabled_features = []
+
   # Number of in-memory buffers allocated to the drive's data-transfer pipeline. Total buffer memory is
   # approximately buffer_count multiplied by buffer_size_bytes. Increasing it can smooth I/O but consumes
-  # more RAM. 
-  # If omitted, 5000 is used.
+  # more RAM.
+  # Type: integer; default: 5000.
   buffer_count = 5000
 
   # Size, in bytes, of each in-memory transfer buffer. Together with buffer_count this determines the
-  # approximate transfer-cache memory consumption. 
-  # If omitted, 5000000 bytes (5 MB) is used.
+  # approximate transfer-cache memory consumption.
+  # Type: integer; default: 5000000.
   buffer_size_bytes = 5000000
 
   # Number of disk I/O worker threads and therefore the maximum number of file transfers that can perform
   # disk I/O concurrently. Increasing it may improve parallelism but raises disk, network, and CPU load.
-  # If omitted, 10 is used.
+  # Type: integer; default: 10.
   disk_io_threads = 10
 
   # Interval, in seconds, between periodic tape-session statistics reports. Must be greater than zero.
-  # If omitted, 15 is used. Final statistics are reported when the session finishes.
+  #  Final statistics are reported when the session finishes.
+  # Type: integer; default: 15.
   stats_report_interval_secs = 15
 
-  # Maximum inactivity in Transferring before liveness becomes unhealthy.
+  # Maximum inactivity, in seconds, in Transferring before liveness becomes unhealthy.
   # Measured from the later of state entry and last block movement; reporter activity does not count.
   # Also preserves the existing stuck-file warning interval.
-  # If omitted, 1800 is used.
+  # Type: integer; default: 1800.
   no_block_move_timeout_secs = 1800
 
   # Batch fetching and tape-flush behavior for disk-to-tape archive sessions.
   [transfers.archive]
     # Maximum total bytes requested from the scheduler in one archive batch. The batch is limited when
     # either this value or fetch_max_files is reached. Larger batches can keep the drive busier but consume
-    # more scheduler and transfer resources. 
-    # If omitted, 100000000000 bytes (100 GB) is used.
+    # more scheduler and transfer resources.
+    # Type: integer; default: 100000000000.
     fetch_max_bytes = 100000000000
 
     # Maximum number of files requested in one archive batch. The batch is limited when either this value
-    # or fetch_max_bytes is reached. 
-    # If omitted, 5000 is used.
+    # or fetch_max_bytes is reached.
+    # Type: integer; default: 5000.
     fetch_max_files = 5000
 
     # Maximum bytes written between flushes to tape using a synchronized tape mark. A flush occurs only on
     # a file boundary, so the actual byte count can exceed this value. More frequent flushes improve recovery
-    # granularity but may reduce throughput. 
-    # If omitted, 32000000000 bytes (32 GB) is used.
+    # granularity but may reduce throughput.
+    # Type: integer; default: 32000000000.
     flush_max_bytes = 32000000000
 
     # Maximum files written between flushes to tape. A flush is triggered when either this value or
-    # flush_max_bytes is reached. 
-    # If omitted, 200 is used.
+    # flush_max_bytes is reached.
+    # Type: integer; default: 200.
     flush_max_files = 200
 
     # Ends archive sessions whose scheduler batches remain too small to use the drive efficiently. The effective
@@ -223,149 +229,165 @@ enabled_features = []
     [transfers.archive.underfill]
       # Minimum duration, in seconds, for which archive batches must remain underfilled before an unmount can be
       # requested. Increasing it tolerates slow producers longer.
-      # If omitted, 300 is used.
+      # Type: integer; default: 300.
       watch_period_secs = 300
 
       # Minimum number of underfilled archive batches required during the observation period before an unmount
       # can be requested. This prevents a single small batch from ending a session.
-      # If omitted, 3 is used.
+      # Type: integer; default: 3.
       minimum_samples = 3
 
       # Fill percentage below which an underfill observation begins. Valid values are 0 through 100 and this
       # should be lower than recovery_threshold_percent.
-      # If omitted, 40 is used.
+      # Type: integer; default: 40.
       start_threshold_percent = 40
 
       # Fill percentage at or above which an underfill observation is cancelled. Valid values are 0 through 100
       # and this should be higher than start_threshold_percent to provide hysteresis.
-      # If omitted, 60 is used.
+      # Type: integer; default: 60.
       recovery_threshold_percent = 60
 
   # Batch fetching, disk-space checks, and disk draining for tape-to-disk retrieve sessions.
   [transfers.retrieve]
-  enabled_features = ["rao"]
+    # Optional features to enable; include the matching sections below.
+    # Type: array of strings; default: [].
+    # Allowed: "rao" (no duplicates).
+    enabled_features = []
+
     # Maximum total bytes requested from the scheduler in one retrieve batch. The batch is limited when
-    # either this value or fetch_max_files is reached. 
-    # If omitted, 100000000000 bytes (100 GB) is used.
+    # either this value or fetch_max_files is reached.
+    # Type: integer; default: 100000000000.
     fetch_max_bytes = 100000000000
 
     # Maximum number of files requested in one retrieve batch. The batch is limited when either this value
-    # or fetch_max_bytes is reached. 
-    # If omitted, 5000 is used.
+    # or fetch_max_bytes is reached.
+    # Type: integer; default: 5000.
     fetch_max_files = 5000
 
-    # Maximum time in DrainingToDisk before liveness becomes unhealthy.
-    # If omitted, 1800 is used.
+    # Maximum time, in seconds, in DrainingToDisk before liveness becomes unhealthy.
+    # Type: integer; default: 1800.
     drain_to_disk_timeout_secs = 1800
 
     # Path to the operator-provided executable that reports free space in the retrieve destination.
     # Leave empty to disable disk-space backpressure. If cta-eosdf is installed, set this path to
     # "/usr/bin/cta-eosdf.sh".
-    # If omitted, an empty path is used.
+    # Type: string; default: "".
     external_free_disk_space_script = ""
 
     # Recommended Access Order reduces tape positioning during retrieve.
-    [transfers.retrieve.rao]
-      # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
-      # When hardware RAO is available, it is preferred over software RAO. 
-      # If omitted, true is used.
+    # Add "rao" to transfers.retrieve.enabled_features, then uncomment this section.
+    # [transfers.retrieve.rao]
+    #   # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
+    #   # When hardware RAO is available, it is preferred over software RAO.
 
-      # Software RAO algorithm for LTO-8 drives. Valid values are 
-      # - "random": Retrieve files in random order (ie. FIFO)
-      # - "linear": Order files by fseq
-      # - "sltf": Shortest Locate Time First. Order by always picking the nearest (lowest cost) neighbour
-      # For production, "sltf" is recommended. For "sltf" to work, the columns NB_WRAPS, MIN_LPOS, and MAX_LPOS 
-      # columns of the corresponding media type must be populated in the catalogue. 
-      # This option is ignored when hardware RAO is available on the drive.
-      # If omitted, "sltf" is used.
-      lto_algorithm = "sltf"
+    #   # Software RAO algorithm for LTO-8 drives. Valid values are
+    #   # - "random": Retrieve files in randomized order
+    #   # - "linear": Order files by fseq
+    #   # - "sltf": Shortest Locate Time First. Order by always picking the nearest (lowest cost) neighbour
+    #   # For production, "sltf" is recommended. For "sltf" to work, the columns NB_WRAPS, MIN_LPOS, and MAX_LPOS
+    #   # columns of the corresponding media type must be populated in the catalogue.
+    #   # This option is ignored when hardware RAO is available on the drive.
+    #   # Type: string; default: "sltf".
+    #   # Allowed: "linear", "random", "sltf".
+    #   lto_algorithm = "sltf"
 
-  # Hardware-encryption behavior shared by archive and retrieve sessions.
-  [transfers.encryption]
-    # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
-    # This does not encrypt tapes lacking valid key configuration. 
-    # If omitted, true is used.
+    # Hardware-encryption behaviour shared by archive and retrieve sessions.
+    # Add "encryption" to transfers.enabled_features, then uncomment this section.
+    # [transfers.encryption]
+    #   # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
+    #   # This does not encrypt tapes lacking valid key configuration.
 
-    # Path to the operator-provided executable used to obtain encryption keys. It must be executable by
-    # cta-taped and return the protocol expected by EncryptionControl. It is required when encryption is used.
-    # If omitted, /usr/local/bin/cta-get-encryption-key.sh is used.
-    external_key_script = "/usr/local/bin/cta-get-encryption-key.sh"
+    #   # Path to the operator-provided executable used to obtain encryption keys. It must be executable by
+    #   # cta-taped and return the protocol expected by EncryptionControl. It is required when encryption is used.
+    #   # Type: string; default: "/usr/local/bin/cta-get-encryption-key.sh".
+    #   external_key_script = "/usr/local/bin/cta-get-encryption-key.sh"
 
 # Connection to the Remote Media Changer Daemon (cta-rmcd) used for physical mount and unmount operations.
 [rmcd]
   # Hostname or IP address of the RMCD. Use "localhost" when the RMCD runs on the same host as cta-taped.
-  # Note that cta-rmcd traffic is not encrypted and/or authenticated, so it is not recommended to change 
+  # Note that cta-rmcd traffic is not encrypted and/or authenticated, so it is not recommended to change
   # this setting.
-  # If omitted, "localhost" is used.
+  # Type: string; default: "localhost".
   host = "localhost"
 
   # TCP port on which the RMCD accepts requests.
-  # If omitted, 5014 is used.
+  # Type: integer; default: 5014.
   port = 5014
 
   # The timeout in seconds to be applied when performing network read and write operations to RMCD.
-  # Expiry makes the current RMCD operation fail: a mount error enters normal cleanup, while an unmount 
-  # error puts the drive Down. 
-  # If omitted, 600 is used.
+  # Expiry makes the current RMCD operation fail: a mount error enters normal cleanup, while an unmount
+  # error puts the drive Down.
+  # Type: integer; default: 600.
   request_timeout_secs = 600
 
   # The maximum number of attempts a retriable RMC request should be issued. Network and protocol
   # errors, including expiry of request_timeout_secs, are not retried by this setting. Increasing it can
-  # tolerate a longer RMCD-side transient condition but delays final failure reporting. 
-  # If omitted, 10 is used.
+  # tolerate a longer RMCD-side transient condition but delays final failure reporting.
+  # Type: integer; default: 10.
   request_attempts = 10
 
-
 [logging]
-  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
-  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
-  # If omitted, INFO is used.
+  # Minimum severity written to the log. More verbose levels increase log volume.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
   level = "INFO"
 
-  # Log format. Possible values are "json" and "kv" (key-value).
-  # If omitted json is used.
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
   format = "json"
 
-  # The following key-value pairs are added to all log lines.
-  # All keys are optional as this is purely for monitoring purposes.
+  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Type: table of strings; default: {}.
   [logging.attributes]
     # Monitoring-only label identifying the CTA instance served by this process, such as "production" or
     # "preproduction". It should identify the catalogue instance consistently across CTA services.
     # This attribute is optional and has no behavioral effect.
-    instance = "production"
+    # Type: string; default: none; optional.
+    # instance = "production"
+
     # Monitoring-only label identifying the scheduler backend. It should normally match scheduler.backend_name.
     # This attribute is optional and has no behavioral effect.
-    sched_backend = "cephUser"
-
+    # Type: string; default: none; optional.
+    # sched_backend = "cephUser"
 
 [xrootd]
   # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins. 
-  # If omitted, "sss" is used.
+  # Valid values depend on the installed XRootD security plugins.
+  # Type: string; default: "sss".
   security_protocol = "sss"
+
   # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
   # be readable by cta-taped when the "sss" protocol is selected.
-  # This setting is required for SSS.
+  # Type: string; default: "etc/cta/sss.keytab".
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
+  # Telemetry (experimental)
+  # Add "telemetry" to the root enabled_features list, then uncomment this section.
+  # [telemetry]
+  #   # Path to the OpenTelemetry SDK declarative configuration file.
+  #   # Type: string; default: none; required.
+  #   config_file = "/etc/cta/cta-otel.yaml"
 
-# Telemetry (experimental)
-# Add "telemetry" to the root enabled_features list, then uncomment this section.
-# [telemetry]
-#   # Path to the OpenTelemetry SDK declarative configuration file.
-#   config_file = "/etc/cta/cta-otel.yaml"
-#   # "warn" continues without telemetry if initialization fails; "fatal" aborts startup.
-#   on_init_failure = "warn"
+  #   # Behaviour when telemetry initialization fails.
+  #   # Type: string; default: "warn".
+  #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  #   on_init_failure = "warn"
 
+  # Health endpoints
+  # Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
+  # [health_server]
+  #   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+  #   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
+  #   # Type: string; default: "tcp".
+  #   # Allowed: "tcp", "unix".
+  #   transport = "tcp"
 
-# Health endpoints
-# Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
-# [health_server]
-#   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-#   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
-#   transport = "tcp"
-#
-# [health_server.tcp]
-#   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
-#   host = "127.0.0.1"
-#   port = 8080
+  # [health_server.tcp]
+  #   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+  #   # Type: string; default: "127.0.0.1".
+  #   host = "127.0.0.1"
+
+  #   # TCP port for the health endpoints.
+  #   # Type: integer; default: 8080.
+  #   port = 8080

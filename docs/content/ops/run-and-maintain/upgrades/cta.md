@@ -25,7 +25,8 @@ The old keys are not aliases for the new schema; validate the migrated file with
 
 Remove `[experimental]` after migrating its flags.
 Keep all previously intended capabilities in the appropriate lists, including routines, encryption and RAO that were enabled by default.
-An omitted activation list defaults to empty in non-strict mode; supplied inactive sections are rejected in both modes.
+An omitted `enabled_features` list defaults to empty in non-strict mode; `auth.enabled_methods` defaults to `["jwt"]` for both APIs.
+Supplied inactive sections are rejected in both modes.
 
 Explicitly set `grpc.number_of_threads = 0` to preserve automatic sizing and, in objectstore API configurations, `scheduler.client.thread_stack_size_mb = 0` to preserve the system stack size.
 For `defaults.repack.max_files_to_select`, use `0` to select all files, which was the previous omission behaviour despite examples describing a scheduler default.

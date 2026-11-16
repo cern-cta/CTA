@@ -1,54 +1,95 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-####################################################################################################
-#
 # CTA Maintd Service Configuration
-#
-####################################################################################################
 
-# This is an example, not a ready-to-run configuration. Copy it to
-# /etc/cta/cta-maintd.toml, replace all deployment-specific values, and run:
-#   cta-maintd --config=/etc/cta/cta-maintd.toml --config-strict --config-check
-# before enabling or starting the service.
-
+# Copy this example and replace deployment-specific names, endpoints and credential paths.
+# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
+# Include feature sections only when enabled, with all their required settings.
 
 # Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
 # Here [A -> B -> C] is a single cycle of routine execution.
 # A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
 # Due to this operating model, it is not possible to define different sleep intervals per routine.
 # If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
-# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
+# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine
+# sleep interval.
 
-# Defaults documented below apply only in non-strict mode.
-# Strict mode requires all applicable settings except genuinely optional values.
-# Optional sections must match this list. Disabled features are shown as commented examples below.
+# Optional features to enable; include the matching sections below.
+# Type: array of strings; default: [].
+# Allowed: "telemetry", "health_server" (no duplicates).
 enabled_features = []
 
+# Select the routines needed for this deployment; an empty list performs no maintenance work.
 [routines]
-  enabled_features = ["disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "queue_cleanup", "garbage_collect"]
-  # The sleep duration in between cycles of routine executions.
-  # If omitted, 10 is used.
+  # Routines to enable; include matching sections below. "garbage_collect" has no settings section.
+  # Type: array of strings; default: [].
+  # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "queue_cleanup",
+  # "garbage_collect" (no duplicates).
+  enabled_features = []
+
+  # Sleep duration in seconds between cycles of routine executions.
+  # Type: integer; default: 10.
   cycle_sleep_interval_secs = 10
 
   # The maximum duration in seconds a single cycle of routine execution is allowed to take.
   # If a cycle takes longer than this value, it will not be interrupted.
   # Instead, the process will no longer be considered alive by the health server.
-  # If omitted, 900 is used (15 minutes).
+  # Type: integer; default: 900.
   max_cycle_duration_secs = 900
 
   # Routine that reports archive transfer success/failures to the disk system.
-  disk_report_archive  = { batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 0 }
-  # Routine that reports retrieve transfer success/failures to the disk system.
-  disk_report_retrieve = { batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 0 }
-  # Routine that expands repack requests.
-  repack_expand        = { max_to_expand = 2 }
-  # Routine that handles the reporting of the requests created by repack requests.
-  repack_report        = { soft_timeout_secs = 30 }
-  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
-  queue_cleanup        = { batch_size = 500 }
-  # Objectstore routine that garbage collects stale agents and objects.
+  # Add "disk_report_archive" to routines.enabled_features, then uncomment this section.
+  # [routines.disk_report_archive]
+  #   # Maximum number of entries processed per batch.
+  #   # Type: integer; default: 500.
+  #   batch_size = 500
 
+  #   # Soft time limit in seconds for this routine; checked between batches.
+  #   # Type: integer; default: 30.
+  #   soft_timeout_secs = 30
+
+  #   # Pause in milliseconds between iterations; 0 means no pause.
+  #   # Type: integer; default: 0.
+  #   iter_sleep_ms = 0
+
+  # Routine that reports retrieve transfer success/failures to the disk system.
+  # Add "disk_report_retrieve" to routines.enabled_features, then uncomment this section.
+  # [routines.disk_report_retrieve]
+  #   # Maximum number of entries processed per batch.
+  #   # Type: integer; default: 500.
+  #   batch_size = 500
+
+  #   # Soft time limit in seconds for this routine; checked between batches.
+  #   # Type: integer; default: 30.
+  #   soft_timeout_secs = 30
+
+  #   # Pause in milliseconds between iterations; 0 means no pause.
+  #   # Type: integer; default: 0.
+  #   iter_sleep_ms = 0
+
+  # Routine that expands repack requests.
+  # Add "repack_expand" to routines.enabled_features, then uncomment this section.
+  # [routines.repack_expand]
+  #   # Maximum number of repack requests expanded per cycle.
+  #   # Type: integer; default: 2.
+  #   max_to_expand = 2
+
+  # Routine that handles the reporting of the requests created by repack requests.
+  # Add "repack_report" to routines.enabled_features, then uncomment this section.
+  # [routines.repack_report]
+  #   # Soft time limit in seconds for this routine; checked between batches.
+  #   # Type: integer; default: 900.
+  #   soft_timeout_secs = 900
+
+  #   # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests
+  #   # to other queues.
+
+  # Add "queue_cleanup" to routines.enabled_features, then uncomment this section.
+  # [routines.queue_cleanup]
+  #   # Maximum number of entries processed per batch.
+  #   # Type: integer; default: 500.
+  #   batch_size = 500
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -57,78 +98,96 @@ enabled_features = []
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
   # See /usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf for further details.
-  # This setting is required.
+  # Type: string; default: "/etc/cta/cta-catalogue.conf".
   config_file = "/etc/cta/cta-catalogue.conf"
-
 
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
+  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser".
+  # Type: string; default: none; required.
   backend_name = "cephUser"
+
   # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
   # specifies how to connect to the scheduler backend.
   # Examples:
   #   rados://user@pool:namespace
   #   file:///path/to/objectstore
   # See /usr/share/doc/cta-lib-scheduler/examples/cta-scheduler.example.conf for further details.
-  # This setting is required.
+  # Type: string; default: "/etc/cta/cta-scheduler.conf".
   config_file = "/etc/cta/cta-scheduler.conf"
+
   # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
+  # Lower values reflect scheduler changes sooner but increase backend queries.
+  # Type: integer; default: 600.
   tape_cache_max_age_secs = 600
+
   # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. If omitted, 10 is used.
+  # retrieves sooner but increase backend queries.
+  # Type: integer; default: 10.
   retrieve_queue_cache_max_age_secs = 10
 
-
 [logging]
-  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
-  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
-  # If omitted, INFO is used.
+  # Minimum severity written to the log. More verbose levels increase log volume.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
   level = "INFO"
 
-  # Log format. Possible values are "json" and "kv" (key-value).
-  # If omitted json is used.
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
   format = "json"
 
-  # The following key-value pairs are added to all log lines.
-  # All keys are optional as this is purely for monitoring purposes.
+  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Type: table of strings; default: {}.
   [logging.attributes]
     # Monitoring-only label identifying the CTA instance served by this process, such as "production" or
     # "preproduction". It should identify the catalogue instance consistently across CTA services.
     # This attribute is optional and has no behavioral effect.
-    instance = "production"
+    # Type: string; default: none; optional.
+    # instance = "production"
+
     # Monitoring-only label identifying the scheduler backend. It should normally match scheduler.backend_name.
     # This attribute is optional and has no behavioral effect.
-    sched_backend = "cephUser"
-
+    # Type: string; default: none; optional.
+    # sched_backend = "cephUser"
 
 [xrootd]
   # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins. If omitted, "sss" is used.
+  # Valid values depend on the installed XRootD security plugins.
+  # Type: string; default: "sss".
   security_protocol = "sss"
+
   # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
   # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
+  # Type: string; default: "etc/cta/sss.keytab".
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
+  # Telemetry (experimental)
+  # Add "telemetry" to the root enabled_features list, then uncomment this section.
+  # [telemetry]
+  #   # Path to the OpenTelemetry SDK declarative configuration file.
+  #   # Type: string; default: none; required.
+  #   config_file = "/etc/cta/cta-otel.yaml"
 
-# Telemetry (experimental)
-# Add "telemetry" to the root enabled_features list, then uncomment this section.
-# [telemetry]
-#   # Path to the OpenTelemetry SDK declarative configuration file.
-#   config_file = "/etc/cta/cta-otel.yaml"
-#   # "warn" continues without telemetry if initialization fails; "fatal" aborts startup.
-#   on_init_failure = "warn"
+  #   # Behaviour when telemetry initialization fails.
+  #   # Type: string; default: "warn".
+  #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  #   on_init_failure = "warn"
 
+  # Health endpoints
+  # Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
+  # [health_server]
+  #   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+  #   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
+  #   # Type: string; default: "tcp".
+  #   # Allowed: "tcp", "unix".
+  #   transport = "tcp"
 
-# Health endpoints
-# Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
-# [health_server]
-#   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-#   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
-#   transport = "tcp"
-#
-# [health_server.tcp]
-#   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
-#   host = "127.0.0.1"
-#   port = 8080
+  # [health_server.tcp]
+  #   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+  #   # Type: string; default: "127.0.0.1".
+  #   host = "127.0.0.1"
+
+  #   # TCP port for the health endpoints.
+  #   # Type: integer; default: 8080.
+  #   port = 8080

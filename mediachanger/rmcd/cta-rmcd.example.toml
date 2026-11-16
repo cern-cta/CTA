@@ -1,75 +1,82 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-####################################################################################################
-#
 # CTA Remote Media Changer Daemon Configuration
-#
-####################################################################################################
 
+# Copy this example and replace deployment-specific names, endpoints and credential paths.
+# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
+# Include feature sections only when enabled, with all their required settings.
 
-# Defaults documented below apply only in non-strict mode.
-# Strict mode requires all applicable settings except genuinely optional values.
-# Optional sections must match this list. Disabled features are shown as commented examples below.
+# Optional features to enable; include the matching sections below.
+# Type: array of strings; default: [].
+# Allowed: "telemetry", "health_server" (no duplicates).
 enabled_features = []
 
 [media_changer]
   # The SCSI-compatible media changer device used by rmcd to control the tape library.
   # Set this to the operating-system path of the device.
-  # If omitted, "/dev/smc" is used
+  # Type: string; default: "/dev/smc".
   device = "/dev/smc"
-
 
 # Configuration for the RMC protocol endpoint used by clients such as cta-taped.
 # This is separate from the optional health server configured below.
 [rmc_server]
-
   # TCP port on which rmcd listens for RMC client connections.
-  # If omitted, 5014 is used.
+  # Type: integer; default: 5014.
   port = 5014
 
   # Network scope from which rmcd accepts RMC client connections.
   # Use "loopback" to accept connections only from localhost, or "any" to accept connections
   # from other hosts. The RMC protocol provides no authentication, so use "any" with extreme
   # caution in production environments.
-  # If omitted, "loopback" is used
+  # Type: string; default: "loopback".
+  # Allowed: "loopback", "any".
   listen_scope = "loopback"
 
-
 [logging]
-  # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
-  # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
-  # If omitted INFO is used.
+  # Minimum severity written to the log. More verbose levels increase log volume.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
   level = "INFO"
 
-  # Log format. Possible values are "json" and "kv" (key-value).
-  # If omitted json is used.
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
   format = "json"
 
-  # The following key-value pairs are added to all log lines.
-  # All keys are optional as this is purely for monitoring purposes.
+  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Type: table of strings; default: {}.
   [logging.attributes]
     # Unique string to identify CTA's instance the rmcd process is serving (i.e: production, preproduction).
-    instance = "production"
+    # Type: string; default: none; optional.
+    # instance = "production"
 
+    # Telemetry (experimental)
+    # Add "telemetry" to the root enabled_features list, then uncomment this section.
+    # [telemetry]
+    #   # Path to the OpenTelemetry SDK declarative configuration file.
+    #   # Type: string; default: none; required.
+    #   config_file = "/etc/cta/cta-otel.yaml"
 
-# Telemetry (experimental)
-# Add "telemetry" to the root enabled_features list, then uncomment this section.
-# [telemetry]
-#   # Path to the OpenTelemetry SDK declarative configuration file.
-#   config_file = "/etc/cta/cta-otel.yaml"
-#   # "warn" continues without telemetry if initialization fails; "fatal" aborts startup.
-#   on_init_failure = "warn"
+    #   # Behaviour when telemetry initialization fails.
+    #   # Type: string; default: "warn".
+    #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+    #   on_init_failure = "warn"
 
+    # Health endpoints
+    # Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
+    # [health_server]
+    #   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+    #   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
+    #   # Type: string; default: "tcp".
+    #   # Allowed: "tcp", "unix".
+    #   transport = "tcp"
 
-# Health endpoints
-# Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
-# [health_server]
-#   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-#   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
-#   transport = "tcp"
-#
-# [health_server.tcp]
-#   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
-#   host = "127.0.0.1"
-#   port = 8080
+    # [health_server.tcp]
+    #   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+    #   # Type: string; default: "127.0.0.1".
+    #   host = "127.0.0.1"
+
+    #   # TCP port for the health endpoints.
+    #   # Type: integer; default: 8080.
+    #   port = 8080

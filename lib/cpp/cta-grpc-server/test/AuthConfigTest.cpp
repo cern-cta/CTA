@@ -117,6 +117,7 @@ service_principal = "svc/host@REALM"
 
 TEST(AdminAuthConfig, KerberosOnlyIsValid) {
   AdminAuthConfig config;
+  config.enabled_methods.clear();
   config.kerberos = makeEnabledKerberosConfig();
   config.enabled_methods.push_back("kerberos");
 
@@ -126,6 +127,7 @@ TEST(AdminAuthConfig, KerberosOnlyIsValid) {
 
 TEST(AdminAuthConfig, JwtOnlyIsValid) {
   AdminAuthConfig config;
+  config.enabled_methods.clear();
   config.jwt = makeValidJwtConfig();
   config.enabled_methods.push_back("jwt");
 
@@ -135,6 +137,7 @@ TEST(AdminAuthConfig, JwtOnlyIsValid) {
 
 TEST(AdminAuthConfig, JwtAndKerberosIsValid) {
   AdminAuthConfig config;
+  config.enabled_methods.clear();
   config.jwt = makeValidJwtConfig();
   config.enabled_methods.push_back("jwt");
   config.kerberos = makeEnabledKerberosConfig();
@@ -146,6 +149,7 @@ TEST(AdminAuthConfig, JwtAndKerberosIsValid) {
 
 TEST(AdminAuthConfig, NoEnabledMethodIsRejected) {
   AdminAuthConfig config;
+  config.enabled_methods.clear();
   EXPECT_FALSE(config.validate().ok());
 
   config.kerberos = makeEnabledKerberosConfig();
@@ -156,6 +160,7 @@ TEST(AdminAuthConfig, NoEnabledMethodIsRejected) {
 
 TEST(AdminAuthConfig, ValidatesEnabledMethods) {
   AdminAuthConfig config;
+  config.enabled_methods.clear();
   config.kerberos = makeEnabledKerberosConfig();
   config.enabled_methods.push_back("kerberos");
   config.kerberos->keytab_path.clear();
@@ -175,6 +180,7 @@ TEST(AdminAuthConfig, StrictLoadingRejectsMtlsBlock) {
 
 TEST(WfeAuthConfig, MtlsOnlyIsValid) {
   WfeAuthConfig config;
+  config.enabled_methods.clear();
   config.mtls = makeEnabledMtlsConfig();
   config.enabled_methods.push_back("mtls");
 
@@ -184,6 +190,7 @@ TEST(WfeAuthConfig, MtlsOnlyIsValid) {
 
 TEST(WfeAuthConfig, JwtOnlyIsValid) {
   WfeAuthConfig config;
+  config.enabled_methods.clear();
   config.jwt = makeValidJwtConfig();
   config.enabled_methods.push_back("jwt");
 
@@ -193,11 +200,13 @@ TEST(WfeAuthConfig, JwtOnlyIsValid) {
 
 TEST(WfeAuthConfig, NoEnabledMethodIsRejected) {
   WfeAuthConfig config;
+  config.enabled_methods.clear();
   EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(WfeAuthConfig, JwtAndMtlsTogetherIsRejected) {
   WfeAuthConfig config;
+  config.enabled_methods.clear();
   config.jwt = makeValidJwtConfig();
   config.enabled_methods.push_back("jwt");
   config.mtls = makeEnabledMtlsConfig();
@@ -208,6 +217,7 @@ TEST(WfeAuthConfig, JwtAndMtlsTogetherIsRejected) {
 
 TEST(WfeAuthConfig, MtlsRejectsEmptyAliasIdentity) {
   WfeAuthConfig config;
+  config.enabled_methods.clear();
   config.mtls = makeEnabledMtlsConfig();
   config.enabled_methods.push_back("mtls");
   config.mtls->aliases["identity"] = {};
@@ -262,5 +272,42 @@ jwks_total_timeout = 60
                cta::exception::UserError);
   EXPECT_THROW(cta::runtime::loadFromTomlString<AdminAuthConfig>(document + "revoke_list_path = ''", "auth.toml", true),
                cta::exception::UserError);
+}
+}  // namespace unitTests
+
+namespace unitTests {
+namespace {
+template<class Config>
+void checkDefaultJwtAuthentication() {
+  Config config;
+  EXPECT_EQ(config.enabled_methods, (std::vector<std::string> {"jwt"}));
+  EXPECT_FALSE(config.validate().ok());
+  config.jwt = makeValidJwtConfig();
+  EXPECT_TRUE(config.validate().ok());
+
+  const std::string document = R"toml(
+[jwt]
+jwks_uri = "file:///jwks.json"
+expected_issuer = "cta"
+expected_audience = "api"
+min_generation = 0
+cache_refresh_interval = 600
+pub_key_timeout = 0
+jwks_total_timeout = 60
+)toml";
+  const auto loaded = cta::runtime::loadFromTomlString<Config>(document, "auth.toml", false);
+  EXPECT_EQ(loaded.getEnabledMethods(), (std::set<AuthMethod, std::less<>> {AuthMethod::JWT}));
+  EXPECT_THROW(cta::runtime::loadFromTomlString<Config>(document, "auth.toml", true), cta::exception::UserError);
+  EXPECT_NO_THROW(
+    cta::runtime::loadFromTomlString<Config>("enabled_methods = ['jwt']\n" + document, "auth.toml", true));
+}
+}  // namespace
+
+TEST(AdminAuthConfig, DefaultsToJwtButStrictModeRequiresExplicitSelection) {
+  checkDefaultJwtAuthentication<AdminAuthConfig>();
+}
+
+TEST(WfeAuthConfig, DefaultsToJwtButStrictModeRequiresExplicitSelection) {
+  checkDefaultJwtAuthentication<WfeAuthConfig>();
 }
 }  // namespace unitTests
