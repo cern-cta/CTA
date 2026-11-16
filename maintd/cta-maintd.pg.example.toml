@@ -19,7 +19,16 @@
 # Due to this operating model, it is not possible to define different sleep intervals per routine.
 # If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
 # At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
+
+# Defaults documented below apply only in non-strict mode.
+# Strict mode requires all applicable settings except genuinely optional values.
+# Optional sections must match this list; unused sections are omitted.
+enabled_features = []
+# To enable telemetry, add "telemetry" above and supply [telemetry] with config_file and on_init_failure.
+# Services supporting health checks can similarly enable "health_server" and configure its transport.
+
 [routines]
+  enabled_features = ["disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "user_active_queue_cleanup", "repack_active_queue_cleanup", "user_pending_queue_cleanup", "repack_pending_queue_cleanup", "scheduler_maintenance_cleanup"]
   # The sleep duration in between cycles of routine executions.
   # If omitted, 10 is used.
   cycle_sleep_interval_secs = 10
@@ -31,24 +40,24 @@
   max_cycle_duration_secs = 900
 
   # Routine that reports archive transfer success/failures to the disk system.
-  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 500 }
+  disk_report_archive  = { batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 500 }
   # Routine that reports retrieve transfer success/failures to the disk system.
-  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 500 }
+  disk_report_retrieve = { batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 500 }
   # Routine that expands repack requests.
-  repack_expand        = { enabled = true, max_to_expand = 2 }
+  repack_expand        = { max_to_expand = 2 }
   # Routine that handles the reporting of the requests created by repack requests.
-  repack_report        = { enabled = true, soft_timeout_secs = 30 }
+  repack_report        = { soft_timeout_secs = 30 }
 
-  user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  user_pending_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  repack_pending_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  user_active_queue_cleanup   = { batch_size = 1000, age_for_collection_secs = 900 }
+  repack_active_queue_cleanup = { batch_size = 1000, age_for_collection_secs = 900 }
+  user_pending_queue_cleanup   = { batch_size = 1000, age_for_collection_secs = 900 }
+  repack_pending_queue_cleanup = { batch_size = 1000, age_for_collection_secs = 900 }
   # Also removes the disk system sleep entries whose sleep time has elapsed (no age/batch size of
   # its own: an entry expires by the sleep time and the timestamp it holds itself, and there is at
   # most one entry per disk system). This is housekeeping only: an expired entry is already ignored
   # when the mounts are decided, and a disk system which runs out of space again takes its expired
   # entry over. How often this cleanup runs therefore only affects how long the collected rows linger.
-  scheduler_maintenance_cleanup = { enabled = true, batch_size = 1000, age_for_deletion_secs = 1209600 }
+  scheduler_maintenance_cleanup = { batch_size = 1000, age_for_deletion_secs = 1209600 }
 
 
 [catalogue]
@@ -104,46 +113,6 @@
     sched_backend = "postgresUser"
 
 
-# Note that telemetry is experimental and disabled by default.
-# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
-[telemetry]
-  # Path to the declarative config file to initialise the OpenTelemetry SDK.
-  # If omitted or an empty string, telemetry will be disabled.
-  config_file = "/etc/cta/cta-otel.yaml"
-  # Controls how the application reacts if telemetry initialization fails.
-  # Possible values:
-  #   "warn": log a warning and continue startup without telemetry.
-  #   "fatal": treat the failure as an error and abort startup.
-  # If omitted, "warn" is used
-  on_init_failure = "warn"
-
-
-# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
-# - host:port/health/ready
-# - host:port/health/live
-# This allows for configuring readiness and liveness probes if so desired.
-[health_server]
-  # Whether to enable the health server or not.
-  # If omitted, false is used.
-  enabled = false
-  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
-  # Set to 0.0.0.0 to accept connections from anywhere.
-  # When use_unix_domain_socket is enabled, this host value will be unused.
-  # If omitted, 127.0.0.1 is used.
-  host = "127.0.0.1"
-  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
-  # When use_unix_domain_socket is enabled, this port value will be unused.
-  # If omitted, 8080 is used.
-  port = 8080
-  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
-  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
-  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
-  # If omitted, false is used.
-  use_unix_domain_socket = false
-
-
-# Makes XRootD environment variables explicit.
-# XRootD is what is used to connect to the disk instance.
 [xrootd]
   # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
   # Valid values depend on the installed XRootD security plugins. If omitted, "sss" is used.
@@ -151,10 +120,3 @@
   # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
   # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
-
-
-[experimental]
-  # Enables experimental OpenTelemetry support configured by [telemetry]. Experimental features may
-  # change incompatibly and should be evaluated before production use.
-  # If omitted, false is used.
-  telemetry_enabled = false

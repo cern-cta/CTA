@@ -275,7 +275,7 @@ protected:
     config.transfers.buffer_count = 10;
     config.transfers.buffer_size_bytes = 1024 * 1024;
     config.transfers.disk_io_threads = 1;
-    config.transfers.encryption.enabled = false;
+    config.transfers.encryption.reset();
     config.transfers.archive.fetch_max_files = 10;
     config.transfers.archive.fetch_max_bytes = 1000000;
   }

@@ -7,6 +7,31 @@ Upgrading CTA is relatively easy as CTA is the tape backend and separated from d
 
 RPM upgrades preserve whether each packaged service is enabled and restart it only when it is already running. See [RPM Packages and Services](../../deploy-and-configure/deployment/installation/rpm-packages.md#package-lifecycle) for the complete package lifecycle contract.
 
+## Migrating TOML feature activation
+
+When upgrading from configuration files using section-local `enabled` flags or `[experimental]`, migrate them before starting the new binaries.
+The old keys are not aliases for the new schema; validate the migrated file with `--config-strict --config-check`.
+
+| Previous setting | Replacement |
+| --- | --- |
+| `experimental.telemetry_enabled` | Root `enabled_features` contains `"telemetry"`; retain `[telemetry]` only when enabled. |
+| `health_server.enabled` | Root `enabled_features` contains `"health_server"`. |
+| `health_server.use_unix_domain_socket` | `health_server.transport = "unix"` or `"tcp"`; move TCP host and port into `[health_server.tcp]`. |
+| `auth.<method>.enabled` | `auth.enabled_methods` lists selected methods; omit inactive method sections. |
+| `experimental.opportunistic_batching_enabled` | Root `enabled_features` contains `"opportunistic_batching"` in PostgreSQL workflow API configurations. |
+| `routines.<routine>.enabled` | `routines.enabled_features` lists selected routines; omit inactive sections. The objectstore `garbage_collect` routine needs no section. |
+| `transfers.encryption.enabled` | `transfers.enabled_features` contains `"encryption"`; retain the section only when enabled. |
+| `transfers.retrieve.rao.enabled` | `transfers.retrieve.enabled_features` contains `"rao"`; retain the section only when enabled. |
+
+Remove `[experimental]` after migrating its flags.
+Keep all previously intended capabilities in the appropriate lists, including routines, encryption and RAO that were enabled by default.
+An omitted activation list defaults to empty in non-strict mode; supplied inactive sections are rejected in both modes.
+
+Explicitly set `grpc.number_of_threads = 0` to preserve automatic sizing and, in objectstore API configurations, `scheduler.client.thread_stack_size_mb = 0` to preserve the system stack size.
+For `defaults.repack.max_files_to_select`, use `0` to select all files, which was the previous omission behaviour despite examples describing a scheduler default.
+Retain positive values when a fixed count, size or limit is intended.
+Remove placeholder values for genuinely optional files that are not used.
+
 ## Test upgrade path
 
 !!! danger

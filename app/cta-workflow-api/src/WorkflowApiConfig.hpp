@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -55,23 +56,6 @@ struct RequestsConfig final {
   }
 };
 
-/// @brief Experimental options of the workflow API: the common ones plus the workflow-specific ones.
-struct WorkflowApiExperimentalConfig final {
-  /// Whether OpenTelemetry, configured by `[telemetry]`, is enabled
-  bool telemetry_enabled = false;
-
-#ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 1; }
-#else
-  /// Whether opportunistic batching, configured by `[opportunistic_batching]`, is enabled
-  bool opportunistic_batching_enabled = false;
-
-  static constexpr std::size_t memberCount() { return 2; }
-#endif
-
-  cta::runtime::ValidationResult validate() const { return {}; }
-};
-
 #ifdef CTA_PGSCHED
 
 /// @brief Opportunistic batching of archive/retrieve queueing (PostgreSQL scheduler only).
@@ -105,11 +89,11 @@ struct WorkflowApiConfig final {
   cta::service_resources::ServiceCatalogueConfig catalogue;
   cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
-  cta::runtime::TelemetryConfig telemetry;
-  WorkflowApiExperimentalConfig experimental;
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
+  std::vector<std::string> enabled_features;
 
 #ifdef CTA_PGSCHED
-  OpportunisticBatchingConfig opportunistic_batching;
+  std::optional<OpportunisticBatchingConfig> opportunistic_batching = std::nullopt;
 #endif
 
   cta::grpc_server::ListenerConfig grpc;
@@ -133,10 +117,14 @@ struct WorkflowApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("experimental", experimental.validate());
+    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
 #ifdef CTA_PGSCHED
-    result.merge("opportunistic_batching", opportunistic_batching.validate());
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "opportunistic_batching"}));
+#else
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry"}));
+#endif
+#ifdef CTA_PGSCHED
+    cta::runtime::validateFeature(result, enabled_features, "opportunistic_batching", opportunistic_batching);
 #endif
     result.merge("requests", requests.validate());
     result.merge("grpc", grpc.validate());

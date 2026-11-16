@@ -26,7 +26,9 @@ ConnectionOptions makeConnectionOptions(const ServiceCatalogueConfig& catalogueC
   connections.archiveFileListingConns = NB_ARCHIVE_FILE_LISTING_CONNS;
 #ifndef CTA_PGSCHED
   connections.osThreadPoolSize = schedulerConfig.client.number_of_threads;
-  connections.osThreadStackSizeMb = schedulerConfig.client.thread_stack_size_mb;
+  if (schedulerConfig.client.thread_stack_size_mb != 0) {
+    connections.osThreadStackSizeMb = schedulerConfig.client.thread_stack_size_mb;
+  }
 #endif
   return connections;
 }

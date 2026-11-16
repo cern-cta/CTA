@@ -237,20 +237,21 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   RecallReportPacker reportPacker(&retrieveMount, logContext, *m_tapeSessionTracker);
   reportPacker.disableBulk();  //no bulk needed anymore
   RecallMemoryManager memoryManager(m_transfersConfig.buffer_count, m_transfersConfig.buffer_size_bytes, logContext);
-  TapeReadSingleThread tapeReadThread(*drive,
-                                      m_mediaChanger,
-                                      *m_tapeSessionTracker,
-                                      m_volInfo,
-                                      m_transfersConfig.retrieve.fetch_max_files,
-                                      logContext,
-                                      reportPacker,
-                                      c_useLbp,
-                                      m_transfersConfig.retrieve.rao.enabled,
-                                      m_transfersConfig.encryption.enabled,
-                                      m_transfersConfig.encryption.external_key_script,
-                                      retrieveMount,
-                                      m_tapeLoadTimeoutSecs,
-                                      m_catalogue);
+  TapeReadSingleThread tapeReadThread(
+    *drive,
+    m_mediaChanger,
+    *m_tapeSessionTracker,
+    m_volInfo,
+    m_transfersConfig.retrieve.fetch_max_files,
+    logContext,
+    reportPacker,
+    c_useLbp,
+    m_transfersConfig.retrieve.rao.has_value(),
+    m_transfersConfig.encryption.has_value(),
+    (m_transfersConfig.encryption ? m_transfersConfig.encryption->external_key_script : std::string {}),
+    retrieveMount,
+    m_tapeLoadTimeoutSecs,
+    m_catalogue);
 
   DiskWriteThreadPool diskWriteThreadPool(m_transfersConfig.disk_io_threads,
                                           reportPacker,
@@ -272,7 +273,7 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   utils::Timer startupTimer;
 
   // The RecallTaskInjector and the TapeReadSingleThread share the promise
-  if (m_transfersConfig.retrieve.rao.enabled) {
+  if (m_transfersConfig.retrieve.rao.has_value()) {
     configureRAO(logContext, recallTaskInjector);
   }
   bool noFilesToRecall = false;
@@ -352,20 +353,21 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
   // to refer them to each other)
   MigrationMemoryManager memoryManager(m_transfersConfig.buffer_count, m_transfersConfig.buffer_size_bytes, logContext);
   MigrationReportPacker reportPacker(&archiveMount, logContext, *m_tapeSessionTracker);
-  TapeWriteSingleThread tapeWriteThread(*drive,
-                                        m_mediaChanger,
-                                        *m_tapeSessionTracker,
-                                        m_volInfo,
-                                        logContext,
-                                        reportPacker,
-                                        m_transfersConfig.archive.flush_max_files,
-                                        m_transfersConfig.archive.flush_max_bytes,
-                                        c_useLbp,
-                                        m_transfersConfig.encryption.enabled,
-                                        m_transfersConfig.encryption.external_key_script,
-                                        archiveMount,
-                                        m_tapeLoadTimeoutSecs,
-                                        m_catalogue);
+  TapeWriteSingleThread tapeWriteThread(
+    *drive,
+    m_mediaChanger,
+    *m_tapeSessionTracker,
+    m_volInfo,
+    logContext,
+    reportPacker,
+    m_transfersConfig.archive.flush_max_files,
+    m_transfersConfig.archive.flush_max_bytes,
+    c_useLbp,
+    m_transfersConfig.encryption.has_value(),
+    (m_transfersConfig.encryption ? m_transfersConfig.encryption->external_key_script : std::string {}),
+    archiveMount,
+    m_tapeLoadTimeoutSecs,
+    m_catalogue);
 
   DiskReadThreadPool diskReadThreadPool(m_transfersConfig.disk_io_threads,
                                         m_transfersConfig.archive.fetch_max_files,
@@ -493,10 +495,11 @@ void TapeSession::configureRAO(log::LogContext& logContext, RecallTaskInjector& 
     params.add("tapeVid", m_volInfo.vid).add("mountId", m_volInfo.mountId).add("labelFormat", format_str.str());
     logContext.log(log::INFO, "TapeSession::executeRead Tape LabelFormat incompatible with RAO. Setting RAO false.");
   } else {
-    rao::RAOParams raoDataConfig(m_transfersConfig.retrieve.rao.enabled,
-                                 m_transfersConfig.retrieve.rao.lto_algorithm,
-                                 c_raoLtoAlgorithmOptions,
-                                 m_volInfo.vid);
+    rao::RAOParams raoDataConfig(
+      m_transfersConfig.retrieve.rao.has_value(),
+      (m_transfersConfig.retrieve.rao ? m_transfersConfig.retrieve.rao->lto_algorithm : std::string {}),
+      c_raoLtoAlgorithmOptions,
+      m_volInfo.vid);
     taskInjector.initRAO(raoDataConfig, &m_catalogue);
   }
 }

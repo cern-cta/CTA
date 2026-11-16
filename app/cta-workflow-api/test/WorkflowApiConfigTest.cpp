@@ -22,7 +22,8 @@ cta::workflow_api::WorkflowApiConfig makeValidConfig() {
 #endif
   config.grpc.tls.server_key_path = "/key.pem";
   config.grpc.tls.server_cert_path = "/cert.pem";
-  config.auth.mtls = cta::grpc_server::MtlsAuthConfig {true, {{"instance", {"host.example.org"}}}};
+  config.auth.mtls = cta::grpc_server::MtlsAuthConfig {{{"instance", {"host.example.org"}}}};
+  config.auth.enabled_methods = {"mtls"};
   return config;
 }
 
@@ -41,17 +42,17 @@ TEST(WorkflowApiConfig, InstanceNameIsRequired) {
 TEST(WorkflowApiConfig, AuthRequiresJwtOrMtls) {
   auto config = makeValidConfig();
   config.auth.mtls.reset();
-  EXPECT_THROW(config.validate(), cta::exception::UserError);
+  EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(WorkflowApiConfig, JwtAndMtlsTogetherAreRejected) {
   auto config = makeValidConfig();
   config.auth.jwt = cta::grpc_server::JwtAuthConfig {};
-  config.auth.jwt->enabled = true;
+  config.auth.enabled_methods.push_back("jwt");
   config.auth.jwt->jwks_uri = "file:///jwks.json";
   config.auth.jwt->expected_issuer = "cta";
   config.auth.jwt->expected_audience = "cta-workflow-api";
-  EXPECT_THROW(config.validate(), cta::exception::UserError);
+  EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(WorkflowApiConfig, ZeroCatalogueConnectionsIsRejected) {
@@ -62,12 +63,13 @@ TEST(WorkflowApiConfig, ZeroCatalogueConnectionsIsRejected) {
 
 #ifdef CTA_PGSCHED
 TEST(WorkflowApiConfig, OpportunisticBatchingIsDisabledByDefault) {
-  EXPECT_FALSE(makeValidConfig().experimental.opportunistic_batching_enabled);
+  EXPECT_FALSE(makeValidConfig().opportunistic_batching.has_value());
 }
 
 TEST(WorkflowApiConfig, ZeroOpportunisticBatchingMaxBatchSizeIsRejected) {
   auto config = makeValidConfig();
-  config.opportunistic_batching.max_batch_size = 0;
+  config.enabled_features = {"opportunistic_batching"};
+  config.opportunistic_batching.emplace().max_batch_size = 0;
   EXPECT_FALSE(config.validate().ok());
 }
 #endif

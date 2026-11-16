@@ -15,7 +15,18 @@ When defining a config file for a service, there are multiple problems that can 
 Services that use the CTA Runtime Library support the `--config-strict` flag which can prevent all of these. Concretely it enforces the following rules:
 
 - Every provided config value MUST be a valid config entry. That means it will fail when entries are present that are not consumed by CTA. This mitigates (1) and (2).
-- Every single config value parsed by CTA MUST be present in the config file. As a result, changes in default values will not affect the deployment, because every value is explicit and defaults are no longer relied upon. This mitigates (2) and (3).
+- Every applicable setting MUST be explicit, including settings with defaults. Genuinely optional values and sections for disabled features may be absent. This mitigates (2) and (3).
+
+Optional capabilities are selected through `enabled_features` at their parent, or `auth.enabled_methods` for authentication.
+Supply a section for each selected feature with configurable settings and omit sections for disabled features.
+Unknown or duplicate feature names and mismatches between selections and sections are errors in both modes.
+Strict mode requires the selection list, including `[]` when none are enabled.
+
+For integer settings that support automatic sizing or system defaults, explicitly set `0` to select that behaviour.
+For example, `grpc.number_of_threads = 0` selects eight threads per detected CPU (at least one CPU), and `scheduler.client.thread_stack_size_mb = 0` uses the system's thread-stack size in objectstore builds.
+Positive values fix the count or size.
+The meaning of zero is specific to each field: `defaults.repack.max_files_to_select = 0` means all files.
+An explicit automatic setting may produce different values on different hosts or software versions.
 
 It is possible to check the validity of a config beforehand using the `--config-check` flag, which can be combined with the `--config-strict` flag. This checks the configuration and exits without starting the service.
 `--config-check` cannot be combined with `--runtime-dir`, so checking configuration does not overwrite a service's runtime snapshots.

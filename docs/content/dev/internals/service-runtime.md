@@ -70,7 +70,111 @@ Configuration checking is split into three layers with distinct responsibilities
 
 `ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct. If validation reports errors, the loader presents all of them in one `UserError`. Root and parent config structs must explicitly merge the validation result from each custom config child. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
 
+### Optional fields and feature activation
+
+Strict mode MUST require every applicable setting to be explicit, except where absence is a valid, documented state.
+Disabling a feature allows its configuration to be omitted.
+Enabling it requires its settings to be explicit again.
+
+#### When a field may be optional
+
+There are two valid reasons to make a field or section optional:
+
+- **It does not apply:** an explicit feature gate or mode selector makes it unnecessary.
+- **Absence has a meaning:** the application supports leaving it unset without choosing a fallback value.
+
+Use this table when classifying a field:
+
+| Field | May be omitted in strict mode? | Example |
+| --- | --- | --- |
+| Section for a disabled feature | Yes | Telemetry configuration when telemetry is disabled |
+| Section for an enabled feature | No | JWT configuration when JWT is enabled |
+| Setting with a default, used by an active feature | No | JWT cache refresh interval |
+| Required value with no sensible default | No | Kerberos keytab path |
+| Value with a supported absence state and no fallback | Yes | No additional certificate-chain file |
+| Integer setting supporting automatic sizing or delegation | No; explicitly supply `0` to select that behaviour | Worker count calculated from CPU count |
+
+For a field to remain optional when it applies, all of these requirements MUST hold:
+
+- Its documentation explains what absence means, and the application supports that state.
+- Its C++ initial state is `std::nullopt`.
+- Consumers preserve absence rather than substitute a default, including library, operating-system, scheduler or calculated defaults.
+  Check fallback code such as `value_or(default)`.
+- Supplied values receive the normal type and semantic checks.
+
+For example, an omitted token-revocation path can mean that no additional file is used.
+An omitted stack size that selects the operating-system default does not qualify.
+Use an explicit integer sentinel as described below.
+
+Empty strings, zero and empty collections are explicit values with their own validation rules.
+They do not generally mean “absent”.
+Strict mode still requires an explicit empty collection when that is the intended setting, for example `attributes = {}` for no additional logging attributes.
+Describe defaulted fields as “required in strict mode; defaulted in non-strict mode” rather than “optional”.
+
+#### Automatic sizing and integer sentinels
+
+For integer settings that support automatic sizing or delegation to another component, use `0` to explicitly select that behaviour.
+Positive values specify a fixed value in the field's documented units.
+Keep the field integer-valued; do not introduce an `"auto"` string alternative or a separate policy field.
+Strict mode requires the field whenever it applies, including an explicit `0` when automatic behaviour is wanted.
+These settings are not optional merely because they support automatic behaviour.
+
+Document what `0` means for each field, including how the value is calculated or which component supplies it.
+Strict mode makes that choice explicit; it does not freeze the calculated result across environments or implementation changes.
+Validation must accept the documented sentinel and reject other invalid values.
+Consumers must resolve the sentinel before passing the value to an API that expects a positive count or size.
+
+For example:
+
+```toml
+[grpc]
+# Calculate the thread limit from the CPU count; a positive value fixes the limit.
+number_of_threads = 0
+
+[scheduler.client]
+number_of_threads = 500
+# Use the system's thread-stack size; a positive value specifies the size in MB.
+thread_stack_size_mb = 0
+```
+
+The scheduler client settings above apply to objectstore builds.
+The current gRPC calculation is eight times `std::thread::hardware_concurrency()`; a CPU count of zero is treated as one CPU, and the resulting thread limit is capped to the integer range supported by gRPC.
+
+Zero is not a universal spelling of “automatic”.
+Preserve other documented meanings, such as “unlimited”, and keep zero invalid for fields where it has no supported meaning.
+For `defaults.repack.max_files_to_select`, `0` means all files.
+This field is required in strict mode; it does not inherit a scheduler-selected limit.
+
+#### How features are enabled
+
+Put activation in the parent of the optional section, using an `enabled_features` list.
+Use a more specific name where helpful, such as `auth.enabled_methods` for authentication.
+For mutually exclusive alternatives, use one mode selector, such as `transport = "tcp"` or `"unix"`.
+Do not put an `enabled` flag inside the section it controls.
+
+**Activation lists:**
+
+- Strict mode requires the list, including `[]` when no features are enabled.
+- In non-strict mode, an omitted list may use a documented default.
+- Unknown and duplicate names are errors in both modes.
+- List order has no meaning.
+
+**Sections must match the selection in both modes:**
+
+| Selection | Required configuration |
+| --- | --- |
+| Feature enabled | Its section must be present if it has configurable settings. |
+| Feature disabled | Its section must be absent. |
+| Mode selected | The applicable section must be present; sections for other modes must be absent. |
+
+A supplied section never enables a feature implicitly.
+
+The [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/configuration/) also separates extension configuration from activation.
+CTA additionally rejects sections for disabled features so that supplied configuration cannot silently remain unused.
+
 ## Application configuration
+
+The following example describes the current application interface.
 
 ```c++
 struct CustomConfig final {
@@ -81,13 +185,12 @@ struct CustomConfig final {
   // Must always be present; all tools and apps support logging
   cta::runtime::LoggingConfig logging;
   // Add this if the app should be able to produce telemetry
-  cta::runtime::TelemetryConfig telemetry;
+  std::optional<cta::runtime::TelemetryConfig> telemetry;
   // Add this if the app needs a separate health endpoint
   // Don't add this if the app already natively exposes a health endpoint (e.g. a REST API)
-  cta::runtime::HealthServerConfig health_server;
-  // Add this if the app has experimental options
-  // For now, this must be added if telemetry is there as telemetry is considered experimental
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::HealthServerConfig> health_server;
+  // Explicitly select optional capabilities.
+  std::vector<std::string> enabled_features;
   // Add this if the app uses XRootD
   cta::runtime::XRootDConfig xrootd;
   // Put whatever you want here; will be populated from the config file and available in the run() function
@@ -102,9 +205,9 @@ struct CustomConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("health_server", health_server.validate());
-    result.merge("experimental", experimental.validate());
+    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
     result.merge("xrootd", xrootd.validate());
     result.merge("customConf", customConf.validate());
     return result;

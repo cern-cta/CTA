@@ -16,7 +16,7 @@ namespace cta::grpc_server::auth {
 
 std::shared_ptr<JwtAuthManager> makeJwtAuthManager(const std::optional<JwtAuthConfig>& config,
                                                    cta::log::Logger& logger) {
-  if (!config.has_value() || !config->enabled) {
+  if (!config.has_value()) {
     return nullptr;
   }
 

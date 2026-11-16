@@ -128,10 +128,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   if (!node) {
-    if (strict) {
-      return ParseResult::error("Expected field '" + std::string(fieldName) + "' is missing.");
-    }
-    // In non-strict mode, a missing optional is fine
+    out.reset();
     return ParseResult::success();
   }
   using InnerType = typename std::remove_cvref_t<T>::value_type;
@@ -267,7 +264,9 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
       const auto node = tbl[tableFieldName];
 
       if (!node) {
-        if (strict) {
+        if constexpr (StdOptional<decltype(field)>) {
+          field.reset();
+        } else if (strict) {
           errs.push_back(ParseResult::error("Expected field '" + std::string(tableFieldName) + "' is missing."));
         }
         return;

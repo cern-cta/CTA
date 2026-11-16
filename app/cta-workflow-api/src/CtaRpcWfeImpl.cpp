@@ -233,7 +233,7 @@ Status CtaRpcWfeImpl::CancelRetrieve(::grpc::ServerContext* context,
 }
 
 bool CtaRpcWfeImpl::usesMtls() const {
-  return m_config.auth.mtls.has_value() && m_config.auth.mtls->enabled;
+  return m_config.auth.mtls.has_value();
 }
 
 std::set<std::string, std::less<>> CtaRpcWfeImpl::getMtlsCertIdentitiesForInstance(const std::string& instance) const {

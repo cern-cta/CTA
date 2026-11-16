@@ -11,16 +11,16 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta::maintd {
 
 struct DiskReportRoutineConfig final {
-  bool enabled = true;
   uint32_t batch_size = 500;
   uint32_t soft_timeout_secs = 30;
   uint32_t iter_sleep_ms = 0;
 
-  static constexpr std::size_t memberCount() { return 4; }
+  static constexpr std::size_t memberCount() { return 3; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -35,10 +35,9 @@ struct DiskReportRoutineConfig final {
 };
 
 struct RepackExpandRoutineConfig final {
-  bool enabled = true;
   uint32_t max_to_expand = 2;
 
-  static constexpr std::size_t memberCount() { return 2; }
+  static constexpr std::size_t memberCount() { return 1; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -50,10 +49,9 @@ struct RepackExpandRoutineConfig final {
 };
 
 struct RepackReportRoutineConfig final {
-  bool enabled = true;
   uint32_t soft_timeout_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 2; }
+  static constexpr std::size_t memberCount() { return 1; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -67,10 +65,9 @@ struct RepackReportRoutineConfig final {
 #ifndef CTA_PGSCHED
 
 struct QueueCleanupRoutineConfig final {
-  bool enabled = true;
   uint32_t batch_size = 500;
 
-  static constexpr std::size_t memberCount() { return 2; }
+  static constexpr std::size_t memberCount() { return 1; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -81,22 +78,13 @@ struct QueueCleanupRoutineConfig final {
   }
 };
 
-struct GarbageCollectRoutineConfig final {
-  bool enabled = true;
-
-  static constexpr std::size_t memberCount() { return 1; }
-
-  cta::runtime::ValidationResult validate() const { return {}; }
-};
-
 #else
 
 struct ActivePendingQueueCleanupRoutineConfig final {
-  bool enabled = true;
   uint32_t batch_size = 500;
   uint32_t age_for_collection_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 3; }
+  static constexpr std::size_t memberCount() { return 2; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -111,11 +99,10 @@ struct ActivePendingQueueCleanupRoutineConfig final {
 };
 
 struct SchedulerMaintenanceCleanupRoutineConfig final {
-  bool enabled = true;
   uint32_t batch_size = 500;
   uint32_t age_for_deletion_secs = 1209600;
 
-  static constexpr std::size_t memberCount() { return 3; }
+  static constexpr std::size_t memberCount() { return 2; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -132,51 +119,79 @@ struct SchedulerMaintenanceCleanupRoutineConfig final {
 #endif
 
 struct RoutinesConfig final {
+  std::vector<std::string> enabled_features;
   uint32_t cycle_sleep_interval_secs = 10;
   uint32_t max_cycle_duration_secs = 900;
 
-  DiskReportRoutineConfig disk_report_archive;
-  DiskReportRoutineConfig disk_report_retrieve;
+  std::optional<DiskReportRoutineConfig> disk_report_archive = std::nullopt;
+  std::optional<DiskReportRoutineConfig> disk_report_retrieve = std::nullopt;
 
-  RepackExpandRoutineConfig repack_expand;
-  RepackReportRoutineConfig repack_report;
+  std::optional<RepackExpandRoutineConfig> repack_expand = std::nullopt;
+  std::optional<RepackReportRoutineConfig> repack_report = std::nullopt;
 
 #ifndef CTA_PGSCHED
-  GarbageCollectRoutineConfig garbage_collect;
-  QueueCleanupRoutineConfig queue_cleanup;
+  std::optional<QueueCleanupRoutineConfig> queue_cleanup = std::nullopt;
 
   static constexpr std::size_t memberCount() { return 8; }
 #else
-  ActivePendingQueueCleanupRoutineConfig user_active_queue_cleanup;
-  ActivePendingQueueCleanupRoutineConfig repack_active_queue_cleanup;
-  ActivePendingQueueCleanupRoutineConfig user_pending_queue_cleanup;
-  ActivePendingQueueCleanupRoutineConfig repack_pending_queue_cleanup;
-  SchedulerMaintenanceCleanupRoutineConfig scheduler_maintenance_cleanup;
+  std::optional<ActivePendingQueueCleanupRoutineConfig> user_active_queue_cleanup = std::nullopt;
+  std::optional<ActivePendingQueueCleanupRoutineConfig> repack_active_queue_cleanup = std::nullopt;
+  std::optional<ActivePendingQueueCleanupRoutineConfig> user_pending_queue_cleanup = std::nullopt;
+  std::optional<ActivePendingQueueCleanupRoutineConfig> repack_pending_queue_cleanup = std::nullopt;
+  std::optional<SchedulerMaintenanceCleanupRoutineConfig> scheduler_maintenance_cleanup = std::nullopt;
 
-  static constexpr std::size_t memberCount() { return 11; }
+  static constexpr std::size_t memberCount() { return 12; }
 #endif
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
+#ifndef CTA_PGSCHED
+    result.merge("",
+                 cta::runtime::validateFeatureNames(enabled_features,
+                                                    {"disk_report_archive",
+                                                     "disk_report_retrieve",
+                                                     "repack_expand",
+                                                     "repack_report",
+                                                     "garbage_collect",
+                                                     "queue_cleanup"}));
+#else
+    result.merge("",
+                 cta::runtime::validateFeatureNames(enabled_features,
+                                                    {"disk_report_archive",
+                                                     "disk_report_retrieve",
+                                                     "repack_expand",
+                                                     "repack_report",
+                                                     "user_active_queue_cleanup",
+                                                     "repack_active_queue_cleanup",
+                                                     "user_pending_queue_cleanup",
+                                                     "repack_pending_queue_cleanup",
+                                                     "scheduler_maintenance_cleanup"}));
+#endif
     if (cycle_sleep_interval_secs == 0) {
       result.addError("cycle_sleep_interval_secs", "must be greater than zero");
     }
     if (max_cycle_duration_secs == 0) {
       result.addError("max_cycle_duration_secs", "must be greater than zero");
     }
-    result.merge("disk_report_archive", disk_report_archive.validate());
-    result.merge("disk_report_retrieve", disk_report_retrieve.validate());
-    result.merge("repack_expand", repack_expand.validate());
-    result.merge("repack_report", repack_report.validate());
+    cta::runtime::validateFeature(result, enabled_features, "disk_report_archive", disk_report_archive);
+    cta::runtime::validateFeature(result, enabled_features, "disk_report_retrieve", disk_report_retrieve);
+    cta::runtime::validateFeature(result, enabled_features, "repack_expand", repack_expand);
+    cta::runtime::validateFeature(result, enabled_features, "repack_report", repack_report);
 #ifndef CTA_PGSCHED
-    result.merge("garbage_collect", garbage_collect.validate());
-    result.merge("queue_cleanup", queue_cleanup.validate());
+
+    cta::runtime::validateFeature(result, enabled_features, "queue_cleanup", queue_cleanup);
 #else
-    result.merge("user_active_queue_cleanup", user_active_queue_cleanup.validate());
-    result.merge("repack_active_queue_cleanup", repack_active_queue_cleanup.validate());
-    result.merge("user_pending_queue_cleanup", user_pending_queue_cleanup.validate());
-    result.merge("repack_pending_queue_cleanup", repack_pending_queue_cleanup.validate());
-    result.merge("scheduler_maintenance_cleanup", scheduler_maintenance_cleanup.validate());
+    cta::runtime::validateFeature(result, enabled_features, "user_active_queue_cleanup", user_active_queue_cleanup);
+    cta::runtime::validateFeature(result, enabled_features, "repack_active_queue_cleanup", repack_active_queue_cleanup);
+    cta::runtime::validateFeature(result, enabled_features, "user_pending_queue_cleanup", user_pending_queue_cleanup);
+    cta::runtime::validateFeature(result,
+                                  enabled_features,
+                                  "repack_pending_queue_cleanup",
+                                  repack_pending_queue_cleanup);
+    cta::runtime::validateFeature(result,
+                                  enabled_features,
+                                  "scheduler_maintenance_cleanup",
+                                  scheduler_maintenance_cleanup);
 #endif
     return result;
   }
@@ -186,9 +201,9 @@ struct MaintdConfig final {
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
-  cta::runtime::TelemetryConfig telemetry;
-  cta::runtime::HealthServerConfig health_server;
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
+  std::optional<cta::runtime::HealthServerConfig> health_server = std::nullopt;
+  std::vector<std::string> enabled_features;
   cta::runtime::XRootDConfig xrootd;
   RoutinesConfig routines;
 
@@ -199,9 +214,9 @@ struct MaintdConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("health_server", health_server.validate());
-    result.merge("experimental", experimental.validate());
+    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
     result.merge("xrootd", xrootd.validate());
     result.merge("routines", routines.validate());
     return result;

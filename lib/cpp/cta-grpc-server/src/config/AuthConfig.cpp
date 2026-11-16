@@ -13,9 +13,6 @@ namespace cta::grpc_server {
 
 cta::runtime::ValidationResult JwtAuthConfig::validate() const {
   cta::runtime::ValidationResult result;
-  if (!enabled) {
-    return result;
-  }
 
   // check that the timeouts are not zero
   if (cache_refresh_interval == 0) {
@@ -46,62 +43,49 @@ cta::runtime::ValidationResult JwtAuthConfig::validate() const {
 }
 
 cta::runtime::ValidationResult AdminAuthConfig::validate() const {
-  const bool jwtEnabled = jwt && jwt->enabled;
-  const bool kerberosEnabled = kerberos && kerberos->enabled;
-
-  // This is a constraint on the auth block as a whole: without a usable combination of authentication methods there
-  // is nothing left worth reporting, so fail fast instead of collecting field errors.
+  auto result = cta::runtime::validateFeatureNames(enabled_methods, {"jwt", "kerberos"}, "enabled_methods");
+  const bool jwtEnabled = cta::runtime::featureEnabled(enabled_methods, "jwt");
+  const bool kerberosEnabled = cta::runtime::featureEnabled(enabled_methods, "kerberos");
   if (!jwtEnabled && !kerberosEnabled) {
-    throw exception::UserError("Admin frontend authentication requires at least one of JWT or Kerberos to be enabled");
+    result.addError("enabled_methods",
+                    "Admin frontend authentication requires at least one of JWT or Kerberos to be enabled");
   }
-
-  cta::runtime::ValidationResult result;
-  if (jwt) {
-    result.merge("jwt", jwt->validate());
-  }
-  if (kerberos) {
-    result.merge("kerberos", kerberos->validate());
-  }
+  cta::runtime::validateFeature(result, enabled_methods, "jwt", jwt);
+  cta::runtime::validateFeature(result, enabled_methods, "kerberos", kerberos);
   return result;
 }
 
 std::set<AuthMethod, std::less<>> AdminAuthConfig::getEnabledMethods() const {
   using enum AuthMethod;
   std::set<AuthMethod, std::less<>> result;
-  if (jwt && jwt->enabled) {
+  if (cta::runtime::featureEnabled(enabled_methods, "jwt")) {
     result.emplace(JWT);
   }
-  if (kerberos && kerberos->enabled) {
+  if (cta::runtime::featureEnabled(enabled_methods, "kerberos")) {
     result.emplace(KERBEROS);
   }
   return result;
 }
 
 cta::runtime::ValidationResult WfeAuthConfig::validate() const {
-  const bool jwtEnabled = jwt && jwt->enabled;
-  const bool mtlsEnabled = mtls && mtls->enabled;
-
+  auto result = cta::runtime::validateFeatureNames(enabled_methods, {"jwt", "mtls"}, "enabled_methods");
+  const bool jwtEnabled = cta::runtime::featureEnabled(enabled_methods, "jwt");
+  const bool mtlsEnabled = cta::runtime::featureEnabled(enabled_methods, "mtls");
   if (jwtEnabled == mtlsEnabled) {
-    throw exception::UserError("WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
+    result.addError("enabled_methods", "WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
   }
-
-  cta::runtime::ValidationResult result;
-  if (jwt) {
-    result.merge("jwt", jwt->validate());
-  }
-  if (mtls) {
-    result.merge("mtls", mtls->validate());
-  }
+  cta::runtime::validateFeature(result, enabled_methods, "jwt", jwt);
+  cta::runtime::validateFeature(result, enabled_methods, "mtls", mtls);
   return result;
 }
 
 std::set<AuthMethod, std::less<>> WfeAuthConfig::getEnabledMethods() const {
   using enum AuthMethod;
   std::set<AuthMethod, std::less<>> result;
-  if (jwt && jwt->enabled) {
+  if (cta::runtime::featureEnabled(enabled_methods, "jwt")) {
     result.emplace(JWT);
   }
-  if (mtls && mtls->enabled) {
+  if (cta::runtime::featureEnabled(enabled_methods, "mtls")) {
     result.emplace(MTLS);
   }
   return result;
@@ -109,9 +93,6 @@ std::set<AuthMethod, std::less<>> WfeAuthConfig::getEnabledMethods() const {
 
 cta::runtime::ValidationResult MtlsAuthConfig::validate() const {
   cta::runtime::ValidationResult result;
-  if (!enabled) {
-    return result;
-  }
   for (const auto& [identity, hostnames] : aliases) {
     if (identity.empty()) {
       result.addError("aliases", "cannot contain an empty identity");
@@ -124,9 +105,6 @@ cta::runtime::ValidationResult MtlsAuthConfig::validate() const {
 
 cta::runtime::ValidationResult KerberosAuthConfig::validate() const {
   cta::runtime::ValidationResult result;
-  if (!enabled) {
-    return result;
-  }
 
   if (keytab_path.empty()) {
     result.addError("keytab_path", "cannot be empty when Kerberos authentication is enabled");

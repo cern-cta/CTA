@@ -502,16 +502,18 @@ INSTANTIATE_TEST_SUITE_P(Application, ApplicationShutdownSignalTest, testing::Va
 // These applications retain configuration and logging references until destruction.
 struct LifecycleConfig {
   cta::runtime::LoggingConfig logging;
-  cta::runtime::ExperimentalConfig experimental;
-  cta::runtime::TelemetryConfig telemetry;
-  cta::runtime::HealthServerConfig health_server;
+  std::vector<std::string> enabled_features;
+  std::optional<cta::runtime::TelemetryConfig> telemetry;
+  std::optional<cta::runtime::HealthServerConfig> health_server;
 
   static constexpr std::size_t memberCount() { return 4; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("logging", logging.validate());
-    result.merge("health_server", health_server.validate());
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
+    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
     return result;
   }
 };
@@ -565,7 +567,7 @@ public:
       EXPECT_TRUE(state->signalFinished.load());
       EXPECT_GT(state->healthCalls.load(), 0);
       // A live endpoint here would still be able to call this object during destruction.
-      httplib::Client client(*m_config->health_server.host, *m_config->health_server.port);
+      httplib::Client client(m_config->health_server->tcp->host, m_config->health_server->tcp->port);
       client.set_address_family(AF_UNIX);
       client.set_connection_timeout(1);
       client.set_read_timeout(2);
@@ -604,7 +606,7 @@ public:
     m_config = &config;
     m_log = &log;
     if (state->exerciseCallbacks) {
-      httplib::Client client(*config.health_server.host, *config.health_server.port);
+      httplib::Client client(config.health_server->tcp->host, config.health_server->tcp->port);
       client.set_address_family(AF_UNIX);
       client.set_connection_timeout(1);
       client.set_read_timeout(2);
@@ -639,14 +641,14 @@ TEST(Application, DestroysAppBeforeTelemetryAndAfterCallbacks) {
     TempFile socket("", ".sock");
     ::unlink(socket.path().c_str());
     TempFile logs;
-    TempFile config("[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
-                    "[experimental]\ntelemetry_enabled = true\n"
-                    "[telemetry]\nconfig_file = \""
-                      + telemetry.path()
-                      + "\"\n"
-                        "[health_server]\nenabled = true\nhost = \""
-                      + socket.path() + "\"\nport = 80\n",
-                    ".toml");
+    TempFile config(
+      "enabled_features = [\"telemetry\", \"health_server\"]\n[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
+      "[telemetry]\nconfig_file = \""
+        + telemetry.path()
+        + "\"\n"
+          "[health_server]\ntransport = \"tcp\"\n[health_server.tcp]\nhost = \""
+        + socket.path() + "\"\nport = 80\n",
+      ".toml");
     {
       runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
       app.addSignalFunction(SIGUSR2, &LifecycleApp::customSignal);
@@ -730,8 +732,7 @@ TEST(Application, InitializationFailureCleansUpBeforeStoppedEvent) {
   LifecycleApp::state = &state;
   TempFile logs;
   TempFile invalidTelemetry("not valid SDK configuration: [", ".yaml");
-  TempFile config("[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
-                  "[experimental]\ntelemetry_enabled = true\n"
+  TempFile config("enabled_features = [\"telemetry\"]\n[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
                   "[telemetry]\non_init_failure = \"fatal\"\nconfig_file = \""
                     + invalidTelemetry.path() + "\"\n",
                   ".toml");

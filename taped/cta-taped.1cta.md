@@ -64,7 +64,7 @@ Defaults to */etc/cta/cta-taped.toml* if not provided.
 
 --config-strict
 
-:   Treat unknown keys, missing keys, and type mismatches in the configuration file as errors.
+:   Treat unknown keys, missing required keys, and type mismatches in the configuration file as errors.
 
 --config-check
 
@@ -89,6 +89,14 @@ The **cta-taped** daemon reads its configuration from a TOML file
 (default: */etc/cta/cta-taped.toml*).
 
 Each section is described below.
+
+## Feature selection
+
+The root **enabled_features** list selects `telemetry` and `health_server`.
+Use `[]` to disable both, and omit their sections.
+Unknown names, duplicate names and sections for disabled features are rejected.
+Strict mode requires every applicable setting, even when a default is documented.
+Defaults apply only in non-strict mode.
 
 ## [drive]
 
@@ -296,10 +304,8 @@ external_free_disk_space_script *(default: /usr/bin/cta-eosdf.sh)*
 
 ## [transfers.retrieve.rao]
 
-enabled *(default: true)*
-
-:   Enable Recommended Access Order on supported drives.
-Hardware RAO is preferred when available; otherwise software RAO may be used.
+Include `"rao"` in **transfers.retrieve.enabled_features** to enable recommended access order, preferring hardware RAO where available.
+Omit this section when disabled.
 
 lto_algorithm *(default: sltf)*
 
@@ -309,9 +315,8 @@ The `sltf` algorithm requires the corresponding media type's `NB_WRAPS`, `MIN_LP
 
 ## [transfers.encryption]
 
-enabled *(default: true)*
-
-:   Enable tape-drive hardware encryption when a key is configured for the tape or tape pool.
+Include `"encryption"` in **transfers.enabled_features** to use tape-drive hardware encryption when a key is configured for the tape or tape pool.
+Omit this section when disabled.
 
 external_key_script *(default: /usr/local/bin/cta-get-encryption-key.sh)*
 
@@ -359,39 +364,39 @@ Possible values: json, kv.
 config_file
 
 :   Path to the OpenTelemetry SDK declarative configuration file.
-If omitted or empty, telemetry is disabled.
+Required and nonempty when telemetry is enabled.
 
 on_init_failure *(default: warn)*
 
 :   Behaviour if telemetry initialisation fails.
 Possible values: `warn`, `fatal`.
 
-Telemetry is experimental and disabled by default unless explicitly enabled under **[experimental]**.
+Enable experimental telemetry by including `"telemetry"` in the root **enabled_features** list.
+Omit **[telemetry]** when disabled.
 
 ## [health_server]
 
-enabled *(default: false)*
+Include `"health_server"` in the root **enabled_features** list to enable health endpoints.
+Omit this section and its children when disabled.
 
-:   Enable or disable the health server.
+transport *(default: tcp)*
+
+:   Select `tcp` or `unix`.
+For `unix`, omit **[health_server.tcp]** and supply **--runtime-dir**; the socket is created at *<runtime-dir>/health.sock*.
+
+## [health_server.tcp]
+
+This section is required for TCP and must be absent for Unix sockets.
 
 host *(default: 127.0.0.1)*
 
-:   Interface to bind to when using TCP.
+:   Interface to bind to.
 
 port *(default: 8080)*
 
-:   TCP port to bind to when using TCP.
+:   TCP port to bind to.
 
-use_unix_domain_socket *(default: false)*
-
-:   Expose the health server over a Unix domain socket instead of TCP.
-When enabled, **--runtime-dir** must be provided.
-The socket file is created at *<runtime-dir>/health.sock*.
-
-The health server exposes:
-
-* /health/ready
-* /health/live
+The health server exposes */health/ready* and */health/live*.
 
 ## [xrootd]
 
@@ -404,11 +409,6 @@ sss_keytab_path
 :   Override `XrdSecSSSKT` with the path to the XRootD Simple Shared Secrets keytab.
 The file must be readable by **cta-taped** when the `sss` protocol is selected.
 
-## [experimental]
-
-telemetry_enabled *(default: false)*
-
-:   Enable experimental telemetry support configured under **[telemetry]**.
 
 # ENVIRONMENT
 

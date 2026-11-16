@@ -35,7 +35,7 @@ ServerBuilderHelper::ServerBuilderHelper(const ListenerConfig& config,
   m_builder.AddListeningPort(m_serverAddress, creds);
 
   // Fix the number of request processing threads
-  const int threads = config.number_of_threads.value_or(8 * std::thread::hardware_concurrency());
+  const int threads = config.resolveThreadCount(std::thread::hardware_concurrency());
   ::grpc::ResourceQuota quota;
   quota.SetMaxThreads(threads);
   lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");

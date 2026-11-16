@@ -8,7 +8,9 @@
 #include "runtime/config/CommonConfig.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <vector>
 
 namespace cta::tape::daemon {
 
@@ -271,17 +273,15 @@ struct ArchiveTransferConfig final {
 
 /// Tape encryption and external key-script settings.
 struct EncryptionConfig final {
-  /// Use drive hardware encryption when a valid key is configured for the tape or tape pool.
-  bool enabled = true;
   /// Executable that obtains keys using the protocol expected by EncryptionControl.
   std::string external_key_script = "/usr/local/bin/cta-get-encryption-key.sh";
 
-  static constexpr std::size_t memberCount() { return 2; }
+  static constexpr std::size_t memberCount() { return 1; }
 
-  /// Require a key-script path when encryption is enabled.
+  /// Require a key-script path for the selected encryption feature.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
-    if (enabled && external_key_script.empty()) {
+    if (external_key_script.empty()) {
       result.addError("external_key_script", "cannot be empty when encryption is enabled");
     }
     return result;
@@ -290,15 +290,13 @@ struct EncryptionConfig final {
 
 /// Recommended access order settings for retrieval.
 struct RaoConfig final {
-  /// Enable recommended access order on supported drives, preferring hardware RAO over software RAO.
-  bool enabled = true;
   /// Software RAO algorithm for LTO-8: linear, random or sltf; ignored when hardware RAO is available.
   /// SLTF requires catalogue media-type fields NB_WRAPS, MIN_LPOS and MAX_LPOS.
   std::string lto_algorithm = "sltf";
 
-  static constexpr std::size_t memberCount() { return 2; }
+  static constexpr std::size_t memberCount() { return 1; }
 
-  /// Reject unknown LTO access-order algorithms, even when RAO is disabled.
+  /// Reject unknown LTO access-order algorithms.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (lto_algorithm != "linear" && lto_algorithm != "random" && lto_algorithm != "sltf") {
@@ -311,6 +309,7 @@ struct RaoConfig final {
 
 /// Retrieval batching, disk delivery and access-order settings.
 struct RetrieveTransferConfig final {
+  std::vector<std::string> enabled_features;
   /// Maximum bytes requested per scheduler retrieve batch; either this or fetch_max_files limits the batch.
   uint64_t fetch_max_bytes = 100000000000;
   /// Maximum files requested per scheduler retrieve batch; either this or fetch_max_bytes limits the batch.
@@ -320,9 +319,9 @@ struct RetrieveTransferConfig final {
   /// Executable reporting free space at the retrieve destination; an empty path disables disk-space backpressure.
   std::string external_free_disk_space_script = "";
   /// Recommended access order policy for reducing tape positioning during retrieval.
-  RaoConfig rao;
+  std::optional<RaoConfig> rao = std::nullopt;
 
-  static constexpr std::size_t memberCount() { return 5; }
+  static constexpr std::size_t memberCount() { return 6; }
 
   /// Collect invalid retrieval batch limits, disk-drain timeout and RAO settings.
   cta::runtime::ValidationResult validate() const {
@@ -336,13 +335,15 @@ struct RetrieveTransferConfig final {
     if (drain_to_disk_timeout_secs == 0) {
       result.addError("drain_to_disk_timeout_secs", "must be greater than zero");
     }
-    result.merge("rao", rao.validate());
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"rao"}));
+    cta::runtime::validateFeature(result, enabled_features, "rao", rao);
     return result;
   }
 };
 
 /// Shared pipeline resources and direction-specific transfer settings.
 struct TransfersConfig final {
+  std::vector<std::string> enabled_features;
   /// Number of pipeline buffers; approximate buffer memory is buffer_count multiplied by buffer_size_bytes.
   uint32_t buffer_count = 5000;
   /// Size in bytes of each in-memory transfer buffer.
@@ -359,9 +360,9 @@ struct TransfersConfig final {
   /// Batching, disk delivery and access order policy for tape-to-disk transfers.
   RetrieveTransferConfig retrieve;
   /// Hardware encryption and key retrieval settings shared by archive and retrieve sessions.
-  EncryptionConfig encryption;
+  std::optional<EncryptionConfig> encryption = std::nullopt;
 
-  static constexpr std::size_t memberCount() { return 8; }
+  static constexpr std::size_t memberCount() { return 9; }
 
   /// Collect invalid pipeline resource limits, reporting intervals and transfer settings.
   cta::runtime::ValidationResult validate() const {
@@ -383,7 +384,8 @@ struct TransfersConfig final {
     }
     result.merge("archive", archive.validate());
     result.merge("retrieve", retrieve.validate());
-    result.merge("encryption", encryption.validate());
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"encryption"}));
+    cta::runtime::validateFeature(result, enabled_features, "encryption", encryption);
     return result;
   }
 };
@@ -396,12 +398,12 @@ struct TapedConfig final {
   cta::runtime::SchedulerConfig scheduler;
   /// Log severity, format and monitoring attributes.
   cta::runtime::LoggingConfig logging;
-  /// OpenTelemetry initialization settings; also requires experimental.telemetry_enabled.
-  cta::runtime::TelemetryConfig telemetry;
+  /// OpenTelemetry settings, present only when telemetry is enabled.
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
   /// Readiness and liveness endpoint settings.
-  cta::runtime::HealthServerConfig health_server;
-  /// Opt-in feature gates for experimental functionality.
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::HealthServerConfig> health_server = std::nullopt;
+  /// Names of enabled optional capabilities.
+  std::vector<std::string> enabled_features;
   /// XRootD authentication settings for connections to disk storage.
   cta::runtime::XRootDConfig xrootd;
 
@@ -422,9 +424,9 @@ struct TapedConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("health_server", health_server.validate());
-    result.merge("experimental", experimental.validate());
+    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
     result.merge("xrootd", xrootd.validate());
     result.merge("drive", drive.validate());
     result.merge("mounts", mounts.validate());

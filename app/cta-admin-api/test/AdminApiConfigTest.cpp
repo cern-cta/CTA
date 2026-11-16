@@ -6,7 +6,7 @@
 #include "AdminApiConfig.hpp"
 
 #include "common/exception/UserError.hpp"
-#include "runtime/config/parsing/TomlParser.hpp"
+#include "runtime/config/ConfigLoader.hpp"
 
 #include <gtest/gtest.h>
 #include <string>
@@ -26,7 +26,8 @@ cta::admin_api::AdminApiConfig makeValidConfig() {
 #endif
   config.grpc.tls.server_key_path = "/key.pem";
   config.grpc.tls.server_cert_path = "/cert.pem";
-  config.auth.kerberos = cta::grpc_server::KerberosAuthConfig {true, "/file.keytab", "svc/host@REALM"};
+  config.auth.kerberos = cta::grpc_server::KerberosAuthConfig {"/file.keytab", "svc/host@REALM"};
+  config.auth.enabled_methods = {"kerberos"};
   return config;
 }
 
@@ -45,7 +46,7 @@ TEST(AdminApiConfig, InstanceNameIsRequired) {
 TEST(AdminApiConfig, AuthRequiresJwtOrKerberos) {
   auto config = makeValidConfig();
   config.auth.kerberos.reset();
-  EXPECT_THROW(config.validate(), cta::exception::UserError);
+  EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(AdminApiConfig, ZeroCatalogueConnectionsIsRejected) {
@@ -84,4 +85,14 @@ TEST(AdminApiConfig, AdminModeRejectsNonString) {
   EXPECT_FALSE(cta::runtime::parsing::parseTable(config, tbl, false).ok());
 }
 
+}  // namespace unitTests
+
+namespace unitTests {
+TEST(AdminApiConfig, RepackLimitMustBeExplicitButZeroMeansAllFiles) {
+  using cta::admin_api::RepackConfig;
+  using cta::runtime::loadFromTomlString;
+  EXPECT_THROW(loadFromTomlString<RepackConfig>("", "repack.toml", true), cta::exception::UserError);
+  EXPECT_EQ(0u, loadFromTomlString<RepackConfig>("max_files_to_select = 0", "repack.toml", true).max_files_to_select);
+  EXPECT_EQ(42u, loadFromTomlString<RepackConfig>("max_files_to_select = 42", "repack.toml", true).max_files_to_select);
+}
 }  // namespace unitTests

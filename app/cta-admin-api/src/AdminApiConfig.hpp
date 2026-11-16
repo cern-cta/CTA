@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta::admin_api {
 
@@ -24,7 +25,7 @@ struct RepackConfig final {
   /// URL of the repack buffer
   std::optional<std::string> buffer_url = std::nullopt;
   /// Max number of files to expand during a repack
-  std::optional<uint64_t> max_files_to_select = std::nullopt;
+  uint64_t max_files_to_select = 0;
 
   static constexpr std::size_t memberCount() { return 2; }
 
@@ -32,9 +33,6 @@ struct RepackConfig final {
     cta::runtime::ValidationResult result;
     if (buffer_url.has_value() && buffer_url->empty()) {
       result.addError("buffer_url", "cannot be empty when provided");
-    }
-    if (max_files_to_select.has_value() && *max_files_to_select == 0) {
-      result.addError("max_files_to_select", "must be greater than zero");
     }
     return result;
   }
@@ -108,8 +106,8 @@ struct AdminApiConfig final {
   cta::service_resources::ServiceCatalogueConfig catalogue;
   cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
-  cta::runtime::TelemetryConfig telemetry;
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
+  std::vector<std::string> enabled_features;
 
   PoliciesConfig policies;
 
@@ -130,8 +128,8 @@ struct AdminApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("experimental", experimental.validate());
+    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry"}));
     result.merge("policies", policies.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());

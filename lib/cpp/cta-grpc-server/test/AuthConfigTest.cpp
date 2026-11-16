@@ -6,11 +6,14 @@
 #include "grpc-server/config/AuthConfig.hpp"
 
 #include "common/exception/UserError.hpp"
+#include "grpc-server/config/ListenerConfig.hpp"
 #include "runtime/config/ConfigLoader.hpp"
+#include "tests/TempFile.hpp"
 
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <limits>
 #include <string>
 
 namespace unitTests {
@@ -26,7 +29,6 @@ namespace {
 
 JwtAuthConfig makeValidJwtConfig() {
   JwtAuthConfig config;
-  config.enabled = true;
   config.jwks_uri = "file:///etc/cta/jwks.json";
   config.expected_issuer = "cta";
   config.expected_audience = "cta-admin";
@@ -77,13 +79,12 @@ TEST(JwtAuthConfig, PubKeyTimeoutAboveCacheRefreshIntervalIsValid) {
   EXPECT_TRUE(config.validate().ok());
 }
 
-TEST(JwtAuthConfig, PubKeyTimeoutIsNotValidatedWhenDisabled) {
+TEST(JwtAuthConfig, PubKeyTimeoutIsValidatedWheneverSectionIsPresent) {
   auto config = makeValidJwtConfig();
-  config.enabled = false;
   config.cache_refresh_interval = 600;
   config.pub_key_timeout = 1;
 
-  EXPECT_TRUE(config.validate().ok());
+  EXPECT_FALSE(config.validate().ok());
 }
 
 //------------------------------------------------------------------------------
@@ -94,7 +95,6 @@ namespace {
 
 KerberosAuthConfig makeEnabledKerberosConfig() {
   KerberosAuthConfig config;
-  config.enabled = true;
   config.keytab_path = "/etc/cta/file.keytab";
   config.service_principal = "svc/host@REALM";
   return config;
@@ -102,42 +102,13 @@ KerberosAuthConfig makeEnabledKerberosConfig() {
 
 MtlsAuthConfig makeEnabledMtlsConfig() {
   MtlsAuthConfig config;
-  config.enabled = true;
   return config;
 }
 
-/// Temporary TOML file, removed on destruction
-class TomlFile {
-public:
-  explicit TomlFile(const std::string& content)
-      : m_path(std::filesystem::temp_directory_path() / ("AuthConfigTest-" + std::to_string(s_counter++) + ".toml")) {
-    std::ofstream(m_path) << content;
-  }
-
-  ~TomlFile() { std::filesystem::remove(m_path); }
-
-  std::string path() const { return m_path.string(); }
-
-private:
-  std::filesystem::path m_path;
-  static inline int s_counter = 0;
-};
-
 /// A complete (strict-loadable) AdminAuthConfig document
 const std::string ADMIN_AUTH_TOML = R"toml(
-[jwt]
-enabled = false
-jwks_uri = ""
-cache_refresh_interval = 600
-pub_key_timeout = 0
-jwks_total_timeout = 60
-expected_issuer = ""
-expected_audience = ""
-min_generation = 0
-revoke_list_path = ""
-
+enabled_methods = ["kerberos"]
 [kerberos]
-enabled = true
 keytab_path = "/etc/cta/file.keytab"
 service_principal = "svc/host@REALM"
 )toml";
@@ -147,6 +118,7 @@ service_principal = "svc/host@REALM"
 TEST(AdminAuthConfig, KerberosOnlyIsValid) {
   AdminAuthConfig config;
   config.kerberos = makeEnabledKerberosConfig();
+  config.enabled_methods.push_back("kerberos");
 
   EXPECT_TRUE(config.validate().ok());
   EXPECT_EQ(config.getEnabledMethods(), (std::set<AuthMethod, std::less<>> {AuthMethod::KERBEROS}));
@@ -155,6 +127,7 @@ TEST(AdminAuthConfig, KerberosOnlyIsValid) {
 TEST(AdminAuthConfig, JwtOnlyIsValid) {
   AdminAuthConfig config;
   config.jwt = makeValidJwtConfig();
+  config.enabled_methods.push_back("jwt");
 
   EXPECT_TRUE(config.validate().ok());
   EXPECT_EQ(config.getEnabledMethods(), (std::set<AuthMethod, std::less<>> {AuthMethod::JWT}));
@@ -163,42 +136,47 @@ TEST(AdminAuthConfig, JwtOnlyIsValid) {
 TEST(AdminAuthConfig, JwtAndKerberosIsValid) {
   AdminAuthConfig config;
   config.jwt = makeValidJwtConfig();
+  config.enabled_methods.push_back("jwt");
   config.kerberos = makeEnabledKerberosConfig();
+  config.enabled_methods.push_back("kerberos");
 
   EXPECT_TRUE(config.validate().ok());
   EXPECT_EQ(config.getEnabledMethods().size(), 2U);
 }
 
-TEST(AdminAuthConfig, NoEnabledMethodThrows) {
+TEST(AdminAuthConfig, NoEnabledMethodIsRejected) {
   AdminAuthConfig config;
-  EXPECT_THROW(config.validate(), cta::exception::UserError);
+  EXPECT_FALSE(config.validate().ok());
 
   config.kerberos = makeEnabledKerberosConfig();
-  config.kerberos->enabled = false;
-  EXPECT_THROW(config.validate(), cta::exception::UserError);
+  config.enabled_methods.push_back("kerberos");
+  config.enabled_methods.clear();
+  EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(AdminAuthConfig, ValidatesEnabledMethods) {
   AdminAuthConfig config;
   config.kerberos = makeEnabledKerberosConfig();
+  config.enabled_methods.push_back("kerberos");
   config.kerberos->keytab_path.clear();
 
   EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(AdminAuthConfig, StrictLoadingAcceptsCompleteDocument) {
-  const TomlFile file(ADMIN_AUTH_TOML);
+  const TempFile file(ADMIN_AUTH_TOML, ".toml");
   EXPECT_NO_THROW(cta::runtime::loadFromToml<AdminAuthConfig>(file.path(), true));
 }
 
 TEST(AdminAuthConfig, StrictLoadingRejectsMtlsBlock) {
-  const TomlFile file(ADMIN_AUTH_TOML + "\n[mtls]\nenabled = true\n");
+  const TempFile file(ADMIN_AUTH_TOML + "\n[mtls]\naliases = {}\n", ".toml");
   EXPECT_ANY_THROW(cta::runtime::loadFromToml<AdminAuthConfig>(file.path(), true));
 }
 
 TEST(WfeAuthConfig, MtlsOnlyIsValid) {
   WfeAuthConfig config;
   config.mtls = makeEnabledMtlsConfig();
+  config.enabled_methods.push_back("mtls");
 
   EXPECT_TRUE(config.validate().ok());
   EXPECT_EQ(config.getEnabledMethods(), (std::set<AuthMethod, std::less<>> {AuthMethod::MTLS}));
@@ -207,56 +185,82 @@ TEST(WfeAuthConfig, MtlsOnlyIsValid) {
 TEST(WfeAuthConfig, JwtOnlyIsValid) {
   WfeAuthConfig config;
   config.jwt = makeValidJwtConfig();
+  config.enabled_methods.push_back("jwt");
 
   EXPECT_TRUE(config.validate().ok());
   EXPECT_EQ(config.getEnabledMethods(), (std::set<AuthMethod, std::less<>> {AuthMethod::JWT}));
 }
 
-TEST(WfeAuthConfig, NoEnabledMethodThrows) {
+TEST(WfeAuthConfig, NoEnabledMethodIsRejected) {
   WfeAuthConfig config;
-  EXPECT_THROW(config.validate(), cta::exception::UserError);
+  EXPECT_FALSE(config.validate().ok());
 }
 
-TEST(WfeAuthConfig, JwtAndMtlsTogetherThrows) {
+TEST(WfeAuthConfig, JwtAndMtlsTogetherIsRejected) {
   WfeAuthConfig config;
   config.jwt = makeValidJwtConfig();
+  config.enabled_methods.push_back("jwt");
   config.mtls = makeEnabledMtlsConfig();
+  config.enabled_methods.push_back("mtls");
 
-  EXPECT_THROW(config.validate(), cta::exception::UserError);
+  EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(WfeAuthConfig, MtlsRejectsEmptyAliasIdentity) {
   WfeAuthConfig config;
   config.mtls = makeEnabledMtlsConfig();
+  config.enabled_methods.push_back("mtls");
   config.mtls->aliases["identity"] = {};
 
   EXPECT_FALSE(config.validate().ok());
 }
 
 TEST(WfeAuthConfig, StrictLoadingRejectsKerberosBlock) {
-  const TomlFile file(R"toml(
-[jwt]
-enabled = false
-jwks_uri = ""
-cache_refresh_interval = 600
-pub_key_timeout = 0
-jwks_total_timeout = 60
-expected_issuer = ""
-expected_audience = ""
-min_generation = 0
-revoke_list_path = ""
-
+  const TempFile file(R"toml(
+enabled_methods = ["mtls"]
 [mtls]
-enabled = true
-
-[mtls.aliases]
-
+aliases = {}
 [kerberos]
-enabled = true
 keytab_path = "/etc/cta/file.keytab"
 service_principal = "svc/host@REALM"
-)toml");
+)toml",
+                      ".toml");
   EXPECT_ANY_THROW(cta::runtime::loadFromToml<WfeAuthConfig>(file.path(), true));
 }
 
+}  // namespace unitTests
+
+namespace unitTests {
+TEST(ListenerConfig, AutomaticThreadCountIsBoundedAndFixedCountsArePreserved) {
+  cta::grpc_server::ListenerConfig config;
+  EXPECT_EQ(8, config.resolveThreadCount(0));
+  EXPECT_EQ(32, config.resolveThreadCount(4));
+  EXPECT_EQ((std::numeric_limits<int>::max() / 8) * 8, config.resolveThreadCount(std::numeric_limits<unsigned>::max()));
+  config.number_of_threads = 3;
+  EXPECT_EQ(3, config.resolveThreadCount(4));
+  config.number_of_threads = -1;
+  EXPECT_FALSE(config.validate().ok());
+}
+
+TEST(AdminAuthConfig, StrictJwtAllowsAbsentRevocationPathButRequiresTimeouts) {
+  const std::string document = R"toml(
+enabled_methods = ["jwt"]
+[jwt]
+jwks_uri = "file:///jwks.json"
+expected_issuer = "cta"
+expected_audience = "admin"
+min_generation = 0
+cache_refresh_interval = 600
+pub_key_timeout = 0
+jwks_total_timeout = 60
+)toml";
+  const auto config = cta::runtime::loadFromTomlString<AdminAuthConfig>(document, "auth.toml", true);
+  EXPECT_FALSE(config.jwt->revoke_list_path);
+  auto missingTimeout = document;
+  missingTimeout.erase(missingTimeout.find("jwks_total_timeout = 60"));
+  EXPECT_THROW(cta::runtime::loadFromTomlString<AdminAuthConfig>(missingTimeout, "auth.toml", true),
+               cta::exception::UserError);
+  EXPECT_THROW(cta::runtime::loadFromTomlString<AdminAuthConfig>(document + "revoke_list_path = ''", "auth.toml", true),
+               cta::exception::UserError);
+}
 }  // namespace unitTests

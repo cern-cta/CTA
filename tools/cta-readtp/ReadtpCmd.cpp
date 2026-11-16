@@ -117,8 +117,9 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
 
   // Configure encryption
-  const std::string externalEncryptionKeyScript = tapedConfig.transfers.encryption.external_key_script;
-  const bool useEncryption = tapedConfig.transfers.encryption.enabled;
+  const std::string externalEncryptionKeyScript =
+    (tapedConfig.transfers.encryption ? tapedConfig.transfers.encryption->external_key_script : std::string {});
+  const bool useEncryption = tapedConfig.transfers.encryption.has_value();
   m_encryptionControl =
     std::make_unique<cta::tape::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
 

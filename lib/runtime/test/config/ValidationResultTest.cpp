@@ -30,3 +30,11 @@ TEST(ValidationResult, MergesPrefixesAndSortsErrors) {
 }
 
 }  // namespace unitTests
+
+TEST(ValidationResult, EmptyPrefixPreservesFieldPath) {
+  cta::runtime::ValidationResult child;
+  child.addError("enabled_features", "contains a duplicate");
+  cta::runtime::ValidationResult parent;
+  parent.merge("", child);
+  EXPECT_EQ(parent.what(), "1) Field 'enabled_features' contains a duplicate.\n");
+}

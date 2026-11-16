@@ -42,9 +42,10 @@ the single bulk `INSERT` and releases every request in the batch (including itse
 A request that fails its own catalogue lookup never joins a batch at all — it fails immediately, in
 isolation, exactly as it would under the file-by-file scheme.
 
-**Configuration** (`cta-workflow-api.toml`, pgsched only). The feature is experimental and is enabled
-by `opportunistic_batching_enabled` (default `false`) in the `[experimental]` section. It is tuned by
-the `[opportunistic_batching]` section:
+**Configuration** (`cta-workflow-api.toml`, pgsched only).
+Enable this experimental feature by including `"opportunistic_batching"` in the root `enabled_features` list and supplying `[opportunistic_batching]`.
+Omit the section when disabled.
+Both settings below are required in strict mode; the defaults apply only in non-strict mode:
 
 | Key | Default | Meaning |
 |---|---|---|

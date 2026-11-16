@@ -9,6 +9,14 @@
 
 
 # Identifies the tape drive controlled by this cta-taped process.
+
+# Defaults documented below apply only in non-strict mode.
+# Strict mode requires all applicable settings except genuinely optional values.
+# Optional sections must match this list; unused sections are omitted.
+enabled_features = []
+# To enable telemetry, add "telemetry" above and supply [telemetry] with config_file and on_init_failure.
+# Services supporting health checks can similarly enable "health_server" and configure its transport.
+
 [drive]
   # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
   # This value is required and has no useful default.
@@ -162,6 +170,7 @@
 
 # Controls resources and inactivity limits shared by archive and retrieve data-transfer sessions.
 [transfers]
+  enabled_features = ["encryption"]
   # Number of in-memory buffers allocated to the drive's data-transfer pipeline. Total buffer memory is
   # approximately buffer_count multiplied by buffer_size_bytes. Increasing it can smooth I/O but consumes
   # more RAM. 
@@ -239,6 +248,7 @@
 
   # Batch fetching, disk-space checks, and disk draining for tape-to-disk retrieve sessions.
   [transfers.retrieve]
+  enabled_features = ["rao"]
     # Maximum total bytes requested from the scheduler in one retrieve batch. The batch is limited when
     # either this value or fetch_max_files is reached. 
     # If omitted, 100000000000 bytes (100 GB) is used.
@@ -264,7 +274,6 @@
       # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
       # When hardware RAO is available, it is preferred over software RAO. 
       # If omitted, true is used.
-      enabled = true
 
       # Software RAO algorithm for LTO-8 drives. Valid values are 
       # - "random": Retrieve files in random order (ie. FIFO)
@@ -281,7 +290,6 @@
     # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
     # This does not encrypt tapes lacking valid key configuration. 
     # If omitted, true is used.
-    enabled = true
 
     # Path to the operator-provided executable used to obtain encryption keys. It must be executable by
     # cta-taped and return the protocol expected by EncryptionControl. It is required when encryption is used.
@@ -335,46 +343,6 @@
     sched_backend = "cephUser"
 
 
-# Note that telemetry is experimental and disabled by default.
-# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
-[telemetry]
-  # Path to the declarative config file to initialise the OpenTelemetry SDK.
-  # If omitted or an empty string, telemetry will be disabled.
-  config_file = "/etc/cta/cta-otel.yaml"
-  # Controls how the application reacts if telemetry initialization fails.
-  # Possible values:
-  #   "warn": log a warning and continue startup without telemetry.
-  #   "fatal": treat the failure as an error and abort startup.
-  # If omitted, "warn" is used
-  on_init_failure = "warn"
-
-
-# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
-# - host:port/health/ready
-# - host:port/health/live
-# This allows for configuring readiness and liveness probes if so desired.
-[health_server]
-  # Whether to enable the health server or not.
-  # If omitted, false is used.
-  enabled = false
-  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
-  # Set to 0.0.0.0 to accept connections from anywhere.
-  # When use_unix_domain_socket is enabled, this host value will be unused.
-  # If omitted, 127.0.0.1 is used.
-  host = "127.0.0.1"
-  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
-  # When use_unix_domain_socket is enabled, this port value will be unused.
-  # If omitted, 8080 is used.
-  port = 8080
-  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
-  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
-  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
-  # If omitted, false is used.
-  use_unix_domain_socket = false
-
-
-# Makes XRootD environment variables explicit.
-# XRootD is what is used to connect to the disk instance.
 [xrootd]
   # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
   # Valid values depend on the installed XRootD security plugins. 
@@ -384,10 +352,3 @@
   # be readable by cta-taped when the "sss" protocol is selected.
   # This setting is required for SSS.
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
-
-
-[experimental]
-  # Enables experimental OpenTelemetry support configured by [telemetry]. Experimental features may
-  # change incompatibly and should be evaluated before production use.
-  # If omitted, false is used.
-  telemetry_enabled = false

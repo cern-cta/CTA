@@ -23,6 +23,10 @@ cta-admin-api --- CTA admin gRPC API server
 The configuration is read from a TOML file (by default `/etc/cta/cta-admin-api.toml`). The configuration is
 validated at start-up; use `--config-check` to validate it without starting the server. Unknown keys are only reported
 with `--config-strict`.
+Select authentication methods using `auth.enabled_methods` and supply only their configuration sections.
+Enable telemetry through the root `enabled_features` list; omit its section when disabled.
+Strict mode requires settings with defaults, but permits genuinely optional values to be absent.
+Use `grpc.number_of_threads = 0` for automatic CPU-based sizing.
 
 Authentication uses JSON Web Tokens (`[auth.jwt]`) and/or Kerberos (`[auth.kerberos]`). At least one of them must be
 enabled.
@@ -33,7 +37,7 @@ enabled.
 : Path to the configuration file. Defaults to `/etc/cta/cta-admin-api.toml`.
 
 **--config-strict**
-: Treat unknown keys, missing keys and type mismatches in the configuration file as errors.
+: Treat unknown keys, missing required keys and type mismatches in the configuration file as errors.
 
 **--config-check**
 : Validate the configuration, then exit.

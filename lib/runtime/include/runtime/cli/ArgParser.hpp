@@ -86,7 +86,7 @@ public:
     withBoolArg(&T::configStrict,
                 "config-strict",
                 std::nullopt,
-                "Treat unknown keys, missing keys, and type mismatches in the config file as errors.");
+                "Reject unknown keys, missing required keys, and type mismatches in the config file.");
 
     withStringArg(&T::configFilePath,
                   "config",

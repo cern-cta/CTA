@@ -943,8 +943,8 @@ public:
     config.archive.fetch_max_bytes = 1024;
     config.retrieve.fetch_max_files = 1;
     config.retrieve.fetch_max_bytes = 1024;
-    config.retrieve.rao.enabled = false;
-    config.encryption.enabled = false;
+    config.retrieve.rao.reset();
+    config.encryption.reset();
     config.no_block_move_timeout_secs = 600;
     cta::mediachanger::RmcProxy proxy;
     cta::mediachanger::MediaChangerFacade changer(proxy, logger);
@@ -1220,9 +1220,8 @@ TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessfu
         config.archive.fetch_max_bytes = 1024;
         config.archive.flush_max_files = 1;
         config.archive.flush_max_bytes = 1024;
-        config.encryption.enabled = false;
         // Keep this transfer test independent of external key scripts and catalogue encryption settings.
-        config.encryption.external_key_script.clear();
+        config.encryption.reset();
         config.no_block_move_timeout_secs = 600;
         TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
 
@@ -1988,9 +1987,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -1999,7 +1996,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
   dataTransferConf.retrieve.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -2276,9 +2273,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumRecall) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -2287,7 +2282,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumRecall) {
   dataTransferConf.retrieve.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -2576,9 +2571,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongRecall) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -2587,7 +2580,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongRecall) {
   dataTransferConf.retrieve.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -2819,9 +2812,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecall) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -2829,9 +2820,9 @@ TEST_P(TapeSessionTest, TapeSessionRAORecall) {
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
-  dataTransferConf.retrieve.rao.enabled = true;
+  dataTransferConf.retrieve.rao.emplace();
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -3068,9 +3059,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallLinearAlgorithm) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -3078,10 +3067,10 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallLinearAlgorithm) {
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
-  dataTransferConf.retrieve.rao.enabled = true;
-  dataTransferConf.retrieve.rao.lto_algorithm = "linear";
+  dataTransferConf.retrieve.rao.emplace();
+  dataTransferConf.retrieve.rao->lto_algorithm = "linear";
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -3318,9 +3307,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -3328,10 +3315,10 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
-  dataTransferConf.retrieve.rao.enabled = true;
+  dataTransferConf.retrieve.rao.emplace();
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.retrieve.rao.lto_algorithm = "DOES_NOT_EXIST";
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.retrieve.rao->lto_algorithm = "DOES_NOT_EXIST";
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
 
   cta::log::DummyLogger dummyLog("dummy", "dummy");
@@ -3573,9 +3560,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallSLTFRAOAlgorithm) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -3583,10 +3568,10 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallSLTFRAOAlgorithm) {
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
-  dataTransferConf.retrieve.rao.enabled = true;
+  dataTransferConf.retrieve.rao.emplace();
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.retrieve.rao.lto_algorithm = "sltf";
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.retrieve.rao->lto_algorithm = "sltf";
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -3819,15 +3804,13 @@ TEST_P(TapeSessionTest, TapeSessionNoSuchDrive) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024;
   tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_count = 10;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -4008,9 +3991,7 @@ TEST_P(TapeSessionTest, TapeSessionFailtoMount) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -4019,7 +4000,7 @@ TEST_P(TapeSessionTest, TapeSessionFailtoMount) {
   dataTransferConf.retrieve.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 3;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -4204,9 +4185,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -4217,7 +4196,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
   dataTransferConf.archive.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -4434,9 +4413,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -4447,7 +4424,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
   dataTransferConf.archive.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -4660,9 +4637,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumMigration) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -4673,7 +4648,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumMigration) {
   dataTransferConf.archive.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -4888,9 +4863,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFilesizeInMiddleOfBatchMigration) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -4901,7 +4874,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFilesizeInMiddleOfBatchMigration) {
   dataTransferConf.archive.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -5109,9 +5082,7 @@ TEST_P(TapeSessionTest, TapeSessionMissingFilesMigration) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -5124,7 +5095,7 @@ TEST_P(TapeSessionTest, TapeSessionMissingFilesMigration) {
   dataTransferConf.archive.flush_max_bytes = 9999999;
   dataTransferConf.archive.flush_max_files = 9999999;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -5337,9 +5308,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullMigration) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -5350,7 +5319,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullMigration) {
   dataTransferConf.archive.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -5585,9 +5554,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullOnFlushMigration) {
   dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
   dataTransferConf.retrieve.fetch_max_bytes = 0;
   dataTransferConf.retrieve.fetch_max_files = 0;
-  dataTransferConf.retrieve.rao.enabled = false;
-  dataTransferConf.retrieve.rao.lto_algorithm.clear();
-  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.retrieve.rao.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   uint32_t tapeLoadTimeoutSecs = 300;
   dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
@@ -5598,7 +5565,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullOnFlushMigration) {
   dataTransferConf.archive.fetch_max_files = 1000;
   dataTransferConf.disk_io_threads = 1;
   tapeLoadTimeoutSecs = 300;
-  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.encryption.reset();
   dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;

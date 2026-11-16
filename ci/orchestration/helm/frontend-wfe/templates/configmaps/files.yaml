@@ -4,6 +4,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $batchingEnabled := and (eq $schedulerConfig.backend "postgres") .Values.conf.schedulerdb.opportunisticBatching.enabled -}}
 {{- $name := include "ctafrontend.fullname" . }}
 {{- $jwtRevokeListPath := include "ctafrontend.jwtRevokeList" . -}}
 
@@ -15,6 +16,7 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
   cta-workflow-api.toml: |-
+    enabled_features = ["telemetry"{{ if $batchingEnabled }}, "opportunistic_batching"{{ end }}]
     instance_name = {{ .Release.Namespace | quote }}
 
 
@@ -34,9 +36,11 @@ data:
       number_of_connections = {{ .Values.conf.schedulerdb.numberOfConnections | int }}
 
 
+      {{- if $batchingEnabled }}
     [opportunistic_batching]
       window_ms = {{ .Values.conf.schedulerdb.opportunisticBatching.windowMs | int }}
       max_batch_size = {{ .Values.conf.schedulerdb.opportunisticBatching.maxBatchSize | int }}
+      {{- end }}
       {{- else }}
 
 
@@ -62,13 +66,9 @@ data:
     [logging]
       level = {{ .Values.conf.logger.logLevel | quote }}
       format = {{ .Values.conf.logger.logFormat | quote }}
+      attributes = {}
 
 
-    [experimental]
-      telemetry_enabled = true
-      {{- if eq $schedulerConfig.backend "postgres" }}
-      opportunistic_batching_enabled = {{ .Values.conf.schedulerdb.opportunisticBatching.enabled }}
-      {{- end }}
 
 
     [telemetry]
@@ -88,18 +88,25 @@ data:
       {{- end }}
 
 
-    {{ if eq .Values.conf.auth.method "jwt" -}}
+    [auth]
+      enabled_methods = [{{ .Values.conf.auth.method | quote }}]
+
+    {{- if eq .Values.conf.auth.method "jwt" }}
     [auth.jwt]
-      enabled = true
+
       jwks_uri = "file:///etc/cta/jwks.json"
+      cache_refresh_interval = 600
+      pub_key_timeout = 0
+      jwks_total_timeout = 60
+      min_generation = 0
       expected_issuer = {{ .Values.conf.auth.config.jwt.expectedIssuer | quote }}
       expected_audience = {{ .Values.conf.auth.config.jwt.expectedAudience | quote }}
       revoke_list_path = {{ $jwtRevokeListPath | quote }}
     {{- end }}
 
-    {{- if eq .Values.conf.auth.method "mtls" -}}
+    {{- if eq .Values.conf.auth.method "mtls" }}
     [auth.mtls]
-      enabled = true
+
 
       [auth.mtls.aliases]
       {{- range $instance, $hosts := .Values.conf.auth.config.mtls.aliases }}

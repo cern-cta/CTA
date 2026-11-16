@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "FeatureConfig.hpp"
 #include "ValidationResult.hpp"
 
 #include <algorithm>
@@ -25,21 +26,6 @@
  * applications that use that struct to support said option.
  */
 namespace cta::runtime {
-
-/**
- * @brief Experimental config that may be common to all apps/tools.
- * Must follow the naming convention: `<feature>_enabled`.
- * Experimental config options relevant only to a specific app/tool MUST NOT be added here.
- * Instead, extend this struct in the relevant app/tool.
- *
- */
-struct ExperimentalConfig final {
-  bool telemetry_enabled = false;
-
-  static constexpr std::size_t memberCount() { return 1; }
-
-  ValidationResult validate() const { return ValidationResult::OK; }
-};
 
 /// @brief Marker for a config section without a `client` sub-table.
 struct NoClientConfig final {
@@ -160,6 +146,9 @@ struct TelemetryConfig final {
 
   ValidationResult validate() const {
     ValidationResult result;
+    if (config_file.empty()) {
+      result.addError("config_file", "cannot be empty");
+    }
     if (on_init_failure != "fatal" && on_init_failure != "warn") {
       result.addError("on_init_failure",
                       "has unsupported value '" + on_init_failure + "'; must be one of [fatal, warn]");
@@ -171,32 +160,39 @@ struct TelemetryConfig final {
 /**
  * @brief HealthServer config. For applications only.
  */
-struct HealthServerConfig final {
-  bool enabled = false;
-  bool use_unix_domain_socket = false;
-  std::optional<std::string> host = "";
-  std::optional<uint16_t> port = 8080;
+struct HealthTcpConfig final {
+  std::string host = "127.0.0.1";
+  uint16_t port = 8080;
 
-  static constexpr std::size_t memberCount() { return 4; }
+  static constexpr std::size_t memberCount() { return 2; }
 
   ValidationResult validate() const {
     ValidationResult result;
-    if (!enabled) {
-      return result;
+    if (host.empty()) {
+      result.addError("host", "cannot be empty");
     }
-    if (use_unix_domain_socket) {
-      return result;
-    }
-    if (!host.has_value()) {
-      result.addError("host", "must be provided for TCP");
-    } else if (host->empty()) {
-      result.addError("host", "cannot be empty for TCP");
-    }
-    if (!port.has_value()) {
-      result.addError("port", "must be provided for TCP");
-    } else if (*port == 0) {
+    if (port == 0) {
       result.addError("port", "must be greater than zero");
     }
+    return result;
+  }
+};
+
+struct HealthServerConfig final {
+  std::string transport = "tcp";
+  std::optional<HealthTcpConfig> tcp = std::nullopt;
+
+  static constexpr std::size_t memberCount() { return 2; }
+
+  ValidationResult validate() const {
+    ValidationResult result;
+    if (transport != "tcp" && transport != "unix") {
+      result.addError("transport", "must be one of [tcp, unix]");
+    }
+    validateFeature(result,
+                    transport == "tcp" ? std::vector<std::string> {"tcp"} : std::vector<std::string> {},
+                    "tcp",
+                    tcp);
     return result;
   }
 };

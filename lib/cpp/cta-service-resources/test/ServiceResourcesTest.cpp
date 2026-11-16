@@ -44,3 +44,19 @@ TEST(ServiceResourcesTest, throwsWhenCatalogueConfigFileIsMissing) {
 }
 
 }  // namespace unitTests
+
+#ifndef CTA_PGSCHED
+namespace unitTests {
+TEST(ServiceResourcesTest, ZeroStackSizeDelegatesToSystemAndPositiveSizeIsPreserved) {
+  cta::service_resources::ServiceCatalogueConfig catalogue;
+  cta::service_resources::ServiceSchedulerConfig scheduler;
+  scheduler.backend_name = "test";
+  scheduler.client.number_of_threads = 2;
+  scheduler.client.thread_stack_size_mb = 0;
+  EXPECT_TRUE(scheduler.validate().ok());
+  EXPECT_FALSE(cta::service_resources::makeConnectionOptions(catalogue, scheduler).osThreadStackSizeMb);
+  scheduler.client.thread_stack_size_mb = 4;
+  EXPECT_EQ(4u, cta::service_resources::makeConnectionOptions(catalogue, scheduler).osThreadStackSizeMb);
+}
+}  // namespace unitTests
+#endif

@@ -37,7 +37,7 @@ Defaults to */etc/cta/cta-rmcd.toml* if not provided.
 
 --config-strict
 
-:   Treat unknown keys, missing keys, and type mismatches in the configuration file as errors.
+:   Treat unknown keys, missing required keys, and type mismatches in the configuration file as errors.
 
 --config-check
 
@@ -62,6 +62,14 @@ The **cta-rmcd** daemon reads its configuration from a TOML file
 (default: */etc/cta/cta-rmcd.toml*).
 
 Each section is described below.
+
+## Feature selection
+
+The root **enabled_features** list selects `telemetry` and `health_server`.
+Use `[]` to disable both, and omit their sections.
+Unknown names, duplicate names and sections for disabled features are rejected.
+Strict mode requires every applicable setting, even when a default is documented.
+Defaults apply only in non-strict mode.
 
 ## [media_changer]
 
@@ -108,7 +116,7 @@ format *(default: json)*
 config_file
 
 :   Path to the OpenTelemetry SDK declarative configuration file.
-If omitted or empty, telemetry is disabled.
+Required and nonempty when telemetry is enabled.
 
 on_init_failure *(default: warn)*
 
@@ -117,38 +125,33 @@ Possible values:
 - warn
 - fatal
 
-Telemetry is experimental and disabled by default unless explicitly enabled under **[experimental]**.
+Enable experimental telemetry by including `"telemetry"` in the root **enabled_features** list.
+Omit **[telemetry]** when disabled.
 
 ## [health_server]
 
-enabled *(default: false)*
+Include `"health_server"` in the root **enabled_features** list to enable health endpoints.
+Omit this section and its children when disabled.
 
-:   Enable or disable the health server.
+transport *(default: tcp)*
+
+:   Select `tcp` or `unix`.
+For `unix`, omit **[health_server.tcp]** and supply **--runtime-dir**; the socket is created at *<runtime-dir>/health.sock*.
+
+## [health_server.tcp]
+
+This section is required for TCP and must be absent for Unix sockets.
 
 host *(default: 127.0.0.1)*
 
-:   Interface to bind to (ignored if using a Unix domain socket).
+:   Interface to bind to.
 
 port *(default: 8080)*
 
-:   TCP port to bind to (ignored if using a Unix domain socket).
+:   TCP port to bind to.
 
-use_unix_domain_socket *(default: false)*
+The health server exposes */health/ready* and */health/live*.
 
-:   Expose the health server over a Unix domain socket instead of TCP.
-When enabled, **--runtime-dir** must be provided.
-The socket file will be created at *<runtime-dir>/health.sock*.
-
-The health server exposes:
-
-* /health/ready
-* /health/live
-
-## [experimental]
-
-telemetry_enabled *(default: false)*
-
-:   Enables experimental telemetry support.
 
 # FILES
 

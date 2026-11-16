@@ -45,7 +45,7 @@ Defaults to */etc/cta/cta-maintd.toml* if not provided.
 
 --config-strict
 
-:   Treat unknown keys, missing keys, and type mismatches in the configuration file as errors.
+:   Treat unknown keys, missing required keys, and type mismatches in the configuration file as errors.
 
 --config-check
 
@@ -113,6 +113,14 @@ The **cta-maintd** daemon reads its configuration from a TOML file
 
 Each section is described below.
 
+## Feature selection
+
+The root **enabled_features** list selects `telemetry` and `health_server`.
+Use `[]` to disable both, and omit their sections.
+Unknown names, duplicate names and sections for disabled features are rejected.
+Strict mode requires every applicable setting, even when a default is documented.
+Defaults apply only in non-strict mode.
+
 ## [catalogue]
 
 config_file
@@ -160,7 +168,7 @@ format *(default: json)*
 config_file
 
 :   Path to the OpenTelemetry SDK declarative configuration file.
-If omitted or empty, telemetry is disabled.
+Required and nonempty when telemetry is enabled.
 
 on_init_failure *(default: warn)*
 
@@ -169,32 +177,32 @@ Possible values:
 - warn
 - fatal
 
-Telemetry is experimental and disabled by default unless explicitly enabled under **[experimental]**.
+Enable experimental telemetry by including `"telemetry"` in the root **enabled_features** list.
+Omit **[telemetry]** when disabled.
 
 ## [health_server]
 
-enabled *(default: false)*
+Include `"health_server"` in the root **enabled_features** list to enable health endpoints.
+Omit this section and its children when disabled.
 
-:   Enable or disable the health server.
+transport *(default: tcp)*
+
+:   Select `tcp` or `unix`.
+For `unix`, omit **[health_server.tcp]** and supply **--runtime-dir**; the socket is created at *<runtime-dir>/health.sock*.
+
+## [health_server.tcp]
+
+This section is required for TCP and must be absent for Unix sockets.
 
 host *(default: 127.0.0.1)*
 
-:   Interface to bind to (ignored if using a Unix domain socket).
+:   Interface to bind to.
 
 port *(default: 8080)*
 
-:   TCP port to bind to (ignored if using a Unix domain socket).
+:   TCP port to bind to.
 
-use_unix_domain_socket *(default: false)*
-
-:   Expose the health server over a Unix domain socket instead of TCP.
-When enabled, **--runtime-dir** must be provided.
-The socket file will be created at *<runtime-dir>/health.sock*.
-
-The health server exposes:
-
-* /health/ready
-* /health/live
+The health server exposes */health/ready* and */health/live*.
 
 ## [xrootd]
 
@@ -217,20 +225,20 @@ max_cycle_duration_secs *(default: 900)*
 :   Maximum allowed duration of a full cycle.
 If exceeded, the cycle is not interrupted, but the process will no longer be considered alive by the health server.
 
-Each routine can be individually configured and enabled/disabled, for example:
+Select routines in **routines.enabled_features** and provide settings only for selected routines.
+For example:
 
-* disk_report_archive = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
-* disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
-* repack_expand = { enabled = true, max_to_expand = 2 }
-* repack_report = { enabled = true, soft_timeout_secs = 30 }
-* queue_cleanup = { enabled = true, batch_size = 500 }
-* garbage_collect = { enabled = true }
+```toml
+[routines]
+enabled_features = ["disk_report_archive", "repack_expand"]
+cycle_sleep_interval_secs = 10
+max_cycle_duration_secs = 900
+disk_report_archive = { batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 0 }
+repack_expand = { max_to_expand = 2 }
+```
 
-## [experimental]
-
-telemetry_enabled *(default: false)*
-
-:   Enables experimental telemetry support.
+The objectstore `garbage_collect` routine has no settings: enable it by name without a section.
+Use the example for the selected scheduler backend to find supported routines.
 
 # FILES
 

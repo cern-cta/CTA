@@ -8,7 +8,9 @@
 #include "runtime/config/CommonConfig.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <vector>
 
 namespace cta::rmcd {
 
@@ -46,9 +48,9 @@ struct RmcServerConfig final {
 
 struct RmcdConfig final {
   cta::runtime::LoggingConfig logging;
-  cta::runtime::TelemetryConfig telemetry;
-  cta::runtime::HealthServerConfig health_server;
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
+  std::optional<cta::runtime::HealthServerConfig> health_server = std::nullopt;
+  std::vector<std::string> enabled_features;
   MediaChangerConfig media_changer;
   RmcServerConfig rmc_server;
 
@@ -57,9 +59,9 @@ struct RmcdConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("health_server", health_server.validate());
-    result.merge("experimental", experimental.validate());
+    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
+    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
     result.merge("media_changer", media_changer.validate());
     result.merge("rmc_server", rmc_server.validate());
     return result;
