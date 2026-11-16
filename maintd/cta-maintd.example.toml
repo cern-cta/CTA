@@ -3,105 +3,22 @@
 
 # CTA Maintd Service Configuration
 
-# Copy this example and replace deployment-specific names, endpoints and credential paths.
-# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# This example enables all compatible features, including experimental ones.
-# To disable a feature, update its selector and remove its section.
+# Recommended starting configuration. Replace deployment-specific values before use.
+# Defaults apply only in non-strict mode. With --config-strict, provide every setting
+# in enabled sections unless marked optional.
 
-# Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
-# Here [A -> B -> C] is a single cycle of routine execution.
-# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
-# Due to this operating model, it is not possible to define different sleep intervals per routine.
-# If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
-# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine
-# sleep interval.
-
-# Optional features to enable; include the matching sections below.
+# Optional features to enable. Remove a feature and its section to disable it.
 # Type: array of strings; default: [].
 # Allowed: "health_server" (no duplicates).
 enabled_features = ["health_server"]
 
-# Experimental features to enable; their interfaces may change or be removed.
+# Experimental features to enable. These may change or be removed in future releases.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
 enabled_experimental_features = ["telemetry"]
 
-# All supported routines are enabled by default; an empty list performs no maintenance work.
-[routines]
-  # Routines to enable; include matching sections below. "garbage_collect" has no settings section.
-  # Type: array of strings; default: all routines listed below.
-  # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "queue_cleanup",
-  # "garbage_collect" (no duplicates).
-  enabled_routines = [
-    "disk_report_archive",
-    "disk_report_retrieve",
-    "repack_expand",
-    "repack_report",
-    "garbage_collect",
-    "queue_cleanup",
-  ]
-
-  # Sleep duration in seconds between cycles of routine executions.
-  # Type: integer; default: 10.
-  cycle_sleep_interval_secs = 10
-
-  # The maximum duration in seconds a single cycle of routine execution is allowed to take.
-  # If a cycle takes longer than this value, it will not be interrupted.
-  # Instead, the process will no longer be considered alive by the health server.
-  # Type: integer; default: 900.
-  max_cycle_duration_secs = 900
-
-  # Routine that reports archive transfer success/failures to the disk system.
-  [routines.disk_report_archive]
-    # Maximum number of entries processed per batch.
-    # Type: integer; default: 500.
-    batch_size = 500
-
-    # Soft time limit in seconds for this routine; checked between batches.
-    # Type: integer; default: 30.
-    soft_timeout_secs = 30
-
-    # Pause in milliseconds between iterations; 0 means no pause.
-    # Type: integer; default: 0.
-    iter_sleep_ms = 0
-
-  # Routine that reports retrieve transfer success/failures to the disk system.
-  [routines.disk_report_retrieve]
-    # Maximum number of entries processed per batch.
-    # Type: integer; default: 500.
-    batch_size = 500
-
-    # Soft time limit in seconds for this routine; checked between batches.
-    # Type: integer; default: 30.
-    soft_timeout_secs = 30
-
-    # Pause in milliseconds between iterations; 0 means no pause.
-    # Type: integer; default: 0.
-    iter_sleep_ms = 0
-
-  # Routine that expands repack requests.
-  [routines.repack_expand]
-    # Maximum number of repack requests expanded per cycle.
-    # Type: integer; default: 2.
-    max_to_expand = 2
-
-  # Routine that handles the reporting of the requests created by repack requests.
-  [routines.repack_report]
-    # Soft time limit in seconds for this routine; checked between batches.
-    # Type: integer; default: 900.
-    soft_timeout_secs = 900
-
-  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests
-  # to other queues.
-  [routines.queue_cleanup]
-    # Maximum number of entries processed per batch.
-    # Type: integer; default: 500.
-    batch_size = 500
-
-
 [catalogue]
-  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
-  # specifies how to connect to the Catalogue DB.
+  # Path to the file containing the catalogue database connection string.
   # Examples:
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
@@ -110,13 +27,11 @@ enabled_experimental_features = ["telemetry"]
   config_file = "/etc/cta/cta-catalogue.conf"
 
 [scheduler]
-  # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser".
+  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
   # Type: string; default: none; required.
   backend_name = "cephUser"
 
-  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
-  # specifies how to connect to the scheduler backend.
+  # Path to the file containing the scheduler backend connection string.
   # Examples:
   #   rados://user@pool:namespace
   #   file:///path/to/objectstore
@@ -135,7 +50,7 @@ enabled_experimental_features = ["telemetry"]
   retrieve_queue_cache_max_age_secs = 10
 
 [logging]
-  # Minimum severity written to the log. More verbose levels increase log volume.
+  # Lowest severity to log. DEBUG produces the most output.
   # Type: string; default: "INFO".
   # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
   level = "INFO"
@@ -145,33 +60,26 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "json", "kv".
   format = "json"
 
-  # Additional string key-value pairs included in every log line.
+  # Custom string labels added to every log line for filtering and monitoring.
+  # Keys are freely chosen and optional; they do not change service behaviour.
   # Type: table of strings; default: {}.
-  attributes = {}
+  [logging.attributes]
+    # CTA catalogue instance served by this process, for example "production" or "preproduction".
+    # Use the same label across services sharing that catalogue; omit it if unused.
+    instance = "production"
 
-[xrootd]
-  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins.
-  # Type: string; default: "sss".
-  security_protocol = "sss"
-
-  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
-  # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
-  # Type: string; default: "etc/cta/sss.keytab".
-  sss_keytab_path = "/etc/cta/cta.sss.keytab"
-
-# Telemetry (experimental)
+# Telemetry (experimental). Recommended for monitoring; enabled in this example.
 [telemetry]
   # Path to the OpenTelemetry SDK declarative configuration file.
   # Type: string; default: none; required.
   config_file = "/etc/cta/cta-otel.yaml"
 
-  # Behaviour when telemetry initialization fails.
+  # What to do if telemetry cannot start.
   # Type: string; default: "warn".
   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
   on_init_failure = "warn"
 
-# Health endpoints
+# Health endpoints. Recommended for monitoring; enabled in this example.
 [health_server]
   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
   # For Unix sockets, remove the entire [health_server.tcp] section.
@@ -187,3 +95,87 @@ enabled_experimental_features = ["telemetry"]
     # TCP port for the health endpoints.
     # Type: integer; default: 8080.
     port = 8080
+
+[xrootd]
+  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
+  # Valid values depend on the installed XRootD security plugins.
+  # Type: string; default: "sss".
+  security_protocol = "sss"
+
+  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
+  # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
+  # Type: string; default: "etc/cta/sss.keytab".
+  sss_keytab_path = "/etc/cta/cta.sss.keytab"
+
+# Run each enabled routine in turn, then sleep before starting the next cycle.
+# To use different schedules, run separate maintd processes with different routine selections.
+# All routines are enabled by default; an empty list disables maintenance.
+[routines]
+  # Routines to enable; include matching sections below. "garbage_collect" has no settings section.
+  # Type: array of strings; default: all routines listed below.
+  # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "queue_cleanup",
+  # "garbage_collect" (no duplicates).
+  enabled_routines = [
+    "disk_report_archive",
+    "disk_report_retrieve",
+    "repack_expand",
+    "repack_report",
+    "garbage_collect",
+    "queue_cleanup",
+  ]
+
+  # Seconds to wait after each cycle of maintenance routines.
+  # Type: integer; default: 10.
+  cycle_sleep_interval_secs = 10
+
+  # Maximum cycle duration in seconds before the health endpoint reports the process as unhealthy.
+  # A slow cycle continues running; this timeout does not interrupt it.
+  # Type: integer; default: 900.
+  max_cycle_duration_secs = 900
+
+  # Report archive successes and failures to the disk system.
+  [routines.disk_report_archive]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
+
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 30.
+    soft_timeout_secs = 30
+
+    # Pause in milliseconds between iterations; 0 means no pause.
+    # Type: integer; default: 0.
+    iter_sleep_ms = 0
+
+  # Report retrieve successes and failures to the disk system.
+  [routines.disk_report_retrieve]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
+
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 30.
+    soft_timeout_secs = 30
+
+    # Pause in milliseconds between iterations; 0 means no pause.
+    # Type: integer; default: 0.
+    iter_sleep_ms = 0
+
+  # Expand repack requests.
+  [routines.repack_expand]
+    # Maximum number of repack requests expanded per cycle.
+    # Type: integer; default: 2.
+    max_to_expand = 2
+
+  # Process transfer reports for repack requests.
+  [routines.repack_report]
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 900.
+    soft_timeout_secs = 900
+
+  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests
+  # to other queues.
+  [routines.queue_cleanup]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500

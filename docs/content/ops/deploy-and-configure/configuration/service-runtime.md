@@ -31,7 +31,7 @@ Experimental interfaces may change or be removed; selecting them explicitly opts
 Both APIs default to JWT authentication in non-strict mode when `auth.enabled_methods` is omitted; the `[auth.jwt]` section is still required.
 
 For integer settings that support automatic sizing or system defaults, explicitly set `0` to select that behaviour.
-For example, `grpc.number_of_threads = 0` selects eight threads per detected CPU (at least one CPU), and `scheduler.client.thread_stack_size_mb = 0` uses the system's thread-stack size in objectstore builds.
+For example, `grpc.number_of_threads = 0` selects eight threads per detected CPU, and `scheduler.client.thread_stack_size_mb = 0` uses the system's thread-stack size in objectstore builds.
 Positive values fix the count or size.
 The meaning of zero is specific to each field: `defaults.repack.max_files_to_select = 0` means all files.
 An explicit automatic setting may produce different values on different hosts or software versions.
@@ -40,6 +40,36 @@ It is possible to check the validity of a config beforehand using the `--config-
 `--config-check` cannot be combined with `--runtime-dir`, so checking configuration does not overwrite a service's runtime snapshots.
 
 It is highly recommended to use `--config-strict` when deploying CTA to ensure operators have full control and transparency over the consumed config values.
+
+## Using the example configurations
+
+The packaged examples are recommended starting configurations, with deployment-specific names, endpoints and credential paths to replace.
+They are not minimal files and need not reproduce every default: recommended optional features such as telemetry and health endpoints are enabled, and logging attributes illustrate a deployment label.
+Numeric values normally match the struct defaults; a required value with no default, such as the objectstore scheduler thread count, is explicitly illustrative.
+
+Field comments distinguish three cases:
+
+| Metadata | Meaning when the section is active |
+| --- | --- |
+| `default: <value>` | May be omitted in non-strict mode; must be supplied in strict mode. |
+| `default: none; required` | Must be supplied in either mode. |
+| `default: none; optional` | May be omitted in either mode; the description explains the effect. |
+
+Feature optionality is separate from field requiredness.
+For example, telemetry is optional but recommended; selecting it requires a configuration-file path.
+
+To disable optional service-wide features, set the root lists to empty and remove their sections:
+
+```toml
+enabled_features = []
+enabled_experimental_features = []
+```
+
+For example, remove `[telemetry]`, `[health_server]` and `[health_server.tcp]` when disabling telemetry and health endpoints.
+Retain the service's other required settings and authentication configuration.
+Nested selectors are independent: set `transfers.retrieve.rao_enabled = false` and remove `[transfers.retrieve.rao]` to disable RAO, or set `transfers.encryption_enabled = false` and remove `[transfers.encryption]` to disable tape encryption.
+Selecting fewer maintenance routines requires removing the deselected routine sections; `routines.enabled_routines = []` performs no maintenance work.
+These edits reduce the starting configuration without maintaining a separate minimal example for each strict-mode and feature combination.
 
 ## Environment Variables
 

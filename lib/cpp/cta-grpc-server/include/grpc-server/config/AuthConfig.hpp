@@ -21,9 +21,7 @@ namespace cta::grpc_server {
 
 using AliasMap = std::map<std::string, std::vector<std::string>, std::less<>>;
 
-/**
- * @brief A JWT auth config block
- */
+/// Signing-key retrieval, token claims and revocation checks for JWT authentication.
 struct JwtAuthConfig final {
   std::string jwks_uri;                   //!< The URI of the JWKS endpoint (REQUIRED if enabled)
   uint32_t cache_refresh_interval = 600;  //!< TTL (s) of the JWKS cache, after which the JWKS will be re-fetched
@@ -45,9 +43,7 @@ struct JwtAuthConfig final {
   static constexpr std::size_t memberCount() { return 8; }
 };
 
-/**
- * @brief An mTLS auth config block
- */
+/// Mapping from disk-instance identities to accepted client-certificate hostnames.
 struct MtlsAuthConfig final {
   AliasMap aliases;  //!< Mapping of identity -> (host)name aliases (SAN)
 
@@ -60,9 +56,7 @@ struct MtlsAuthConfig final {
   static constexpr std::size_t memberCount() { return 1; }
 };
 
-/**
- * @brief A Kerberos auth config block
- */
+/// Keytab and service principal used to authenticate Kerberos tickets.
 struct KerberosAuthConfig final {
   std::string keytab_path;        //!< Path to keytab file (REQUIRED if enabled)
   std::string service_principal;  //!< Kerberos service principal which will be accepted (REQUIRED if enabled)
@@ -76,7 +70,7 @@ struct KerberosAuthConfig final {
   static constexpr std::size_t memberCount() { return 2; }
 };
 
-/// @brief Authentication config of the admin API
+/// Authentication method selection and credentials for admin API requests.
 struct AdminAuthConfig final {
   /// JWT is the non-strict default; strict mode requires an explicit selection.
   std::vector<std::string> enabled_methods = {"jwt"};
@@ -95,7 +89,7 @@ struct AdminAuthConfig final {
   static constexpr std::size_t memberCount() { return 3; }
 };
 
-/// @brief Authentication config of the WFE API
+/// Authentication method selection and credentials for workflow API requests.
 struct WfeAuthConfig final {
   /// JWT is the non-strict default; strict mode requires an explicit selection.
   std::vector<std::string> enabled_methods = {"jwt"};

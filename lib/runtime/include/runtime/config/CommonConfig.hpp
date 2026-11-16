@@ -27,14 +27,14 @@
  */
 namespace cta::runtime {
 
-/// @brief Marker for a config section without a `client` sub-table.
+/// Marker for a config section without a `client` sub-table.
 struct NoClientConfig final {
   static constexpr std::size_t memberCount() { return 0; }
 
   ValidationResult validate() const { return ValidationResult::OK; }
 };
 
-/// @brief Catalogue config.
+/// @brief Catalogue connection-file location and client settings.
 /// @tparam ClientConfig Application-specific options of the catalogue client, read from `[catalogue.client]`.
 template<typename ClientConfig = NoClientConfig>
 struct BasicCatalogueConfig final {
@@ -57,7 +57,7 @@ struct BasicCatalogueConfig final {
 /// By default, no client config required
 using CatalogueConfig = BasicCatalogueConfig<>;
 
-/// @brief Scheduler config.
+/// @brief Scheduler connection-file location, queue-statistics caching and client settings.
 /// @tparam ClientConfig Application-specific options of the scheduler client, read from `[scheduler.client]`.
 template<typename ClientConfig = NoClientConfig>
 struct BasicSchedulerConfig final {
@@ -106,9 +106,7 @@ struct BasicSchedulerConfig final {
 /// By default, no client config required
 using SchedulerConfig = BasicSchedulerConfig<>;
 
-/**
- * @brief Logging config.
- */
+/// Log severity, output format and labels attached to log messages.
 struct LoggingConfig final {
   std::string level = "INFO";
   std::string format = "json";
@@ -132,9 +130,7 @@ struct LoggingConfig final {
   }
 };
 
-/**
- * @brief Telemetry config.
- */
+/// OpenTelemetry SDK configuration path and initialization-failure policy.
 struct TelemetryConfig final {
   /**
    * @brief Path to the OpenTelemetry declarative config file.
@@ -157,9 +153,7 @@ struct TelemetryConfig final {
   }
 };
 
-/**
- * @brief HealthServer config. For applications only.
- */
+/// TCP address and port for readiness and liveness endpoints.
 struct HealthTcpConfig final {
   std::string host = "127.0.0.1";
   uint16_t port = 8080;
@@ -178,6 +172,7 @@ struct HealthTcpConfig final {
   }
 };
 
+/// Transport and listener settings for readiness and liveness endpoints.
 struct HealthServerConfig final {
   std::string transport = "tcp";
   std::optional<HealthTcpConfig> tcp = std::nullopt;
@@ -197,10 +192,7 @@ struct HealthServerConfig final {
   }
 };
 
-/**
- * @brief XRootD config to ensure we don't need to rely on environment variables.
- *
- */
+/// Security protocol and credentials for XRootD connections to disk storage.
 struct XRootDConfig final {
   std::string security_protocol = "sss";
   std::string sss_keytab_path = "etc/cta/sss.keytab";

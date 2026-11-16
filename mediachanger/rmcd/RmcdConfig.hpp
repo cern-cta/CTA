@@ -14,6 +14,7 @@
 
 namespace cta::rmcd {
 
+/// Device used to control the tape library through SCSI media-changer commands.
 struct MediaChangerConfig final {
   std::string device = "/dev/smc";
 
@@ -28,6 +29,7 @@ struct MediaChangerConfig final {
   }
 };
 
+/// Listening port and network scope of the remote media-changer protocol server.
 struct RmcServerConfig final {
   uint16_t port = 5014;
   std::string listen_scope = "loopback";
@@ -46,6 +48,7 @@ struct RmcServerConfig final {
   }
 };
 
+/// Device, listener and monitoring settings for the remote media-changer daemon.
 struct RmcdConfig final {
   cta::runtime::LoggingConfig logging;
   std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;

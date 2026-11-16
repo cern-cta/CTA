@@ -13,7 +13,7 @@
 
 namespace cta::grpc_server {
 
-/// @brief TLS Config
+/// Server identity and CA certificates used to secure gRPC connections.
 struct TlsConfig final {
   /// The path to the private key file (REQUIRED)
   std::string server_key_path;

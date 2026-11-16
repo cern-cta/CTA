@@ -20,7 +20,7 @@
 
 namespace cta::admin_api {
 
-/// @brief Repack-related options of the admin API.
+/// Repack-related options of the admin API.
 struct RepackConfig final {
   /// URL of the repack buffer
   std::optional<std::string> buffer_url = std::nullopt;
@@ -38,7 +38,7 @@ struct RepackConfig final {
   }
 };
 
-/// @brief Fixed rules applied by the admin API to tape commands (tape ls, tape reclaim).
+/// Fixed rules applied by the admin API to tape commands (tape ls, tape reclaim).
 struct TapePoliciesConfig final {
   /// Minimum age of missing tape file copies before they are reported
   uint64_t missing_file_copies_min_age_secs = 0;
@@ -50,7 +50,7 @@ struct TapePoliciesConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Archive-related options of the admin API.
+/// Archive-related options of the admin API.
 struct AdminArchiveConfig final {
   /// Default maximum size of an archived file, in GB (0 = no limit)
   uint64_t max_file_size_gb = 0;
@@ -63,7 +63,7 @@ struct AdminArchiveConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Default values applied by the admin API when a command does not set them explicitly.
+/// Default values applied by the admin API when a command does not set them explicitly.
 struct DefaultsConfig final {
   AdminArchiveConfig archive;
   RepackConfig repack;
@@ -78,7 +78,7 @@ struct DefaultsConfig final {
   }
 };
 
-/// @brief Fixed rules enforced by the admin API, which cannot be overridden by command options.
+/// Fixed rules enforced by the admin API, which cannot be overridden by command options.
 struct PoliciesConfig final {
   /// Role of the admin API with respect to the repacks, meant to match the scheduler DB it is connected to when the
   /// user and the repack requests are served from separate ones (see AdminCmdMode):
@@ -99,6 +99,7 @@ struct PoliciesConfig final {
   }
 };
 
+/// Backend connections, authentication, command policies and monitoring for the admin API.
 struct AdminApiConfig final {
   /// Name of the instance, used by auth verification and gRPC messages
   std::string instance_name;

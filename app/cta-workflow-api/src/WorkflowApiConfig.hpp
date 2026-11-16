@@ -19,7 +19,7 @@
 
 namespace cta::workflow_api {
 
-/// @brief Archive-related options of the workflow API.
+/// Archive-related options of the workflow API.
 struct ArchiveConfig final {
   /// Whether 0-length files are rejected
   bool zero_length_files_forbidden = true;
@@ -31,7 +31,7 @@ struct ArchiveConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Prepare (retrieve) request options of the workflow API.
+/// Prepare (retrieve) request options of the workflow API.
 struct PrepareConfig final {
   /// Mount policy used for verification requests
   std::string verification_mount_policy = "";
@@ -41,7 +41,7 @@ struct PrepareConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Request-related options of the workflow API.
+/// Request-related options of the workflow API.
 struct RequestsConfig final {
   ArchiveConfig archive;
   PrepareConfig prepare;
@@ -82,6 +82,7 @@ struct OpportunisticBatchingConfig final {
 
 #endif
 
+/// Backend connections, authentication, request handling and monitoring for the workflow API.
 struct WorkflowApiConfig final {
   /// Name of the instance, used by auth verification and gRPC messages
   std::string instance_name;

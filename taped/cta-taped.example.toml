@@ -3,20 +3,109 @@
 
 # CTA Taped Service Configuration
 
-# Copy this example and replace deployment-specific names, endpoints and credential paths.
-# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# This example enables all compatible features, including experimental ones.
-# To disable a feature, update its selector and remove its section.
+# Recommended starting configuration. Replace deployment-specific values before use.
+# Defaults apply only in non-strict mode. With --config-strict, provide every setting
+# in enabled sections unless marked optional.
 
-# Optional features to enable; include the matching sections below.
+# Optional features to enable. Remove a feature and its section to disable it.
 # Type: array of strings; default: [].
 # Allowed: "health_server" (no duplicates).
 enabled_features = ["health_server"]
 
-# Experimental features to enable; their interfaces may change or be removed.
+# Experimental features to enable. These may change or be removed in future releases.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
 enabled_experimental_features = ["telemetry"]
+
+[catalogue]
+  # Path to the file containing the catalogue database connection string.
+  # Examples:
+  #   postgresql:postgresql://username:password@hostname/database
+  #   oracle:username/password@database
+  # See /etc/cta/cta-catalogue.example.conf for further details.
+  # Type: string; default: "/etc/cta/cta-catalogue.conf".
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+[scheduler]
+  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
+  # Type: string; default: none; required.
+  backend_name = "cephUser"
+
+  # Path to the file containing the scheduler backend connection string.
+  # Examples:
+  #   rados://user@pool:namespace
+  #   file:///path/to/objectstore
+  # See /etc/cta/cta-scheduler.example.conf for further details.
+  # Type: string; default: "/etc/cta/cta-scheduler.conf".
+  config_file = "/etc/cta/cta-scheduler.conf"
+
+  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries.
+  # Type: integer; default: 600.
+  tape_cache_max_age_secs = 600
+
+  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries.
+  # Type: integer; default: 10.
+  retrieve_queue_cache_max_age_secs = 10
+
+[logging]
+  # Lowest severity to log. DEBUG produces the most output.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
+  level = "INFO"
+
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
+  format = "json"
+
+  # Custom string labels added to every log line for filtering and monitoring.
+  # Keys are freely chosen and optional; they do not change service behaviour.
+  # Type: table of strings; default: {}.
+  [logging.attributes]
+    # CTA catalogue instance served by this process, for example "production" or "preproduction".
+    # Use the same label across services sharing that catalogue; omit it if unused.
+    instance = "production"
+
+# Telemetry (experimental). Recommended for monitoring; enabled in this example.
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # What to do if telemetry cannot start.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
+
+# Health endpoints. Recommended for monitoring; enabled in this example.
+[health_server]
+  # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+  # For Unix sockets, remove the entire [health_server.tcp] section.
+  # Type: string; default: "tcp".
+  # Allowed: "tcp", "unix".
+  transport = "tcp"
+
+  [health_server.tcp]
+    # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+    # Type: string; default: "127.0.0.1".
+    host = "127.0.0.1"
+
+    # TCP port for the health endpoints.
+    # Type: integer; default: 8080.
+    port = 8080
+
+[xrootd]
+  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
+  # Valid values depend on the installed XRootD security plugins.
+  # Type: string; default: "sss".
+  security_protocol = "sss"
+
+  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
+  # be readable by cta-taped when the "sss" protocol is selected.
+  # Type: string; default: "etc/cta/sss.keytab".
+  sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
 [drive]
   # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
@@ -71,55 +160,40 @@ enabled_experimental_features = ["telemetry"]
       # Type: boolean; default: false.
       auto_up = false
 
-[catalogue]
-  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
-  # specifies how to connect to the Catalogue DB.
-  # Examples:
-  #   postgresql:postgresql://username:password@hostname/database
-  #   oracle:username/password@database
-  # See /etc/cta/cta-catalogue.example.conf for further details.
-  # Type: string; default: "/etc/cta/cta-catalogue.conf".
-  config_file = "/etc/cta/cta-catalogue.conf"
+# Connection to the Remote Media Changer Daemon (cta-rmcd) used for physical mount and unmount operations.
+[rmcd]
+  # Hostname or IP address of the RMCD. Use "localhost" when the RMCD runs on the same host as cta-taped.
+  # Note that cta-rmcd traffic is not encrypted and/or authenticated, so it is not recommended to change
+  # this setting.
+  # Type: string; default: "localhost".
+  host = "localhost"
 
-[scheduler]
-  # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser".
-  # Type: string; default: none; required.
-  backend_name = "cephUser"
+  # TCP port on which the RMCD accepts requests.
+  # Type: integer; default: 5014.
+  port = 5014
 
-  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
-  # specifies how to connect to the scheduler backend.
-  # Examples:
-  #   rados://user@pool:namespace
-  #   file:///path/to/objectstore
-  # See /etc/cta/cta-scheduler.example.conf for further details.
-  # Type: string; default: "/etc/cta/cta-scheduler.conf".
-  config_file = "/etc/cta/cta-scheduler.conf"
-
-  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries.
+  # Timeout in seconds for network reads and writes to RMCD.
+  # Expiry makes the current RMCD operation fail: a mount error enters normal cleanup, while an unmount
+  # error puts the drive Down.
   # Type: integer; default: 600.
-  tape_cache_max_age_secs = 600
+  request_timeout_secs = 600
 
-  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries.
+  # Maximum attempts for a retriable RMC request. Network errors, protocol errors and timeouts are not retried.
+  # More attempts tolerate longer temporary RMCD failures but delay reporting a final failure.
   # Type: integer; default: 10.
-  retrieve_queue_cache_max_age_secs = 10
+  request_attempts = 10
 
 # Controls when cta-taped requests work from the scheduler and how long the physical mount may take.
 # Session timeout checks affect liveness only; they do not terminate or recover sessions.
 # Controller operations are not checked by these session timeouts.
 [mounts]
-  # Minimum amount of queued archive or retrieve data, in bytes, required before the scheduler considers
-  # the queue large enough to start a tape mount. A mount can still start below this threshold when the
-  # applicable catalogue mount-rule timeout expires. This is combined with minimum_queued_files using OR
-  # semantics: reaching either threshold is sufficient. Increasing it favors fuller mounts but may add latency.
+  # Queued bytes needed to start a tape mount. Reaching either this threshold or minimum_queued_files is enough.
+  # Catalogue mount-rule timeouts can allow smaller mounts. Higher thresholds favour fuller mounts but add latency.
   # Type: integer; default: 500000000000.
   minimum_queued_bytes = 500000000000
 
-  # Minimum number of queued archive or retrieve files required before the scheduler considers the queue
-  # large enough to start a tape mount. This is combined with minimum_queued_bytes using OR semantics.
-  # Increasing it favors fuller mounts of small files but may add latency.
+  # Queued files needed to start a tape mount. Reaching either this threshold or minimum_queued_bytes is enough.
+  # Higher thresholds favour fuller mounts of small files but may add latency.
   # Type: integer; default: 10000.
   minimum_queued_files = 10000
 
@@ -144,12 +218,12 @@ enabled_experimental_features = ["telemetry"]
   # Type: integer; default: 5.
   logical_library_poll_interval_secs = 5
 
-  # Maximum time, in seconds, in Mounting before liveness becomes unhealthy.
+  # Maximum seconds spent mounting before the health endpoint reports the session as unhealthy.
   # Type: integer; default: 900.
   mount_timeout_secs = 900
 
-  # Maximum time, in seconds, in Loading before liveness becomes unhealthy.
-  # Also limits the existing physical drive readiness wait, whose failure starts cleanup.
+  # Maximum seconds spent loading before the health endpoint reports the session as unhealthy.
+  # Also limits how long to wait for the drive to become ready; expiry starts session cleanup.
   # Type: integer; default: 900.
   tape_load_timeout_secs = 900
 
@@ -158,7 +232,7 @@ enabled_experimental_features = ["telemetry"]
   # Type: integer; default: 900.
   tape_unload_timeout_secs = 900
 
-  # Maximum time, in seconds, in Unmounting before liveness becomes unhealthy.
+  # Maximum seconds spent unmounting before the health endpoint reports the session as unhealthy.
   # Type: integer; default: 900.
   unmount_timeout_secs = 900
 
@@ -193,13 +267,13 @@ enabled_experimental_features = ["telemetry"]
   disk_io_threads = 10
 
   # Interval, in seconds, between periodic tape-session statistics reports. Must be greater than zero.
-  #  Final statistics are reported when the session finishes.
+  # Final statistics are also reported when the session finishes.
   # Type: integer; default: 15.
   stats_report_interval_secs = 15
 
   # Maximum inactivity, in seconds, in Transferring before liveness becomes unhealthy.
   # Measured from the later of state entry and last block movement; reporter activity does not count.
-  # Also preserves the existing stuck-file warning interval.
+  # Also controls how often warnings are logged for a stuck file.
   # Type: integer; default: 1800.
   no_block_move_timeout_secs = 1800
 
@@ -278,7 +352,7 @@ enabled_experimental_features = ["telemetry"]
     # Type: string; default: "".
     external_free_disk_space_script = ""
 
-    # Recommended Access Order reduces tape positioning during retrieve.
+    # Recommended access order (RAO): optional and enabled in this example to reduce tape positioning.
     [transfers.retrieve.rao]
       # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
       # When hardware RAO is available, it is preferred over software RAO.
@@ -294,90 +368,12 @@ enabled_experimental_features = ["telemetry"]
       # Allowed: "linear", "random", "sltf".
       lto_algorithm = "sltf"
 
-  # Hardware-encryption behaviour shared by archive and retrieve sessions.
+  # Tape encryption: optional and enabled in this example; requires tape or tape-pool key configuration.
   [transfers.encryption]
     # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
     # This does not encrypt tapes lacking valid key configuration.
 
     # Path to the operator-provided executable used to obtain encryption keys. It must be executable by
-    # cta-taped and return the protocol expected by EncryptionControl. It is required when encryption is used.
+    # cta-taped and return the protocol expected by EncryptionControl.
     # Type: string; default: "/usr/local/bin/cta-get-encryption-key.sh".
     external_key_script = "/usr/local/bin/cta-get-encryption-key.sh"
-
-# Connection to the Remote Media Changer Daemon (cta-rmcd) used for physical mount and unmount operations.
-[rmcd]
-  # Hostname or IP address of the RMCD. Use "localhost" when the RMCD runs on the same host as cta-taped.
-  # Note that cta-rmcd traffic is not encrypted and/or authenticated, so it is not recommended to change
-  # this setting.
-  # Type: string; default: "localhost".
-  host = "localhost"
-
-  # TCP port on which the RMCD accepts requests.
-  # Type: integer; default: 5014.
-  port = 5014
-
-  # The timeout in seconds to be applied when performing network read and write operations to RMCD.
-  # Expiry makes the current RMCD operation fail: a mount error enters normal cleanup, while an unmount
-  # error puts the drive Down.
-  # Type: integer; default: 600.
-  request_timeout_secs = 600
-
-  # The maximum number of attempts a retriable RMC request should be issued. Network and protocol
-  # errors, including expiry of request_timeout_secs, are not retried by this setting. Increasing it can
-  # tolerate a longer RMCD-side transient condition but delays final failure reporting.
-  # Type: integer; default: 10.
-  request_attempts = 10
-
-[logging]
-  # Minimum severity written to the log. More verbose levels increase log volume.
-  # Type: string; default: "INFO".
-  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
-  level = "INFO"
-
-  # Log format: structured JSON or key-value pairs.
-  # Type: string; default: "json".
-  # Allowed: "json", "kv".
-  format = "json"
-
-  # Additional string key-value pairs included in every log line.
-  # Type: table of strings; default: {}.
-  attributes = {}
-
-[xrootd]
-  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins.
-  # Type: string; default: "sss".
-  security_protocol = "sss"
-
-  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
-  # be readable by cta-taped when the "sss" protocol is selected.
-  # Type: string; default: "etc/cta/sss.keytab".
-  sss_keytab_path = "/etc/cta/cta.sss.keytab"
-
-# Telemetry (experimental)
-[telemetry]
-  # Path to the OpenTelemetry SDK declarative configuration file.
-  # Type: string; default: none; required.
-  config_file = "/etc/cta/cta-otel.yaml"
-
-  # Behaviour when telemetry initialization fails.
-  # Type: string; default: "warn".
-  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-  on_init_failure = "warn"
-
-# Health endpoints
-[health_server]
-  # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-  # For Unix sockets, remove the entire [health_server.tcp] section.
-  # Type: string; default: "tcp".
-  # Allowed: "tcp", "unix".
-  transport = "tcp"
-
-  [health_server.tcp]
-    # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
-    # Type: string; default: "127.0.0.1".
-    host = "127.0.0.1"
-
-    # TCP port for the health endpoints.
-    # Type: integer; default: 8080.
-    port = 8080

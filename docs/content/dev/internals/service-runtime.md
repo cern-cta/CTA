@@ -115,20 +115,36 @@ In example files, explain the strict-mode rule once in the header rather than re
 #### Example configuration comments
 
 Use the same format for each setting: a short operational description, `Type: <TOML type>; default: <value>.`, and an `Allowed: ...` line for constrained string values.
-Use `default: none; required` for settings that must be supplied even in non-strict mode, and `default: none; optional` for settings with a supported absence state.
+Keep the introduction to the purpose of the file and one strict-mode rule; do not redefine “required” there.
+Lead setting descriptions with what the setting controls, then explain special values or a useful operational consequence.
+Avoid repeating the key name, metadata or an allowed-values list in prose.
+Keep shared rules at section level and longer explanations in the service documentation.
+Use `default: none; required` for settings that must be supplied whenever their section is active, even in non-strict mode.
+Use `default: none; optional` only for values that may be omitted even in an active section under strict mode, and explain what absence means.
+For defaulted fields, omit the requiredness label: the header explains that these fields are required in strict mode and defaulted otherwise.
+Describe whether a feature is optional, recommended or selected above its section, separately from the requiredness of its fields.
+An optional feature may have required settings.
 Describe units, special values such as `0`, and the consequences of changing a setting in the description.
 Document the actual accepted values and defaults from the configuration structs and validators, not from the example assignments.
 
-Enable all compatible features in the service examples, including experimental features, so their settings are exercised by strict configuration checks.
-Keep other example assignments equal to defaults unless a deployment-specific value is needed.
-Keep documented defaults accurate even when an example selects a different value.
+Treat service examples as recommended starting configurations with deployment-specific placeholders, rather than minimal configurations or exact copies of every default.
+Show recommended optional features such as telemetry and health endpoints enabled, with their settings present.
+Keep numeric assignments equal to struct defaults where defaults exist; document any deployment-specific exception.
+A required numeric field without a valid default needs an explicitly illustrative value.
+If an alternative numeric value is generally preferable, reconsider the struct default rather than silently recommending different tuning in the example.
+Keep documented defaults accurate even when feature selections, logging attributes or deployment-specific values differ.
 Leave unused optional scalar settings and mutually exclusive alternatives commented out, with instructions for switching alternatives.
+Document free-form maps at the map level; example keys are not predefined configuration fields.
 Describe prerequisites and relationships between settings at section level.
 For feature lists, list the allowed names and any restrictions on combinations.
+Keep shared sections in the same order across service examples: catalogue, scheduler, logging, telemetry, health server, XRootD, gRPC and authentication, followed by service-specific settings.
+Keep each parent table and its children together, and use the same order in objectstore and PostgreSQL variants.
+Show logging labels under `[logging.attributes]`, including an `instance` example; explain the map once rather than documenting arbitrary keys as predefined optional fields.
 Use two spaces for settings beneath a table, a blank line between settings, and comments above assignments.
 Expand inline tables when their members need individual descriptions.
 
-When updating examples, check the base configuration and variants that activate the commented sections with the matching service's strict configuration check.
+When updating examples, check the starting configuration and relevant enabled, disabled and alternative-feature variants with the matching service's strict configuration check.
+Keep validation coverage separate from recommendations about which features to enable.
 This detects stale keys and missing settings; it does not verify prose or claimed defaults.
 
 #### Automatic sizing and integer sentinels

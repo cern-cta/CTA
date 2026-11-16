@@ -13,11 +13,11 @@
 
 namespace cta::grpc_server {
 
-/// @brief How the gRPC server listens for connections: port, request processing threads and TLS
+/// Listening port, worker-thread limit and TLS settings for a gRPC server.
 struct ListenerConfig final {
   /// Port to listen on for gRPC connections
   uint16_t port = 50051;
-  /// Maximum number of threads; zero selects eight per detected CPU (at least one CPU).
+  /// Maximum number of threads; zero selects eight per detected CPU.
   int number_of_threads = 0;
   /// TLS config (mandatory)
   TlsConfig tls;

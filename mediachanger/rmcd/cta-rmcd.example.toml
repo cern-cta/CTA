@@ -3,44 +3,22 @@
 
 # CTA Remote Media Changer Daemon Configuration
 
-# Copy this example and replace deployment-specific names, endpoints and credential paths.
-# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# This example enables all compatible features, including experimental ones.
-# To disable a feature, update its selector and remove its section.
+# Recommended starting configuration. Replace deployment-specific values before use.
+# Defaults apply only in non-strict mode. With --config-strict, provide every setting
+# in enabled sections unless marked optional.
 
-# Optional features to enable; include the matching sections below.
+# Optional features to enable. Remove a feature and its section to disable it.
 # Type: array of strings; default: [].
 # Allowed: "health_server" (no duplicates).
 enabled_features = ["health_server"]
 
-# Experimental features to enable; their interfaces may change or be removed.
+# Experimental features to enable. These may change or be removed in future releases.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
 enabled_experimental_features = ["telemetry"]
 
-[media_changer]
-  # The SCSI-compatible media changer device used by rmcd to control the tape library.
-  # Set this to the operating-system path of the device.
-  # Type: string; default: "/dev/smc".
-  device = "/dev/smc"
-
-# Configuration for the RMC protocol endpoint used by clients such as cta-taped.
-# This is separate from the optional health server configured below.
-[rmc_server]
-  # TCP port on which rmcd listens for RMC client connections.
-  # Type: integer; default: 5014.
-  port = 5014
-
-  # Network scope from which rmcd accepts RMC client connections.
-  # Use "loopback" to accept connections only from localhost, or "any" to accept connections
-  # from other hosts. The RMC protocol provides no authentication, so use "any" with extreme
-  # caution in production environments.
-  # Type: string; default: "loopback".
-  # Allowed: "loopback", "any".
-  listen_scope = "loopback"
-
 [logging]
-  # Minimum severity written to the log. More verbose levels increase log volume.
+  # Lowest severity to log. DEBUG produces the most output.
   # Type: string; default: "INFO".
   # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
   level = "INFO"
@@ -50,21 +28,25 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "json", "kv".
   format = "json"
 
-  # Additional string key-value pairs included in every log line.
+  # Custom string labels added to every log line for filtering and monitoring.
+  # Keys are freely chosen and optional; they do not change service behaviour.
   # Type: table of strings; default: {}.
-  attributes = {}
+  [logging.attributes]
+    # CTA catalogue instance served by this process, for example "production" or "preproduction".
+    # Use the same label across services sharing that catalogue; omit it if unused.
+    instance = "production"
 
 [telemetry]
   # Path to the OpenTelemetry SDK declarative configuration file.
   # Type: string; default: none; required.
   config_file = "/etc/cta/cta-otel.yaml"
 
-  # Behaviour when telemetry initialization fails.
+  # What to do if telemetry cannot start.
   # Type: string; default: "warn".
   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
   on_init_failure = "warn"
 
-# Health endpoints
+# Health endpoints. Recommended for monitoring; enabled in this example.
 [health_server]
   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
   # For Unix sockets, remove the entire [health_server.tcp] section.
@@ -80,3 +62,22 @@ enabled_experimental_features = ["telemetry"]
     # TCP port for the health endpoints.
     # Type: integer; default: 8080.
     port = 8080
+
+[media_changer]
+  # Path to the SCSI media changer device that controls the tape library.
+  # Type: string; default: "/dev/smc".
+  device = "/dev/smc"
+
+# RMC endpoint used by cta-taped to request tape mounts and unmounts.
+[rmc_server]
+  # TCP port on which rmcd listens for RMC client connections.
+  # Type: integer; default: 5014.
+  port = 5014
+
+  # Network scope from which rmcd accepts RMC client connections.
+  # Use "loopback" to accept connections only from localhost, or "any" to accept connections
+  # from other hosts. The RMC protocol provides no authentication, so use "any" with extreme
+  # caution in production environments.
+  # Type: string; default: "loopback".
+  # Allowed: "loopback", "any".
+  listen_scope = "loopback"

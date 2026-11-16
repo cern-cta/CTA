@@ -16,6 +16,7 @@
 
 namespace cta::maintd {
 
+/// Batch size and timing for reporting archive or retrieve results to the disk system.
 struct DiskReportRoutineConfig final {
   uint32_t batch_size = 500;
   uint32_t soft_timeout_secs = 30;
@@ -35,6 +36,7 @@ struct DiskReportRoutineConfig final {
   }
 };
 
+/// Limit on repack requests expanded during each maintenance cycle.
 struct RepackExpandRoutineConfig final {
   uint32_t max_to_expand = 2;
 
@@ -49,6 +51,7 @@ struct RepackExpandRoutineConfig final {
   }
 };
 
+/// Time budget for processing transfer reports from repack requests.
 struct RepackReportRoutineConfig final {
   uint32_t soft_timeout_secs = 900;
 
@@ -65,6 +68,7 @@ struct RepackReportRoutineConfig final {
 
 #ifndef CTA_PGSCHED
 
+/// Batch size for moving requests out of objectstore queues marked for cleanup.
 struct QueueCleanupRoutineConfig final {
   uint32_t batch_size = 500;
 
@@ -81,6 +85,7 @@ struct QueueCleanupRoutineConfig final {
 
 #else
 
+/// Batch size and age threshold for collecting PostgreSQL active or pending queue entries.
 struct ActivePendingQueueCleanupRoutineConfig final {
   uint32_t batch_size = 500;
   uint32_t age_for_collection_secs = 900;
@@ -99,6 +104,7 @@ struct ActivePendingQueueCleanupRoutineConfig final {
   }
 };
 
+/// Batch size and retention period for cleaning PostgreSQL scheduler maintenance entries.
 struct SchedulerMaintenanceCleanupRoutineConfig final {
   uint32_t batch_size = 500;
   uint32_t age_for_deletion_secs = 1209600;
@@ -119,6 +125,7 @@ struct SchedulerMaintenanceCleanupRoutineConfig final {
 
 #endif
 
+/// Maintenance routine selection, cycle timing and per-routine settings.
 struct RoutinesConfig final {
   // All routines supported by this scheduler backend run unless explicitly deselected.
 #ifndef CTA_PGSCHED
@@ -226,6 +233,7 @@ struct RoutinesConfig final {
   }
 };
 
+/// Catalogue, scheduler, monitoring and routine settings for the maintenance daemon.
 struct MaintdConfig final {
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;

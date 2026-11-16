@@ -3,28 +3,26 @@
 
 # CTA Admin API Service Configuration
 
-# Copy this example and replace deployment-specific names, endpoints and credential paths.
-# Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# This example enables all compatible features, including experimental ones.
-# To disable a feature, update its selector and remove its section.
+# Recommended starting configuration. Replace deployment-specific values before use.
+# Defaults apply only in non-strict mode. With --config-strict, provide every setting
+# in enabled sections unless marked optional.
 
-# Name of the CTA instance. Used to validate the authentication tokens. It also gets sent with gRPC responses.
+# CTA instance name used for authentication and included in gRPC responses.
 # Type: string; default: none; required.
-instance_name = "CI_local"
+instance_name = "production"
 
-# Optional features to enable; include the matching sections below.
+# Optional features to enable. Remove a feature and its section to disable it.
 # Type: array of strings; default: [].
 # Allowed: none (use []).
 enabled_features = []
 
-# Experimental features to enable; their interfaces may change or be removed.
+# Experimental features to enable. These may change or be removed in future releases.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
 enabled_experimental_features = ["telemetry"]
 
 [catalogue]
-  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
-  # specifies how to connect to the Catalogue DB.
+  # Path to the file containing the catalogue database connection string.
   # Examples:
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
@@ -38,13 +36,11 @@ enabled_experimental_features = ["telemetry"]
     number_of_connections = 10
 
 [scheduler]
-  # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:
-  # `[ceph|postgres][User|Repack]:`
+  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
   # Type: string; default: none; required.
   backend_name = "cephUser"
 
-  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
-  # specifies how to connect to the scheduler backend.
+  # Path to the file containing the scheduler backend connection string.
   # Examples:
   #   rados://user@pool:namespace
   #   file:///path/to/objectstore
@@ -63,62 +59,20 @@ enabled_experimental_features = ["telemetry"]
   retrieve_queue_cache_max_age_secs = 10
 
   [scheduler.client]
-    # These will be removed once the objectstore scheduler is decommissioned.
+    # Objectstore scheduler connections.
 
     # Size of the scheduler DB thread pool. Must be greater than zero.
+    # Choose for expected scheduler concurrency; 500 is an illustrative deployment value.
     # Type: integer; default: none; required.
     number_of_threads = 500
 
-    # Stack size of each scheduler DB thread, in MiB (1,048,576 bytes).
+    # Stack size of each scheduler DB thread, in MiB.
     # Set to 0 to use the system's thread-stack size.
     # Type: integer; default: 0.
     thread_stack_size_mb = 0
 
-# Fixed rules enforced by the admin API. Unlike [defaults], they cannot be overridden by command options.
-[policies]
-  # Role of this server with respect to repacks. It is meant to match the scheduler DB it is connected to,
-  # when the user and repack requests are served from separate scheduler DBs:
-  #   "all"        - no restriction
-  #   "no_repack"  - for the user scheduler DB: all the repack commands ("repack add", "repack rm",
-  #                  "repack err" and "repack ls") are rejected, and tape state changes ("tape ch --state")
-  #                  follow the rules of a user-only scheduler DB.
-  #   "repack"     - for the repack scheduler DB: all commands available, and tape state changes follow the
-  #                  rules of a repack-only scheduler DB.
-  # Type: string; default: "all".
-  # Allowed: "all", "no_repack", "repack".
-  admin_mode = "all"
-
-  [policies.tapes]
-    # Minimum age, in seconds, of missing tape file copies in order to be listed. Set it to prevent
-    # false flagging of multi-copy files which are still in the process of being archived.
-    # A typical value is 86400 (24 hours).
-    # Type: integer; default: 0.
-    missing_file_copies_min_age_secs = 0
-
-    # Minimum quarantine period, in seconds, that a tape must spend in the recycle log before it can be
-    # reclaimed.
-    # Type: integer; default: 2678400.
-    recycle_log_quarantine_secs = 2678400
-
-[defaults]
-  [defaults.archive]
-    # Default maximum size (in GB) of an archived file for a virtual organization. This is applied when a virtual
-    # organisation is first added and an explicit maximum hasn't been set. 0 means no limit.
-    # Type: integer; default: 0.
-    max_file_size_gb = 0
-
-  [defaults.repack]
-    # URL of the buffer used by repack requests. Cannot be empty when provided.
-    # If omitted, repack requests which require a buffer cannot be created.
-    # Type: string; default: none; optional.
-    # buffer_url = "root://ctaeos//eos/ctaeos/repack"
-
-    # Maximum number of files to select when expanding a repack request. Zero means all files.
-    # Type: integer; default: 0.
-    max_files_to_select = 0
-
 [logging]
-  # Minimum severity written to the log. More verbose levels increase log volume.
+  # Lowest severity to log. DEBUG produces the most output.
   # Type: string; default: "INFO".
   # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
   level = "INFO"
@@ -128,9 +82,24 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "json", "kv".
   format = "json"
 
-  # Additional string key-value pairs included in every log line.
+  # Custom string labels added to every log line for filtering and monitoring.
+  # Keys are freely chosen and optional; they do not change service behaviour.
   # Type: table of strings; default: {}.
-  attributes = {}
+  [logging.attributes]
+    # CTA catalogue instance served by this process, for example "production" or "preproduction".
+    # Use the same label across services sharing that catalogue; omit it if unused.
+    instance = "production"
+
+# Telemetry (experimental). Recommended for monitoring; enabled in this example.
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # What to do if telemetry cannot start.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
 
 [grpc]
   # TCP port the gRPC server listens on.
@@ -138,7 +107,7 @@ enabled_experimental_features = ["telemetry"]
   port = 50051
 
   # Maximum number of worker threads used by the gRPC server.
-  # Set to 0 for automatic sizing: eight times the detected CPU count (at least one CPU).
+  # Set to 0 for automatic sizing: eight times the detected CPU count.
   # Type: integer; default: 0.
   number_of_threads = 0
 
@@ -151,8 +120,8 @@ enabled_experimental_features = ["telemetry"]
     # Type: string; default: none; required.
     server_cert_path = "/path/to/your/certificate.pem"
 
-    # Optional CA chain file (PEM) forming the full certificate chain presented to clients.
-    # Omit when the server certificate file already supplies the required chain.
+    # Additional CA certificates (PEM) used to verify client certificates for mTLS.
+    # Omit if no additional CA certificates are needed.
     # Type: string; default: none; optional.
     # chain_cert_path = "/etc/cta/ca-chain.pem"
 
@@ -192,11 +161,11 @@ enabled_experimental_features = ["telemetry"]
     # Type: integer; default: 0.
     pub_key_timeout = 0
 
-    # Path to an additional token-revocation file; omitted means no additional file is consulted.
+    # Path to a file listing revoked tokens. Omit if no additional revocation list is used.
     # Type: string; default: none; optional.
     # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
-  # Kerberos authentication
+  # Kerberos authentication. Enabled alongside JWT in this example.
   [auth.kerberos]
     # Filesystem path to the Kerberos keytab file containing the service principal keys used to
     # validate incoming tickets.
@@ -207,13 +176,45 @@ enabled_experimental_features = ["telemetry"]
     # Type: string; default: none; required.
     service_principal = "service/instance@REALM"
 
-# Telemetry (experimental)
-[telemetry]
-  # Path to the OpenTelemetry SDK declarative configuration file.
-  # Type: string; default: none; required.
-  config_file = "/etc/cta/cta-otel.yaml"
+# Fixed rules enforced by the admin API. Unlike [defaults], they cannot be overridden by command options.
+[policies]
+  # Role of this server with respect to repacks. It is meant to match the scheduler DB it is connected to,
+  # when the user and repack requests are served from separate scheduler DBs:
+  #   "all"        - no restriction
+  #   "no_repack"  - for the user scheduler DB: all the repack commands ("repack add", "repack rm",
+  #                  "repack err" and "repack ls") are rejected, and tape state changes ("tape ch --state")
+  #                  follow the rules of a user-only scheduler DB.
+  #   "repack"     - for the repack scheduler DB: all commands available, and tape state changes follow the
+  #                  rules of a repack-only scheduler DB.
+  # Type: string; default: "all".
+  # Allowed: "all", "no_repack", "repack".
+  admin_mode = "all"
 
-  # Behaviour when telemetry initialization fails.
-  # Type: string; default: "warn".
-  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-  on_init_failure = "warn"
+  [policies.tapes]
+    # Minimum age, in seconds, of missing tape file copies in order to be listed. Set it to prevent
+    # false flagging of multi-copy files which are still in the process of being archived.
+    # A typical value is 86400 (24 hours).
+    # Type: integer; default: 0.
+    missing_file_copies_min_age_secs = 0
+
+    # Minimum quarantine period, in seconds, that a tape must spend in the recycle log before it can be
+    # reclaimed.
+    # Type: integer; default: 2678400.
+    recycle_log_quarantine_secs = 2678400
+
+[defaults]
+  [defaults.archive]
+    # Default maximum size (in GB) of an archived file for a virtual organization. This is applied when a virtual
+    # organisation is first added and an explicit maximum hasn't been set. 0 means no limit.
+    # Type: integer; default: 0.
+    max_file_size_gb = 0
+
+  [defaults.repack]
+    # URL of the buffer used by repack requests. Cannot be empty when provided.
+    # If omitted, supply the buffer URL on each repack command with --bufferurl.
+    # Type: string; default: none; optional.
+    # buffer_url = "root://ctaeos//eos/ctaeos/repack"
+
+    # Maximum number of files to select when expanding a repack request. Zero means all files.
+    # Type: integer; default: 0.
+    max_files_to_select = 0
