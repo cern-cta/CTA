@@ -19,6 +19,7 @@ enabled_experimental_features = ["telemetry"]
 
 [media_changer]
   # Path to the SCSI media changer device that controls the tape library.
+  # A device name without a leading slash is resolved below /dev.
   # Type: string; default: "/dev/smc".
   device = "/dev/smc"
 

@@ -4,30 +4,20 @@ Configure the API that receives archive, retrieve, and delete workflow requests 
 
 ## Service configuration
 
-The Workflow Frontend is configured via `cta-frontend.conf`.
-
-```ini
-# Operation mode: this node is the Workflow Engine (WFE)
-cta.operation_mode wfe
-
-# gRPC port
-grpc.port 10956
-
-# WFE authentication method: "jwt" or "mtls"
-grpc.wfe.auth_method jwt
-
-# TLS
-grpc.tls.server_key_path /path/to/server-wfe.key.pem
-grpc.tls.server_cert_path /path/to/server-wfe.crt.pem
-grpc.tls.chain_cert_path /path/to/ca.crt.pem
-
-# JWKS Endpoint (required for JWT auth)
-grpc.jwks.uri file:///etc/cta/jwks.json
-# or a remote endpoint:
-# grpc.jwks.uri http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
-```
+`cta-workflow-api` reads `/etc/cta/cta-workflow-api.toml` by default.
+Use `--config` to select another TOML file.
+Configure the gRPC listener and TLS credentials under `[grpc]` and `[grpc.tls]`.
+Select exactly one of JWT or mutual TLS using `auth.enabled_methods`, and provide only the selected authentication sections.
+Use the [annotated examples](#example-configuration) for all settings and defaults, and [Service Runtime](service-runtime.md) for validation and feature selection.
+Restart the service to apply changes.
 
 ## Example configuration
+
+The annotated examples are the complete settings reference.
+Choose the variant matching the compiled scheduler backend and replace deployment-specific values.
+The installed package provides the matching variant as `/usr/share/doc/cta-workflow-api/examples/cta-workflow-api.example.toml`.
+
+### Objectstore scheduler
 
 ???+ example "cta-workflow-api.example.toml"
 
@@ -37,4 +27,14 @@ grpc.jwks.uri file:///etc/cta/jwks.json
     --8<--
     ```
 
-See [Authentication Configuration](authentication.md) and the [cta-workflow-api command reference](../../tools/service-manuals/cta-workflow-api.md) for additional options.
+### PostgreSQL scheduler
+
+???+ example "cta-workflow-api.pg.example.toml"
+
+    ```toml
+    --8<--
+    app/cta-workflow-api/cta-workflow-api.pg.example.toml
+    --8<--
+    ```
+
+See [Authentication Configuration](authentication.md) and the [cta-workflow-api command reference](../../tools/service-manuals/cta-workflow-api.md) for authentication guidance and command-line options, respectively.

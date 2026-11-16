@@ -68,6 +68,21 @@ A `README.md` is an entry point for someone browsing the repository. Keep it sho
 
 Maintain one source for each explanation. When moving a guide into `docs/`, replace the README content with a link. Manuals and configuration examples included by the site can remain beside their tools; include them rather than maintaining a second copy.
 
+## Service command manuals
+
+Keep service `*.1cta.md` manuals focused on purpose, invocation, complete CLI options and aliases, configuration loading and validation, relevant lifecycle behaviour, environment, files, and related references.
+Use consistent option formatting and describe arguments, defaults and incompatible combinations.
+Escape the first hyphen of long options outside code spans (`\--config`) so Pandoc preserves two hyphens instead of rendering an en dash.
+The synopsis may use `[OPTIONS]`; the OPTIONS section must list every supported option.
+
+Use the annotated example TOML files as the authoritative settings reference, including defaults, required values, feature selection and backend-specific settings.
+Include those files in the website's configuration guides, with both scheduler variants where applicable.
+Manuals should link to the guide and give the installed example path for offline use instead of duplicating setting lists.
+Keep operational decisions and interactions in the configuration guide, and preserve useful explanations when consolidating references.
+
+When changing CLI options, compare the manual with the parser and help output.
+Render both the installed manual and its website page when changing manual formatting.
+
 ## Check before submitting
 
 Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From `docs/`, with the Python environment activated, run:

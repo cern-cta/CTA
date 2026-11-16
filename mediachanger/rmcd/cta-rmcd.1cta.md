@@ -13,8 +13,9 @@ cta-rmcd --- CTA remote media changer daemon
 
 **cta-rmcd** [OPTIONS]
 
-**cta-rmcd** --help
-**cta-rmcd** --version
+**cta-rmcd** \--help
+
+**cta-rmcd** \--version
 
 # DESCRIPTION
 
@@ -26,155 +27,67 @@ By default, **cta-rmcd** listens only on the loopback interface. This supports c
 
 # OPTIONS
 
--l, --log-file *PATH*
+**-c**, **\--config** *PATH*
 
-:   Write logs to *PATH*. If not specified, logs are written to stdout/stderr.
+:   Read the main TOML configuration from *PATH*.
+    Defaults to `/etc/cta/cta-rmcd.toml`.
 
--c, --config *PATH*
+**\--config-strict**
 
-:   Path to the main configuration file.
-Defaults to */etc/cta/cta-rmcd.toml* if not provided.
+:   Reject unknown keys and require every applicable setting explicitly, including settings with defaults.
+    Genuinely optional values and sections for disabled features may be absent.
 
---config-strict
+**\--config-check**
 
-:   Treat unknown keys, missing required keys, and type mismatches in the configuration file as errors.
+:   Validate the configuration and exit without starting the service.
+    Respects **\--config-strict**; cannot be combined with **\--runtime-dir**.
 
---config-check
+**\--runtime-dir** *PATH*
 
-:   Validate the configuration, then exit.
-Respects **--config-strict**.
+:   Store consumed configuration and version metadata in *PATH*.
+    The directory must already exist and be readable and writable by the service.
+    Cannot be combined with **\--config-check**.
 
---runtime-dir *PATH*
+**-l**, **\--log-file** *PATH*
 
-:   Store runtime state metadata (such as the consumed configuration and version information) in the specified directory.
+:   Write logs to *PATH* instead of stdout/stderr.
 
--v, --version
+**-v**, **\--version**
 
 :   Print version information and exit.
 
--h, --help
+**-h**, **\--help**
 
 :   Display command usage information and exit.
 
+# SIGNALS
+
+SIGTERM and SIGINT request service shutdown.
+SIGHUP and SIGUSR1 reopen the log file; they do not reload configuration.
+
 # CONFIGURATION
 
-The **cta-rmcd** daemon reads its configuration from a TOML file
-(default: */etc/cta/cta-rmcd.toml*).
+Configuration is read at startup from `/etc/cta/cta-rmcd.toml`, or the file selected by **\--config**.
+Restart the service to apply changes.
+Use **\--config-check**, with **\--config-strict** when required, to validate a file before starting the service.
 
-Each section is described below.
-
-## Feature selection
-
-The root **enabled_features** list selects `health_server`; **enabled_experimental_features** selects `telemetry`.
-Both lists must be explicit in strict mode, including empty lists.
-Use `[]` to disable both, and omit their sections.
-Unknown names, duplicate names and sections for disabled features are rejected.
-Strict mode requires every applicable setting, even when a default is documented.
-Defaults apply only in non-strict mode.
-
-## [media_changer]
-
-device *(default: /dev/smc)*
-
-:   Path to the SCSI-compatible media changer device used to control the tape library.
-A device name without a leading slash is resolved below */dev*.
-
-## [rmc_server]
-
-port *(default: 5014)*
-
-:   TCP port on which the daemon listens for RMC client connections.
-Clients must be configured to use the same port.
-
-listen_scope *(default: loopback)*
-
-:   Network scope from which the daemon accepts RMC client connections.
-Possible values:
-
-- loopback: listen on 127.0.0.1
-- any: listen on 0.0.0.0
-
-The RMC protocol provides no authentication. Setting this option to **any** requires appropriate network access controls.
-An unsupported value is logged and treated as **loopback**.
-
-## [logging]
-
-level *(default: INFO)*
-
-:   Log mask. Messages below this level are suppressed.
-Possible values: EMERG, ALERT, CRIT, ERR, WARNING, NOTICE, INFO, DEBUG.
-
-format *(default: json)*
-
-:   Log output format. Possible values: json, kv.
-
-[logging.attributes]
-
-:   Optional key-value pairs added to all log lines, typically used for monitoring and instance identification.
-
-## [telemetry]
-
-config_file
-
-:   Path to the OpenTelemetry SDK declarative configuration file.
-Required and nonempty when telemetry is enabled.
-
-on_init_failure *(default: warn)*
-
-:   Behaviour if telemetry initialisation fails.
-Possible values:
-- warn
-- fatal
-
-Enable experimental telemetry by including `"telemetry"` in the root **enabled_experimental_features** list.
-Omit **[telemetry]** when disabled.
-
-## [health_server]
-
-Include `"health_server"` in the root **enabled_features** list to enable health endpoints.
-Omit this section and its children when disabled.
-
-transport *(default: tcp)*
-
-:   Select `tcp` or `unix`.
-For `unix`, omit **[health_server.tcp]** and supply **--runtime-dir**; the socket is created at *<runtime-dir>/health.sock*.
-
-## [health_server.tcp]
-
-This section is required for TCP and must be absent for Unix sockets.
-
-host *(default: 127.0.0.1)*
-
-:   Interface to bind to.
-
-port *(default: 8080)*
-
-:   TCP port to bind to.
-
-The health server exposes */health/ready* and */health/live*.
-
+The annotated example `/usr/share/doc/cta-rmcd/examples/cta-rmcd.example.toml` is the complete settings reference, including defaults, required values and feature selection.
+See [cta-rmcd configuration](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/media-changer-daemon/) for the examples and operational guidance, and [Service runtime](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/service-runtime/) for shared validation, feature selection and environment substitution rules.
 
 # FILES
 
-*/etc/cta/cta-rmcd.toml*
+`/etc/cta/cta-rmcd.toml`
 
-:   Default configuration file.
+:   Default service configuration file.
 
-*/etc/cta/cta-otel.yaml*
+`/usr/share/doc/cta-rmcd/examples/cta-rmcd.example.toml`
 
-:   OpenTelemetry declarative configuration file. Used only if telemetry is enabled and a config_file is specified under the [telemetry] section.
+:   Annotated configuration example and complete settings reference.
 
-*/usr/share/doc/cta-rmcd/examples/cta-rmcd.example.toml*
+`/etc/cta/cta-otel.yaml`
 
-:   Example configuration documenting all available settings.
-
-*/var/log/cta/cta-rmcd.log*
-
-:   Log file used by the packaged systemd service.
-
-*/usr/lib/systemd/system/cta-rmcd.service*
-
-:   Packaged systemd service unit.
+:   Telemetry configuration path used by the example when telemetry is enabled.
+    Selected by `telemetry.config_file`.
 
 # SEE ALSO
 

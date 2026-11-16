@@ -2,7 +2,7 @@
 
 Run one `cta-taped` process per tape drive, with a TOML configuration file for each process.
 The packaged service reads `/etc/cta/cta-taped.toml`.
-Use the [annotated example](#example-configuration) to configure the service and the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for individual options and defaults.
+Use the [annotated example](#example-configuration) to configure the service and the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for command-line options.
 This page covers operational decisions and interactions between settings.
 
 ## Prepare the deployment
@@ -101,6 +101,12 @@ To roll back configuration, restore the previous file, validate it, and restart 
 
 ## Example configuration
 
+The annotated examples are the complete settings reference.
+Choose the variant matching the compiled scheduler backend and replace deployment-specific values.
+The installed package provides the matching variant as `/usr/share/doc/cta-taped/examples/cta-taped.example.toml`.
+
+### Objectstore scheduler
+
 ???+ example "cta-taped.example.toml"
 
     ```toml
@@ -109,6 +115,16 @@ To roll back configuration, restore the previous file, validate it, and restart 
     --8<--
     ```
 
+### PostgreSQL scheduler
+
+???+ example "cta-taped.pg.example.toml"
+
+    ```toml
+    --8<--
+    taped/cta-taped.pg.example.toml
+    --8<--
+    ```
+
 ## Command reference
 
-See the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for the complete option reference.
+See the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for the complete command-line option reference.

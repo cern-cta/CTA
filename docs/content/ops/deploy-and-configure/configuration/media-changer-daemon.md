@@ -21,6 +21,9 @@ Telemetry is experimental and disabled by default.
 
 ## Example configuration
 
+The annotated example is the complete settings reference.
+It is installed at `/usr/share/doc/cta-rmcd/examples/cta-rmcd.example.toml`.
+
 ???+ example "cta-rmcd.example.toml"
 
     ```toml

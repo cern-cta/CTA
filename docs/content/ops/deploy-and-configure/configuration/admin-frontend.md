@@ -4,30 +4,12 @@ Configure the API used by operators and administrative tools, including `cta-adm
 
 ## Service configuration
 
-The Admin Frontend is configured via `cta-frontend.conf`.
-
-```ini
-# Operation mode: this node serves admin commands
-cta.operation_mode admin_all
-
-# gRPC port
-grpc.port 10956
-
-# Admin authentication methods (space-separated list): "jwt", "kerberos"
-grpc.admin.auth_methods jwt kerberos
-
-# TLS
-grpc.tls.server_key_path /path/to/server-admin.key.pem
-grpc.tls.server_cert_path /path/to/server-admin.crt.pem
-grpc.tls.chain_cert_path /path/to/ca.crt.pem
-
-# JWKS Endpoint (required for JWT auth)
-grpc.jwks.uri file:///etc/cta/jwks.json
-
-# Kerberos (required when kerberos is in auth_methods)
-grpc.keytab /etc/cta/cta-frontend.krb5.keytab
-grpc.service_principal cta/cta-frontend-admin@REALM
-```
+`cta-admin-api` reads `/etc/cta/cta-admin-api.toml` by default.
+Use `--config` to select another TOML file.
+Configure the gRPC listener and TLS credentials under `[grpc]` and `[grpc.tls]`.
+Select JWT, Kerberos, or both using `auth.enabled_methods`, and provide only the selected authentication sections.
+Use the [annotated examples](#example-configuration) for all settings and defaults, and [Service Runtime](service-runtime.md) for validation and feature selection.
+Restart the service to apply changes.
 
 ## Client-side configuration
 
@@ -42,6 +24,12 @@ The configuration file is consulted first in order to determine which authentica
 
 ## Example configuration
 
+The annotated examples are the complete settings reference.
+Choose the variant matching the compiled scheduler backend and replace deployment-specific values.
+The installed package provides the matching variant as `/usr/share/doc/cta-admin-api/examples/cta-admin-api.example.toml`.
+
+### Objectstore scheduler
+
 ???+ example "cta-admin-api.example.toml"
 
     ```toml
@@ -50,4 +38,14 @@ The configuration file is consulted first in order to determine which authentica
     --8<--
     ```
 
-See [Authentication Configuration](authentication.md) and the [cta-admin-api command reference](../../tools/service-manuals/cta-admin-api.md) for additional options.
+### PostgreSQL scheduler
+
+???+ example "cta-admin-api.pg.example.toml"
+
+    ```toml
+    --8<--
+    app/cta-admin-api/cta-admin-api.pg.example.toml
+    --8<--
+    ```
+
+See [Authentication Configuration](authentication.md) and the [cta-admin-api command reference](../../tools/service-manuals/cta-admin-api.md) for authentication guidance and command-line options, respectively.

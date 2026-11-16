@@ -147,11 +147,13 @@ enabled_experimental_features = ["telemetry"]
   # Type: integer; default: 900.
   unmount_timeout_secs = 900
 
-  # Maximum time, in seconds, in Preparing, in seconds, before liveness becomes unhealthy.
+  # Maximum time, in seconds, in Preparing before liveness becomes unhealthy. Must be positive.
+  # Applies to transfer sessions and drive cleanup.
   # Type: integer; default: 900.
   preparing_timeout_secs = 900
 
   # Maximum seconds spent finalising before the health endpoint reports the session as unhealthy.
+  # Includes final statistics publication. Must be positive.
   # Type: integer; default: 900.
   finalizing_timeout_secs = 900
 

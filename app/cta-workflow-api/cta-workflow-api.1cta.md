@@ -13,52 +13,89 @@ cta-workflow-api --- CTA workflow gRPC API server
 
 **cta-workflow-api** [OPTIONS]
 
-**cta-workflow-api** --help
-**cta-workflow-api** --version
+**cta-workflow-api** \--help
+
+**cta-workflow-api** \--version
 
 # DESCRIPTION
 
 **cta-workflow-api** serves the workflow (EOS) requests of CTA over gRPC: archive, retrieve, cancel retrieve and delete.
 
-The configuration is read from a TOML file (by default `/etc/cta/cta-workflow-api.toml`). The configuration is
-validated at start-up; use `--config-check` to validate it without starting the server. Unknown keys are only reported
-with `--config-strict`.
-Select authentication methods using `auth.enabled_methods` and supply only their configuration sections.
-Enable experimental telemetry through the root `enabled_experimental_features` list; omit its section when disabled.
-Strict mode requires settings with defaults, but permits genuinely optional values to be absent.
-Use `grpc.number_of_threads = 0` for automatic CPU-based sizing.
-
-Authentication uses JSON Web Tokens (`[auth.jwt]`) or mutual TLS (`[auth.mtls]`). Exactly one of them must be enabled.
-With mutual TLS, the certificate identities accepted for each EOS instance are configured in `[auth.mtls]`.
-
 # OPTIONS
 
-**-c**, **--config** PATH
-: Path to the configuration file. Defaults to `/etc/cta/cta-workflow-api.toml`.
+**-c**, **\--config** *PATH*
 
-**--config-strict**
-: Treat unknown keys, missing required keys and type mismatches in the configuration file as errors.
+:   Read the main TOML configuration from *PATH*.
+    Defaults to `/etc/cta/cta-workflow-api.toml`.
 
-**--config-check**
-: Validate the configuration, then exit.
+**\--config-strict**
 
-**--runtime-dir** PATH
-: Directory for state metadata such as the consumed configuration and version information.
+:   Reject unknown keys and require every applicable setting explicitly, including settings with defaults.
+    Genuinely optional values and sections for disabled features may be absent.
 
-**-l**, **--log-file** PATH
-: Write logs to PATH instead of stdout/stderr.
+**\--config-check**
 
-**-v**, **--version**
-: Print version information and exit.
+:   Validate the configuration and exit without starting the service.
+    Respects **\--config-strict**; cannot be combined with **\--runtime-dir**.
 
-**-h**, **--help**
-: Print the help message and exit.
+**\--runtime-dir** *PATH*
+
+:   Store consumed configuration and version metadata in *PATH*.
+    The directory must already exist and be readable and writable by the service.
+    Cannot be combined with **\--config-check**.
+
+**-l**, **\--log-file** *PATH*
+
+:   Write logs to *PATH* instead of stdout/stderr.
+
+**-v**, **\--version**
+
+:   Print version information and exit.
+
+**-h**, **\--help**
+
+:   Display command usage information and exit.
+
+# SIGNALS
+
+SIGTERM and SIGINT request service shutdown.
+SIGHUP and SIGUSR1 reopen the log file; they do not reload configuration.
+
+# CONFIGURATION
+
+Configuration is read at startup from `/etc/cta/cta-workflow-api.toml`, or the file selected by **\--config**.
+Restart the service to apply changes.
+Use **\--config-check**, with **\--config-strict** when required, to validate a file before starting the service.
+
+The annotated example `/usr/share/doc/cta-workflow-api/examples/cta-workflow-api.example.toml` is the complete settings reference, including defaults, required values and feature selection.
+The packaged example matches the compiled scheduler backend; the online guide provides both objectstore and PostgreSQL variants.
+See [cta-workflow-api configuration](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/workflow-frontend/) for the examples and operational guidance, and [Service runtime](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/service-runtime/) for shared validation, feature selection and environment substitution rules.
+
+Select exactly one authentication method, JWT or mutual TLS, using `auth.enabled_methods`, and supply its configuration section.
+With mutual TLS, configure the accepted EOS certificate identities in `[auth.mtls]`.
 
 # FILES
 
 `/etc/cta/cta-workflow-api.toml`
-: Default configuration file, also used by the `cta-workflow-api` systemd service. See the `cta-workflow-api.example.toml`
-  documentation file for all options.
+
+:   Default service configuration file.
+
+`/usr/share/doc/cta-workflow-api/examples/cta-workflow-api.example.toml`
+
+:   Annotated configuration example and complete settings reference.
+
+`/etc/cta/cta-catalogue.conf`
+
+:   Default catalogue connection file, selected by `catalogue.config_file`.
+
+`/etc/cta/cta-scheduler.conf`
+
+:   Default scheduler connection file, selected by `scheduler.config_file`.
+
+`/etc/cta/cta-otel.yaml`
+
+:   Telemetry configuration path used by the example when telemetry is enabled.
+    Selected by `telemetry.config_file`.
 
 # SEE ALSO
 
