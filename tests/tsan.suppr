@@ -4,5 +4,11 @@
 # Oracle 23.1 client lock-order cycles observed during schema enumeration.
 deadlock:kpugattr0
 
+# XRootD 5.8.4 reverses its initialization/fork-handler lock order during PostgreSQL test cleanup.
+deadlock:XrdCl::DefaultEnv::GetPostMaster
+
+# XRootD 5.8.4 accesses sInitMutex through GetMonitor during static destruction after the mutex is destroyed.
+mutex:XrdCl::DefaultEnv::GetMonitor
+
 # This test intentionally unlocks an unlocked error-checking mutex to verify the exception.
 mutex:unitTests::cta_threading_Mutex_properly_throws_exceptions_Test::TestBody
