@@ -17,9 +17,8 @@ instance_name = "CI_local"
 
 # Defaults documented below apply only in non-strict mode.
 # Strict mode requires all applicable settings except genuinely optional values.
-# Optional sections must match this list; unused sections are omitted.
+# Optional sections must match this list. Disabled features are shown as commented examples below.
 enabled_features = []
-# To enable telemetry, add "telemetry" above and supply [telemetry] with config_file and on_init_failure.
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -189,3 +188,30 @@ enabled_features = []
   # Kerberos service principal accepted by the frontend, e.g. "service/instance@REALM".
   # (string, REQUIRED if enabled)
   service_principal = "service/instance@REALM"
+
+
+# Telemetry (experimental)
+# Add "telemetry" to the root enabled_features list, then uncomment this section.
+# [telemetry]
+#   # Path to the OpenTelemetry SDK declarative configuration file.
+#   config_file = "/etc/cta/cta-otel.yaml"
+#   # "warn" continues without telemetry if initialization fails; "fatal" aborts startup.
+#   on_init_failure = "warn"
+
+
+# JWT authentication
+# Add "jwt" to auth.enabled_methods, then uncomment this section. JWT and Kerberos may both be enabled.
+# [auth.jwt]
+#   # URI of the JWKS document used to verify JWT signatures; supports file:// and https://.
+#   jwks_uri = "file:///etc/cta/jwks.json"
+#   expected_issuer = "cta"
+#   expected_audience = "cta-admin-api"
+#   # Minimum accepted token generation; raise it to invalidate older tokens.
+#   min_generation = 0
+#   # JWKS refresh interval and HTTP retrieval timeout, in seconds.
+#   cache_refresh_interval = 600
+#   jwks_total_timeout = 60
+#   # Cached public-key lifetime in seconds; 0 means never expires.
+#   pub_key_timeout = 0
+#   # Optional additional revocation file. Leave commented if unused.
+#   # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"

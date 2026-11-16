@@ -17,9 +17,8 @@ instance_name = "CI_local"
 
 # Defaults documented below apply only in non-strict mode.
 # Strict mode requires all applicable settings except genuinely optional values.
-# Optional sections must match this list; unused sections are omitted.
+# Optional sections must match this list. Disabled features are shown as commented examples below.
 enabled_features = []
-# To enable telemetry, add "telemetry" above and supply [telemetry] with config_file and on_init_failure.
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -186,3 +185,30 @@ enabled_features = []
   # without changing key material.
   # (file path, optional)
   # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
+
+
+# Telemetry (experimental)
+# Add "telemetry" to the root enabled_features list, then uncomment this section.
+# [telemetry]
+#   # Path to the OpenTelemetry SDK declarative configuration file.
+#   config_file = "/etc/cta/cta-otel.yaml"
+#   # "warn" continues without telemetry if initialization fails; "fatal" aborts startup.
+#   on_init_failure = "warn"
+
+
+# Opportunistic batching (experimental, PostgreSQL only)
+# Add "opportunistic_batching" to the root enabled_features list, then uncomment this section.
+# [opportunistic_batching]
+#   # Maximum time the leader waits for concurrent requests to join a batch, in milliseconds.
+#   window_ms = 10
+#   # Maximum number of requests in a batch; must be greater than zero.
+#   max_batch_size = 1000
+
+
+# Mutual TLS authentication
+# Set auth.enabled_methods to ["mtls"], comment out [auth.jwt], and uncomment this section.
+# Configure grpc.tls.chain_cert_path with the CA used to verify client certificates.
+# [auth.mtls]
+#   # Match certificate identities to the disk instance named in the request.
+#   [auth.mtls.aliases]
+#     ctaeos = ["eos-mgm.example.org"]
