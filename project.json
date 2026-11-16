@@ -16,7 +16,7 @@
     "defaultBuildType": "RelWithDebInfo",
     "ctaImageRegistry": "gitlab-registry.cern.ch",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
-    "eosImageTag": "5.5.4.el9",
+    "eosImageTag": "5.5.5.el9",
     "dCacheImageRepository": "gitlab.desy.de:5555/dcache/dcache",
     "dCacheImageTag": "cta-2fe4facc"
   },
