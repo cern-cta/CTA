@@ -17,10 +17,17 @@ Services that use the CTA Runtime Library support the `--config-strict` flag whi
 - Every provided config value MUST be a valid config entry. That means it will fail when entries are present that are not consumed by CTA. This mitigates (1) and (2).
 - Every applicable setting MUST be explicit, including settings with defaults. Genuinely optional values and sections for disabled features may be absent. This mitigates (2) and (3).
 
-Optional capabilities are selected through `enabled_features` at their parent, or `auth.enabled_methods` for authentication.
+Select stable optional capabilities through `enabled_features` and experimental ones through `enabled_experimental_features` at the service root.
+Telemetry and PostgreSQL workflow batching are experimental; health endpoints, maintenance routines, encryption and RAO are stable.
+Authentication uses `auth.enabled_methods`.
 Supply a section for each selected feature with configurable settings and omit sections for disabled features.
+Nested selectors use domain-specific names: `routines.enabled_routines`, `transfers.encryption_enabled` and `transfers.retrieve.rao_enabled`.
+Maintenance enables all supported routines by default in non-strict mode, retaining their default settings; an explicit routine list selects a subset.
+Strict mode requires that list and every selected routine section explicitly.
 Unknown or duplicate feature names and mismatches between selections and sections are errors in both modes.
-Strict mode requires the selection list, including `[]` when none are enabled.
+Strict mode requires both feature lists, including `[]` when none of that class are enabled.
+A feature in the wrong list is rejected with instructions to move it; the same applies when a feature becomes stable.
+Experimental interfaces may change or be removed; selecting them explicitly opts into that instability.
 Both APIs default to JWT authentication in non-strict mode when `auth.enabled_methods` is omitted; the `[auth.jwt]` section is still required.
 
 For integer settings that support automatic sizing or system defaults, explicitly set `0` to select that behaviour.

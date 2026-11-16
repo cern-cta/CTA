@@ -254,7 +254,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
 
   std::vector<ParseResult> errs;
 
-  auto assignField = [&tbl, &errs, &knownFields, strict](std::string_view tableFieldName, auto& field) {
+  auto assignField = [&out, &tbl, &errs, &knownFields, strict](std::string_view tableFieldName, auto& field) {
     if constexpr (EmptyConfig<std::remove_cvref_t<decltype(field)>>) {
       // Empty configs have no members and the parser should fail when
       // presented with a value for one, in strict mode. Hence, let's
@@ -262,6 +262,27 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
       return;
     } else {
       const auto node = tbl[tableFieldName];
+
+      if constexpr (StdOptional<decltype(field)> && requires {
+                      { out.isSectionEnabled(tableFieldName) } -> std::same_as<bool>;
+                    }) {
+        // Selectors are already parsed. Never silently discard an explicitly supplied inactive section.
+        if (!out.isSectionEnabled(tableFieldName)) {
+          if (node) {
+            errs.push_back(
+              ParseResult::error("Field '" + std::string(tableFieldName) + "' must be absent when disabled."));
+          } else {
+            field.reset();
+          }
+        } else if (!node) {
+          if (strict) {
+            errs.push_back(
+              ParseResult::error("Expected enabled section '" + std::string(tableFieldName) + "' is missing."));
+          }
+          // Non-strict loading keeps the section's member initializer; the loader invents no defaults.
+          return;
+        }
+      }
 
       if (!node) {
         if constexpr (StdOptional<decltype(field)>) {
@@ -280,8 +301,17 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
     }
   };
 
-  // Do a pass over the fields of T and try to assign its members
-  reflection::forEachMember(out, assignField);
+  // Parse selectors before optional sections, independently of member declaration or TOML key order.
+  reflection::forEachMember(out, [&](std::string_view name, auto& field) {
+    if constexpr (!StdOptional<decltype(field)>) {
+      assignField(name, field);
+    }
+  });
+  reflection::forEachMember(out, [&](std::string_view name, auto& field) {
+    if constexpr (StdOptional<decltype(field)>) {
+      assignField(name, field);
+    }
+  });
 
   if (strict) {
     // In strict mode, we need to do a second pass to spot keys in the TOML but not in T

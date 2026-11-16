@@ -24,7 +24,7 @@ The configuration is read from a TOML file (by default `/etc/cta/cta-admin-api.t
 validated at start-up; use `--config-check` to validate it without starting the server. Unknown keys are only reported
 with `--config-strict`.
 Select authentication methods using `auth.enabled_methods` and supply only their configuration sections.
-Enable telemetry through the root `enabled_features` list; omit its section when disabled.
+Enable experimental telemetry through the root `enabled_experimental_features` list; omit its section when disabled.
 Strict mode requires settings with defaults, but permits genuinely optional values to be absent.
 Use `grpc.number_of_threads = 0` for automatic CPU-based sizing.
 

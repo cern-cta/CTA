@@ -165,23 +165,39 @@ This field is required in strict mode; it does not inherit a scheduler-selected 
 
 #### How features are enabled
 
-Put activation in the parent of the optional section, using an `enabled_features` list.
+Use `enabled_features` and `enabled_experimental_features` at the service root for stable and experimental service-wide capabilities.
+For nested behaviour, use a domain-specific selector in the parent, such as `transfers.retrieve.rao_enabled`, `transfers.encryption_enabled`, or `routines.enabled_routines`.
+Do not add empty experimental lists to nested sections.
+Classify telemetry and PostgreSQL workflow batching as experimental; health endpoints, maintenance routines, encryption and RAO are stable.
+Experimental means the interface may change incompatibly or be removed; selecting a feature in the experimental list is the explicit opt-in.
 Use a more specific name where helpful, such as `auth.enabled_methods` for authentication.
 For mutually exclusive alternatives, use one mode selector, such as `transport = "tcp"` or `"unix"`.
 Do not put an `enabled` flag inside the section it controls.
 
 **Activation lists:**
 
-- Strict mode requires the list, including `[]` when no features are enabled.
-- In non-strict mode, an omitted list may use a documented default.
+- Strict mode requires both root feature lists, including `[]` when no features of that class are enabled, and all applicable nested selectors.
+- In non-strict mode, both feature lists default to empty.
+- Use `validateFeatureLists()` with disjoint stable and experimental name sets to reject names in the wrong list, with guidance to move them.
+- A feature cannot appear in both lists.
+- On promotion to stable, move its name to the stable set and validate its section against `enabled_features`; configurations must move the selection to that list.
+  Keep its settings section at the same path and document the migration.
 - Unknown and duplicate names are errors in both modes.
 - List order has no meaning.
+
+Keep defaults in configuration member initializers, including the complete backend-specific `enabled_routines` list and populated routine sections.
+`RoutinesConfig::isSectionEnabled(name)` lets the loader distinguish selected defaults from inactive sections.
+The loader parses non-optional members before optional sections, so selection is independent of declaration and TOML key order.
+For configs defining this hook, omitted selected sections retain their member initializers only in non-strict mode; strict mode requires the sections and their settings explicitly.
+Omitted inactive sections are cleared, and explicitly supplied inactive sections are rejected in both modes.
+Configs without the hook retain the usual optional-field absence semantics.
+The hook must classify every optional member in its config; it must not introduce fallback values or mutate configuration.
 
 **Sections must match the selection in both modes:**
 
 | Selection | Required configuration |
 | --- | --- |
-| Feature enabled | Its section must be present if it has configurable settings. |
+| Feature enabled | Its section must be explicit in strict mode. Non-strict mode may use a section default declared by the config and selected through `isSectionEnabled()`. |
 | Feature disabled | Its section must be absent. |
 | Mode selected | The applicable section must be present; sections for other modes must be absent. |
 
@@ -209,6 +225,7 @@ struct CustomConfig final {
   std::optional<cta::runtime::HealthServerConfig> health_server;
   // Explicitly select optional capabilities.
   std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
   // Add this if the app uses XRootD
   cta::runtime::XRootDConfig xrootd;
   // Put whatever you want here; will be populated from the config file and available in the run() function
@@ -216,16 +233,17 @@ struct CustomConfig final {
 
   // All configs must have this function (limitation of custom reflection implementation)
   // If this number is not consistent with the actual number of members, it won't compile
-  static constexpr std::size_t memberCount() { return 8; }
+  static constexpr std::size_t memberCount() { return 9; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
     cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
+    result.merge("", cta::runtime::validateFeatureLists(
+      enabled_features, enabled_experimental_features, {"health_server"}, {"telemetry"}));
     result.merge("xrootd", xrootd.validate());
     result.merge("customConf", customConf.validate());
     return result;

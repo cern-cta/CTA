@@ -92,7 +92,8 @@ Each section is described below.
 
 ## Feature selection
 
-The root **enabled_features** list selects `telemetry` and `health_server`.
+The root **enabled_features** list selects `health_server`; **enabled_experimental_features** selects `telemetry`.
+Both lists must be explicit in strict mode, including empty lists.
 Use `[]` to disable both, and omit their sections.
 Unknown names, duplicate names and sections for disabled features are rejected.
 Strict mode requires every applicable setting, even when a default is documented.
@@ -304,7 +305,7 @@ external_free_disk_space_script *(default: /usr/bin/cta-eosdf.sh)*
 
 ## [transfers.retrieve.rao]
 
-Include `"rao"` in **transfers.retrieve.enabled_features** to enable recommended access order, preferring hardware RAO where available.
+Set **transfers.retrieve.rao_enabled** to `true` to enable recommended access order, preferring hardware RAO where available.
 Omit this section when disabled.
 
 lto_algorithm *(default: sltf)*
@@ -315,7 +316,7 @@ The `sltf` algorithm requires the corresponding media type's `NB_WRAPS`, `MIN_LP
 
 ## [transfers.encryption]
 
-Include `"encryption"` in **transfers.enabled_features** to use tape-drive hardware encryption when a key is configured for the tape or tape pool.
+Set **transfers.encryption_enabled** to `true` to use tape-drive hardware encryption when a key is configured for the tape or tape pool.
 Omit this section when disabled.
 
 external_key_script *(default: /usr/local/bin/cta-get-encryption-key.sh)*
@@ -371,7 +372,7 @@ on_init_failure *(default: warn)*
 :   Behaviour if telemetry initialisation fails.
 Possible values: `warn`, `fatal`.
 
-Enable experimental telemetry by including `"telemetry"` in the root **enabled_features** list.
+Enable experimental telemetry by including `"telemetry"` in the root **enabled_experimental_features** list.
 Omit **[telemetry]** when disabled.
 
 ## [health_server]

@@ -13,8 +13,13 @@ instance_name = "CI_local"
 
 # Optional features to enable; include the matching sections below.
 # Type: array of strings; default: [].
-# Allowed: "telemetry", "opportunistic_batching" (no duplicates).
+# Allowed: none (use []).
 enabled_features = []
+
+# Experimental features to enable; their interfaces may change or be removed.
+# Type: array of strings; default: [].
+# Allowed: "telemetry", "opportunistic_batching" (no duplicates).
+enabled_experimental_features = []
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -158,7 +163,7 @@ enabled_features = []
     # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
     # Telemetry (experimental)
-    # Add "telemetry" to the root enabled_features list, then uncomment this section.
+    # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
     # [telemetry]
     #   # Path to the OpenTelemetry SDK declarative configuration file.
     #   # Type: string; default: none; required.
@@ -170,7 +175,7 @@ enabled_features = []
     #   on_init_failure = "warn"
 
     # Opportunistic batching (experimental, PostgreSQL only)
-    # Add "opportunistic_batching" to the root enabled_features list, then uncomment this section.
+    # Add "opportunistic_batching" to the root enabled_experimental_features list, then uncomment this section.
     # [opportunistic_batching]
     #   # Maximum time the leader waits for concurrent requests to join a batch, in milliseconds.
     #   # Type: integer; default: 10.

@@ -9,8 +9,13 @@
 
 # Optional features to enable; include the matching sections below.
 # Type: array of strings; default: [].
-# Allowed: "telemetry", "health_server" (no duplicates).
+# Allowed: "health_server" (no duplicates).
 enabled_features = []
+
+# Experimental features to enable; their interfaces may change or be removed.
+# Type: array of strings; default: [].
+# Allowed: "telemetry" (no duplicates).
+enabled_experimental_features = []
 
 [media_changer]
   # The SCSI-compatible media changer device used by rmcd to control the tape library.
@@ -52,7 +57,7 @@ enabled_features = []
     # instance = "production"
 
     # Telemetry (experimental)
-    # Add "telemetry" to the root enabled_features list, then uncomment this section.
+    # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
     # [telemetry]
     #   # Path to the OpenTelemetry SDK declarative configuration file.
     #   # Type: string; default: none; required.

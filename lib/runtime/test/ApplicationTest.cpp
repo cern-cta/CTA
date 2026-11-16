@@ -503,16 +503,21 @@ INSTANTIATE_TEST_SUITE_P(Application, ApplicationShutdownSignalTest, testing::Va
 struct LifecycleConfig {
   cta::runtime::LoggingConfig logging;
   std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
   std::optional<cta::runtime::TelemetryConfig> telemetry;
   std::optional<cta::runtime::HealthServerConfig> health_server;
 
-  static constexpr std::size_t memberCount() { return 4; }
+  static constexpr std::size_t memberCount() { return 5; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("logging", logging.validate());
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
-    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    result.merge("",
+                 cta::runtime::validateFeatureLists(enabled_features,
+                                                    enabled_experimental_features,
+                                                    {"health_server"},
+                                                    {"telemetry"}));
+    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
     cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
     return result;
   }
@@ -641,14 +646,14 @@ TEST(Application, DestroysAppBeforeTelemetryAndAfterCallbacks) {
     TempFile socket("", ".sock");
     ::unlink(socket.path().c_str());
     TempFile logs;
-    TempFile config(
-      "enabled_features = [\"telemetry\", \"health_server\"]\n[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
-      "[telemetry]\nconfig_file = \""
-        + telemetry.path()
-        + "\"\n"
-          "[health_server]\ntransport = \"tcp\"\n[health_server.tcp]\nhost = \""
-        + socket.path() + "\"\nport = 80\n",
-      ".toml");
+    TempFile config("enabled_features = [\"health_server\"]\nenabled_experimental_features = "
+                    "[\"telemetry\"]\n[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
+                    "[telemetry]\nconfig_file = \""
+                      + telemetry.path()
+                      + "\"\n"
+                        "[health_server]\ntransport = \"tcp\"\n[health_server.tcp]\nhost = \""
+                      + socket.path() + "\"\nport = 80\n",
+                    ".toml");
     {
       runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
       app.addSignalFunction(SIGUSR2, &LifecycleApp::customSignal);
@@ -732,7 +737,8 @@ TEST(Application, InitializationFailureCleansUpBeforeStoppedEvent) {
   LifecycleApp::state = &state;
   TempFile logs;
   TempFile invalidTelemetry("not valid SDK configuration: [", ".yaml");
-  TempFile config("enabled_features = [\"telemetry\"]\n[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
+  TempFile config("enabled_features = []\nenabled_experimental_features = [\"telemetry\"]\n[logging]\nlevel = "
+                  "\"INFO\"\nformat = \"json\"\n"
                   "[telemetry]\non_init_failure = \"fatal\"\nconfig_file = \""
                     + invalidTelemetry.path() + "\"\n",
                   ".toml");

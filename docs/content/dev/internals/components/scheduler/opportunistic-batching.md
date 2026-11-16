@@ -43,7 +43,7 @@ A request that fails its own catalogue lookup never joins a batch at all — it 
 isolation, exactly as it would under the file-by-file scheme.
 
 **Configuration** (`cta-workflow-api.toml`, pgsched only).
-Enable this experimental feature by including `"opportunistic_batching"` in the root `enabled_features` list and supplying `[opportunistic_batching]`.
+Enable this experimental feature by including `"opportunistic_batching"` in the root `enabled_experimental_features` list and supplying `[opportunistic_batching]`.
 Omit the section when disabled.
 Both settings below are required in strict mode; the defaults apply only in non-strict mode:
 

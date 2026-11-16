@@ -34,7 +34,7 @@ conf:
     # Only takes effect with the postgres scheduler (pgsched); ignored by the objectstore
     # scheduler, which always queues one request at a time regardless of these values.
     opportunisticBatching:
-      # Experimental: selects opportunistic_batching in the root enabled_features list.
+      # Experimental: selects opportunistic_batching in the root enabled_experimental_features list.
       enabled: false
       # Only meaningful when enabled is true: see cta-workflow-api.pg.example.toml.
       windowMs: 10

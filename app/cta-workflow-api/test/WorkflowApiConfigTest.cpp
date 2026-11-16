@@ -66,9 +66,19 @@ TEST(WorkflowApiConfig, OpportunisticBatchingIsDisabledByDefault) {
   EXPECT_FALSE(makeValidConfig().opportunistic_batching.has_value());
 }
 
+TEST(WorkflowApiConfig, BatchingRequiresExperimentalSelection) {
+  auto config = makeValidConfig();
+  config.opportunistic_batching.emplace();
+  config.enabled_features = {"opportunistic_batching"};
+  EXPECT_FALSE(config.validate().ok());
+  config.enabled_features.clear();
+  config.enabled_experimental_features = {"opportunistic_batching"};
+  EXPECT_TRUE(config.validate().ok());
+}
+
 TEST(WorkflowApiConfig, ZeroOpportunisticBatchingMaxBatchSizeIsRejected) {
   auto config = makeValidConfig();
-  config.enabled_features = {"opportunistic_batching"};
+  config.enabled_experimental_features = {"opportunistic_batching"};
   config.opportunistic_batching.emplace().max_batch_size = 0;
   EXPECT_FALSE(config.validate().ok());
 }

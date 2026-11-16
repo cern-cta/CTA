@@ -51,17 +51,22 @@ struct RmcdConfig final {
   std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
   std::optional<cta::runtime::HealthServerConfig> health_server = std::nullopt;
   std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
   MediaChangerConfig media_changer;
   RmcServerConfig rmc_server;
 
-  static constexpr std::size_t memberCount() { return 6; }
+  static constexpr std::size_t memberCount() { return 7; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
     cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
+    result.merge("",
+                 cta::runtime::validateFeatureLists(enabled_features,
+                                                    enabled_experimental_features,
+                                                    {"health_server"},
+                                                    {"telemetry"}));
     result.merge("media_changer", media_changer.validate());
     result.merge("rmc_server", rmc_server.validate());
     return result;

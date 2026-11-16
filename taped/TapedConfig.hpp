@@ -309,7 +309,7 @@ struct RaoConfig final {
 
 /// Retrieval batching, disk delivery and access-order settings.
 struct RetrieveTransferConfig final {
-  std::vector<std::string> enabled_features;
+  bool rao_enabled = false;
   /// Maximum bytes requested per scheduler retrieve batch; either this or fetch_max_files limits the batch.
   uint64_t fetch_max_bytes = 100000000000;
   /// Maximum files requested per scheduler retrieve batch; either this or fetch_max_bytes limits the batch.
@@ -335,15 +335,14 @@ struct RetrieveTransferConfig final {
     if (drain_to_disk_timeout_secs == 0) {
       result.addError("drain_to_disk_timeout_secs", "must be greater than zero");
     }
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"rao"}));
-    cta::runtime::validateFeature(result, enabled_features, "rao", rao);
+    cta::runtime::validateFeature(result, rao_enabled, "rao", rao);
     return result;
   }
 };
 
 /// Shared pipeline resources and direction-specific transfer settings.
 struct TransfersConfig final {
-  std::vector<std::string> enabled_features;
+  bool encryption_enabled = false;
   /// Number of pipeline buffers; approximate buffer memory is buffer_count multiplied by buffer_size_bytes.
   uint32_t buffer_count = 5000;
   /// Size in bytes of each in-memory transfer buffer.
@@ -384,8 +383,7 @@ struct TransfersConfig final {
     }
     result.merge("archive", archive.validate());
     result.merge("retrieve", retrieve.validate());
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"encryption"}));
-    cta::runtime::validateFeature(result, enabled_features, "encryption", encryption);
+    cta::runtime::validateFeature(result, encryption_enabled, "encryption", encryption);
     return result;
   }
 };
@@ -404,6 +402,7 @@ struct TapedConfig final {
   std::optional<cta::runtime::HealthServerConfig> health_server = std::nullopt;
   /// Names of enabled optional capabilities.
   std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
   /// XRootD authentication settings for connections to disk storage.
   cta::runtime::XRootDConfig xrootd;
 
@@ -416,7 +415,7 @@ struct TapedConfig final {
   /// Shared pipeline resources and archive/retrieve transfer policies.
   TransfersConfig transfers;
 
-  static constexpr std::size_t memberCount() { return 11; }
+  static constexpr std::size_t memberCount() { return 12; }
 
   /// Collect validation errors from all sections, prefixed with their section names.
   cta::runtime::ValidationResult validate() const {
@@ -424,9 +423,13 @@ struct TapedConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
     cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "health_server"}));
+    result.merge("",
+                 cta::runtime::validateFeatureLists(enabled_features,
+                                                    enabled_experimental_features,
+                                                    {"health_server"},
+                                                    {"telemetry"}));
     result.merge("xrootd", xrootd.validate());
     result.merge("drive", drive.validate());
     result.merge("mounts", mounts.validate());

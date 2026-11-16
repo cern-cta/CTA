@@ -95,7 +95,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
  */
 #ifndef CTA_PGSCHED
   // Add Garbage Collector
-  if (cta::runtime::featureEnabled(m_config.routines.enabled_features, "garbage_collect")) {
+  if (cta::runtime::featureEnabled(m_config.routines.enabled_routines, "garbage_collect")) {
     routines.push_back(std::make_unique<GarbageCollectRoutine>(m_lc,
                                                                m_resources.getSchedDbInit().getBackend(),
                                                                m_resources.getSchedDbInit().getAgentReference(),

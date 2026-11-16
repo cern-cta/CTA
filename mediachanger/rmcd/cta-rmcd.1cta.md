@@ -65,7 +65,8 @@ Each section is described below.
 
 ## Feature selection
 
-The root **enabled_features** list selects `telemetry` and `health_server`.
+The root **enabled_features** list selects `health_server`; **enabled_experimental_features** selects `telemetry`.
+Both lists must be explicit in strict mode, including empty lists.
 Use `[]` to disable both, and omit their sections.
 Unknown names, duplicate names and sections for disabled features are rejected.
 Strict mode requires every applicable setting, even when a default is documented.
@@ -125,7 +126,7 @@ Possible values:
 - warn
 - fatal
 
-Enable experimental telemetry by including `"telemetry"` in the root **enabled_features** list.
+Enable experimental telemetry by including `"telemetry"` in the root **enabled_experimental_features** list.
 Omit **[telemetry]** when disabled.
 
 ## [health_server]

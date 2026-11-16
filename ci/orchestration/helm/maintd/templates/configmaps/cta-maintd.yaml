@@ -15,7 +15,8 @@ metadata:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
   cta-maintd.toml: |-
-    enabled_features = ["telemetry", "health_server"]
+    enabled_features = ["health_server"]
+    enabled_experimental_features = ["telemetry"]
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
@@ -58,7 +59,7 @@ data:
       max_cycle_duration_secs = 900
 
 
-      enabled_features = [{{ include "common.toSnakeCase" $routineName | quote }}]
+      enabled_routines = [{{ include "common.toSnakeCase" $routineName | quote }}]
       {{- if ne $routineName "garbageCollect" }}
       [routines.{{ include "common.toSnakeCase" $routineName }}]
       {{- range $k, $v := (omit $routineConf "replicas" "sleepIntervalSecs") }}

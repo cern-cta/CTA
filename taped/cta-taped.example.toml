@@ -9,8 +9,13 @@
 
 # Optional features to enable; include the matching sections below.
 # Type: array of strings; default: [].
-# Allowed: "telemetry", "health_server" (no duplicates).
+# Allowed: "health_server" (no duplicates).
 enabled_features = []
+
+# Experimental features to enable; their interfaces may change or be removed.
+# Type: array of strings; default: [].
+# Allowed: "telemetry" (no duplicates).
+enabled_experimental_features = []
 
 [drive]
   # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
@@ -166,10 +171,9 @@ enabled_features = []
 
 # Controls resources and inactivity limits shared by archive and retrieve data-transfer sessions.
 [transfers]
-  # Optional features to enable; include the matching sections below.
-  # Type: array of strings; default: [].
-  # Allowed: "encryption" (no duplicates).
-  enabled_features = []
+  # Enable encryption; include [transfers.encryption] only when true.
+  # Type: boolean; default: false.
+  encryption_enabled = false
 
   # Number of in-memory buffers allocated to the drive's data-transfer pipeline. Total buffer memory is
   # approximately buffer_count multiplied by buffer_size_bytes. Increasing it can smooth I/O but consumes
@@ -249,10 +253,9 @@ enabled_features = []
 
   # Batch fetching, disk-space checks, and disk draining for tape-to-disk retrieve sessions.
   [transfers.retrieve]
-    # Optional features to enable; include the matching sections below.
-    # Type: array of strings; default: [].
-    # Allowed: "rao" (no duplicates).
-    enabled_features = []
+    # Enable recommended access order (RAO); include [transfers.retrieve.rao] only when true.
+    # Type: boolean; default: false.
+    rao_enabled = false
 
     # Maximum total bytes requested from the scheduler in one retrieve batch. The batch is limited when
     # either this value or fetch_max_files is reached.
@@ -275,7 +278,7 @@ enabled_features = []
     external_free_disk_space_script = ""
 
     # Recommended Access Order reduces tape positioning during retrieve.
-    # Add "rao" to transfers.retrieve.enabled_features, then uncomment this section.
+    # Set transfers.retrieve.rao_enabled = true, then uncomment this section.
     # [transfers.retrieve.rao]
     #   # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
     #   # When hardware RAO is available, it is preferred over software RAO.
@@ -292,7 +295,7 @@ enabled_features = []
     #   lto_algorithm = "sltf"
 
     # Hardware-encryption behaviour shared by archive and retrieve sessions.
-    # Add "encryption" to transfers.enabled_features, then uncomment this section.
+    # Set transfers.encryption_enabled = true, then uncomment this section.
     # [transfers.encryption]
     #   # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
     #   # This does not encrypt tapes lacking valid key configuration.
@@ -363,7 +366,7 @@ enabled_features = []
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
   # Telemetry (experimental)
-  # Add "telemetry" to the root enabled_features list, then uncomment this section.
+  # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
   # [telemetry]
   #   # Path to the OpenTelemetry SDK declarative configuration file.
   #   # Type: string; default: none; required.

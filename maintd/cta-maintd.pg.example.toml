@@ -17,17 +17,32 @@
 
 # Optional features to enable; include the matching sections below.
 # Type: array of strings; default: [].
-# Allowed: "telemetry", "health_server" (no duplicates).
+# Allowed: "health_server" (no duplicates).
 enabled_features = []
 
-# Select the routines needed for this deployment; an empty list performs no maintenance work.
+# Experimental features to enable; their interfaces may change or be removed.
+# Type: array of strings; default: [].
+# Allowed: "telemetry" (no duplicates).
+enabled_experimental_features = []
+
+# All supported routines are enabled by default; an empty list performs no maintenance work.
 [routines]
   # Optional features to enable; include the matching sections below.
-  # Type: array of strings; default: [].
+  # Type: array of strings; default: all routines listed below.
   # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report",
   # "user_active_queue_cleanup", "repack_active_queue_cleanup", "user_pending_queue_cleanup",
   # "repack_pending_queue_cleanup", "scheduler_maintenance_cleanup" (no duplicates).
-  enabled_features = []
+  enabled_routines = [
+    "disk_report_archive",
+    "disk_report_retrieve",
+    "repack_expand",
+    "repack_report",
+    "user_active_queue_cleanup",
+    "repack_active_queue_cleanup",
+    "user_pending_queue_cleanup",
+    "repack_pending_queue_cleanup",
+    "scheduler_maintenance_cleanup",
+  ]
 
   # Sleep duration in seconds between cycles of routine executions.
   # Type: integer; default: 10.
@@ -40,100 +55,89 @@ enabled_features = []
   max_cycle_duration_secs = 900
 
   # Routine that reports archive transfer success/failures to the disk system.
-  # Add "disk_report_archive" to routines.enabled_features, then uncomment this section.
-  # [routines.disk_report_archive]
-  #   # Maximum number of entries processed per batch.
-  #   # Type: integer; default: 500.
-  #   batch_size = 500
+  [routines.disk_report_archive]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
-  #   # Soft time limit in seconds for this routine; checked between batches.
-  #   # Type: integer; default: 30.
-  #   soft_timeout_secs = 30
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 30.
+    soft_timeout_secs = 30
 
-  #   # Pause in milliseconds between iterations; 0 means no pause.
-  #   # Type: integer; default: 0.
-  #   iter_sleep_ms = 0
+    # Pause in milliseconds between iterations; 0 means no pause.
+    # Type: integer; default: 0.
+    iter_sleep_ms = 0
 
   # Routine that reports retrieve transfer success/failures to the disk system.
-  # Add "disk_report_retrieve" to routines.enabled_features, then uncomment this section.
-  # [routines.disk_report_retrieve]
-  #   # Maximum number of entries processed per batch.
-  #   # Type: integer; default: 500.
-  #   batch_size = 500
+  [routines.disk_report_retrieve]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
-  #   # Soft time limit in seconds for this routine; checked between batches.
-  #   # Type: integer; default: 30.
-  #   soft_timeout_secs = 30
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 30.
+    soft_timeout_secs = 30
 
-  #   # Pause in milliseconds between iterations; 0 means no pause.
-  #   # Type: integer; default: 0.
-  #   iter_sleep_ms = 0
+    # Pause in milliseconds between iterations; 0 means no pause.
+    # Type: integer; default: 0.
+    iter_sleep_ms = 0
 
   # Routine that expands repack requests.
-  # Add "repack_expand" to routines.enabled_features, then uncomment this section.
-  # [routines.repack_expand]
-  #   # Maximum number of repack requests expanded per cycle.
-  #   # Type: integer; default: 2.
-  #   max_to_expand = 2
+  [routines.repack_expand]
+    # Maximum number of repack requests expanded per cycle.
+    # Type: integer; default: 2.
+    max_to_expand = 2
 
   # Routine that handles the reporting of the requests created by repack requests.
-  # Add "repack_report" to routines.enabled_features, then uncomment this section.
-  # [routines.repack_report]
-  #   # Soft time limit in seconds for this routine; checked between batches.
-  #   # Type: integer; default: 900.
-  #   soft_timeout_secs = 900
+  [routines.repack_report]
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 900.
+    soft_timeout_secs = 900
+  [routines.user_active_queue_cleanup]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
-  # Add "user_active_queue_cleanup" to routines.enabled_features, then uncomment this section.
-  # [routines.user_active_queue_cleanup]
-  #   # Maximum number of entries processed per batch.
-  #   # Type: integer; default: 500.
-  #   batch_size = 500
+    # Minimum queue-entry age in seconds before collection.
+    # Type: integer; default: 900.
+    age_for_collection_secs = 900
+  [routines.repack_active_queue_cleanup]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
-  #   # Minimum queue-entry age in seconds before collection.
-  #   # Type: integer; default: 900.
-  #   age_for_collection_secs = 900
+    # Minimum queue-entry age in seconds before collection.
+    # Type: integer; default: 900.
+    age_for_collection_secs = 900
+  [routines.user_pending_queue_cleanup]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
-  # Add "repack_active_queue_cleanup" to routines.enabled_features, then uncomment this section.
-  # [routines.repack_active_queue_cleanup]
-  #   # Maximum number of entries processed per batch.
-  #   # Type: integer; default: 500.
-  #   batch_size = 500
+    # Minimum queue-entry age in seconds before collection.
+    # Type: integer; default: 900.
+    age_for_collection_secs = 900
+  [routines.repack_pending_queue_cleanup]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
-  #   # Minimum queue-entry age in seconds before collection.
-  #   # Type: integer; default: 900.
-  #   age_for_collection_secs = 900
-
-  # Add "user_pending_queue_cleanup" to routines.enabled_features, then uncomment this section.
-  # [routines.user_pending_queue_cleanup]
-  #   # Maximum number of entries processed per batch.
-  #   # Type: integer; default: 500.
-  #   batch_size = 500
-
-  #   # Minimum queue-entry age in seconds before collection.
-  #   # Type: integer; default: 900.
-  #   age_for_collection_secs = 900
-
-  # Add "repack_pending_queue_cleanup" to routines.enabled_features, then uncomment this section.
-  # [routines.repack_pending_queue_cleanup]
-  #   # Maximum number of entries processed per batch.
-  #   # Type: integer; default: 500.
-  #   batch_size = 500
-
-  #   # Minimum queue-entry age in seconds before collection.
-  #   # Type: integer; default: 900.
-  #   age_for_collection_secs = 900
+    # Minimum queue-entry age in seconds before collection.
+    # Type: integer; default: 900.
+    age_for_collection_secs = 900
 
   # Removes stale scheduler maintenance entries and expired disk-system sleep entries.
   # Disk-system sleep entries expire according to their own timestamps, independent of age_for_deletion_secs.
-  # Add "scheduler_maintenance_cleanup" to routines.enabled_features, then uncomment this section.
-  # [routines.scheduler_maintenance_cleanup]
-  #   # Maximum number of entries processed per batch.
-  #   # Type: integer; default: 500.
-  #   batch_size = 500
+  [routines.scheduler_maintenance_cleanup]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
-#   # Minimum maintenance-entry age in seconds before deletion.
-#   # Type: integer; default: 1209600.
-#   age_for_deletion_secs = 1209600
+    # Minimum maintenance-entry age in seconds before deletion.
+    # Type: integer; default: 1209600.
+    age_for_deletion_secs = 1209600
+
+
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
   # specifies how to connect to the Catalogue DB.
@@ -209,7 +213,7 @@ enabled_features = []
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
   # Telemetry (experimental)
-  # Add "telemetry" to the root enabled_features list, then uncomment this section.
+  # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
   # [telemetry]
   #   # Path to the OpenTelemetry SDK declarative configuration file.
   #   # Type: string; default: none; required.

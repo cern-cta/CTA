@@ -61,6 +61,7 @@ These health endpoints can be enabled and configured as follows:
 
     ```toml
     enabled_features = ["health_server"]
+    enabled_experimental_features = []
 
     [health_server]
     transport = "tcp"

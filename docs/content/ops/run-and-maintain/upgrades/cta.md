@@ -14,18 +14,23 @@ The old keys are not aliases for the new schema; validate the migrated file with
 
 | Previous setting | Replacement |
 | --- | --- |
-| `experimental.telemetry_enabled` | Root `enabled_features` contains `"telemetry"`; retain `[telemetry]` only when enabled. |
+| `experimental.telemetry_enabled` | Root `enabled_experimental_features` contains `"telemetry"`; retain `[telemetry]` only when enabled. |
 | `health_server.enabled` | Root `enabled_features` contains `"health_server"`. |
 | `health_server.use_unix_domain_socket` | `health_server.transport = "unix"` or `"tcp"`; move TCP host and port into `[health_server.tcp]`. |
 | `auth.<method>.enabled` | `auth.enabled_methods` lists selected methods; omit inactive method sections. |
-| `experimental.opportunistic_batching_enabled` | Root `enabled_features` contains `"opportunistic_batching"` in PostgreSQL workflow API configurations. |
-| `routines.<routine>.enabled` | `routines.enabled_features` lists selected routines; omit inactive sections. The objectstore `garbage_collect` routine needs no section. |
-| `transfers.encryption.enabled` | `transfers.enabled_features` contains `"encryption"`; retain the section only when enabled. |
-| `transfers.retrieve.rao.enabled` | `transfers.retrieve.enabled_features` contains `"rao"`; retain the section only when enabled. |
+| `experimental.opportunistic_batching_enabled` | Root `enabled_experimental_features` contains `"opportunistic_batching"` in PostgreSQL workflow API configurations. |
+| `routines.<routine>.enabled` | `routines.enabled_routines` lists selected routines; omit inactive sections. The objectstore `garbage_collect` routine needs no section. |
+| `transfers.encryption.enabled` | `transfers.encryption_enabled = true`; retain the section only when enabled. |
+| `transfers.retrieve.rao.enabled` | `transfers.retrieve.rao_enabled = true`; retain the section only when enabled. |
 
 Remove `[experimental]` after migrating its flags.
-Keep all previously intended capabilities in the appropriate lists, including routines, encryption and RAO that were enabled by default.
-An omitted `enabled_features` list defaults to empty in non-strict mode; `auth.enabled_methods` defaults to `["jwt"]` for both APIs.
+If using the intermediate single-list schema, move `telemetry` and `opportunistic_batching` from `enabled_features` to `enabled_experimental_features`.
+Strict mode requires both feature lists at the service root.
+For nested settings, replace `routines.enabled_features` with `routines.enabled_routines`, `transfers.enabled_features` with `transfers.encryption_enabled`, and `transfers.retrieve.enabled_features` with `transfers.retrieve.rao_enabled`.
+Remove nested `enabled_experimental_features` lists.
+In non-strict mode, an omitted `routines.enabled_routines` enables all routines supported by the scheduler backend, using their struct defaults; set an explicit subset or `[]` to override this.
+Preserve previously intended selections, including routines, encryption and RAO that were enabled by default; use the new lists or boolean selectors as appropriate.
+Omitted `enabled_features` and `enabled_experimental_features` lists default to empty in non-strict mode; `auth.enabled_methods` defaults to `["jwt"]` for both APIs.
 Supplied inactive sections are rejected in both modes.
 
 Explicitly set `grpc.number_of_threads = 0` to preserve automatic sizing and, in objectstore API configurations, `scheduler.client.thread_stack_size_mb = 0` to preserve the system stack size.

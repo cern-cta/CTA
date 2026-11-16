@@ -108,6 +108,7 @@ struct AdminApiConfig final {
   cta::runtime::LoggingConfig logging;
   std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
   std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
 
   PoliciesConfig policies;
 
@@ -116,7 +117,7 @@ struct AdminApiConfig final {
 
   DefaultsConfig defaults;
 
-  static constexpr std::size_t memberCount() { return 10; }
+  static constexpr std::size_t memberCount() { return 11; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -128,8 +129,10 @@ struct AdminApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry"}));
+    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
+    result.merge(
+      "",
+      cta::runtime::validateFeatureLists(enabled_features, enabled_experimental_features, {}, {"telemetry"}));
     result.merge("policies", policies.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());

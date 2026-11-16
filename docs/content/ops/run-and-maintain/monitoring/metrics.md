@@ -146,7 +146,8 @@ Once metrics publishing is enabled and the OpenTelemetry Collector is receiving 
 Set the following options in each service's TOML configuration file:
 
 ```toml
-enabled_features = ["telemetry"]
+enabled_features = []
+enabled_experimental_features = ["telemetry"]
 
 [telemetry]
   config_file = "/etc/cta/cta-otel.yaml"

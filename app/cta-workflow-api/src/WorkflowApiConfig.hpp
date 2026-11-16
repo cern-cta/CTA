@@ -91,6 +91,7 @@ struct WorkflowApiConfig final {
   cta::runtime::LoggingConfig logging;
   std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
   std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
 
 #ifdef CTA_PGSCHED
   std::optional<OpportunisticBatchingConfig> opportunistic_batching = std::nullopt;
@@ -102,9 +103,9 @@ struct WorkflowApiConfig final {
   RequestsConfig requests;
 
 #ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 9; }
-#else
   static constexpr std::size_t memberCount() { return 10; }
+#else
+  static constexpr std::size_t memberCount() { return 11; }
 #endif
 
   cta::runtime::ValidationResult validate() const {
@@ -117,14 +118,23 @@ struct WorkflowApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_features, "telemetry", telemetry);
+    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
 #ifdef CTA_PGSCHED
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry", "opportunistic_batching"}));
+    result.merge("",
+                 cta::runtime::validateFeatureLists(enabled_features,
+                                                    enabled_experimental_features,
+                                                    {},
+                                                    {"telemetry", "opportunistic_batching"}));
 #else
-    result.merge("", cta::runtime::validateFeatureNames(enabled_features, {"telemetry"}));
+    result.merge(
+      "",
+      cta::runtime::validateFeatureLists(enabled_features, enabled_experimental_features, {}, {"telemetry"}));
 #endif
 #ifdef CTA_PGSCHED
-    cta::runtime::validateFeature(result, enabled_features, "opportunistic_batching", opportunistic_batching);
+    cta::runtime::validateFeature(result,
+                                  enabled_experimental_features,
+                                  "opportunistic_batching",
+                                  opportunistic_batching);
 #endif
     result.merge("requests", requests.validate());
     result.merge("grpc", grpc.validate());

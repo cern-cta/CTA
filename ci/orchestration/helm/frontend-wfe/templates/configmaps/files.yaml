@@ -16,7 +16,8 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
   cta-workflow-api.toml: |-
-    enabled_features = ["telemetry"{{ if $batchingEnabled }}, "opportunistic_batching"{{ end }}]
+    enabled_features = []
+    enabled_experimental_features = ["telemetry"{{ if $batchingEnabled }}, "opportunistic_batching"{{ end }}]
     instance_name = {{ .Release.Namespace | quote }}
 
 

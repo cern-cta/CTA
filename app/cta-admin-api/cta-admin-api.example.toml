@@ -13,8 +13,13 @@ instance_name = "CI_local"
 
 # Optional features to enable; include the matching sections below.
 # Type: array of strings; default: [].
-# Allowed: "telemetry" (no duplicates).
+# Allowed: none (use []).
 enabled_features = []
+
+# Experimental features to enable; their interfaces may change or be removed.
+# Type: array of strings; default: [].
+# Allowed: "telemetry" (no duplicates).
+enabled_experimental_features = []
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -195,7 +200,7 @@ enabled_features = []
     # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
     # Telemetry (experimental)
-    # Add "telemetry" to the root enabled_features list, then uncomment this section.
+    # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
     # [telemetry]
     #   # Path to the OpenTelemetry SDK declarative configuration file.
     #   # Type: string; default: none; required.
