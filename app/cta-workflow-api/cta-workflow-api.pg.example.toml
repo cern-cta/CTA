@@ -65,19 +65,20 @@ enabled_experimental_features = ["telemetry"]
   # Type: integer; default: 10.
   retrieve_queue_cache_max_age_secs = 10
 
-[requests.archive]
-  # Whether 0-length files are rejected.
-  # Type: boolean; default: true.
-  zero_length_files_forbidden = true
+[requests]
+  [requests.archive]
+    # Whether 0-length files are rejected.
+    # Type: boolean; default: true.
+    zero_length_files_forbidden = true
 
-  # VOs which are exempt from the 0-length file restriction.
-  # Type: array of strings; default: [].
-  zero_length_vo_exceptions = []
+    # VOs which are exempt from the 0-length file restriction.
+    # Type: array of strings; default: [].
+    zero_length_vo_exceptions = []
 
-[requests.prepare]
-  # Name of the mount policy used for verification requests.
-  # Type: string; default: "".
-  verification_mount_policy = ""
+  [requests.prepare]
+    # Name of the mount policy used for verification requests.
+    # Type: string; default: "".
+    verification_mount_policy = ""
 
 [logging]
   # Minimum severity written to the log. More verbose levels increase log volume.
@@ -90,14 +91,9 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "json", "kv".
   format = "json"
 
-  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Additional string key-value pairs included in every log line.
   # Type: table of strings; default: {}.
-  [logging.attributes]
-    # Type: string; default: none; optional.
-    # instance = "CI_local"
-
-    # Type: string; default: none; optional.
-    # sched_backend = "postgresCI"
+  attributes = {}
 
 [grpc]
   # TCP port the gRPC server listens on.
@@ -163,6 +159,16 @@ enabled_experimental_features = ["telemetry"]
     # Type: string; default: none; optional.
     # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
+    # Mutual TLS authentication
+    # Set auth.enabled_methods to ["mtls"], comment out [auth.jwt], and uncomment this section.
+    # Configure grpc.tls.chain_cert_path with the CA used to verify client certificates.
+    # [auth.mtls]
+    #   # Match certificate identities to the disk instance named in the request.
+    #   # Type: table of arrays of strings; default: {}.
+    # [auth.mtls.aliases]
+    #   # Type: array of strings; default: none; optional.
+    #   ctaeos = ["eos-mgm.example.org"]
+
 # Telemetry (experimental)
 [telemetry]
   # Path to the OpenTelemetry SDK declarative configuration file.
@@ -173,13 +179,3 @@ enabled_experimental_features = ["telemetry"]
   # Type: string; default: "warn".
   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
   on_init_failure = "warn"
-
-  # Mutual TLS authentication
-  # Set auth.enabled_methods to ["mtls"], comment out [auth.jwt], and uncomment this section.
-  # Configure grpc.tls.chain_cert_path with the CA used to verify client certificates.
-  # [auth.mtls]
-  #   # Match certificate identities to the disk instance named in the request.
-  #   # Type: table of arrays of strings; default: {}.
-  # [auth.mtls.aliases]
-  #   # Type: array of strings; default: none; optional.
-  #   ctaeos = ["eos-mgm.example.org"]

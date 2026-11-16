@@ -50,14 +50,10 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "json", "kv".
   format = "json"
 
-  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Additional string key-value pairs included in every log line.
   # Type: table of strings; default: {}.
-  [logging.attributes]
-    # Unique string to identify CTA's instance the rmcd process is serving (i.e: production, preproduction).
-    # Type: string; default: none; optional.
-    # instance = "production"
+  attributes = {}
 
-# Telemetry (experimental)
 [telemetry]
   # Path to the OpenTelemetry SDK declarative configuration file.
   # Type: string; default: none; required.
@@ -71,7 +67,7 @@ enabled_experimental_features = ["telemetry"]
 # Health endpoints
 [health_server]
   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-  # For Unix sockets, leave the entire [health_server.tcp] section commented out.
+  # For Unix sockets, remove the entire [health_server.tcp] section.
   # Type: string; default: "tcp".
   # Allowed: "tcp", "unix".
   transport = "tcp"

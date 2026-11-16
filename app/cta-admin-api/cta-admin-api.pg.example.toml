@@ -91,21 +91,22 @@ enabled_experimental_features = ["telemetry"]
     # Type: integer; default: 2678400.
     recycle_log_quarantine_secs = 2678400
 
-[defaults.archive]
-  # Default maximum size (in GB) of an archived file for a virtual organization. This is applied when a virtual
-  # organisation is first added and an explicit maximum hasn't been set. 0 means no limit.
-  # Type: integer; default: 0.
-  max_file_size_gb = 0
+[defaults]
+  [defaults.archive]
+    # Default maximum size (in GB) of an archived file for a virtual organization. This is applied when a virtual
+    # organisation is first added and an explicit maximum hasn't been set. 0 means no limit.
+    # Type: integer; default: 0.
+    max_file_size_gb = 0
 
-[defaults.repack]
-  # URL of the buffer used by repack requests. Cannot be empty when provided.
-  # If omitted, repack requests which require a buffer cannot be created.
-  # Type: string; default: none; optional.
-  # buffer_url = "root://ctaeos//eos/ctaeos/repack"
+  [defaults.repack]
+    # URL of the buffer used by repack requests. Cannot be empty when provided.
+    # If omitted, repack requests which require a buffer cannot be created.
+    # Type: string; default: none; optional.
+    # buffer_url = "root://ctaeos//eos/ctaeos/repack"
 
-  # Maximum number of files to select when expanding a repack request. Zero means all files.
-  # Type: integer; default: 0.
-  max_files_to_select = 0
+    # Maximum number of files to select when expanding a repack request. Zero means all files.
+    # Type: integer; default: 0.
+    max_files_to_select = 0
 
 [logging]
   # Minimum severity written to the log. More verbose levels increase log volume.
@@ -118,14 +119,9 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "json", "kv".
   format = "json"
 
-  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Additional string key-value pairs included in every log line.
   # Type: table of strings; default: {}.
-  [logging.attributes]
-    # Type: string; default: none; optional.
-    # instance = "CI_local"
-
-    # Type: string; default: none; optional.
-    # sched_backend = "postgresCI"
+  attributes = {}
 
 [grpc]
   # TCP port the gRPC server listens on.
@@ -191,17 +187,6 @@ enabled_experimental_features = ["telemetry"]
     # Type: string; default: none; optional.
     # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
-# Telemetry (experimental)
-[telemetry]
-  # Path to the OpenTelemetry SDK declarative configuration file.
-  # Type: string; default: none; required.
-  config_file = "/etc/cta/cta-otel.yaml"
-
-  # Behaviour when telemetry initialization fails.
-  # Type: string; default: "warn".
-  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-  on_init_failure = "warn"
-
   # Kerberos authentication
   [auth.kerberos]
     # Filesystem path to the Kerberos keytab file containing the service principal keys used to
@@ -212,3 +197,14 @@ enabled_experimental_features = ["telemetry"]
     # Kerberos service principal accepted by the frontend, e.g. "service/instance@REALM".
     # Type: string; default: none; required.
     service_principal = "service/instance@REALM"
+
+# Telemetry (experimental)
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # Behaviour when telemetry initialization fails.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"

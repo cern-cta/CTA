@@ -344,19 +344,9 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "json", "kv".
   format = "json"
 
-  # Arbitrary string labels added to every log line; no effect on service behaviour.
+  # Additional string key-value pairs included in every log line.
   # Type: table of strings; default: {}.
-  [logging.attributes]
-    # Monitoring-only label identifying the CTA instance served by this process, such as "production" or
-    # "preproduction". It should identify the catalogue instance consistently across CTA services.
-    # This attribute is optional and has no behavioral effect.
-    # Type: string; default: none; optional.
-    # instance = "production"
-
-    # Monitoring-only label identifying the scheduler backend. It should normally match scheduler.backend_name.
-    # This attribute is optional and has no behavioral effect.
-    # Type: string; default: none; optional.
-    # sched_backend = "cephUser"
+  attributes = {}
 
 [xrootd]
   # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
@@ -383,7 +373,7 @@ enabled_experimental_features = ["telemetry"]
 # Health endpoints
 [health_server]
   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-  # For Unix sockets, leave the entire [health_server.tcp] section commented out.
+  # For Unix sockets, remove the entire [health_server.tcp] section.
   # Type: string; default: "tcp".
   # Allowed: "tcp", "unix".
   transport = "tcp"
