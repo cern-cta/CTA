@@ -117,7 +117,7 @@ struct WorkflowApiConfig final {
   };
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
 
     if (instance_name.empty()) {
       result.addError("instance_name", "cannot be empty");
@@ -126,7 +126,6 @@ struct WorkflowApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("requests", requests.validate());
     result.merge("grpc", grpc.validate());
     // Workflow API: exactly one of JWT or mTLS (Kerberos is not representable in WfeAuthConfig)

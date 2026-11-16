@@ -514,9 +514,8 @@ struct LifecycleConfig {
                 cta::runtime::stableFeature("health_server", &LifecycleConfig::health_server)};
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
     result.merge("logging", logging.validate());
-    result.merge("", cta::runtime::validateFeatures(*this));
     return result;
   }
 };

@@ -88,7 +88,7 @@ private:
   void executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount, ExecutionState& state);
 
   /// Configure requested RAO unless the tape label format is incompatible.
-  void configureRAO(cta::log::LogContext& logContext, RecallTaskInjector& taskInjector);
+  void configureRAO(cta::log::LogContext& logContext, RecallTaskInjector& taskInjector, const RaoConfig& config);
 
   /// @brief Run the disk-to-tape pipeline if archive jobs are available.
   ///

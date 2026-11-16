@@ -7,6 +7,7 @@
 
 #include "common/exception/UserError.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
+#include "grpc-server/server/ServerBuilderHelper.hpp"
 #include "runtime/config/ConfigLoader.hpp"
 #include "tests/TempFile.hpp"
 
@@ -238,13 +239,15 @@ service_principal = "svc/host@REALM"
   EXPECT_ANY_THROW(cta::runtime::loadFromToml<WfeAuthConfig>(file.path(), true));
 }
 
-TEST(ListenerConfig, AutomaticThreadCountIsBoundedAndFixedCountsArePreserved) {
+TEST(ServerBuilderHelper, AutomaticThreadLimitHandlesUnknownCpuCountAndOverflow) {
+  EXPECT_EQ(8, cta::grpc_server::automaticThreadLimit(0));
+  EXPECT_EQ(32, cta::grpc_server::automaticThreadLimit(4));
+  EXPECT_EQ((std::numeric_limits<int>::max() / 8) * 8,
+            cta::grpc_server::automaticThreadLimit(std::numeric_limits<unsigned>::max()));
+}
+
+TEST(ListenerConfig, RejectsNegativeThreadCount) {
   cta::grpc_server::ListenerConfig config;
-  EXPECT_EQ(8, config.resolveThreadCount(0));
-  EXPECT_EQ(32, config.resolveThreadCount(4));
-  EXPECT_EQ((std::numeric_limits<int>::max() / 8) * 8, config.resolveThreadCount(std::numeric_limits<unsigned>::max()));
-  config.number_of_threads = 3;
-  EXPECT_EQ(3, config.resolveThreadCount(4));
   config.number_of_threads = -1;
   EXPECT_FALSE(config.validate().ok());
 }

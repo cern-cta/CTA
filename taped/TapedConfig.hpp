@@ -423,11 +423,10 @@ struct TapedConfig final {
 
   /// Collect validation errors from all sections, prefixed with their section names.
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("xrootd", xrootd.validate());
     result.merge("drive", drive.validate());
     result.merge("mounts", mounts.validate());

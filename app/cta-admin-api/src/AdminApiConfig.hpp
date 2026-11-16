@@ -124,7 +124,7 @@ struct AdminApiConfig final {
     std::tuple {cta::runtime::experimentalFeature("telemetry", &AdminApiConfig::telemetry)};
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
 
     if (instance_name.empty()) {
       result.addError("instance_name", "cannot be empty");
@@ -133,7 +133,6 @@ struct AdminApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("policies", policies.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());

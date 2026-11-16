@@ -26,9 +26,6 @@ struct ListenerConfig final {
   /// @return The validation result (will contain the errors if present)
   cta::runtime::ValidationResult validate() const;
 
-  /// Resolve automatic sizing, bounding the result to the gRPC API integer range.
-  int resolveThreadCount(unsigned detectedCpuCount) const;
-
   static constexpr std::size_t memberCount() { return 3; }
 };
 

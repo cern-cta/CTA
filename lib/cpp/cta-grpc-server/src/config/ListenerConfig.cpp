@@ -5,15 +5,7 @@
 
 #include "grpc-server/config/ListenerConfig.hpp"
 
-#include <algorithm>
-#include <limits>
-
 namespace cta::grpc_server {
-
-int ListenerConfig::resolveThreadCount(unsigned detectedCpuCount) const {
-  const auto cpus = std::clamp(detectedCpuCount, 1u, static_cast<unsigned>(std::numeric_limits<int>::max() / 8));
-  return number_of_threads == 0 ? static_cast<int>(8 * cpus) : number_of_threads;
-}
 
 cta::runtime::ValidationResult ListenerConfig::validate() const {
   cta::runtime::ValidationResult result;

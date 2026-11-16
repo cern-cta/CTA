@@ -273,8 +273,8 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   utils::Timer startupTimer;
 
   // The RecallTaskInjector and the TapeReadSingleThread share the promise
-  if (m_transfersConfig.retrieve.rao.has_value()) {
-    configureRAO(logContext, recallTaskInjector);
+  if (const auto& rao = m_transfersConfig.retrieve.rao) {
+    configureRAO(logContext, recallTaskInjector, *rao);
   }
   bool noFilesToRecall = false;
   bool jobsFetched = false;
@@ -483,7 +483,7 @@ std::unique_ptr<drive::DriveInterface> TapeSession::findDrive(log::LogContext& l
   }
 }
 
-void TapeSession::configureRAO(log::LogContext& logContext, RecallTaskInjector& taskInjector) {
+void TapeSession::configureRAO(log::LogContext& logContext, RecallTaskInjector& taskInjector, const RaoConfig& config) {
   using LabelFormat = common::dataStructures::Label::Format;
   if (m_volInfo.labelFormat == LabelFormat::Enstore || m_volInfo.labelFormat == LabelFormat::EnstoreLarge) {
     // No RAO for Enstore
@@ -495,11 +495,7 @@ void TapeSession::configureRAO(log::LogContext& logContext, RecallTaskInjector& 
     params.add("tapeVid", m_volInfo.vid).add("mountId", m_volInfo.mountId).add("labelFormat", format_str.str());
     logContext.log(log::INFO, "TapeSession::executeRead Tape LabelFormat incompatible with RAO. Setting RAO false.");
   } else {
-    rao::RAOParams raoDataConfig(
-      m_transfersConfig.retrieve.rao.has_value(),
-      (m_transfersConfig.retrieve.rao ? m_transfersConfig.retrieve.rao->lto_algorithm : std::string {}),
-      c_raoLtoAlgorithmOptions,
-      m_volInfo.vid);
+    rao::RAOParams raoDataConfig(config.lto_algorithm, c_raoLtoAlgorithmOptions, m_volInfo.vid);
     taskInjector.initRAO(raoDataConfig, &m_catalogue);
   }
 }

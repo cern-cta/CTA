@@ -212,11 +212,10 @@ struct MaintdConfig final {
                 cta::runtime::stableFeature("health_server", &MaintdConfig::health_server)};
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("xrootd", xrootd.validate());
     result.merge("routines", routines.validate());
     return result;

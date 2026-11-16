@@ -28,29 +28,14 @@ public:
     sltf  //!< Short Locate Time First
   };
 
-  /**
-   * Default constructor
-   */
+  /// Construct empty algorithm settings.
   RAOParams() = default;
 
-  /**
-   * Constructor
-   *
-   * @param useRAO if set to true, the RAO will be enabled. If false, not enabled.
-   * @param raoAlgorithmName the RAO algorithm that will be executed when called
-   * @param raoAlgorithmOptions the options that could be passed to the RAO algorithm
-   * @param vid the vid of the tape that is currently mounted for retrieval
-   */
-  RAOParams(bool useRAO, std::string_view raoAlgorithmName, std::string_view raoAlgorithmOptions, std::string_view vid)
-      : m_useRAO(useRAO),
-        m_raoAlgorithmName(raoAlgorithmName),
+  /// Store the selected algorithm, its options and the mounted tape's VID.
+  RAOParams(std::string_view raoAlgorithmName, std::string_view raoAlgorithmOptions, std::string_view vid)
+      : m_raoAlgorithmName(raoAlgorithmName),
         m_raoAlgorithmOptions(raoAlgorithmOptions),
         m_vid(vid) {}
-
-  /**
-    * Returns true if RAO has to be used, false otherwise
-    */
-  bool useRAO() const { return m_useRAO; }
 
   /**
     * Returns the RAO algorithm name of this RAO data instance
@@ -61,11 +46,6 @@ public:
     * Returns the RAO algorithm options of this RAO data instance
     */
   const RAOOptions& getRAOAlgorithmOptions() const { return m_raoAlgorithmOptions; }
-
-  /**
-    * Disable RAO of this configuration
-    */
-  void disableRAO() { m_useRAO = false; }
 
   /**
     * Returns RAOAlgorithmType object corresopnding to this configration's raoAlgorithmName
@@ -83,7 +63,6 @@ public:
   std::string getMountedVid() const;
 
 private:
-  bool m_useRAO = false;
   std::string m_raoAlgorithmName;
   RAOOptions m_raoAlgorithmOptions;
   std::string m_vid;

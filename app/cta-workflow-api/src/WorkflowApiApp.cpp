@@ -41,6 +41,7 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   // Opportunistic batching of archive/retrieve queueing, in front of the Scheduler
   const auto& batching = config.opportunistic_batching;
   const bool batchingEnabled = config.opportunistic_batching.has_value();
+  // TODO: this is a bit ugly; ideally the whole layer is optional
   FrontendBatchingLayer batchingLayer(serviceResources.getScheduler(),
                                       batchingEnabled,
                                       batching ? batching->window_ms : 0,
