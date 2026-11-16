@@ -4,27 +4,27 @@
 # Latest versions can be found in the respective repos if an update is desired
 repos:
   - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
+    rev: 01886c8a910c64595c47f186ca1ffc0b77fa5458  # frozen: v1.5.0
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v20.1.8
+    rev: 182152eb8c5ce1cf5299b956b04392c86bd8a126  # frozen: v20.1.8
     hooks:
       - id: clang-format
         files: \.(c|h|cc|cpp|cxx|hpp|hh|json)$
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.9
+    rev: d96cc7adddf7d15b77f99dbd5d20e037dfd1b29c  # frozen: v0.14.9
     hooks:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
+    rev: 79a6b2b1392eaf49cdd32ac4f14be1a809bbd8f7  # frozen: v1.37.1
     hooks:
       - id: yamllint
   - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.1.0
+    rev: 634a1823f9a9a234f79510e8fade22aea5306f85  # frozen: v5.1.0
     hooks:
       - id: reuse-lint-file
   - repo: local

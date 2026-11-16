@@ -1,0 +1,140 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description":
+    "Initial scope: container bases, external CI images, GitHub Actions, frozen pre-commit hooks and grpc-health-probe. Rust, Python workspaces, native packages, Helm, submodules and retired development images are deferred.",
+  "enabledManagers": [
+    "dockerfile",
+    "github-actions",
+    "pre-commit",
+    "custom.regex"
+  ],
+  "automerge": false,
+  "prConcurrentLimit": 3,
+  "semanticCommits": "disabled",
+  "commitMessagePrefix": "[ci]",
+  "commitMessageAction": "Update",
+  "commitMessageLowerCase": "never",
+  "prHeader": "### Description",
+  "prFooter": "### Checklist\n\n- [x] Merge Request title is clear, concise, and suitable as a changelog entry.",
+  "ignorePaths": [
+    "build/**",
+    "build_rpm/**",
+    "build_srpm/**",
+    "target/**",
+    "ci/build/development/**",
+    "ci/orchestration/**",
+    "catalogue/cta-catalogue-schema/**",
+    "common/jwt-cpp/**",
+    "lib/protobuf/external/**"
+  ],
+  "dockerfile": {
+    "managerFilePatterns": [
+      "/^ci/docker/.*\\.Dockerfile$/"
+    ]
+  },
+  "github-actions": {
+    "managerFilePatterns": [
+      "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+    ]
+  },
+  "pre-commit": {
+    "enabled": true,
+    "managerFilePatterns": [
+      "/^\\.pre-commit-config\\.yaml$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description":
+        "Resolve proxied external images upstream while preserving the CERN proxy prefix. CTA pipeline images remain owned by the existing image updater.",
+      "managerFilePatterns": [
+        "/^\\.gitlab-ci\\.yml$/"
+      ],
+      "matchStrings": [
+        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|LICENSE_CHECK|SBOM_HELPER): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
+        "IMAGE_(?:TRIVY|SBOMQS): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\" +# (?<currentValue>v?[0-9.]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Update the release URL and verified binary checksum together in both production Dockerfiles.",
+      "managerFilePatterns": [
+        "/^ci/docker/cta/el(?:9|10)/prod\\.Dockerfile$/"
+      ],
+      "matchStrings": [
+        "https://github\\.com/grpc-ecosystem/grpc-health-probe/releases/download/(?<currentValue>v[0-9.]+)/grpc_health_probe-linux-amd64\\s+\\\\\\s+-o /grpc-health-probe && \\\\\\s+echo \"(?<currentDigest>[a-f0-9]{64})  /grpc-health-probe\""
+      ],
+      "depNameTemplate": "grpc-ecosystem/grpc-health-probe",
+      "datasourceTemplate": "github-release-attachments",
+      "versioningTemplate": "semver"
+    }
+  ],
+  "packageRules": [
+    {
+      "description":
+        "Only container references are in scope for the Dockerfile manager; package installation locks are deferred.",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchDatasources": [
+        "!docker"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "package_context is a local named build context, not a registry image.",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "package_context"
+      ],
+      "enabled": false
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": true
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action"
+      ],
+      "pinDigests": true
+    },
+    {
+      "description": "Hosted runner OS updates are outside the initial pinning scope.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "github-runner"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Update frozen hook repositories only; additional Python dependencies are deferred.",
+      "matchManagers": [
+        "pre-commit"
+      ],
+      "matchDepTypes": [
+        "!repository"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Keep the health probe release and checksum aligned across EL9 and EL10.",
+      "matchPackageNames": [
+        "grpc-ecosystem/grpc-health-probe"
+      ],
+      "groupName": "grpc-health-probe"
+    }
+  ]
+}

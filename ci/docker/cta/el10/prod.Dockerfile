@@ -13,27 +13,27 @@
 # =========================================================================
 # CERN CA CERTIFICATES
 # =========================================================================
-# hadolint ignore=DL3007
-FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest AS cern-ca
+FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2 AS cern-ca
 
 # =========================================================================
 # GRPC HEALTH PROBE
 # =========================================================================
-# hadolint ignore=DL3007
-FROM docker.io/almalinux/10-minimal:latest AS grpc-health-probe
+FROM docker.io/almalinux/10-minimal:latest@sha256:59186585abee4673468ea8c7167917c76fa7e751206f4903a856d8a23cc3ed5f AS grpc-health-probe
 
 # Download once for frontend readiness checks and tools-image diagnostics.
 RUN curl -fL --proto "=https" --proto-redir "=https" \
     https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.59/grpc_health_probe-linux-amd64 \
     -o /grpc-health-probe && \
+    echo "b74ea9e3fe0e4fb19008a77422b6475e29141b30833a6f82c18941bf6eb6a136  /grpc-health-probe" > /tmp/grpc-health-probe.sha256 && \
+    sha256sum -c /tmp/grpc-health-probe.sha256 && \
+    rm /tmp/grpc-health-probe.sha256 && \
     chmod 0755 /grpc-health-probe
 
 # =========================================================================
 # 1. REPO BUILDER
 # Used to feed the RPMs to the other stages
 # =========================================================================
-# hadolint ignore=DL3007
-FROM docker.io/almalinux/10-minimal:latest AS repo-builder
+FROM docker.io/almalinux/10-minimal:latest@sha256:59186585abee4673468ea8c7167917c76fa7e751206f4903a856d8a23cc3ed5f AS repo-builder
 
 # hadolint ignore=DL3040,DL3041
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
@@ -52,8 +52,7 @@ RUN /bin/bash -o pipefail -c \
 # =========================================================================
 #  2. BASE IMAGE
 # =========================================================================
-# hadolint ignore=DL3007
-FROM docker.io/almalinux/10-minimal:latest AS base
+FROM docker.io/almalinux/10-minimal:latest@sha256:59186585abee4673468ea8c7167917c76fa7e751206f4903a856d8a23cc3ed5f AS base
 
 ARG SUPPRESS_BUILD_SERVICE_STDOUT=false
 
