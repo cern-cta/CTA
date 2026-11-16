@@ -5,17 +5,18 @@
 
 # Copy this example and replace deployment-specific names, endpoints and credential paths.
 # Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# Include feature sections only when enabled, with all their required settings.
+# This example enables all compatible features, including experimental ones.
+# To disable a feature, update its selector and remove its section.
 
 # Optional features to enable; include the matching sections below.
 # Type: array of strings; default: [].
 # Allowed: "health_server" (no duplicates).
-enabled_features = []
+enabled_features = ["health_server"]
 
 # Experimental features to enable; their interfaces may change or be removed.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
-enabled_experimental_features = []
+enabled_experimental_features = ["telemetry"]
 
 [drive]
   # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
@@ -178,7 +179,7 @@ enabled_experimental_features = []
 [transfers]
   # Enable encryption; include [transfers.encryption] only when true.
   # Type: boolean; default: false.
-  encryption_enabled = false
+  encryption_enabled = true
 
   # Number of in-memory buffers allocated to the drive's data-transfer pipeline. Total buffer memory is
   # approximately buffer_count multiplied by buffer_size_bytes. Increasing it can smooth I/O but consumes
@@ -260,7 +261,7 @@ enabled_experimental_features = []
   [transfers.retrieve]
     # Enable recommended access order (RAO); include [transfers.retrieve.rao] only when true.
     # Type: boolean; default: false.
-    rao_enabled = false
+    rao_enabled = true
 
     # Maximum total bytes requested from the scheduler in one retrieve batch. The batch is limited when
     # either this value or fetch_max_files is reached.
@@ -283,32 +284,30 @@ enabled_experimental_features = []
     external_free_disk_space_script = ""
 
     # Recommended Access Order reduces tape positioning during retrieve.
-    # Set transfers.retrieve.rao_enabled = true, then uncomment this section.
-    # [transfers.retrieve.rao]
-    #   # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
-    #   # When hardware RAO is available, it is preferred over software RAO.
+    [transfers.retrieve.rao]
+      # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
+      # When hardware RAO is available, it is preferred over software RAO.
 
-    #   # Software RAO algorithm for LTO-8 drives. Valid values are
-    #   # - "random": Retrieve files in randomized order
-    #   # - "linear": Order files by fseq
-    #   # - "sltf": Shortest Locate Time First. Order by always picking the nearest (lowest cost) neighbour
-    #   # For production, "sltf" is recommended. For "sltf" to work, the columns NB_WRAPS, MIN_LPOS, and MAX_LPOS
-    #   # columns of the corresponding media type must be populated in the catalogue.
-    #   # This option is ignored when hardware RAO is available on the drive.
-    #   # Type: string; default: "sltf".
-    #   # Allowed: "linear", "random", "sltf".
-    #   lto_algorithm = "sltf"
+      # Software RAO algorithm for LTO-8 drives. Valid values are
+      # - "random": Retrieve files in randomized order
+      # - "linear": Order files by fseq
+      # - "sltf": Shortest Locate Time First. Order by always picking the nearest (lowest cost) neighbour
+      # For production, "sltf" is recommended. For "sltf" to work, the columns NB_WRAPS, MIN_LPOS, and MAX_LPOS
+      # columns of the corresponding media type must be populated in the catalogue.
+      # This option is ignored when hardware RAO is available on the drive.
+      # Type: string; default: "sltf".
+      # Allowed: "linear", "random", "sltf".
+      lto_algorithm = "sltf"
 
-    # Hardware-encryption behaviour shared by archive and retrieve sessions.
-    # Set transfers.encryption_enabled = true, then uncomment this section.
-    # [transfers.encryption]
-    #   # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
-    #   # This does not encrypt tapes lacking valid key configuration.
+  # Hardware-encryption behaviour shared by archive and retrieve sessions.
+  [transfers.encryption]
+    # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
+    # This does not encrypt tapes lacking valid key configuration.
 
-    #   # Path to the operator-provided executable used to obtain encryption keys. It must be executable by
-    #   # cta-taped and return the protocol expected by EncryptionControl. It is required when encryption is used.
-    #   # Type: string; default: "/usr/local/bin/cta-get-encryption-key.sh".
-    #   external_key_script = "/usr/local/bin/cta-get-encryption-key.sh"
+    # Path to the operator-provided executable used to obtain encryption keys. It must be executable by
+    # cta-taped and return the protocol expected by EncryptionControl. It is required when encryption is used.
+    # Type: string; default: "/usr/local/bin/cta-get-encryption-key.sh".
+    external_key_script = "/usr/local/bin/cta-get-encryption-key.sh"
 
 # Connection to the Remote Media Changer Daemon (cta-rmcd) used for physical mount and unmount operations.
 [rmcd]
@@ -370,32 +369,30 @@ enabled_experimental_features = []
   # Type: string; default: "etc/cta/sss.keytab".
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
-  # Telemetry (experimental)
-  # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
-  # [telemetry]
-  #   # Path to the OpenTelemetry SDK declarative configuration file.
-  #   # Type: string; default: none; required.
-  #   config_file = "/etc/cta/cta-otel.yaml"
+# Telemetry (experimental)
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
 
-  #   # Behaviour when telemetry initialization fails.
-  #   # Type: string; default: "warn".
-  #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-  #   on_init_failure = "warn"
+  # Behaviour when telemetry initialization fails.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
 
-  # Health endpoints
-  # Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
-  # [health_server]
-  #   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-  #   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
-  #   # Type: string; default: "tcp".
-  #   # Allowed: "tcp", "unix".
-  #   transport = "tcp"
+# Health endpoints
+[health_server]
+  # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+  # For Unix sockets, leave the entire [health_server.tcp] section commented out.
+  # Type: string; default: "tcp".
+  # Allowed: "tcp", "unix".
+  transport = "tcp"
 
-  # [health_server.tcp]
-  #   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
-  #   # Type: string; default: "127.0.0.1".
-  #   host = "127.0.0.1"
+  [health_server.tcp]
+    # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+    # Type: string; default: "127.0.0.1".
+    host = "127.0.0.1"
 
-  #   # TCP port for the health endpoints.
-  #   # Type: integer; default: 8080.
-  #   port = 8080
+    # TCP port for the health endpoints.
+    # Type: integer; default: 8080.
+    port = 8080

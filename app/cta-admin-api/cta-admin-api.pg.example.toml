@@ -5,7 +5,8 @@
 
 # Copy this example and replace deployment-specific names, endpoints and credential paths.
 # Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# Include feature sections only when enabled, with all their required settings.
+# This example enables all compatible features, including experimental ones.
+# To disable a feature, update its selector and remove its section.
 
 # Name of the CTA instance. Used to validate the authentication tokens. It also gets sent with gRPC responses.
 # Type: string; default: none; required.
@@ -19,7 +20,7 @@ enabled_features = []
 # Experimental features to enable; their interfaces may change or be removed.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
-enabled_experimental_features = []
+enabled_experimental_features = ["telemetry"]
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -155,7 +156,7 @@ enabled_experimental_features = []
   # Authentication methods to enable; include the matching sections below.
   # Type: array of strings; default: ["jwt"].
   # Allowed: "jwt", "kerberos" (one or both).
-  enabled_methods = ["jwt"]
+  enabled_methods = ["jwt", "kerberos"]
 
   [auth.jwt]
     # URI of the JWKS document used to verify JWT signatures; supports file:// and https://.
@@ -190,27 +191,24 @@ enabled_experimental_features = []
     # Type: string; default: none; optional.
     # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
-    # Telemetry (experimental)
-    # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
-    # [telemetry]
-    #   # Path to the OpenTelemetry SDK declarative configuration file.
-    #   # Type: string; default: none; required.
-    #   config_file = "/etc/cta/cta-otel.yaml"
+# Telemetry (experimental)
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
 
-    #   # Behaviour when telemetry initialization fails.
-    #   # Type: string; default: "warn".
-    #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-    #   on_init_failure = "warn"
+  # Behaviour when telemetry initialization fails.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
 
-    # Kerberos authentication
-    # Add "kerberos" to auth.enabled_methods, then uncomment this section.
-    # JWT and Kerberos may both be enabled; remove "jwt" and comment out [auth.jwt] for Kerberos only.
-    # [auth.kerberos]
-    #   # Filesystem path to the Kerberos keytab file containing the service principal keys used to
-    #   # validate incoming tickets.
-    #   # Type: string; default: none; required.
-    #   keytab_path = "/path/to/file.keytab"
+  # Kerberos authentication
+  [auth.kerberos]
+    # Filesystem path to the Kerberos keytab file containing the service principal keys used to
+    # validate incoming tickets.
+    # Type: string; default: none; required.
+    keytab_path = "/path/to/file.keytab"
 
-    #   # Kerberos service principal accepted by the frontend, e.g. "service/instance@REALM".
-    #   # Type: string; default: none; required.
-    #   service_principal = "service/instance@REALM"
+    # Kerberos service principal accepted by the frontend, e.g. "service/instance@REALM".
+    # Type: string; default: none; required.
+    service_principal = "service/instance@REALM"

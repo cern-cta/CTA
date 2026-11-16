@@ -5,17 +5,18 @@
 
 # Copy this example and replace deployment-specific names, endpoints and credential paths.
 # Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# Include feature sections only when enabled, with all their required settings.
+# This example enables all compatible features, including experimental ones.
+# To disable a feature, update its selector and remove its section.
 
 # Optional features to enable; include the matching sections below.
 # Type: array of strings; default: [].
 # Allowed: "health_server" (no duplicates).
-enabled_features = []
+enabled_features = ["health_server"]
 
 # Experimental features to enable; their interfaces may change or be removed.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
-enabled_experimental_features = []
+enabled_experimental_features = ["telemetry"]
 
 [media_changer]
   # The SCSI-compatible media changer device used by rmcd to control the tape library.
@@ -56,32 +57,30 @@ enabled_experimental_features = []
     # Type: string; default: none; optional.
     # instance = "production"
 
-    # Telemetry (experimental)
-    # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
-    # [telemetry]
-    #   # Path to the OpenTelemetry SDK declarative configuration file.
-    #   # Type: string; default: none; required.
-    #   config_file = "/etc/cta/cta-otel.yaml"
+# Telemetry (experimental)
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
 
-    #   # Behaviour when telemetry initialization fails.
-    #   # Type: string; default: "warn".
-    #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-    #   on_init_failure = "warn"
+  # Behaviour when telemetry initialization fails.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
 
-    # Health endpoints
-    # Add "health_server" to the root enabled_features list, then uncomment the TCP example below.
-    # [health_server]
-    #   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-    #   # For Unix sockets, leave the entire [health_server.tcp] section commented out.
-    #   # Type: string; default: "tcp".
-    #   # Allowed: "tcp", "unix".
-    #   transport = "tcp"
+# Health endpoints
+[health_server]
+  # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+  # For Unix sockets, leave the entire [health_server.tcp] section commented out.
+  # Type: string; default: "tcp".
+  # Allowed: "tcp", "unix".
+  transport = "tcp"
 
-    # [health_server.tcp]
-    #   # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
-    #   # Type: string; default: "127.0.0.1".
-    #   host = "127.0.0.1"
+  [health_server.tcp]
+    # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+    # Type: string; default: "127.0.0.1".
+    host = "127.0.0.1"
 
-    #   # TCP port for the health endpoints.
-    #   # Type: integer; default: 8080.
-    #   port = 8080
+    # TCP port for the health endpoints.
+    # Type: integer; default: 8080.
+    port = 8080

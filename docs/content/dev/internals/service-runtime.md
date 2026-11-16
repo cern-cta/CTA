@@ -119,8 +119,10 @@ Use `default: none; required` for settings that must be supplied even in non-str
 Describe units, special values such as `0`, and the consequences of changing a setting in the description.
 Document the actual accepted values and defaults from the configuration structs and validators, not from the example assignments.
 
-Keep example assignments equal to defaults unless a deployment-specific value is needed.
-Leave optional scalar settings and disabled feature sections commented out, with activation instructions above each feature section.
+Enable all compatible features in the service examples, including experimental features, so their settings are exercised by strict configuration checks.
+Keep other example assignments equal to defaults unless a deployment-specific value is needed.
+Keep documented defaults accurate even when an example selects a different value.
+Leave unused optional scalar settings and mutually exclusive alternatives commented out, with instructions for switching alternatives.
 Describe prerequisites and relationships between settings at section level.
 For feature lists, list the allowed names and any restrictions on combinations.
 Use two spaces for settings beneath a table, a blank line between settings, and comments above assignments.

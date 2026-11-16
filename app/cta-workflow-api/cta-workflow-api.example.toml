@@ -5,7 +5,8 @@
 
 # Copy this example and replace deployment-specific names, endpoints and credential paths.
 # Defaults apply only in non-strict mode; strict mode requires all settings unless marked optional.
-# Include feature sections only when enabled, with all their required settings.
+# This example enables all compatible features, including experimental ones.
+# To disable a feature, update its selector and remove its section.
 
 # Name of the CTA instance. Used to validate the authentication tokens. It also gets sent with gRPC responses.
 # Type: string; default: none; required.
@@ -19,7 +20,7 @@ enabled_features = []
 # Experimental features to enable; their interfaces may change or be removed.
 # Type: array of strings; default: [].
 # Allowed: "telemetry" (no duplicates).
-enabled_experimental_features = []
+enabled_experimental_features = ["telemetry"]
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -170,24 +171,23 @@ enabled_experimental_features = []
     # Type: string; default: none; optional.
     # revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
-    # Telemetry (experimental)
-    # Add "telemetry" to the root enabled_experimental_features list, then uncomment this section.
-    # [telemetry]
-    #   # Path to the OpenTelemetry SDK declarative configuration file.
-    #   # Type: string; default: none; required.
-    #   config_file = "/etc/cta/cta-otel.yaml"
+# Telemetry (experimental)
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
 
-    #   # Behaviour when telemetry initialization fails.
-    #   # Type: string; default: "warn".
-    #   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-    #   on_init_failure = "warn"
+  # Behaviour when telemetry initialization fails.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
 
-    # Mutual TLS authentication
-    # Set auth.enabled_methods to ["mtls"], comment out [auth.jwt], and uncomment this section.
-    # Configure grpc.tls.chain_cert_path with the CA used to verify client certificates.
-    # [auth.mtls]
-    #   # Match certificate identities to the disk instance named in the request.
-    #   # Type: table of arrays of strings; default: {}.
-    # [auth.mtls.aliases]
-    #   # Type: array of strings; default: none; optional.
-    #   ctaeos = ["eos-mgm.example.org"]
+  # Mutual TLS authentication
+  # Set auth.enabled_methods to ["mtls"], comment out [auth.jwt], and uncomment this section.
+  # Configure grpc.tls.chain_cert_path with the CA used to verify client certificates.
+  # [auth.mtls]
+  #   # Match certificate identities to the disk instance named in the request.
+  #   # Type: table of arrays of strings; default: {}.
+  # [auth.mtls.aliases]
+  #   # Type: array of strings; default: none; optional.
+  #   ctaeos = ["eos-mgm.example.org"]
