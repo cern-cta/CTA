@@ -137,7 +137,9 @@ Leave unused optional scalar settings and mutually exclusive alternatives commen
 Document free-form maps at the map level; example keys are not predefined configuration fields.
 Describe prerequisites and relationships between settings at section level.
 For feature lists, list the allowed names and any restrictions on combinations.
-Keep shared sections in the same order across service examples: catalogue, scheduler, logging, telemetry, health server, XRootD, gRPC and authentication, followed by service-specific settings.
+Put service-specific settings first, such as the tape drive, maintenance routines or API listener and authentication.
+Follow them with shared dependencies in a consistent order: catalogue, scheduler and XRootD.
+Place logging, telemetry and health server settings at the end, in that order.
 Keep each parent table and its children together, and use the same order in objectstore and PostgreSQL variants.
 Show logging labels under `[logging.attributes]`, including an `instance` example; explain the map once rather than documenting arbitrary keys as predefined optional fields.
 Use two spaces for settings beneath a table, a blank line between settings, and comments above assignments.
@@ -196,14 +198,18 @@ Do not put an `enabled` flag inside the section it controls.
 
 - Strict mode requires both root feature lists, including `[]` when no features of that class are enabled, and all applicable nested selectors.
 - In non-strict mode, both feature lists default to empty.
-- Use `validateFeatureLists()` with disjoint stable and experimental name sets to reject names in the wrong list, with guidance to move them.
+- Declare a static `features` tuple on each service config, using `stableFeature(name, member)` or `experimentalFeature(name, member)` to associate each name with its optional section.
+  Call `validateFeatures(*this)` to validate names, maturity, duplicates and section presence from that declaration.
 - A feature cannot appear in both lists.
-- On promotion to stable, move its name to the stable set and validate its section against `enabled_features`; configurations must move the selection to that list.
+- On promotion to stable, change its descriptor to `stableFeature`; configurations must move the selection to `enabled_features`.
   Keep its settings section at the same path and document the migration.
 - Unknown and duplicate names are errors in both modes.
 - List order has no meaning.
 
-Keep defaults in configuration member initializers, including the complete backend-specific `enabled_routines` list and populated routine sections.
+Keep defaults in configuration member initialisers, including populated routine sections.
+Declare routines once in a static tuple with `routine(name, member)`, omitting the member for routines without settings.
+Initialise `enabled_routines` with `featureNames(routines)` so every declared routine is enabled by default, and validate with `validateRoutines(*this, enabled_routines, routines)`.
+Consumers should use validated optional sections or pass a named descriptor to `featureEnabled()` rather than repeat string literals.
 `RoutinesConfig::isSectionEnabled(name)` lets the loader distinguish selected defaults from inactive sections.
 The loader parses non-optional members before optional sections, so selection is independent of declaration and TOML key order.
 For configs defining this hook, omitted selected sections retain their member initializers only in non-strict mode; strict mode requires the sections and their settings explicitly.

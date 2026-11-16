@@ -509,16 +509,14 @@ struct LifecycleConfig {
 
   static constexpr std::size_t memberCount() { return 5; }
 
+  static constexpr auto features =
+    std::tuple {cta::runtime::experimentalFeature("telemetry", &LifecycleConfig::telemetry),
+                cta::runtime::stableFeature("health_server", &LifecycleConfig::health_server)};
+
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("logging", logging.validate());
-    result.merge("",
-                 cta::runtime::validateFeatureLists(enabled_features,
-                                                    enabled_experimental_features,
-                                                    {"health_server"},
-                                                    {"telemetry"}));
-    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
-    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
+    result.merge("", cta::runtime::validateFeatures(*this));
     return result;
   }
 };

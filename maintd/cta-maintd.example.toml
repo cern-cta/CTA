@@ -17,96 +17,6 @@ enabled_features = ["health_server"]
 # Allowed: "telemetry" (no duplicates).
 enabled_experimental_features = ["telemetry"]
 
-[catalogue]
-  # Path to the file containing the catalogue database connection string.
-  # Examples:
-  #   postgresql:postgresql://username:password@hostname/database
-  #   oracle:username/password@database
-  # See /usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf for further details.
-  # Type: string; default: "/etc/cta/cta-catalogue.conf".
-  config_file = "/etc/cta/cta-catalogue.conf"
-
-[scheduler]
-  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
-  # Type: string; default: none; required.
-  backend_name = "cephUser"
-
-  # Path to the file containing the scheduler backend connection string.
-  # Examples:
-  #   rados://user@pool:namespace
-  #   file:///path/to/objectstore
-  # See /usr/share/doc/cta-lib-scheduler/examples/cta-scheduler.example.conf for further details.
-  # Type: string; default: "/etc/cta/cta-scheduler.conf".
-  config_file = "/etc/cta/cta-scheduler.conf"
-
-  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries.
-  # Type: integer; default: 600.
-  tape_cache_max_age_secs = 600
-
-  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries.
-  # Type: integer; default: 10.
-  retrieve_queue_cache_max_age_secs = 10
-
-[logging]
-  # Lowest severity to log. DEBUG produces the most output.
-  # Type: string; default: "INFO".
-  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
-  level = "INFO"
-
-  # Log format: structured JSON or key-value pairs.
-  # Type: string; default: "json".
-  # Allowed: "json", "kv".
-  format = "json"
-
-  # Custom string labels added to every log line for filtering and monitoring.
-  # Keys are freely chosen and optional; they do not change service behaviour.
-  # Type: table of strings; default: {}.
-  [logging.attributes]
-    # CTA catalogue instance served by this process, for example "production" or "preproduction".
-    # Use the same label across services sharing that catalogue; omit it if unused.
-    instance = "production"
-
-# Telemetry (experimental). Recommended for monitoring; enabled in this example.
-[telemetry]
-  # Path to the OpenTelemetry SDK declarative configuration file.
-  # Type: string; default: none; required.
-  config_file = "/etc/cta/cta-otel.yaml"
-
-  # What to do if telemetry cannot start.
-  # Type: string; default: "warn".
-  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-  on_init_failure = "warn"
-
-# Health endpoints. Recommended for monitoring; enabled in this example.
-[health_server]
-  # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
-  # For Unix sockets, remove the entire [health_server.tcp] section.
-  # Type: string; default: "tcp".
-  # Allowed: "tcp", "unix".
-  transport = "tcp"
-
-  [health_server.tcp]
-    # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
-    # Type: string; default: "127.0.0.1".
-    host = "127.0.0.1"
-
-    # TCP port for the health endpoints.
-    # Type: integer; default: 8080.
-    port = 8080
-
-[xrootd]
-  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins.
-  # Type: string; default: "sss".
-  security_protocol = "sss"
-
-  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
-  # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
-  # Type: string; default: "etc/cta/sss.keytab".
-  sss_keytab_path = "/etc/cta/cta.sss.keytab"
-
 # Run each enabled routine in turn, then sleep before starting the next cycle.
 # To use different schedules, run separate maintd processes with different routine selections.
 # All routines are enabled by default; an empty list disables maintenance.
@@ -179,3 +89,93 @@ enabled_experimental_features = ["telemetry"]
     # Maximum number of entries processed per batch.
     # Type: integer; default: 500.
     batch_size = 500
+
+[catalogue]
+  # Path to the file containing the catalogue database connection string.
+  # Examples:
+  #   postgresql:postgresql://username:password@hostname/database
+  #   oracle:username/password@database
+  # See /usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf for further details.
+  # Type: string; default: "/etc/cta/cta-catalogue.conf".
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+[scheduler]
+  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
+  # Type: string; default: none; required.
+  backend_name = "cephUser"
+
+  # Path to the file containing the scheduler backend connection string.
+  # Examples:
+  #   rados://user@pool:namespace
+  #   file:///path/to/objectstore
+  # See /usr/share/doc/cta-lib-scheduler/examples/cta-scheduler.example.conf for further details.
+  # Type: string; default: "/etc/cta/cta-scheduler.conf".
+  config_file = "/etc/cta/cta-scheduler.conf"
+
+  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries.
+  # Type: integer; default: 600.
+  tape_cache_max_age_secs = 600
+
+  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries.
+  # Type: integer; default: 10.
+  retrieve_queue_cache_max_age_secs = 10
+
+[xrootd]
+  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
+  # Valid values depend on the installed XRootD security plugins.
+  # Type: string; default: "sss".
+  security_protocol = "sss"
+
+  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
+  # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
+  # Type: string; default: "etc/cta/sss.keytab".
+  sss_keytab_path = "/etc/cta/cta.sss.keytab"
+
+[logging]
+  # Lowest severity to log. DEBUG produces the most output.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
+  level = "INFO"
+
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
+  format = "json"
+
+  # Custom string labels added to every log line for filtering and monitoring.
+  # Keys are freely chosen and optional; they do not change service behaviour.
+  # Type: table of strings; default: {}.
+  [logging.attributes]
+    # CTA catalogue instance served by this process, for example "production" or "preproduction".
+    # Use the same label across services sharing that catalogue; omit it if unused.
+    instance = "production"
+
+# Telemetry (experimental). Recommended for monitoring.
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # What to do if telemetry cannot start.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
+
+# Health endpoints. Recommended for monitoring.
+[health_server]
+  # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+  # For Unix sockets, remove the entire [health_server.tcp] section.
+  # Type: string; default: "tcp".
+  # Allowed: "tcp", "unix".
+  transport = "tcp"
+
+  [health_server.tcp]
+    # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+    # Type: string; default: "127.0.0.1".
+    host = "127.0.0.1"
+
+    # TCP port for the health endpoints.
+    # Type: integer; default: 8080.
+    port = 8080

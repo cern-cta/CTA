@@ -417,19 +417,17 @@ struct TapedConfig final {
 
   static constexpr std::size_t memberCount() { return 12; }
 
+  static constexpr auto features =
+    std::tuple {cta::runtime::experimentalFeature("telemetry", &TapedConfig::telemetry),
+                cta::runtime::stableFeature("health_server", &TapedConfig::health_server)};
+
   /// Collect validation errors from all sections, prefixed with their section names.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
-    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
-    result.merge("",
-                 cta::runtime::validateFeatureLists(enabled_features,
-                                                    enabled_experimental_features,
-                                                    {"health_server"},
-                                                    {"telemetry"}));
+    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("xrootd", xrootd.validate());
     result.merge("drive", drive.validate());
     result.merge("mounts", mounts.validate());

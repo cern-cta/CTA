@@ -59,9 +59,6 @@ TEST(CommonConfig, ReportsAllInvalidFields) {
             "2) Field 'level' has unsupported value 'verbose'.\n");
 }
 
-}  // namespace unitTests
-
-namespace unitTests {
 namespace {
 struct FeatureTestConfig {
   std::vector<std::string> enabled_features;
@@ -71,17 +68,32 @@ struct FeatureTestConfig {
 
   static constexpr std::size_t memberCount() { return 4; }
 
-  cta::runtime::ValidationResult validate() const {
-    auto result = cta::runtime::validateFeatureLists(enabled_features,
-                                                     enabled_experimental_features,
-                                                     {"health_server"},
-                                                     {"telemetry"});
-    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
-    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
-    return result;
-  }
+  static constexpr auto features =
+    std::tuple {cta::runtime::experimentalFeature("telemetry", &FeatureTestConfig::telemetry),
+                cta::runtime::stableFeature("health_server", &FeatureTestConfig::health_server)};
+
+  cta::runtime::ValidationResult validate() const { return cta::runtime::validateFeatures(*this); }
 };
 }  // namespace
+
+TEST(CommonConfig, RoutineDescriptorsSupportSectionsAndStandaloneRoutines) {
+  struct Config {
+    std::optional<cta::runtime::TelemetryConfig> reporting = cta::runtime::TelemetryConfig {"/otel.yaml", "warn"};
+  } config;
+
+  constexpr auto cleanup = cta::runtime::routine("cleanup");
+  const auto routines = std::tuple {cta::runtime::routine("reporting", &Config::reporting), cleanup};
+  const auto enabled = cta::runtime::featureNames(routines);
+  EXPECT_EQ(enabled, (std::vector<std::string> {"reporting", "cleanup"}));
+  EXPECT_TRUE(cta::runtime::featureEnabled(enabled, cleanup));
+  EXPECT_TRUE(cta::runtime::validateRoutines(config, enabled, routines).ok());
+  EXPECT_FALSE(cta::runtime::validateRoutines(config, {"cleanup"}, routines).ok());
+  config.reporting.reset();
+  EXPECT_TRUE(cta::runtime::validateRoutines(config, {"cleanup"}, routines).ok());
+  EXPECT_FALSE(cta::runtime::validateRoutines(config, {"cleanup", "cleanup"}, routines).ok());
+  EXPECT_FALSE(cta::runtime::validateRoutines(config, {"unknown"}, routines).ok());
+  EXPECT_FALSE(cta::runtime::validateRoutines(config, enabled, routines).ok());
+}
 
 TEST(CommonConfig, FeatureSelectionIsValidatedInBothModes) {
   using cta::runtime::loadFromTomlString;
@@ -166,9 +178,7 @@ TEST(CommonConfig, HealthTransportRequiresOnlyItsOwnSettings) {
     loadFromTomlString<HealthServerConfig>("transport = 'tcp'\n[tcp]\nhost = '127.0.0.1'", "test.toml", true),
     cta::exception::UserError);
 }
-}  // namespace unitTests
 
-namespace unitTests {
 namespace {
 struct SelectedSectionConfig {
   // Declare the section before its selector to exercise order-independent loading.

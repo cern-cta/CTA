@@ -120,6 +120,9 @@ struct AdminApiConfig final {
 
   static constexpr std::size_t memberCount() { return 11; }
 
+  static constexpr auto features =
+    std::tuple {cta::runtime::experimentalFeature("telemetry", &AdminApiConfig::telemetry)};
+
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
 
@@ -130,10 +133,7 @@ struct AdminApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
-    result.merge(
-      "",
-      cta::runtime::validateFeatureLists(enabled_features, enabled_experimental_features, {}, {"telemetry"}));
+    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("policies", policies.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());

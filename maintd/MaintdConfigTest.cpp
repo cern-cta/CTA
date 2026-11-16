@@ -99,9 +99,6 @@ TEST(MaintdConfig, ReportsErrorsFromAllInvalidChildren) {
   }
 }
 
-}  // namespace unitTests
-
-namespace unitTests {
 namespace {
 std::string completeRoutinesToml() {
   std::string text = R"toml(

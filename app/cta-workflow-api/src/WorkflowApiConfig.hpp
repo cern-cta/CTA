@@ -109,6 +109,13 @@ struct WorkflowApiConfig final {
   static constexpr std::size_t memberCount() { return 11; }
 #endif
 
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature("telemetry", &WorkflowApiConfig::telemetry),
+#ifdef CTA_PGSCHED
+    cta::runtime::experimentalFeature("opportunistic_batching", &WorkflowApiConfig::opportunistic_batching),
+#endif
+  };
+
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
 
@@ -119,24 +126,7 @@ struct WorkflowApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
-#ifdef CTA_PGSCHED
-    result.merge("",
-                 cta::runtime::validateFeatureLists(enabled_features,
-                                                    enabled_experimental_features,
-                                                    {},
-                                                    {"telemetry", "opportunistic_batching"}));
-#else
-    result.merge(
-      "",
-      cta::runtime::validateFeatureLists(enabled_features, enabled_experimental_features, {}, {"telemetry"}));
-#endif
-#ifdef CTA_PGSCHED
-    cta::runtime::validateFeature(result,
-                                  enabled_experimental_features,
-                                  "opportunistic_batching",
-                                  opportunistic_batching);
-#endif
+    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("requests", requests.validate());
     result.merge("grpc", grpc.validate());
     // Workflow API: exactly one of JWT or mTLS (Kerberos is not representable in WfeAuthConfig)

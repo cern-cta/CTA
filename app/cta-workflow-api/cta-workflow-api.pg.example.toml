@@ -22,76 +22,6 @@ enabled_features = []
 # Opportunistic batching is disabled in this starting configuration.
 enabled_experimental_features = ["telemetry"]
 
-[catalogue]
-  # Path to the file containing the catalogue database connection string.
-  # Examples:
-  #   postgresql:postgresql://username:password@hostname/database
-  #   oracle:username/password@database
-  # See /usr/share/doc/cta/cta-catalogue.example.conf for further details.
-  # Type: string; default: "/etc/cta/cta-catalogue.conf".
-  config_file = "/etc/cta/cta-catalogue.conf"
-
-  [catalogue.client]
-    # Number of connections in the catalogue connection pool. Must be greater than zero.
-    # Type: integer; default: 10.
-    number_of_connections = 10
-
-[scheduler]
-  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
-  # Type: string; default: none; required.
-  backend_name = "postgresUser"
-
-  # Path to the file containing the scheduler backend connection string.
-  # Example:
-  #   postgresql:postgresql://username:password@hostname/database
-  # See /usr/share/doc/cta/cta-scheduler.example.conf for further details.
-  # Type: string; default: "/etc/cta/cta-scheduler.conf".
-  config_file = "/etc/cta/cta-scheduler.conf"
-
-  # Number of connections in the scheduler DB connection pool. Must be greater than zero.
-  # Type: integer; default: 3.
-  number_of_connections = 3
-
-  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. Must be greater than zero.
-  # Type: integer; default: 600.
-  tape_cache_max_age_secs = 600
-
-  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. Must be greater than zero.
-  # Type: integer; default: 10.
-  retrieve_queue_cache_max_age_secs = 10
-
-[logging]
-  # Lowest severity to log. DEBUG produces the most output.
-  # Type: string; default: "INFO".
-  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
-  level = "INFO"
-
-  # Log format: structured JSON or key-value pairs.
-  # Type: string; default: "json".
-  # Allowed: "json", "kv".
-  format = "json"
-
-  # Custom string labels added to every log line for filtering and monitoring.
-  # Keys are freely chosen and optional; they do not change service behaviour.
-  # Type: table of strings; default: {}.
-  [logging.attributes]
-    # CTA catalogue instance served by this process, for example "production" or "preproduction".
-    # Use the same label across services sharing that catalogue; omit it if unused.
-    instance = "production"
-
-# Telemetry (experimental). Recommended for monitoring; enabled in this example.
-[telemetry]
-  # Path to the OpenTelemetry SDK declarative configuration file.
-  # Type: string; default: none; required.
-  config_file = "/etc/cta/cta-otel.yaml"
-
-  # What to do if telemetry cannot start.
-  # Type: string; default: "warn".
-  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
-  on_init_failure = "warn"
-
 [grpc]
   # TCP port the gRPC server listens on.
   # Type: integer; default: 50051.
@@ -180,3 +110,73 @@ enabled_experimental_features = ["telemetry"]
     # Name of the mount policy used for verification requests; an empty string rejects verification requests.
     # Type: string; default: "".
     verification_mount_policy = ""
+
+[catalogue]
+  # Path to the file containing the catalogue database connection string.
+  # Examples:
+  #   postgresql:postgresql://username:password@hostname/database
+  #   oracle:username/password@database
+  # See /usr/share/doc/cta/cta-catalogue.example.conf for further details.
+  # Type: string; default: "/etc/cta/cta-catalogue.conf".
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+  [catalogue.client]
+    # Number of connections in the catalogue connection pool. Must be greater than zero.
+    # Type: integer; default: 10.
+    number_of_connections = 10
+
+[scheduler]
+  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
+  # Type: string; default: none; required.
+  backend_name = "postgresUser"
+
+  # Path to the file containing the scheduler backend connection string.
+  # Example:
+  #   postgresql:postgresql://username:password@hostname/database
+  # See /usr/share/doc/cta/cta-scheduler.example.conf for further details.
+  # Type: string; default: "/etc/cta/cta-scheduler.conf".
+  config_file = "/etc/cta/cta-scheduler.conf"
+
+  # Number of connections in the scheduler DB connection pool. Must be greater than zero.
+  # Type: integer; default: 3.
+  number_of_connections = 3
+
+  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries. Must be greater than zero.
+  # Type: integer; default: 600.
+  tape_cache_max_age_secs = 600
+
+  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries. Must be greater than zero.
+  # Type: integer; default: 10.
+  retrieve_queue_cache_max_age_secs = 10
+
+[logging]
+  # Lowest severity to log. DEBUG produces the most output.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
+  level = "INFO"
+
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
+  format = "json"
+
+  # Custom string labels added to every log line for filtering and monitoring.
+  # Keys are freely chosen and optional; they do not change service behaviour.
+  # Type: table of strings; default: {}.
+  [logging.attributes]
+    # CTA catalogue instance served by this process, for example "production" or "preproduction".
+    # Use the same label across services sharing that catalogue; omit it if unused.
+    instance = "production"
+
+# Telemetry (experimental). Recommended for monitoring.
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # What to do if telemetry cannot start.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"

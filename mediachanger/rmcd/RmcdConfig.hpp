@@ -60,16 +60,14 @@ struct RmcdConfig final {
 
   static constexpr std::size_t memberCount() { return 7; }
 
+  static constexpr auto features =
+    std::tuple {cta::runtime::experimentalFeature("telemetry", &RmcdConfig::telemetry),
+                cta::runtime::stableFeature("health_server", &RmcdConfig::health_server)};
+
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("logging", logging.validate());
-    cta::runtime::validateFeature(result, enabled_experimental_features, "telemetry", telemetry);
-    cta::runtime::validateFeature(result, enabled_features, "health_server", health_server);
-    result.merge("",
-                 cta::runtime::validateFeatureLists(enabled_features,
-                                                    enabled_experimental_features,
-                                                    {"health_server"},
-                                                    {"telemetry"}));
+    result.merge("", cta::runtime::validateFeatures(*this));
     result.merge("media_changer", media_changer.validate());
     result.merge("rmc_server", rmc_server.validate());
     return result;

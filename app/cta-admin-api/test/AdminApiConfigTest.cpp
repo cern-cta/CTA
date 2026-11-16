@@ -85,9 +85,6 @@ TEST(AdminApiConfig, AdminModeRejectsNonString) {
   EXPECT_FALSE(cta::runtime::parsing::parseTable(config, tbl, false).ok());
 }
 
-}  // namespace unitTests
-
-namespace unitTests {
 TEST(AdminApiConfig, RepackLimitMustBeExplicitButZeroMeansAllFiles) {
   using cta::admin_api::RepackConfig;
   using cta::runtime::loadFromTomlString;

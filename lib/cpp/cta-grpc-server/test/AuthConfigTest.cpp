@@ -238,9 +238,6 @@ service_principal = "svc/host@REALM"
   EXPECT_ANY_THROW(cta::runtime::loadFromToml<WfeAuthConfig>(file.path(), true));
 }
 
-}  // namespace unitTests
-
-namespace unitTests {
 TEST(ListenerConfig, AutomaticThreadCountIsBoundedAndFixedCountsArePreserved) {
   cta::grpc_server::ListenerConfig config;
   EXPECT_EQ(8, config.resolveThreadCount(0));
@@ -273,9 +270,7 @@ jwks_total_timeout = 60
   EXPECT_THROW(cta::runtime::loadFromTomlString<AdminAuthConfig>(document + "revoke_list_path = ''", "auth.toml", true),
                cta::exception::UserError);
 }
-}  // namespace unitTests
 
-namespace unitTests {
 namespace {
 template<class Config>
 void checkDefaultJwtAuthentication() {

@@ -17,6 +17,25 @@ enabled_features = ["health_server"]
 # Allowed: "telemetry" (no duplicates).
 enabled_experimental_features = ["telemetry"]
 
+[media_changer]
+  # Path to the SCSI media changer device that controls the tape library.
+  # Type: string; default: "/dev/smc".
+  device = "/dev/smc"
+
+# RMC endpoint used by cta-taped to request tape mounts and unmounts.
+[rmc_server]
+  # TCP port on which rmcd listens for RMC client connections.
+  # Type: integer; default: 5014.
+  port = 5014
+
+  # Network scope from which rmcd accepts RMC client connections.
+  # Use "loopback" to accept connections only from localhost, or "any" to accept connections
+  # from other hosts. The RMC protocol provides no authentication, so use "any" with extreme
+  # caution in production environments.
+  # Type: string; default: "loopback".
+  # Allowed: "loopback", "any".
+  listen_scope = "loopback"
+
 [logging]
   # Lowest severity to log. DEBUG produces the most output.
   # Type: string; default: "INFO".
@@ -46,7 +65,7 @@ enabled_experimental_features = ["telemetry"]
   # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
   on_init_failure = "warn"
 
-# Health endpoints. Recommended for monitoring; enabled in this example.
+# Health endpoints. Recommended for monitoring.
 [health_server]
   # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
   # For Unix sockets, remove the entire [health_server.tcp] section.
@@ -62,22 +81,3 @@ enabled_experimental_features = ["telemetry"]
     # TCP port for the health endpoints.
     # Type: integer; default: 8080.
     port = 8080
-
-[media_changer]
-  # Path to the SCSI media changer device that controls the tape library.
-  # Type: string; default: "/dev/smc".
-  device = "/dev/smc"
-
-# RMC endpoint used by cta-taped to request tape mounts and unmounts.
-[rmc_server]
-  # TCP port on which rmcd listens for RMC client connections.
-  # Type: integer; default: 5014.
-  port = 5014
-
-  # Network scope from which rmcd accepts RMC client connections.
-  # Use "loopback" to accept connections only from localhost, or "any" to accept connections
-  # from other hosts. The RMC protocol provides no authentication, so use "any" with extreme
-  # caution in production environments.
-  # Type: string; default: "loopback".
-  # Allowed: "loopback", "any".
-  listen_scope = "loopback"
