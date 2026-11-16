@@ -63,7 +63,7 @@ By default, **cta-rmcd** listens only on the loopback interface. This supports c
 # SIGNALS
 
 SIGTERM and SIGINT request service shutdown.
-SIGHUP and SIGUSR1 reopen the log file; they do not reload configuration.
+SIGHUP reopens the log file; it does not reload configuration.
 
 # CONFIGURATION
 
@@ -72,7 +72,7 @@ Restart the service to apply changes.
 Use **\--config-check**, with **\--config-strict** when required, to validate a file before starting the service.
 
 The annotated example `/usr/share/doc/cta-rmcd/examples/cta-rmcd.example.toml` is the complete settings reference, including defaults, required values and feature selection.
-See [cta-rmcd configuration](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/media-changer-daemon/) for the examples and operational guidance, and [Service runtime](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/service-runtime/) for shared validation, feature selection and environment substitution rules.
+See the CERN Tape Archive documentation for configuration examples, operational guidance and shared runtime rules.
 
 # FILES
 

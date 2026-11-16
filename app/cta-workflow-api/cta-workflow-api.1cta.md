@@ -59,7 +59,7 @@ cta-workflow-api --- CTA workflow gRPC API server
 # SIGNALS
 
 SIGTERM and SIGINT request service shutdown.
-SIGHUP and SIGUSR1 reopen the log file; they do not reload configuration.
+SIGHUP reopens the log file; it does not reload configuration.
 
 # CONFIGURATION
 
@@ -69,7 +69,7 @@ Use **\--config-check**, with **\--config-strict** when required, to validate a 
 
 The annotated example `/usr/share/doc/cta-workflow-api/examples/cta-workflow-api.example.toml` is the complete settings reference, including defaults, required values and feature selection.
 The packaged example matches the compiled scheduler backend; the online guide provides both objectstore and PostgreSQL variants.
-See [cta-workflow-api configuration](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/workflow-frontend/) for the examples and operational guidance, and [Service runtime](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/service-runtime/) for shared validation, feature selection and environment substitution rules.
+See the CERN Tape Archive documentation for configuration examples, operational guidance and shared runtime rules.
 
 Select exactly one authentication method, JWT or mutual TLS, using `auth.enabled_methods`, and supply its configuration section.
 With mutual TLS, configure the accepted EOS certificate identities in `[auth.mtls]`.
@@ -100,3 +100,6 @@ With mutual TLS, configure the accepted EOS certificate identities in `[auth.mtl
 # SEE ALSO
 
 **cta-admin-api**(1)
+
+CERN Tape Archive documentation
+[https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)

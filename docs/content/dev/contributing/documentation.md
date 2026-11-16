@@ -77,7 +77,8 @@ The synopsis may use `[OPTIONS]`; the OPTIONS section must list every supported 
 
 Use the annotated example TOML files as the authoritative settings reference, including defaults, required values, feature selection and backend-specific settings.
 Include those files in the website's configuration guides, with both scheduler variants where applicable.
-Manuals should link to the guide and give the installed example path for offline use instead of duplicating setting lists.
+Manuals should link to the documentation homepage rather than individual web pages, whose paths may change.
+Give the installed example path for offline use instead of duplicating setting lists.
 Keep operational decisions and interactions in the configuration guide, and preserve useful explanations when consolidating references.
 
 When changing CLI options, compare the manual with the parser and help output.

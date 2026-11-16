@@ -74,7 +74,7 @@ If per-routine intervals are required, run multiple **cta-maintd** instances wit
 # SIGNALS
 
 SIGTERM and SIGINT request service shutdown.
-SIGHUP and SIGUSR1 reopen the log file; they do not reload configuration.
+SIGHUP reopens the log file; it does not reload configuration.
 
 # CONFIGURATION
 
@@ -84,7 +84,7 @@ Use **\--config-check**, with **\--config-strict** when required, to validate a 
 
 The annotated example `/usr/share/doc/cta-maintd/examples/cta-maintd.example.toml` is the complete settings reference, including defaults, required values and feature selection.
 The packaged example matches the compiled scheduler backend; the online guide provides both objectstore and PostgreSQL variants.
-See [cta-maintd configuration](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/maintenance-daemon/) for the examples and operational guidance, and [Service runtime](https://cta.docs.cern.ch/ops/deploy-and-configure/configuration/service-runtime/) for shared validation, feature selection and environment substitution rules.
+See the CERN Tape Archive documentation for configuration examples, operational guidance and shared runtime rules.
 
 # ENVIRONMENT
 
