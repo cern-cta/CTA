@@ -12,7 +12,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <type_traits>
 #include <vector>
 
 namespace cta::maintd {
@@ -151,22 +150,27 @@ struct RoutinesConfig final {
   uint32_t cycle_sleep_interval_secs = 10;
   uint32_t max_cycle_duration_secs = 900;
 
-  std::optional<DiskReportRoutineConfig> disk_report_archive = std::nullopt;
-  std::optional<DiskReportRoutineConfig> disk_report_retrieve = std::nullopt;
+  std::optional<DiskReportRoutineConfig> disk_report_archive = DiskReportRoutineConfig {};
+  std::optional<DiskReportRoutineConfig> disk_report_retrieve = DiskReportRoutineConfig {};
 
-  std::optional<RepackExpandRoutineConfig> repack_expand = std::nullopt;
-  std::optional<RepackReportRoutineConfig> repack_report = std::nullopt;
+  std::optional<RepackExpandRoutineConfig> repack_expand = RepackExpandRoutineConfig {};
+  std::optional<RepackReportRoutineConfig> repack_report = RepackReportRoutineConfig {};
 
 #ifndef CTA_PGSCHED
-  std::optional<QueueCleanupRoutineConfig> queue_cleanup = std::nullopt;
+  std::optional<QueueCleanupRoutineConfig> queue_cleanup = QueueCleanupRoutineConfig {};
 
   static constexpr std::size_t memberCount() { return 8; }
 #else
-  std::optional<ActivePendingQueueCleanupRoutineConfig> user_active_queue_cleanup = std::nullopt;
-  std::optional<ActivePendingQueueCleanupRoutineConfig> repack_active_queue_cleanup = std::nullopt;
-  std::optional<ActivePendingQueueCleanupRoutineConfig> user_pending_queue_cleanup = std::nullopt;
-  std::optional<ActivePendingQueueCleanupRoutineConfig> repack_pending_queue_cleanup = std::nullopt;
-  std::optional<SchedulerMaintenanceCleanupRoutineConfig> scheduler_maintenance_cleanup = std::nullopt;
+  std::optional<ActivePendingQueueCleanupRoutineConfig> user_active_queue_cleanup =
+    ActivePendingQueueCleanupRoutineConfig {};
+  std::optional<ActivePendingQueueCleanupRoutineConfig> repack_active_queue_cleanup =
+    ActivePendingQueueCleanupRoutineConfig {};
+  std::optional<ActivePendingQueueCleanupRoutineConfig> user_pending_queue_cleanup =
+    ActivePendingQueueCleanupRoutineConfig {};
+  std::optional<ActivePendingQueueCleanupRoutineConfig> repack_pending_queue_cleanup =
+    ActivePendingQueueCleanupRoutineConfig {};
+  std::optional<SchedulerMaintenanceCleanupRoutineConfig> scheduler_maintenance_cleanup =
+    SchedulerMaintenanceCleanupRoutineConfig {};
 
   static constexpr std::size_t memberCount() { return 12; }
 #endif
@@ -241,23 +245,6 @@ struct RoutinesConfig final {
     return false;
   }
 
-  /// Supply omitted settings for selected routines during non-strict loading.
-  void applyDefaults() {
-    std::apply(
-      [&](const auto&... routine) {
-        const auto apply = [&](const auto& descriptor) {
-          if constexpr (!std::is_same_v<decltype(descriptor.member), std::nullptr_t>) {
-            auto& section = this->*descriptor.member;
-            if (!section && cta::runtime::featureEnabled(enabled_routines, descriptor)) {
-              section.emplace();
-            }
-          }
-        };
-        (apply(routine), ...);
-      },
-      routines);
-  }
-
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatureSelection(*this, enabled_routines, routines, "enabled_routines");
     if (cycle_sleep_interval_secs == 0) {
@@ -296,9 +283,6 @@ struct MaintdConfig final {
 
   /// Query selection using the feature's stable or experimental list.
   bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
-
-  /// Apply nested routine defaults before non-strict validation.
-  void applyDefaults() { routines.applyDefaults(); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

@@ -68,13 +68,14 @@ Configuration checking is split into three layers with distinct responsibilities
 2. The config struct's `ValidationResult validate() const` method checks the fully initialized struct. It collects semantic constraints such as non-empty strings, strictly positive values, supported values, and valid combinations of entries. It must not read TOML or inspect external resources.
 3. Application-specific initialization checks external state. Examples include checking that a configured file exists or is readable, connecting to a database, and verifying that a remote service is reachable.
 
-`ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct and applied any non-strict section defaults. If validation reports errors, the loader presents all of them in one `UserError`. Root and parent config structs must explicitly merge the validation result from each custom config child. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
+`ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct. If validation reports errors, the loader presents all of them in one `UserError`. Root and parent config structs must explicitly merge the validation result from each custom config child. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
 
 ### Optional fields and feature activation
 
 Strict mode requires every applicable setting explicitly, including settings with defaults.
 Use optional fields only for sections controlled by a feature or mode selector, or for values whose absence is a supported state.
-An optional value must start as `std::nullopt`, document what absence means, and preserve that state in consumers rather than substitute a fallback.
+Initialise optional values to `std::nullopt` unless they have documented non-strict defaults.
+Document what absence means and preserve that state in consumers rather than substitute a fallback.
 Validate active settings and genuinely optional values normally.
 Empty strings, zero and empty collections are explicit values, subject to their own validation rules.
 
@@ -118,13 +119,12 @@ The runtime expects `Feature::Telemetry` and `Feature::HealthServer` when the co
 Keep defaults in configuration member initialisers.
 The parser reads every supplied field independently of feature selection and retains disabled sections.
 Incorrect types are errors in both modes; strict mode also requires every non-optional field within a supplied section.
-Omitted optional sections become `std::nullopt`, so validation can require settings for selected features without treating presence as enablement.
+Non-strict parsing preserves member initialisers for omitted fields, including optional sections.
+Strict parsing resets omitted optional sections to `std::nullopt`, so validation can require settings for selected features without treating presence as enablement.
 Only selected sections undergo feature-specific semantic validation.
 
-For configurations with defaultable sections, the root may provide `void applyDefaults()`; `ConfigLoader` calls it after successful non-strict parsing and before validation.
-Parent hooks must explicitly call the hooks of their children, including children whose entire table was omitted.
-The hook fills omitted selected sections without overwriting supplied settings, as in `MaintdConfig` and `RoutinesConfig`.
-Strict loading skips this hook, leaving selected missing sections for validation to reject.
+Declare defaultable optional sections with an initialised settings object, as in `RoutinesConfig`.
+These defaults remain available for disabled routines in non-strict mode; only selection controls activation.
 Keep field defaults in their settings types and keep `validate()` read-only.
 See [Service Runtime](../../ops/deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for configuration rules.
 

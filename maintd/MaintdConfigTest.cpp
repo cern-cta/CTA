@@ -18,7 +18,6 @@ namespace unitTests {
 TEST(MaintdConfig, DefaultValuesAreValidOnceBackendNameIsSet) {
   cta::maintd::MaintdConfig config;
   config.scheduler.backend_name = "vfsTest";
-  config.applyDefaults();
 
   EXPECT_TRUE(config.validate().ok());
 }
@@ -221,19 +220,21 @@ TEST(MaintdConfig, RoutineEnabledReflectsSelection) {
   }
 }
 
-TEST(MaintdConfig, RoutineSubsetKeepsOnlySelectedDefaults) {
+TEST(MaintdConfig, RoutineSubsetRetainsDefaultsWithoutEnablingOtherRoutines) {
   using cta::maintd::RoutinesConfig;
   const auto config =
     cta::runtime::loadFromTomlString<RoutinesConfig>("enabled_routines = ['repack_expand']", "routines.toml", false);
   ASSERT_TRUE(config.repack_expand);
   EXPECT_EQ(config.repack_expand->max_to_expand, 2);
-  EXPECT_FALSE(config.disk_report_archive);
-  EXPECT_FALSE(config.disk_report_retrieve);
-  EXPECT_FALSE(config.repack_report);
+  EXPECT_TRUE(config.disk_report_archive);
+  EXPECT_TRUE(config.disk_report_retrieve);
+  EXPECT_TRUE(config.repack_report);
+  EXPECT_FALSE(config.routineEnabled(cta::maintd::Routine::RepackReport));
   EXPECT_TRUE(config.validate().ok());
   const auto disabled =
     cta::runtime::loadFromTomlString<RoutinesConfig>("enabled_routines = []", "routines.toml", false);
-  EXPECT_FALSE(disabled.repack_expand);
+  EXPECT_TRUE(disabled.repack_expand);
+  EXPECT_FALSE(disabled.routineEnabled(cta::maintd::Routine::RepackExpand));
   EXPECT_TRUE(disabled.validate().ok());
 }
 
@@ -283,8 +284,6 @@ TEST(MaintdConfig, RoutineDefaultsPreserveExplicitSettings) {
   ASSERT_TRUE(config.repack_report);
   EXPECT_EQ(config.repack_expand->max_to_expand, 7);
   EXPECT_EQ(config.repack_report->soft_timeout_secs, 900);
-  config.applyDefaults();
-  EXPECT_EQ(config.repack_expand->max_to_expand, 7);
 }
 
 TEST(MaintdConfig, StrictRoutinesRequireExplicitSelectionSectionsAndSettings) {

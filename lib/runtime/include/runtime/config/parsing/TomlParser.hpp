@@ -265,7 +265,10 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
 
       if (!node) {
         if constexpr (StdOptional<decltype(field)>) {
-          field.reset();
+          // Strict loading preserves absence so validation can require selected sections.
+          if (strict) {
+            field.reset();
+          }
         } else if (strict) {
           errs.push_back(ParseResult::error("Expected field '" + std::string(tableFieldName) + "' is missing."));
         }

@@ -278,7 +278,10 @@ TEST(CommonConfig, OptionalSectionPresenceIsIndependentOfSelectors) {
   for (bool strict : {false, true}) {
     const auto missing =
       cta::runtime::loadFromTomlString<OptionalSectionConfig>("telemetry_enabled = true", "test.toml", strict);
-    EXPECT_FALSE(missing.telemetry);
+    ASSERT_EQ(missing.telemetry.has_value(), !strict);
+    if (!strict) {
+      EXPECT_EQ(missing.telemetry->config_file, "/default.yaml");
+    }
     const auto present = cta::runtime::loadFromTomlString<OptionalSectionConfig>(
       "telemetry_enabled = false\n[telemetry]\nconfig_file = '/explicit.yaml'\non_init_failure = 'warn'",
       "test.toml",
