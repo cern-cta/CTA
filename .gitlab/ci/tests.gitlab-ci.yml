@@ -18,15 +18,16 @@ spec:
   - cp -r build/$[[ inputs.platform ]]/RPM ${CTAREPODIR}
   - createrepo ${CTAREPODIR}
   - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
-  - dnf -y --nogpgcheck install cta-release
+  - dnf -y --nogpgcheck install cta-release || exit 75
   - cta-versionlock apply
   - |
     if $[[ inputs.enable-internal-repos ]]; then
       cp -f ci/docker/cta/$[[ inputs.platform ]]/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
-  - dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo
+  - dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo || exit 75
 
 .cpp-test:
+  retry: !reference [.retry-package-install, retry]
   before_script:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
@@ -113,6 +114,7 @@ unit-test-rust:
   coverage: '/^TOTAL.*\s(\d+\.\d+)%/'
 
 test-cta-valgrind:
+  retry: !reference [.retry-package-install, retry]
   stage: test
   needs:
     - job: check-merge-train-duplicate
@@ -175,7 +177,7 @@ unit-test-postgresql:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   script:
-    - dnf -y install cta-catalogue-utils
+    - dnf -y install cta-catalogue-utils || exit 75
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
     - POSTGRESQL_LOG_DIR=/var/log/postgres
     - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
@@ -226,7 +228,7 @@ unit-test-oracle:
     # Note that this expects the full url; not a shortname relying on tnsnames
     ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
   script:
-    - dnf -y install cta-catalogue-utils
+    - dnf -y install cta-catalogue-utils || exit 75
     - CTA_CATALOGUE_CONF=$(mktemp)
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}

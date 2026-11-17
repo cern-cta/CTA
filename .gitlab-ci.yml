@@ -214,6 +214,8 @@ variables:
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
   ENABLE_SCCACHE: "false"
   BUILD_CACHE_POLICY: "pull"
+  # Download caches can be reused even when compiler caches are rebuilt on main.
+  PACKAGE_CACHE_POLICY: "pull"
 
   # Registry publishing configuration and credentials
   DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
@@ -241,11 +243,14 @@ variables:
   GIT_SUBMODULE_STRATEGY: "recursive"
   GIT_DEPTH: "10"
   GIT_SUBMODULE_DEPTH: "1"
+  GET_SOURCES_ATTEMPTS: "2"
 
   # Artifact and cache performance
   FF_USE_FASTZIP: "true"
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
+  ARTIFACT_DOWNLOAD_ATTEMPTS: "2"
+  RESTORE_CACHE_ATTEMPTS: "2"
 
   # Runner and test reports
   FF_TIMESTAMPS: "true"
@@ -268,6 +273,7 @@ variables:
 default:
   image: $IMAGE_DEFAULT
   interruptible: true
+  retry: !reference [.retry-infrastructure, retry]
   before_script:
     - !reference [.merge-train-guard, before_script]
 
@@ -308,6 +314,7 @@ workflow:
       variables:
         ENABLE_SCCACHE: "true"
         BUILD_CACHE_POLICY: "pull-push"
+        PACKAGE_CACHE_POLICY: "pull-push"
         CACHE_BRANCH: "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
         GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
     # Default-branch push pipelines provide the target-branch test-report baseline.
@@ -317,6 +324,7 @@ workflow:
       variables:
         ENABLE_SCCACHE: "true"
         BUILD_CACHE_POLICY: "push" # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
+        PACKAGE_CACHE_POLICY: "pull-push"
         CACHE_BRANCH: "$CI_COMMIT_BRANCH"
         ENABLE_SBOM_GENERATION: "true"
         GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"

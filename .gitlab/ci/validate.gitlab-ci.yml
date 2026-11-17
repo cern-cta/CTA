@@ -30,6 +30,8 @@ validate-project-json:
       optional: true
   rules:
     - when: on_success
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
   script:
     - python3 ./ci/project-json/validate_project_json.py
 

@@ -93,6 +93,7 @@ spec:
 
 .build-cta-image:
   extends: .build-image
+  retry: !reference [.retry-script-failure, retry]
   stage: build:image
   needs:
     - job: prepare-cta-version
