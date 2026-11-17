@@ -28,6 +28,9 @@ CTA and infrastructure:
 
 Database initialization:
   -c, --catalogue-version <version>        Catalogue schema version (default: latest).
+      --protected                          Protect both connections from resets and system tests.
+      --reset-unprotected                  Reset only unprotected connections (development bootstrap).
+      --validate-only                      Validate bootstrap and print its protection ConfigMap without deploying.
       --reset-catalogue                    Reset catalogue content (default: disabled).
       --reset-scheduler                    Reset scheduler content (default: disabled).
 
@@ -122,6 +125,9 @@ create_instance() {
                 --values presets/infra/scheduler-vfs.yaml)
   infra_config_explicit=false
   # Reset database content only when explicitly requested.
+  protected=false
+  validate_only=false
+  reset_unprotected=false
   reset_catalogue=false
   reset_scheduler=false
   max_drives=2
@@ -156,6 +162,9 @@ create_instance() {
       --max-drives)
         max_drives="$2"
         shift ;;
+      --protected) protected=true ;;
+      --validate-only) validate_only=true ;;
+      --reset-unprotected) reset_unprotected=true ;;
       --reset-scheduler) reset_scheduler=true ;;
       --reset-catalogue) reset_catalogue=true ;;
       --telemetry)
@@ -221,6 +230,20 @@ create_instance() {
   if [[ -z "${catalogue_schema_version}" ]]; then
     catalogue_schema_version="latest"
   fi
+  # Let Helm resolve overlays and enforce protection before creating any resources.
+  if [[ $protected == true ]]; then
+    cta_overrides+=(--set global.catalogue.protected=true --set global.scheduler.protected=true)
+  fi
+  reset_flags=(--set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler"
+               --set "reset.unprotected=$reset_unprotected")
+  update_local_cta_chart_dependencies >&2
+  local protection_policy
+  protection_policy=$(helm template cta-tools helm/cta-admin-tools "${cta_config[@]}" "${cta_overrides[@]}" \
+    "${reset_flags[@]}" --show-only templates/connection-protection.yaml)
+  if [[ $validate_only == true ]]; then
+    printf '%s\n' "$protection_policy"
+    return 0
+  fi
   check_deploy_commands
   project_json_path="../../project.json"
   cta_image_registry=${cta_image_registry:-$(jq -r .dev.ctaImageRegistry "${project_json_path}")}
@@ -231,16 +254,19 @@ create_instance() {
 
   echo "Catalogue schema version: ${catalogue_schema_version}"
 
-  if [[ "$reset_catalogue" == "true" ]]; then
-    log_warn "Catalogue content will be reset."
+  if [[ $reset_unprotected == true ]]; then
+    echo "Unprotected connections will be reset; protected connections will be preserved."
   else
-    echo "Catalogue will be left unchanged."
-  fi
-
-  if [[ "$reset_scheduler" == "true" ]]; then
-    log_warn "Scheduler content will be reset."
-  else
-    echo "Scheduler will be left unchanged."
+    if [[ $reset_catalogue == true ]]; then
+      log_warn "Catalogue content will be reset."
+    else
+      echo "Catalogue will be left unchanged."
+    fi
+    if [[ $reset_scheduler == true ]]; then
+      log_warn "Scheduler content will be reset."
+    else
+      echo "Scheduler will be left unchanged."
+    fi
   fi
 
   SECONDS=0
@@ -275,7 +301,6 @@ create_instance() {
   # Infrastructure has remote dependencies; consumer charts use local sources.
   log_task "Updating infrastructure chart dependencies..."
   helm dependency update helm/ci-infra --repository-config /dev/null > /dev/null
-  update_local_cta_chart_dependencies
 
   log_task "Starting deployment..."
 
@@ -323,7 +348,7 @@ create_instance() {
                        --namespace "${namespace}" \
                        "${shared_flags[@]}" \
                        --set database.enabled=true --set client.enabled=true \
-                       --set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler" \
+                       "${reset_flags[@]}" \
                        --set-string "reset.catalogueSchemaVersion=$catalogue_schema_version" \
                        --wait --wait-for-jobs --timeout 5m "${cta_overrides[@]}"
 

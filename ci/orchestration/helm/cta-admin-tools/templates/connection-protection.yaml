@@ -1,0 +1,21 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+{{- range $database := list "catalogue" "scheduler" }}
+{{- if and (index $.Values.global $database).protected (index $.Values.reset $database) }}
+{{- fail (printf "Cannot reset protected %s connection" $database) }}
+{{- end }}
+{{- end }}
+{{- if and .Values.global.catalogue.protected .Values.liquibase.enabled }}
+{{- fail "Cannot run Liquibase against a protected catalogue connection" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-connection-protection
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  catalogue: {{ .Values.global.catalogue.protected | quote }}
+  scheduler: {{ .Values.global.scheduler.protected | quote }}

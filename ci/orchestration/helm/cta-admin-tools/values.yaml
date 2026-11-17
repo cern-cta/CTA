@@ -15,6 +15,8 @@ database:
 
 # Explicit bootstrap resets; completed Jobs remain available for log collection.
 reset:
+  # Development bootstrap resets only connections that are not protected.
+  unprotected: false
   catalogue: false
   scheduler: false
   catalogueSchemaVersion: latest
@@ -37,8 +39,10 @@ global:
       password: defaultcipassword
 
   catalogue:
+    protected: false
     existingSecret: cta-catalogue-conf
   scheduler:
+    protected: false
     backend: vfs
     existingSecret: cta-scheduler-conf
     existingClaim: scheduler-vfs-pvc

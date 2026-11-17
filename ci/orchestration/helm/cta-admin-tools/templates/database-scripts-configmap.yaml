@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- if or .Values.database.enabled .Values.reset.catalogue .Values.reset.scheduler }}
+{{- if or .Values.database.enabled .Values.reset.catalogue .Values.reset.scheduler .Values.reset.unprotected }}
 
 apiVersion: v1
 kind: ConfigMap

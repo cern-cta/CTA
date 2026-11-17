@@ -44,6 +44,7 @@ readonly ci_image_registry
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type=""
+protected=false
 oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
@@ -90,6 +91,7 @@ namespace_deletion_pid=""
 namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
+source "${script_dir}/utils/helm_utils.sh"
 
 # Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
@@ -336,6 +338,7 @@ Usage:
 Options:
       --namespace <ns>              Kubernetes namespace.
                                     Defaults to dev.
+      --protected                   Protect catalogue and scheduler from resets and tests.
       --infra-values <path>         Infrastructure values; repeatable, replaces default provisioning.
       --cta-values <path>           Final consumer values override; repeatable.
       --eos-values <path>           EOS values override; repeatable.
@@ -610,6 +613,10 @@ parse_options() {
         require_command "$1" "$command" deploy up debug all
         dcache_image_repository="$2"
         shift
+        ;;
+      --protected)
+        require_command "$1" "$command" deploy up debug all
+        protected=true
         ;;
       --infra-values)
         require_command "$1" "$command" deploy up debug all
@@ -1266,15 +1273,8 @@ finish_namespace_deletion() {
   [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
 }
 
-# Recreate the CTA development instance using images already available to the cluster.
-deploy_cta() {
-  validate_deployment_environment
-
-  finish_namespace_deletion
-
-  print_header "DEPLOYING CTA"
-  log_task "Deploying CTA images ${cta_image_registry}/cta/ctageneric/*:${cta_image_tag}"
-  cd "${project_root}/ci/orchestration"
+# Resolve deployment arguments once, before any background deletion starts.
+prepare_deployment() {
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
   [[ -n $dcache_image_repository ]] && extra_spawn_options+=(--dcache-image-repository "$dcache_image_repository")
@@ -1294,14 +1294,27 @@ deploy_cta() {
     fi
   fi
   extra_spawn_options+=("${infra_config[@]}" "${cta_overrides[@]}")
-  ./create_instance.sh --namespace "${namespace}" \
+  [[ $protected == false ]] || extra_spawn_options+=(--protected)
+  deployment_args=( --namespace "${namespace}" \
     --cta-image-registry "${cta_image_registry}" \
     --cta-image-tag "${cta_image_tag}" \
-    --eos-enabled ${eos_enabled} \
-    --dcache-enabled ${dcache_enabled} \
-    --reset-catalogue \
-    --reset-scheduler \
-    "${extra_spawn_options[@]}"
+    --eos-enabled "${eos_enabled}" \
+    --dcache-enabled "${dcache_enabled}" \
+    --reset-unprotected \
+    "${extra_spawn_options[@]}")
+
+}
+
+# Recreate the CTA development instance using images already available to the cluster.
+deploy_cta() {
+  validate_deployment_environment
+
+  finish_namespace_deletion
+
+  print_header "DEPLOYING CTA"
+  log_task "Deploying CTA images ${cta_image_registry}/cta/ctageneric/*:${cta_image_tag}"
+  cd "${project_root}/ci/orchestration"
+  ./create_instance.sh "${deployment_args[@]}"
 
   if [[ $telemetry == local ]]; then
     # Prometheus is exposed through a local port-forward, not a public endpoint.
@@ -1502,6 +1515,32 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
+
+  if [[ $show_help != true ]]; then
+    case "$command" in
+      deploy|up|debug|all)
+        prepare_deployment
+        (cd "${project_root}/ci/orchestration" && update_local_cta_chart_dependencies)
+        export CTA_LOCAL_CHARTS_READY="${project_root}/ci/orchestration/helm"
+        local protection_policy protected_connections
+        protection_policy=$(cd "${project_root}/ci/orchestration" && \
+          ./create_instance.sh "${deployment_args[@]}" --validate-only)
+        if [[ $command == all ]]; then
+          # all already requires the system-test environment, including PyYAML.
+          protected_connections=$("$venv_dir/bin/python" -c '
+import sys, yaml
+policy = yaml.safe_load(sys.stdin)["data"]
+for name in ("catalogue", "scheduler"):
+    if policy[name] not in ("true", "false"):
+        sys.exit("Invalid connection protection policy")
+print(" ".join(name for name, value in policy.items() if value == "true"))
+' <<< "$protection_policy") || die "Cannot verify connection protection; refusing to run all."
+          [[ -z $protected_connections ]] || \
+            die "System tests are blocked for protected connections ($protected_connections); use cta-dev up instead of all."
+        fi
+        ;;
+    esac
+  fi
 
   case "$command" in
     build|images|up|debug|all)

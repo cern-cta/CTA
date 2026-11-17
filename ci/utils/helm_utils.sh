@@ -5,6 +5,8 @@
 
 # Call from ci/orchestration after sourcing log_utils.sh.
 update_local_cta_chart_dependencies() {
+  # cta-dev prepares these before preflight; its child deployment reuses the same archives.
+  [[ ${CTA_LOCAL_CHARTS_READY:-} != "$PWD/helm" ]] || return 0
   # Local dependencies need no remote repositories; skip both index loading and refreshes.
 
   log_task "Updating local chart dependencies..."

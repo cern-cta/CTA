@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from system_tests.helpers.connection_protection import require_unprotected_connections
+
 # Ensure pytest knows about the fixtures
 pytest_plugins = [
     "system_tests.fixtures.fixtures",
@@ -159,3 +161,11 @@ def pytest_collection_finish(session: pytest.Session) -> None:
 
     session.items[:] = selected_items
     session.testscollected = len(selected_items)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_sessionstart(session: pytest.Session) -> None:
+    # Collection is read-only; guard execution before any setup fixtures can run.
+    namespace = session.config.getoption("--namespace")
+    if namespace and not session.config.option.collectonly:
+        require_unprotected_connections(namespace)

@@ -4,8 +4,10 @@
 # These settings are available to all the subcharts
 global:
   catalogue:
+    protected: false
     existingSecret: cta-catalogue-conf
   scheduler:
+    protected: false
     backend: vfs
     existingSecret: cta-scheduler-conf
     existingClaim: scheduler-vfs-pvc

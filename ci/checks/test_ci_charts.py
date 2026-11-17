@@ -668,7 +668,7 @@ log_warn() { :; }
 log_success() { :; }
 die() { echo "$*" >&2; exit 1; }
 die_usage() { die "$@"; }
-helm() { [[ $1 == list || $1 == dependency ]]; }
+helm() { [[ $1 == list || $1 == dependency || $1 == template ]]; }
 kubectl() { [[ " $* " != *" get secret "* ]]; }
 log_run() { printf 'COMMAND\\n'; printf '%s\\n' "$@"; printf 'END\\n'; }
 """
@@ -820,3 +820,83 @@ def test_dcache_values_and_explicit_image_overrides(tmp_path: Path) -> None:
         "dcache.image.tag=custom",
     ]
     assert args.index("--values") < args.index("--set-string")
+
+
+@pytest.mark.parametrize(("catalogue", "scheduler"), [(False, False), (True, False), (False, True), (True, True)])
+def test_protected_bootstrap(charts: Path, catalogue: bool, scheduler: bool) -> None:
+    manifests = render(
+        charts,
+        "cta-admin-tools",
+        "--set",
+        "reset.unprotected=true",
+        "--set",
+        f"global.catalogue.protected={str(catalogue).lower()}",
+        "--set",
+        f"global.scheduler.protected={str(scheduler).lower()}",
+    )
+    jobs = {item["metadata"]["name"] for item in manifests if item["kind"] == "Job"}
+    assert ("test-reset-catalogue" in jobs) is not catalogue
+    assert ("test-reset-scheduler" in jobs) is not scheduler
+    policy = next(item for item in manifests if item["metadata"]["name"] == "cta-connection-protection")
+    assert policy["data"] == {"catalogue": str(catalogue).lower(), "scheduler": str(scheduler).lower()}
+
+
+@pytest.mark.parametrize(
+    ("database", "operation"),
+    [
+        ("catalogue", "reset.catalogue"),
+        ("scheduler", "reset.scheduler"),
+        ("catalogue", "liquibase.enabled"),
+    ],
+)
+def test_protected_operations_rejected(charts: Path, database: str, operation: str) -> None:
+    with pytest.raises(subprocess.CalledProcessError) as error:
+        render(charts, "cta-admin-tools", "--set", f"global.{database}.protected=true", "--set", f"{operation}=true")
+    assert "protected" in error.value.stderr
+
+
+@pytest.mark.parametrize("explicit_reset", [False, True])
+def test_standalone_protection_preflight(charts: Path, explicit_reset: bool) -> None:
+    source = (REPO / "ci/orchestration/create_instance.sh").read_text()
+    source = source[: source.rindex('\ncreate_instance "$@"')]
+    source = "\n".join(line for line in source.splitlines() if not line.startswith('source "'))
+    shutil.copytree(PRESETS, charts.parent / "presets", dirs_exist_ok=True)
+    script = (
+        source
+        + "\nupdate_local_cta_chart_dependencies() { :; }\n"
+        + 'die() { echo "$*" >&2; exit 1; }\n'
+        + 'die_usage() { die "$@"; }\n'
+        + 'cd "$1"\nshift\ncreate_instance -n test -i test --validate-only --protected "$@"\n'
+    )
+    args = ["--reset-catalogue"] if explicit_reset else ["--reset-unprotected"]
+    if explicit_reset:
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            run_tool("bash", "-s", "--", str(charts.parent), *args, input_text=script)
+        assert "Cannot reset protected catalogue" in error.value.stderr
+    else:
+        result = run_tool("bash", "-s", "--", str(charts.parent), *args, input_text=script)
+        assert yaml.safe_load(result.stdout)["data"] == {"catalogue": "true", "scheduler": "true"}
+
+
+def test_deployment_reuses_prepared_local_dependencies(tmp_path: Path) -> None:
+    result = run_tool(
+        "bash",
+        "-s",
+        "--",
+        str(REPO / "ci/utils/helm_utils.sh"),
+        str(tmp_path),
+        input_text="""set -e
+source "$1"
+cd "$2"
+log_task() { :; }
+# Record dependency updates even though preparation normally suppresses Helm output.
+helm() { printf '%s\\n' "$*" >> calls; }
+(update_local_cta_chart_dependencies)
+export CTA_LOCAL_CHARTS_READY="$PWD/helm"
+(update_local_cta_chart_dependencies)
+cat calls
+""",
+    )
+    calls = result.stdout.splitlines()
+    assert len(calls) == 8
+    assert len(set(calls)) == 8

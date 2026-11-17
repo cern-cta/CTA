@@ -122,7 +122,7 @@ Run `--sanitizers thread --enable-unit-tests` separately; ThreadSanitizer cannot
 Run commands from your CTA checkout. The default namespace is `dev`; use `--namespace` to select another instance. These deployments are for development and testing. For a site deployment, see [Operations](../../../ops/index.md).
 
 !!! warning "Replacing an instance"
-    `cta-dev deploy`, `up`, and `all` replace the managed deployment and reset its catalogue and scheduler. Combined commands start deleting the old deployment while the build runs, before the build has succeeded. Preserve logs, core dumps, and other evidence before invoking them.
+    `cta-dev deploy`, `up`, and `all` replace the managed deployment and reset its unprotected catalogue and scheduler. Combined commands start deleting the old deployment while the build runs, before the build has succeeded. Preserve logs, core dumps, and other evidence before invoking them.
 
 ### Deploy existing images
 
@@ -185,6 +185,24 @@ Catalogue and scheduler presets contain consumer settings only: Secret/PVC refer
 Files under `presets/infra/` provision local resources; `presets/cta/` contains consumer settings, and `presets/eos/` contains EOS values.
 `create_instance.sh --infra-values <file>` replaces the default local catalogue/VFS provisioning; repeat it to compose infrastructure files.
 `cta-dev` exposes the same option and otherwise provisions the local catalogue and its build-selected scheduler.
+### Protected connections
+
+Use `cta-dev deploy --protected` or `cta-dev up --protected` to preserve existing catalogue and scheduler state during bootstrap and block automated system tests.
+Combine this flag with your connection values and `--infra-values presets/infra/external.yaml` when both connections are external.
+Protection does not make running CTA services read-only.
+
+For mixed deployments, set `global.catalogue.protected: true` or `global.scheduler.protected: true` in a `--cta-values` file.
+The `--protected` flag sets both values to true.
+Automatic development resets skip protected connections; explicit reset flags and Liquibase against a protected catalogue fail validation.
+`cta-dev all` rejects protected connections before building or deleting the existing deployment; use `up` instead.
+Dedicated external CI databases should remain unprotected so their explicit reset and test workflow continues unchanged.
+
+The tools chart records both protection values in `cta-connection-protection`.
+Namespace-based system tests, including direct pytest setup and teardown runs, require this ConfigMap and refuse to run if either connection is protected or the policy cannot be read.
+Older deployments must be upgraded or recreated to supply it.
+SSH connection-config test environments do not use this Kubernetes policy.
+There is no test override; manually invoked administrative commands remain the caller's responsibility.
+
 For external connections, use `presets/infra/external.yaml` and add only the local provisioning files you need.
 Changing a catalogue or scheduler consumer preset does not implicitly change infrastructure provisioning.
 Both entry points accept repeatable `--cta-values <file>`, `--eos-values <file>` and `--dcache-values <file>` options.
@@ -287,7 +305,7 @@ Externally managed Oracle catalogues must already be available; objectstore rese
 Completed and failed Job pods remain available for log collection until the namespace is deleted or the tools release is upgraded.
 For example, use `kubectl -n <namespace> logs job/cta-tools-reset-catalogue` to inspect the catalogue reset.
 The upgrade script disables both reset Jobs, removing completed bootstrap Jobs without rerunning them.
-For manual Helm upgrades, also set `reset.catalogue=false` and `reset.scheduler=false` before changing the tools image.
+For manual Helm upgrades, also set `reset.unprotected=false`, `reset.catalogue=false` and `reset.scheduler=false` before changing the tools image.
 A failed Job stops deployment before CTA services are installed.
 Command output is captured in the deployment/CI log rather than a separate Kubernetes Job log.
 Helm upgrades never execute initialization or resets.
