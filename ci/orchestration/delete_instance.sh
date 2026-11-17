@@ -59,10 +59,19 @@ save_logs() {
             + ((.spec.ephemeralContainers // []) | map(.name + ":ephemeral"))
           )
           | join(" ")
+        ),
+        (
+          (
+            (.status.initContainerStatuses // [])
+            + (.status.containerStatuses // [])
+            + (.status.ephemeralContainerStatuses // [])
+          )
+          | map(select((.restartCount // 0) > 0) | .name)
+          | join(" ")
         )
       ]
     | join("\u001f")
-  ' | while IFS=$'\x1f' read -r pod instance phase containers; do
+  ' | while IFS=$'\x1f' read -r pod instance phase containers restarted_containers; do
     pod_dir="${destination}/${pod}"
     mkdir -p "${pod_dir}"
 
@@ -74,6 +83,15 @@ save_logs() {
     for container_entry in ${containers}; do
       container="${container_entry%:*}"
       container_type="${container_entry##*:}"
+
+      # A restarted container's current log omits the process that crashed.
+      if [[ " ${restarted_containers} " == *" ${container} "* ]]; then
+        if ! kubectl -n "${namespace}" logs "${pod}" -c "${container}" --previous \
+          > "${pod_dir}/${container}.previous.stdout.log"; then
+          log_warn "Failed to collect previous stdout logs for ${pod}/${container}."
+          rm -f "${pod_dir}/${container}.previous.stdout.log"
+        fi
+      fi
 
       # Collect stdout logs
       if ! kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${pod_dir}/${container}.stdout.log"; then
