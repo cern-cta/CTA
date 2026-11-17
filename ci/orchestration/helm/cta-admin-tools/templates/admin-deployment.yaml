@@ -2,7 +2,7 @@
 SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
-{{- if .Values.database.enabled }}
+{{- if .Values.admin.enabled }}
 {{- $scheduler := .Values.global.scheduler }}
 apiVersion: apps/v1
 kind: Deployment
@@ -35,7 +35,7 @@ spec:
             - name: SCHEDULER_BACKEND
               value: {{ $scheduler.backend | quote }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.admin.resources | nindent 12 }}
           volumeMounts:
             - name: scripts
               mountPath: /scripts

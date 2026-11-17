@@ -66,13 +66,13 @@ for backend in vfs postgres ceph; do
     --set 'taped.drives[0].controlPath=/dev/sg0,taped.drives[0].logicalLibraryName=test-library'
   render cta-admin-tools "tools-$backend" \
     -f "presets/cta/scheduler/$backend.yaml" \
-    --set database.enabled=true,client.enabled=true,reset.unprotected=true
+    --set admin.enabled=true,client.enabled=true,reset.allUnprotected=true
 done
 
 # Cover administration modes independently of the scheduler backend matrix.
 render cta-admin-tools tools-default
 render cta-admin-tools tools-protected \
-  --set global.catalogue.protected=true,global.scheduler.protected=true,reset.unprotected=true
+  --set global.catalogue.protected=true,global.scheduler.protected=true,reset.allUnprotected=true
 render cta-admin-tools tools-liquibase \
   --set liquibase.enabled=true,liquibase.catalogueSourceVersion=15.0,liquibase.catalogueDestinationVersion=16.0
 
@@ -110,3 +110,7 @@ reject_values cta-admin-tools invalid-scheduler-backend --set global.scheduler.b
 reject_values cta-admin-tools missing-vfs-claim --set-string global.scheduler.existingClaim=
 reject_values cta-admin-tools invalid-client-replicas --set client.replicas=-1
 reject_values cta-admin-tools invalid-pull-policy --set image.pullPolicy=Sometimes
+reject_values cta-admin-tools obsolete-database-toggle --set database.enabled=true
+reject_values cta-admin-tools obsolete-reset-toggle --set reset.unprotected=true
+reject_values cta-admin-tools obsolete-shared-resources --set resources.requests.memory=128Mi
+reject_values ci-infra obsolete-credential-image --set secrets.image=example:latest

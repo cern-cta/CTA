@@ -164,7 +164,7 @@ The deployment harness installs infrastructure, persistent tools and CTA service
 | Release | Chart | Responsibility |
 | --- | --- | --- |
 | `ci-infra` | `ci-infra` | Disposable PostgreSQL 17 instances, KDC, test credentials, connection Secrets, VFS storage and optional local telemetry. |
-| `cta-tools` | `cta-admin-tools` | Persistent direct database tools (`database.enabled`) and API client (`client.enabled`). |
+| `cta-tools` | `cta-admin-tools` | Persistent direct database tools (`admin.enabled`) and API client (`client.enabled`). |
 | `cta` | `cta` | Long-running CTA services. |
 | `store` | `dcache` | dCache services consuming the database provisioned by `ci-infra`. |
 
@@ -216,6 +216,7 @@ Compose `cta/scheduler/postgres.yaml` before `cta/scheduler/postgres-external.ya
 Compose `cta/tests/stress.yaml` before `cta/tests/stress-postgres.yaml` for PostgreSQL stress tuning.
 `ci-infra` provisions named resources without interpreting catalogue, scheduler or disk-system backends.
 The infrastructure presets in `ci/orchestration/presets/` request those resources and supply the CTA-specific connection files.
+Each PostgreSQL instance is a separate server with one initial database.
 For example, this requests two independent PostgreSQL instances:
 
 ```yaml
@@ -291,8 +292,16 @@ The VFS PVC can use delayed binding, so the harness installs infrastructure with
 Once the tools are ready, a Helm upgrade of infrastructure with `--reuse-values --wait --wait-for-jobs` waits for database services, KDC and credential generation.
 
 The harness installs `cta-tools` once.
+
+The administration tools chart groups workload settings under `admin`, `client`, `reset`, and `liquibase`, each with its own `resources` map.
+`admin.enabled` starts persistent tools with direct database access; `client.enabled` starts the frontend API client.
+`liquibase.enabled` starts a tools pod without executing migrations.
+`reset.allUnprotected` requests bootstrap Jobs for every unprotected connection, while `reset.catalogue` and `reset.scheduler` request explicit resets and reject protected connections.
+Infrastructure credential generation is configured under `credentialGeneration`; arbitrary connection files remain under `secretFiles`.
+
 The requested catalogue and scheduler reset Jobs run concurrently, and Helm waits for them before starting CTA services.
 The tools container starts without contacting CTA services or requiring an initialized schema.
+`cta-dev` uses `--reset-unprotected` to set `reset.allUnprotected` for development bootstrap.
 The `--reset-catalogue` and `--reset-scheduler` flags enable `reset.catalogue` and `reset.scheduler` in the admin-tools chart, respectively.
 Each script clears old state and initializes it.
 Without a reset flag, the corresponding Job is omitted and existing state is left unchanged.
@@ -305,10 +314,10 @@ Externally managed Oracle catalogues must already be available; objectstore rese
 Completed and failed Job pods remain available for log collection until the namespace is deleted or the tools release is upgraded.
 For example, use `kubectl -n <namespace> logs job/cta-tools-reset-catalogue` to inspect the catalogue reset.
 The upgrade script disables both reset Jobs, removing completed bootstrap Jobs without rerunning them.
-For manual Helm upgrades, also set `reset.unprotected=false`, `reset.catalogue=false` and `reset.scheduler=false` before changing the tools image.
+For manual Helm upgrades, also set `reset.allUnprotected=false`, `reset.catalogue=false` and `reset.scheduler=false` before changing the tools image.
 A failed Job stops deployment before CTA services are installed.
-Command output is captured in the deployment/CI log rather than a separate Kubernetes Job log.
-Helm upgrades never execute initialization or resets.
+Reset output is retained in each Job's container log.
+Completed Jobs do not rerun on upgrade; disable reset flags before upgrading to avoid immutable Job changes.
 
 The tools remain available for tests and later administration, which invoke the native CTA commands directly.
 For example:

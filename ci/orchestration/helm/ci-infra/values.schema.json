@@ -5,10 +5,7 @@
     "Chart-owned settings are validated here; Kubernetes extension objects and shared/dependency values remain extensible.",
   "type": "object",
   "properties": {
-    "global": {
-      "type": "object"
-    },
-    "secrets": {
+    "credentialGeneration": {
       "type": "object",
       "properties": {
         "image": {
@@ -19,7 +16,8 @@
       "required": [
         "image"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Job that generates shared authentication credentials; separate from arbitrary secretFiles."
     },
     "kerberos": {
       "type": "object",
@@ -81,7 +79,9 @@
           },
           "additionalProperties": {
             "$ref": "#/definitions/postgresInstance"
-          }
+          },
+          "description":
+            "Keys become Service/StatefulSet names. Database and username default to the key; secretName defaults to <key>-credentials."
         }
       },
       "required": [
@@ -89,7 +89,9 @@
         "password",
         "instances"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description":
+        "Disposable PostgreSQL servers with ephemeral emptyDir storage. Each instance is a separate server with one initial database."
     },
     "secretFiles": {
       "type": "object",
@@ -98,7 +100,8 @@
       },
       "additionalProperties": {
         "$ref": "#/definitions/stringMap"
-      }
+      },
+      "description": "Map of Secret names to filename/content maps. Filenames and contents support Helm templates."
     },
     "persistentVolumeClaims": {
       "type": "object",
@@ -107,7 +110,9 @@
       },
       "additionalProperties": {
         "$ref": "#/definitions/claim"
-      }
+      },
+      "description":
+        "Map of PVC names to storage requests. Omitting storageClass uses the cluster default; \"-\" requests no storage class."
     },
     "prometheus": {
       "type": "object",
@@ -118,7 +123,8 @@
       },
       "required": [
         "enabled"
-      ]
+      ],
+      "description": "Optional upstream Prometheus chart; its values are passed through unchanged."
     },
     "otel": {
       "type": "object",
@@ -129,7 +135,11 @@
       },
       "required": [
         "enabled"
-      ]
+      ],
+      "description": "Optional upstream OpenTelemetry Collector chart; its values are passed through unchanged."
+    },
+    "global": {
+      "type": "object"
     }
   },
   "required": [
@@ -139,7 +149,7 @@
     "postgres",
     "prometheus",
     "secretFiles",
-    "secrets"
+    "credentialGeneration"
   ],
   "additionalProperties": false,
   "definitions": {
@@ -175,7 +185,9 @@
           "$ref": "#/definitions/resourceName"
         },
         "extraSecretData": {
-          "$ref": "#/definitions/stringMap"
+          "$ref": "#/definitions/stringMap",
+          "description":
+            "Additional Secret files rendered with .connection.host, database, username, password and uri. Generated PostgreSQL credential keys cannot be overridden."
         }
       },
       "additionalProperties": false

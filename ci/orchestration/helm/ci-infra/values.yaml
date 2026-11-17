@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-secrets:
+# Generates shared authentication credentials; secretFiles below supplies arbitrary files.
+credentialGeneration:
   image: registry.cern.ch/docker.io/python:3.12-slim
 
 kerberos:
@@ -11,7 +12,8 @@ kerberos:
     name: root
     password: "defaultcipassword"
 
-# Each map entry provisions an independent PostgreSQL instance and a credentials Secret.
+# Each entry provisions a separate PostgreSQL server with one initial database and a credentials Secret.
+# Data uses emptyDir: it is lost when the database Pod is replaced.
 # The entry name is its Kubernetes Service/StatefulSet name. Database and username default to that name.
 postgres:
   image: docker.io/postgres:17
@@ -21,12 +23,30 @@ postgres:
   # Entries may override database, username, password and secretName (default <entry-name>-credentials).
   # extraSecretData adds files using Helm templates and .connection (host, database, username, password, uri).
   instances: {}
+  # Example (the database and username default to "example", the Secret to "example-credentials"):
+  # instances:
+  #   example:
+  #     database: application
+  #     username: application
+  #     secretName: application-database
+  #     extraSecretData:
+  #       connection.conf: '{{ .connection.uri }}'
 
 # Named Secrets containing arbitrary connection/configuration files; values support Helm templates.
 secretFiles: {}
+# Example (map keys name the Secret and its files):
+# secretFiles:
+#   application-connection:
+#     connection.conf: 'postgresql://user:password@external-db/application'
 
 # Named PVCs: size, storageClass, accessModes (default ReadWriteOnce), and optional annotations.
 persistentVolumeClaims: {}
+# Example (the map key is the claim name; omit storageClass to use the cluster default):
+# persistentVolumeClaims:
+#   application-data:
+#     size: 10Gi
+#     storageClass: local-path
+#     accessModes: [ReadWriteOnce]
 
 # Enable and configure the local telemetry stack with presets/infra/telemetry.yaml.
 prometheus:

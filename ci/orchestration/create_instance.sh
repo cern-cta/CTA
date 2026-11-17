@@ -127,7 +127,7 @@ create_instance() {
   # Reset database content only when explicitly requested.
   protected=false
   validate_only=false
-  reset_unprotected=false
+  reset_all_unprotected=false
   reset_catalogue=false
   reset_scheduler=false
   max_drives=2
@@ -164,7 +164,7 @@ create_instance() {
         shift ;;
       --protected) protected=true ;;
       --validate-only) validate_only=true ;;
-      --reset-unprotected) reset_unprotected=true ;;
+      --reset-unprotected) reset_all_unprotected=true ;;
       --reset-scheduler) reset_scheduler=true ;;
       --reset-catalogue) reset_catalogue=true ;;
       --telemetry)
@@ -235,7 +235,7 @@ create_instance() {
     cta_overrides+=(--set global.catalogue.protected=true --set global.scheduler.protected=true)
   fi
   reset_flags=(--set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler"
-               --set "reset.unprotected=$reset_unprotected")
+               --set "reset.allUnprotected=$reset_all_unprotected")
   update_local_cta_chart_dependencies >&2
   local protection_policy
   protection_policy=$(helm template cta-tools helm/cta-admin-tools "${cta_config[@]}" "${cta_overrides[@]}" \
@@ -254,7 +254,7 @@ create_instance() {
 
   echo "Catalogue schema version: ${catalogue_schema_version}"
 
-  if [[ $reset_unprotected == true ]]; then
+  if [[ $reset_all_unprotected == true ]]; then
     echo "Unprotected connections will be reset; protected connections will be preserved."
   else
     if [[ $reset_catalogue == true ]]; then
@@ -347,7 +347,7 @@ create_instance() {
   log_run helm install cta-tools helm/cta-admin-tools \
                        --namespace "${namespace}" \
                        "${shared_flags[@]}" \
-                       --set database.enabled=true --set client.enabled=true \
+                       --set admin.enabled=true --set client.enabled=true \
                        "${reset_flags[@]}" \
                        --set-string "reset.catalogueSchemaVersion=$catalogue_schema_version" \
                        --wait --wait-for-jobs --timeout 5m "${cta_overrides[@]}"

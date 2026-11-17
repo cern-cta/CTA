@@ -4,7 +4,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 {{- $scheduler := .Values.global.scheduler }}
 {{- range $database := list "catalogue" "scheduler" }}
-{{- if or (index $.Values.reset $database) (and $.Values.reset.unprotected (not (index $.Values.global $database).protected)) }}
+{{- if or (index $.Values.reset $database) (and $.Values.reset.allUnprotected (not (index $.Values.global $database).protected)) }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -58,7 +58,7 @@ spec:
               value: {{ $scheduler.backend | quote }}
             {{- end }}
           resources:
-            {{- toYaml $.Values.resources | nindent 12 }}
+            {{- toYaml $.Values.reset.resources | nindent 12 }}
           volumeMounts:
             - name: scripts
               mountPath: /scripts

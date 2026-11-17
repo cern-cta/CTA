@@ -26,9 +26,9 @@ spec:
     stdin: true
     securityContext:
       allowPrivilegeEscalation: False
-    {{- if $.Values.resources }}
+    {{- if $.Values.liquibase.resources }}
     resources:
-      {{-  toYaml $.Values.resources | nindent 10 }}
+      {{-  toYaml $.Values.liquibase.resources | nindent 10 }}
     {{- end }}
     # This sets up the script used in the liquibase update test
     command: ["/bin/bash", "-c"]

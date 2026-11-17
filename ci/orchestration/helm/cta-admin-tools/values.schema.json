@@ -8,27 +8,27 @@
     "image": {
       "$ref": "#/definitions/image"
     },
-    "resources": {
-      "type": "object"
-    },
-    "database": {
+    "admin": {
       "type": "object",
       "properties": {
         "enabled": {
           "type": "boolean"
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
         }
       },
       "required": [
         "enabled"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description":
+        "Persistent administration pod with direct catalogue and scheduler access; startup never resets state."
     },
     "reset": {
       "type": "object",
       "properties": {
-        "unprotected": {
-          "type": "boolean"
-        },
         "catalogue": {
           "type": "boolean"
         },
@@ -37,21 +37,35 @@
         },
         "catalogueSchemaVersion": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description":
+            "Catalogue schema version to create during reset; latest selects the version shipped with the tools image."
         },
         "postgresClientImage": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "PostgreSQL client image used by reset init containers to wait for database readiness."
+        },
+        "allUnprotected": {
+          "type": "boolean",
+          "description":
+            "Reset every connection that is not protected. Explicit catalogue/scheduler flags reject protected connections."
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
         }
       },
       "required": [
-        "unprotected",
+        "allUnprotected",
         "catalogue",
         "scheduler",
         "catalogueSchemaVersion",
         "postgresClientImage"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description":
+        "One-shot bootstrap Jobs. Disable reset flags before upgrading; completed Jobs do not rerun automatically."
     },
     "global": {
       "type": "object",
@@ -111,10 +125,13 @@
           "type": "object",
           "properties": {
             "protected": {
-              "type": "boolean"
+              "type": "boolean",
+              "description":
+                "Reject explicit resets and block system tests; automatic bootstrap skips this connection. Running services can still write."
             },
             "existingSecret": {
-              "$ref": "#/definitions/resourceName"
+              "$ref": "#/definitions/resourceName",
+              "description": "Name of the Secret containing cta-catalogue.conf in the deployment namespace."
             }
           },
           "required": [
@@ -126,10 +143,13 @@
           "type": "object",
           "properties": {
             "protected": {
-              "type": "boolean"
+              "type": "boolean",
+              "description":
+                "Reject explicit resets and block system tests; automatic bootstrap skips this connection. Running services can still write."
             },
             "existingSecret": {
-              "$ref": "#/definitions/resourceName"
+              "$ref": "#/definitions/resourceName",
+              "description": "Name of the Secret containing cta-scheduler.conf in the deployment namespace."
             },
             "backend": {
               "enum": [
@@ -139,7 +159,8 @@
               ]
             },
             "existingClaim": {
-              "type": "string"
+              "type": "string",
+              "description": "Existing PVC used by the VFS backend; ignored by other backends."
             }
           },
           "required": [
@@ -173,7 +194,8 @@
       "required": [
         "catalogue",
         "scheduler"
-      ]
+      ],
+      "description": "Shared CTA connection and runtime settings, supplied to both service and tools releases."
     },
     "liquibase": {
       "type": "object",
@@ -194,14 +216,20 @@
           "type": "string"
         },
         "customRepoFiles": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Mount the yum.repos.d-config ConfigMap for the Liquibase test environment."
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
         }
       },
       "required": [
         "enabled",
         "image"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "Persistent Liquibase tools pod. Enabling it does not execute a migration."
     },
     "client": {
       "type": "object",
@@ -224,7 +252,8 @@
           "minLength": 1
         },
         "resources": {
-          "type": "object"
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
         },
         "conf": {
           "type": [
@@ -278,7 +307,8 @@
             }
           }
         }
-      ]
+      ],
+      "description": "API client pod without direct catalogue or scheduler access."
     }
   },
   "definitions": {
@@ -343,10 +373,28 @@
   },
   "required": [
     "image",
-    "database",
+    "admin",
     "reset",
     "global",
     "liquibase",
     "client"
+  ],
+  "allOf": [
+    {
+      "not": {
+        "required": [
+          "database"
+        ]
+      },
+      "description": "Use admin.enabled for the persistent administration pod."
+    },
+    {
+      "not": {
+        "required": [
+          "resources"
+        ]
+      },
+      "description": "Set admin.resources, reset.resources, liquibase.resources or client.resources."
+    }
   ]
 }

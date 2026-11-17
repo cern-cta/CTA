@@ -28,13 +28,13 @@ tests:
           value: Never
   - it: bootstraps both unprotected connections
     set:
-      reset.unprotected: true
+      reset.allUnprotected: true
     asserts:
       - hasDocuments:
           count: 2
   - it: bootstrap skips the protected catalogue
     set:
-      reset.unprotected: true
+      reset.allUnprotected: true
       global.catalogue.protected: true
     asserts:
       - hasDocuments:
@@ -44,7 +44,7 @@ tests:
           value: check-reset-scheduler
   - it: bootstrap skips the protected scheduler
     set:
-      reset.unprotected: true
+      reset.allUnprotected: true
       global.scheduler.protected: true
     asserts:
       - hasDocuments:
@@ -54,7 +54,7 @@ tests:
           value: check-reset-catalogue
   - it: bootstrap leaves both protected connections untouched
     set:
-      reset.unprotected: true
+      reset.allUnprotected: true
       global.catalogue.protected: true
       global.scheduler.protected: true
     asserts:
