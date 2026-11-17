@@ -142,6 +142,9 @@ Follow [Documentation Changes](docs/content/dev/contributing/documentation.md) a
 
 - Match the surrounding prose and established terminology.
 - Maintain one authoritative explanation; link rather than duplicate it.
+- Write documentation and code comments for someone encountering the final design without the conversation history.
+  Freely consolidate explanations introduced or substantially changed on the current branch as the design evolves, rather than appending answers to review questions.
+  For pre-existing documentation, prefer targeted corrections needed by the task; broader rewrites require a concrete clarity or correctness problem relevant to the change.
 - Keep steady-state operation in deployment/configuration guides and version-specific migration in upgrade guides.
 - Keep CI Helm guidance in development/CI documentation, not operator deployment instructions.
 - Edit the original manual or example when a documentation page includes it.

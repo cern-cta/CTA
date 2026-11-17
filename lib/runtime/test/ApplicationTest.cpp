@@ -509,9 +509,15 @@ struct LifecycleConfig {
 
   static constexpr std::size_t memberCount() { return 5; }
 
-  static constexpr auto features =
-    std::tuple {cta::runtime::experimentalFeature("telemetry", &LifecycleConfig::telemetry),
-                cta::runtime::stableFeature("health_server", &LifecycleConfig::health_server)};
+  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &LifecycleConfig::telemetry);
+  static constexpr auto healthServerFeature =
+    cta::runtime::stableFeature("health_server", &LifecycleConfig::health_server);
+
+  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
+
+  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
+
+  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);
@@ -630,6 +636,20 @@ private:
   const LifecycleConfig* m_config = nullptr;
   cta::log::Logger* m_log = nullptr;
 };
+
+TEST(Application, InactiveSettingsDoNotStartHealthOrTelemetry) {
+  LifecycleState state;
+  LifecycleApp::state = &state;
+  TempFile logs;
+  TempFile config("enabled_features = []\nenabled_experimental_features = []\n"
+                  "[telemetry]\nconfig_file = '/does/not/exist.yaml'\non_init_failure = 'fatal'\n"
+                  "[health_server]\ntransport = 'unix'\n",
+                  ".toml");
+  cta::runtime::Application<LifecycleApp, LifecycleConfig, cta::runtime::CommonCliOptions> app("cta-test", "");
+  Argv args({"cta-test", "--config", config.path(), "--log-file", logs.path()});
+  // Starting either feature would fail: no telemetry file or runtime directory is available.
+  EXPECT_EQ(EXIT_SUCCESS, app.run(args.count, args.data()));
+}
 
 TEST(Application, DestroysAppBeforeTelemetryAndAfterCallbacks) {
   using namespace cta;

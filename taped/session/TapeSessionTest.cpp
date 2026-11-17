@@ -2820,6 +2820,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecall) {
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao_enabled = true;
   dataTransferConf.retrieve.rao.emplace();
   tapeLoadTimeoutSecs = 300;
   dataTransferConf.encryption.reset();
@@ -3067,6 +3068,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallLinearAlgorithm) {
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao_enabled = true;
   dataTransferConf.retrieve.rao.emplace();
   dataTransferConf.retrieve.rao->lto_algorithm = "linear";
   tapeLoadTimeoutSecs = 300;
@@ -3315,6 +3317,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao_enabled = true;
   dataTransferConf.retrieve.rao.emplace();
   tapeLoadTimeoutSecs = 300;
   dataTransferConf.retrieve.rao->lto_algorithm = "DOES_NOT_EXIST";
@@ -3568,6 +3571,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallSLTFRAOAlgorithm) {
   dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
   dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
   dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao_enabled = true;
   dataTransferConf.retrieve.rao.emplace();
   tapeLoadTimeoutSecs = 300;
   dataTransferConf.retrieve.rao->lto_algorithm = "sltf";

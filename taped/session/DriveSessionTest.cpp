@@ -8,6 +8,7 @@
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/log/StringLogger.hpp"
+#include "runtime/config/ConfigLoader.hpp"
 #include "taped/SchedulerContext.hpp"
 #include "taped/drive/FakeDrive.hpp"
 
@@ -852,6 +853,26 @@ TEST_F(DriveSessionTest, BlockMovementRefreshesTransferLivenessAndNewSessionRese
   tracker->beginTapeSession(session::SessionType::Archive, now);
   tracker->reportState(Transferring, now);
   EXPECT_TRUE(session->isLive());
+}
+
+TEST(TapedFeatureConfig, DisabledTransferFeaturesIgnoreSettingsWithoutStrictMode) {
+  using cta::runtime::loadFromTomlString;
+  const std::string rao = "rao_enabled = false\nfetch_max_bytes = 1\nfetch_max_files = 1\n"
+                          "drain_to_disk_timeout_secs = 1\nexternal_free_disk_space_script = ''\n"
+                          "[rao]\nlto_algorithm = 'invalid'";
+  EXPECT_FALSE(loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", false).rao);
+  EXPECT_THROW(loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", true), exception::UserError);
+  EXPECT_THROW(loadFromTomlString<RetrieveTransferConfig>("rao_enabled = true\n[rao]\nlto_algorithm = 'invalid'",
+                                                          "transfers.toml",
+                                                          false),
+               exception::UserError);
+
+  const std::string encryption = "encryption_enabled = false\n[encryption]\nexternal_key_script = 42";
+  EXPECT_FALSE(loadFromTomlString<TransfersConfig>(encryption, "transfers.toml", false).encryption);
+  EXPECT_THROW(loadFromTomlString<TransfersConfig>("encryption_enabled = true\n[encryption]\nexternal_key_script = 42",
+                                                   "transfers.toml",
+                                                   false),
+               exception::UserError);
 }
 
 }  // namespace cta::tape::daemon

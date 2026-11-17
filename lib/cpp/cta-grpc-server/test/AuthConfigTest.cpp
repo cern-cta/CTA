@@ -308,4 +308,23 @@ TEST(AdminAuthConfig, DefaultsToJwtButStrictModeRequiresExplicitSelection) {
 TEST(WfeAuthConfig, DefaultsToJwtButStrictModeRequiresExplicitSelection) {
   checkDefaultJwtAuthentication<WfeAuthConfig>();
 }
+
+TEST(AdminAuthConfig, InactiveJwtSettingsCannotEnableJwtAuthentication) {
+  const std::string document = ADMIN_AUTH_TOML + "\n[jwt]\njwks_total_timeout = 'invalid'";
+  const auto config = cta::runtime::loadFromTomlString<AdminAuthConfig>(document, "auth.toml", false);
+  EXPECT_FALSE(config.jwt);
+  EXPECT_FALSE(config.isJwtEnabled());
+  EXPECT_EQ(config.getEnabledMethods(), (std::set<AuthMethod, std::less<>> {AuthMethod::KERBEROS}));
+  EXPECT_THROW(cta::runtime::loadFromTomlString<AdminAuthConfig>(document, "auth.toml", true),
+               cta::exception::UserError);
+}
+
+TEST(WfeAuthConfig, InactiveJwtSettingsCannotEnableJwtAuthentication) {
+  const std::string document = "enabled_methods = ['mtls']\n[mtls]\naliases = {}\n[jwt]\njwks_uri = 42";
+  const auto config = cta::runtime::loadFromTomlString<WfeAuthConfig>(document, "auth.toml", false);
+  EXPECT_FALSE(config.jwt);
+  EXPECT_EQ(config.getEnabledMethods(), (std::set<AuthMethod, std::less<>> {AuthMethod::MTLS}));
+  EXPECT_THROW(cta::runtime::loadFromTomlString<WfeAuthConfig>(document, "auth.toml", true), cta::exception::UserError);
+}
+
 }  // namespace unitTests

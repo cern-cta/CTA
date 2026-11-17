@@ -9,6 +9,7 @@
 #include "Reflection.hpp"
 #include "common/config/Config.hpp"
 #include "common/exception/UserError.hpp"
+#include "runtime/config/FeatureConfig.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -263,24 +264,32 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
     } else {
       const auto node = tbl[tableFieldName];
 
-      if constexpr (StdOptional<decltype(field)> && requires {
-                      { out.isSectionEnabled(tableFieldName) } -> std::same_as<bool>;
-                    }) {
-        // Selectors are already parsed. Never silently discard an explicitly supplied inactive section.
-        if (!out.isSectionEnabled(tableFieldName)) {
-          if (node) {
-            errs.push_back(
-              ParseResult::error("Field '" + std::string(tableFieldName) + "' must be absent when disabled."));
-          } else {
+      if constexpr (StdOptional<decltype(field)>) {
+        std::optional<bool> selected;
+        if constexpr (requires { out.isSectionEnabled(tableFieldName); }) {
+          selected = out.isSectionEnabled(tableFieldName);
+        } else if constexpr (requires { T::features; }) {
+          selected = featureSelection(out, tableFieldName);
+        }
+        if (selected.has_value()) {
+          // Selection is authoritative. Do not parse or validate settings for inactive features.
+          if (!*selected) {
+            knownFields.insert(tableFieldName);
+            if (strict && node) {
+              errs.push_back(
+                ParseResult::error("Field '" + std::string(tableFieldName) + "' must be absent when disabled."));
+            }
             field.reset();
+            return;
           }
-        } else if (!node) {
-          if (strict) {
-            errs.push_back(
-              ParseResult::error("Expected enabled section '" + std::string(tableFieldName) + "' is missing."));
+          if (!node) {
+            if (strict) {
+              errs.push_back(
+                ParseResult::error("Expected enabled section '" + std::string(tableFieldName) + "' is missing."));
+            }
+            // Non-strict loading retains declared defaults; validation checks that settings are available.
+            return;
           }
-          // Non-strict loading keeps the section's member initializer; the loader invents no defaults.
-          return;
         }
       }
 

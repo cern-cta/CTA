@@ -120,8 +120,11 @@ struct AdminApiConfig final {
 
   static constexpr std::size_t memberCount() { return 11; }
 
-  static constexpr auto features =
-    std::tuple {cta::runtime::experimentalFeature("telemetry", &AdminApiConfig::telemetry)};
+  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &AdminApiConfig::telemetry);
+
+  static constexpr auto features = std::tuple {telemetryFeature};
+
+  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

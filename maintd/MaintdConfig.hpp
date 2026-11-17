@@ -8,10 +8,10 @@
 #include "runtime/config/CommonConfig.hpp"
 
 #include <cstdint>
-#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 namespace cta::maintd {
@@ -125,6 +125,24 @@ struct SchedulerMaintenanceCleanupRoutineConfig final {
 
 #endif
 
+/// Routines available with the configured scheduler backend.
+enum class Routine {
+  DiskReportArchive,
+  DiskReportRetrieve,
+  RepackExpand,
+  RepackReport,
+#ifndef CTA_PGSCHED
+  GarbageCollect,
+  QueueCleanup,
+#else
+  UserActiveQueueCleanup,
+  RepackActiveQueueCleanup,
+  UserPendingQueueCleanup,
+  RepackPendingQueueCleanup,
+  SchedulerMaintenanceCleanup,
+#endif
+};
+
 /// Maintenance routine selection, cycle timing and per-routine settings.
 struct RoutinesConfig final {
   // All declared routines run unless explicitly deselected.
@@ -157,32 +175,81 @@ struct RoutinesConfig final {
   static constexpr std::size_t memberCount() { return 12; }
 #endif
 
+  static constexpr auto diskReportArchive =
+    cta::runtime::stableFeature("disk_report_archive", &RoutinesConfig::disk_report_archive);
+  static constexpr auto diskReportRetrieve =
+    cta::runtime::stableFeature("disk_report_retrieve", &RoutinesConfig::disk_report_retrieve);
+  static constexpr auto repackExpand = cta::runtime::stableFeature("repack_expand", &RoutinesConfig::repack_expand);
+  static constexpr auto repackReport = cta::runtime::stableFeature("repack_report", &RoutinesConfig::repack_report);
 #ifndef CTA_PGSCHED
-  static constexpr auto garbageCollect = cta::runtime::routine("garbage_collect");
-#endif
-  static constexpr auto routines =
-    std::tuple {cta::runtime::routine("disk_report_archive", &RoutinesConfig::disk_report_archive),
-                cta::runtime::routine("disk_report_retrieve", &RoutinesConfig::disk_report_retrieve),
-                cta::runtime::routine("repack_expand", &RoutinesConfig::repack_expand),
-                cta::runtime::routine("repack_report", &RoutinesConfig::repack_report),
-#ifndef CTA_PGSCHED
-                garbageCollect,
-                cta::runtime::routine("queue_cleanup", &RoutinesConfig::queue_cleanup)
+  static constexpr auto garbageCollect = cta::runtime::stableFeature("garbage_collect");
+  static constexpr auto queueCleanup = cta::runtime::stableFeature("queue_cleanup", &RoutinesConfig::queue_cleanup);
 #else
-    cta::runtime::routine("user_active_queue_cleanup", &RoutinesConfig::user_active_queue_cleanup),
-    cta::runtime::routine("repack_active_queue_cleanup", &RoutinesConfig::repack_active_queue_cleanup),
-    cta::runtime::routine("user_pending_queue_cleanup", &RoutinesConfig::user_pending_queue_cleanup),
-    cta::runtime::routine("repack_pending_queue_cleanup", &RoutinesConfig::repack_pending_queue_cleanup),
-    cta::runtime::routine("scheduler_maintenance_cleanup", &RoutinesConfig::scheduler_maintenance_cleanup),
+  static constexpr auto userActiveQueueCleanup =
+    cta::runtime::stableFeature("user_active_queue_cleanup", &RoutinesConfig::user_active_queue_cleanup);
+  static constexpr auto repackActiveQueueCleanup =
+    cta::runtime::stableFeature("repack_active_queue_cleanup", &RoutinesConfig::repack_active_queue_cleanup);
+  static constexpr auto userPendingQueueCleanup =
+    cta::runtime::stableFeature("user_pending_queue_cleanup", &RoutinesConfig::user_pending_queue_cleanup);
+  static constexpr auto repackPendingQueueCleanup =
+    cta::runtime::stableFeature("repack_pending_queue_cleanup", &RoutinesConfig::repack_pending_queue_cleanup);
+  static constexpr auto schedulerMaintenanceCleanup =
+    cta::runtime::stableFeature("scheduler_maintenance_cleanup", &RoutinesConfig::scheduler_maintenance_cleanup);
 #endif
-    };
 
-  /// The loader retains defaults only for selected routines and rejects supplied inactive sections.
+  static constexpr auto routines = std::tuple {diskReportArchive,
+                                               diskReportRetrieve,
+                                               repackExpand,
+                                               repackReport,
+#ifndef CTA_PGSCHED
+                                               garbageCollect,
+                                               queueCleanup
+#else
+                                               userActiveQueueCleanup,
+                                               repackActiveQueueCleanup,
+                                               userPendingQueueCleanup,
+                                               repackPendingQueueCleanup,
+                                               schedulerMaintenanceCleanup
+#endif
+  };
+
+  /// Return whether the routine is selected, independently of its settings section.
+  bool routineEnabled(Routine routine) const {
+    switch (routine) {
+      case Routine::DiskReportArchive:
+        return cta::runtime::featureEnabled(enabled_routines, diskReportArchive);
+      case Routine::DiskReportRetrieve:
+        return cta::runtime::featureEnabled(enabled_routines, diskReportRetrieve);
+      case Routine::RepackExpand:
+        return cta::runtime::featureEnabled(enabled_routines, repackExpand);
+      case Routine::RepackReport:
+        return cta::runtime::featureEnabled(enabled_routines, repackReport);
+#ifndef CTA_PGSCHED
+      case Routine::GarbageCollect:
+        return cta::runtime::featureEnabled(enabled_routines, garbageCollect);
+      case Routine::QueueCleanup:
+        return cta::runtime::featureEnabled(enabled_routines, queueCleanup);
+#else
+      case Routine::UserActiveQueueCleanup:
+        return cta::runtime::featureEnabled(enabled_routines, userActiveQueueCleanup);
+      case Routine::RepackActiveQueueCleanup:
+        return cta::runtime::featureEnabled(enabled_routines, repackActiveQueueCleanup);
+      case Routine::UserPendingQueueCleanup:
+        return cta::runtime::featureEnabled(enabled_routines, userPendingQueueCleanup);
+      case Routine::RepackPendingQueueCleanup:
+        return cta::runtime::featureEnabled(enabled_routines, repackPendingQueueCleanup);
+      case Routine::SchedulerMaintenanceCleanup:
+        return cta::runtime::featureEnabled(enabled_routines, schedulerMaintenanceCleanup);
+#endif
+    }
+    return false;
+  }
+
+  /// Identify active sections so the loader can apply strictness and retain defaults for selected routines.
   bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_routines, name); }
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
-    result.merge("", cta::runtime::validateRoutines(*this, enabled_routines, routines));
+    auto result = cta::runtime::validateFeatureSelection(*this, enabled_routines, routines, "enabled_routines");
     if (cycle_sleep_interval_secs == 0) {
       result.addError("cycle_sleep_interval_secs", "must be greater than zero");
     }
@@ -207,9 +274,15 @@ struct MaintdConfig final {
 
   static constexpr std::size_t memberCount() { return 9; }
 
-  static constexpr auto features =
-    std::tuple {cta::runtime::experimentalFeature("telemetry", &MaintdConfig::telemetry),
-                cta::runtime::stableFeature("health_server", &MaintdConfig::health_server)};
+  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &MaintdConfig::telemetry);
+  static constexpr auto healthServerFeature =
+    cta::runtime::stableFeature("health_server", &MaintdConfig::health_server);
+
+  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
+
+  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
+
+  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

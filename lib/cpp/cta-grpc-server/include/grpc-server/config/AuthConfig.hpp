@@ -79,6 +79,17 @@ struct AdminAuthConfig final {
   /// Kerberos auth config (optional)
   std::optional<KerberosAuthConfig> kerberos;
 
+  static constexpr auto jwtFeature = cta::runtime::stableFeature("jwt", &AdminAuthConfig::jwt);
+  static constexpr auto kerberosFeature = cta::runtime::stableFeature("kerberos", &AdminAuthConfig::kerberos);
+  static constexpr auto methods = std::tuple {jwtFeature, kerberosFeature};
+
+  bool isJwtEnabled() const { return cta::runtime::featureEnabled(enabled_methods, jwtFeature); }
+
+  bool isKerberosEnabled() const { return cta::runtime::featureEnabled(enabled_methods, kerberosFeature); }
+
+  /// Select settings only for explicitly enabled authentication methods.
+  bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_methods, name); }
+
   /// @brief Validate the authentication configuration for consistency
   /// @return The validation result (will contain the errors if present)
   cta::runtime::ValidationResult validate() const;
@@ -97,6 +108,17 @@ struct WfeAuthConfig final {
   std::optional<JwtAuthConfig> jwt;
   /// mTLS auth config (optional)
   std::optional<MtlsAuthConfig> mtls;
+
+  static constexpr auto jwtFeature = cta::runtime::stableFeature("jwt", &WfeAuthConfig::jwt);
+  static constexpr auto mtlsFeature = cta::runtime::stableFeature("mtls", &WfeAuthConfig::mtls);
+  static constexpr auto methods = std::tuple {jwtFeature, mtlsFeature};
+
+  bool isJwtEnabled() const { return cta::runtime::featureEnabled(enabled_methods, jwtFeature); }
+
+  bool isMtlsEnabled() const { return cta::runtime::featureEnabled(enabled_methods, mtlsFeature); }
+
+  /// Select settings only for explicitly enabled authentication methods.
+  bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_methods, name); }
 
   /// @brief Validate the authentication configuration for consistency
   /// @return The validation result (will contain the errors if present)

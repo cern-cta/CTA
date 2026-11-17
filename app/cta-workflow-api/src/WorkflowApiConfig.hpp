@@ -109,12 +109,25 @@ struct WorkflowApiConfig final {
   static constexpr std::size_t memberCount() { return 11; }
 #endif
 
-  static constexpr auto features = std::tuple {
-    cta::runtime::experimentalFeature("telemetry", &WorkflowApiConfig::telemetry),
+  static constexpr auto telemetryFeature =
+    cta::runtime::experimentalFeature("telemetry", &WorkflowApiConfig::telemetry);
 #ifdef CTA_PGSCHED
-    cta::runtime::experimentalFeature("opportunistic_batching", &WorkflowApiConfig::opportunistic_batching),
+  static constexpr auto batchingFeature =
+    cta::runtime::experimentalFeature("opportunistic_batching", &WorkflowApiConfig::opportunistic_batching);
+#endif
+
+  static constexpr auto features = std::tuple {
+    telemetryFeature,
+#ifdef CTA_PGSCHED
+    batchingFeature,
 #endif
   };
+
+  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
+
+#ifdef CTA_PGSCHED
+  bool isBatchingEnabled() const { return cta::runtime::featureEnabled(*this, batchingFeature); }
+#endif
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

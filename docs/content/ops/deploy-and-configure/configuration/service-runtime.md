@@ -41,15 +41,14 @@ Field comments distinguish three cases:
 Select service-wide capabilities through root `enabled_features` and `enabled_experimental_features` lists.
 Telemetry and PostgreSQL workflow batching are experimental; their interfaces may change or be removed.
 Strict mode requires both lists, including `[]` when empty; non-strict mode defaults both to empty.
-Supply settings for selected features and remove sections for disabled features, including their child tables.
 Unknown names, duplicates and selections in the wrong list are rejected.
 
-To disable a feature, remove its name from the appropriate list and remove its configuration section.
-For example, disabling telemetry requires removing `"telemetry"` from `enabled_experimental_features` and removing `[telemetry]`.
+Supply settings for enabled features.
+Sections for disabled features are ignored in non-strict mode and must be removed in strict mode.
+For example, disable telemetry by removing `"telemetry"` from `enabled_experimental_features`.
 See [Metrics](../../run-and-maintain/monitoring/metrics.md) and [Health and Alerts](../../run-and-maintain/monitoring/health-and-alerts.md) for complete activation examples.
 
 Nested selectors work independently: authentication uses `auth.enabled_methods`, maintenance uses `routines.enabled_routines`, and tape transfers use `transfers.encryption_enabled` and `transfers.retrieve.rao_enabled`.
-Their sections must also match the selections in both modes.
 In non-strict mode, maintenance defaults to all supported routines with their default settings, and both APIs default to JWT authentication, requiring `[auth.jwt]`.
 In strict mode, supply each selector and its selected sections explicitly.
 

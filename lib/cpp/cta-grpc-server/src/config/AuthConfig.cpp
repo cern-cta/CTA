@@ -43,49 +43,41 @@ cta::runtime::ValidationResult JwtAuthConfig::validate() const {
 }
 
 cta::runtime::ValidationResult AdminAuthConfig::validate() const {
-  auto result = cta::runtime::validateFeatureNames(enabled_methods, {"jwt", "kerberos"}, "enabled_methods");
-  const bool jwtEnabled = cta::runtime::featureEnabled(enabled_methods, "jwt");
-  const bool kerberosEnabled = cta::runtime::featureEnabled(enabled_methods, "kerberos");
-  if (!jwtEnabled && !kerberosEnabled) {
+  auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
+  if (!isJwtEnabled() && !isKerberosEnabled()) {
     result.addError("enabled_methods",
                     "Admin frontend authentication requires at least one of JWT or Kerberos to be enabled");
   }
-  cta::runtime::validateFeature(result, enabled_methods, "jwt", jwt);
-  cta::runtime::validateFeature(result, enabled_methods, "kerberos", kerberos);
   return result;
 }
 
 std::set<AuthMethod, std::less<>> AdminAuthConfig::getEnabledMethods() const {
   using enum AuthMethod;
   std::set<AuthMethod, std::less<>> result;
-  if (cta::runtime::featureEnabled(enabled_methods, "jwt")) {
+  if (isJwtEnabled()) {
     result.emplace(JWT);
   }
-  if (cta::runtime::featureEnabled(enabled_methods, "kerberos")) {
+  if (isKerberosEnabled()) {
     result.emplace(KERBEROS);
   }
   return result;
 }
 
 cta::runtime::ValidationResult WfeAuthConfig::validate() const {
-  auto result = cta::runtime::validateFeatureNames(enabled_methods, {"jwt", "mtls"}, "enabled_methods");
-  const bool jwtEnabled = cta::runtime::featureEnabled(enabled_methods, "jwt");
-  const bool mtlsEnabled = cta::runtime::featureEnabled(enabled_methods, "mtls");
-  if (jwtEnabled == mtlsEnabled) {
+  auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
+  if (isJwtEnabled() == isMtlsEnabled()) {
     result.addError("enabled_methods", "WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
   }
-  cta::runtime::validateFeature(result, enabled_methods, "jwt", jwt);
-  cta::runtime::validateFeature(result, enabled_methods, "mtls", mtls);
   return result;
 }
 
 std::set<AuthMethod, std::less<>> WfeAuthConfig::getEnabledMethods() const {
   using enum AuthMethod;
   std::set<AuthMethod, std::less<>> result;
-  if (cta::runtime::featureEnabled(enabled_methods, "jwt")) {
+  if (isJwtEnabled()) {
     result.emplace(JWT);
   }
-  if (cta::runtime::featureEnabled(enabled_methods, "mtls")) {
+  if (isMtlsEnabled()) {
     result.emplace(MTLS);
   }
   return result;

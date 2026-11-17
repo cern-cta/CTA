@@ -76,23 +76,24 @@ struct FeatureTestConfig {
 };
 }  // namespace
 
-TEST(CommonConfig, RoutineDescriptorsSupportSectionsAndStandaloneRoutines) {
+TEST(CommonConfig, FeatureDescriptorsSupportSectionsAndStandaloneFeatures) {
   struct Config {
     std::optional<cta::runtime::TelemetryConfig> reporting = cta::runtime::TelemetryConfig {"/otel.yaml", "warn"};
   } config;
 
-  constexpr auto cleanup = cta::runtime::routine("cleanup");
-  const auto routines = std::tuple {cta::runtime::routine("reporting", &Config::reporting), cleanup};
-  const auto enabled = cta::runtime::featureNames(routines);
+  constexpr auto cleanup = cta::runtime::stableFeature("cleanup");
+  const auto features = std::tuple {cta::runtime::stableFeature("reporting", &Config::reporting), cleanup};
+  const auto enabled = cta::runtime::featureNames(features);
   EXPECT_EQ(enabled, (std::vector<std::string> {"reporting", "cleanup"}));
   EXPECT_TRUE(cta::runtime::featureEnabled(enabled, cleanup));
-  EXPECT_TRUE(cta::runtime::validateRoutines(config, enabled, routines).ok());
-  EXPECT_FALSE(cta::runtime::validateRoutines(config, {"cleanup"}, routines).ok());
+  EXPECT_TRUE(cta::runtime::validateFeatureSelection(config, enabled, features).ok());
+  EXPECT_TRUE(cta::runtime::validateFeatureSelection(config, {"cleanup"}, features).ok());
   config.reporting.reset();
-  EXPECT_TRUE(cta::runtime::validateRoutines(config, {"cleanup"}, routines).ok());
-  EXPECT_FALSE(cta::runtime::validateRoutines(config, {"cleanup", "cleanup"}, routines).ok());
-  EXPECT_FALSE(cta::runtime::validateRoutines(config, {"unknown"}, routines).ok());
-  EXPECT_FALSE(cta::runtime::validateRoutines(config, enabled, routines).ok());
+  EXPECT_TRUE(cta::runtime::validateFeatureSelection(config, {"cleanup"}, features).ok());
+  EXPECT_FALSE(cta::runtime::validateFeatureSelection(config, {"cleanup", "cleanup"}, features).ok());
+  const auto invalid = cta::runtime::validateFeatureSelection(config, {"unknown"}, features, "enabled_items");
+  EXPECT_NE(invalid.what().find("Field 'enabled_items' unsupported feature 'unknown'"), std::string::npos);
+  EXPECT_FALSE(cta::runtime::validateFeatureSelection(config, enabled, features).ok());
 }
 
 TEST(CommonConfig, FeatureSelectionIsValidatedInBothModes) {
@@ -119,7 +120,6 @@ TEST(CommonConfig, FeatureSelectionIsValidatedInBothModes) {
          {std::string("enabled_features = ['unknown']\nenabled_experimental_features = []"),
           std::string("enabled_features = []\nenabled_experimental_features = ['unknown']"),
           std::string("enabled_features = []\nenabled_experimental_features = ['telemetry']"),
-          "enabled_features = []\nenabled_experimental_features = []" + telemetry,
           "enabled_features = ['health_server', 'health_server']\nenabled_experimental_features = []" + health,
           "enabled_features = []\nenabled_experimental_features = ['telemetry', 'telemetry']" + telemetry,
           "enabled_features = ['telemetry']\nenabled_experimental_features = []" + telemetry,
@@ -130,11 +130,72 @@ TEST(CommonConfig, FeatureSelectionIsValidatedInBothModes) {
   }
 }
 
+TEST(CommonConfig, FeatureDescriptorsUseTheirDeclaredSelectionList) {
+  FeatureTestConfig config;
+  const auto& telemetry = std::get<0>(FeatureTestConfig::features);
+  const auto& health = std::get<1>(FeatureTestConfig::features);
+  config.enabled_features = {"telemetry"};
+  config.enabled_experimental_features = {"health_server"};
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, telemetry));
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, health));
+
+  config.enabled_features = {"health_server"};
+  config.enabled_experimental_features = {"telemetry"};
+  EXPECT_TRUE(cta::runtime::featureEnabled(config, telemetry));
+  EXPECT_TRUE(cta::runtime::featureEnabled(config, health));
+}
+
 TEST(CommonConfig, WrongFeatureListExplainsHowToMigrate) {
-  const auto experimental = cta::runtime::validateFeatureLists({"telemetry"}, {}, {"health_server"}, {"telemetry"});
-  EXPECT_NE(experimental.what().find("is experimental; move it to enabled_experimental_features"), std::string::npos);
-  const auto stable = cta::runtime::validateFeatureLists({}, {"health_server"}, {"health_server"}, {"telemetry"});
-  EXPECT_NE(stable.what().find("is stable; move it to enabled_features"), std::string::npos);
+  FeatureTestConfig config;
+  config.enabled_features = {"telemetry"};
+  const auto experimental = cta::runtime::validateFeatures(config);
+  EXPECT_NE(experimental.what().find("feature 'telemetry' must be listed in enabled_experimental_features"),
+            std::string::npos);
+
+  config.enabled_features.clear();
+  config.enabled_experimental_features = {"health_server"};
+  const auto stable = cta::runtime::validateFeatures(config);
+  EXPECT_NE(stable.what().find("feature 'health_server' must be listed in enabled_features"), std::string::npos);
+}
+
+TEST(CommonConfig, InactiveSectionsAreIgnoredOnlyWithoutStrictMode) {
+  using cta::runtime::loadFromTomlString;
+  const std::string disabled = "enabled_features = []\nenabled_experimental_features = []\n";
+  // Inactive sections may be incomplete, invalid, or not even tables; none can activate a feature.
+  for (const auto& settings : {"[telemetry]\nconfig_file = '/unused.yaml'",
+                               "[telemetry]\nconfig_file = 42\non_init_failure = 'invalid'",
+                               "telemetry = 42\nhealth_server = 'unused'"}) {
+    const auto config = loadFromTomlString<FeatureTestConfig>(disabled + settings, "test.toml", false);
+    EXPECT_FALSE(config.telemetry);
+    EXPECT_FALSE(config.health_server);
+    EXPECT_THROW(loadFromTomlString<FeatureTestConfig>(disabled + settings, "test.toml", true),
+                 cta::exception::UserError);
+  }
+  EXPECT_THROW(
+    loadFromTomlString<FeatureTestConfig>("enabled_features = []\nenabled_experimental_features = ['telemetry']\n"
+                                          "[telemetry]\nconfig_file = 42",
+                                          "test.toml",
+                                          false),
+    cta::exception::UserError);
+}
+
+TEST(CommonConfig, ValidationUsesSelectionRatherThanSectionPresence) {
+  FeatureTestConfig config;
+  config.telemetry.emplace().on_init_failure = "invalid";
+  EXPECT_TRUE(cta::runtime::validateFeatures(config).ok());
+  EXPECT_EQ(cta::runtime::featureSelection(config, "telemetry"), false);
+  EXPECT_FALSE(cta::runtime::featureSelection(config, "unrelated").has_value());
+  config.enabled_experimental_features = {"telemetry"};
+  EXPECT_EQ(cta::runtime::featureSelection(config, "telemetry"), true);
+  EXPECT_FALSE(cta::runtime::validateFeatures(config).ok());
+}
+
+TEST(CommonConfig, UnixTransportIgnoresInactiveTcpSettingsWithoutStrictMode) {
+  const std::string document = "transport = 'unix'\n[tcp]\nport = 'invalid'";
+  const auto config = cta::runtime::loadFromTomlString<cta::runtime::HealthServerConfig>(document, "test.toml", false);
+  EXPECT_FALSE(config.tcp);
+  EXPECT_THROW(cta::runtime::loadFromTomlString<cta::runtime::HealthServerConfig>(document, "test.toml", true),
+               cta::exception::UserError);
 }
 
 TEST(CommonConfig, StrictFeatureSettingsRemainExplicit) {
@@ -167,10 +228,6 @@ TEST(CommonConfig, HealthTransportRequiresOnlyItsOwnSettings) {
                                                            strict));
     EXPECT_THROW(loadFromTomlString<HealthServerConfig>("transport = 'tcp'", "test.toml", strict),
                  cta::exception::UserError);
-    EXPECT_THROW(loadFromTomlString<HealthServerConfig>("transport = 'unix'\n[tcp]\nhost = '127.0.0.1'\nport = 8080",
-                                                        "test.toml",
-                                                        strict),
-                 cta::exception::UserError);
     EXPECT_THROW(loadFromTomlString<HealthServerConfig>("transport = 'invalid'", "test.toml", strict),
                  cta::exception::UserError);
   }
@@ -198,12 +255,9 @@ TEST(CommonConfig, SectionSelectionPrecedesOptionalLoading) {
   const auto defaults = cta::runtime::loadFromTomlString<SelectedSectionConfig>("", "test.toml", false);
   ASSERT_TRUE(defaults.telemetry);
   EXPECT_EQ(defaults.telemetry->config_file, "/default.yaml");
-  for (bool strict : {false, true}) {
-    EXPECT_THROW(cta::runtime::loadFromTomlString<SelectedSectionConfig>(
-                   "telemetry_enabled = false\n[telemetry]\nconfig_file = '/explicit.yaml'\non_init_failure = 'warn'",
-                   "test.toml",
-                   strict),
-                 cta::exception::UserError);
-  }
+  const std::string inactive = "telemetry_enabled = false\n[telemetry]\nconfig_file = 42";
+  EXPECT_FALSE(cta::runtime::loadFromTomlString<SelectedSectionConfig>(inactive, "test.toml", false).telemetry);
+  EXPECT_THROW(cta::runtime::loadFromTomlString<SelectedSectionConfig>(inactive, "test.toml", true),
+               cta::exception::UserError);
 }
 }  // namespace unitTests

@@ -60,9 +60,14 @@ struct RmcdConfig final {
 
   static constexpr std::size_t memberCount() { return 7; }
 
-  static constexpr auto features =
-    std::tuple {cta::runtime::experimentalFeature("telemetry", &RmcdConfig::telemetry),
-                cta::runtime::stableFeature("health_server", &RmcdConfig::health_server)};
+  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &RmcdConfig::telemetry);
+  static constexpr auto healthServerFeature = cta::runtime::stableFeature("health_server", &RmcdConfig::health_server);
+
+  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
+
+  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
+
+  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

@@ -246,9 +246,9 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
     logContext,
     reportPacker,
     c_useLbp,
-    m_transfersConfig.retrieve.rao.has_value(),
-    m_transfersConfig.encryption.has_value(),
-    (m_transfersConfig.encryption ? m_transfersConfig.encryption->external_key_script : std::string {}),
+    m_transfersConfig.retrieve.rao_enabled,
+    m_transfersConfig.encryption_enabled,
+    (m_transfersConfig.encryption_enabled ? m_transfersConfig.encryption->external_key_script : std::string {}),
     retrieveMount,
     m_tapeLoadTimeoutSecs,
     m_catalogue);
@@ -273,7 +273,7 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   utils::Timer startupTimer;
 
   // The RecallTaskInjector and the TapeReadSingleThread share the promise
-  if (const auto& rao = m_transfersConfig.retrieve.rao) {
+  if (const auto& rao = m_transfersConfig.retrieve.rao; m_transfersConfig.retrieve.rao_enabled) {
     configureRAO(logContext, recallTaskInjector, *rao);
   }
   bool noFilesToRecall = false;
@@ -363,8 +363,8 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
     m_transfersConfig.archive.flush_max_files,
     m_transfersConfig.archive.flush_max_bytes,
     c_useLbp,
-    m_transfersConfig.encryption.has_value(),
-    (m_transfersConfig.encryption ? m_transfersConfig.encryption->external_key_script : std::string {}),
+    m_transfersConfig.encryption_enabled,
+    (m_transfersConfig.encryption_enabled ? m_transfersConfig.encryption->external_key_script : std::string {}),
     archiveMount,
     m_tapeLoadTimeoutSecs,
     m_catalogue);

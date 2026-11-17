@@ -118,8 +118,8 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
 
   // Configure encryption
   const std::string externalEncryptionKeyScript =
-    (tapedConfig.transfers.encryption ? tapedConfig.transfers.encryption->external_key_script : std::string {});
-  const bool useEncryption = tapedConfig.transfers.encryption.has_value();
+    (tapedConfig.transfers.encryption_enabled ? tapedConfig.transfers.encryption->external_key_script : std::string {});
+  const bool useEncryption = tapedConfig.transfers.encryption_enabled;
   m_encryptionControl =
     std::make_unique<cta::tape::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
 

@@ -70,19 +70,11 @@ Maintain one source for each explanation. When moving a guide into `docs/`, repl
 
 ## Service command manuals
 
-Keep service `*.1cta.md` manuals focused on purpose, invocation, complete CLI options and aliases, configuration loading and validation, relevant lifecycle behaviour, environment, files, and related references.
-Use consistent option formatting and describe arguments, defaults and incompatible combinations.
-Escape the first hyphen of long options outside code spans (`\--config`) so Pandoc preserves two hyphens instead of rendering an en dash.
-The synopsis may use `[OPTIONS]`; the OPTIONS section must list every supported option.
+Service `*.1cta.md` manuals describe invocation, all supported CLI options, and relevant lifecycle behaviour, environment and files.
+Keep settings in the annotated TOML examples and operational guidance in the configuration guides; reference the installed example path for offline use.
 
-Use the annotated example TOML files as the authoritative settings reference, including defaults, required values, feature selection and backend-specific settings.
-Include those files in the website's configuration guides, with both scheduler variants where applicable.
-Manuals should link to the documentation homepage rather than individual web pages, whose paths may change.
-Give the installed example path for offline use instead of duplicating setting lists.
-Keep operational decisions and interactions in the configuration guide, and preserve useful explanations when consolidating references.
-
-When changing CLI options, compare the manual with the parser and help output.
-Render both the installed manual and its website page when changing manual formatting.
+Check options against the parser and help output, and render both the installed manual and its website page when changing formatting.
+Escape the first hyphen of long options outside code spans (`\--config`) so Pandoc preserves two hyphens.
 
 ## Check before submitting
 

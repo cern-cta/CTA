@@ -177,6 +177,9 @@ struct HealthServerConfig final {
   std::string transport = "tcp";
   std::optional<HealthTcpConfig> tcp = std::nullopt;
 
+  /// TCP settings are active only for the TCP transport.
+  bool isSectionEnabled(std::string_view name) const { return name == "tcp" && transport == "tcp"; }
+
   static constexpr std::size_t memberCount() { return 2; }
 
   ValidationResult validate() const {

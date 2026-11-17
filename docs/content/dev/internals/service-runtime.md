@@ -75,7 +75,7 @@ Configuration checking is split into three layers with distinct responsibilities
 Strict mode requires every applicable setting explicitly, including settings with defaults.
 Use optional fields only for sections controlled by a feature or mode selector, or for values whose absence is a supported state.
 An optional value must start as `std::nullopt`, document what absence means, and preserve that state in consumers rather than substitute a fallback.
-Validate supplied values normally.
+Validate active settings and genuinely optional values normally.
 Empty strings, zero and empty collections are explicit values, subject to their own validation rules.
 
 #### Example configuration comments
@@ -107,19 +107,17 @@ Use a mode selector for mutually exclusive alternatives, such as `transport = "t
 
 Declare a static `features` tuple using `stableFeature(name, member)` and `experimentalFeature(name, member)` to associate names with optional sections.
 Initialise the validation result with `validateFeatures(*this)`, then merge ordinary child validations as shown below.
-The helper validates feature names, maturity, duplicates, section presence and section contents.
-Selections are unordered; supplied sections never enable features implicitly, and inactive sections are rejected in both modes.
-When promoting a feature, change its descriptor to `stableFeature`, keep its section path, and document the move to `enabled_features`.
+The helper validates the selections and their settings.
 
-Declare maintenance routines with `routine(name, member)`, omitting the member for routines without settings.
-Initialise `enabled_routines` with `featureNames(routines)` and validate with `validateRoutines(*this, enabled_routines, routines)`.
-Consumers should use validated optional sections or named descriptors with `featureEnabled()`.
+For a domain-specific selection list, use `validateFeatureSelection(config, enabled, descriptors, fieldName)`.
+Descriptors without settings can omit the member pointer; `featureNames(descriptors)` supplies an all-enabled default.
+Consumers use named accessors such as `isTelemetryEnabled()`, or the corresponding boolean or mode field, before using the settings.
 
 Keep defaults in configuration member initialisers.
-Configs with default-enabled sections provide `isSectionEnabled(name)` to classify every optional member without modifying configuration.
-The loader parses selectors first, then preserves omitted selected sections' initialisers in non-strict mode; strict mode requires those sections explicitly.
-Omitted inactive sections are cleared.
-Without this hook, omitted optional fields become `std::nullopt`.
+For nested selectors, implement `isSectionEnabled(name)` so the loader can identify active optional members.
+Non-strict loading retains initialisers for omitted active sections; strict mode requires those sections explicitly.
+Other omitted optional fields become `std::nullopt`.
+See [Service Runtime](../../ops/deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for configuration rules.
 
 ## Application configuration
 
@@ -149,9 +147,13 @@ struct CustomConfig final {
   static constexpr std::size_t memberCount() { return 9; }
 
   // Associate each feature with its settings section.
-  static constexpr auto features =
-    std::tuple {cta::runtime::experimentalFeature("telemetry", &CustomConfig::telemetry),
-                cta::runtime::stableFeature("health_server", &CustomConfig::health_server)};
+  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &CustomConfig::telemetry);
+  static constexpr auto healthServerFeature = cta::runtime::stableFeature("health_server", &CustomConfig::health_server);
+  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
+
+  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
+
+  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

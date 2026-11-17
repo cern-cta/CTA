@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace unitTests {
@@ -149,7 +150,7 @@ TEST(MaintdConfig, AllSupportedRoutinesAreEnabledByDefault) {
 #ifndef CTA_PGSCHED
   EXPECT_EQ(config.enabled_routines.size(), 6);
   EXPECT_TRUE(config.queue_cleanup);
-  EXPECT_TRUE(cta::runtime::featureEnabled(config.enabled_routines, "garbage_collect"));
+  EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::GarbageCollect));
 #else
   EXPECT_EQ(config.enabled_routines.size(), 9);
   EXPECT_TRUE(config.user_active_queue_cleanup);
@@ -163,6 +164,43 @@ TEST(MaintdConfig, AllSupportedRoutinesAreEnabledByDefault) {
                                                                                false);
   EXPECT_EQ(app.routines.enabled_routines, config.enabled_routines);
   EXPECT_TRUE(app.routines.repack_report);
+}
+
+TEST(MaintdConfig, RoutineEnabledReflectsSelection) {
+  using cta::maintd::Routine;
+  cta::maintd::RoutinesConfig config;
+  const std::pair<Routine, std::string> routines[] = {
+    {Routine::DiskReportArchive,  "disk_report_archive" },
+    {Routine::DiskReportRetrieve, "disk_report_retrieve"},
+    {Routine::RepackExpand,       "repack_expand"       },
+    {Routine::RepackReport,       "repack_report"       },
+#ifndef CTA_PGSCHED
+    {Routine::GarbageCollect,     "garbage_collect"     },
+    {Routine::QueueCleanup,       "queue_cleanup"       },
+#else
+    {Routine::UserActiveQueueCleanup, "user_active_queue_cleanup"},
+    {Routine::RepackActiveQueueCleanup, "repack_active_queue_cleanup"},
+    {Routine::UserPendingQueueCleanup, "user_pending_queue_cleanup"},
+    {Routine::RepackPendingQueueCleanup, "repack_pending_queue_cleanup"},
+    {Routine::SchedulerMaintenanceCleanup, "scheduler_maintenance_cleanup"},
+#endif
+  };
+
+  for (const auto& [routine, name] : routines) {
+    EXPECT_TRUE(config.routineEnabled(routine)) << name;
+  }
+
+  for (const auto& [selected, name] : routines) {
+    config.enabled_routines = {name};
+    for (const auto& [routine, candidate] : routines) {
+      EXPECT_EQ(config.routineEnabled(routine), routine == selected) << name << ": " << candidate;
+    }
+  }
+
+  config.enabled_routines.clear();
+  for (const auto& [routine, name] : routines) {
+    EXPECT_FALSE(config.routineEnabled(routine)) << name;
+  }
 }
 
 TEST(MaintdConfig, RoutineSubsetKeepsOnlySelectedDefaults) {
@@ -181,7 +219,7 @@ TEST(MaintdConfig, RoutineSubsetKeepsOnlySelectedDefaults) {
   EXPECT_TRUE(disabled.validate().ok());
 }
 
-TEST(MaintdConfig, RoutineSelectionsAndInactiveSectionsAreValidatedInBothModes) {
+TEST(MaintdConfig, RoutineSelectionsAreValidatedInBothModes) {
   using cta::maintd::RoutinesConfig;
   for (bool strict : {false, true}) {
     const std::string timing = "\ncycle_sleep_interval_secs = 10\nmax_cycle_duration_secs = 900\n";
@@ -191,7 +229,7 @@ TEST(MaintdConfig, RoutineSelectionsAndInactiveSectionsAreValidatedInBothModes) 
                                                                      strict));
     EXPECT_NO_THROW(
       cta::runtime::loadFromTomlString<RoutinesConfig>("enabled_routines = []" + timing, "routines.toml", strict));
-    for (const auto& selection : {"[]", "['unknown']", "['repack_expand', 'repack_expand']"}) {
+    for (const auto& selection : {"['unknown']", "['repack_expand', 'repack_expand']"}) {
       EXPECT_THROW(cta::runtime::loadFromTomlString<RoutinesConfig>("enabled_routines = " + std::string(selection)
                                                                       + timing + "[repack_expand]\nmax_to_expand = 2",
                                                                     "routines.toml",
@@ -199,6 +237,16 @@ TEST(MaintdConfig, RoutineSelectionsAndInactiveSectionsAreValidatedInBothModes) 
                    cta::exception::UserError);
     }
   }
+}
+
+TEST(MaintdConfig, InactiveRoutineSettingsAreIgnoredOnlyWithoutStrictMode) {
+  const std::string document = "enabled_routines = []\ncycle_sleep_interval_secs = 10\n"
+                               "max_cycle_duration_secs = 900\n[repack_expand]\nmax_to_expand = 'invalid'";
+  const auto config = cta::runtime::loadFromTomlString<cta::maintd::RoutinesConfig>(document, "routines.toml", false);
+  EXPECT_FALSE(config.repack_expand);
+  EXPECT_FALSE(config.routineEnabled(cta::maintd::Routine::RepackExpand));
+  EXPECT_THROW(cta::runtime::loadFromTomlString<cta::maintd::RoutinesConfig>(document, "routines.toml", true),
+               cta::exception::UserError);
 }
 
 TEST(MaintdConfig, StrictRoutinesRequireExplicitSelectionSectionsAndSettings) {

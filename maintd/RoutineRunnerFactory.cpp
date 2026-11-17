@@ -44,6 +44,8 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config,
 // RoutineRunnerFactory::registerRoutines
 //------------------------------------------------------------------------------
 std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
+  const auto& routinesConfig = m_config.routines;
+
   m_lc.log(log::INFO, "In RoutineRunnerFactory::registerRoutines(): Creating routines");
 
   // Create all of the different routines
@@ -51,7 +53,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   std::vector<std::unique_ptr<IRoutine>> routines;
 
   // Add Disk Reporter for Archive
-  if (const auto& config = m_config.routines.disk_report_archive) {
+  if (const auto& config = routinesConfig.disk_report_archive;
+      routinesConfig.routineEnabled(Routine::DiskReportArchive)) {
     routines.push_back(std::make_unique<DiskReportArchiveRoutine>(m_lc,
                                                                   m_resources.getScheduler(),
                                                                   config->batch_size,
@@ -60,7 +63,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   }
 
   // Add Disk Reporter for Retrieve
-  if (const auto& config = m_config.routines.disk_report_retrieve) {
+  if (const auto& config = routinesConfig.disk_report_retrieve;
+      routinesConfig.routineEnabled(Routine::DiskReportRetrieve)) {
     routines.push_back(std::make_unique<DiskReportRetrieveRoutine>(m_lc,
                                                                    m_resources.getScheduler(),
                                                                    config->batch_size,
@@ -69,12 +73,12 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   }
 
   // Add Repack Expansion
-  if (const auto& config = m_config.routines.repack_expand) {
+  if (const auto& config = routinesConfig.repack_expand; routinesConfig.routineEnabled(Routine::RepackExpand)) {
     routines.push_back(std::make_unique<RepackExpandRoutine>(m_lc, m_resources.getScheduler(), config->max_to_expand));
   }
 
   // Add Repack Reporting
-  if (const auto& config = m_config.routines.repack_report) {
+  if (const auto& config = routinesConfig.repack_report; routinesConfig.routineEnabled(Routine::RepackReport)) {
     routines.push_back(
       std::make_unique<RepackReportRoutine>(m_lc, m_resources.getScheduler(), config->soft_timeout_secs));
   }
@@ -91,14 +95,14 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
 #ifndef CTA_PGSCHED
   // Add Garbage Collector
   // The garbage collector has no settings section; check its declared selector.
-  if (cta::runtime::featureEnabled(m_config.routines.enabled_routines, RoutinesConfig::garbageCollect)) {
+  if (routinesConfig.routineEnabled(Routine::GarbageCollect)) {
     routines.push_back(std::make_unique<GarbageCollectRoutine>(m_lc,
                                                                m_resources.getSchedDbInit().getBackend(),
                                                                m_resources.getSchedDbInit().getAgentReference(),
                                                                m_resources.getCatalogue()));
   }
   // Add Queue Cleanup
-  if (const auto& config = m_config.routines.queue_cleanup) {
+  if (const auto& config = routinesConfig.queue_cleanup; routinesConfig.routineEnabled(Routine::QueueCleanup)) {
     routines.push_back(std::make_unique<QueueCleanupRoutine>(m_lc,
                                                              m_resources.getSchedDb(),
                                                              m_resources.getCatalogue(),
@@ -106,7 +110,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   }
 #else
   // Add User Archive and Retrieve Active Queue Cleanup
-  if (const auto& config = m_config.routines.user_active_queue_cleanup) {
+  if (const auto& config = routinesConfig.user_active_queue_cleanup;
+      routinesConfig.routineEnabled(Routine::UserActiveQueueCleanup)) {
     routines.push_back(std::make_unique<ArchiveInactiveMountActiveQueueRoutine>(m_lc,
                                                                                 m_resources.getCatalogue(),
                                                                                 m_resources.getSchedDb(),
@@ -123,7 +128,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                                           config->age_for_collection_secs));
   }
   // Add Repack Archive and Repack Retrieve Active Queue Cleanup
-  if (const auto& config = m_config.routines.repack_active_queue_cleanup) {
+  if (const auto& config = routinesConfig.repack_active_queue_cleanup;
+      routinesConfig.routineEnabled(Routine::RepackActiveQueueCleanup)) {
     routines.push_back(std::make_unique<RepackArchiveInactiveMountActiveQueueRoutine>(m_lc,
                                                                                       m_resources.getCatalogue(),
                                                                                       m_resources.getSchedDb(),
@@ -137,7 +143,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                                       config->age_for_collection_secs));
   }
   // Add User Archive and Repack Retrieve Pending Queue Cleanup
-  if (const auto& config = m_config.routines.user_pending_queue_cleanup) {
+  if (const auto& config = routinesConfig.user_pending_queue_cleanup;
+      routinesConfig.routineEnabled(Routine::UserPendingQueueCleanup)) {
     routines.push_back(std::make_unique<ArchiveInactiveMountPendingQueueRoutine>(m_lc,
                                                                                  m_resources.getCatalogue(),
                                                                                  m_resources.getSchedDb(),
@@ -150,7 +157,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                                                   config->age_for_collection_secs));
   }
   // Add Repack Archive and Repack Retrieve Pending Queue Cleanup
-  if (const auto& config = m_config.routines.repack_pending_queue_cleanup) {
+  if (const auto& config = routinesConfig.repack_pending_queue_cleanup;
+      routinesConfig.routineEnabled(Routine::RepackPendingQueueCleanup)) {
     routines.push_back(
       std::make_unique<RepackArchiveInactiveMountPendingQueueRoutine>(m_lc,
                                                                       m_resources.getCatalogue(),
@@ -165,7 +173,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                                        config->age_for_collection_secs));
   }
   // Add Scheduler Maintenance Cleanup
-  if (const auto& config = m_config.routines.scheduler_maintenance_cleanup) {
+  if (const auto& config = routinesConfig.scheduler_maintenance_cleanup;
+      routinesConfig.routineEnabled(Routine::SchedulerMaintenanceCleanup)) {
     routines.push_back(std::make_unique<DeleteOldFailedQueuesRoutine>(m_lc,
                                                                       m_resources.getSchedDb(),
                                                                       config->batch_size,
@@ -186,7 +195,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
 #endif
 
   m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): Routines created");
-  return std::make_unique<RoutineRunner>(m_config.routines, std::move(routines));
+  return std::make_unique<RoutineRunner>(routinesConfig, std::move(routines));
 }
 
 }  // namespace cta::maintd
