@@ -105,9 +105,7 @@ The annotated examples are the complete settings reference.
 Choose the variant matching the compiled scheduler backend and replace deployment-specific values.
 The installed package provides the matching variant as `/usr/share/doc/cta-taped/examples/cta-taped.example.toml`.
 
-### Objectstore scheduler
-
-???+ example "cta-taped.example.toml"
+??? example "Objectstore scheduler"
 
     ```toml
     --8<--
@@ -115,9 +113,7 @@ The installed package provides the matching variant as `/usr/share/doc/cta-taped
     --8<--
     ```
 
-### PostgreSQL scheduler
-
-???+ example "cta-taped.pg.example.toml"
+??? example "PostgreSQL scheduler"
 
     ```toml
     --8<--

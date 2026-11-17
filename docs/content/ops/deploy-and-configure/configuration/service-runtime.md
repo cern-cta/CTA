@@ -39,22 +39,19 @@ Field comments distinguish three cases:
 | `default: none; optional` | May be omitted in either mode; the description explains the effect. |
 
 Select service-wide capabilities through root `enabled_features` and `enabled_experimental_features` lists.
-Telemetry and PostgreSQL workflow batching are experimental; their interfaces may change or be removed.
+Experimental features may change or be removed; supported names are listed in each service's example.
 Strict mode requires both lists, including `[]` when empty; non-strict mode defaults both to empty.
 Unknown names, duplicates and selections in the wrong list are rejected.
 
-Supply settings for enabled features.
-Supplied sections are parsed and retained even when their feature is disabled.
-Their values must have valid types in both modes; strict mode also requires all non-optional settings within every supplied section.
-Only enabled features undergo semantic validation, such as checking that a URI is non-empty or a timeout is positive.
-An enabled feature requires its settings section unless non-strict mode provides section defaults, as for maintenance routines.
-Strict mode requires enabled sections explicitly.
 Section presence alone never enables a feature.
-For example, disable telemetry by removing `"telemetry"` from `enabled_experimental_features`.
+Supply settings for enabled features and omit disabled sections.
+Non-strict mode may provide section defaults where documented; strict mode requires enabled sections explicitly.
+If a disabled section is supplied, its values must still have valid types and, in strict mode, include all non-optional settings.
+The parser checks all supplied sections before feature selection is validated, so disabling a feature does not bypass these checks.
+Only enabled features undergo feature-specific semantic validation.
 See [Metrics](../../run-and-maintain/monitoring/metrics.md) and [Health and Alerts](../../run-and-maintain/monitoring/health-and-alerts.md) for complete activation examples.
 
 Nested selectors work independently: authentication uses `auth.enabled_methods`, maintenance uses `routines.enabled_routines`, and tape transfers use `transfers.encryption_enabled` and `transfers.retrieve.rao_enabled`.
-In non-strict mode, maintenance defaults to all supported routines with their default settings, and both APIs default to JWT authentication, requiring `[auth.jwt]`.
 In strict mode, supply each selector and its selected sections explicitly.
 
 ## Environment Variables

@@ -4,8 +4,7 @@
 # CTA Remote Media Changer Daemon Configuration
 
 # Recommended starting configuration. Replace deployment-specific values before use.
-# Defaults apply only in non-strict mode. With --config-strict, provide every setting
-# in enabled sections unless marked optional.
+# With --config-strict, set values explicitly rather than relying on defaults.
 
 # Optional features to enable. Remove a feature and its section to disable it.
 # Type: array of strings; default: [].

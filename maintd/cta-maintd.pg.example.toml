@@ -4,8 +4,7 @@
 # CTA Maintd Service Configuration
 
 # Recommended starting configuration. Replace deployment-specific values before use.
-# Defaults apply only in non-strict mode. With --config-strict, provide every setting
-# in enabled sections unless marked optional.
+# With --config-strict, set values explicitly rather than relying on defaults.
 
 # Optional features to enable. Remove a feature and its section to disable it.
 # Type: array of strings; default: [].
@@ -75,7 +74,7 @@ enabled_experimental_features = ["telemetry"]
     # Type: integer; default: 0.
     iter_sleep_ms = 0
 
-  # Expand repack requests.
+  # Expand repack requests into individual archive and retrieve jobs.
   [routines.repack_expand]
     # Maximum number of repack requests expanded per cycle.
     # Type: integer; default: 2.

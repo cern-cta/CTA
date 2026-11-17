@@ -28,9 +28,7 @@ The annotated examples are the complete settings reference.
 Choose the variant matching the compiled scheduler backend and replace deployment-specific values.
 The installed package provides the matching variant as `/usr/share/doc/cta-admin-api/examples/cta-admin-api.example.toml`.
 
-### Objectstore scheduler
-
-???+ example "cta-admin-api.example.toml"
+??? example "Objectstore scheduler"
 
     ```toml
     --8<--
@@ -38,9 +36,7 @@ The installed package provides the matching variant as `/usr/share/doc/cta-admin
     --8<--
     ```
 
-### PostgreSQL scheduler
-
-???+ example "cta-admin-api.pg.example.toml"
+??? example "PostgreSQL scheduler"
 
     ```toml
     --8<--

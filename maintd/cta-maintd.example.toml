@@ -4,8 +4,7 @@
 # CTA Maintd Service Configuration
 
 # Recommended starting configuration. Replace deployment-specific values before use.
-# Defaults apply only in non-strict mode. With --config-strict, provide every setting
-# in enabled sections unless marked optional.
+# With --config-strict, set values explicitly rather than relying on defaults.
 
 # Optional features to enable. Remove a feature and its section to disable it.
 # Type: array of strings; default: [].
@@ -21,7 +20,8 @@ enabled_experimental_features = ["telemetry"]
 # To use different schedules, run separate maintd processes with different routine selections.
 # All routines are enabled by default; an empty list disables maintenance.
 [routines]
-  # Routines to enable; include matching sections below. "garbage_collect" has no settings section.
+  # Routines to enable; include matching sections below.
+  # "garbage_collect" cleans up stale agents and objects in the objectstore and has no settings section.
   # Type: array of strings; default: all routines listed below.
   # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "queue_cleanup",
   # "garbage_collect" (no duplicates).
@@ -71,7 +71,7 @@ enabled_experimental_features = ["telemetry"]
     # Type: integer; default: 0.
     iter_sleep_ms = 0
 
-  # Expand repack requests.
+  # Expand repack requests into individual archive and retrieve jobs.
   [routines.repack_expand]
     # Maximum number of repack requests expanded per cycle.
     # Type: integer; default: 2.

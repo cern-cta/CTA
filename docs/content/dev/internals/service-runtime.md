@@ -72,7 +72,7 @@ Configuration checking is split into three layers with distinct responsibilities
 
 ### Optional fields and feature activation
 
-Strict mode requires every applicable setting explicitly, including settings with defaults.
+See the operator [configuration rules](../../ops/deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for strict checking and feature selection.
 Use optional fields only for sections controlled by a feature or mode selector, or for values whose absence is a supported state.
 Initialise optional values to `std::nullopt` unless they have documented non-strict defaults.
 Document what absence means and preserve that state in consumers rather than substitute a fallback.
@@ -94,39 +94,30 @@ Check examples and supported feature variants with the service's `--config-stric
 #### Automatic sizing and integer sentinels
 
 For integer settings supporting automatic sizing or system defaults, use an explicit `0` to select that behaviour and positive values for fixed counts or sizes.
-Strict mode still requires the setting.
 Document the meaning of the sentinel, validate it, and resolve it before calling an API that requires a positive value.
 Preserve other documented meanings of zero, such as “unlimited”.
 
 #### How features are enabled
 
 Use root `enabled_features` and `enabled_experimental_features` lists for stable and experimental service-wide capabilities.
-Both default to empty in non-strict mode and must be explicit in strict mode.
-Experimental interfaces may change incompatibly or be removed.
 For nested behaviour, put a domain-specific selector in the parent, such as `auth.enabled_methods` or `transfers.encryption_enabled`.
 Use a mode selector for mutually exclusive alternatives, such as `transport = "tcp"` or `"unix"`.
 
-Declare a static `features` tuple using `stableFeature(Feature::Value, name, member)` and `experimentalFeature(Feature::Value, name, member)` to associate names with optional sections.
-Initialise the validation result with `validateFeatures(*this)`, then merge ordinary child validations as shown below.
-The helper validates the selections and their settings.
+The [application configuration example](#application-configuration) shows how to declare feature descriptors, query selection and validate enabled settings.
 
 For a domain-specific selection list, use `validateFeatureSelection(config, enabled, descriptors, fieldName)`.
 Descriptors without settings can omit the member pointer; `featureNames(descriptors)` supplies an all-enabled default.
-Each service config declares its own `Feature` enum and exposes `featureEnabled(Feature)` for querying its supported features.
 Consumers use `config.featureEnabled(Config::Feature::Telemetry)`, or the corresponding boolean or mode field, before using the settings.
 The runtime expects `Feature::Telemetry` and `Feature::HealthServer` when the corresponding configuration sections exist; experimental status remains in the descriptors.
 
-Keep defaults in configuration member initialisers.
 The parser reads every supplied field independently of feature selection and retains disabled sections.
 Incorrect types are errors in both modes; strict mode also requires every non-optional field within a supplied section.
 Non-strict parsing preserves member initialisers for omitted fields, including optional sections.
 Strict parsing resets omitted optional sections to `std::nullopt`, so validation can require settings for selected features without treating presence as enablement.
 Only selected sections undergo feature-specific semantic validation.
 
-Declare defaultable optional sections with an initialised settings object, as in `RoutinesConfig`.
-These defaults remain available for disabled routines in non-strict mode; only selection controls activation.
-Keep field defaults in their settings types and keep `validate()` read-only.
-See [Service Runtime](../../ops/deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for configuration rules.
+Keep field defaults in their settings types and initialise defaultable optional sections with a settings object, as in `RoutinesConfig`.
+Keep `validate()` read-only; consumers must use selection rather than section presence to determine activation.
 
 ## Application configuration
 

@@ -17,9 +17,7 @@ The annotated examples are the complete settings reference.
 Choose the variant matching the compiled scheduler backend and replace deployment-specific values.
 The installed package provides the matching variant as `/usr/share/doc/cta-workflow-api/examples/cta-workflow-api.example.toml`.
 
-### Objectstore scheduler
-
-???+ example "cta-workflow-api.example.toml"
+??? example "Objectstore scheduler"
 
     ```toml
     --8<--
@@ -27,9 +25,7 @@ The installed package provides the matching variant as `/usr/share/doc/cta-workf
     --8<--
     ```
 
-### PostgreSQL scheduler
-
-???+ example "cta-workflow-api.pg.example.toml"
+??? example "PostgreSQL scheduler"
 
     ```toml
     --8<--

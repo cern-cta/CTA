@@ -58,7 +58,7 @@ For admin commands, the decoded payload might look like this:
 ```
 
 The frontend validates the following claims:
-- `kid`: The JWT must have a header claim that matches the key in the `grpc.jwks.uri` that signed the token
+- `kid`: The JWT must have a header claim that matches the key in the `auth.jwt.jwks_uri` that signed the token
 - `exp`: Must be after the current time in UTC
 - `sub`: Must match one of the entries in the list of authorized admin users (`cta-admin admin ls`) for admin commands, or must match the instance name of the disk instance who sent the workflow event
 - `alg`: Is expected to be RS256

@@ -4,8 +4,7 @@
 # CTA Admin API Service Configuration
 
 # Recommended starting configuration. Replace deployment-specific values before use.
-# Defaults apply only in non-strict mode. With --config-strict, provide every setting
-# in enabled sections unless marked optional.
+# With --config-strict, set values explicitly rather than relying on defaults.
 
 # CTA instance name used for authentication and included in gRPC responses.
 # Type: string; default: none; required.
