@@ -86,6 +86,8 @@ server:
 
     extraEnv:
       EOS_USE_MQ_ON_QDB: "1"
+      # Preserve crash backtraces in the previous-container log collected by CI.
+      EOS_FST_ENABLE_STACKTRACE: "1"
       TZ: "CET"
 
   qdb:

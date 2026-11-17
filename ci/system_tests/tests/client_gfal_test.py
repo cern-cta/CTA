@@ -155,7 +155,22 @@ def _delete_gfal(eos_client: EosClientHost, instance: str, batch: GfalBatch, par
 
 
 def test_setup_client_gfal_xrootd(eos_client: EosClientHost) -> None:
+    # GFAL installs distribution XRootD libraries alongside EOS's bundled copy.
+    # Record resolution on both sides of the installation to diagnose changes to xrdcp.
+    diagnostics = r"""
+        xrdcp_binary=$(command -v xrdcp)
+        printf 'xrdcp path: %s\n' "$xrdcp_binary"
+        readlink -f "$xrdcp_binary"
+        rpm -qf "$xrdcp_binary" || true
+        rpm -q eos-xrootd xrootd-libs xrootd-client-libs || true
+        ldd "$xrdcp_binary"
+        ldconfig -p | grep -E 'libXrd(Cl|Sec|Utils)' || true
+    """
+    print("XRootD client libraries before installing GFAL", flush=True)
+    eos_client.exec(diagnostics)
     eos_client.exec("dnf install -y python3-gfal2-util gfal2-plugin-xrootd")
+    print("XRootD client libraries after installing GFAL", flush=True)
+    eos_client.exec(diagnostics)
 
 
 def test_archive_gfal_xrootd(
