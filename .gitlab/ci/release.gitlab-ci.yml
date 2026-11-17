@@ -145,6 +145,7 @@ public-release-cta-stable:
       artifacts: true
     - job: internal-release-cta
     - job: build-cta-images
+      artifacts: false
       parallel:
         matrix:
           - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
@@ -212,6 +213,7 @@ publish-images-private:
     - job: internal-release-cta
       optional: true # Present on tags; branch publication does not publish RPMs.
     - job: build-cta-images
+      artifacts: false
       parallel:
         matrix:
           - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
@@ -243,6 +245,7 @@ publish-images-public:
     - job: public-release-cta-stable
       artifacts: true
     - job: build-cta-images
+      artifacts: false
       parallel:
         matrix:
           - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]

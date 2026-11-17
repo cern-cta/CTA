@@ -152,7 +152,7 @@ build-cta:
 
 # These build jobs are not (and ideally should not) be used further down the pipeline; just compilation checks
 # All builds below disable sccache as they are not on the critical path and may pollute it.
-# They restore the DNF cache; only the primary build publishes updates.
+# They restore the DNF and Cargo download caches; only the primary build publishes updates.
 
 # Specifically build CTA without sccache and with debug packages enabled
 build-cta-no-sccache:
@@ -169,6 +169,8 @@ build-cta-no-sccache:
     ENABLE_DEBUG_INFO: "FALSE"
   cache:
     - <<: *dnf-cache
+      policy: pull
+    - <<: *cargo-cache
       policy: pull
 
 build-cta-pgsched:
@@ -203,6 +205,8 @@ build-cta-pgsched:
       metrics: []
   cache:
     - <<: *dnf-cache
+      policy: pull
+    - <<: *cargo-cache
       policy: pull
 
 reset-sccache:

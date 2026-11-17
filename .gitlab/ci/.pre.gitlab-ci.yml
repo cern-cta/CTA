@@ -61,6 +61,7 @@ modify-project-json:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
   variables:
     CUSTOM_XROOTD_VERSION_INPUT: "$[[ inputs.custom-xrootd-version ]]"
+    GIT_SUBMODULE_STRATEGY: "none"
   script:
     - project_json_file="project.json"
     - touch pipeline.env
