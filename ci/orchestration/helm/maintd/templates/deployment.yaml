@@ -80,6 +80,9 @@ spec:
         - name: cta-maintd-config
           mountPath: /etc/cta/cta-maintd.toml
           subPath: cta-maintd.toml
+        - name: opentelemetry-config
+          mountPath: /etc/cta/cta-otel.yaml
+          subPath: cta-otel.yaml
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf

@@ -95,7 +95,8 @@ upgrade_instance() {
 
   # Upgrades keep the same references without executing any reset scripts.
   log_run helm upgrade cta-tools helm/cta-admin-tools --namespace "$namespace" \
-                      --reuse-values --wait --timeout 5m "${shared_flags[@]}"
+                      --reuse-values --wait --timeout 5m "${shared_flags[@]}" \
+                      --set reset.catalogue=false --set reset.scheduler=false
 
 }
 

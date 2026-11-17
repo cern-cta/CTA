@@ -402,62 +402,66 @@ def test_legacy_vfs_is_rejected(charts: Path) -> None:
     assert "global.scheduler.backend must be postgres, ceph or vfs" in error.value.stderr
 
 
-@pytest.mark.parametrize("failure", ["", "catalogue", "scheduler"])
-def test_preparation_waits_for_commands_and_propagates_failure(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failure: str
-) -> None:
-    source = (REPO / "ci/orchestration/create_instance.sh").read_text()
-    function = source[source.index("prepare_cta_databases() {") : source.index("create_instance() {")]
-    command_log = tmp_path / "commands"
-    kubectl = tmp_path / "kubectl"
-    kubectl.write_text(
-        '#!/bin/bash\nprintf "%s\n" "$*" >> "$COMMAND_LOG"\n'
-        'if [[ -n "$FAILURE" && "$*" == *reset_"$FAILURE".sh ]]; then exit 42; fi\n'
+@pytest.mark.parametrize("backend", ["vfs", "ceph", "postgres"])
+@pytest.mark.parametrize(("catalogue", "scheduler"), [(False, False), (True, False), (False, True), (True, True)])
+def test_optional_reset_jobs(charts: Path, backend: str, catalogue: bool, scheduler: bool) -> None:
+    objects = render(
+        charts,
+        "cta-admin-tools",
+        "--set",
+        f"global.scheduler.backend={backend},reset.catalogue={str(catalogue).lower()},reset.scheduler={str(scheduler).lower()}",
+        "--set-string",
+        "reset.catalogueSchemaVersion=15.0",
     )
-    kubectl.chmod(0o755)
-    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
-    monkeypatch.setenv("COMMAND_LOG", str(command_log))
-    monkeypatch.setenv("FAILURE", failure)
-    script = (
-        'set -e\nlog_run() { "$@"; }\n'
-        + function
-        + 'prepare_cta_databases test true true latest\necho services >> "$COMMAND_LOG"\n'
-    )
-    if failure:
-        with pytest.raises(subprocess.CalledProcessError):
-            run_tool("bash", input_text=script)
-    else:
-        run_tool("bash", input_text=script)
-    commands = command_log.read_text().splitlines()
-    assert "/scripts/reset_catalogue.sh" in commands[0]
-    if failure == "catalogue":
-        assert len(commands) == 1
-    else:
-        assert "-c admin" in commands[1]
-        assert "/scripts/reset_scheduler.sh" in commands[1]
-        if failure == "scheduler":
-            assert len(commands) == 2
+    jobs = {obj["metadata"]["name"]: obj for obj in objects if obj["kind"] == "Job"}
+    assert set(jobs) == {
+        f"test-reset-{name}" for name, enabled in [("catalogue", catalogue), ("scheduler", scheduler)] if enabled
+    }
+    for name, job in jobs.items():
+        database = name.rsplit("-", 1)[1]
+        assert "helm.sh/hook" not in job["metadata"].get("annotations", {})
+        assert job["spec"]["activeDeadlineSeconds"] == 240
+        assert job["spec"]["backoffLimit"] == 0
+        assert "ttlSecondsAfterFinished" not in job["spec"]
+        spec = job["spec"]["template"]["spec"]
+        assert spec["restartPolicy"] == "Never"
+        container = spec["containers"][0]
+        assert container["command"] == ["bash", f"/scripts/reset_{database}.sh"]
+        env = {entry["name"]: entry["value"] for entry in container["env"]}
+        assert env == ({"SCHEMA_VERSION": "15.0"} if database == "catalogue" else {"SCHEDULER_BACKEND": backend})
+        volumes = {volume["name"]: volume for volume in spec["volumes"]}
+        assert f"{database}-config" in volumes
+        assert ("vfs-storage-volume" in volumes) == (database == "scheduler" and backend == "vfs")
+        config = next(obj for obj in objects if obj["metadata"]["name"] == volumes["scripts"]["configMap"]["name"])
+        assert f"reset_{database}.sh" in config["data"]
+        if database == "catalogue" or backend == "postgres":
+            init = spec["initContainers"][0]
+            assert init["command"] == ["bash", "/scripts/wait_database.sh", f"/etc/cta/cta-{database}.conf"]
+            assert init["image"] == "docker.io/postgres:17"
+            assert init["volumeMounts"][1]["name"] == f"{database}-config"
+            assert "wait_database.sh" in config["data"]
         else:
-            assert commands[2] == "services"
-    # The actual deployment calls preparation before installing services.
-    assert source.index('  prepare_cta_databases "$namespace"') < source.index(
-        "  log_run helm upgrade --install cta helm/cta"
-    )
+            assert "initContainers" not in spec
 
 
-@pytest.mark.parametrize(("catalogue", "scheduler"), [("false", "false"), ("true", "false"), ("false", "true")])
-def test_reset_flags_skip_unrequested_commands(catalogue: str, scheduler: str) -> None:
-    source = (REPO / "ci/orchestration/create_instance.sh").read_text()
-    function = source[source.index("prepare_cta_databases() {") : source.index("create_instance() {")]
-    result = run_tool(
-        "bash",
-        input_text='set -e\nlog_run() { printf "%s\n" "$*"; }\n'
-        + function
-        + f"prepare_cta_databases test {catalogue} {scheduler} latest\n",
-    )
-    assert ("reset_catalogue.sh" in result.stdout) == (catalogue == "true")
-    assert ("reset_scheduler.sh" in result.stdout) == (scheduler == "true")
-    assert "RESET=" not in result.stdout
+def test_database_readiness_retries_only_read_only_query(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    connection = "postgresql://test:password@database/test"
+    config = tmp_path / "database.conf"
+    config.write_text(f"postgresql:{connection}")
+    calls = tmp_path / "calls"
+    psql = tmp_path / "psql"
+    psql.write_text('#!/bin/bash\nprintf "%s\\n" "$*" >> "$CALLS"\n[[ $(wc -l < "$CALLS") -gt 1 ]]\n')
+    psql.chmod(0o755)
+    sleep = tmp_path / "sleep"
+    sleep.write_text("#!/bin/bash\nexit 0\n")
+    sleep.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+    monkeypatch.setenv("CALLS", str(calls))
+    result = run_tool("bash", str(CHARTS / "cta-admin-tools/scripts/wait_database.sh"), str(config))
+    assert calls.read_text().splitlines() == [f"{connection} --no-psqlrc --set=ON_ERROR_STOP=1 --command=SELECT 1"] * 2
+    assert "Waiting for database connection" in result.stdout
+    assert "Database connection ready" in result.stdout
+    assert "password" not in result.stdout + result.stderr
 
 
 @pytest.mark.parametrize("global_override", [False, True])
@@ -534,6 +538,7 @@ def test_upgrade_shares_connection_overrides(tmp_path: Path) -> None:
     assert lines.count("global.image.registry=registry.example") == 2
     assert not any("global.image.repository=" in line for line in lines)
     assert "--reuse-values" in lines
+    assert lines[-4:] == ["--set", "reset.catalogue=false", "--set", "reset.scheduler=false"]
 
 
 @pytest.mark.parametrize(("prometheus", "otel"), [(False, False), (True, False), (False, True), (True, True)])
@@ -635,15 +640,17 @@ log_run() { printf 'COMMAND\\n'; printf '%s\\n' "$@"; printf 'END\\n'; }
     )
     result = run_tool("bash", "-s", "--", str(base), str(infra), str(override), telemetry, input_text=script)
     commands = [block.split("\nEND")[0].splitlines() for block in result.stdout.split("COMMAND\n")[1:]]
-    infra_install, tools_install, infra_wait, catalogue_reset, scheduler_reset, cta_install = commands
+    infra_install, tools_install, infra_wait, cta_install = commands
     assert infra_install[:4] == ["helm", "upgrade", "--install", "ci-infra"]
     assert str(infra) in infra_install
     assert str(base) not in infra_install
     assert ("presets/infra/telemetry.yaml" in infra_install) == (telemetry == "local")
     assert infra_wait[:3] == ["helm", "upgrade", "ci-infra"]
     assert "--wait-for-jobs" in infra_wait
-    assert catalogue_reset[-1] == "/scripts/reset_catalogue.sh"
-    assert scheduler_reset[-1] == "/scripts/reset_scheduler.sh"
+    assert "--wait-for-jobs" in tools_install
+    assert "reset.catalogue=true" in tools_install
+    assert "reset.scheduler=true" in tools_install
+    assert "reset.catalogueSchemaVersion=latest" in tools_install
     for command in [tools_install, cta_install]:
         assert str(infra) not in command
         value_files = [command[i + 1] for i, arg in enumerate(command) if arg == "--values"]
@@ -725,8 +732,14 @@ def test_scheduler_overlays_replace_backend_cleanup(charts: Path, backend: str) 
     deployments = [obj for obj in objects if obj["kind"] == "Deployment" and "-rt-" in obj["metadata"]["name"]]
     assert len(deployments) == len(expected)
     for deployment in deployments:
-        volume = next(v for v in deployment["spec"]["template"]["spec"]["volumes"] if v["name"] == "cta-maintd-config")
+        spec = deployment["spec"]["template"]["spec"]
+        volume = next(v for v in spec["volumes"] if v["name"] == "cta-maintd-config")
         assert volume["configMap"]["name"] in configs
+        # The runtime reads telemetry configuration even when export is disabled.
+        mount = next(m for m in spec["containers"][0]["volumeMounts"] if m["mountPath"] == "/etc/cta/cta-otel.yaml")
+        volume = next(v for v in spec["volumes"] if v["name"] == mount["name"])
+        config = next(obj for obj in objects if obj["metadata"]["name"] == volume["configMap"]["name"])
+        assert mount["subPath"] in config["data"]
 
 
 def test_eos_values_preserve_order_and_spaces(tmp_path: Path) -> None:

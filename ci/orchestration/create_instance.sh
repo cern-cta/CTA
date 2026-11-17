@@ -109,20 +109,6 @@ EOF
   echo
 }
 
-# Only requested resets run; a failed reset prevents CTA services from starting.
-prepare_cta_databases() {
-  local namespace=$1 reset_catalogue=$2 reset_scheduler=$3 schema_version=$4
-  if [[ "$reset_catalogue" == true ]]; then
-    log_run kubectl -n "$namespace" exec deployment/cta-tools-admin -c admin -- \
-      env SCHEMA_VERSION="$schema_version" \
-      timeout 240 bash /scripts/reset_catalogue.sh || return 1
-  fi
-  if [[ "$reset_scheduler" == true ]]; then
-    log_run kubectl -n "$namespace" exec deployment/cta-tools-admin -c admin -- \
-      timeout 240 bash /scripts/reset_scheduler.sh || return 1
-  fi
-}
-
 create_instance() {
   # Argument defaults
   # Copy available shared credentials and runner connections into the deployment namespace.
@@ -328,12 +314,13 @@ create_instance() {
                        --namespace "${namespace}" \
                        "${shared_flags[@]}" \
                        --set database.enabled=true --set client.enabled=true \
-                       --wait --timeout 5m "${cta_overrides[@]}"
+                       --set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler" \
+                       --set-string "reset.catalogueSchemaVersion=$catalogue_schema_version" \
+                       --wait --wait-for-jobs --timeout 5m "${cta_overrides[@]}"
 
   # The tools now mount the VFS PVC, so Helm can wait for infrastructure without a binding deadlock.
   log_run helm upgrade ci-infra helm/ci-infra --namespace "$namespace" \
                        --reuse-values --wait --wait-for-jobs --timeout 4m
-  prepare_cta_databases "$namespace" "$reset_catalogue" "$reset_scheduler" "$catalogue_schema_version"
 
   if [[ $eos_enabled == "true" ]]; then
     ./deploy_eos.sh --namespace "${namespace}" \

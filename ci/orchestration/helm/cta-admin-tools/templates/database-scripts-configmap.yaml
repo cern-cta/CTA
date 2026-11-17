@@ -3,13 +3,17 @@ SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- if .Values.database.enabled }}
+{{- if or .Values.database.enabled .Values.reset.catalogue .Values.reset.scheduler }}
 
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  wait_database.sh: |
+    {{- .Files.Get "scripts/wait_database.sh" | nindent 4 }}
   name: {{ .Release.Name }}-scripts
 data:
+  wait_database.sh: |
+    {{- .Files.Get "scripts/wait_database.sh" | nindent 4 }}
   reset_catalogue.sh: |
     {{- .Files.Get "scripts/reset_catalogue.sh" | nindent 4 }}
   reset_scheduler.sh: |

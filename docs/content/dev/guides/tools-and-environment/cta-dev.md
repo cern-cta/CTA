@@ -269,18 +269,26 @@ The local VFS preset requires the `local-path` StorageClass; alternatively, prov
 
 The PostgreSQL instances share one template but run independently, with explicit ephemeral data volumes.
 Deleting or replacing a database pod loses its data; this chart is for disposable CI environments.
-The VFS PVC can use delayed binding, so the harness installs infrastructure without waiting, then installs the tools with `--wait` to provide its first consumer.
+The VFS PVC can use delayed binding, so the harness installs infrastructure without waiting, then installs the tools and optional reset Jobs with `--wait --wait-for-jobs` to provide its first consumers.
 Once the tools are ready, a Helm upgrade of infrastructure with `--reuse-values --wait --wait-for-jobs` waits for database services, KDC and credential generation.
 
 The harness installs `cta-tools` once.
-After infrastructure is ready, it runs the requested reset scripts synchronously with `kubectl exec`, before starting CTA services.
+The requested catalogue and scheduler reset Jobs run concurrently, and Helm waits for them before starting CTA services.
 The tools container starts without contacting CTA services or requiring an initialized schema.
-The `--reset-catalogue` and `--reset-scheduler` flags select `reset_catalogue.sh` and `reset_scheduler.sh`, respectively.
+The `--reset-catalogue` and `--reset-scheduler` flags enable `reset.catalogue` and `reset.scheduler` in the admin-tools chart, respectively.
 Each script clears old state and initializes it.
-Without a reset flag, the corresponding script is skipped and existing state is left unchanged.
+Without a reset flag, the corresponding Job is omitted and existing state is left unchanged.
 Fresh databases and objectstores need the corresponding reset flags.
 Catalogue creation accepts `--catalogue-version`, including `latest`.
-Each command has a 240-second timeout; any failure stops deployment before CTA services are installed.
+Each Job has a 240-second deadline covering both readiness and reset, with retries disabled.
+Kubernetes waits for the referenced Secrets and PVCs before starting containers.
+For PostgreSQL, an init container waits until a read-only query succeeds with the database credentials before the reset starts.
+Externally managed Oracle catalogues must already be available; objectstore resets do not use the PostgreSQL readiness check.
+Completed and failed Job pods remain available for log collection until the namespace is deleted or the tools release is upgraded.
+For example, use `kubectl -n <namespace> logs job/cta-tools-reset-catalogue` to inspect the catalogue reset.
+The upgrade script disables both reset Jobs, removing completed bootstrap Jobs without rerunning them.
+For manual Helm upgrades, also set `reset.catalogue=false` and `reset.scheduler=false` before changing the tools image.
+A failed Job stops deployment before CTA services are installed.
 Command output is captured in the deployment/CI log rather than a separate Kubernetes Job log.
 Helm upgrades never execute initialization or resets.
 
