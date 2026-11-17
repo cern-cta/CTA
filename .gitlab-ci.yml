@@ -273,13 +273,7 @@ variables:
 default:
   image: $IMAGE_DEFAULT
   interruptible: true
-  retry:
-    max: 1
-    when:
-      - runner_system_failure
-      - runner_external_dependency_failure
-      - runner_interrupted
-      - api_failure
+  retry: !reference [.retry-infrastructure, retry]
   before_script:
     - !reference [.merge-train-guard, before_script]
 
