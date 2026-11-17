@@ -8,7 +8,6 @@
 #include "ValidationResult.hpp"
 
 #include <algorithm>
-#include <initializer_list>
 #include <optional>
 #include <set>
 #include <span>
@@ -70,14 +69,6 @@ inline ValidationResult validateFeatureLists(const std::vector<std::string>& ena
   return result;
 }
 
-/// Check selected names against a braced list of supported names, e.g. {"jwt", "kerberos"}.
-/// Reports the same errors as the span overload.
-inline ValidationResult validateFeatureNames(const std::vector<std::string>& enabled,
-                                             std::initializer_list<std::string_view> supported,
-                                             std::string_view field = "enabled_features") {
-  return validateFeatureNames(enabled, std::span<const std::string_view>(supported.begin(), supported.size()), field);
-}
-
 /// Require and validate settings for a selected feature, attributing errors to name.
 /// Unselected settings are retained but are not semantically validated.
 template<class T>
@@ -127,12 +118,6 @@ struct FeatureDescriptor {
 template<class Member = std::nullptr_t>
 constexpr auto stableFeature(std::string_view name, Member member = nullptr) {
   return FeatureDescriptor<Member> {name, member, false};
-}
-
-/// Return a descriptor linking name to an optional settings member selected through enabled_experimental_features.
-template<class Member>
-constexpr auto experimentalFeature(std::string_view name, Member member) {
-  return FeatureDescriptor<Member> {name, member, true};
 }
 
 /// Associate a service-local enum value with a stable feature and its optional settings member.

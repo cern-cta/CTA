@@ -413,10 +413,6 @@ private:
     if (!config.featureEnabled(TConfig::Feature::Telemetry)) {
       return;
     }
-    if (config.telemetry->on_init_failure != "fatal" && config.telemetry->on_init_failure != "warn") {
-      throw exception::UserError("Unsupported value for telemetry.on_init_failure: '"
-                                 + config.telemetry->on_init_failure + "'. Must be one of [fatal, warn].");
-    }
     log::LogContext lc(log);
 
     std::map<std::string, std::string> customAttributes;
