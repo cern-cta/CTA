@@ -12,7 +12,8 @@ metadata:
   name: {{ $name }}
   namespace: {{ .Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "common.labels.withoutname" . | nindent 4 }}
 spec:
   replicas: {{ .Values.client.replicas }}
   selector:
@@ -22,7 +23,9 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "common.labels.standard" $ | nindent 8 }}
+        {{/* Keep the pod name label aligned with the client selector, not the parent chart name. */}}
+        app.kubernetes.io/name: {{ $name }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
     spec:
       imagePullSecrets:
       {{ include "cta-admin-tools.imagePullSecrets" . | nindent 6 }}

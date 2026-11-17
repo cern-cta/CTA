@@ -6,16 +6,6 @@
 set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
-die() {
-  log_error "$@"
-  exit 1
-}
-
-log_run() {
-  log_task "Running: $*"
-  "$@"
-}
-
 usage() {
   echo
   echo "Deploys EOS to a given namespace. If a deployment already exists, it will try and perform an upgrade."
@@ -29,7 +19,7 @@ usage() {
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
   echo "      --eos-values <file>:            EOS values override; repeatable, applied in order."
   echo
-  exit 1
+  exit "${1:-1}"
 }
 
 check_helm_installed() {
@@ -45,7 +35,7 @@ deploy() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      -h | --help) usage ;;
+      -h | --help) usage 0 ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
@@ -70,6 +60,7 @@ deploy() {
   if [[ -z "${namespace}" ]]; then
     die_usage "Missing mandatory argument: -n | --namespace"
   fi
+  check_helm_installed
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
     die "Namespace $namespace does not exist. Upgrade failed"
   fi
@@ -93,6 +84,5 @@ deploy() {
                       "${helm_flags[@]}"
 }
 
-check_helm_installed
 deploy "$@"
 log_success "Deployed EOS in namespace ${namespace}."

@@ -4,9 +4,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- $schedulerConfig := $.Values.global.scheduler -}}
-{{- $allRoutines := $.Values.routines -}}
+{{- $allRoutines := include "maintd.routines" . | fromYaml -}}
 {{- range $routineName, $routineConf := $allRoutines }}
-{{- if not (and (eq $routineName "garbageCollect") (eq $schedulerConfig.backend "postgres")) }}
 {{- $routineNameSlug := include "common.slugify" $routineName }}
 {{- $podName := printf "%s-%s-%s" $.Release.Name "rt" $routineNameSlug | trunc 63 | trimSuffix "-" }}
 apiVersion: apps/v1
@@ -115,5 +114,4 @@ spec:
           defaultMode: 0400
       {{ include "common.extraVolumes" $ | nindent 6 }}
 ---
-{{- end }}
 {{- end }}

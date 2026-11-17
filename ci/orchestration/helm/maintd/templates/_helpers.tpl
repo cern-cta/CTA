@@ -20,3 +20,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- end }}
 
 
+
+{{/* Backend-specific fields are rejected by the other maintd build, even when disabled. */}}
+{{- define "maintd.routines" -}}
+{{- if eq .Values.global.scheduler.backend "postgres" -}}
+{{- omit .Values.routines "garbageCollect" "queueCleanup" | toYaml -}}
+{{- else -}}
+{{- omit .Values.routines "userActiveQueueCleanup" "repackActiveQueueCleanup"
+    "userPendingQueueCleanup" "repackPendingQueueCleanup" "schedulerMaintenanceCleanup" | toYaml -}}
+{{- end -}}
+{{- end -}}

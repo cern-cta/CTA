@@ -12,6 +12,11 @@ from typing import Any, Optional
 import pytest
 import yaml
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 REPO = Path(__file__).resolve().parents[2]
 CHARTS = REPO / "ci/orchestration/helm"
 PRESETS = REPO / "ci/orchestration/presets"
@@ -246,19 +251,23 @@ def test_liquibase_pod(charts: Path) -> None:
     run_tool("bash", "-n", input_text=spec["containers"][0]["args"][0])
 
 
-def test_api_client_has_no_database_access(charts: Path) -> None:
+@pytest.mark.parametrize("client_name", ["cta-cli", "custom-client"])
+def test_api_client_has_no_database_access(charts: Path, client_name: str) -> None:
     objects = render(
         charts,
         "cta-admin-tools",
         "--set",
-        "client.enabled=true",
+        f"client.enabled=true,client.fullnameOverride={client_name}",
         "-f",
         str(PRESETS / "cta/base.yaml"),
         "-f",
         str(PRESETS / "cta/auth/frontend-admin-jwt.yaml"),
     )
     workload = next(obj for obj in objects if obj["kind"] == "StatefulSet")
-    assert workload["metadata"]["name"] == "cta-cli"
+    assert workload["metadata"]["name"] == client_name
+    labels = workload["spec"]["template"]["metadata"]["labels"]
+    assert workload["metadata"]["labels"]["app.kubernetes.io/name"] == client_name
+    assert workload["spec"]["selector"]["matchLabels"].items() <= labels.items()
     assert not any(
         volume["name"] in {"catalogue-config", "scheduler-config"}
         for volume in workload["spec"]["template"]["spec"]["volumes"]
@@ -508,19 +517,22 @@ def test_scheduler_presets_include_maintenance(charts: Path, preset: str, routin
 
 def test_upgrade_shares_connection_overrides(tmp_path: Path) -> None:
     source = (REPO / "ci/orchestration/upgrade_cta_instance.sh").read_text()
-    function = source[source.index("upgrade_instance() {") : source.index("\ncheck_helm_installed\n")]
+    function = source[source.index("upgrade_instance() {") : source.index('\nupgrade_instance "$@"')]
     values = tmp_path / "scheduler override.yaml"
     values.write_text("global:\n  scheduler:\n    existingSecret: replacement\n")
     script = (
-        "set -e\nupdate_local_cta_chart_dependencies() { :; }\n"
+        "set -e\nupdate_local_cta_chart_dependencies() { :; }\ncheck_helm_installed() { :; }\n"
         'kubectl() { :; }\nlog_run() { printf "%s\\n" "$@"; }\n'
         + function
-        + '\nupgrade_instance --namespace test --cta-values "$1" --cta-image-tag updated\n'
+        + '\nupgrade_instance --namespace test --cta-values "$1" --cta-image-tag updated '
+        + "--cta-image-registry registry.example\n"
     )
     result = run_tool("bash", "-c", script, "test", str(values))
     lines = result.stdout.splitlines()
     assert lines.count(str(values)) == 2
     assert lines.count("global.image.tag=updated") == 2
+    assert lines.count("global.image.registry=registry.example") == 2
+    assert not any("global.image.repository=" in line for line in lines)
     assert "--reuse-values" in lines
 
 
@@ -613,7 +625,7 @@ log_warn() { :; }
 log_success() { :; }
 die() { echo "$*" >&2; exit 1; }
 die_usage() { die "$@"; }
-helm() { [[ $1 == list ]]; }
+helm() { [[ $1 == list || $1 == dependency ]]; }
 kubectl() { [[ " $* " != *" get secret "* ]]; }
 log_run() { printf 'COMMAND\\n'; printf '%s\\n' "$@"; printf 'END\\n'; }
 """
@@ -687,15 +699,43 @@ def test_scheduler_overlays_replace_backend_cleanup(charts: Path, backend: str) 
     assert ("test-rt-garbagecollect" in routines) == (backend != "postgres")
     assert ("test-rt-queuecleanup" in routines) == (backend != "postgres")
     assert ("test-rt-schedulermaintenancecleanup" in routines) == (backend == "postgres")
+    # Check all rendered configs, including zero-replica workloads left by composed overlays.
+    common = {"disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report"}
+    cleanup = (
+        {
+            "user_active_queue_cleanup",
+            "repack_active_queue_cleanup",
+            "user_pending_queue_cleanup",
+            "repack_pending_queue_cleanup",
+            "scheduler_maintenance_cleanup",
+        }
+        if backend == "postgres"
+        else {"garbage_collect", "queue_cleanup"}
+    )
+    expected = common | cleanup
+    configs = {
+        obj["metadata"]["name"]: tomllib.loads(obj["data"]["cta-maintd.toml"])["routines"]
+        for obj in objects
+        if obj["kind"] == "ConfigMap" and "cta-maintd.toml" in obj.get("data", {})
+    }
+    assert len(configs) == len(expected)
+    for config in configs.values():
+        assert set(config) == expected | {"cycle_sleep_interval_secs", "max_cycle_duration_secs"}
+        assert sum(config[name]["enabled"] for name in expected) == 1
+    deployments = [obj for obj in objects if obj["kind"] == "Deployment" and "-rt-" in obj["metadata"]["name"]]
+    assert len(deployments) == len(expected)
+    for deployment in deployments:
+        volume = next(v for v in deployment["spec"]["template"]["spec"]["volumes"] if v["name"] == "cta-maintd-config")
+        assert volume["configMap"]["name"] in configs
 
 
 def test_eos_values_preserve_order_and_spaces(tmp_path: Path) -> None:
     source = (REPO / "ci/orchestration/deploy_eos.sh").read_text()
-    function = source[source.index("deploy() {") : source.index("\ncheck_helm_installed\ndeploy")]
+    function = source[source.index("deploy() {") : source.index('\ndeploy "$@"')]
     values = tmp_path / "EOS override.yaml"
     values.write_text("{}\n")
     script = (
-        'set -e\nkubectl() { :; }\nhelm() { echo "dependency ok"; }\n'
+        'set -e\ncheck_helm_installed() { :; }\nkubectl() { :; }\nhelm() { echo "dependency ok"; }\n'
         'log_run() { printf "%s\\n" "$@"; }\n'
         + function
         + '\ndeploy --namespace test --eos-values "$1" --eos-values "$1"\n'
@@ -708,11 +748,11 @@ def test_eos_values_preserve_order_and_spaces(tmp_path: Path) -> None:
 
 def test_dcache_values_and_explicit_image_overrides(tmp_path: Path) -> None:
     source = (REPO / "ci/orchestration/deploy_dcache.sh").read_text()
-    function = source[source.index("deploy() {") : source.index("\ncheck_helm_installed\ndeploy")]
+    function = source[source.index("deploy() {") : source.index('\ndeploy "$@"')]
     values = tmp_path / "dCache override.yaml"
     values.write_text("dcache:\n  database:\n    existingSecret: external-database\n")
     script = (
-        'set -e\nkubectl() { :; }\nhelm() { echo "dependency ok"; }\n'
+        'set -e\ncheck_helm_installed() { :; }\nkubectl() { :; }\nhelm() { echo "dependency ok"; }\n'
         'log_run() { printf "%s\\n" "$@"; }\n'
         + function
         + '\ndeploy --namespace test --dcache-values "$1" --dcache-values "$1" '

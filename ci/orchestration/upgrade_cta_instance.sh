@@ -5,16 +5,7 @@
 
 set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
-
-die() {
-  echo "$@" 1>&2
-  exit 1
-}
-
-log_run() {
-  echo "Running: $*"
-  "$@"
-}
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/helm_utils.sh"
 
 usage() {
   echo
@@ -26,11 +17,11 @@ usage() {
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "      --cta-values <file>:            Consumer values override; repeatable."
-  echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -r, --cta-image-registry <registry>: CTA image registry (default: reuse existing)."
   echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
   echo "      --force:                        Force redeploy all pods in the CTA chart."
   echo
-  exit 1
+  exit "${1:-1}"
 }
 
 check_helm_installed() {
@@ -40,32 +31,13 @@ check_helm_installed() {
   fi
 }
 
-update_local_cta_chart_dependencies() {
-  # Local dependencies need no remote repositories; skip both index loading and refreshes.
-
-  echo "Updating chart dependencies"
-  charts=(
-    "common"
-    "cta-admin-tools"
-    "frontend-wfe"
-    "frontend-admin"
-    "taped"
-    "rmcd"
-    "maintd"
-    "cta"
-  )
-  for chart in "${charts[@]}"; do
-    helm dependency update helm/"$chart" --skip-refresh --repository-config /dev/null > /dev/null
-  done
-}
-
 upgrade_instance() {
   force=0
   consumer_values=()
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      -h | --help) usage ;;
+      -h | --help) usage 0 ;;
       --cta-values)
         [[ -f "$2" ]] || die "CTA values file $2 does not exist"
         consumer_values+=(--values "$2")
@@ -73,8 +45,8 @@ upgrade_instance() {
       -n|--namespace)
         namespace="$2"
         shift ;;
-      -r|--cta-image-repository)
-        cta_image_repository="$2"
+      -r|--cta-image-registry)
+        cta_image_registry="$2"
         shift ;;
       -i|--cta-image-tag)
         cta_image_tag="$2"
@@ -93,6 +65,7 @@ upgrade_instance() {
   if [[ -z "${namespace}" ]]; then
     die_usage "Missing mandatory argument: -n | --namespace"
   fi
+  check_helm_installed
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
     die "Namespace $namespace does not exist. Upgrade failed"
   fi
@@ -104,11 +77,11 @@ upgrade_instance() {
   if [[ $force == 1 ]]; then
     cta_flags+=(--force)
   fi
-  if [[ -n "$cta_image_repository" ]]; then
-    cta_flags+=(--set "global.image.repository=${cta_image_repository}")
+  if [[ -n "$cta_image_registry" ]]; then
+    shared_flags+=(--set-string "global.image.registry=${cta_image_registry}")
   fi
   if [[ -n "$cta_image_tag" ]]; then
-    shared_flags+=(--set "global.image.tag=${cta_image_tag}")
+    shared_flags+=(--set-string "global.image.tag=${cta_image_tag}")
   fi
   shared_flags+=("${consumer_values[@]}")
 
@@ -126,7 +99,6 @@ upgrade_instance() {
 
 }
 
-check_helm_installed
 upgrade_instance "$@"
 echo "CTA instance in ${namespace} successfully upgraded:"
 kubectl --namespace ${namespace} get pods

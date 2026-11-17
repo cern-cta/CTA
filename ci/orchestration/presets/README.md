@@ -6,7 +6,7 @@ These files are Helm values overlays, grouped by their consumer:
 - `cta/`: shared CTA service/tools settings, grouped into catalogue, scheduler, authentication, telemetry and test overlays.
 - `eos/`: EOS authentication and stress settings.
 
-Use repeatable `--cta-values` and `--eos-values` options.
+Use repeatable `--cta-values`, `--eos-values` and `--dcache-values` options.
 Defaults are applied first, then supplied files in command-line order.
 Supplying `--infra-values` files replaces the default local provisioning selection.
 Use `infra/external.yaml` when no local database or scheduler storage is needed.

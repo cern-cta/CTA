@@ -5,6 +5,7 @@
 
 set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/helm_utils.sh"
 
 usage() {
   cat <<EOF
@@ -46,7 +47,7 @@ dCache:
       --dcache-image-tag <tag>             dCache image tag (default: project.json).
       --dcache-values <file>               dCache values override; repeatable, applied in order.
 EOF
-  exit 1
+  exit "${1:-1}"
 }
 
 check_deploy_commands() {
@@ -108,26 +109,6 @@ EOF
   echo
 }
 
-update_local_cta_chart_dependencies() {
-  # Only infrastructure has remote dependencies; the remaining charts use local sources.
-
-  log_task "Updating Helm chart dependencies..."
-  helm dependency update helm/ci-infra --repository-config /dev/null > /dev/null
-  charts=(
-    "common"
-    "cta-admin-tools"
-    "frontend-wfe"
-    "frontend-admin"
-    "taped"
-    "rmcd"
-    "maintd"
-    "cta"
-  )
-  for chart in "${charts[@]}"; do
-    helm dependency update helm/"$chart" --skip-refresh --repository-config /dev/null > /dev/null
-  done
-}
-
 # Only requested resets run; a failed reset prevents CTA services from starting.
 prepare_cta_databases() {
   local namespace=$1 reset_catalogue=$2 reset_scheduler=$3 schema_version=$4
@@ -143,12 +124,7 @@ prepare_cta_databases() {
 }
 
 create_instance() {
-  check_deploy_commands
-
-  project_json_path="../../project.json"
   # Argument defaults
-  # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
-  # Note that it is fine for not all of these secrets to exist
   # Copy available shared credentials and runner connections into the deployment namespace.
   secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials"
   secrets+=" cta-oracle-catalogue-conf cta-ceph-scheduler-conf cta-stress-scheduler-conf"
@@ -159,20 +135,14 @@ create_instance() {
   infra_config=(--values presets/infra/catalogue-postgres.yaml
                 --values presets/infra/scheduler-vfs.yaml)
   infra_config_explicit=false
-  # By default keep the catalogue and keep the scheduler
-  # default should not make user loose data if he forgot the option
+  # Reset database content only when explicitly requested.
   reset_catalogue=false
   reset_scheduler=false
-  cta_image_registry=$(jq -r .dev.ctaImageRegistry ${project_json_path})
   max_drives=2
   # EOS related
-  eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
-  eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
   eos_values=()
   eos_enabled=true
   # dCache
-  dcache_image_repository=$(jq -r .dev.dCacheImageRepository ${project_json_path})
-  dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
   dcache_enabled=false
   dcache_values=()
   # CTA chart timeout
@@ -184,7 +154,7 @@ create_instance() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      -h | --help) usage ;;
+      -h | --help) usage 0 ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
@@ -265,6 +235,14 @@ create_instance() {
   if [[ -z "${catalogue_schema_version}" ]]; then
     catalogue_schema_version="latest"
   fi
+  check_deploy_commands
+  project_json_path="../../project.json"
+  cta_image_registry=${cta_image_registry:-$(jq -r .dev.ctaImageRegistry "${project_json_path}")}
+  eos_image_tag=${eos_image_tag:-$(jq -r .dev.eosImageTag "${project_json_path}")}
+  eos_image_repository=${eos_image_repository:-$(jq -r .dev.eosImageRepository "${project_json_path}")}
+  dcache_image_repository=${dcache_image_repository:-$(jq -r .dev.dCacheImageRepository "${project_json_path}")}
+  dcache_image_tag=${dcache_image_tag:-$(jq -r .dev.dCacheImageTag "${project_json_path}")}
+
   echo "Catalogue schema version: ${catalogue_schema_version}"
 
   if [[ "$reset_catalogue" == "true" ]]; then
@@ -281,17 +259,12 @@ create_instance() {
 
   SECONDS=0
 
-  # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
-
   # As we have no nice way of locking resources, just fail if another CTA release already exists
   if [[ $(helm list --all-namespaces | grep cta | wc -l) -ge 1 ]]; then
     die "Another CTA release was found. Currently, installing multiple CTA releases on the same machine is not supported."
   fi
 
-  # Determine the library config to use
-  if [[ -z "${tapeservers_config}" ]]; then
-    generate_tape_values_files
-  fi
+  generate_tape_values_files
 
   if [[ " ${infra_config[*]} " == *" presets/infra/scheduler-vfs.yaml "* ]]; then
     kubectl get sc local-path >/dev/null 2>&1 ||
@@ -313,6 +286,9 @@ create_instance() {
     fi
   done
 
+  # Infrastructure has remote dependencies; consumer charts use local sources.
+  log_task "Updating infrastructure chart dependencies..."
+  helm dependency update helm/ci-infra --repository-config /dev/null > /dev/null
   update_local_cta_chart_dependencies
 
   log_task "Starting deployment..."
@@ -335,7 +311,7 @@ create_instance() {
 
   # Both consumer releases use the same public connection settings and overrides.
   shared_flags=("${cta_config[@]}"
-                --set "global.image.registry=$cta_image_registry" --set "global.image.tag=$cta_image_tag")
+                --set-string "global.image.registry=$cta_image_registry" --set-string "global.image.tag=$cta_image_tag")
   if [[ "$dcache_enabled" == true ]]; then
     # The dCache CTA nearline-storage driver only supports mTLS.
     shared_flags+=(--values presets/cta/auth/frontend-wfe-mtls.yaml)
