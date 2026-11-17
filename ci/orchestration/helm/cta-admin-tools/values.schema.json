@@ -1,0 +1,352 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CTA administration tools values",
+  "$comment":
+    "Chart-owned settings are validated here; Kubernetes extension objects and shared/dependency values remain extensible.",
+  "type": "object",
+  "properties": {
+    "image": {
+      "$ref": "#/definitions/image"
+    },
+    "resources": {
+      "type": "object"
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false
+    },
+    "reset": {
+      "type": "object",
+      "properties": {
+        "unprotected": {
+          "type": "boolean"
+        },
+        "catalogue": {
+          "type": "boolean"
+        },
+        "scheduler": {
+          "type": "boolean"
+        },
+        "catalogueSchemaVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "postgresClientImage": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unprotected",
+        "catalogue",
+        "scheduler",
+        "catalogueSchemaVersion",
+        "postgresClientImage"
+      ],
+      "additionalProperties": false
+    },
+    "global": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "extraVolumes": {
+          "$ref": "#/definitions/extraVolumes"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "kerberos": {
+          "type": "object",
+          "properties": {
+            "clientConfig": {
+              "type": "object",
+              "properties": {
+                "configMap": {
+                  "$ref": "#/definitions/resourceName"
+                }
+              },
+              "required": [
+                "configMap"
+              ]
+            },
+            "defaultRealm": {
+              "type": "string",
+              "minLength": 1
+            },
+            "adminPrinc": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "password": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "name",
+                "password"
+              ]
+            }
+          },
+          "required": [
+            "clientConfig",
+            "defaultRealm",
+            "adminPrinc"
+          ]
+        },
+        "catalogue": {
+          "type": "object",
+          "properties": {
+            "protected": {
+              "type": "boolean"
+            },
+            "existingSecret": {
+              "$ref": "#/definitions/resourceName"
+            }
+          },
+          "required": [
+            "protected",
+            "existingSecret"
+          ]
+        },
+        "scheduler": {
+          "type": "object",
+          "properties": {
+            "protected": {
+              "type": "boolean"
+            },
+            "existingSecret": {
+              "$ref": "#/definitions/resourceName"
+            },
+            "backend": {
+              "enum": [
+                "postgres",
+                "ceph",
+                "vfs"
+              ]
+            },
+            "existingClaim": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "protected",
+            "existingSecret",
+            "backend"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "backend": {
+                    "const": "vfs"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "existingClaim"
+                ],
+                "properties": {
+                  "existingClaim": {
+                    "$ref": "#/definitions/resourceName"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "catalogue",
+        "scheduler"
+      ]
+    },
+    "liquibase": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "catalogueSourceVersion": {
+          "type": "string"
+        },
+        "catalogueDestinationVersion": {
+          "type": "string"
+        },
+        "extraFlags": {
+          "type": "string"
+        },
+        "customRepoFiles": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled",
+        "image"
+      ],
+      "additionalProperties": false
+    },
+    "client": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "nameOverride": {
+          "type": "string"
+        },
+        "fullnameOverride": {
+          "type": "string"
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "krb5PrincName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resources": {
+          "type": "object"
+        },
+        "conf": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "extraEnv": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object"
+          }
+        },
+        "pod": {
+          "type": "object",
+          "properties": {
+            "extraSpec": {
+              "type": "object"
+            }
+          }
+        },
+        "extraVolumes": {
+          "$ref": "#/definitions/extraVolumes"
+        }
+      },
+      "required": [
+        "enabled",
+        "replicas",
+        "krb5PrincName"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "conf"
+            ],
+            "properties": {
+              "conf": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "resourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$"
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "registry": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "pullSecrets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/resourceName"
+          }
+        }
+      }
+    },
+    "extraVolumes": {
+      "type": "object",
+      "properties": {
+        "volumes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object"
+          }
+        },
+        "volumeMounts": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "image",
+    "database",
+    "reset",
+    "global",
+    "liquibase",
+    "client"
+  ]
+}

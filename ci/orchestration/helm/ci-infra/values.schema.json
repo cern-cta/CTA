@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CI infrastructure values",
+  "$comment":
+    "Chart-owned settings are validated here; Kubernetes extension objects and shared/dependency values remain extensible.",
+  "type": "object",
+  "properties": {
+    "global": {
+      "type": "object"
+    },
+    "secrets": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "additionalProperties": false
+    },
+    "kerberos": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "defaultRealm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adminPrinc": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name",
+            "password"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "image",
+        "defaultRealm",
+        "adminPrinc"
+      ],
+      "additionalProperties": false
+    },
+    "postgres": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resources": {
+          "type": "object"
+        },
+        "instances": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/postgresInstance"
+          }
+        }
+      },
+      "required": [
+        "image",
+        "password",
+        "instances"
+      ],
+      "additionalProperties": false
+    },
+    "secretFiles": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/resourceName"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/stringMap"
+      }
+    },
+    "persistentVolumeClaims": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/resourceName"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/claim"
+      }
+    },
+    "prometheus": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    },
+    "otel": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    }
+  },
+  "required": [
+    "kerberos",
+    "otel",
+    "persistentVolumeClaims",
+    "postgres",
+    "prometheus",
+    "secretFiles",
+    "secrets"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$"
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "postgresInstance": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "username": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "password": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "secretName": {
+          "$ref": "#/definitions/resourceName"
+        },
+        "extraSecretData": {
+          "$ref": "#/definitions/stringMap"
+        }
+      },
+      "additionalProperties": false
+    },
+    "claim": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "string",
+          "minLength": 1
+        },
+        "storageClass": {
+          "type": "string"
+        },
+        "accessModes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "ReadWriteOnce",
+              "ReadOnlyMany",
+              "ReadWriteMany",
+              "ReadWriteOncePod"
+            ]
+          }
+        },
+        "annotations": {
+          "$ref": "#/definitions/stringMap"
+        }
+      },
+      "required": [
+        "size"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

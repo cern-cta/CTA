@@ -24,3 +24,6 @@
 .idea/
 *.tmproj
 .vscode/
+
+# Unit tests are repository checks, not chart payload.
+tests/

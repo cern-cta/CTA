@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+suite: Connection protection
+templates:
+  - templates/connection-protection.yaml
+tests:
+  - it: rejects reset.catalogue on a protected catalogue
+    set:
+      global.catalogue.protected: true
+      reset.catalogue: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Cannot reset protected catalogue connection
+  - it: rejects reset.scheduler on a protected scheduler
+    set:
+      global.scheduler.protected: true
+      reset.scheduler: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Cannot reset protected scheduler connection
+  - it: rejects liquibase.enabled on a protected catalogue
+    set:
+      global.catalogue.protected: true
+      liquibase.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: Cannot run Liquibase against a protected catalogue connection
+  - it: publishes the connection protection policy for other clients
+    set:
+      global.catalogue.protected: true
+    asserts:
+      - equal:
+          path: data
+          value:
+            catalogue: 'true'
+            scheduler: 'false'

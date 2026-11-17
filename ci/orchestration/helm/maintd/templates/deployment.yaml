@@ -27,7 +27,6 @@ spec:
         {{- include "common.labels.withoutname" $ | nindent 8 }}
     spec:
       restartPolicy: Always
-      terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{- include "maintd.imagePullSecrets" $ | nindent 6 }}
       {{- if $.Values.pod.extraSpec }}

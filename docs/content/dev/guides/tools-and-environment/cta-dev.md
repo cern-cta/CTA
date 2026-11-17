@@ -327,9 +327,24 @@ Enabling `liquibase.enabled` creates a pod exposing `/launch_liquibase.sh` for t
 It uses its own `liquibase.image` and source/destination catalogue versions; tests invoke each command explicitly.
 The catalogue schema test uses this mode instead of a separate catalogue-updater chart.
 
-To validate these interfaces without deploying, run `pytest ci/checks/test_ci_charts.py` with Helm available.
-The infrastructure and dCache rendering checks need their pinned upstream charts in Helm's repository cache.
-Prepare them using `helm dependency update` in temporary copies of `ci-infra` and `dcache`; tests use cached archives without network access.
+Validate the CI charts without deploying:
+
+```bash
+sh ci/orchestration/check_charts.sh lint
+sh ci/orchestration/check_charts.sh test
+```
+
+The `lint-helm` and `test-helm` CI jobs run these same commands with Helm 3.19.0 and [helm-unittest](https://github.com/helm-unittest/helm-unittest) 1.0.3.
+For local testing, install the plugin with `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3`.
+Both commands prepare real chart dependencies in a temporary copy, including downloading the pinned infrastructure dependencies; they do not change the checkout or contact Kubernetes.
+Missing tools or dependencies fail the checks rather than skipping them.
+An optional second argument selects the output directory; the default is `build/helm-checks/lint` or `build/helm-checks/test`.
+
+Linting runs `helm lint --strict` and renders representative scheduler, administration and infrastructure configurations, retaining the manifests for inspection.
+It checks template expansion, not Kubernetes API validity or runtime behaviour; deployment and system tests remain necessary for those changes.
+Unit suites live in each chart's `tests/` directory and produce a JUnit report.
+Test meaningful contracts such as connection references, reset protection and preset composition, using the CTA umbrella when shared values or subchart wiring matter.
+Avoid snapshots of entire manifests, assertions about third-party chart internals and tests that merely restate defaults.
 
 ### EOS
 
