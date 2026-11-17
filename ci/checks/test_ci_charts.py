@@ -274,6 +274,44 @@ def test_api_client_has_no_database_access(charts: Path, client_name: str) -> No
     )
 
 
+@pytest.mark.parametrize("fail_creation", [False, True])
+def test_client_waits_for_kerberos_before_creating_keytab(
+    charts: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, fail_creation: bool
+) -> None:
+    objects = render(charts, "cta-admin-tools", "--set", "client.enabled=true")
+    workload = next(obj for obj in objects if obj["kind"] == "StatefulSet")
+    init = workload["spec"]["template"]["spec"]["initContainers"][0]
+    calls = tmp_path / "calls"
+    kadmin = tmp_path / "kadmin"
+    kadmin.write_text(
+        '#!/bin/bash\nread -r password\nprintf "%s\\n" "$*" >> "$CALLS"\n'
+        'if [[ "$*" == *getprivs ]]; then\n'
+        '  [[ $(wc -l < "$CALLS") -ge 3 ]]\n'
+        'elif [[ "$FAIL_CREATION" == true && "$*" == *addprinc* ]]; then\n'
+        "  exit 42\n"
+        "fi\n"
+    )
+    kadmin.chmod(0o755)
+    sleep = tmp_path / "sleep"
+    sleep.write_text("#!/bin/bash\nexit 0\n")
+    sleep.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+    monkeypatch.setenv("CALLS", str(calls))
+    monkeypatch.setenv("FAIL_CREATION", str(fail_creation).lower())
+    if fail_creation:
+        with pytest.raises(subprocess.CalledProcessError) as error:
+            run_tool(*init["command"], *init["args"])
+        assert error.value.returncode == 42
+    else:
+        run_tool(*init["command"], *init["args"])
+    commands = calls.read_text().splitlines()
+    assert len(commands) == (4 if fail_creation else 5)
+    assert all(command.endswith("getprivs") for command in commands[:3])
+    assert "addprinc -randkey ctaadmin1" in commands[3]
+    if not fail_creation:
+        assert "ktadd -k /root/ctaadmin1_keytab/output/ctaadmin1.keytab ctaadmin1" in commands[4]
+
+
 def test_dcache_uses_infra_secret(charts: Path) -> None:
     # Use a real cached dependency, never helper stubs or a network fetch during unit tests.
     cache = Path(os.environ.get("HELM_REPOSITORY_CACHE", Path.home() / ".cache/helm/repository"))

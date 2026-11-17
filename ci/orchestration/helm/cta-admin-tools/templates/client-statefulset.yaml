@@ -39,10 +39,15 @@ spec:
         imagePullPolicy: {{ include "cta-admin-tools.imagePullPolicy" . }}
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-        command: ["/bin/bash", "-c"]
+        command: ["/bin/bash", "-ec"]
         args:
         - |
-          sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
+          sukadmin() { printf '%s\n' {{ .Values.global.kerberos.adminPrinc.password | squote }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper | quote }} -p {{ printf "%s/admin" .Values.global.kerberos.adminPrinc.name | quote }} "$@"; }
+          # Wait for KDC startup without triggering init-container restart backoff.
+          until sukadmin getprivs >/dev/null 2>&1; do
+            echo "Waiting for Kerberos administration service..."
+            sleep 1
+          done
           sukadmin addprinc -randkey {{ .Values.client.krb5PrincName }};
           sukadmin ktadd -k /root/{{ .Values.client.krb5PrincName }}_keytab/output/{{ .Values.client.krb5PrincName }}.keytab {{ .Values.client.krb5PrincName }};
         volumeMounts:

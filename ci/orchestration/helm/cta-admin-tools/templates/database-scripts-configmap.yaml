@@ -8,8 +8,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  wait_database.sh: |
-    {{- .Files.Get "scripts/wait_database.sh" | nindent 4 }}
   name: {{ .Release.Name }}-scripts
 data:
   wait_database.sh: |

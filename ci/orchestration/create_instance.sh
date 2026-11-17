@@ -295,6 +295,15 @@ create_instance() {
                                 "${infra_flags[@]}" \
                                 --timeout 4m
 
+  # EOS needs shared credentials, but can initialize alongside the CTA reset Jobs.
+  if [[ $eos_enabled == "true" ]]; then
+    ./deploy_eos.sh --namespace "${namespace}" \
+                    "${eos_values[@]}" \
+                    --eos-image-repository "${eos_image_repository}" \
+                    --eos-image-tag "${eos_image_tag}" &
+    eos_pid=$!
+  fi
+
   # Both consumer releases use the same public connection settings and overrides.
   shared_flags=("${cta_config[@]}"
                 --set-string "global.image.registry=$cta_image_registry" --set-string "global.image.tag=$cta_image_tag")
@@ -321,14 +330,6 @@ create_instance() {
   # The tools now mount the VFS PVC, so Helm can wait for infrastructure without a binding deadlock.
   log_run helm upgrade ci-infra helm/ci-infra --namespace "$namespace" \
                        --reuse-values --wait --wait-for-jobs --timeout 4m
-
-  if [[ $eos_enabled == "true" ]]; then
-    ./deploy_eos.sh --namespace "${namespace}" \
-                    "${eos_values[@]}" \
-                    --eos-image-repository "${eos_image_repository}" \
-                    --eos-image-tag "${eos_image_tag}" &
-    eos_pid=$!
-  fi
 
   if [[ $dcache_enabled == "true" ]]; then
     ./deploy_dcache.sh --namespace "${namespace}" \
