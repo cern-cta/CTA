@@ -9,6 +9,10 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: [reg-ctageneric]
 
+# Permission for explicitly selected resets or Liquibase on protected connections.
+# This does not enable any operation or change connection protection.
+allowDestructive: false
+
 # Persistent tools do not initialize or reset anything on startup.
 admin:
   enabled: false
@@ -17,7 +21,7 @@ admin:
 # Bootstrap Jobs run once; changing values does not rerun a completed Job.
 # Disable reset flags before upgrading the tools image. Logs remain available until Job deletion.
 reset:
-  # Reset every unprotected connection. Explicit per-connection resets reject protected connections.
+  # Reset every unprotected connection. Explicit protected resets require allowDestructive.
   allUnprotected: false
   catalogue: false
   scheduler: false

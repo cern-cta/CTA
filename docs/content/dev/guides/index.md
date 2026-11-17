@@ -5,6 +5,7 @@ Use these guides for the task at hand. For your first development environment, s
 | I want to… | Start here |
 | --- | --- |
 | Build CTA packages or container images | [Building Images & Packages](tools-and-environment/building-images-and-packages.md) |
+| Test CTA with your own catalogue or PostgreSQL scheduler | [Testing with External Databases](tools-and-environment/external-databases.md) |
 | Understand the development instance and its virtual hardware | [Development & Test Environment](tools-and-environment/environment.md) |
 | Run or reconfigure a development instance | [cta-dev deployment options](tools-and-environment/cta-dev.md#deployment-options) |
 | Look up a cta-dev command or setting | [cta-dev Reference](tools-and-environment/cta-dev.md) |

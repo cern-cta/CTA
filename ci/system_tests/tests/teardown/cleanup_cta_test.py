@@ -3,6 +3,8 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 from system_tests.helpers.hosts import CtaAdminApiHost
 from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_env import TestEnv
@@ -10,6 +12,9 @@ from system_tests.helpers.test_env import TestEnv
 # =========================================================================
 #  CTA Teardown
 # =========================================================================
+
+
+pytestmark = pytest.mark.destructive()
 
 
 def test_cleanup_catalogue(cta_admin_api: CtaAdminApiHost) -> None:

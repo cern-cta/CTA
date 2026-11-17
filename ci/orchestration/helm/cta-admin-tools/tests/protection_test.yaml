@@ -4,6 +4,8 @@
 suite: Connection protection
 templates:
   - templates/connection-protection.yaml
+  - templates/database-reset-jobs.yaml
+  - templates/liquibase-pod.yaml
 tests:
   - it: rejects reset.catalogue on a protected catalogue
     set:
@@ -12,6 +14,7 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: Cannot reset protected catalogue connection
+        template: templates/database-reset-jobs.yaml
   - it: rejects reset.scheduler on a protected scheduler
     set:
       global.scheduler.protected: true
@@ -19,6 +22,7 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: Cannot reset protected scheduler connection
+        template: templates/database-reset-jobs.yaml
   - it: rejects liquibase.enabled on a protected catalogue
     set:
       global.catalogue.protected: true
@@ -26,12 +30,39 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: Cannot run Liquibase against a protected catalogue connection
+        template: templates/liquibase-pod.yaml
   - it: publishes the connection protection policy for other clients
     set:
       global.catalogue.protected: true
     asserts:
-      - equal:
+      - template: templates/connection-protection.yaml
+        equal:
           path: data
           value:
             catalogue: 'true'
             scheduler: 'false'
+
+  - it: permits explicit protected resets without removing protection
+    set:
+      allowDestructive: true
+      global.catalogue.protected: true
+      global.scheduler.protected: true
+      reset.catalogue: true
+      reset.scheduler: true
+    asserts:
+      - template: templates/connection-protection.yaml
+        equal:
+          path: data
+          value:
+            catalogue: 'true'
+            scheduler: 'true'
+  - it: permits Liquibase on a protected catalogue with explicit permission
+    set:
+      allowDestructive: true
+      global.catalogue.protected: true
+      liquibase.enabled: true
+    asserts:
+      - template: templates/connection-protection.yaml
+        equal:
+          path: data.catalogue
+          value: 'true'

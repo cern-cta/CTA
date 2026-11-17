@@ -4,6 +4,8 @@
 
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 from system_tests.helpers.hosts import CtaAdminApiHost, CtaCliHost, CtaRmcdHost, DiskInstanceHost
 from system_tests.helpers.test_env import TestEnv
 
@@ -160,6 +162,7 @@ def test_reset_drive_devices(env: TestEnv) -> None:
         taped.exec(f"sudo sg_turs {taped.drive_device} 2>&1 > /dev/null || true")
 
 
+@pytest.mark.destructive
 def test_label_tapes(env: TestEnv) -> None:
     tapes = CtaRmcdHost.list_all_tapes_in_libraries(env.cta_rmcd)
     with ThreadPoolExecutor(max_workers=len(env.cta_taped)) as pool:

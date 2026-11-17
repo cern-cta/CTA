@@ -368,6 +368,7 @@ nav:
               - "Debugging": dev/guides/tools-and-environment/debugging.md
               - "Pre-commit Hooks": dev/guides/tools-and-environment/pre-commit.md
               - "Building Images & Packages": dev/guides/tools-and-environment/building-images-and-packages.md
+              - "Testing with External Databases": dev/guides/tools-and-environment/external-databases.md
           - "Python Libraries & Tools":
               - "Overview": dev/guides/python/index.md
               - "cta-sdk":

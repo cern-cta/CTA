@@ -57,6 +57,7 @@ _ctadev() {
         --dcache-image-tag
         --dcache-values
         --protected
+        --copy-secret
         --infra-values
         --cta-values
         --eos-values
@@ -96,7 +97,7 @@ _ctadev() {
             COMPREPLY=( $(compgen -W "$(jq -r '.platforms | keys[]' "${project_root}/project.json")" -- "$cur") )
             return
             ;;
-        --namespace)
+        --namespace|--copy-secret)
             return
             ;;
         --cta-image-registry)
@@ -137,6 +138,12 @@ _ctadev() {
                 break
             fi
         done
+
+        if [[ "$seen_test" == true && "$cur" == -* ]]; then
+            mapfile -t COMPREPLY < <(compgen -W \
+                "--allow-destructive --setup --verification --teardown --teardown-first --lf --ff -k" -- "$cur")
+            return
+        fi
 
         if [[ "$seen_test" == false && "$cur" != -* ]]; then
             local tests=""

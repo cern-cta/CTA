@@ -205,47 +205,20 @@ kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
 
 Set `global.catalogue.protected: true` or `global.scheduler.protected: true` in CTA values to preserve that connection during bootstrap.
 `--protected` sets both; use it when both connections are already initialized.
-Explicit resets and catalogue Liquibase operations against protected connections are rejected.
-Namespace-based system tests are blocked if either connection is protected or its protection policy cannot be read.
-Use `up` instead of `all` to build and deploy without tests.
+Normal state-changing tests are allowed, but automatic test setup and teardown are skipped when either connection is protected.
+Explicit destructive tests require `--allow-destructive`; see [System Tests](../testing/system-tests.md#protected-and-external-connections).
+`all` uses the same test policy after deployment.
+An unreadable protection policy blocks tests.
 
 Protection does not make CTA read-only: running services and manually invoked commands can change database state.
-External databases dedicated to destructive CI tests should remain unprotected.
+For an explicit bootstrap reset, pass `--allow-destructive` together with `--reset-catalogue` or `--reset-scheduler` to `create_instance.sh`.
+Direct Helm use requires `allowDestructive=true` for protected resets or Liquibase; reset it to `false` on subsequent upgrades.
+Automatic bootstrap resets still skip protected connections, even with this permission.
 
 ### Connect to an external database
 
-External connections must be reachable from the Pods, already initialized, and compatible with the selected CTA images and scheduler backend.
-The catalogue and scheduler must describe compatible state.
-Local tape and disk-system configuration must also match the intended use of that catalogue.
-These are development deployments; protection does not provide isolation from other CTA instances using the same databases.
-
-For example, connect to an external Oracle catalogue while provisioning a local VFS scheduler.
-Create a local `cta-catalogue.conf` containing the CTA connection string, then provision the runner Secret:
-
-```bash
-kubectl -n default create secret generic cta-oracle-catalogue-conf \
-  --from-file=cta-catalogue.conf=/path/to/cta-catalogue.conf
-```
-
-Save `/path/to/protected-catalogue.yaml`:
-
-```yaml
-global:
-  catalogue:
-    protected: true
-```
-
-Deploy with existing Oracle-enabled objectstore images, or replace `deploy` with `up` to build them:
-
-```bash
-cta-dev deploy --enable-oracle-support --scheduler-type objectstore \
-  --infra-values presets/infra/scheduler-vfs.yaml \
-  --cta-values presets/cta/catalogue/oracle.yaml \
-  --cta-values /path/to/protected-catalogue.yaml
-```
-
-The catalogue is preserved, the local scheduler is initialized, and automated system tests are blocked.
-Deleting the development namespace removes its copied Secrets and local resources, but does not delete the external database.
+For a walkthrough using your own catalogue and PostgreSQL scheduler databases, see [Testing with External Databases](external-databases.md).
+It covers connection files, infrastructure overrides, protected deployments and opting into destructive automated tests.
 
 ### Runner connection Secrets
 
@@ -263,8 +236,12 @@ Ceph uses `rados://<client>@<pool>:<namespace>`; the client must match the keyri
 The PostgreSQL scheduler uses `presets/cta/scheduler/postgres.yaml` followed by `presets/cta/scheduler/postgres-external.yaml`; Ceph uses `presets/cta/scheduler/ceph.yaml`.
 
 For other connections, `global.catalogue.existingSecret` and `global.scheduler.existingSecret` select Secrets containing the corresponding CTA connection files.
-Custom Secret names must be provisioned in the deployment namespace; they are not automatically copied from `default`.
-The infrastructure chart can supply them through `secretFiles`, but credentials supplied this way are also stored in Helm release values.
+Create them in `default` and pass repeatable `--copy-secret <name>` options to `cta-dev deploy`, `up`, `debug`, or `all`.
+Requested Secrets must be readable before the previous deployment is deleted; they are copied under the same names into the new namespace.
+The deployment namespace cannot be `default` when using this option.
+Repeated names are copied only once, including names already in the built-in list.
+Source Secrets remain in `default` after the deployment is removed.
+The infrastructure chart's `secretFiles` setting is only for ephemeral/fake CI credentials, which are also stored in Helm release values; do not use it for actual external resources.
 
 ### Validate chart changes
 

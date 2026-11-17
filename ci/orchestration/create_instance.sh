@@ -23,14 +23,16 @@ CTA and infrastructure:
   -r, --cta-image-registry <registry>      CTA image registry (default: project.json).
   -i, --cta-image-tag <tag>                CTA image tag (required).
       --cta-values <file>                  Consumer values override; repeatable, applied in order.
+      --copy-secret <name>                 Copy a required Secret from default; repeatable.
       --infra-values <file>                Infrastructure values; repeatable, replaces local defaults.
       --telemetry <none|local|central>     Telemetry mode (default: none).
 
 Database initialization:
   -c, --catalogue-version <version>        Catalogue schema version (default: latest).
-      --protected                          Protect both connections from resets and system tests.
+      --allow-destructive                  Allow explicitly requested resets of protected connections.
+      --protected                          Protect both connections from automatic resets and destructive tests.
       --reset-unprotected                  Reset only unprotected connections (development bootstrap).
-      --validate-only                      Validate bootstrap and print its protection ConfigMap without deploying.
+      --validate-only                      Validate bootstrap values and requested Secrets without deploying.
       --reset-catalogue                    Reset catalogue content (default: disabled).
       --reset-scheduler                    Reset scheduler content (default: disabled).
 
@@ -115,8 +117,10 @@ EOF
 create_instance() {
   # Argument defaults
   # Copy available shared credentials and runner connections into the deployment namespace.
-  secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials"
-  secrets+=" cta-oracle-catalogue-conf cta-ceph-scheduler-conf cta-stress-scheduler-conf"
+  local secrets=(reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials
+                 cta-oracle-catalogue-conf cta-ceph-scheduler-conf cta-stress-scheduler-conf)
+  local copy_secrets=()
+  local -A required_secrets=() copied_secrets=()
   cta_config=(--values presets/cta/base.yaml --values presets/cta/auth/frontend-wfe-jwt.yaml
               --values presets/cta/auth/frontend-admin-jwt.yaml
               --values presets/cta/catalogue/postgres.yaml --values presets/cta/scheduler/vfs.yaml)
@@ -125,6 +129,7 @@ create_instance() {
                 --values presets/infra/scheduler-vfs.yaml)
   infra_config_explicit=false
   # Reset database content only when explicitly requested.
+  allow_destructive=false
   protected=false
   validate_only=false
   reset_all_unprotected=false
@@ -162,6 +167,7 @@ create_instance() {
       --max-drives)
         max_drives="$2"
         shift ;;
+      --allow-destructive) allow_destructive=true ;;
       --protected) protected=true ;;
       --validate-only) validate_only=true ;;
       --reset-unprotected) reset_all_unprotected=true ;;
@@ -201,6 +207,11 @@ create_instance() {
         [[ -f "$2" ]] || die "CTA values file $2 does not exist"
         cta_overrides+=(--values "$2")
         shift ;;
+      --copy-secret)
+        [[ -n ${2:-} && $2 =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] ||
+          die "--copy-secret requires a Kubernetes Secret name"
+        copy_secrets+=("$2")
+        shift ;;
       --infra-values)
         [[ -f "$2" ]] || die "Infrastructure values file $2 does not exist"
         if [[ $infra_config_explicit == false ]]; then
@@ -230,20 +241,25 @@ create_instance() {
   if [[ -z "${catalogue_schema_version}" ]]; then
     catalogue_schema_version="latest"
   fi
+  # cta-dev runs this preflight before deleting the previous deployment namespace.
+  local secret_name
+  for secret_name in "${copy_secrets[@]}"; do
+    [[ $namespace != default ]] || die "Cannot copy Secrets from default into a deployment replacing default"
+    kubectl --namespace default get secret "$secret_name" -o name >/dev/null ||
+      die "Cannot read requested Secret '$secret_name' in namespace 'default'; create it before deploying"
+    required_secrets[$secret_name]=true
+  done
+
   # Let Helm resolve overlays and enforce protection before creating any resources.
   if [[ $protected == true ]]; then
     cta_overrides+=(--set global.catalogue.protected=true --set global.scheduler.protected=true)
   fi
   reset_flags=(--set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler"
-               --set "reset.allUnprotected=$reset_all_unprotected")
+               --set "reset.allUnprotected=$reset_all_unprotected" --set "allowDestructive=$allow_destructive")
   update_local_cta_chart_dependencies >&2
-  local protection_policy
-  protection_policy=$(helm template cta-tools helm/cta-admin-tools "${cta_config[@]}" "${cta_overrides[@]}" \
-    "${reset_flags[@]}" --show-only templates/connection-protection.yaml)
-  if [[ $validate_only == true ]]; then
-    printf '%s\n' "$protection_policy"
-    return 0
-  fi
+  helm template cta-tools helm/cta-admin-tools "${cta_config[@]}" "${cta_overrides[@]}" \
+    "${reset_flags[@]}" >/dev/null
+  [[ $validate_only == false ]] || return 0
   check_deploy_commands
   project_json_path="../../project.json"
   cta_image_registry=${cta_image_registry:-$(jq -r .dev.ctaImageRegistry "${project_json_path}")}
@@ -255,7 +271,7 @@ create_instance() {
   echo "Catalogue schema version: ${catalogue_schema_version}"
 
   if [[ $reset_all_unprotected == true ]]; then
-    echo "Unprotected connections will be reset; protected connections will be preserved."
+    echo "Automatic resets apply only to unprotected connections."
   else
     if [[ $reset_catalogue == true ]]; then
       log_warn "Catalogue content will be reset."
@@ -288,13 +304,16 @@ create_instance() {
   kubectl create namespace "${namespace}"
   kubectl label namespace "$namespace" "app.kubernetes.io/managed-by=cta-create-instance"
   log_task "Copying secrets into namespace ${namespace}..."
-  for secret_name in ${secrets}; do
-    # If the secret exists...
-    if kubectl --namespace default get secret "${secret_name}" &> /dev/null; then
+  for secret_name in "${copy_secrets[@]}" "${secrets[@]}"; do
+    [[ ${copied_secrets[$secret_name]:-false} == false ]] || continue
+    # Explicit requests must still exist; only the built-in runner Secrets are optional.
+    if [[ ${required_secrets[$secret_name]:-false} == true ]] ||
+       kubectl --namespace default get secret "${secret_name}" &> /dev/null; then
       kubectl --namespace default get secret "${secret_name}" -o json |
         jq --arg namespace "$namespace" \
           '{apiVersion, kind, type, data, metadata: {name: .metadata.name, namespace: $namespace}}' |
         kubectl --namespace "${namespace}" create -f -
+      copied_secrets[$secret_name]=true
     fi
   done
 

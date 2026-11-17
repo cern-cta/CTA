@@ -60,3 +60,25 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: permission alone does not reset protected connections automatically
+    set:
+      allowDestructive: true
+      reset.allUnprotected: true
+      global.catalogue.protected: true
+      global.scheduler.protected: true
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: explicit permission enables only the requested protected reset
+    set:
+      allowDestructive: true
+      reset.catalogue: true
+      global.catalogue.protected: true
+      global.scheduler.protected: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: check-reset-catalogue

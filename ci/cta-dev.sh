@@ -338,7 +338,8 @@ Usage:
 Options:
       --namespace <ns>              Kubernetes namespace.
                                     Defaults to dev.
-      --protected                   Protect catalogue and scheduler from resets and tests.
+      --protected                   Skip automatic resets and require permission for destructive tests.
+      --copy-secret <name>          Copy a Secret from default; repeatable, required to exist.
       --infra-values <path>         Infrastructure values; repeatable, replaces default provisioning.
       --cta-values <path>           Final consumer values override; repeatable.
       --eos-values <path>           EOS values override; repeatable.
@@ -396,7 +397,9 @@ Examples:
   $(basename "$0") test client --lf # Run only the failed tests again
   $(basename "$0") test client -k test_simple_archive_retrieve
 
-Setup, verification, and teardown tests are included by default.
+Verification is included by default; automatic setup and teardown are skipped for protected connections.
+Use --allow-destructive to permit explicitly selected destructive tests.
+It does not enable automatic setup or teardown.
 Any additional arguments are passed directly to pytest.
 For additional pytest help, navigate to ci/system_tests and run pytest --help
 
@@ -617,6 +620,12 @@ parse_options() {
       --protected)
         require_command "$1" "$command" deploy up debug all
         protected=true
+        ;;
+      --copy-secret)
+        require_command "$1" "$command" deploy up debug all
+        [[ -n ${2:-} && $2 != -* ]] || die "--copy-secret requires a Secret name"
+        extra_spawn_options+=(--copy-secret "$2")
+        shift
         ;;
       --infra-values)
         require_command "$1" "$command" deploy up debug all
@@ -1354,7 +1363,7 @@ test_cta() {
       ;;
     *)
       test_path="tests/${selected_test}_test.py"
-      lifecycle_options=(--setup --verification --teardown)
+      lifecycle_options=(--auto-lifecycle)
       ;;
   esac
 
@@ -1522,22 +1531,8 @@ main() {
         prepare_deployment
         (cd "${project_root}/ci/orchestration" && update_local_cta_chart_dependencies)
         export CTA_LOCAL_CHARTS_READY="${project_root}/ci/orchestration/helm"
-        local protection_policy protected_connections
-        protection_policy=$(cd "${project_root}/ci/orchestration" && \
+        (cd "${project_root}/ci/orchestration" && \
           ./create_instance.sh "${deployment_args[@]}" --validate-only)
-        if [[ $command == all ]]; then
-          # all already requires the system-test environment, including PyYAML.
-          protected_connections=$("$venv_dir/bin/python" -c '
-import sys, yaml
-policy = yaml.safe_load(sys.stdin)["data"]
-for name in ("catalogue", "scheduler"):
-    if policy[name] not in ("true", "false"):
-        sys.exit("Invalid connection protection policy")
-print(" ".join(name for name, value in policy.items() if value == "true"))
-' <<< "$protection_policy") || die "Cannot verify connection protection; refusing to run all."
-          [[ -z $protected_connections ]] || \
-            die "System tests are blocked for protected connections ($protected_connections); use cta-dev up instead of all."
-        fi
         ;;
     esac
   fi

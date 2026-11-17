@@ -114,3 +114,5 @@ reject_values cta-admin-tools obsolete-database-toggle --set database.enabled=tr
 reject_values cta-admin-tools obsolete-reset-toggle --set reset.unprotected=true
 reject_values cta-admin-tools obsolete-shared-resources --set resources.requests.memory=128Mi
 reject_values ci-infra obsolete-credential-image --set secrets.image=example:latest
+
+reject_values cta-admin-tools invalid-destructive-permission --set-string allowDestructive=true

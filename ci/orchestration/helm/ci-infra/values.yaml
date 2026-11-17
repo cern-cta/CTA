@@ -32,12 +32,14 @@ postgres:
   #     extraSecretData:
   #       connection.conf: '{{ .connection.uri }}'
 
-# Named Secrets containing arbitrary connection/configuration files; values support Helm templates.
+# Ephemeral/fake CI credentials only: these files are also stored in Helm release values.
+# For actual external resources, create Secrets manually and use cta-dev --copy-secret.
+# Map keys name the Secrets and files; values support Helm templates.
 secretFiles: {}
 # Example (map keys name the Secret and its files):
 # secretFiles:
 #   application-connection:
-#     connection.conf: 'postgresql://user:password@external-db/application'
+#     connection.conf: 'postgresql://test:test@disposable-db/application'
 
 # Named PVCs: size, storageClass, accessModes (default ReadWriteOnce), and optional annotations.
 persistentVolumeClaims: {}

@@ -101,7 +101,8 @@
       "additionalProperties": {
         "$ref": "#/definitions/stringMap"
       },
-      "description": "Map of Secret names to filename/content maps. Filenames and contents support Helm templates."
+      "description":
+        "Ephemeral/fake CI credentials only, stored in Helm release values. For actual resources use manually created Secrets. Maps Secret names to templated filename/content maps."
     },
     "persistentVolumeClaims": {
       "type": "object",

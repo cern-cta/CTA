@@ -127,7 +127,7 @@
             "protected": {
               "type": "boolean",
               "description":
-                "Reject explicit resets and block system tests; automatic bootstrap skips this connection. Running services can still write."
+                "Skip automatic resets and test setup/teardown; destructive operations require explicit permission. Normal writes are allowed."
             },
             "existingSecret": {
               "$ref": "#/definitions/resourceName",
@@ -145,7 +145,7 @@
             "protected": {
               "type": "boolean",
               "description":
-                "Reject explicit resets and block system tests; automatic bootstrap skips this connection. Running services can still write."
+                "Skip automatic resets and test setup/teardown; destructive operations require explicit permission. Normal writes are allowed."
             },
             "existingSecret": {
               "$ref": "#/definitions/resourceName",
@@ -309,6 +309,11 @@
         }
       ],
       "description": "API client pod without direct catalogue or scheduler access."
+    },
+    "allowDestructive": {
+      "type": "boolean",
+      "description":
+        "Permit explicitly selected resets or Liquibase against protected connections. Does not enable operations or automatic resets."
     }
   },
   "definitions": {
