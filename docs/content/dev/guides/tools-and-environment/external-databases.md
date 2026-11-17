@@ -1,13 +1,17 @@
 # Testing with External Databases
 
-Use `cta-dev` to run a development instance against your own PostgreSQL catalogue and scheduler databases.
+Use `cta-dev` to run a development instance against your own catalogue, scheduler, or both.
+This guide assumes a PostgreSQL scheduler; the catalogue can use PostgreSQL or Oracle.
 The examples invoke `./ci/cta-dev.sh` from the checkout root; installing the `cta-dev` command is optional.
 
 ## Requirements
 
 - A prepared [development environment](../../getting-started/environment-setup.md), including Kubernetes, Helm and virtual tape hardware.
-- Two initialized PostgreSQL databases reachable from the Pods, with compatible catalogue and scheduler state and schemas matching your CTA images.
+- An initialized external catalogue or scheduler database, or both, reachable from the Pods and compatible with your CTA images and the other connection's state.
 - Images built with `--scheduler-type pgsched`; see [Building Images & Packages](building-images-and-packages.md) to build your own.
+
+For an Oracle catalogue, use Oracle-enabled images and pass `--enable-oracle-support` when building and deploying.
+The connection examples below use PostgreSQL for both databases; see [Use only one external database](#use-only-one-external-database) to override just one connection.
 
 Use databases dedicated to this instance and ensure their tape, library and disk-system configuration matches the environment.
 
