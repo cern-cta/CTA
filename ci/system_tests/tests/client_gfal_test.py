@@ -50,7 +50,7 @@ class GfalBatch:
 
 @pytest.fixture(scope="module")
 def gfal_xrootd(test_dir: Path, disk_instance_name: str) -> GfalBatch:
-    auth = "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5"
+    auth = "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss"
     return GfalBatch("root", test_dir / "gfal_xrootd", f"root://{disk_instance_name}", auth, auth)
 
 
@@ -327,13 +327,13 @@ def test_xrootd_activity_ends_up_in_eos_report(eos_client: EosClientHost, eos_mg
 
     # Retrieve with activity
     eos_client.exec(
-        f"KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} "
+        f"XrdSecsssKT=/etc/eos/client/{eospower_user}.keytab XrdSecPROTOCOL=sss xrdfs {disk_instance_name} "
         f"prepare -s {test_file}?activity=XRootD_Act"
     )
 
     # Evict
     eos_client.exec(
-        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 xrdfs {disk_instance_name} "
+        f"XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/{eospower_user}.keytab xrdfs {disk_instance_name} "
         f"prepare -e {test_file}"
     )
 

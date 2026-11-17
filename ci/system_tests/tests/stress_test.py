@@ -259,12 +259,6 @@ def test_wait_for_archival(eos_mgm: EosMgmHost, stress_params: StressParams, tes
     assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"
 
 
-def test_kinit_poweruser(eos_client: EosClientHost, krb5_realm: str) -> None:
-    """Initialize Kerberos credentials for poweruser1 (needed for retrieve)."""
-    eos_client.exec("mkdir -p /tmp/poweruser1")
-    eos_client.exec(f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab poweruser1@{krb5_realm}")
-
-
 @pytest.mark.asyncio
 async def test_request_files_for_retrieve(
     cta_cli: CtaCliHost,

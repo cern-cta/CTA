@@ -18,6 +18,7 @@ def test_eos_version(eos_mgm: EosMgmHost) -> None:
 
 
 def test_general_settings(eos_mgm: EosMgmHost) -> None:
+    eos_mgm.exec("eos vid enable sss")
     eos_mgm.exec("eos vid enable unix")
     eos_mgm.exec("eos vid enable https")
     eos_mgm.exec("eos space set default on")
@@ -130,13 +131,30 @@ def test_create_cta_directory(
 # - eosadmin1 is an EOS sudo user used for namespace administration, token generation, and privileged eviction
 # - poweruser1 has explicit read/write/prepare/delete rights and is used for staging, releasing, and cleanup
 # - user1 is the regular eosusers archive writer; it can create files but is explicitly denied deletion
-def test_kinit_eos_clients(env: TestEnv, krb5_realm: str) -> None:
-    client_users = ["eosadmin1", "ctaadmin2", "poweruser1", "user1"]
+def test_sss_eos_clients(env: TestEnv) -> None:
+    identities = {
+        "user1": (11001, 1100),
+        "poweruser1": (12001, 1200),
+        "eosadmin1": (14001, 1400),
+        "ctaadmin2": (13002, 1300),
+    }
     for eos_client in env.eos_client:
-        for user in client_users:
-            eos_client.exec(f"mkdir -p /tmp/{user}")
-            eos_client.exec(f"KRB5CCNAME=/tmp/{user}/krb5cc_0  kinit -kt /root/{user}.keytab {user}@{krb5_realm}")
+        for user, (uid, gid) in identities.items():
+            identity = eos_client.exec_with_output(
+                f"XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/{user}.keytab eos whoami"
+            )
+            assert f"uid={uid} " in identity, identity
+            assert f"gid={gid} " in identity, identity
+            assert "[authz:sss]" in identity, identity
 
-        # Set the default to be user1
-        # This is so that we can play around with xrdcp manually without always having to specify the user
-        eos_client.exec("kinit -kt /root/user1.keytab user1@TEST.CTA")
+        # Interactive commands and commands without an explicit keytab use user1.
+        identity = eos_client.exec_with_output("eos whoami")
+        assert "uid=11001 " in identity, identity
+        assert "[authz:sss]" in identity, identity
+
+        identity = eos_client.exec_with_output(
+            "XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/eosadmin1.keytab eos -r 0 0 whoami"
+        )
+        assert "uid=0 " in identity, identity
+        assert "gid=0 " in identity, identity
+        assert "[authz:sss]" in identity, identity

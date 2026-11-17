@@ -356,8 +356,7 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
 
-  # The disk-buffer init containers need both the auth secrets and a responsive KDC.
-  # Waiting only for the secrets can make their first kadmin call race KDC startup.
+  # EOS needs the SSS secrets; CTA admin clients also need a responsive KDC.
   wait $auth_pid || exit 1
 
   if [[ $eos_enabled == "true" ]]; then

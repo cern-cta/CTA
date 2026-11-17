@@ -27,7 +27,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dest-dir", required=True, help="EOS directory containing archived files")
     p.add_argument("--num-dirs", type=int, required=True, help="Number of subdirectories")
     p.add_argument("--num-procs", type=int, default=8, help="Number of parallel worker processes")
-    p.add_argument("--krb5-cache", required=True, help="Kerberos credential cache for retrieve")
+    p.add_argument("--sss-keytab", required=True, help="SSS keytab for retrieve")
     p.add_argument("--activity", required=True, help="Activity string appended to prepare targets")
     return p.parse_args()
 
@@ -55,13 +55,10 @@ def list_tape_only_files(eos_host: str, dest_dir: str, num_dirs: int) -> list[st
     return tape_files
 
 
-def retrieve_worker(work_q: JoinableQueue[Any], wid: int, eos_host: str, krb5_cache: str) -> None:
+def retrieve_worker(work_q: JoinableQueue[Any], wid: int, eos_host: str, sss_keytab: str) -> None:
     """Worker process that issues prepare (stage-in) requests via XRootD."""
-    # Switch from SSS to Kerberos (poweruser1) for prepare permissions
-    for k in ("XrdSecsssKT", "XRDSSSKT"):
-        os.environ.pop(k, None)
-    os.environ["XrdSecPROTOCOL"] = "krb5"  # noqa: SIM112 - XRootD requires this exact mixed-case name
-    os.environ["KRB5CCNAME"] = krb5_cache
+    os.environ["XrdSecPROTOCOL"] = "sss"  # noqa: SIM112 - XRootD requires this exact mixed-case name
+    os.environ["XrdSecsssKT"] = sss_keytab  # noqa: SIM112
 
     from XRootD import client  # type: ignore[reportMissingImports]
     from XRootD.client.flags import PrepareFlags  # type: ignore[reportMissingImports]
@@ -94,6 +91,9 @@ def main() -> None:
     print(f"  source: {args.dest_dir}", flush=True)
     print(f"  activity: {args.activity}", flush=True)
 
+    os.environ["XrdSecPROTOCOL"] = "sss"  # noqa: SIM112
+    os.environ["XrdSecsssKT"] = args.sss_keytab  # noqa: SIM112
+
     # Discover tape-only files
     print("Discovering tape-only files...", flush=True)
     tape_files = list_tape_only_files(args.eos_host, args.dest_dir, args.num_dirs)
@@ -113,7 +113,7 @@ def main() -> None:
     for wid in range(args.num_procs):
         p = mp.Process(
             target=retrieve_worker,
-            args=(work_q, wid, args.eos_host, args.krb5_cache),
+            args=(work_q, wid, args.eos_host, args.sss_keytab),
             daemon=True,
         )
         p.start()

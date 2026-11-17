@@ -33,7 +33,7 @@ class EosClientHost(DiskClientHost):
         """Submit one XRootD PREPARE stage request containing all supplied paths."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         return self.exec(
-            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss "
             f"xrdfs {shlex.quote(disk_instance_name)} prepare -s {path_arguments}",
             capture_output=True,
             throw_on_failure=False,
@@ -50,7 +50,7 @@ class EosClientHost(DiskClientHost):
         """Return EOS's per-path status for an XRootD PREPARE request."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         output = self.exec_with_output(
-            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss "
             f"xrdfs {shlex.quote(disk_instance_name)} query prepare {shlex.quote(request_id)} {path_arguments}"
         )
         return json.loads(output)
@@ -66,7 +66,7 @@ class EosClientHost(DiskClientHost):
         """Abort the supplied paths from an XRootD PREPARE request."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         return self.exec(
-            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss "
             f"xrdfs {shlex.quote(disk_instance_name)} prepare -a {shlex.quote(request_id)} {path_arguments}",
             capture_output=True,
             throw_on_failure=False,
@@ -82,7 +82,7 @@ class EosClientHost(DiskClientHost):
         """Evict the supplied paths through an XRootD PREPARE request."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         return self.exec(
-            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss "
             f"xrdfs {shlex.quote(disk_instance_name)} prepare -e {path_arguments}",
             capture_output=True,
             throw_on_failure=False,
@@ -103,7 +103,7 @@ class EosClientHost(DiskClientHost):
         expires = int((datetime.now() + timedelta(days=1)).timestamp())
         print(f"Generating a Tape REST API bearer token for {owner}")
         token = self.exec_with_output(
-            "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 "
+            "XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/eosadmin1.keytab eos -r 0 0 "
             f"root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires {expires} "
             f"--owner {owner} --group {group} --permission {permission}"
         )
@@ -156,7 +156,7 @@ class EosClientHost(DiskClientHost):
         # Generate distinct contents for every file and propagate both generation and copy failures.
         worker = (
             f"dd if=/dev/urandom bs=1K count={file_size_kb} status=none | "
-            "KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp - "
+            "XrdSecsssKT=/etc/eos/client/user1.keytab xrdcp - "
             f'{shlex.quote(f"root://{disk_instance_name}/{directory}/0/file_")}"$1"'
         )
         self.exec(
@@ -187,7 +187,10 @@ class EosClientHost(DiskClientHost):
         wait_timeout_secs: int = 20,
     ) -> None:
         print(f"Copying {source_path} to {destination_path} on disk instance {disk_instance_name}")
-        self.exec(f"KRB5CCNAME=/tmp/{user}/krb5cc_0 xrdcp {source_path} root://{disk_instance_name}/{destination_path}")
+        self.exec(
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab "
+            f"xrdcp {source_path} root://{disk_instance_name}/{destination_path}"
+        )
         if wait:
             self.wait_for_file_archival(disk_instance_name, destination_path, wait_timeout_secs=wait_timeout_secs)
             if wait_for_evict:
@@ -345,8 +348,8 @@ class EosClientHost(DiskClientHost):
         worker = (
             'path="$1"; activity="$2"; retrieve_path="$path"; '
             '[ -z "$activity" ] || retrieve_path="$path?activity=$activity"; '
-            "request_id=$(KRB5CCNAME=/tmp/"
-            f"{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {shlex.quote(disk_instance_name)} "
+            "request_id=$(XrdSecsssKT=/etc/eos/client/"
+            f"{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss xrdfs {shlex.quote(disk_instance_name)} "
             'prepare -s "$retrieve_path") || exit; printf "%s\\t%s\\n" "$request_id" "$path"'
         )
         command = (
@@ -393,7 +396,7 @@ class EosClientHost(DiskClientHost):
             raise ValueError("parallelism must be at least 1")
 
         worker = (
-            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss "
             f'xrdfs {shlex.quote(disk_instance_name)} prepare -a "$1" "$2"'
         )
         if isinstance(requests, PrepareRequests) and requests.remote_manifest is not None:
@@ -401,7 +404,7 @@ class EosClientHost(DiskClientHost):
             # every request into the outer shell command, which would exceed ARG_MAX for large directories.
             manifest_worker = (
                 'tab=$(printf "\\t"); request_id=${1%%"$tab"*}; path=${1#*"$tab"}; '
-                f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss "
                 f'xrdfs {shlex.quote(disk_instance_name)} prepare -a "$request_id" "$path"'
             )
             self.exec(
@@ -482,7 +485,7 @@ class EosClientHost(DiskClientHost):
 
     def _evict_worker(self, disk_instance_name: str, user: str) -> str:
         return (
-            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 "
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss eos -r 0 0 "
             f'root://{shlex.quote(disk_instance_name)} file drop "$1" 1 >/dev/null'
         )
 
@@ -523,7 +526,7 @@ class EosClientHost(DiskClientHost):
 
     def _delete_worker(self, disk_instance_name: str, user: str) -> str:
         return (
-            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"XrdSecsssKT=/etc/eos/client/{shlex.quote(user)}.keytab XrdSecPROTOCOL=sss "
             f'eos root://{shlex.quote(disk_instance_name)} rm -rf --no-confirmation "$1" >/dev/null'
         )
 
@@ -562,7 +565,7 @@ class EosClientHost(DiskClientHost):
         num_dirs: int,
         num_procs: int,
         *,
-        krb5_cache: str = "/tmp/poweruser1/krb5cc_0",
+        sss_keytab: str = "/etc/eos/client/poweruser1.keytab",
         activity: str = "T0Reprocess",
     ) -> asyncio.Future[ExecResult]:
         """Start retrieve (prepare/stage-in) asynchronously. Returns a future that can be awaited."""
@@ -572,7 +575,7 @@ class EosClientHost(DiskClientHost):
             f"--dest-dir {dest_dir} "
             f"--num-dirs {num_dirs} "
             f"--num-procs {num_procs} "
-            f"--krb5-cache {krb5_cache} "
+            f"--sss-keytab {shlex.quote(sss_keytab)} "
             f"--activity {activity}"
         )
         return self.exec_async(cmd)

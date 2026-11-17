@@ -365,7 +365,7 @@ def test_evict(
     # Generate the known paths remotely to avoid one Kubernetes exec connection per batch.
     prefix = shlex.quote(str(archive_directory / "0" / "file_"))
     worker = (
-        "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+        "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss "
         f'xrdfs {shlex.quote(disk_instance_name)} prepare -e "$@"'
     )
     eos_client.exec(
@@ -441,7 +441,7 @@ def test_multiple_retrieve(
         for path in paths:
             # Exercise the XRootD attribute interface as well as the counter semantics.
             output = eos_client.exec_with_output(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss "
                 f"xrdfs {shlex.quote(disk_instance_name)} xattr {shlex.quote(str(path))} "
                 "get sys.retrieve.evict_counter"
             )
@@ -563,7 +563,9 @@ class TestPrepare:
             prepare_test_paths.no_prepare_dir / str(uuid.uuid4()) for _ in range(2 if all_forbidden else 1)
         ]
         for path in forbidden_files:
-            eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
+            eos_client.exec(
+                f"XrdSecsssKT=/etc/eos/client/user1.keytab xrdcp /etc/group root://{disk_instance_name}/{path}"
+            )
         # A mixed request succeeds overall, while a request with no valid path fails
         paths = forbidden_files if all_forbidden else [prepare_test_paths.tape_file, forbidden_files[0]]
         if all_forbidden:
@@ -657,7 +659,9 @@ class TestPrepare:
         forbidden_files = [prepare_test_paths.no_prepare_dir / str(uuid.uuid4()) for _ in range(4)]
         missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(4)]
         for path in forbidden_files:
-            eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
+            eos_client.exec(
+                f"XrdSecsssKT=/etc/eos/client/user1.keytab xrdcp /etc/group root://{disk_instance_name}/{path}"
+            )
         paths = tape_files + forbidden_files + missing_files
         # Submit all path categories together and validate every response entry
         result = eos_client.prepare_files(disk_instance_name, paths)
@@ -741,7 +745,7 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
     # and the namespace entry without ever queueing an archive request.
     test_directory = test_dir / "fail_on_closew_test"
     test_file = test_directory / str(uuid.uuid4())
-    eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 root://{disk_instance_name}"
+    eos_admin = f"XrdSecsssKT=/etc/eos/client/eosadmin1.keytab eos -r 0 0 root://{disk_instance_name}"
 
     # Configure a storage class that makes the CLOSEW workflow fail before CTA queues an archive request
     print("The following cleanup command may fail because the test directory is normally absent")
@@ -753,7 +757,7 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
         # Writing the file must fail and trigger EOS's delete-on-close handling
         print("The following archive is expected to fail and trigger delete-on-close handling")
         copy_result = eos_client.exec(
-            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
+            f"XrdSecsssKT=/etc/eos/client/user1.keytab xrdcp /etc/group root://{disk_instance_name}/{test_file}",
             capture_output=True,
             throw_on_failure=False,
         )
@@ -778,7 +782,7 @@ def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name:
     eos_client.exec(f"truncate -s 0 '{source_path}'")
     print("The following archive is expected to fail because zero-length files are forbidden")
     result = eos_client.exec(
-        f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp '{source_path}' root://{disk_instance_name}/{destination_path}",
+        f"XrdSecsssKT=/etc/eos/client/user1.keytab xrdcp '{source_path}' root://{disk_instance_name}/{destination_path}",
         capture_output=True,
         throw_on_failure=False,
     )
@@ -800,7 +804,7 @@ class TestEosEvict:
         eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
         file_info = json.loads(
             eos_client.exec_with_output(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss "
                 f"eos --json root://{disk_instance_name} info '{file_path}'"
             )
         )
@@ -811,7 +815,7 @@ class TestEosEvict:
         # A normal eviction must fail while no tape replica exists
         print("The following eviction is expected to fail because the file has no tape replica")
         result = eos_client.exec(
-            "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss "
             f"eos root://{disk_instance_name} evict '{file_path}'",
             throw_on_failure=False,
         )
@@ -820,7 +824,7 @@ class TestEosEvict:
         # Selecting the disk FSID and bypassing the counter must still fail without a tape replica
         print("The following forced eviction is expected to fail because the file has no tape replica")
         result = eos_client.exec(
-            "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss "
             f"eos root://{disk_instance_name} evict --ignore-evict-counter --fsid {disk_fsid} '{file_path}'",
             throw_on_failure=False,
         )
@@ -844,13 +848,13 @@ class TestEosEvict:
         for expected_counter in range(3, 0, -1):
             attributes = json.loads(
                 eos_client.exec_with_output(
-                    "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                    "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss "
                     f"eos --json root://{disk_instance_name} attr get sys.retrieve.evict_counter '{file_path}'"
                 )
             )
             assert int(attributes["attr"]["get"][0]["sys"]["retrieve"]["evict_counter"]) == expected_counter
             eos_client.exec(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss "
                 f"eos root://{disk_instance_name} evict '{file_path}'"
             )
 
@@ -870,8 +874,10 @@ class TestEosEvict:
         file_path = eos_client.generate_and_archive_file(
             disk_instance_name, test_dir / "eos_evict_fsid", append_uid=True
         )
-        eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://{disk_instance_name}"
-        eos_power = "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 eos"
+        eos_admin = (
+            f"XrdSecsssKT=/etc/eos/client/eosadmin1.keytab XrdSecPROTOCOL=sss eos -r 0 0 root://{disk_instance_name}"
+        )
+        eos_power = "XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss eos"
 
         try:
             # Add three dummy filesystems and advertise replicas on them in the namespace
@@ -936,7 +942,7 @@ def test_eos_immutable_file(
     eos_client.copy_to(remote_scripts_dir / "eos_client" / script.name, script)
     file_url = f"root://{disk_instance_name}/{test_dir}/immutable_file_{uuid.uuid4().hex}"
     # Select the writer, leaving XRootD protocol negotiation enabled for the MGM-to-FST redirect.
-    eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 python3 {script} {shlex.quote(file_url)}")
+    eos_client.exec(f"XrdSecsssKT=/etc/eos/client/user1.keytab python3 {script} {shlex.quote(file_url)}")
 
 
 def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:

@@ -16,12 +16,27 @@ pip install --no-cache-dir --no-deps --only-binary :all: pyjwt cryptography cffi
 
 # --- SSS Keytabs --- #
 
+# Each EOS test identity has a distinct key, also accepted by the EOS servers.
+# Keep the service key last: XRootD clients select the last distinct key in a keytab.
+# This preserves daemon authentication for EOS internals, taped and maintd.
+: > "$SECRETS_DIR/eos.keytab"
+sss_key_id=100
+for identity in user1:eosusers poweruser1:powerusers eosadmin1:eosadmins ctaadmin2:ctaadmins; do
+  sss_user=${identity%%:*}
+  sss_group=${identity#*:}
+  sss_key=$(openssl rand -hex 32)
+  printf '0 u:%s g:%s n:eos-%s N:%s c:1762534677 e:0 f:0 k:%s\n' \
+    "$sss_user" "$sss_group" "$sss_user" "$sss_key_id" "$sss_key" > "$SECRETS_DIR/eos-$sss_user.keytab"
+  cat "$SECRETS_DIR/eos-$sss_user.keytab" >> "$SECRETS_DIR/eos.keytab"
+  sss_key_id=$((sss_key_id + 1))
+done
+
 # Generated using:
 #   echo y | xrdsssadmin -k ctaeos+ -u daemon -g daemon add /tmp/eos.keytab
 # Note that this hardcoded keytab is only for CI/dev purposes
 # The reason that this is hardcoded is that xrdsssadmin requires xrootd-server which takes quite long to install
 # That would slow down the CI startup significantly...
-echo "0 u:daemon g:daemon n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k:468153fa4be9a871c7f7e1fa3aefbfeb12d3f0a99ff4a18f9b6ebe3d3abacbc1" > $SECRETS_DIR/eos.keytab
+echo "0 u:daemon g:daemon n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k:468153fa4be9a871c7f7e1fa3aefbfeb12d3f0a99ff4a18f9b6ebe3d3abacbc1" >> $SECRETS_DIR/eos.keytab
 # Same as above, but changing the user and group to the eos instance name
 echo "0 u:ctaeos g:ctaeos n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k:468153fa4be9a871c7f7e1fa3aefbfeb12d3f0a99ff4a18f9b6ebe3d3abacbc1" > $SECRETS_DIR/cta-frontend.keytab
 

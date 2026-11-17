@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Check EOS immutable-file open modes from a pod with XRootD and Kerberos credentials."""
+"""Check EOS immutable-file open modes from a pod with XRootD and SSS credentials."""
 
 import argparse
 

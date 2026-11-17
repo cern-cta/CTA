@@ -88,13 +88,13 @@ Easy, right? Let's archive a bunch more files with random data, just for fun (an
 ### Preparing a file for retrieval
 
 Now we will be asking CTA to "recover" a file from tape and make it available on the EOS buffer.
-But first of all, let's set our kerberos-relate environment config so that the EOS client can authenticate.
+Select the power user's SSS keytab in the EOS client pod.
+The development deployment provisions separate SSS keys for the test users; commands default to `user1`.
 
 !!! terminal "client"
 
     ```console
-    # export KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5
-    # kinit -kt /root/poweruser1.keytab poweruser1@TEST.CTA
+    # export XrdSecsssKT=/etc/eos/client/poweruser1.keytab XrdSecPROTOCOL=sss
     ```
 
 Now we should be a power user on `ctaeos`.
@@ -134,7 +134,7 @@ At this point you can finally retrieve the contents of the file:
 !!! terminal "client"
 
     ```console
-    # unset KRB5CCNAME XrdSecPROTOCOL # back to regular user
+    # export XrdSecsssKT=/etc/eos/client/user1.keytab # back to regular user
     # xrdcp root://ctaeos//eos/ctaeos/cta/cheese.txt - | less
     ```
 

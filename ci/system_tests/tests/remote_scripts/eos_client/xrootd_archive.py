@@ -49,7 +49,7 @@ def worker(
     file_size: int,
     write_in_chunks: bool,
 ) -> None:
-    # Import here so the Kerberos environment is set before XRootD is loaded.
+    # Import here so the SSS environment is set before XRootD is loaded.
     from XRootD import client  # type: ignore[reportMissingImports]
     from XRootD.client.flags import OpenFlags  # type: ignore[reportMissingImports]
 
@@ -135,15 +135,9 @@ def main() -> None:
     if args.file_size < HEADER_SIZE:
         raise ValueError(f"File size must be >= {HEADER_SIZE} bytes")
 
-    # For now, use Kerberos authentication for copying/archival. Testing showed no
-    # significant performance difference between Kerberos and SSS. To switch to
-    # SSS in the future, configure the keytab and protocol before starting workers:
-    # os.environ["XrdSecsssKT"] = "/etc/eos.keytab"
-    # os.environ["XrdSecPROTOCOL"] = "sss"
-    # os.environ.setdefault("XRD_LOGLEVEL", "Error")
-    #
-    # Match the established xrdcp archival path: write files as user1 via Kerberos.
-    os.environ["KRB5CCNAME"] = "/tmp/user1/krb5cc_0"
+    # Set credentials before importing XRootD in the workers.
+    os.environ["XrdSecPROTOCOL"] = "sss"  # noqa: SIM112 - XRootD requires this exact mixed-case name
+    os.environ["XrdSecsssKT"] = "/etc/eos/client/user1.keytab"  # noqa: SIM112
 
     # Launch workers
     work_q = mp.JoinableQueue()

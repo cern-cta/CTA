@@ -20,15 +20,8 @@ server:
       secret: eos-keytab
 
   mgm:
-    # Must match the authentication chart
     kerberos:
-      enabled: true
-      clientConfig:
-        configMap: krb5-conf
-      defaultRealm: TEST.CTA
-      adminPrinc:
-        name: root
-        password: "defaultcipassword"
+      enabled: false
 
     # Ensure we can delete the pods quickly in CI
     pod:
@@ -120,6 +113,7 @@ client:
     tag: ""
     pullPolicy: IfNotPresent
     pullSecrets: []
+  # Keys are provisioned by the auth chart; identities are defined in setup_eos_test.py.
   users:
     - user1
     - eosadmin1
