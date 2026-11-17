@@ -14,5 +14,5 @@ Use `infra/external.yaml` when no local database or scheduler storage is needed.
 Compose the PostgreSQL scheduler preset before its external-connection override.
 Likewise, apply common stress settings before PostgreSQL stress tuning.
 
-See the [cta-dev reference](../../../docs/content/dev/guides/tools-and-environment/cta-dev.md) for defaults and deployment examples.
+See the [cta-dev reference](../../../docs/content/dev/guides/tools-and-environment/cta-dev.md) for defaults and deployment examples, including [external database connections](../../../docs/content/dev/guides/tools-and-environment/cta-dev.md#connect-to-an-external-database).
 Follow [Helm & Orchestration Conventions](../../../docs/content/dev/guides/conventions/orchestration.md) when changing deployment values.
