@@ -6,6 +6,7 @@
 # =========================================================================
 
 
+import shlex
 import time
 from pathlib import Path
 
@@ -131,7 +132,8 @@ def test_create_cta_directory(
 # - eosadmin1 is an EOS sudo user used for namespace administration, token generation, and privileged eviction
 # - poweruser1 has explicit read/write/prepare/delete rights and is used for staging, releasing, and cleanup
 # - user1 is the regular eosusers archive writer; it can create files but is explicitly denied deletion
-def test_sss_eos_clients(env: TestEnv) -> None:
+def test_sss_eos_clients(env: TestEnv, eos_mgm: EosMgmHost) -> None:
+    eos_url = shlex.quote(f"root://{eos_mgm.instance_name}")
     identities = {
         "user1": (11001, 1100),
         "poweruser1": (12001, 1200),
@@ -141,19 +143,19 @@ def test_sss_eos_clients(env: TestEnv) -> None:
     for eos_client in env.eos_client:
         for user, (uid, gid) in identities.items():
             identity = eos_client.exec_with_output(
-                f"XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/{user}.keytab eos whoami"
+                f"XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/{user}.keytab eos {eos_url} whoami"
             )
             assert f"uid={uid} " in identity, identity
             assert f"gid={gid} " in identity, identity
             assert "[authz:sss]" in identity, identity
 
         # Interactive commands and commands without an explicit keytab use user1.
-        identity = eos_client.exec_with_output("eos whoami")
+        identity = eos_client.exec_with_output(f"eos {eos_url} whoami")
         assert "uid=11001 " in identity, identity
         assert "[authz:sss]" in identity, identity
 
         identity = eos_client.exec_with_output(
-            "XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/eosadmin1.keytab eos -r 0 0 whoami"
+            f"XrdSecPROTOCOL=sss XrdSecsssKT=/etc/eos/client/eosadmin1.keytab eos -r 0 0 {eos_url} whoami"
         )
         assert "uid=0 " in identity, identity
         assert "gid=0 " in identity, identity
