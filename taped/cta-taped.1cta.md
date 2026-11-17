@@ -86,7 +86,7 @@ Restart the service to apply changes.
 Use **\--config-check**, with **\--config-strict** when required, to validate a file before starting the service.
 
 The annotated example `/usr/share/doc/cta-taped/examples/cta-taped.example.toml` is the complete settings reference, including defaults, required values and feature selection.
-The packaged example matches the compiled scheduler backend; the online guide provides both objectstore and PostgreSQL variants.
+
 See the CERN Tape Archive documentation for configuration examples, operational guidance and shared runtime rules.
 
 # ENVIRONMENT
