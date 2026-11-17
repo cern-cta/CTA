@@ -79,15 +79,18 @@ struct FeatureTestConfig {
 }  // namespace
 
 TEST(CommonConfig, FeatureDescriptorsSupportSectionsAndStandaloneFeatures) {
+  enum class Feature { Reporting, Cleanup };
+
   struct Config {
     std::optional<cta::runtime::TelemetryConfig> reporting = cta::runtime::TelemetryConfig {"/otel.yaml", "warn"};
   } config;
 
-  constexpr auto cleanup = cta::runtime::stableFeature("cleanup");
-  const auto features = std::tuple {cta::runtime::stableFeature("reporting", &Config::reporting), cleanup};
+  constexpr auto cleanup = cta::runtime::stableFeature(Feature::Cleanup, "cleanup");
+  const auto features =
+    std::tuple {cta::runtime::stableFeature(Feature::Reporting, "reporting", &Config::reporting), cleanup};
   const auto enabled = cta::runtime::featureNames(features);
   EXPECT_EQ(enabled, (std::vector<std::string> {"reporting", "cleanup"}));
-  EXPECT_TRUE(cta::runtime::featureEnabled(enabled, cleanup));
+  EXPECT_TRUE(cta::runtime::featureEnabled(enabled, Feature::Cleanup, features));
   EXPECT_TRUE(cta::runtime::validateFeatureSelection(config, enabled, features).ok());
   EXPECT_TRUE(cta::runtime::validateFeatureSelection(config, {"cleanup"}, features).ok());
   config.reporting.reset();
@@ -132,21 +135,6 @@ TEST(CommonConfig, FeatureSelectionIsValidatedInBothModes) {
   }
 }
 
-TEST(CommonConfig, FeatureDescriptorsUseTheirDeclaredSelectionList) {
-  FeatureTestConfig config;
-  const auto& telemetry = std::get<0>(FeatureTestConfig::features);
-  const auto& health = std::get<1>(FeatureTestConfig::features);
-  config.enabled_features = {"telemetry"};
-  config.enabled_experimental_features = {"health_server"};
-  EXPECT_FALSE(cta::runtime::featureEnabled(config, telemetry));
-  EXPECT_FALSE(cta::runtime::featureEnabled(config, health));
-
-  config.enabled_features = {"health_server"};
-  config.enabled_experimental_features = {"telemetry"};
-  EXPECT_TRUE(cta::runtime::featureEnabled(config, telemetry));
-  EXPECT_TRUE(cta::runtime::featureEnabled(config, health));
-}
-
 TEST(CommonConfig, EnumFeatureLookupUsesIdentityAndDeclaredSelectionList) {
   using Feature = FeatureTestConfig::Feature;
   FeatureTestConfig config;
@@ -169,17 +157,17 @@ TEST(CommonConfig, EnumFeatureLookupUsesIdentityAndDeclaredSelectionList) {
   EXPECT_FALSE(cta::runtime::featureEnabled(config, static_cast<Feature>(99)));
 }
 
-TEST(CommonConfig, WrongFeatureListExplainsHowToMigrate) {
+TEST(CommonConfig, WrongFeatureListReportsUnsupportedName) {
   FeatureTestConfig config;
   config.enabled_features = {"telemetry"};
   const auto experimental = cta::runtime::validateFeatures(config);
-  EXPECT_NE(experimental.what().find("feature 'telemetry' must be listed in enabled_experimental_features"),
-            std::string::npos);
+  EXPECT_NE(experimental.what().find("Field 'enabled_features' unsupported feature 'telemetry'"), std::string::npos);
 
   config.enabled_features.clear();
   config.enabled_experimental_features = {"health_server"};
   const auto stable = cta::runtime::validateFeatures(config);
-  EXPECT_NE(stable.what().find("feature 'health_server' must be listed in enabled_features"), std::string::npos);
+  EXPECT_NE(stable.what().find("Field 'enabled_experimental_features' unsupported feature 'health_server'"),
+            std::string::npos);
 }
 
 TEST(CommonConfig, InactiveSectionsAreParsedAndRetained) {
