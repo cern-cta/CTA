@@ -1,6 +1,31 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Package downloads fail as script_failure, just like build and test errors.
+# Opt in only where one full job retry is an acceptable tradeoff.
+.retry-script-failure:
+  retry:
+    max: 1
+    # Job retry settings replace the default, so retain the runner failure reasons.
+    when:
+      - runner_system_failure
+      - runner_external_dependency_failure
+      - runner_interrupted
+      - api_failure
+      - script_failure
+
+# Package-install commands use "|| exit 75" to request one GitLab job retry.
+# Test commands keep their ordinary exit status and are not retried.
+.retry-package-install:
+  retry:
+    max: 1
+    when:
+      - runner_system_failure
+      - runner_external_dependency_failure
+      - runner_interrupted
+      - api_failure
+    exit_codes: 75
+
 .python-version:
   before_script:
     - !reference [.merge-train-guard, before_script]
