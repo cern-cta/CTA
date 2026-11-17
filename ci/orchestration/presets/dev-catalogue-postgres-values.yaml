@@ -1,11 +1,16 @@
 # SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-backend: postgres
-postgresConfig:
-  remote: false
-  username: cta
-  password: cta
-  database: cta
-  path: /var/lib/postgresql/data/pgdata
-  server: cta-catalogue-postgres-db
+global:
+  catalogue:
+    existingSecret: cta-catalogue-conf
+
+postgres:
+  instances:
+    cta-catalogue-postgres-db:
+      database: cta
+      username: cta
+      secretName: cta-catalogue-conf
+      extraSecretData:
+        cta-catalogue.conf: 'postgresql:{{ .connection.uri }}'

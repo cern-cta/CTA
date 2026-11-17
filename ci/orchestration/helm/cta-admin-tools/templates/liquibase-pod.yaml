@@ -1,0 +1,74 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if .Values.liquibase.enabled }}
+{{- $name := "liquibase-update" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Release.Name }}-liquibase
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  imagePullSecrets:
+  {{- range .Values.liquibase.image.pullSecrets }}
+  - name: {{ . }}
+  {{- end }}
+  containers:
+  - name: {{ $name }}
+    image: "{{ .Values.liquibase.image.repository }}:{{ .Values.liquibase.image.tag }}"
+    imagePullPolicy: {{ .Values.liquibase.image.pullPolicy }}
+    stdin: true
+    securityContext:
+      allowPrivilegeEscalation: False
+    {{- if $.Values.resources }}
+    resources:
+      {{-  toYaml $.Values.resources | nindent 10 }}
+    {{- end }}
+    # This sets up the script used in the liquibase update test
+    command: ["/bin/bash", "-c"]
+    args:
+    - |
+      echo "#!/bin/bash" > /launch_liquibase.sh
+      echo "COMMAND=\$1" >> /launch_liquibase.sh
+      echo "/entrypoint.sh --disable-schema-verify -f '{{ .Values.liquibase.catalogueSourceVersion }}' -t '{{ .Values.liquibase.catalogueDestinationVersion }}' {{ .Values.liquibase.extraFlags }} -c \"\$COMMAND\"" >> /launch_liquibase.sh
+      chmod +x /launch_liquibase.sh
+      sleep infinity
+    readinessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - "-c"
+          - "test -f /launch_liquibase.sh"
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 2
+      failureThreshold: 3
+      successThreshold: 1
+    env:
+    - name: TERM
+      value: "xterm"
+    volumeMounts:
+    {{- if .Values.liquibase.customRepoFiles }}
+    - name: yum-repos
+      mountPath: /shared/etc_yum.repos.d
+    {{- end }}
+    - name: catalogue-config
+      mountPath: /shared/etc_cta/cta-catalogue.conf
+      subPath: cta-catalogue.conf
+  volumes:
+  {{- if .Values.liquibase.customRepoFiles }}
+  - name: yum-repos
+    configMap:
+      name: yum.repos.d-config
+  {{- end }}
+  - name: catalogue-config
+    secret:
+      secretName: {{ .Values.global.catalogue.existingSecret }}
+
+{{- end }}

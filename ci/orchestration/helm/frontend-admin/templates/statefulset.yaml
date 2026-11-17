@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 {{- if and .Values.enabled }}
 {{- $name := include "ctafrontend.fullname" . }}
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $schedulerConfig := .Values.global.scheduler -}}
 {{- $jwtRevokeListPath := include "ctafrontend.jwtRevokeList" . }}
 apiVersion: apps/v1
 kind: StatefulSet
@@ -78,22 +78,6 @@ spec:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
         env:
-        - name: MY_NAME
-          value: {{ $name }}
-        - name: MY_NAMESPACE
-          value: {{ .Release.Namespace | quote }}
-        - name: INSTANCE_NAME
-          value: {{ .Release.Namespace | quote }}
-        - name: SCHEDULER_BACKEND
-          value: {{ $schedulerConfig.backend | quote }}
-        {{- if eq $schedulerConfig.backend "ceph" }}
-        - name: SCHEDULER_CEPH_NAMESPACE
-          value: {{ $schedulerConfig.cephConfig.namespace | quote }}
-        - name: SCHEDULER_CEPH_ID
-          value: {{ $schedulerConfig.cephConfig.id | quote }}
-        - name: SCHEDULER_CEPH_POOL
-          value: {{ $schedulerConfig.cephConfig.pool | quote }}
-        {{- end }}
         - name: TERM
           value: "xterm"
         {{- with .Values.extraEnv }}
@@ -105,21 +89,8 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
-        - name: scheduler-config
-          mountPath: /etc/cta/cta-scheduler.conf
-          subPath: cta-scheduler.conf
-        {{- if eq $schedulerConfig.backend "ceph" }}
-        - name: cta-ceph-volume
-          mountPath: /etc/ceph/ceph.conf
-          subPath: ceph.conf
-        - name: cta-ceph-volume
-          mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
-          subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
-        {{- end }}
-        {{- if eq $schedulerConfig.backend "vfs" }}
-        - name: vfs-storage-volume
-          mountPath: /objectstore
-        {{- end }}
+        {{- include "common.scheduler.mounts" $schedulerConfig | nindent 8 }}
+
         - name: frontend-config
           mountPath: /etc/cta/cta-admin-api.toml
           subPath: cta-admin-api.toml
@@ -157,21 +128,9 @@ spec:
           name: cta-frontend-admin-scripts
           defaultMode: 0777
       - name: catalogue-config
-        configMap:
-          name: cta-catalogue-conf
-      - name: scheduler-config
-        configMap:
-          name: cta-scheduler-conf
-      {{- if eq $schedulerConfig.backend "ceph" }}
-      - name: cta-ceph-volume
-        configMap:
-          name: ceph-conf
-      {{- end }}
-      {{- if eq $schedulerConfig.backend "vfs" }}
-      - name: vfs-storage-volume
-        persistentVolumeClaim:
-          claimName: scheduler-vfs-pvc
-      {{- end }}
+        secret:
+          secretName: {{ $.Values.global.catalogue.existingSecret }}
+      {{- include "common.scheduler.volumes" $schedulerConfig | nindent 6 }}
       - name: frontend-config
         configMap:
           name: cta-frontend-admin-conf

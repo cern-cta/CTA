@@ -156,6 +156,134 @@ cta-dev deploy \
   --cta-config /path/to/base-values.yaml,/path/to/feature-values.yaml
 ```
 
+### CI chart responsibilities
+
+The deployment harness installs infrastructure, persistent tools and CTA services as separate Helm releases.
+
+| Release | Chart | Responsibility |
+| --- | --- | --- |
+| `ci-infra` | `ci-infra` | Disposable PostgreSQL 17 instances, KDC, test credentials, connection Secrets, VFS storage and optional local telemetry. |
+| `cta-tools` | `cta-admin-tools` | Persistent direct database tools (`database.enabled`) and API client (`client.enabled`). |
+| `cta` | `cta` | Long-running CTA services. |
+| `store` | `dcache` | dCache services consuming the database provisioned by `ci-infra`. |
+
+Prometheus and the OpenTelemetry collector are pinned dependencies of `ci-infra`, disabled by default through `prometheus.enabled` and `otel.enabled`.
+`--local-telemetry` loads `presets/dev-telemetry-infra-values.yaml`, enabling and configuring both.
+Either dependency can be disabled independently in an override.
+They share the infrastructure release lifecycle and readiness wait; there are no separate telemetry releases.
+The preset preserves the existing collector and Prometheus service names used by CTA, scraping and cleanup.
+`--publish-telemetry` still configures the external backend without enabling local telemetry.
+Dependency preparation fetches the pinned external charts even when disabled; the other CTA charts retain local-only dependency preparation.
+
+The catalogue and scheduler files are ordinary Helm values, passed with `--values`.
+`ci-infra` provisions named resources without interpreting catalogue, scheduler or disk-system backends.
+The presets in `ci/orchestration/presets/` request those resources and supply the CTA-specific connection files and public references.
+For example, this requests two independent PostgreSQL instances:
+
+```yaml
+postgres:
+  instances:
+    example-a: {}
+    example-b:
+      database: events
+      username: app
+```
+
+Each map key becomes the Service and StatefulSet name.
+The database and username default to that name; an instance can override them and the shared test password.
+Its credentials Secret defaults to `<name>-credentials`, or can be named with `secretName`.
+`extraSecretData` adds application-specific files using Helm templates with `.connection.host`, `.connection.database`, `.connection.username`, `.connection.password` and the URL-encoded `.connection.uri`.
+The catalogue preset uses `cta-catalogue.conf: 'postgresql:{{ .connection.uri }}'`; the PostgreSQL template itself knows nothing about CTA's connection-file format.
+
+`secretFiles` creates named Secrets for arbitrary files, including external database and Ceph connections.
+File names and contents support Helm templates.
+`persistentVolumeClaims` requests named claims with a size, storage class, access modes and optional annotations.
+The dCache infrastructure preset is included only when dCache is selected.
+The harness forwards public connection and storage references and maintenance settings to CTA and its administrative tools, not database credentials or provisioning settings.
+Scheduler presets include their required `maintd.routines`; the shell does not select additional maintenance presets.
+Creation applies the same composed CTA overrides to services and tools, and upgrades pass scheduler overrides to both releases.
+
+The service-facing contract is:
+
+```yaml
+global:
+  catalogue:
+    existingSecret: cta-catalogue-conf
+  scheduler:
+    backend: postgres
+    existingSecret: cta-scheduler-conf
+```
+
+The Secrets contain `cta-catalogue.conf` and `cta-scheduler.conf`, respectively, in the connection-file format understood by CTA.
+VFS also uses `global.scheduler.existingClaim`.
+Ceph bundles `cta-scheduler.conf`, `ceph.conf` and `ceph.client.<id>.keyring` in the same scheduler Secret.
+The chart mounts that Secret at `/etc/ceph` as well as mounting the connection file; the connection URL selects the client, pool and namespace.
+For external databases, omit the local PostgreSQL instance and reference an existing Secret, or supply the connection file through `secretFiles`.
+Oracle and Ceph connections use the same file mechanism; no special provisioning branch is needed in the chart.
+
+Each CI runner has its own Kubernetes cluster with runner Secrets in the `default` namespace.
+Provision the same Secret names on every runner, with that runner's connection files:
+
+```bash
+kubectl -n default create secret generic cta-ceph-scheduler-conf \
+  --from-file=cta-scheduler.conf --from-file=ceph.conf --from-file=ceph.client.runner.keyring
+kubectl -n default create secret generic cta-oracle-catalogue-conf --from-file=cta-catalogue.conf
+kubectl -n default create secret generic cta-stress-scheduler-conf --from-file=cta-scheduler.conf
+```
+
+Create only the Secrets needed by that runner's jobs.
+The Ceph connection file contains `rados://<client>@<pool>:<namespace>`; its client must match the keyring filename and identity.
+The Oracle catalogue and stress PostgreSQL scheduler files use CTA's native connection-file format.
+Keep credentials in these files and Secrets rather than Helm values.
+The repository presets reference these fixed Secret names.
+External Secret names differ from locally provisioned database Secrets so both can coexist on a runner.
+The existing Secret copy loop copies available runner Secrets from `default` into the disposable test namespace before bootstrap.
+Provision the required Secrets and file keys before running the corresponding jobs.
+Namespace cleanup already preserves `default`; existing test namespaces keep their copied credentials until recreated.
+Provision these Secrets before switching runners to this branch; the former `/opt/kubernetes/CTA` values files are no longer read.
+CI reset flags still reset the selected external catalogue and scheduler, so each runner's connections must select its own disposable test state.
+
+Legacy host-directory VFS support has been removed.
+The local VFS preset requires the `local-path` StorageClass; alternatively, provide a preset referencing another PVC.
+
+The PostgreSQL instances share one template but run independently, with explicit ephemeral data volumes.
+Deleting or replacing a database pod loses its data; this chart is for disposable CI environments.
+The VFS PVC can use delayed binding, so the harness installs infrastructure without waiting, then installs the tools with `--wait` to provide its first consumer.
+Once the tools are ready, a Helm upgrade of infrastructure with `--reuse-values --wait --wait-for-jobs` waits for database services, KDC and credential generation.
+
+The harness installs `cta-tools` once.
+After infrastructure is ready, it runs the requested reset scripts synchronously with `kubectl exec`, before starting CTA services.
+The tools container starts without contacting CTA services or requiring an initialized schema.
+The `--reset-catalogue` and `--reset-scheduler` flags select `reset_catalogue.sh` and `reset_scheduler.sh`, respectively.
+Each script clears old state and initializes it.
+Without a reset flag, the corresponding script is skipped and existing state is left unchanged.
+Fresh databases and objectstores need the corresponding reset flags.
+Catalogue creation accepts `--catalogue-version`, including `latest`.
+Each command has a 240-second timeout; any failure stops deployment before CTA services are installed.
+Command output is captured in the deployment/CI log rather than a separate Kubernetes Job log.
+Helm upgrades never execute initialization or resets.
+
+The tools remain available for tests and later administration, which invoke the native CTA commands directly.
+For example:
+
+```bash
+kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
+  cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
+```
+
+The API client remains a separate workload in the same release, configured by the `cli` section of the composed CTA values.
+The admin and API client workloads share the tools chart's `image` settings, with consistent `global.image` overrides; there is no separate `cli.image`.
+The infrastructure credential-generation Job also remains in place so an ordinary infrastructure upgrade does not regenerate credentials.
+A partially failed credential provisioning run requires recreating the disposable environment.
+
+Enabling `liquibase.enabled` creates a pod exposing `/launch_liquibase.sh` for the schema test's tag/update/rollback sequence.
+It uses its own `liquibase.image` and source/destination catalogue versions; tests invoke each command explicitly.
+The catalogue schema test uses this mode instead of a separate catalogue-updater chart.
+
+To validate these interfaces without deploying, run `pytest ci/checks/test_ci_charts.py` with Helm available.
+The infrastructure and dCache rendering checks need their pinned upstream charts in Helm's repository cache.
+Prepare them using `helm dependency update` in temporary copies of `ci-infra` and `dcache`; tests use cached archives without network access.
+
 ### EOS
 
 Override the EOS configuration or image for an EOS-backed test deployment:

@@ -1,9 +1,30 @@
 # SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-backend: "vfs"
-vfsConfig:
-  storageClass: local-path
-  accessModes:
-    - ReadWriteOnce
-  size: 10Gi
+global:
+  scheduler:
+    backend: vfs
+    existingSecret: cta-scheduler-conf
+    existingClaim: scheduler-vfs-pvc
+
+secretFiles:
+  cta-scheduler-conf:
+    cta-scheduler.conf: /objectstore
+
+persistentVolumeClaims:
+  scheduler-vfs-pvc:
+    storageClass: local-path
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+maintd:
+  routines:
+    garbageCollect:
+      replicas: 1
+      sleepIntervalSecs: 1
+    queueCleanup:
+      replicas: 1
+      sleepIntervalSecs: 1
+      batchSize: 500

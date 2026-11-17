@@ -1,11 +1,17 @@
-# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-backend: "ceph"
-cephConfig:
-  mon: "cephmond.cern.ch"
-  monport: "6790"
-  pool: "tapetest"
-  namespace: "cta-dev"
-  id: "cta-dev"
-  key: "KEY"
+global:
+  scheduler:
+    backend: ceph
+    existingSecret: cta-ceph-scheduler-conf
+
+maintd:
+  routines:
+    garbageCollect:
+      replicas: 1
+      sleepIntervalSecs: 1
+    queueCleanup:
+      replicas: 1
+      sleepIntervalSecs: 1
+      batchSize: 500

@@ -78,12 +78,6 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         env:
-        - name: MY_NAME
-          value: {{ $name }}
-        - name: MY_NAMESPACE
-          value: {{ .Release.Namespace | quote }}
-        - name: INSTANCE_NAME
-          value: {{ .Release.Namespace | quote }}
         - name: TERM
           value: xterm
         {{- with $client.extraEnv }}

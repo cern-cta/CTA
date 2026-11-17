@@ -7,7 +7,7 @@ image:
   tag: latest
 
 # Note that by default this chart does not enable any routines for the objectstore/scheduler cleanup
-# To do this, enable these explicitly by passing in another values file (see e.g. presets/dev-cta-maintd-*-values.yaml)
+# To do this, enable these explicitly by passing a scheduler preset (presets/*scheduler*-values.yaml)
 routines:
   # Note that the snake_case version of all these options (including the names)
   # should match the corresponding names in the maintd conf file

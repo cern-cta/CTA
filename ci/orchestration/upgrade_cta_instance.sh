@@ -25,10 +25,9 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file."
+  echo "  -o, --scheduler-config <file>:      Path to public scheduler values (global.scheduler only)."
   echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
-  echo "  -c, --catalogue-version <version>:  Set the catalogue schema version."
   echo "      --force:                        Force redeploy all pods in the CTA chart."
   echo
   exit 1
@@ -47,10 +46,7 @@ update_local_cta_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
     "common"
-    "auth"
-    "catalogue"
-    "scheduler"
-    "cli"
+    "cta-admin-tools"
     "frontend-wfe"
     "frontend-admin"
     "taped"
@@ -82,9 +78,6 @@ upgrade_instance() {
       -i|--cta-image-tag)
         cta_image_tag="$2"
         shift ;;
-      -c|--catalogue-version)
-        catalogue_schema_version="$2"
-        shift ;;
       --force)
         force=1
         ;;
@@ -104,30 +97,33 @@ upgrade_instance() {
   fi
 
 
-  helm_flags=""
+  # Connection overrides and image tags are shared by services and their administration tools.
+  shared_flags=()
+  cta_flags=()
   if [[ $force == 1 ]]; then
-    helm_flags+=" --force"
+    cta_flags+=(--force)
   fi
   if [[ -n "$cta_image_repository" ]]; then
-    helm_flags+=" --set global.image.repository=${cta_image_repository}"
+    cta_flags+=(--set "global.image.repository=${cta_image_repository}")
   fi
   if [[ -n "$cta_image_tag" ]]; then
-    helm_flags+=" --set global.image.tag=${cta_image_tag}"
-  fi
-  if [[ -n "$catalogue_schema_version" ]]; then
-    helm_flags+=" --set global.catalogueSchemaVersion=${catalogue_schema_version}"
+    shared_flags+=(--set "global.image.tag=${cta_image_tag}")
   fi
   if [[ -n "$scheduler_config" ]]; then
-    helm_flags+=" --set-file global.configuration.scheduler=${scheduler_config}"
+    shared_flags+=(--values "$scheduler_config")
   fi
 
   update_local_cta_chart_dependencies
   echo "Upgrading cta chart..."
   log_run helm upgrade cta helm/cta \
-                      --namespace ${namespace} \
+                      --namespace "$namespace" \
                       --wait --timeout 5m \
                       --reuse-values \
-                      ${helm_flags}
+                      "${shared_flags[@]}" "${cta_flags[@]}"
+
+  # Upgrades keep the same references without executing any reset scripts.
+  log_run helm upgrade cta-tools helm/cta-admin-tools --namespace "$namespace" \
+                      --reuse-values --wait --timeout 5m "${shared_flags[@]}"
 
 }
 

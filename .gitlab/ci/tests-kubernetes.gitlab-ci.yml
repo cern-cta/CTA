@@ -39,13 +39,13 @@ spec:
     CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-$[[ inputs.admin-api-authentication ]].yaml"
   - | # Which scheduler config to use
     if [[ "$SCHEDULER_TYPE" == "objectstore" ]]; then
-      SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
+      SCHEDULER_CONFIG=presets/dev-scheduler-ceph-values.yaml
     else
       SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
     fi
   - | # Which catalogue config to use
     if $ENABLE_ORACLE_SUPPORT; then
-      CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+      CATALOGUE_CONFIG=presets/ci-catalogue-oracle-values.yaml
     else
       CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
     fi
@@ -358,7 +358,7 @@ stress-test:
   script:
     - |
       if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+        SCHEDULER_CONFIG=presets/stress-scheduler-postgres-values.yaml
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"

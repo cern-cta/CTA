@@ -112,14 +112,15 @@ def test_init_catalogue_updater(
         )
         print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
 
-    extra_flags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
+    extra_flags = f"--set liquibase.extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
 
-    print("Install catalogue-updater chart...")
+    print("Install administrative tools for catalogue migration...")
     env.exec_local(
-        f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
-                                                        --set catalogueSourceVersion={catalogue_from_version} \
-                                                        --set catalogueDestinationVersion={catalogue_to_version} \
-                                                        {extra_flags} --wait --timeout 2m"
+        f"helm install catalogue-updater ../orchestration/helm/cta-admin-tools --namespace {namespace} "
+        f"--set liquibase.catalogueSourceVersion={catalogue_from_version} "
+        f"--set liquibase.catalogueDestinationVersion={catalogue_to_version} "
+        "--set liquibase.enabled=true "
+        f"--set liquibase.customRepoFiles=true {extra_flags} --wait --timeout 2m"
     )
 
 

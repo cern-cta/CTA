@@ -97,15 +97,13 @@ EOF
 }
 
 update_local_cta_chart_dependencies() {
-  # Local dependencies need no remote repositories; skip both index loading and refreshes.
+  # Only infrastructure has remote dependencies; the remaining charts use local sources.
 
   log_task "Updating Helm chart dependencies..."
+  helm dependency update helm/ci-infra --repository-config /dev/null > /dev/null
   charts=(
     "common"
-    "auth"
-    "catalogue"
-    "scheduler"
-    "cli"
+    "cta-admin-tools"
     "frontend-wfe"
     "frontend-admin"
     "taped"
@@ -118,6 +116,20 @@ update_local_cta_chart_dependencies() {
   done
 }
 
+# Only requested resets run; a failed reset prevents CTA services from starting.
+prepare_cta_databases() {
+  local namespace=$1 reset_catalogue=$2 reset_scheduler=$3 schema_version=$4
+  if [[ "$reset_catalogue" == true ]]; then
+    log_run kubectl -n "$namespace" exec deployment/cta-tools-admin -c admin -- \
+      env SCHEMA_VERSION="$schema_version" \
+      timeout 240 bash /scripts/reset_catalogue.sh || return 1
+  fi
+  if [[ "$reset_scheduler" == true ]]; then
+    log_run kubectl -n "$namespace" exec deployment/cta-tools-admin -c admin -- \
+      timeout 240 bash /scripts/reset_scheduler.sh || return 1
+  fi
+}
+
 create_instance() {
   check_deploy_commands
 
@@ -125,12 +137,12 @@ create_instance() {
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist
-  secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
+  # Copy available shared credentials and runner connections into the deployment namespace.
+  secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials"
+  secrets+=" cta-oracle-catalogue-conf cta-ceph-scheduler-conf cta-stress-scheduler-conf"
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
   cta_config="-f presets/dev-cta-common.yaml -f presets/frontend-wfe/auth-jwt.yaml -f presets/frontend-admin/auth-jwt.yaml"
-  prometheus_config="presets/dev-prometheus-values.yaml"
-  opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
   # By default keep the catalogue and keep the scheduler
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
@@ -246,13 +258,13 @@ create_instance() {
   if [[ "$reset_catalogue" == "true" ]]; then
     log_warn "Catalogue content will be reset."
   else
-    echo "Catalogue content will be kept."
+    echo "Catalogue will be left unchanged."
   fi
 
   if [[ "$reset_scheduler" == "true" ]]; then
     log_warn "Scheduler content will be reset."
   else
-    echo "Scheduler content will be kept."
+    echo "Scheduler will be left unchanged."
   fi
 
   SECONDS=0
@@ -270,34 +282,9 @@ create_instance() {
   fi
 
   if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then
-    if kubectl get sc local-path >/dev/null 2>&1; then
-      echo "Local path provisioning is enabled; using the VFS scheduler."
-    else
-      echo "==============================================================================="
-      log_warn "Local path provisioning is not enabled. Support for this configuration will be removed soon."
-      echo "==============================================================================="
-      echo
-      echo "Please follow these instructions to enable local path provisioning."
-      echo " 1. ssh into your machine as root"
-      echo " 2. navigate to the minikube_cta_ci repo you used to instantiate your dev machine"
-      echo " 3. Run: git pull"
-      echo " 4. Run: ./01_bootstrap_minikube.sh"
-      echo " 5. Reboot the machine"
-      echo "The storage-provisioner-rancher addon should now be enabled."
-      echo "This addon provides dynamic local path provisioning"
-      echo
-      echo "Alternatively if you prefer to do it manually:"
-      echo " 1. Run: minikube addons enable storage-provisioner-rancher"
-      echo " 2. Add this same line to /usr/local/bin/start_minikube.sh to ensure it persists over restarts"
-      echo
-      log_warn "Falling back to presets/dev-scheduler-vfs-deprecated-values.yaml."
-      echo "==============================================================================="
-      echo
-      echo
-      scheduler_config=presets/dev-scheduler-vfs-deprecated-values.yaml
-    fi
+    kubectl get sc local-path >/dev/null 2>&1 ||
+      die "The default VFS preset requires the local-path StorageClass. Enable the provisioner or select another preset."
   fi
-
 
   # Create the namespace
   log_task "Creating namespace ${namespace}..."
@@ -306,8 +293,11 @@ create_instance() {
   log_task "Copying secrets into namespace ${namespace}..."
   for secret_name in ${secrets}; do
     # If the secret exists...
-    if kubectl get secret "${secret_name}" &> /dev/null; then
-      kubectl get secret "${secret_name}" -o yaml | grep -v '^ *namespace:' | kubectl --namespace "${namespace}" create -f -
+    if kubectl --namespace default get secret "${secret_name}" &> /dev/null; then
+      kubectl --namespace default get secret "${secret_name}" -o json |
+        jq --arg namespace "$namespace" \
+          '{apiVersion, kind, type, data, metadata: {name: .metadata.name, namespace: $namespace}}' |
+        kubectl --namespace "${namespace}" create -f -
     fi
   done
 
@@ -315,71 +305,27 @@ create_instance() {
 
   log_task "Starting deployment..."
 
-  if [[ "$local_telemetry" == "true" ]]; then
-    log_task "Installing telemetry and Prometheus charts..."
-    helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-    # Keep the chart compatible with the collector image pinned in the default values.
-    helm install otel open-telemetry/opentelemetry-collector \
-          --version 0.128.0 \
-          --namespace "${namespace}" \
-          --values "${opentelemetry_collector_config}" \
-          --wait --timeout 2m
-    helm install prometheus prometheus-community/prometheus \
-          --namespace "${namespace}" \
-          --values "${prometheus_config}" \
-          --wait --timeout 2m
+  # Presets request infrastructure resources; the chart itself does not select application backends.
+  infra_flags=()
+  if [[ "$local_telemetry" == true ]]; then
+    infra_flags+=(--values presets/dev-telemetry-infra-values.yaml)
+  fi
+  if [[ "$dcache_enabled" == true ]]; then
+    infra_flags+=(--values presets/dev-dcache-infra-values.yaml)
   fi
 
-  # Note that some of these charts are installed in parallel
-  log_run helm upgrade --install auth helm/auth \
+  # Provision shared services first; schema operations belong to a separate tools release.
+  log_run helm upgrade --install ci-infra helm/ci-infra \
                                 --namespace "${namespace}" \
-                                --wait --wait-for-jobs --timeout 2m &
-  auth_pid=$!
+                                "${infra_flags[@]}" \
+                                --values "${catalogue_config}" \
+                                --values "${scheduler_config}" \
+                                --timeout 4m
 
-  log_run helm upgrade --install cta-catalogue helm/catalogue \
-                                --namespace "${namespace}" \
-                                --set resetImage.registry="${cta_image_registry}" \
-                                --set resetImage.tag="${cta_image_tag}" \
-                                --set schemaVersion="${catalogue_schema_version}" \
-                                --set resetCatalogue="${reset_catalogue}" \
-                                --set-file configuration="${catalogue_config}" \
-                                --wait --wait-for-jobs --timeout 4m &
-  catalogue_pid=$!
-
-  log_run helm upgrade --install cta-scheduler helm/scheduler \
-                                --namespace "${namespace}" \
-                                --set resetImage.registry="${cta_image_registry}" \
-                                --set resetImage.tag="${cta_image_tag}" \
-                                --set resetScheduler="${reset_scheduler}" \
-                                --set-file configuration="${scheduler_config}" \
-                                --wait --wait-for-jobs --timeout 4m &
-  scheduler_pid=$!
-
-  # The disk-buffer init containers need both the auth secrets and a responsive KDC.
-  # Waiting only for the secrets can make their first kadmin call race KDC startup.
-  wait $auth_pid || exit 1
-
-  if [[ $eos_enabled == "true" ]]; then
-    ./deploy_eos.sh --namespace "${namespace}" \
-                    --eos-config "${eos_config}" \
-                    --eos-image-repository "${eos_image_repository}" \
-                    --eos-image-tag "${eos_image_tag}" &
-    eos_pid=$!
-  fi
-
-  if [[ $dcache_enabled == "true" ]]; then
-    ./deploy_dcache.sh --namespace "${namespace}" \
-                       --dcache-image-repository "${dcache_image_repository}" \
-                       --dcache-image-tag "${dcache_image_tag}" &
-    dcache_pid=$!
-  fi
-
-
-  # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
-  wait $catalogue_pid || exit 1
-  wait $scheduler_pid || exit 1
-
+  consumer_values=$(mktemp)
+  trap 'rm -f "$consumer_values"' EXIT
+  helm get values ci-infra --namespace "$namespace" --all --output json | \
+    jq '{global: .global, maintd: (.maintd // {})}' > "$consumer_values"
   extra_cta_chart_flags=""
   if [[ "$dcache_enabled" == "true" ]]; then
     # The dCache CTA nearline-storage driver only supports mTLS.
@@ -391,23 +337,49 @@ create_instance() {
   if [[ "$publish_telemetry" == "true" ]]; then
     extra_cta_chart_flags+=" --values presets/ci-cta-telemetry-values.yaml"
   fi
-  # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
-  if grep -q "postgres" "$scheduler_config"; then
-    extra_cta_chart_flags+=" --values presets/dev-cta-maintd-postgres-values.yaml"
-  else
-    extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
-  fi
   if [[ "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "
   fi
 
+  # Install once: both the API client and direct database tools remain available after bootstrap.
+  log_run helm install cta-tools helm/cta-admin-tools \
+                       --namespace "${namespace}" \
+                       ${cta_config} \
+                       --values "$consumer_values" \
+                       --set database.enabled=true --set client.enabled=true \
+                       --set global.image.registry="${cta_image_registry}" \
+                       --set global.image.tag="${cta_image_tag}" \
+                       --wait --timeout 5m ${extra_cta_chart_flags}
+
+  # The tools now mount the VFS PVC, so Helm can wait for infrastructure without a binding deadlock.
+  log_run helm upgrade ci-infra helm/ci-infra --namespace "$namespace" \
+                       --reuse-values --wait --wait-for-jobs --timeout 4m
+  prepare_cta_databases "$namespace" "$reset_catalogue" "$reset_scheduler" "$catalogue_schema_version"
+
+  if [[ $eos_enabled == "true" ]]; then
+    ./deploy_eos.sh --namespace "${namespace}" \
+                    --eos-config "${eos_config}" \
+                    --eos-image-repository "${eos_image_repository}" \
+                    --eos-image-tag "${eos_image_tag}" &
+    eos_pid=$!
+  fi
+
+  if [[ $dcache_enabled == "true" ]]; then
+    dcache_database_secret=$(helm get values ci-infra --namespace "$namespace" --all --output json | \
+      jq -r .dcache.databaseSecret)
+    ./deploy_dcache.sh --namespace "${namespace}" \
+                       --database-secret "$dcache_database_secret" \
+                       --dcache-image-repository "${dcache_image_repository}" \
+                       --dcache-image-tag "${dcache_image_tag}" &
+    dcache_pid=$!
+  fi
 
   log_run helm upgrade --install cta helm/cta \
                                 --namespace "${namespace}" \
                                 ${cta_config} \
                                 --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
-                                --set-file global.configuration.scheduler="${scheduler_config}" \
+                                --values "$consumer_values" \
                                 -f "${taped_config}" \
                                 -f "${rmcd_config}" \
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}

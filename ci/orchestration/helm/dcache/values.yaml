@@ -4,6 +4,8 @@
 
 # Values for the upstream dCache dependency.
 dcache:
+  database:
+    existingSecret: dcache-database
   # Run ZooKeeper in the door instead of a separate service.
   zookeeper:
     embedded: true

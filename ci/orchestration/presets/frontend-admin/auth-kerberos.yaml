@@ -7,7 +7,7 @@ frontend-admin:
       methods:
         - kerberos
 
-cli:
+client:
   useGrpc: true
   conf:
     cta:

@@ -19,7 +19,7 @@ frontend-admin:
       # Disable recycle log quarantine for tests
       recycleLogQuarantineSecs: 0
 
-cli:
+client:
   useGrpc: true
   conf: null # set by more specific config
 

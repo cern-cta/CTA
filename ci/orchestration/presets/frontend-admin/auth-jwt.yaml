@@ -7,7 +7,7 @@ frontend-admin:
       methods:
         - jwt
 
-cli:
+client:
   useGrpc: true
   conf:
     cta:

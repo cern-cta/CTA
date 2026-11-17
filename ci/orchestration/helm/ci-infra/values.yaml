@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+secrets:
+  image: registry.cern.ch/docker.io/python:3.12-slim
+
+kerberos:
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:9.7
+  defaultRealm: TEST.CTA
+  adminPrinc:
+    name: root
+    password: "defaultcipassword"
+
+# Each map entry provisions an independent PostgreSQL instance and a credentials Secret.
+# The entry name is its Kubernetes Service/StatefulSet name. Database and username default to that name.
+postgres:
+  image: docker.io/postgres:17
+  # Test-only default, overridable per instance.
+  password: cta
+  resources: {}
+  # Entries may override database, username, password and secretName (default <entry-name>-credentials).
+  # extraSecretData adds files using Helm templates and .connection (host, database, username, password, uri).
+  instances: {}
+
+# Named Secrets containing arbitrary connection/configuration files; values support Helm templates.
+secretFiles: {}
+
+# Named PVCs: size, storageClass, accessModes (default ReadWriteOnce), and optional annotations.
+persistentVolumeClaims: {}
+
+# Enable and configure the local telemetry stack with dev-telemetry-infra-values.yaml.
+prometheus:
+  enabled: false
+otel:
+  enabled: false

@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+image:
+  registry: gitlab-registry.cern.ch
+  repository: cta/ctageneric/cta-tools
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: [reg-ctageneric]
+
+# Persistent tools do not initialize or reset anything on startup.
+database:
+  enabled: false
+
+resources: {}
+
+global:
+  image: {}
+  extraVolumes:
+    volumes: []
+    volumeMounts: []
+  securityContext: {}
+  kerberos:
+    clientConfig:
+      configMap: krb5-conf
+    defaultRealm: TEST.CTA
+    adminPrinc:
+      name: root
+      password: defaultcipassword
+
+  catalogue:
+    existingSecret: cta-catalogue-conf
+  scheduler:
+    backend: vfs
+    existingSecret: cta-scheduler-conf
+    existingClaim: scheduler-vfs-pvc
+
+liquibase:
+  enabled: false
+  image:
+    repository: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater
+    tag: alma9-base.2
+    pullPolicy: IfNotPresent
+    pullSecrets: [reg-eoscta-operations]
+  catalogueSourceVersion: ''
+  catalogueDestinationVersion: ''
+  extraFlags: ''
+  customRepoFiles: false
+
+# Tools using the CTA frontend API.
+client:
+  enabled: false
+  fullnameOverride: cta-cli
+  replicas: 1
+
+  conf:
+    cta:
+      endpoint: cta-frontend-admin:10956
+      grpc:
+        cta_admin_auth_method: jwt
+        tls:
+          chain_cert_path: /etc/grpc-certs/ca.crt.pem
+
+  krb5PrincName: ctaadmin1
+
+  pod:
+    extraSpec:
+      terminationGracePeriodSeconds: 1
+
+  extraVolumes:
+    volumeMounts: null
+    volumes: null

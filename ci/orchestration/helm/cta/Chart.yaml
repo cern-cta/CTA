@@ -15,9 +15,6 @@ dependencies:
   - name: frontend-wfe
     repository: "file://../frontend-wfe"
     version: 0.2.0
-  - name: cli
-    repository: "file://../cli"
-    version: 0.2.0
   - name: taped
     repository: "file://../taped"
     version: 0.2.0

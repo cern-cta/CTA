@@ -22,6 +22,7 @@ usage() {
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
   echo "  -r, --dcache-image-repository <repo>:   The dCache Docker image repository."
   echo "  -i, --dcache-image-tag <tag>:           The DCache Docker image tag."
+  echo "      --database-secret <name>:          Existing database connection Secret. Defaults to dcache-database."
   echo "      --dcache-config <file>:             Optional values file overriding the dCache chart defaults."
   echo
   exit 1
@@ -35,6 +36,7 @@ check_helm_installed() {
 }
 
 deploy() {
+  database_secret=dcache-database
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -47,6 +49,9 @@ deploy() {
         shift ;;
       -i|--dcache-image-tag)
         dcache_image_tag="$2"
+        shift ;;
+      --database-secret)
+        database_secret="$2"
         shift ;;
       --dcache-config)
         dcache_config="$2"
@@ -67,7 +72,7 @@ deploy() {
   fi
 
 
-  helm_flags=()
+  helm_flags=(--set-string "dcache.database.existingSecret=${database_secret}")
   if [[ -n "$dcache_image_repository" ]]; then
     dcache_image_registry="${dcache_image_repository%%/*}"
     dcache_image_name="${dcache_image_repository#*/}"

@@ -3,6 +3,12 @@
 
 # These settings are available to all the subcharts
 global:
+  catalogue:
+    existingSecret: cta-catalogue-conf
+  scheduler:
+    backend: vfs
+    existingSecret: cta-scheduler-conf
+    existingClaim: scheduler-vfs-pvc
   image:
     registry: gitlab-registry.cern.ch
     tag: ""
@@ -32,17 +38,11 @@ global:
       name: root
       password: "defaultcipassword"
 
-  # This shared mount is to be removed once vfsDeprecated is removed
   extraVolumes:
     volumes:
-      - name: shared
-        hostPath:
-          path: /opt/cta
       - name: coredumps
         emptyDir: {}
     volumeMounts:
-      - name: shared
-        mountPath: /shared
       - name: coredumps
         mountPath: /var/log/tmp
 
