@@ -16,7 +16,7 @@ local_die() {
 
 # While this script looks like it does a lot, it essentially just does fancy namespace deletion.
 # `kubectl delete namespace <ns>` will accomplish mostly the same, except you lose log collection
-# and a few central resources may stick around. These are typically not harmful though.
+# and released persistent volumes are not reclaimed.
 usage() {
   echo
   echo "Deletes a given Kubernetes namespace and optionally collects the logs in said namespace."
@@ -28,8 +28,6 @@ usage() {
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
   echo "      --collect-logs <dir>:               Collect pod logs and diagnostics in the specified directory."
   echo "      --keep-pvs:                         Skip the wiping and reclaiming of released Persistent Volumes after namespace cleanup."
-  echo "      --keep-cluster-resources:           Keep cluster roles and bindings owned by this namespace."
-  echo "      --force-delete-cluster-resources:   Delete named cluster roles and bindings even when ownership cannot be verified."
   echo
   exit 1
 }
@@ -162,42 +160,9 @@ reclaim_released_pvs() {
   done
 }
 
-delete_cluster_resources() {
-  local namespace="$1" force_delete="$2"
-  local resource
-  for resource in otel-opentelemetry-collector prometheus-server prometheus-kube-state-metrics; do
-    delete_cluster_resource_if_owned "$namespace" clusterrole "$resource" "$force_delete"
-    delete_cluster_resource_if_owned "$namespace" clusterrolebinding "$resource" "$force_delete"
-  done
-}
-
-delete_cluster_resource_if_owned() {
-  local namespace="$1" resource_type="$2" resource_name="$3" force_delete="$4" release_namespace
-  if ! kubectl get "$resource_type" "$resource_name" >/dev/null 2>&1; then
-    return
-  fi
-  if [[ $force_delete == true ]]; then
-    log_warn "Force deleting ${resource_type}/${resource_name} without checking ownership."
-    kubectl delete "$resource_type" "$resource_name"
-    return
-  fi
-  if ! release_namespace=$(kubectl get "$resource_type" "$resource_name" \
-    -o 'jsonpath={.metadata.annotations.meta\.helm\.sh/release-namespace}'); then
-    log_warn "Could not verify ownership of ${resource_type}/${resource_name}; skipping it."
-    return
-  fi
-  if [[ $release_namespace == "$namespace" ]]; then
-    kubectl delete "$resource_type" "$resource_name"
-  else
-    log_warn "Skipping shared ${resource_type}/${resource_name}: it is not owned by namespace ${namespace}"
-  fi
-}
-
 delete_instance() {
   local log_directory=""
   local wipe_pvs=true
-  local delete_cluster_resources=true
-  local force_delete_cluster_resources=false
   local namespace=""
 
   # Parse command line arguments
@@ -212,8 +177,6 @@ delete_instance() {
         log_directory="$2"
         shift ;;
       --keep-pvs) wipe_pvs=false ;;
-      --keep-cluster-resources) delete_cluster_resources=false ;;
-      --force-delete-cluster-resources) force_delete_cluster_resources=true ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;
@@ -225,10 +188,6 @@ delete_instance() {
   if [[ -z "${namespace}" ]]; then
     die_usage "Missing mandatory argument: -n | --namespace"
   fi
-  if [[ $delete_cluster_resources == false && $force_delete_cluster_resources == true ]]; then
-    die_usage "--keep-cluster-resources and --force-delete-cluster-resources cannot be used together"
-  fi
-
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
     log_task "Namespace ${namespace} does not exist; nothing to delete..."
     exit 0
@@ -271,11 +230,6 @@ delete_instance() {
     reclaim_released_pvs "$namespace"
   else
     log_warn "Skipping reclamation of released persistent volumes."
-  fi
-  if [[ $delete_cluster_resources == true ]]; then
-    delete_cluster_resources "$namespace" "$force_delete_cluster_resources"
-  else
-    log_warn "Skipping cleanup of shared cluster-level resources."
   fi
   echo
   log_success "Deleted CTA instance ${namespace} in ${SECONDS} seconds."

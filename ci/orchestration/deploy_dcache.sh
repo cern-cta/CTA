@@ -22,8 +22,7 @@ usage() {
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
   echo "  -r, --dcache-image-repository <repo>:   The dCache Docker image repository."
   echo "  -i, --dcache-image-tag <tag>:           The DCache Docker image tag."
-  echo "      --database-secret <name>:          Existing database connection Secret. Defaults to dcache-database."
-  echo "      --dcache-config <file>:             Optional values file overriding the dCache chart defaults."
+  echo "      --dcache-values <file>:             dCache values override; repeatable, applied in order."
   echo
   exit 1
 }
@@ -36,7 +35,7 @@ check_helm_installed() {
 }
 
 deploy() {
-  database_secret=dcache-database
+  dcache_values=()
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -50,11 +49,9 @@ deploy() {
       -i|--dcache-image-tag)
         dcache_image_tag="$2"
         shift ;;
-      --database-secret)
-        database_secret="$2"
-        shift ;;
-      --dcache-config)
-        dcache_config="$2"
+      --dcache-values)
+        [[ -f "$2" ]] || die "dCache values file $2 does not exist"
+        dcache_values+=(--values "$2")
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
@@ -72,7 +69,7 @@ deploy() {
   fi
 
 
-  helm_flags=(--set-string "dcache.database.existingSecret=${database_secret}")
+  helm_flags=("${dcache_values[@]}")
   if [[ -n "$dcache_image_repository" ]]; then
     dcache_image_registry="${dcache_image_repository%%/*}"
     dcache_image_name="${dcache_image_repository#*/}"
@@ -81,9 +78,6 @@ deploy() {
   fi
   if [[ -n "$dcache_image_tag" ]]; then
     helm_flags+=(--set-string "dcache.image.tag=${dcache_image_tag}")
-  fi
-  if [[ -n "$dcache_config" ]]; then
-    helm_flags+=(--values "$dcache_config")
   fi
 
   # Dependency update can take a few seconds to do a quick check to see if we can skip it

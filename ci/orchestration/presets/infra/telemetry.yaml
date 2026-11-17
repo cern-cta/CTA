@@ -2,17 +2,52 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Preserve the endpoints used by CTA, Prometheus scraping and namespace cleanup.
+# Keep telemetry resources in the deployment namespace; scraping needs no Kubernetes discovery.
 prometheus:
   enabled: true
+  # Remove the upstream API-server, kubelet and cluster discovery jobs.
+  scrapeConfigs:
+    prometheus:
+      enabled: false
+    kubernetes-api-servers:
+      enabled: false
+    kubernetes-nodes:
+      enabled: false
+    kubernetes-nodes-cadvisor:
+      enabled: false
+    kubernetes-service-endpoints:
+      enabled: false
+    kubernetes-service-endpoints-slow:
+      enabled: false
+    prometheus-pushgateway:
+      enabled: false
+    kubernetes-services:
+      enabled: false
+    kubernetes-pods:
+      enabled: false
+    kubernetes-pods-slow:
+      enabled: false
   extraScrapeConfigs: |
+    - job_name: "prometheus"
+      static_configs:
+        - targets: ["localhost:9090"]
+    {{- if index .Values "kube-state-metrics" "enabled" }}
+    - job_name: "kube-state-metrics"
+      static_configs:
+        - targets: ["prometheus-kube-state-metrics:8080"]
+    {{- end }}
+    {{- if index .Values "prometheus-node-exporter" "enabled" }}
+    - job_name: "node-exporter"
+      static_configs:
+        - targets: ["prometheus-prometheus-node-exporter:9100"]
+    {{- end }}
     - job_name: "otel-collector"
       static_configs:
         - targets:
           - otel-opentelemetry-collector:8889
 
   rbac:
-    create: true
+    create: false
 
   alertmanager:
     enabled: false
@@ -20,8 +55,21 @@ prometheus:
   kube-state-metrics:
     fullnameOverride: prometheus-kube-state-metrics
     enabled: true
+    rbac:
+      useClusterRole: false
+    releaseNamespace: true
+    # Only namespaced workload and storage state; no node or cluster inventory.
+    collectors:
+      - pods
+      - deployments
+      - statefulsets
+      - daemonsets
+      - replicasets
+      - jobs
+      - cronjobs
+      - persistentvolumeclaims
 
-  # We want to get metrics on CPU/memory usage
+  # Host CPU/memory metrics; this does not provide per-container cAdvisor metrics.
   prometheus-node-exporter:
     fullnameOverride: prometheus-prometheus-node-exporter
     enabled: true
@@ -31,6 +79,7 @@ prometheus:
 
   server:
     fullnameOverride: prometheus-server
+    automountServiceAccountToken: false
     global:
       scrape_interval: 15s
       scrape_timeout: 3s
@@ -41,6 +90,8 @@ prometheus:
 otel:
   enabled: true
   fullnameOverride: otel-opentelemetry-collector
+  clusterRole:
+    create: false
   image:
     repository: registry.cern.ch/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
     tag: 0.129.1

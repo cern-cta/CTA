@@ -50,15 +50,15 @@ _ctadev() {
 
     local deploy_opts="
         --with-dcache
-        --local-telemetry
-        --publish-telemetry
+        --telemetry
         --eos-image-repository
         --eos-image-tag
         --dcache-image-repository
-        --catalogue-config
-        --scheduler-config
-        --cta-config
-        --eos-config
+        --dcache-image-tag
+        --dcache-values
+        --infra-values
+        --cta-values
+        --eos-values
         --spawn-options
         --namespace
     "
@@ -67,6 +67,10 @@ _ctadev() {
     # Complete values for options that expect one.
     #
     case "$prev" in
+        --telemetry)
+            COMPREPLY=( $(compgen -W "none local central" -- "$cur") )
+            return
+            ;;
         --sanitizers)
             COMPREPLY=( $(compgen -W "none address undefined address,undefined thread" -- "$cur") )
             return
@@ -100,10 +104,10 @@ _ctadev() {
                 -- "$cur") )
             return
             ;;
-        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--dcache-image-repository|--spawn-options)
+        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--dcache-image-repository|--dcache-image-tag|--spawn-options)
             return
             ;;
-        --catalogue-config|--scheduler-config|--cta-config|--eos-config)
+        --infra-values|--cta-values|--eos-values|--dcache-values)
             COMPREPLY=( $(compgen -f -- "$cur") )
             return
             ;;

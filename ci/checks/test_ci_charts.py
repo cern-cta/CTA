@@ -87,11 +87,11 @@ def test_services_consume_only_references(charts: Path, backend: str) -> None:
         charts,
         "cta",
         "-f",
-        str(PRESETS / "dev-cta-common.yaml"),
+        str(PRESETS / "cta/base.yaml"),
         "-f",
-        str(PRESETS / "frontend-admin/auth-jwt.yaml"),
+        str(PRESETS / "cta/auth/frontend-admin-jwt.yaml"),
         "-f",
-        str(PRESETS / "frontend-wfe/auth-jwt.yaml"),
+        str(PRESETS / "cta/auth/frontend-wfe-jwt.yaml"),
         "--set",
         "global.image.tag=test",
         "--set",
@@ -141,11 +141,11 @@ def test_infra_provisions_three_databases_without_resets(charts: Path) -> None:
         charts,
         "ci-infra",
         "-f",
-        str(PRESETS / "dev-catalogue-postgres-values.yaml"),
+        str(PRESETS / "infra/catalogue-postgres.yaml"),
         "-f",
-        str(PRESETS / "dev-scheduler-postgres-values.yaml"),
+        str(PRESETS / "infra/scheduler-postgres.yaml"),
         "-f",
-        str(PRESETS / "dev-dcache-infra-values.yaml"),
+        str(PRESETS / "infra/dcache.yaml"),
     )
     databases = [obj for obj in objects if obj["kind"] == "StatefulSet"]
     assert len(databases) == 3
@@ -253,9 +253,9 @@ def test_api_client_has_no_database_access(charts: Path) -> None:
         "--set",
         "client.enabled=true",
         "-f",
-        str(PRESETS / "dev-cta-common.yaml"),
+        str(PRESETS / "cta/base.yaml"),
         "-f",
-        str(PRESETS / "frontend-admin/auth-jwt.yaml"),
+        str(PRESETS / "cta/auth/frontend-admin-jwt.yaml"),
     )
     workload = next(obj for obj in objects if obj["kind"] == "StatefulSet")
     assert workload["metadata"]["name"] == "cta-cli"
@@ -295,7 +295,9 @@ def test_reset_scripts_drop_and_create(tmp_path: Path, monkeypatch: pytest.Monke
     # Replace the native executables; no database or cluster is contacted.
     for action in ["create", "drop"]:
         executable = tmp_path / f"cta-{component}-schema-{action}"
-        executable.write_text(f'#!/bin/bash\nprintf "%s\n" "{action}" >> "$COMMAND_LOG"\n')
+        # Consume the drop confirmation so the producer cannot race with an early mock exit.
+        confirmation = "cat >/dev/null\n" if action == "drop" else ""
+        executable.write_text(f'#!/bin/bash\n{confirmation}printf "%s\n" "{action}" >> "$COMMAND_LOG"\n')
         executable.chmod(0o755)
     monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
     monkeypatch.setenv("COMMAND_LOG", str(command_log))
@@ -307,7 +309,8 @@ def test_reset_scripts_drop_and_create(tmp_path: Path, monkeypatch: pytest.Monke
 
 @pytest.mark.parametrize("preset", ["postgres", "vfs", "ceph"])
 def test_infrastructure_presets(charts: Path, preset: str) -> None:
-    args = ["-f", str(PRESETS / f"dev-scheduler-{preset}-values.yaml")]
+    filename = f"infra/scheduler-{preset}.yaml" if preset != "ceph" else "infra/external.yaml"
+    args = ["-f", str(PRESETS / filename)]
     objects = render(charts, "ci-infra", *args)
     secrets = {obj["metadata"]["name"]: obj["stringData"] for obj in objects if obj["kind"] == "Secret"}
     if preset == "ceph":
@@ -369,7 +372,7 @@ def test_ceph_admin_uses_bundled_scheduler_secret(charts: Path) -> None:
         charts,
         "cta-admin-tools",
         "-f",
-        str(PRESETS / "dev-scheduler-ceph-values.yaml"),
+        str(PRESETS / "cta/scheduler/ceph.yaml"),
         "--set",
         "database.enabled=true",
     )
@@ -482,14 +485,23 @@ def test_tools_share_image_configuration(charts: Path, global_override: bool) ->
 @pytest.mark.parametrize(
     ("preset", "routine"),
     [
-        ("dev-scheduler-postgres-values.yaml", "schedulermaintenancecleanup"),
-        ("stress-scheduler-postgres-values.yaml", "schedulermaintenancecleanup"),
-        ("dev-scheduler-vfs-values.yaml", "garbagecollect"),
-        ("dev-scheduler-ceph-values.yaml", "garbagecollect"),
+        ("cta/scheduler/postgres.yaml", "schedulermaintenancecleanup"),
+        ("cta/scheduler/postgres-external.yaml", "schedulermaintenancecleanup"),
+        ("cta/scheduler/vfs.yaml", "garbagecollect"),
+        ("cta/scheduler/ceph.yaml", "garbagecollect"),
     ],
 )
 def test_scheduler_presets_include_maintenance(charts: Path, preset: str, routine: str) -> None:
-    objects = render(charts, "cta", "-f", str(PRESETS / preset), "--set", "global.image.tag=test")
+    objects = render(
+        charts,
+        "cta",
+        "-f",
+        str(PRESETS / "cta/scheduler/postgres.yaml"),
+        "-f",
+        str(PRESETS / preset),
+        "--set",
+        "global.image.tag=test",
+    )
     names = {obj["metadata"]["name"] for obj in objects if obj["kind"] == "Deployment"}
     assert f"test-rt-{routine}" in names
 
@@ -503,7 +515,7 @@ def test_upgrade_shares_connection_overrides(tmp_path: Path) -> None:
         "set -e\nupdate_local_cta_chart_dependencies() { :; }\n"
         'kubectl() { :; }\nlog_run() { printf "%s\\n" "$@"; }\n'
         + function
-        + '\nupgrade_instance --namespace test --scheduler-config "$1" --cta-image-tag updated\n'
+        + '\nupgrade_instance --namespace test --cta-values "$1" --cta-image-tag updated\n'
     )
     result = run_tool("bash", "-c", script, "test", str(values))
     lines = result.stdout.splitlines()
@@ -518,24 +530,202 @@ def test_optional_telemetry_dependencies(charts: Path, prometheus: bool, otel: b
         charts,
         "ci-infra",
         "-f",
-        str(PRESETS / "dev-telemetry-infra-values.yaml"),
+        str(PRESETS / "infra/telemetry.yaml"),
         "--set",
         f"prometheus.enabled={str(prometheus).lower()},otel.enabled={str(otel).lower()}",
     )
+    assert not any(
+        obj["kind"] in {"ClusterRole", "ClusterRoleBinding", "CustomResourceDefinition", "PersistentVolume"}
+        for obj in objects
+    )
+    assert all(obj["metadata"].get("namespace") in {None, "", "test"} for obj in objects)
+    for obj in objects:
+        if obj["kind"] == "RoleBinding":
+            assert obj["roleRef"]["kind"] == "Role"
     services = {obj["metadata"]["name"]: obj for obj in objects if obj["kind"] == "Service"}
     assert ("prometheus-server" in services) == prometheus
     assert ("otel-opentelemetry-collector" in services) == otel
     if prometheus:
         assert "prometheus-kube-state-metrics" in services
         assert "prometheus-prometheus-node-exporter" in services
-        for kind in ["ClusterRole", "ClusterRoleBinding"]:
+        for kind in ["Role", "RoleBinding"]:
             names = {obj["metadata"]["name"] for obj in objects if obj["kind"] == kind}
-            assert {"prometheus-server", "prometheus-kube-state-metrics"} <= names
+            assert "prometheus-kube-state-metrics" in names
         config = next(
             obj for obj in objects if obj["kind"] == "ConfigMap" and obj["metadata"]["name"] == "prometheus-server"
         )
-        assert "otel-opentelemetry-collector:8889" in config["data"]["prometheus.yml"]
+        scrape_config = yaml.safe_load(config["data"]["prometheus.yml"])["scrape_configs"]
+        assert {job["job_name"] for job in scrape_config} == {
+            "prometheus",
+            "otel-collector",
+            "kube-state-metrics",
+            "node-exporter",
+        }
+        assert all("kubernetes_sd_configs" not in job for job in scrape_config)
+        targets = {target for job in scrape_config for group in job["static_configs"] for target in group["targets"]}
+        assert targets == {
+            "localhost:9090",
+            "otel-opentelemetry-collector:8889",
+            "prometheus-kube-state-metrics:8080",
+            "prometheus-prometheus-node-exporter:9100",
+        }
+        workloads = {obj["metadata"]["name"]: obj for obj in objects if obj["kind"] == "Deployment"}
+        assert workloads["prometheus-server"]["spec"]["template"]["spec"]["automountServiceAccountToken"] is False
+        containers = workloads["prometheus-kube-state-metrics"]["spec"]["template"]["spec"]["containers"]
+        args = containers[0]["args"]
+        assert "--namespaces=test" in args
+        resources = next(arg.removeprefix("--resources=") for arg in args if arg.startswith("--resources="))
+        assert set(resources.split(",")) == {
+            "pods",
+            "deployments",
+            "statefulsets",
+            "daemonsets",
+            "replicasets",
+            "jobs",
+            "cronjobs",
+            "persistentvolumeclaims",
+        }
     if otel:
         ports = {port["port"] for port in services["otel-opentelemetry-collector"]["spec"]["ports"]}
         assert {4318, 8889} <= ports
     assert not any(obj["kind"] == "PersistentVolumeClaim" for obj in objects)
+
+
+@pytest.mark.parametrize("telemetry", ["none", "local", "central"])
+def test_creation_keeps_provisioning_separate_and_preserves_override_arguments(tmp_path: Path, telemetry: str) -> None:
+    source = (REPO / "ci/orchestration/create_instance.sh").read_text()
+    source = source[: source.rindex('\ncreate_instance "$@"')]
+    # Stub external actions, but execute the actual argument parser and deployment sequence.
+    source = "\n".join(line for line in source.splitlines() if not line.startswith('source "'))
+    base = tmp_path / "base values.yaml"
+    infra = tmp_path / "private infra.yaml"
+    override = tmp_path / "final override.yaml"
+    for path in [base, infra, override]:
+        path.write_text("{}\n")
+    script = (
+        source
+        + """
+check_deploy_commands() { :; }
+update_local_cta_chart_dependencies() { :; }
+generate_tape_values_files() { taped_config=tapes.yaml; rmcd_config=robot.yaml; }
+log_task() { :; }
+log_warn() { :; }
+log_success() { :; }
+die() { echo "$*" >&2; exit 1; }
+die_usage() { die "$@"; }
+helm() { [[ $1 == list ]]; }
+kubectl() { [[ " $* " != *" get secret "* ]]; }
+log_run() { printf 'COMMAND\\n'; printf '%s\\n' "$@"; printf 'END\\n'; }
+"""
+        + f'cd "{REPO}/ci/orchestration"\n'
+        + "create_instance -n test -i test --eos-enabled false --reset-catalogue --reset-scheduler "
+        + '--cta-values "$1" --infra-values "$2" --cta-values "$3" --cta-values "$1" --telemetry "$4"\n'
+    )
+    result = run_tool("bash", "-s", "--", str(base), str(infra), str(override), telemetry, input_text=script)
+    commands = [block.split("\nEND")[0].splitlines() for block in result.stdout.split("COMMAND\n")[1:]]
+    infra_install, tools_install, infra_wait, catalogue_reset, scheduler_reset, cta_install = commands
+    assert infra_install[:4] == ["helm", "upgrade", "--install", "ci-infra"]
+    assert str(infra) in infra_install
+    assert str(base) not in infra_install
+    assert ("presets/infra/telemetry.yaml" in infra_install) == (telemetry == "local")
+    assert infra_wait[:3] == ["helm", "upgrade", "ci-infra"]
+    assert "--wait-for-jobs" in infra_wait
+    assert catalogue_reset[-1] == "/scripts/reset_catalogue.sh"
+    assert scheduler_reset[-1] == "/scripts/reset_scheduler.sh"
+    for command in [tools_install, cta_install]:
+        assert str(infra) not in command
+        value_files = [command[i + 1] for i, arg in enumerate(command) if arg == "--values"]
+        assert value_files == [
+            "presets/cta/base.yaml",
+            "presets/cta/auth/frontend-wfe-jwt.yaml",
+            "presets/cta/auth/frontend-admin-jwt.yaml",
+            "presets/cta/catalogue/postgres.yaml",
+            "presets/cta/scheduler/vfs.yaml",
+            *([f"presets/cta/telemetry/{telemetry}.yaml"] if telemetry != "none" else []),
+            str(base),
+            str(override),
+            str(base),
+        ]
+
+
+@pytest.mark.parametrize(
+    "preset",
+    [
+        "cta/catalogue/postgres",
+        "cta/catalogue/oracle",
+        "cta/scheduler/postgres",
+        "cta/scheduler/vfs",
+        "cta/scheduler/ceph",
+        "cta/scheduler/postgres-external",
+    ],
+)
+def test_consumer_presets_contain_only_public_settings(preset: str) -> None:
+    values = yaml.safe_load((PRESETS / f"{preset}.yaml").read_text())
+    assert set(values) <= {"global", "maintd"}
+    assert set(values["global"]) <= {"catalogue", "scheduler"}
+    for connection in values["global"].values():
+        assert set(connection) <= {"backend", "existingSecret", "existingClaim"}
+
+
+@pytest.mark.parametrize("backend", ["postgres", "ceph", "vfs"])
+def test_scheduler_overlays_replace_backend_cleanup(charts: Path, backend: str) -> None:
+    objects = render(
+        charts,
+        "cta",
+        "-f",
+        str(PRESETS / "cta/scheduler/vfs.yaml"),
+        "-f",
+        str(PRESETS / "cta/scheduler/postgres.yaml"),
+        "-f",
+        str(PRESETS / f"cta/scheduler/{backend}.yaml"),
+        "--set",
+        "global.image.tag=test",
+    )
+    routines = {
+        obj["metadata"]["name"] for obj in objects if obj["kind"] == "Deployment" and obj["spec"]["replicas"] > 0
+    }
+    assert ("test-rt-garbagecollect" in routines) == (backend != "postgres")
+    assert ("test-rt-queuecleanup" in routines) == (backend != "postgres")
+    assert ("test-rt-schedulermaintenancecleanup" in routines) == (backend == "postgres")
+
+
+def test_eos_values_preserve_order_and_spaces(tmp_path: Path) -> None:
+    source = (REPO / "ci/orchestration/deploy_eos.sh").read_text()
+    function = source[source.index("deploy() {") : source.index("\ncheck_helm_installed\ndeploy")]
+    values = tmp_path / "EOS override.yaml"
+    values.write_text("{}\n")
+    script = (
+        'set -e\nkubectl() { :; }\nhelm() { echo "dependency ok"; }\n'
+        'log_run() { printf "%s\\n" "$@"; }\n'
+        + function
+        + '\ndeploy --namespace test --eos-values "$1" --eos-values "$1"\n'
+    )
+    result = run_tool("bash", "-s", "--", str(values), input_text=script)
+    args = result.stdout.splitlines()
+    value_files = [args[i + 1] for i, arg in enumerate(args) if arg == "--values"]
+    assert value_files == ["presets/eos/auth-jwt.yaml", str(values), str(values)]
+
+
+def test_dcache_values_and_explicit_image_overrides(tmp_path: Path) -> None:
+    source = (REPO / "ci/orchestration/deploy_dcache.sh").read_text()
+    function = source[source.index("deploy() {") : source.index("\ncheck_helm_installed\ndeploy")]
+    values = tmp_path / "dCache override.yaml"
+    values.write_text("dcache:\n  database:\n    existingSecret: external-database\n")
+    script = (
+        'set -e\nkubectl() { :; }\nhelm() { echo "dependency ok"; }\n'
+        'log_run() { printf "%s\\n" "$@"; }\n'
+        + function
+        + '\ndeploy --namespace test --dcache-values "$1" --dcache-values "$1" '
+        + "--dcache-image-repository registry.example/team/dcache --dcache-image-tag custom\n"
+    )
+    result = run_tool("bash", "-s", "--", str(values), input_text=script)
+    args = result.stdout.splitlines()
+    value_files = [args[i + 1] for i, arg in enumerate(args) if arg == "--values"]
+    assert value_files == [str(values), str(values)]
+    overrides = [args[i + 1] for i, arg in enumerate(args) if arg == "--set-string"]
+    assert overrides == [
+        "dcache.image.registry=registry.example",
+        "dcache.image.repository=team/dcache",
+        "dcache.image.tag=custom",
+    ]
+    assert args.index("--values") < args.index("--set-string")

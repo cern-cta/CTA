@@ -7,17 +7,13 @@ global:
     backend: postgres
     existingSecret: cta-scheduler-conf
 
-postgres:
-  instances:
-    cta-scheduler-postgres-db:
-      database: cta-scheduler-postgres
-      username: cta
-      secretName: cta-scheduler-conf
-      extraSecretData:
-        cta-scheduler.conf: 'postgresql:{{ .connection.uri }}'
-
 maintd:
   routines:
+    # Disable the other backend routines when composing scheduler overrides.
+    garbageCollect:
+      replicas: 0
+    queueCleanup:
+      replicas: 0
     userActiveQueueCleanup:
       replicas: 1
       sleepIntervalSecs: 900

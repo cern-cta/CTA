@@ -25,7 +25,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -o, --scheduler-config <file>:      Path to public scheduler values (global.scheduler only)."
+  echo "      --cta-values <file>:            Consumer values override; repeatable."
   echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
   echo "      --force:                        Force redeploy all pods in the CTA chart."
@@ -61,13 +61,14 @@ update_local_cta_chart_dependencies() {
 
 upgrade_instance() {
   force=0
+  consumer_values=()
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
-      -o|--scheduler-config)
-        scheduler_config="$2"
-        [[ -f "${scheduler_config}" ]] || die "Scheduler config file ${scheduler_config} does not exist"
+      --cta-values)
+        [[ -f "$2" ]] || die "CTA values file $2 does not exist"
+        consumer_values+=(--values "$2")
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -109,9 +110,7 @@ upgrade_instance() {
   if [[ -n "$cta_image_tag" ]]; then
     shared_flags+=(--set "global.image.tag=${cta_image_tag}")
   fi
-  if [[ -n "$scheduler_config" ]]; then
-    shared_flags+=(--values "$scheduler_config")
-  fi
+  shared_flags+=("${consumer_values[@]}")
 
   update_local_cta_chart_dependencies
   echo "Upgrading cta chart..."

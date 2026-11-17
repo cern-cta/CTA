@@ -36,22 +36,26 @@ spec:
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
   - | # Construct the deployment profiles used by Kubernetes tests
-    CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-$[[ inputs.admin-api-authentication ]].yaml"
+    INFRA_ARGS=(--infra-values presets/infra/external.yaml)
+    CTA_ARGS=(--cta-values presets/cta/auth/frontend-wfe-$[[ inputs.workflow-api-authentication ]].yaml
+              --cta-values presets/cta/auth/frontend-admin-$[[ inputs.admin-api-authentication ]].yaml)
   - | # Which scheduler config to use
     if [[ "$SCHEDULER_TYPE" == "objectstore" ]]; then
-      SCHEDULER_CONFIG=presets/dev-scheduler-ceph-values.yaml
+      SCHEDULER_CONFIG=presets/cta/scheduler/ceph.yaml
     else
-      SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
+      SCHEDULER_CONFIG=presets/cta/scheduler/postgres.yaml
+      INFRA_ARGS+=(--infra-values presets/infra/scheduler-postgres.yaml)
     fi
   - | # Which catalogue config to use
     if $ENABLE_ORACLE_SUPPORT; then
-      CATALOGUE_CONFIG=presets/ci-catalogue-oracle-values.yaml
+      CATALOGUE_CONFIG=presets/cta/catalogue/oracle.yaml
     else
-      CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+      CATALOGUE_CONFIG=presets/cta/catalogue/postgres.yaml
+      INFRA_ARGS+=(--infra-values presets/infra/catalogue-postgres.yaml)
     fi
   - | # Opportunistic batching overlay (pgsched only)
     if [[ "$SCHEDULER_TYPE" == "pgsched" ]] && $[[ inputs.enable-opportunistic-batching ]]; then
-      CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/pgsched-opportunistic-batching-values.yaml"
+      CTA_ARGS+=(--cta-values presets/cta/tests/opportunistic-batching.yaml)
     fi
   - | # Which image tag to use
     if [[ -n "$[[ inputs.custom-cta-image-tag ]]" ]]; then
@@ -60,7 +64,7 @@ spec:
       IMAGE_TAG="${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}"
     fi
   # Export all variables here so that it is clear which ones are available
-  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
+  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
 
 .sanitizer-manual-rules:
   rules:
@@ -93,8 +97,8 @@ spec:
     METRICS_FILE: "${CI_PROJECT_DIR}/metrics.txt"
     # Which tests to run
     PYTESTS: ""
-    # Passed to helm install of the CTA chart
-    EXTRA_CTA_HELM_FLAGS: ""
+    # Optional final consumer values override.
+    CTA_OVERRIDE_VALUES: ""
     # Passed to the create_instance.sh script verbatim
     EXTRA_SPAWN_ARGS: ""
     # Passed to the pytest tests verbatim
@@ -125,11 +129,12 @@ spec:
         --reset-catalogue \
         --reset-scheduler \
         --cta-image-tag ${IMAGE_TAG} \
-        --cta-config ${CTA_VALUES_CHAIN} \
-        --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml \
-        --catalogue-config ${CATALOGUE_CONFIG} \
-        --scheduler-config ${SCHEDULER_CONFIG} \
-        --extra-cta-values "${EXTRA_CTA_HELM_FLAGS}" \
+        "${CTA_ARGS[@]}" \
+        --eos-values presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml \
+        --cta-values "${CATALOGUE_CONFIG}" \
+        --cta-values "${SCHEDULER_CONFIG}" \
+        "${INFRA_ARGS[@]}" \
+        ${CTA_OVERRIDE_VALUES:+--cta-values "${CTA_OVERRIDE_VALUES}"} \
         ${EXTRA_SPAWN_ARGS}
     - create_end=$(date +%s)
     - echo "k8s_${CI_JOB_NAME_SLUG//-/_}_create_instance_duration_sec $((create_end - create_start))" >> $METRICS_FILE
@@ -228,7 +233,7 @@ test-cta-tools:
     PYTESTS: "tests/cta_admin_test.py tests/tape_tools_test.py tests/eos_restore_files_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
     # See the note here on failing cta-admin tests: https://gitlab.cern.ch/cta/CTA/-/issues/1032#note_10458246
-    EXTRA_CTA_HELM_FLAGS: "--set=maintd.routines.repackExpand.replicas=0 --set=maintd.routines.repackReport.replicas=0"
+    CTA_OVERRIDE_VALUES: "presets/cta/tests/disable-repack-maintenance.yaml"
 
 # =========================================================================
 #  Manual tests
@@ -357,13 +362,16 @@ stress-test:
     - *setup-k8s-test-variables
   script:
     - |
+      STRESS_ARGS=(--cta-values presets/cta/tests/stress.yaml)
       if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
-        SCHEDULER_CONFIG=presets/stress-scheduler-postgres-values.yaml
+        CTA_ARGS+=(--cta-values presets/cta/scheduler/postgres-external.yaml)
+        INFRA_ARGS=(--infra-values presets/infra/external.yaml)
+        if ! $ENABLE_ORACLE_SUPPORT; then
+          INFRA_ARGS+=(--infra-values presets/infra/catalogue-postgres.yaml)
+        fi
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
-        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
-      else
-        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
+        STRESS_ARGS+=(--cta-values presets/cta/tests/stress-postgres.yaml)
       fi
     # Set up stress test
     - cd ci/orchestration/
@@ -374,12 +382,13 @@ stress-test:
         --namespace ${NAMESPACE} \
         --reset-catalogue \
         --reset-scheduler \
-        --publish-telemetry \
+        --telemetry central \
         --cta-image-tag ${IMAGE_TAG} \
-        --cta-config ${STRESS_CTA_VALUES_CHAIN} \
-        --eos-config presets/stress-eos-values.yaml \
-        --catalogue-config ${CATALOGUE_CONFIG} \
-        --scheduler-config ${SCHEDULER_CONFIG} \
+        --eos-values presets/eos/stress.yaml \
+        --cta-values "${CATALOGUE_CONFIG}" \
+        --cta-values "${SCHEDULER_CONFIG}" \
+        "${CTA_ARGS[@]}" "${STRESS_ARGS[@]}" \
+        "${INFRA_ARGS[@]}" \
         --chart-install-timeout 15 \
         ${EXTRA_SPAWN_ARGS}
     # Run the actual stress test
@@ -405,8 +414,7 @@ stress-test:
     - |
       ./delete_instance.sh \
         --namespace ${NAMESPACE} \
-        --collect-logs "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pods" \
-        --force-delete-cluster-resources
+        --collect-logs "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pods"
     - |
       if [[ -n "$CI_COMMIT_TAG" ]]; then
         case "$CI_JOB_STATUS" in

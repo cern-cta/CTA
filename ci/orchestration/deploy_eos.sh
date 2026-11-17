@@ -27,7 +27,7 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
-  echo "      --eos-config <file>:            Values file to use for the EOS chart."
+  echo "      --eos-values <file>:            EOS values override; repeatable, applied in order."
   echo
   exit 1
 }
@@ -40,7 +40,7 @@ check_helm_installed() {
 }
 
 deploy() {
-  eos_config="presets/eos/auth-jwt.yaml"
+  eos_values=(--values presets/eos/auth-jwt.yaml)
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -55,8 +55,9 @@ deploy() {
       -i|--eos-image-tag)
         eos_image_tag="$2"
         shift ;;
-      --eos-config)
-        eos_config="$2"
+      --eos-values)
+        [[ -f "$2" ]] || die "EOS values file $2 does not exist"
+        eos_values+=(--values "$2")
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
@@ -74,7 +75,7 @@ deploy() {
   fi
 
 
-  helm_flags=(--values "$eos_config")
+  helm_flags=("${eos_values[@]}")
   if [[ -n "$eos_image_repository" ]]; then
     helm_flags+=(--set-string "server.global.repository=${eos_image_repository}")
   fi

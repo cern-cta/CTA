@@ -26,19 +26,13 @@ frontend-admin:
 
 frontend-wfe:
   conf:
-    catalogue:
-      # Allow concurrent requests without a small catalogue connection pool limiting throughput.
-      numberOfConnections: 50
-    logger:
-      # Reduce per-request logging overhead during sustained load.
-      logLevel: "WARNING"
     schedulerdb:
       # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
       tapeCacheMaxAgeSecs: 1
       retrieveQueueCacheMaxAgeSecs: 1
       # Tuning only, applied whether or not batching ends up enabled: does NOT itself turn batching
       # on. That is controlled solely by the enable-opportunistic-batching pipeline input, via
-      # presets/pgsched-opportunistic-batching-values.yaml -- this file used to also hardcode
+      # presets/cta/tests/opportunistic-batching.yaml -- this file used to also hardcode
       # opportunisticBatching.enabled: true here, which always won (later file in the values chain)
       # over that input, making the input a no-op for stress tests.
       opportunisticBatching:
@@ -52,9 +46,6 @@ taped:
   transfers:
     # Keep enough files in flight to support the larger scheduler/reporting batches below.
     bufferCount: 10000
-  logging:
-    # Avoid verbose tape-operation logs dominating the small-file workload.
-    level: "WARNING"
   scheduler:
     # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
     numberOfConnections: 3

@@ -8,6 +8,17 @@ global:
 
 maintd:
   routines:
+    # Disable the other backend routines when composing scheduler overrides.
+    userActiveQueueCleanup:
+      replicas: 0
+    repackActiveQueueCleanup:
+      replicas: 0
+    userPendingQueueCleanup:
+      replicas: 0
+    repackPendingQueueCleanup:
+      replicas: 0
+    schedulerMaintenanceCleanup:
+      replicas: 0
     garbageCollect:
       replicas: 1
       sleepIntervalSecs: 1

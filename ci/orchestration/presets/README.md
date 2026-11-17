@@ -1,18 +1,18 @@
 # Presets
 
-This directory contains a number of `values.yaml` files that can be passed to the Helm deployment for local development purposes.
+These files are Helm values overlays, grouped by their consumer:
 
-The files should follow the naming convention:
+- `infra/`: PostgreSQL instances, connection Secrets, PVCs and optional telemetry dependencies.
+- `cta/`: shared CTA service/tools settings, grouped into catalogue, scheduler, authentication, telemetry and test overlays.
+- `eos/`: EOS authentication and stress settings.
 
-```txt
-<release>-<component>[-<type>]?-values.yaml
-```
+Use repeatable `--cta-values` and `--eos-values` options.
+Defaults are applied first, then supplied files in command-line order.
+Supplying `--infra-values` files replaces the default local provisioning selection.
+Use `infra/external.yaml` when no local database or scheduler storage is needed.
 
-Presets request named PostgreSQL instances, connection-file Secrets and PVCs from `ci-infra`.
-CTA services consume the resulting connection Secrets.
-The `dev-telemetry-infra-values.yaml` preset enables and configures the optional Prometheus and collector dependencies.
-Scheduler presets also configure the corresponding maintenance routines through `maintd.routines`.
+Compose the PostgreSQL scheduler preset before its external-connection override.
+Likewise, apply common stress settings before PostgreSQL stress tuning.
 
-See the [cta-dev reference](../../../docs/content/dev/guides/tools-and-environment/cta-dev.md) for selecting and overriding deployment values.
-
+See the [cta-dev reference](../../../docs/content/dev/guides/tools-and-environment/cta-dev.md) for defaults and deployment examples.
 Follow [Helm & Orchestration Conventions](../../../docs/content/dev/guides/conventions/orchestration.md) when changing deployment values.

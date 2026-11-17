@@ -2,12 +2,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-global:
-  scheduler:
-    backend: vfs
-    existingSecret: cta-scheduler-conf
-    existingClaim: scheduler-vfs-pvc
-
 secretFiles:
   cta-scheduler-conf:
     cta-scheduler.conf: /objectstore
@@ -18,13 +12,3 @@ persistentVolumeClaims:
     accessModes:
       - ReadWriteOnce
     size: 10Gi
-
-maintd:
-  routines:
-    garbageCollect:
-      replicas: 1
-      sleepIntervalSecs: 1
-    queueCleanup:
-      replicas: 1
-      sleepIntervalSecs: 1
-      batchSize: 500

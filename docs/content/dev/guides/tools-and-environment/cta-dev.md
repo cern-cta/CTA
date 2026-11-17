@@ -151,9 +151,10 @@ Relative values-file paths are resolved from `ci/orchestration/`, where the depl
 
 ```bash
 cta-dev deploy \
-  --catalogue-config /path/to/catalogue-values.yaml \
-  --scheduler-config /path/to/scheduler-values.yaml \
-  --cta-config /path/to/base-values.yaml,/path/to/feature-values.yaml
+  --infra-values /path/to/infrastructure-values.yaml \
+  --cta-values /path/to/catalogue-values.yaml \
+  --cta-values /path/to/scheduler-values.yaml \
+  --cta-values /path/to/feature-values.yaml
 ```
 
 ### CI chart responsibilities
@@ -168,16 +169,35 @@ The deployment harness installs infrastructure, persistent tools and CTA service
 | `store` | `dcache` | dCache services consuming the database provisioned by `ci-infra`. |
 
 Prometheus and the OpenTelemetry collector are pinned dependencies of `ci-infra`, disabled by default through `prometheus.enabled` and `otel.enabled`.
-`--local-telemetry` loads `presets/dev-telemetry-infra-values.yaml`, enabling and configuring both.
+`--telemetry local` loads `presets/infra/telemetry.yaml`, enabling and configuring both.
 Either dependency can be disabled independently in an override.
 They share the infrastructure release lifecycle and readiness wait; there are no separate telemetry releases.
-The preset preserves the existing collector and Prometheus service names used by CTA, scraping and cleanup.
-`--publish-telemetry` still configures the external backend without enabling local telemetry.
+The preset preserves the collector and Prometheus service names used by CTA and scraping.
+The local telemetry stack creates only namespaced resources, so namespace deletion removes it without cluster-role cleanup.
+Prometheus uses explicit scrape targets for itself, the collector, kube-state-metrics and node exporter, without Kubernetes API credentials or discovery.
+Kube-state-metrics watches only the release namespace using a Role and RoleBinding and collects workload and PVC state.
+Node exporter retains host CPU/memory metrics for the single-node runner; API-server, kubelet and per-container cAdvisor metrics are not collected.
+Persistent-volume reclamation remains a separate cleanup step.
+`--telemetry central` still configures the external backend without enabling local telemetry.
 Dependency preparation fetches the pinned external charts even when disabled; the other CTA charts retain local-only dependency preparation.
 
-The catalogue and scheduler files are ordinary Helm values, passed with `--values`.
+Catalogue and scheduler presets contain consumer settings only: Secret/PVC references and maintenance routines.
+Files under `presets/infra/` provision local resources; `presets/cta/` contains consumer settings, and `presets/eos/` contains EOS values.
+`create_instance.sh --infra-values <file>` replaces the default local catalogue/VFS provisioning; repeat it to compose infrastructure files.
+`cta-dev` exposes the same option and otherwise provisions the local catalogue and its build-selected scheduler.
+For external connections, use `presets/infra/external.yaml` and add only the local provisioning files you need.
+Changing a catalogue or scheduler consumer preset does not implicitly change infrastructure provisioning.
+Both entry points accept repeatable `--cta-values <file>`, `--eos-values <file>` and `--dcache-values <file>` options.
+Built-in defaults and telemetry/authentication selections come first; supplied files follow in command-line order, with later files taking precedence.
+Explicit EOS/dCache image repository and tag arguments take precedence over values files.
+Set `dcache.database.existingSecret` in a dCache values file to override the default `dcache-database` connection Secret.
+Infrastructure is the exception: supplying any `--infra-values` files replaces the default local provisioning selection, since infrastructure entries accumulate.
+The dCache and local telemetry selections still add their infrastructure presets.
+Catalogue and scheduler settings use the same `--cta-values` option; there are no separate backend configuration flags or comma-separated file lists.
+Compose `cta/scheduler/postgres.yaml` before `cta/scheduler/postgres-external.yaml` for an external PostgreSQL scheduler.
+Compose `cta/tests/stress.yaml` before `cta/tests/stress-postgres.yaml` for PostgreSQL stress tuning.
 `ci-infra` provisions named resources without interpreting catalogue, scheduler or disk-system backends.
-The presets in `ci/orchestration/presets/` request those resources and supply the CTA-specific connection files and public references.
+The infrastructure presets in `ci/orchestration/presets/` request those resources and supply the CTA-specific connection files.
 For example, this requests two independent PostgreSQL instances:
 
 ```yaml
@@ -193,13 +213,14 @@ Each map key becomes the Service and StatefulSet name.
 The database and username default to that name; an instance can override them and the shared test password.
 Its credentials Secret defaults to `<name>-credentials`, or can be named with `secretName`.
 `extraSecretData` adds application-specific files using Helm templates with `.connection.host`, `.connection.database`, `.connection.username`, `.connection.password` and the URL-encoded `.connection.uri`.
-The catalogue preset uses `cta-catalogue.conf: 'postgresql:{{ .connection.uri }}'`; the PostgreSQL template itself knows nothing about CTA's connection-file format.
+The catalogue infrastructure preset uses `cta-catalogue.conf: 'postgresql:{{ .connection.uri }}'`; the PostgreSQL template itself knows nothing about CTA's connection-file format.
 
 `secretFiles` creates named Secrets for arbitrary files, including external database and Ceph connections.
 File names and contents support Helm templates.
 `persistentVolumeClaims` requests named claims with a size, storage class, access modes and optional annotations.
 The dCache infrastructure preset is included only when dCache is selected.
-The harness forwards public connection and storage references and maintenance settings to CTA and its administrative tools, not database credentials or provisioning settings.
+The harness passes consumer files directly to CTA and its administrative tools; infrastructure files stay with `ci-infra`.
+It does not read configuration back from the installed infrastructure release.
 Scheduler presets include their required `maintd.routines`; the shell does not select additional maintenance presets.
 Creation applies the same composed CTA overrides to services and tools, and upgrades pass scheduler overrides to both releases.
 
@@ -271,8 +292,8 @@ kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
   cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
 ```
 
-The API client remains a separate workload in the same release, configured by the `cli` section of the composed CTA values.
-The admin and API client workloads share the tools chart's `image` settings, with consistent `global.image` overrides; there is no separate `cli.image`.
+The API client remains a separate workload in the same release, configured by the `client` section of the composed CTA values.
+The admin and API client workloads share the tools chart's `image` settings, with consistent `global.image` overrides; there is no separate `client.image`.
 The infrastructure credential-generation Job also remains in place so an ordinary infrastructure upgrade does not regenerate credentials.
 A partially failed credential provisioning run requires recreating the disposable environment.
 
@@ -289,8 +310,10 @@ Prepare them using `helm dependency update` in temporary copies of `ci-infra` an
 Override the EOS configuration or image for an EOS-backed test deployment:
 
 ```bash
-cta-dev deploy --eos-config /path/to/eos-values.yaml
+cta-dev deploy --eos-values /path/to/eos-values.yaml
 cta-dev deploy --eos-image-repository example/eos --eos-image-tag my-tag
+cta-dev deploy --with-dcache --dcache-values /path/to/dcache-values.yaml
+cta-dev deploy --with-dcache --dcache-image-repository example/dcache --dcache-image-tag my-tag
 ```
 
 ### dCache
@@ -305,10 +328,10 @@ cta-dev deploy --with-dcache
 
 ```bash
 # Deploy the local telemetry stack.
-cta-dev deploy --local-telemetry
+cta-dev deploy --telemetry local
 
 # Publish telemetry to the configured backend.
-cta-dev deploy --publish-telemetry
+cta-dev deploy --telemetry central
 
 ```
 

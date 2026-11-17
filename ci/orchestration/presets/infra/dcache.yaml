@@ -2,9 +2,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-dcache:
-  databaseSecret: dcache-database
-
 postgres:
   instances:
     chimera-postgresql:

@@ -28,7 +28,7 @@ secretFiles: {}
 # Named PVCs: size, storageClass, accessModes (default ReadWriteOnce), and optional annotations.
 persistentVolumeClaims: {}
 
-# Enable and configure the local telemetry stack with dev-telemetry-infra-values.yaml.
+# Enable and configure the local telemetry stack with presets/infra/telemetry.yaml.
 prometheus:
   enabled: false
 otel:
