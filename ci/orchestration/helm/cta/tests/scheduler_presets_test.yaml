@@ -7,7 +7,7 @@ release:
 templates:
   - charts/maintd/templates/deployment.yaml
 tests:
-  - it: vfs overrides postgres maintenance routines
+  - it: vfs after postgres deploys only objectstore routines
     values:
       - ../../../presets/cta/scheduler/postgres.yaml
       - ../../../presets/cta/scheduler/vfs.yaml
@@ -21,7 +21,7 @@ tests:
       - notEqual:
           path: metadata.name
           value: check-rt-useractivequeuecleanup
-  - it: postgres overrides vfs maintenance routines
+  - it: postgres after vfs deploys only postgres routines
     values:
       - ../../../presets/cta/scheduler/vfs.yaml
       - ../../../presets/cta/scheduler/postgres.yaml
@@ -35,7 +35,7 @@ tests:
       - notEqual:
           path: metadata.name
           value: check-rt-garbagecollect
-  - it: ceph overrides postgres maintenance routines
+  - it: ceph after postgres deploys only objectstore routines
     values:
       - ../../../presets/cta/scheduler/postgres.yaml
       - ../../../presets/cta/scheduler/ceph.yaml

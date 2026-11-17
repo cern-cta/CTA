@@ -589,7 +589,6 @@ parse_options() {
       --telemetry)
         require_command "$1" "$command" deploy up debug all
         telemetry="$2"
-        case "$telemetry" in none|local|central) ;; *) die "Invalid telemetry mode: $telemetry" ;; esac
         shift
         ;;
       --eos-image-repository)
@@ -623,7 +622,6 @@ parse_options() {
         ;;
       --copy-secret)
         require_command "$1" "$command" deploy up debug all
-        [[ -n ${2:-} && $2 != -* ]] || die "--copy-secret requires a Secret name"
         extra_spawn_options+=(--copy-secret "$2")
         shift
         ;;

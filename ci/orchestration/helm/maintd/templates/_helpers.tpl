@@ -19,8 +19,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-
-
 {{/* Backend-specific fields are rejected by the other maintd build, even when disabled. */}}
 {{- define "maintd.routines" -}}
 {{- if eq .Values.global.scheduler.backend "postgres" -}}

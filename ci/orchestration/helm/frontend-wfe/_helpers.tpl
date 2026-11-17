@@ -23,8 +23,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-
-
 {{- define "ctafrontend.jwtRevokeList" -}}
   /etc/cta/jwt-revoke-list.toml
 {{- end }}

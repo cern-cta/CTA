@@ -89,7 +89,6 @@ spec:
           mountPath: /etc/cta/cta-maintd.sss.keytab.grp # note the .grp to make it group readable
           subPath: {{ $.Values.keytab.subPath }}
         {{- include "common.scheduler.mounts" $schedulerConfig | nindent 8 }}
-
         - name: log-dir
           mountPath: /var/log/cta
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}

@@ -126,8 +126,7 @@ spec:
     - |
       ./create_instance.sh \
         --namespace ${NAMESPACE} \
-        --reset-catalogue \
-        --reset-scheduler \
+        --reset-unprotected \
         --cta-image-tag ${IMAGE_TAG} \
         "${CTA_ARGS[@]}" \
         --eos-values presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml \
@@ -380,8 +379,7 @@ stress-test:
     - |
       ./create_instance.sh \
         --namespace ${NAMESPACE} \
-        --reset-catalogue \
-        --reset-scheduler \
+        --reset-unprotected \
         --telemetry central \
         --cta-image-tag ${IMAGE_TAG} \
         --eos-values presets/eos/stress.yaml \

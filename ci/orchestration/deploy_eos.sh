@@ -5,6 +5,7 @@
 
 set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/helm_utils.sh"
 
 usage() {
   echo
@@ -20,13 +21,6 @@ usage() {
   echo "      --eos-values <file>:            EOS values override; repeatable, applied in order."
   echo
   exit "${1:-1}"
-}
-
-check_helm_installed() {
-  # First thing we do is check whether helm is installed
-  if ! command -v helm >/dev/null 2>&1; then
-    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-  fi
 }
 
 deploy() {

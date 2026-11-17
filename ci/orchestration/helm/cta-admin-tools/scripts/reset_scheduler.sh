@@ -6,20 +6,14 @@
 
 set -euo pipefail
 
-case "$SCHEDULER_BACKEND" in
-  postgres|vfs|ceph) ;;
-  *) echo "Unsupported scheduler backend: $SCHEDULER_BACKEND" >&2; exit 1 ;;
-esac
-
 config=/etc/cta/cta-scheduler.conf
-if [[ "$SCHEDULER_BACKEND" == postgres ]]; then
-  echo yes | cta-scheduler-schema-drop "$config"
-  exec cta-scheduler-schema-create "$config"
-fi
-
-url=$(cat "$config")
 case "$SCHEDULER_BACKEND" in
+  postgres)
+    echo yes | cta-scheduler-schema-drop "$config"
+    cta-scheduler-schema-create "$config"
+    ;;
   vfs)
+    url=$(cat "$config")
     # Only remove contents of the mounted store, including hidden files, on explicit reset.
     [[ "$url" == /objectstore ]] || {
       echo "Refusing to initialize unexpected objectstore path: $url" >&2
@@ -31,6 +25,7 @@ case "$SCHEDULER_BACKEND" in
     chmod -R 777 "$url"
     ;;
   ceph)
+    url=$(cat "$config")
     echo yes | cta-objectstore-reset "$url"
     cta-objectstore-initialize "$url"
     ;;

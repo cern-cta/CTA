@@ -98,7 +98,6 @@ spec:
         - name: taped-sss-keytab
           mountPath: /etc/cta/cta-taped.sss.keytab.grp # note the .grp to make it group readable
           subPath: {{ $.Values.keytab.subPath }}
-
         - name: opentelemetry-config
           mountPath: /etc/cta/cta-otel.yaml
           subPath: cta-otel.yaml

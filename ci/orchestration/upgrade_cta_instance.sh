@@ -24,13 +24,6 @@ usage() {
   exit "${1:-1}"
 }
 
-check_helm_installed() {
-  # First thing we do is check whether helm is installed
-  if ! command -v helm >/dev/null 2>&1; then
-    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-  fi
-}
-
 upgrade_instance() {
   force=0
   consumer_values=()

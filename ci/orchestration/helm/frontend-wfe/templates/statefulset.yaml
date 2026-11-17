@@ -76,7 +76,6 @@ spec:
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
         {{- include "common.scheduler.mounts" $schedulerConfig | nindent 8 }}
-
         - name: frontend-config
           mountPath: /etc/cta/cta-workflow-api.toml
           subPath: cta-workflow-api.toml

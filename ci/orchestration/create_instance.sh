@@ -121,9 +121,9 @@ create_instance() {
                  cta-oracle-catalogue-conf cta-ceph-scheduler-conf cta-stress-scheduler-conf)
   local copy_secrets=()
   local -A required_secrets=() copied_secrets=()
+  # Chart defaults select the PostgreSQL catalogue and VFS scheduler connections.
   cta_config=(--values presets/cta/base.yaml --values presets/cta/auth/frontend-wfe-jwt.yaml
-              --values presets/cta/auth/frontend-admin-jwt.yaml
-              --values presets/cta/catalogue/postgres.yaml --values presets/cta/scheduler/vfs.yaml)
+              --values presets/cta/auth/frontend-admin-jwt.yaml)
   cta_overrides=()
   infra_config=(--values presets/infra/catalogue-postgres.yaml
                 --values presets/infra/scheduler-vfs.yaml)
@@ -318,8 +318,11 @@ create_instance() {
   done
 
   # Infrastructure has remote dependencies; consumer charts use local sources.
-  log_task "Updating infrastructure chart dependencies..."
-  helm dependency update helm/ci-infra --repository-config /dev/null > /dev/null
+  # Downloading the remote telemetry charts takes seconds; skip it while every archive is current.
+  if helm dependency list helm/ci-infra | awk 'NR > 1 && NF && $NF != "ok" {stale = 1} END {exit !stale}'; then
+    log_task "Updating infrastructure chart dependencies..."
+    helm dependency update helm/ci-infra --repository-config /dev/null > /dev/null
+  fi
 
   log_task "Starting deployment..."
 
@@ -362,11 +365,11 @@ create_instance() {
     shared_flags+=(--values presets/cta/telemetry/central.yaml)
   fi
 
-  # Install once: both the API client and direct database tools remain available after bootstrap.
+  # CTA services need only the resets; the API client waits for generated credentials and the KDC.
   log_run helm install cta-tools helm/cta-admin-tools \
                        --namespace "${namespace}" \
                        "${shared_flags[@]}" \
-                       --set admin.enabled=true --set client.enabled=true \
+                       --set admin.enabled=true --set client.enabled=false \
                        "${reset_flags[@]}" \
                        --set-string "reset.catalogueSchemaVersion=$catalogue_schema_version" \
                        --wait --wait-for-jobs --timeout 5m "${cta_overrides[@]}"
@@ -383,12 +386,18 @@ create_instance() {
     dcache_pid=$!
   fi
 
+  # Start the API client alongside the services instead of before them.
+  log_run helm upgrade cta-tools helm/cta-admin-tools --namespace "$namespace" \
+                       --reuse-values --set client.enabled=true --wait --timeout 5m &
+  client_pid=$!
+
   log_run helm upgrade --install cta helm/cta \
                                 --namespace "${namespace}" \
                                 "${shared_flags[@]}" \
                                 -f "${taped_config}" \
                                 -f "${rmcd_config}" \
                                 --wait --timeout "${chart_install_timeout}"m "${cta_overrides[@]}"
+  wait $client_pid || exit 1
   log_success "Deployed CTA in namespace ${namespace}."
 
   # At this point the disk buffer(s) should also be ready

@@ -32,7 +32,8 @@ tar -C "$source_dir" --exclude=charts --exclude=Chart.lock -cf "$work/source.tar
 tar -C "$work" -xf "$work/source.tar"
 cd "$work"
 # Package local dependencies before their consumers; no repository access is needed.
-for chart in common frontend-admin frontend-wfe taped rmcd maintd cta-admin-tools cta; do
+. "$source_dir/../utils/helm_utils.sh"
+for chart in $cta_local_charts; do
   helm dependency update "helm/$chart" --skip-refresh --repository-config /dev/null
 done
 # Infrastructure also needs the pinned upstream telemetry charts.
@@ -114,5 +115,4 @@ reject_values cta-admin-tools obsolete-database-toggle --set database.enabled=tr
 reject_values cta-admin-tools obsolete-reset-toggle --set reset.unprotected=true
 reject_values cta-admin-tools obsolete-shared-resources --set resources.requests.memory=128Mi
 reject_values ci-infra obsolete-credential-image --set secrets.image=example:latest
-
 reject_values cta-admin-tools invalid-destructive-permission --set-string allowDestructive=true
