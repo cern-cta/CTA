@@ -262,6 +262,11 @@ struct RoutinesConfig final {
 
 /// Catalogue, scheduler, monitoring and routine settings for the maintenance daemon.
 struct MaintdConfig final {
+  enum class Feature {
+    Telemetry,
+    HealthServer,
+  };
+
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
@@ -274,15 +279,13 @@ struct MaintdConfig final {
 
   static constexpr std::size_t memberCount() { return 9; }
 
-  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &MaintdConfig::telemetry);
-  static constexpr auto healthServerFeature =
-    cta::runtime::stableFeature("health_server", &MaintdConfig::health_server);
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &MaintdConfig::telemetry),
+    cta::runtime::stableFeature(Feature::HealthServer, "health_server", &MaintdConfig::health_server),
+  };
 
-  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
-
-  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
-
-  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

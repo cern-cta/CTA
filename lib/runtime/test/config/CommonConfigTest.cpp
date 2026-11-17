@@ -61,6 +61,8 @@ TEST(CommonConfig, ReportsAllInvalidFields) {
 
 namespace {
 struct FeatureTestConfig {
+  enum class Feature { Telemetry, HealthServer };
+
   std::vector<std::string> enabled_features;
   std::vector<std::string> enabled_experimental_features;
   std::optional<cta::runtime::TelemetryConfig> telemetry;
@@ -69,8 +71,8 @@ struct FeatureTestConfig {
   static constexpr std::size_t memberCount() { return 4; }
 
   static constexpr auto features =
-    std::tuple {cta::runtime::experimentalFeature("telemetry", &FeatureTestConfig::telemetry),
-                cta::runtime::stableFeature("health_server", &FeatureTestConfig::health_server)};
+    std::tuple {cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &FeatureTestConfig::telemetry),
+                cta::runtime::stableFeature(Feature::HealthServer, "health_server", &FeatureTestConfig::health_server)};
 
   cta::runtime::ValidationResult validate() const { return cta::runtime::validateFeatures(*this); }
 };
@@ -143,6 +145,28 @@ TEST(CommonConfig, FeatureDescriptorsUseTheirDeclaredSelectionList) {
   config.enabled_experimental_features = {"telemetry"};
   EXPECT_TRUE(cta::runtime::featureEnabled(config, telemetry));
   EXPECT_TRUE(cta::runtime::featureEnabled(config, health));
+}
+
+TEST(CommonConfig, EnumFeatureLookupUsesIdentityAndDeclaredSelectionList) {
+  using Feature = FeatureTestConfig::Feature;
+  FeatureTestConfig config;
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, Feature::Telemetry));
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, Feature::HealthServer));
+
+  config.enabled_features = {"telemetry"};
+  config.enabled_experimental_features = {"health_server"};
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, Feature::Telemetry));
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, Feature::HealthServer));
+
+  config.enabled_experimental_features = {"telemetry"};
+  EXPECT_TRUE(cta::runtime::featureEnabled(config, Feature::Telemetry));
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, Feature::HealthServer));
+
+  config.enabled_features = {"health_server"};
+  config.enabled_experimental_features.clear();
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, Feature::Telemetry));
+  EXPECT_TRUE(cta::runtime::featureEnabled(config, Feature::HealthServer));
+  EXPECT_FALSE(cta::runtime::featureEnabled(config, static_cast<Feature>(99)));
 }
 
 TEST(CommonConfig, WrongFeatureListExplainsHowToMigrate) {

@@ -396,6 +396,11 @@ struct TransfersConfig final {
 
 /// Configuration consumed by the taped runtime and daemon.
 struct TapedConfig final {
+  enum class Feature {
+    Telemetry,
+    HealthServer,
+  };
+
   /// Catalogue database connection configuration.
   cta::runtime::CatalogueConfig catalogue;
   /// Scheduler backend connection and queue-statistics cache settings.
@@ -423,14 +428,13 @@ struct TapedConfig final {
 
   static constexpr std::size_t memberCount() { return 12; }
 
-  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &TapedConfig::telemetry);
-  static constexpr auto healthServerFeature = cta::runtime::stableFeature("health_server", &TapedConfig::health_server);
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &TapedConfig::telemetry),
+    cta::runtime::stableFeature(Feature::HealthServer, "health_server", &TapedConfig::health_server),
+  };
 
-  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
-
-  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
-
-  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   /// Collect validation errors from all sections, prefixed with their section names.
   cta::runtime::ValidationResult validate() const {

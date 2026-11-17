@@ -5,15 +5,12 @@
 
 #pragma once
 
-#include "grpc-server/config/AuthMethod.hpp"
-#include "runtime/config/FeatureConfig.hpp"
 #include "runtime/config/ValidationResult.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -68,66 +65,6 @@ struct KerberosAuthConfig final {
   cta::runtime::ValidationResult validate() const;
 
   static constexpr std::size_t memberCount() { return 2; }
-};
-
-/// Authentication method selection and credentials for admin API requests.
-struct AdminAuthConfig final {
-  /// JWT is the non-strict default; strict mode requires an explicit selection.
-  std::vector<std::string> enabled_methods = {"jwt"};
-  /// JWT auth config (optional)
-  std::optional<JwtAuthConfig> jwt;
-  /// Kerberos auth config (optional)
-  std::optional<KerberosAuthConfig> kerberos;
-
-  static constexpr auto jwtFeature = cta::runtime::stableFeature("jwt", &AdminAuthConfig::jwt);
-  static constexpr auto kerberosFeature = cta::runtime::stableFeature("kerberos", &AdminAuthConfig::kerberos);
-  static constexpr auto methods = std::tuple {jwtFeature, kerberosFeature};
-
-  bool isJwtEnabled() const { return cta::runtime::featureEnabled(enabled_methods, jwtFeature); }
-
-  bool isKerberosEnabled() const { return cta::runtime::featureEnabled(enabled_methods, kerberosFeature); }
-
-  /// Select settings only for explicitly enabled authentication methods.
-  bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_methods, name); }
-
-  /// @brief Validate the authentication configuration for consistency
-  /// @return The validation result (will contain the errors if present)
-  cta::runtime::ValidationResult validate() const;
-
-  /// @brief Get all enabled authentication methods
-  std::set<AuthMethod, std::less<>> getEnabledMethods() const;
-
-  static constexpr std::size_t memberCount() { return 3; }
-};
-
-/// Authentication method selection and credentials for workflow API requests.
-struct WfeAuthConfig final {
-  /// JWT is the non-strict default; strict mode requires an explicit selection.
-  std::vector<std::string> enabled_methods = {"jwt"};
-  /// JWT auth config (optional)
-  std::optional<JwtAuthConfig> jwt;
-  /// mTLS auth config (optional)
-  std::optional<MtlsAuthConfig> mtls;
-
-  static constexpr auto jwtFeature = cta::runtime::stableFeature("jwt", &WfeAuthConfig::jwt);
-  static constexpr auto mtlsFeature = cta::runtime::stableFeature("mtls", &WfeAuthConfig::mtls);
-  static constexpr auto methods = std::tuple {jwtFeature, mtlsFeature};
-
-  bool isJwtEnabled() const { return cta::runtime::featureEnabled(enabled_methods, jwtFeature); }
-
-  bool isMtlsEnabled() const { return cta::runtime::featureEnabled(enabled_methods, mtlsFeature); }
-
-  /// Select settings only for explicitly enabled authentication methods.
-  bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_methods, name); }
-
-  /// @brief Validate the authentication configuration for consistency
-  /// @return The validation result (will contain the errors if present)
-  cta::runtime::ValidationResult validate() const;
-
-  /// @brief Get all enabled authentication methods
-  std::set<AuthMethod, std::less<>> getEnabledMethods() const;
-
-  static constexpr std::size_t memberCount() { return 3; }
 };
 
 }  // namespace cta::grpc_server

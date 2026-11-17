@@ -6,6 +6,7 @@
 #pragma once
 
 #include "grpc-server/config/AuthConfig.hpp"
+#include "grpc-server/config/AuthMethod.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "service-resources/config/CatalogueConfig.hpp"
@@ -15,9 +16,46 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <vector>
 
 namespace cta::workflow_api {
+
+/// Authentication method selection and credentials for workflow API requests.
+struct WfeAuthConfig final {
+  /// JWT is the non-strict default; strict mode requires an explicit selection.
+  std::vector<std::string> enabled_methods = {"jwt"};
+  /// JWT auth config (optional)
+  std::optional<cta::grpc_server::JwtAuthConfig> jwt;
+  /// mTLS auth config (optional)
+  std::optional<cta::grpc_server::MtlsAuthConfig> mtls;
+
+  static constexpr auto methods = std::tuple {
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::JWT, "jwt", &WfeAuthConfig::jwt),
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::MTLS, "mtls", &WfeAuthConfig::mtls),
+  };
+
+  /// Query only authentication methods supported by this service.
+  bool methodEnabled(cta::grpc_server::AuthMethod method) const {
+    return cta::runtime::featureEnabled(enabled_methods, method, methods);
+  }
+
+  /// Select settings only for explicitly enabled authentication methods.
+  bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_methods, name); }
+
+  /// Validate method selection and the settings of each selected method.
+  cta::runtime::ValidationResult validate() const {
+    auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
+    if (methodEnabled(cta::grpc_server::AuthMethod::JWT) == methodEnabled(cta::grpc_server::AuthMethod::MTLS)) {
+      result.addError("enabled_methods",
+                      "WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
+    }
+    return result;
+  }
+
+  static constexpr std::size_t memberCount() { return 3; }
+};
 
 /// Archive-related options of the workflow API.
 struct ArchiveConfig final {
@@ -84,6 +122,13 @@ struct OpportunisticBatchingConfig final {
 
 /// Backend connections, authentication, request handling and monitoring for the workflow API.
 struct WorkflowApiConfig final {
+  enum class Feature {
+    Telemetry,
+#ifdef CTA_PGSCHED
+    Batching,
+#endif
+  };
+
   /// Name of the instance, used by auth verification and gRPC messages
   std::string instance_name;
 
@@ -99,7 +144,7 @@ struct WorkflowApiConfig final {
 #endif
 
   cta::grpc_server::ListenerConfig grpc;
-  cta::grpc_server::WfeAuthConfig auth;
+  WfeAuthConfig auth;
 
   RequestsConfig requests;
 
@@ -109,25 +154,17 @@ struct WorkflowApiConfig final {
   static constexpr std::size_t memberCount() { return 11; }
 #endif
 
-  static constexpr auto telemetryFeature =
-    cta::runtime::experimentalFeature("telemetry", &WorkflowApiConfig::telemetry);
-#ifdef CTA_PGSCHED
-  static constexpr auto batchingFeature =
-    cta::runtime::experimentalFeature("opportunistic_batching", &WorkflowApiConfig::opportunistic_batching);
-#endif
-
   static constexpr auto features = std::tuple {
-    telemetryFeature,
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &WorkflowApiConfig::telemetry),
 #ifdef CTA_PGSCHED
-    batchingFeature,
+    cta::runtime::experimentalFeature(Feature::Batching,
+                                      "opportunistic_batching",
+                                      &WorkflowApiConfig::opportunistic_batching),
 #endif
   };
 
-  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
-
-#ifdef CTA_PGSCHED
-  bool isBatchingEnabled() const { return cta::runtime::featureEnabled(*this, batchingFeature); }
-#endif
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

@@ -5,10 +5,6 @@
 
 #include "grpc-server/config/AuthConfig.hpp"
 
-#include "common/exception/UserError.hpp"
-
-#include <set>
-
 namespace cta::grpc_server {
 
 cta::runtime::ValidationResult JwtAuthConfig::validate() const {
@@ -38,47 +34,6 @@ cta::runtime::ValidationResult JwtAuthConfig::validate() const {
   }
   if (revoke_list_path.has_value() && revoke_list_path->empty()) {
     result.addError("revoke_list_path", "cannot be empty when provided");
-  }
-  return result;
-}
-
-cta::runtime::ValidationResult AdminAuthConfig::validate() const {
-  auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
-  if (!isJwtEnabled() && !isKerberosEnabled()) {
-    result.addError("enabled_methods",
-                    "Admin frontend authentication requires at least one of JWT or Kerberos to be enabled");
-  }
-  return result;
-}
-
-std::set<AuthMethod, std::less<>> AdminAuthConfig::getEnabledMethods() const {
-  using enum AuthMethod;
-  std::set<AuthMethod, std::less<>> result;
-  if (isJwtEnabled()) {
-    result.emplace(JWT);
-  }
-  if (isKerberosEnabled()) {
-    result.emplace(KERBEROS);
-  }
-  return result;
-}
-
-cta::runtime::ValidationResult WfeAuthConfig::validate() const {
-  auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
-  if (isJwtEnabled() == isMtlsEnabled()) {
-    result.addError("enabled_methods", "WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
-  }
-  return result;
-}
-
-std::set<AuthMethod, std::less<>> WfeAuthConfig::getEnabledMethods() const {
-  using enum AuthMethod;
-  std::set<AuthMethod, std::less<>> result;
-  if (isJwtEnabled()) {
-    result.emplace(JWT);
-  }
-  if (isMtlsEnabled()) {
-    result.emplace(MTLS);
   }
   return result;
 }

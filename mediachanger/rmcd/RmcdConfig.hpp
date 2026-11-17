@@ -50,6 +50,11 @@ struct RmcServerConfig final {
 
 /// Device, listener and monitoring settings for the remote media-changer daemon.
 struct RmcdConfig final {
+  enum class Feature {
+    Telemetry,
+    HealthServer,
+  };
+
   cta::runtime::LoggingConfig logging;
   std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
   std::optional<cta::runtime::HealthServerConfig> health_server = std::nullopt;
@@ -60,14 +65,13 @@ struct RmcdConfig final {
 
   static constexpr std::size_t memberCount() { return 7; }
 
-  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &RmcdConfig::telemetry);
-  static constexpr auto healthServerFeature = cta::runtime::stableFeature("health_server", &RmcdConfig::health_server);
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &RmcdConfig::telemetry),
+    cta::runtime::stableFeature(Feature::HealthServer, "health_server", &RmcdConfig::health_server),
+  };
 
-  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
-
-  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
-
-  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

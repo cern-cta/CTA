@@ -22,6 +22,23 @@ TEST(MaintdConfig, DefaultValuesAreValidOnceBackendNameIsSet) {
   EXPECT_TRUE(config.validate().ok());
 }
 
+TEST(MaintdConfig, FeaturesUseTheirDeclaredSelectionLists) {
+  using Feature = cta::maintd::MaintdConfig::Feature;
+  cta::maintd::MaintdConfig config;
+  EXPECT_FALSE(config.featureEnabled(Feature::Telemetry));
+  EXPECT_FALSE(config.featureEnabled(Feature::HealthServer));
+
+  config.enabled_features = {"telemetry"};
+  config.enabled_experimental_features = {"health_server"};
+  EXPECT_FALSE(config.featureEnabled(Feature::Telemetry));
+  EXPECT_FALSE(config.featureEnabled(Feature::HealthServer));
+
+  config.enabled_features = {"health_server"};
+  config.enabled_experimental_features = {"telemetry"};
+  EXPECT_TRUE(config.featureEnabled(Feature::Telemetry));
+  EXPECT_TRUE(config.featureEnabled(Feature::HealthServer));
+}
+
 TEST(MaintdConfig, ValidatesCommonConfigChildren) {
   cta::maintd::MaintdConfig config;
   config.logging.level = "invalid";

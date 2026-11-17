@@ -105,13 +105,15 @@ Experimental interfaces may change incompatibly or be removed.
 For nested behaviour, put a domain-specific selector in the parent, such as `auth.enabled_methods` or `transfers.encryption_enabled`.
 Use a mode selector for mutually exclusive alternatives, such as `transport = "tcp"` or `"unix"`.
 
-Declare a static `features` tuple using `stableFeature(name, member)` and `experimentalFeature(name, member)` to associate names with optional sections.
+Declare a static `features` tuple using `stableFeature(Feature::Value, name, member)` and `experimentalFeature(Feature::Value, name, member)` to associate names with optional sections.
 Initialise the validation result with `validateFeatures(*this)`, then merge ordinary child validations as shown below.
 The helper validates the selections and their settings.
 
 For a domain-specific selection list, use `validateFeatureSelection(config, enabled, descriptors, fieldName)`.
 Descriptors without settings can omit the member pointer; `featureNames(descriptors)` supplies an all-enabled default.
-Consumers use named accessors such as `isTelemetryEnabled()`, or the corresponding boolean or mode field, before using the settings.
+Each service config declares its own `Feature` enum and exposes `featureEnabled(Feature)` for querying its supported features.
+Consumers use `config.featureEnabled(Config::Feature::Telemetry)`, or the corresponding boolean or mode field, before using the settings.
+The runtime expects `Feature::Telemetry` and `Feature::HealthServer` when the corresponding configuration sections exist; experimental status remains in the descriptors.
 
 Keep defaults in configuration member initialisers.
 For nested selectors, implement `isSectionEnabled(name)` so the loader can identify active optional members.
@@ -123,6 +125,11 @@ See [Service Runtime](../../ops/deploy-and-configure/configuration/service-runti
 
 ```c++
 struct CustomConfig final {
+  enum class Feature {
+    Telemetry,
+    HealthServer,
+  };
+
   // Add this if the app/tool uses the catalogue
   cta::runtime::CatalogueConfig catalogue;
   // Add this if the app/tool uses the scheduler
@@ -147,13 +154,13 @@ struct CustomConfig final {
   static constexpr std::size_t memberCount() { return 9; }
 
   // Associate each feature with its settings section.
-  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &CustomConfig::telemetry);
-  static constexpr auto healthServerFeature = cta::runtime::stableFeature("health_server", &CustomConfig::health_server);
-  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &CustomConfig::telemetry),
+    cta::runtime::stableFeature(Feature::HealthServer, "health_server", &CustomConfig::health_server),
+  };
 
-  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
-
-  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

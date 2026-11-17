@@ -501,6 +501,11 @@ INSTANTIATE_TEST_SUITE_P(Application, ApplicationShutdownSignalTest, testing::Va
 
 // These applications retain configuration and logging references until destruction.
 struct LifecycleConfig {
+  enum class Feature {
+    Telemetry,
+    HealthServer,
+  };
+
   cta::runtime::LoggingConfig logging;
   std::vector<std::string> enabled_features;
   std::vector<std::string> enabled_experimental_features;
@@ -509,15 +514,13 @@ struct LifecycleConfig {
 
   static constexpr std::size_t memberCount() { return 5; }
 
-  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &LifecycleConfig::telemetry);
-  static constexpr auto healthServerFeature =
-    cta::runtime::stableFeature("health_server", &LifecycleConfig::health_server);
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &LifecycleConfig::telemetry),
+    cta::runtime::stableFeature(Feature::HealthServer, "health_server", &LifecycleConfig::health_server),
+  };
 
-  static constexpr auto features = std::tuple {telemetryFeature, healthServerFeature};
-
-  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
-
-  bool isHealthServerEnabled() const { return cta::runtime::featureEnabled(*this, healthServerFeature); }
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);

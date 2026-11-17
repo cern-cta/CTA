@@ -233,12 +233,12 @@ Status CtaRpcWfeImpl::CancelRetrieve(::grpc::ServerContext* context,
 }
 
 bool CtaRpcWfeImpl::usesMtls() const {
-  return m_config.auth.isMtlsEnabled();
+  return m_config.auth.methodEnabled(cta::grpc_server::AuthMethod::MTLS);
 }
 
 std::set<std::string, std::less<>> CtaRpcWfeImpl::getMtlsCertIdentitiesForInstance(const std::string& instance) const {
   std::set<std::string, std::less<>> identities;
-  if (m_config.auth.isMtlsEnabled()) {
+  if (m_config.auth.methodEnabled(cta::grpc_server::AuthMethod::MTLS)) {
     if (const auto search = m_config.auth.mtls->aliases.find(instance); search != m_config.auth.mtls->aliases.end()) {
       identities.insert(search->second.begin(), search->second.end());
     }

@@ -239,7 +239,7 @@ public:
       // If we were to read the original file instead of the copy, the original file may have changed in the time it took to copy the file and read it.
       // We make sure that the file names match the full path in the TOML config file to ensure they are deterministic and can easily be correlated by operators.
       if constexpr (HasTelemetryConfig<TConfig>) {
-        if (config.isTelemetryEnabled()) {
+        if (config.featureEnabled(TConfig::Feature::Telemetry)) {
           config.telemetry->config_file =
             utils::copyFile(config.telemetry->config_file, cliOptions.runtimeDir + "/telemetry.config_file", true);
         }
@@ -381,7 +381,7 @@ private:
   }
 
   std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions, log::Logger& log) {
-    if (config.isHealthServerEnabled()) {
+    if (config.featureEnabled(TConfig::Feature::HealthServer)) {
       std::string host;
       uint16_t port;
       if (config.health_server->transport == "unix") {
@@ -410,7 +410,7 @@ private:
   }
 
   void initTelemetry(const TConfig& config, log::Logger& log) {
-    if (!config.isTelemetryEnabled()) {
+    if (!config.featureEnabled(TConfig::Feature::Telemetry)) {
       return;
     }
     if (config.telemetry->on_init_failure != "fatal" && config.telemetry->on_init_failure != "warn") {

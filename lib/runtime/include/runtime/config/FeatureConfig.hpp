@@ -106,11 +106,12 @@ void validateFeature(ValidationResult& result,
 /// Associate a selectable name with a pointer to its optional configuration member and its experimental status.
 /// A nullptr member represents a feature with no settings section.
 /// The name is non-owning and must outlive the descriptor; use a string literal for static declarations.
-template<class Member>
+template<class Member, class Id = std::nullptr_t>
 struct FeatureDescriptor {
   std::string_view name;
   Member member;
   bool experimental = false;
+  Id id = {};
 
   /// Append section-presence and settings errors using this descriptor's name and member.
   /// Selection comes from enabled; descriptors without settings require no section validation.
@@ -135,20 +136,51 @@ constexpr auto experimentalFeature(std::string_view name, Member member) {
   return FeatureDescriptor<Member> {name, member, true};
 }
 
+/// Associate a service-local enum value with a stable feature and its optional settings member.
+template<class Id, class Member = std::nullptr_t>
+  requires std::is_enum_v<Id>
+constexpr auto stableFeature(Id id, std::string_view name, Member member = nullptr) {
+  return FeatureDescriptor<Member, Id> {name, member, false, id};
+}
+
+/// Associate a service-local enum value with an experimental feature and its settings member.
+template<class Id, class Member>
+  requires std::is_enum_v<Id>
+constexpr auto experimentalFeature(Id id, std::string_view name, Member member) {
+  return FeatureDescriptor<Member, Id> {name, member, true, id};
+}
+
 /// Return whether enabled contains feature.name; does not change the selection or inspect settings.
-template<class Member>
-bool featureEnabled(const std::vector<std::string>& enabled, const FeatureDescriptor<Member>& feature) {
+template<class Member, class Id>
+bool featureEnabled(const std::vector<std::string>& enabled, const FeatureDescriptor<Member, Id>& feature) {
   return featureEnabled(enabled, feature.name);
 }
 
+/// Query an enum-tagged descriptor in a domain-specific selection list; undeclared values are disabled.
+template<class Id, class Descriptors>
+  requires std::is_enum_v<Id>
+bool featureEnabled(const std::vector<std::string>& enabled, Id id, const Descriptors& descriptors) {
+  return std::apply(
+    [&](const auto&... feature) { return ((feature.id == id && featureEnabled(enabled, feature)) || ...); },
+    descriptors);
+}
+
 /// Return whether a declared service feature is selected in the list matching its experimental status.
-template<class Config, class Member>
+template<class Config, class Member, class Id>
   requires requires(const Config& config) {
     config.enabled_features;
     config.enabled_experimental_features;
   }
-bool featureEnabled(const Config& config, const FeatureDescriptor<Member>& feature) {
+bool featureEnabled(const Config& config, const FeatureDescriptor<Member, Id>& feature) {
   return featureEnabled(feature.experimental ? config.enabled_experimental_features : config.enabled_features, feature);
+}
+
+/// Query a service-local enum through its descriptor; undeclared values are disabled.
+template<class Config>
+bool featureEnabled(const Config& config, typename Config::Feature id) {
+  return std::apply(
+    [&](const auto&... feature) { return ((feature.id == id && featureEnabled(config, feature)) || ...); },
+    Config::features);
 }
 
 /// Return the selection state of a declared feature, or nullopt when name is not a feature.

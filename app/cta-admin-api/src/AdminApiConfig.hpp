@@ -7,6 +7,7 @@
 
 #include "AdminCmdMode.hpp"
 #include "grpc-server/config/AuthConfig.hpp"
+#include "grpc-server/config/AuthMethod.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "service-resources/config/CatalogueConfig.hpp"
@@ -16,9 +17,46 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <vector>
 
 namespace cta::admin_api {
+
+/// Authentication method selection and credentials for admin API requests.
+struct AdminAuthConfig final {
+  /// JWT is the non-strict default; strict mode requires an explicit selection.
+  std::vector<std::string> enabled_methods = {"jwt"};
+  /// JWT auth config (optional)
+  std::optional<cta::grpc_server::JwtAuthConfig> jwt;
+  /// Kerberos auth config (optional)
+  std::optional<cta::grpc_server::KerberosAuthConfig> kerberos;
+
+  static constexpr auto methods = std::tuple {
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::JWT, "jwt", &AdminAuthConfig::jwt),
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::KERBEROS, "kerberos", &AdminAuthConfig::kerberos),
+  };
+
+  /// Query only authentication methods supported by this service.
+  bool methodEnabled(cta::grpc_server::AuthMethod method) const {
+    return cta::runtime::featureEnabled(enabled_methods, method, methods);
+  }
+
+  /// Select settings only for explicitly enabled authentication methods.
+  bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_methods, name); }
+
+  /// Validate method selection and the settings of each selected method.
+  cta::runtime::ValidationResult validate() const {
+    auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
+    if (!methodEnabled(cta::grpc_server::AuthMethod::JWT) && !methodEnabled(cta::grpc_server::AuthMethod::KERBEROS)) {
+      result.addError("enabled_methods",
+                      "Admin frontend authentication requires at least one of JWT or Kerberos to be enabled");
+    }
+    return result;
+  }
+
+  static constexpr std::size_t memberCount() { return 3; }
+};
 
 /// Repack-related options of the admin API.
 struct RepackConfig final {
@@ -101,6 +139,10 @@ struct PoliciesConfig final {
 
 /// Backend connections, authentication, command policies and monitoring for the admin API.
 struct AdminApiConfig final {
+  enum class Feature {
+    Telemetry,
+  };
+
   /// Name of the instance, used by auth verification and gRPC messages
   std::string instance_name;
 
@@ -114,17 +156,18 @@ struct AdminApiConfig final {
   PoliciesConfig policies;
 
   cta::grpc_server::ListenerConfig grpc;
-  cta::grpc_server::AdminAuthConfig auth;
+  AdminAuthConfig auth;
 
   DefaultsConfig defaults;
 
   static constexpr std::size_t memberCount() { return 11; }
 
-  static constexpr auto telemetryFeature = cta::runtime::experimentalFeature("telemetry", &AdminApiConfig::telemetry);
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &AdminApiConfig::telemetry),
+  };
 
-  static constexpr auto features = std::tuple {telemetryFeature};
-
-  bool isTelemetryEnabled() const { return cta::runtime::featureEnabled(*this, telemetryFeature); }
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatures(*this);
