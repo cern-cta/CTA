@@ -5,16 +5,7 @@
 
 set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
-
-die() {
-  log_error "$@"
-  exit 1
-}
-
-log_run() {
-  log_task "Running: $*"
-  "$@"
-}
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/helm_utils.sh"
 
 usage() {
   echo
@@ -27,25 +18,18 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
-  echo "      --eos-config <file>:            Values file to use for the EOS chart."
+  echo "      --eos-values <file>:            EOS values override; repeatable, applied in order."
   echo
-  exit 1
-}
-
-check_helm_installed() {
-  # First thing we do is check whether helm is installed
-  if ! command -v helm >/dev/null 2>&1; then
-    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-  fi
+  exit "${1:-1}"
 }
 
 deploy() {
-  eos_config="presets/eos/auth-jwt.yaml"
+  eos_values=(--values presets/eos/auth-jwt.yaml)
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      -h | --help) usage ;;
+      -h | --help) usage 0 ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
@@ -55,8 +39,9 @@ deploy() {
       -i|--eos-image-tag)
         eos_image_tag="$2"
         shift ;;
-      --eos-config)
-        eos_config="$2"
+      --eos-values)
+        [[ -f "$2" ]] || die "EOS values file $2 does not exist"
+        eos_values+=(--values "$2")
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
@@ -69,12 +54,13 @@ deploy() {
   if [[ -z "${namespace}" ]]; then
     die_usage "Missing mandatory argument: -n | --namespace"
   fi
+  check_helm_installed
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
     die "Namespace $namespace does not exist. Upgrade failed"
   fi
 
 
-  helm_flags=(--values "$eos_config")
+  helm_flags=("${eos_values[@]}")
   if [[ -n "$eos_image_repository" ]]; then
     helm_flags+=(--set-string "server.global.repository=${eos_image_repository}")
   fi
@@ -92,6 +78,5 @@ deploy() {
                       "${helm_flags[@]}"
 }
 
-check_helm_installed
 deploy "$@"
 log_success "Deployed EOS in namespace ${namespace}."

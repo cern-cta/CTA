@@ -1,0 +1,92 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+image:
+  registry: gitlab-registry.cern.ch
+  repository: cta/ctageneric/cta-tools
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: [reg-ctageneric]
+
+# Permission for explicitly selected resets or Liquibase on protected connections.
+# This does not enable any operation or change connection protection.
+allowDestructive: false
+
+# Persistent tools do not initialize or reset anything on startup.
+admin:
+  enabled: false
+  resources: {}
+
+# Bootstrap Jobs run once; changing values does not rerun a completed Job.
+# Disable reset flags before upgrading the tools image. Logs remain available until Job deletion.
+reset:
+  # Reset every unprotected connection. Explicit protected resets require allowDestructive.
+  allUnprotected: false
+  catalogue: false
+  scheduler: false
+  catalogueSchemaVersion: latest
+  postgresClientImage: docker.io/postgres:17
+  resources: {}
+
+global:
+  image: {}
+  extraVolumes:
+    volumes: []
+    volumeMounts: []
+  securityContext: {}
+  kerberos:
+    clientConfig:
+      configMap: krb5-conf
+    defaultRealm: TEST.CTA
+    adminPrinc:
+      name: root
+      password: defaultcipassword
+
+  catalogue:
+    protected: false
+    existingSecret: cta-catalogue-conf
+  scheduler:
+    protected: false
+    backend: vfs
+    existingSecret: cta-scheduler-conf
+    existingClaim: scheduler-vfs-pvc
+
+# Starts a persistent tools pod; migrations run only when explicitly invoked.
+liquibase:
+  enabled: false
+  resources: {}
+  image:
+    repository: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater
+    tag: alma9-base.2
+    pullPolicy: IfNotPresent
+    pullSecrets: [reg-eoscta-operations]
+  catalogueSourceVersion: ''
+  catalogueDestinationVersion: ''
+  extraFlags: ''
+  customRepoFiles: false
+
+# Tools using the CTA frontend API.
+client:
+  enabled: false
+  fullnameOverride: cta-cli
+  replicas: 1
+  resources: {}
+
+  conf:
+    cta:
+      endpoint: cta-frontend-admin:10956
+      grpc:
+        cta_admin_auth_method: jwt
+        tls:
+          chain_cert_path: /etc/grpc-certs/ca.crt.pem
+
+  krb5PrincName: ctaadmin1
+
+  pod:
+    extraSpec:
+      terminationGracePeriodSeconds: 1
+
+  extraVolumes:
+    volumeMounts: null
+    volumes: null

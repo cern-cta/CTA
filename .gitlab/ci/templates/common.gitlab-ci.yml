@@ -65,3 +65,24 @@
   before_script:
     - !reference [.merge-train-guard, before_script]
     - git submodule update --init lib/protobuf/external/xrootd-ssi-protobuf-interface
+
+.helm-charts:
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+    - changes:
+        - "ci/orchestration/helm/**/*"
+        - "ci/orchestration/presets/**/*"
+        - "ci/orchestration/check_charts.sh"
+        - ".gitlab-ci.yml"
+        - ".gitlab/ci/{lint,tests}.gitlab-ci.yml"
+        - ".gitlab/ci/templates/common.gitlab-ci.yml"
+      when: on_success
+  image:
+    name: $IMAGE_HELM
+    entrypoint: [""]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"

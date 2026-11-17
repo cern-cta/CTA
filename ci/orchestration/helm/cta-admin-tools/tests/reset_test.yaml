@@ -1,0 +1,84 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+suite: Database reset lifecycle
+release:
+  name: check
+templates:
+  - templates/database-reset-jobs.yaml
+tests:
+  - it: does not reset databases by default
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: resets only the explicitly requested catalogue
+    set:
+      reset.catalogue: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: check-reset-catalogue
+      - equal:
+          path: spec.backoffLimit
+          value: 0
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+  - it: bootstraps both unprotected connections
+    set:
+      reset.allUnprotected: true
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: bootstrap skips the protected catalogue
+    set:
+      reset.allUnprotected: true
+      global.catalogue.protected: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: check-reset-scheduler
+  - it: bootstrap skips the protected scheduler
+    set:
+      reset.allUnprotected: true
+      global.scheduler.protected: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: check-reset-catalogue
+  - it: bootstrap leaves both protected connections untouched
+    set:
+      reset.allUnprotected: true
+      global.catalogue.protected: true
+      global.scheduler.protected: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: permission alone does not reset protected connections automatically
+    set:
+      allowDestructive: true
+      reset.allUnprotected: true
+      global.catalogue.protected: true
+      global.scheduler.protected: true
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: explicit permission enables only the requested protected reset
+    set:
+      allowDestructive: true
+      reset.catalogue: true
+      global.catalogue.protected: true
+      global.scheduler.protected: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: check-reset-catalogue

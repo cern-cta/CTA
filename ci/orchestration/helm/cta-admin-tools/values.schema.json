@@ -1,0 +1,405 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CTA administration tools values",
+  "$comment":
+    "Chart-owned settings are validated here; Kubernetes extension objects and shared/dependency values remain extensible.",
+  "type": "object",
+  "properties": {
+    "image": {
+      "$ref": "#/definitions/image"
+    },
+    "admin": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "description":
+        "Persistent administration pod with direct catalogue and scheduler access; startup never resets state."
+    },
+    "reset": {
+      "type": "object",
+      "properties": {
+        "catalogue": {
+          "type": "boolean"
+        },
+        "scheduler": {
+          "type": "boolean"
+        },
+        "catalogueSchemaVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description":
+            "Catalogue schema version to create during reset; latest selects the version shipped with the tools image."
+        },
+        "postgresClientImage": {
+          "type": "string",
+          "minLength": 1,
+          "description": "PostgreSQL client image used by reset init containers to wait for database readiness."
+        },
+        "allUnprotected": {
+          "type": "boolean",
+          "description":
+            "Reset every connection that is not protected. Explicit catalogue/scheduler flags reject protected connections."
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
+        }
+      },
+      "required": [
+        "allUnprotected",
+        "catalogue",
+        "scheduler",
+        "catalogueSchemaVersion",
+        "postgresClientImage"
+      ],
+      "additionalProperties": false,
+      "description":
+        "One-shot bootstrap Jobs. Disable reset flags before upgrading; completed Jobs do not rerun automatically."
+    },
+    "global": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "extraVolumes": {
+          "$ref": "#/definitions/extraVolumes"
+        },
+        "securityContext": {
+          "type": "object"
+        },
+        "kerberos": {
+          "type": "object",
+          "properties": {
+            "clientConfig": {
+              "type": "object",
+              "properties": {
+                "configMap": {
+                  "$ref": "#/definitions/resourceName"
+                }
+              },
+              "required": [
+                "configMap"
+              ]
+            },
+            "defaultRealm": {
+              "type": "string",
+              "minLength": 1
+            },
+            "adminPrinc": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "password": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "name",
+                "password"
+              ]
+            }
+          },
+          "required": [
+            "clientConfig",
+            "defaultRealm",
+            "adminPrinc"
+          ]
+        },
+        "catalogue": {
+          "type": "object",
+          "properties": {
+            "protected": {
+              "type": "boolean",
+              "description":
+                "Skip automatic resets and test setup/teardown; destructive operations require explicit permission. Normal writes are allowed."
+            },
+            "existingSecret": {
+              "$ref": "#/definitions/resourceName",
+              "description": "Name of the Secret containing cta-catalogue.conf in the deployment namespace."
+            }
+          },
+          "required": [
+            "protected",
+            "existingSecret"
+          ]
+        },
+        "scheduler": {
+          "type": "object",
+          "properties": {
+            "protected": {
+              "type": "boolean",
+              "description":
+                "Skip automatic resets and test setup/teardown; destructive operations require explicit permission. Normal writes are allowed."
+            },
+            "existingSecret": {
+              "$ref": "#/definitions/resourceName",
+              "description": "Name of the Secret containing cta-scheduler.conf in the deployment namespace."
+            },
+            "backend": {
+              "enum": [
+                "postgres",
+                "ceph",
+                "vfs"
+              ]
+            },
+            "existingClaim": {
+              "type": "string",
+              "description": "Existing PVC used by the VFS backend; ignored by other backends."
+            }
+          },
+          "required": [
+            "protected",
+            "existingSecret",
+            "backend"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "backend": {
+                    "const": "vfs"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "existingClaim"
+                ],
+                "properties": {
+                  "existingClaim": {
+                    "$ref": "#/definitions/resourceName"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "catalogue",
+        "scheduler"
+      ],
+      "description": "Shared CTA connection and runtime settings, supplied to both service and tools releases."
+    },
+    "liquibase": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "catalogueSourceVersion": {
+          "type": "string"
+        },
+        "catalogueDestinationVersion": {
+          "type": "string"
+        },
+        "extraFlags": {
+          "type": "string"
+        },
+        "customRepoFiles": {
+          "type": "boolean",
+          "description": "Mount the yum.repos.d-config ConfigMap for the Liquibase test environment."
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
+        }
+      },
+      "required": [
+        "enabled",
+        "image"
+      ],
+      "additionalProperties": false,
+      "description": "Persistent Liquibase tools pod. Enabling it does not execute a migration."
+    },
+    "client": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "nameOverride": {
+          "type": "string"
+        },
+        "fullnameOverride": {
+          "type": "string"
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "krb5PrincName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resources": {
+          "type": "object",
+          "description": "Kubernetes resource requests and limits for this workload."
+        },
+        "conf": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "extraEnv": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object"
+          }
+        },
+        "pod": {
+          "type": "object",
+          "properties": {
+            "extraSpec": {
+              "type": "object"
+            }
+          }
+        },
+        "extraVolumes": {
+          "$ref": "#/definitions/extraVolumes"
+        }
+      },
+      "required": [
+        "enabled",
+        "replicas",
+        "krb5PrincName"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "conf"
+            ],
+            "properties": {
+              "conf": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      ],
+      "description": "API client pod without direct catalogue or scheduler access."
+    },
+    "allowDestructive": {
+      "type": "boolean",
+      "description":
+        "Permit explicitly selected resets or Liquibase against protected connections. Does not enable operations or automatic resets."
+    }
+  },
+  "definitions": {
+    "resourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$"
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "registry": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "pullSecrets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/resourceName"
+          }
+        }
+      }
+    },
+    "extraVolumes": {
+      "type": "object",
+      "properties": {
+        "volumes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object"
+          }
+        },
+        "volumeMounts": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "image",
+    "admin",
+    "reset",
+    "global",
+    "liquibase",
+    "client"
+  ],
+  "allOf": [
+    {
+      "not": {
+        "required": [
+          "database"
+        ]
+      },
+      "description": "Use admin.enabled for the persistent administration pod."
+    },
+    {
+      "not": {
+        "required": [
+          "resources"
+        ]
+      },
+      "description": "Set admin.resources, reset.resources, liquibase.resources or client.resources."
+    }
+  ]
+}

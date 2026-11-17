@@ -6,8 +6,7 @@ image:
   repository: cta/ctageneric/cta-maintd
   tag: latest
 
-# Note that by default this chart does not enable any routines for the objectstore/scheduler cleanup
-# To do this, enable these explicitly by passing in another values file (see e.g. presets/dev-cta-maintd-*-values.yaml)
+# Routines for both scheduler backends are listed; only those matching global.scheduler.backend are deployed.
 routines:
   # Note that the snake_case version of all these options (including the names)
   # should match the corresponding names in the maintd conf file
@@ -33,6 +32,42 @@ routines:
     replicas: 1
     sleepIntervalSecs: 1
     softTimeoutSecs: 30
+  # Objectstore scheduler (vfs and ceph) only.
+  garbageCollect:
+    replicas: 1
+    sleepIntervalSecs: 1
+  queueCleanup:
+    replicas: 1
+    sleepIntervalSecs: 1
+    batchSize: 500
+  # PostgreSQL scheduler only.
+  userActiveQueueCleanup:
+    replicas: 1
+    sleepIntervalSecs: 900
+    batchSize: 1000
+    ageForCollectionSecs: 1800
+  repackActiveQueueCleanup:
+    replicas: 1
+    sleepIntervalSecs: 900
+    batchSize: 1000
+    ageForCollectionSecs: 1800
+  userPendingQueueCleanup:
+    replicas: 1
+    sleepIntervalSecs: 60
+    batchSize: 1000
+    ageForCollectionSecs: 120
+  repackPendingQueueCleanup:
+    replicas: 1
+    sleepIntervalSecs: 60
+    batchSize: 1000
+    ageForCollectionSecs: 120
+  # Also deletes elapsed disk system sleep entries; mount decisions already ignore expired entries,
+  # so this daily cadence only affects how long those rows linger.
+  schedulerMaintenanceCleanup:
+    replicas: 1
+    sleepIntervalSecs: 86400
+    batchSize: 1000
+    ageForDeletionSecs: 1209600
 
 logging:
   level: "INFO"

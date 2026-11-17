@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+postgres:
+  instances:
+    cta-catalogue-postgres-db:
+      database: cta
+      username: cta
+      secretName: cta-catalogue-conf
+      extraSecretData:
+        cta-catalogue.conf: 'postgresql:{{ .connection.uri }}'

@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+frontend-wfe:
+  conf:
+    schedulerdb:
+      # Tuning only, applied whether or not batching ends up enabled: does NOT itself turn batching
+      # on. That is controlled solely by the enable-opportunistic-batching pipeline input, via
+      # presets/cta/tests/opportunistic-batching.yaml -- this file used to also hardcode
+      # opportunisticBatching.enabled: true here, which always won (later file in the values chain)
+      # over that input, making the input a no-op for stress tests.
+      opportunisticBatching:
+        windowMs: 10
+        # A safety ceiling on single-round batch size, not a target: real workloads should virtually
+        # never hit it (the window ends most rounds first), so it mainly guards against a pathological
+        # burst producing one unreasonably large bulk INSERT rather than shaping normal throughput.
+        maxBatchSize: 1000
+
+taped:
+  transfers:
+    # Keep enough files in flight to support the larger scheduler/reporting batches below.
+    bufferCount: 10000
+  scheduler:
+    # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
+    numberOfConnections: 3
+
+maintd:
+  routines:
+    # Note that the snake_case version of all these options (including the names)
+    # should match the corresponding names in the maintd conf file
+    # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
+    # To disable a routine, set replicas to 0
+    # Parallel reporters and larger batches keep archive completion reporting from backing up.
+    diskReportArchive:
+      replicas: 2
+      # Poll frequently to drain completed work; batch size and worker count are not a rate guarantee.
+      sleepIntervalSecs: 5
+      # Amortize database and reporting overhead across many small files.
+      batchSize: 4000
+      # Bound a reporting pass so workers can return to other queued work.
+      softTimeoutSecs: 30
+    # Apply the same reporting capacity to completed retrievals.
+    diskReportRetrieve:
+      replicas: 2
+      # Poll frequently to drain completed work; batch size and worker count are not a rate guarantee.
+      sleepIntervalSecs: 5
+      # Amortize database and reporting overhead across many small files.
+      batchSize: 4000
+      # Bound a reporting pass so workers can return to other queued work.
+      softTimeoutSecs: 30
+    # Keep repack expansion bounded rather than adding many concurrent requests.
+    repackExpand:
+      replicas: 1
+      sleepIntervalSecs: 10
+      maxToExpand: 2
+    # Retain a single periodic worker for repack reporting.
+    repackReport:
+      replicas: 1
+      sleepIntervalSecs: 10
+      softTimeoutSecs: 30

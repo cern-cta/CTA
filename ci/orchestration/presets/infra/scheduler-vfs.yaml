@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+secretFiles:
+  cta-scheduler-conf:
+    cta-scheduler.conf: /objectstore
+
+persistentVolumeClaims:
+  scheduler-vfs-pvc:
+    storageClass: local-path
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi

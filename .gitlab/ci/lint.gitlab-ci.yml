@@ -190,6 +190,17 @@ lint-rust:
     reports:
       codequality: cargo-clippy.json
 
+lint-helm:
+  extends: .helm-charts
+  stage: lint
+  script:
+    - sh ci/orchestration/check_charts.sh lint artifacts/helm-lint
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - artifacts/helm-lint/
+
 # check for security advisories, bans, licenses and package sources
 deny-rust:
   allow_failure: true

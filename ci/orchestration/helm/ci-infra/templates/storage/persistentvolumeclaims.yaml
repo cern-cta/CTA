@@ -1,0 +1,27 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- range $name, $claim := .Values.persistentVolumeClaims }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $name }}
+  {{- with $claim.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- toYaml (default (list "ReadWriteOnce") $claim.accessModes) | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ required (printf "persistentVolumeClaims.%s.size is required" $name) $claim.size | quote }}
+  {{- if eq (default "" $claim.storageClass) "-" }}
+  storageClassName: ""
+  {{- else if $claim.storageClass }}
+  storageClassName: {{ $claim.storageClass | quote }}
+  {{- end }}
+{{- end }}

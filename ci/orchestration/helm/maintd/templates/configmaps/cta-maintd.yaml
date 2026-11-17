@@ -3,8 +3,8 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $allRoutines := .Values.routines -}}
+{{- $schedulerConfig := .Values.global.scheduler -}}
+{{- $allRoutines := include "maintd.routines" . | fromYaml -}}
 {{- range $routineName, $routineConf := $allRoutines }}
 {{- $routineNameSlug := include "common.slugify" $routineName }}
 apiVersion: v1

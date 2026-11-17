@@ -50,6 +50,11 @@ spec:
         - |
           # Keep each user's keytab on a separate shared volume.
           sukadmin() { printf '%s\n' {{ $kerberos.adminPrinc.password | squote }} | kadmin -r {{ $kerberos.defaultRealm | upper | quote }} -p {{ printf "%s/admin" $kerberos.adminPrinc.name | quote }} "$@"; }
+          # Infrastructure and EOS start together; wait before changing any principals.
+          until sukadmin getprivs >/dev/null 2>&1; do
+            echo "Waiting for Kerberos administration service..."
+            sleep 1
+          done
           {{- range $client.users }}
           sukadmin addprinc -randkey {{ . | quote }}
           sukadmin ktadd -k /root/{{ . }}_keytab/output/{{ . }}.keytab {{ . | quote }}
@@ -76,12 +81,6 @@ spec:
           {{- toYaml . | nindent 10 }}
         {{- end }}
         env:
-        - name: MY_NAME
-          value: {{ $name }}
-        - name: MY_NAMESPACE
-          value: {{ .Release.Namespace | quote }}
-        - name: INSTANCE_NAME
-          value: {{ .Release.Namespace | quote }}
         - name: TERM
           value: xterm
         {{- with $client.extraEnv }}

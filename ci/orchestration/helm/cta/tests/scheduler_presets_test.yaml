@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+suite: Scheduler preset composition
+release:
+  name: check
+templates:
+  - charts/maintd/templates/deployment.yaml
+tests:
+  - it: vfs after postgres deploys only objectstore routines
+    values:
+      - ../../../presets/cta/scheduler/postgres.yaml
+      - ../../../presets/cta/scheduler/vfs.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+        documentSelector:
+          path: metadata.name
+          value: check-rt-garbagecollect
+      - notEqual:
+          path: metadata.name
+          value: check-rt-useractivequeuecleanup
+  - it: postgres after vfs deploys only postgres routines
+    values:
+      - ../../../presets/cta/scheduler/vfs.yaml
+      - ../../../presets/cta/scheduler/postgres.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+        documentSelector:
+          path: metadata.name
+          value: check-rt-useractivequeuecleanup
+      - notEqual:
+          path: metadata.name
+          value: check-rt-garbagecollect
+  - it: ceph after postgres deploys only objectstore routines
+    values:
+      - ../../../presets/cta/scheduler/postgres.yaml
+      - ../../../presets/cta/scheduler/ceph.yaml
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+        documentSelector:
+          path: metadata.name
+          value: check-rt-queuecleanup
+      - notEqual:
+          path: metadata.name
+          value: check-rt-userpendingqueuecleanup

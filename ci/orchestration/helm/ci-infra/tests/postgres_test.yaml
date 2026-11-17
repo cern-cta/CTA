@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+suite: Provisioned database credentials
+templates:
+  - templates/postgres/instances.yaml
+tests:
+  - it: does not provision a database by default
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: escapes connection URI components from the same credentials used by PostgreSQL
+    set: &id001
+      postgres.instances.example:
+        database: test db
+        username: test user
+        password: test/password
+        secretName: custom-credentials
+        extraSecretData:
+          connection.txt: '{{ .connection.uri }}'
+    documentSelector:
+      path: kind
+      value: Secret
+    asserts:
+      - equal:
+          path: stringData["connection.txt"]
+          value: postgresql://test%20user:test%2Fpassword@example/test%20db
+      - equal:
+          path: stringData.POSTGRES_PASSWORD
+          value: test/password
+  - it: wires overridden credentials into the database workload
+    set: *id001
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: custom-credentials
+                key: POSTGRES_PASSWORD
+  - it: rejects connection files that overwrite credentials
+    set:
+      postgres.instances.example.extraSecretData.POSTGRES_PASSWORD: override
+    asserts:
+      - failedTemplate:
+          errorMessage: postgres.instances.example.extraSecretData cannot override POSTGRES_PASSWORD

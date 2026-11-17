@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+suite: Workload resource isolation
+templates:
+  - templates/admin-deployment.yaml
+  - templates/client-statefulset.yaml
+  - templates/database-reset-jobs.yaml
+  - templates/liquibase-pod.yaml
+tests:
+  - it: applies each workload's own resource requests
+    set:
+      admin.enabled: true
+      client.enabled: true
+      reset.catalogue: true
+      liquibase.enabled: true
+      admin.resources.requests.memory: 128Mi
+      client.resources.requests.memory: 256Mi
+      reset.resources.requests.memory: 512Mi
+      liquibase.resources.requests.memory: 1Gi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 128Mi
+        template: templates/admin-deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 256Mi
+        template: templates/client-statefulset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+        template: templates/database-reset-jobs.yaml
+      - equal:
+          path: spec.containers[0].resources.requests.memory
+          value: 1Gi
+        template: templates/liquibase-pod.yaml

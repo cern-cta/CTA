@@ -1,0 +1,89 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+{{- $scheduler := .Values.global.scheduler }}
+{{- range $database := list "catalogue" "scheduler" }}
+{{- if and (index $.Values.global $database).protected (index $.Values.reset $database) (not $.Values.allowDestructive) }}
+{{- fail (printf "Cannot reset protected %s connection" $database) }}
+{{- end }}
+{{- if or (index $.Values.reset $database) (and $.Values.reset.allUnprotected (not (index $.Values.global $database).protected)) }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $.Release.Name }}-reset-{{ $database }}
+  labels:
+    {{- include "common.labels.standard" $ | nindent 4 }}
+spec:
+  # Never retry a destructive reset; the init container waits for database readiness.
+  backoffLimit: 0
+  activeDeadlineSeconds: 240
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels.standard" $ | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        {{- include "cta-admin-tools.imagePullSecrets" $ | nindent 8 }}
+      {{- if or (eq $database "catalogue") (eq $scheduler.backend "postgres") }}
+      initContainers:
+        - name: wait-database
+          image: {{ $.Values.reset.postgresClientImage | quote }}
+          imagePullPolicy: IfNotPresent
+          command: [bash, /scripts/wait_database.sh, /etc/cta/cta-{{ $database }}.conf]
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            - name: {{ $database }}-config
+              mountPath: /etc/cta/cta-{{ $database }}.conf
+              subPath: cta-{{ $database }}.conf
+              readOnly: true
+      {{- end }}
+      containers:
+        - name: reset
+          image: {{ include "cta-admin-tools.image" $ }}
+          imagePullPolicy: {{ include "cta-admin-tools.imagePullPolicy" $ }}
+          securityContext:
+            allowPrivilegeEscalation: false
+          command: [bash, /scripts/reset_{{ $database }}.sh]
+          env:
+            {{- if eq $database "catalogue" }}
+            - name: SCHEMA_VERSION
+              value: {{ $.Values.reset.catalogueSchemaVersion | quote }}
+            {{- else }}
+            - name: SCHEDULER_BACKEND
+              value: {{ $scheduler.backend | quote }}
+            {{- end }}
+          resources:
+            {{- toYaml $.Values.reset.resources | nindent 12 }}
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            {{- if eq $database "catalogue" }}
+            - name: catalogue-config
+              mountPath: /etc/cta/cta-catalogue.conf
+              subPath: cta-catalogue.conf
+              readOnly: true
+            {{- else }}
+            {{- include "common.scheduler.mounts" $scheduler | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ $.Release.Name }}-scripts
+        {{- if eq $database "catalogue" }}
+        - name: catalogue-config
+          secret:
+            secretName: {{ $.Values.global.catalogue.existingSecret }}
+        {{- else }}
+        {{- include "common.scheduler.volumes" $scheduler | nindent 8 }}
+        {{- end }}
+{{- end }}
+{{- end }}

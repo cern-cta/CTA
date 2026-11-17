@@ -124,7 +124,7 @@ Run `--sanitizers thread --enable-unit-tests` separately; ThreadSanitizer cannot
 Run commands from your CTA checkout. The default namespace is `dev`; use `--namespace` to select another instance. These deployments are for development and testing. For a site deployment, see [Operations](../../../ops/index.md).
 
 !!! warning "Replacing an instance"
-    `cta-dev deploy`, `up`, and `all` replace the managed deployment and reset its catalogue and scheduler. Combined commands start deleting the old deployment while the build runs, before the build has succeeded. Preserve logs, core dumps, and other evidence before invoking them.
+    `cta-dev deploy`, `up`, and `all` replace the managed deployment and reset its unprotected catalogue and scheduler. Combined commands start deleting the old deployment while the build runs, before the build has succeeded. Preserve logs, core dumps, and other evidence before invoking them.
 
 ### Deploy existing images
 
@@ -132,8 +132,8 @@ Run commands from your CTA checkout. The default namespace is `dev`; use `--name
 cta-dev deploy
 ```
 
-This does not build RPMs or images. The current deployment in the selected namespace is replaced only if the namespace
-is managed by CTA tooling.
+This does not build RPMs or images.
+The current deployment in the selected namespace is replaced only if the namespace is managed by CTA tooling.
 
 ### Deploy images built by CI
 
@@ -149,21 +149,126 @@ Replace `<ci-image-tag>` with a published CI image tag. This selects the CI regi
 
 ### Custom Helm values
 
-Relative values-file paths are resolved from `ci/orchestration/`, where the deployment scripts run. Use absolute paths for files elsewhere, for example:
+Use repeatable `--cta-values`, `--eos-values`, and `--dcache-values` options to override the deployment presets.
+Values are applied in command-line order, after the defaults; later files take precedence.
+CTA values are shared by the services and administration tools.
+Relative paths are resolved from `ci/orchestration/`; use absolute paths for files elsewhere:
 
 ```bash
 cta-dev deploy \
-  --catalogue-config /path/to/catalogue-values.yaml \
-  --scheduler-config /path/to/scheduler-values.yaml \
-  --cta-config /path/to/base-values.yaml,/path/to/feature-values.yaml
+  --infra-values /path/to/infrastructure-values.yaml \
+  --cta-values /path/to/cta-values.yaml
 ```
+
+`--infra-values` replaces the default local database and scheduler-storage provisioning.
+Repeat it to combine infrastructure presets, or use `presets/infra/external.yaml` when neither connection needs local provisioning.
+Selecting an external connection in CTA values does not disable local provisioning by itself.
+The dCache and local telemetry options add their own infrastructure presets.
+
+Presets are grouped under `presets/infra/`, `presets/cta/`, and `presets/eos/`.
+Compose `cta/scheduler/postgres.yaml` before `cta/scheduler/postgres-external.yaml`, and common stress settings before PostgreSQL stress tuning.
+Explicit EOS/dCache image options take precedence over values files.
+
+### CI chart responsibilities
+
+| Release | Chart | Responsibility |
+| --- | --- | --- |
+| `ci-infra` | `ci-infra` | Disposable PostgreSQL instances, KDC, credentials, connection Secrets, VFS storage, and optional telemetry. |
+| `cta-tools` | `cta-admin-tools` | Persistent administration tools, API client, and bootstrap reset Jobs. |
+| `cta` | `cta` | Long-running CTA services. |
+| `eos` | `eos` | EOS disk system. |
+| `store` | `dcache` | dCache disk system, using a database provisioned by `ci-infra`. |
+
+The infrastructure chart accepts named PostgreSQL instances, `secretFiles`, and `persistentVolumeClaims`.
+Each PostgreSQL instance is a separate server with one initial database and ephemeral storage: replacing its Pod loses its data.
+The local VFS preset requires the `local-path` StorageClass.
+See `ci/orchestration/helm/ci-infra/values.yaml` for configuration examples and naming defaults.
+
+The tools chart groups workloads under `admin`, `client`, `reset`, and `liquibase`, each with its own `resources` map.
+`admin.enabled` starts tools with direct database access; `client.enabled` starts the API client.
+`liquibase.enabled` starts a tools pod without executing migrations.
+Admin and client workloads share `image` settings and `global.image` overrides; Liquibase uses `liquibase.image`.
+
+During bootstrap, catalogue and scheduler reset Jobs run concurrently and must succeed before CTA services start.
+`cta-dev` resets unprotected connections through `reset.allUnprotected`.
+When invoking `create_instance.sh` directly, request resets with `--reset-unprotected`, `--reset-catalogue`, or `--reset-scheduler`.
+Inspect a reset with `kubectl -n <namespace> logs job/cta-tools-reset-catalogue` or `job/cta-tools-reset-scheduler`.
+
+Completed Jobs do not rerun on upgrade.
+The upgrade script disables reset Jobs; for manual Helm upgrades, set `reset.allUnprotected=false`, `reset.catalogue=false`, and `reset.scheduler=false` before changing the tools image.
+The persistent tools remain available for administration, for example:
+
+```bash
+kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
+  cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
+```
+
+### Protected connections
+
+Set `global.catalogue.protected: true` or `global.scheduler.protected: true` in CTA values to preserve that connection during bootstrap.
+`--protected` sets both; use it when both connections are already initialized.
+Normal state-changing tests are allowed, but automatic test setup and teardown are skipped when either connection is protected.
+Explicit destructive tests require `--allow-destructive`; see [System Tests](../testing/system-tests.md#protected-and-external-connections).
+`all` uses the same test policy after deployment.
+An unreadable protection policy blocks tests.
+
+Protection does not make CTA read-only: running services and manually invoked commands can change database state.
+For an explicit bootstrap reset, pass `--allow-destructive` together with `--reset-catalogue` or `--reset-scheduler` to `create_instance.sh`.
+Direct Helm use requires `allowDestructive=true` for protected resets or Liquibase; reset it to `false` on subsequent upgrades.
+Automatic bootstrap resets still skip protected connections, even with this permission.
+
+### Connect to an external database
+
+For a walkthrough using your own catalogue and PostgreSQL scheduler databases, see [Testing with External Databases](external-databases.md).
+It covers connection files, infrastructure overrides, protected deployments and opting into destructive automated tests.
+
+### Runner connection Secrets
+
+The deployment script copies these Secrets from `default` into the deployment namespace when present:
+
+| Connection | Secret | Required files |
+| --- | --- | --- |
+| Oracle catalogue | `cta-oracle-catalogue-conf` | `cta-catalogue.conf` |
+| External PostgreSQL scheduler | `cta-stress-scheduler-conf` | `cta-scheduler.conf` |
+| Ceph scheduler | `cta-ceph-scheduler-conf` | `cta-scheduler.conf`, `ceph.conf`, `ceph.client.<id>.keyring` |
+
+Use the same names on each runner, with that runner's connection details.
+Keep credentials in connection files and Secrets rather than committed values files.
+Ceph uses `rados://<client>@<pool>:<namespace>`; the client must match the keyring identity.
+The PostgreSQL scheduler uses `presets/cta/scheduler/postgres.yaml` followed by `presets/cta/scheduler/postgres-external.yaml`; Ceph uses `presets/cta/scheduler/ceph.yaml`.
+
+For other connections, `global.catalogue.existingSecret` and `global.scheduler.existingSecret` select Secrets containing the corresponding CTA connection files.
+Create them in `default` and pass repeatable `--copy-secret <name>` options to `cta-dev deploy`, `up`, `debug`, or `all`.
+Requested Secrets must be readable before the previous deployment is deleted; they are copied under the same names into the new namespace.
+The deployment namespace cannot be `default` when using this option.
+Repeated names are copied only once, including names already in the built-in list.
+Source Secrets remain in `default` after the deployment is removed.
+The infrastructure chart's `secretFiles` setting is only for ephemeral/fake CI credentials, which are also stored in Helm release values; do not use it for actual external resources.
+
+### Validate chart changes
+
+Run the checks without deploying:
+
+```bash
+sh ci/orchestration/check_charts.sh lint
+sh ci/orchestration/check_charts.sh test
+```
+
+These are the commands used by `lint-helm` and `test-helm` in CI.
+They require Helm 3 and, for tests, [helm-unittest](https://github.com/helm-unittest/helm-unittest) 1.0.3.
+Install the plugin with `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3`.
+The checks prepare dependencies in a temporary copy and need access to the chart repositories.
+Rendered manifests and test reports go to `build/helm-checks/<lint|test>/`; an optional second argument changes that directory.
+
+Rendering and unit tests do not establish Kubernetes API validity or runtime behaviour.
+Use deployment and system tests when changing service startup, storage, or other runtime behaviour.
 
 ### EOS
 
 Override the EOS configuration or image for an EOS-backed test deployment:
 
 ```bash
-cta-dev deploy --eos-config /path/to/eos-values.yaml
+cta-dev deploy --eos-values /path/to/eos-values.yaml
 cta-dev deploy --eos-image-repository example/eos --eos-image-tag my-tag
 ```
 
@@ -173,18 +278,23 @@ Select the dCache test deployment:
 
 ```bash
 cta-dev deploy --with-dcache
+cta-dev deploy --with-dcache --dcache-values /path/to/dcache-values.yaml
+cta-dev deploy --with-dcache --dcache-image-repository example/dcache --dcache-image-tag my-tag
 ```
 
 ### Other deployment options
 
 ```bash
 # Deploy the local telemetry stack.
-cta-dev deploy --local-telemetry
+cta-dev deploy --telemetry local
 
 # Publish telemetry to the configured backend.
-cta-dev deploy --publish-telemetry
-
+cta-dev deploy --telemetry central
 ```
+
+Local telemetry is part of `ci-infra` and uses only namespaced Kubernetes resources.
+It includes workload/PVC state and host metrics, but not kubelet or per-container cAdvisor metrics.
+Central telemetry uses the configured external backend.
 
 `--spawn-options` forwards additional options to `create_instance.sh` when a dedicated `cta-dev` option is unavailable.
 

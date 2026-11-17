@@ -12,17 +12,32 @@ Keep init-host-certs last: the caller appends its certificate volume mount to th
 {{- define "dcache.certs.init" }}
         - name: wait-for-postgres
           image: postgres:17
-          envFrom:
-            - configMapRef:
-                name: postgres-secret
           command: [sh, -ec]
           args:
             - |
-              export PGPASSWORD="$POSTGRES_PASSWORD" PGCONNECT_TIMEOUT=5
-              until psql -h chimera-postgresql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c 'SELECT 1'; do
+              export PGHOST="$(cat /database/PGHOST)"
+              export PGUSER="$(cat /database/POSTGRES_USER)"
+              export PGPASSWORD="$(cat /database/POSTGRES_PASSWORD)"
+              export PGDATABASE="$(cat /database/POSTGRES_DB)" PGCONNECT_TIMEOUT=5
+              until psql -c 'SELECT 1'; do
                 echo "Waiting for the dCache database"
                 sleep 2
               done
+
+              # Replace the upstream test connection defaults with the provisioner's Secret.
+              sed -E '/^[[:space:]]*(dcache.db.(host|user|password)|[a-z-]+.db.name)[[:space:]]*=/d' \
+                /database-base/dcache.conf > /database-config/dcache.conf
+              printf '\n' >> /database-config/dcache.conf
+              cat /database/dcache.conf >> /database-config/dcache.conf
+          volumeMounts:
+            - name: database-credentials
+              mountPath: /database
+              readOnly: true
+            - name: database-base
+              mountPath: /database-base
+              readOnly: true
+            - name: dcache-config
+              mountPath: /database-config
         - name: init-host-certs
           image: docker.io/dcache/ci-init-cert:1.2
           securityContext:
@@ -77,4 +92,25 @@ Keep init-host-certs last: the caller appends its certificate volume mount to th
               install -m 0644 "$work_dir/signing_policy" "$cert_dir/certificates/$ca_hash.signing_policy"
               install -o 994 -g 1000 -m 0644 "$work_dir/hostcert.pem" "$cert_dir/hostcert.pem"
               install -o 994 -g 1000 -m 0600 "$work_dir/hostkey.pem" "$cert_dir/hostkey.pem"
+{{- end }}
+
+{{/* The upstream chart supplies no database Secret option; both door and pools use this helper. */}}
+{{- define "dcache.conf.volume" }}
+- name: dcache-config
+  emptyDir: {}
+- name: database-base
+  configMap:
+    name: {{ .Release.Name }}-configmap
+    items:
+      - key: dcache.conf
+        path: dcache.conf
+- name: database-credentials
+  secret:
+    secretName: {{ .Values.database.existingSecret }}
+- name: dcache-layout
+  configMap:
+    name: {{ .Release.Name }}-configmap
+    items:
+      - key: dcache-k8s-door
+        path: dcache-k8s.conf
 {{- end }}

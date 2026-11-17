@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $schedulerConfig := .Values.global.scheduler -}}
 {{ range .Values.drives -}}
 {{- $driveNameSlug := include "common.slugify" .name }}
 {{- $tapedName := printf "%s-%s-%s" $.Release.Name "taped" $driveNameSlug | trunc 63 | trimSuffix "-" }}
@@ -72,14 +72,6 @@ spec:
             add:
               - SYS_RAWIO
         env:
-        - name: MY_NAME
-          value: {{ $tapedName }}
-        - name: MY_NAMESPACE
-          value: {{ $.Release.Namespace | quote }}
-        - name: INSTANCE_NAME
-          value: {{ $.Release.Namespace | quote }}
-        - name: MY_CONTAINER
-          value: "cta-taped"
         - name: TERM
           value: "xterm"
         - name: DRIVE_NAME
@@ -90,8 +82,6 @@ spec:
           value: {{ .device }}
         - name: DRIVE_CONTROL_PATH
           value: {{ .controlPath }}
-        - name: SCHEDULER_BACKEND
-          value: {{ $schedulerConfig.backend | quote }}
         {{- with $.Values.extraEnv }}
         {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
@@ -104,24 +94,10 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
-        - name: scheduler-config
-          mountPath: /etc/cta/cta-scheduler.conf
-          subPath: cta-scheduler.conf
+        {{- include "common.scheduler.mounts" $schedulerConfig | nindent 8 }}
         - name: taped-sss-keytab
           mountPath: /etc/cta/cta-taped.sss.keytab.grp # note the .grp to make it group readable
           subPath: {{ $.Values.keytab.subPath }}
-        {{- if eq $schedulerConfig.backend "ceph" }}
-        - name: cta-ceph-volume
-          mountPath: /etc/ceph/ceph.conf
-          subPath: ceph.conf
-        - name: cta-ceph-volume
-          mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
-          subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
-        {{- end }}
-        {{- if eq $schedulerConfig.backend "vfs" }}
-        - name: vfs-storage-volume
-          mountPath: /objectstore
-        {{- end }}
         - name: opentelemetry-config
           mountPath: /etc/cta/cta-otel.yaml
           subPath: cta-otel.yaml
@@ -134,21 +110,9 @@ spec:
           name: scripts-taped
           defaultMode: 0777
       - name: catalogue-config
-        configMap:
-          name: cta-catalogue-conf
-      - name: scheduler-config
-        configMap:
-          name: cta-scheduler-conf
-      {{- if eq $schedulerConfig.backend "ceph" }}
-      - name: cta-ceph-volume
-        configMap:
-          name: ceph-conf
-      {{- end }}
-      {{- if eq $schedulerConfig.backend "vfs" }}
-      - name: vfs-storage-volume
-        persistentVolumeClaim:
-          claimName: scheduler-vfs-pvc
-      {{- end }}
+        secret:
+          secretName: {{ $.Values.global.catalogue.existingSecret }}
+      {{- include "common.scheduler.volumes" $schedulerConfig | nindent 6 }}
       - name: cta-taped-config
         configMap:
           name: cta-taped-{{ $driveNameSlug }}-conf

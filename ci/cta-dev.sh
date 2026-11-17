@@ -44,6 +44,7 @@ readonly ci_image_registry
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type=""
+protected=false
 oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
@@ -73,15 +74,15 @@ enable_debug_image=false
 cta_image_registry=""
 dcache_enabled=false
 dcache_image_repository=""
+dcache_image_tag=""
+dcache_values=()
 eos_enabled=true
-local_telemetry=false
-publish_telemetry=false
+telemetry=none
 eos_image_repository=""
 eos_image_tag=""
-catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-scheduler_config=""
-cta_config=""
-eos_config=""
+infra_config=()
+cta_overrides=()
+eos_values=()
 extra_spawn_options=()
 
 stage_names=()
@@ -90,6 +91,7 @@ namespace_deletion_pid=""
 namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
+source "${script_dir}/utils/helm_utils.sh"
 
 # Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
@@ -336,11 +338,11 @@ Usage:
 Options:
       --namespace <ns>              Kubernetes namespace.
                                     Defaults to dev.
-      --catalogue-config <path>     Catalogue values file.
-      --scheduler-config <path>     Scheduler values file.
-      --cta-config <paths>          Additional CTA Helm values.
-                                    Comma-separated list.
-      --eos-config <path>           EOS Helm values.
+      --protected                   Skip automatic resets and require permission for destructive tests.
+      --copy-secret <name>          Copy a Secret from default; repeatable, required to exist.
+      --infra-values <path>         Infrastructure values; repeatable, replaces default provisioning.
+      --cta-values <path>           Final consumer values override; repeatable.
+      --eos-values <path>           EOS values override; repeatable.
       --eos-image-repository <r>    EOS image repository.
       --eos-image-tag <tag>         EOS image tag.
       --cta-image-tag <tag>         Deploy the images with this tag instead of
@@ -352,10 +354,11 @@ Options:
                                     ${ci_image_registry} when --cta-image-tag
                                     is given.
       --dcache-image-repository <r> dCache image repository.
+      --dcache-image-tag <tag>      dCache image tag.
+      --dcache-values <path>        dCache values override; repeatable.
       --spawn-options <options>     Additional deployment options.
       --with-dcache                 Deploy dCache instead of EOS.
-      --local-telemetry             Deploy a local telemetry stack.
-      --publish-telemetry           Publish telemetry to the configured backend.
+      --telemetry <mode>            none (default), local or central.
 
 $(global_options_help)
 
@@ -394,7 +397,9 @@ Examples:
   $(basename "$0") test client --lf # Run only the failed tests again
   $(basename "$0") test client -k test_simple_archive_retrieve
 
-Setup, verification, and teardown tests are included by default.
+Verification is included by default; automatic setup and teardown are skipped for protected connections.
+Use --allow-destructive to permit explicitly selected destructive tests.
+It does not enable automatic setup or teardown.
 Any additional arguments are passed directly to pytest.
 For additional pytest help, navigate to ci/system_tests and run pytest --help
 
@@ -581,13 +586,10 @@ parse_options() {
         dcache_enabled=true
         eos_enabled=false
         ;;
-      --local-telemetry)
+      --telemetry)
         require_command "$1" "$command" deploy up debug all
-        local_telemetry=true
-        ;;
-      --publish-telemetry)
-        require_command "$1" "$command" deploy up debug all
-        publish_telemetry=true
+        telemetry="$2"
+        shift
         ;;
       --eos-image-repository)
         require_command "$1" "$command" deploy up debug all
@@ -599,29 +601,43 @@ parse_options() {
         eos_image_tag="$2"
         shift
         ;;
+      --dcache-image-tag)
+        require_command "$1" "$command" deploy up debug all
+        dcache_image_tag="$2"
+        shift
+        ;;
+      --dcache-values)
+        require_command "$1" "$command" deploy up debug all
+        dcache_values+=(--dcache-values "$2")
+        shift
+        ;;
       --dcache-image-repository)
         require_command "$1" "$command" deploy up debug all
         dcache_image_repository="$2"
         shift
         ;;
-      --catalogue-config)
+      --protected)
         require_command "$1" "$command" deploy up debug all
-        catalogue_config="$2"
+        protected=true
+        ;;
+      --copy-secret)
+        require_command "$1" "$command" deploy up debug all
+        extra_spawn_options+=(--copy-secret "$2")
         shift
         ;;
-      --scheduler-config)
+      --infra-values)
         require_command "$1" "$command" deploy up debug all
-        scheduler_config="$2"
+        infra_config+=(--infra-values "$2")
         shift
         ;;
-      --cta-config)
+      --cta-values)
         require_command "$1" "$command" deploy up debug all
-        cta_config="$2"
+        cta_overrides+=(--cta-values "$2")
         shift
         ;;
-      --eos-config)
+      --eos-values)
         require_command "$1" "$command" deploy up debug all
-        eos_config="$2"
+        eos_values+=(--eos-values "$2")
         shift
         ;;
       --spawn-options)
@@ -1264,6 +1280,38 @@ finish_namespace_deletion() {
   [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
 }
 
+# Resolve deployment arguments once, before any background deletion starts.
+prepare_deployment() {
+  [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
+  [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
+  [[ -n $dcache_image_repository ]] && extra_spawn_options+=(--dcache-image-repository "$dcache_image_repository")
+  [[ -n $dcache_image_tag ]] && extra_spawn_options+=(--dcache-image-tag "$dcache_image_tag")
+  extra_spawn_options+=("${eos_values[@]}" "${dcache_values[@]}" --telemetry "$telemetry")
+  # Match the build-selected scheduler; explicit consumer overlays follow this default.
+  if [[ $scheduler_type == pgsched ]]; then
+    extra_spawn_options+=(--cta-values presets/cta/scheduler/postgres.yaml)
+  fi
+  # Local development provisions its catalogue and build-selected scheduler by default.
+  if [[ ${#infra_config[@]} == 0 ]]; then
+    infra_config=(--infra-values presets/infra/catalogue-postgres.yaml)
+    if [[ $scheduler_type == pgsched ]]; then
+      infra_config+=(--infra-values presets/infra/scheduler-postgres.yaml)
+    else
+      infra_config+=(--infra-values presets/infra/scheduler-vfs.yaml)
+    fi
+  fi
+  extra_spawn_options+=("${infra_config[@]}" "${cta_overrides[@]}")
+  [[ $protected == false ]] || extra_spawn_options+=(--protected)
+  deployment_args=( --namespace "${namespace}" \
+    --cta-image-registry "${cta_image_registry}" \
+    --cta-image-tag "${cta_image_tag}" \
+    --eos-enabled "${eos_enabled}" \
+    --dcache-enabled "${dcache_enabled}" \
+    --reset-unprotected \
+    "${extra_spawn_options[@]}")
+
+}
+
 # Recreate the CTA development instance using images already available to the cluster.
 deploy_cta() {
   validate_deployment_environment
@@ -1273,32 +1321,9 @@ deploy_cta() {
   print_header "DEPLOYING CTA"
   log_task "Deploying CTA images ${cta_image_registry}/cta/ctageneric/*:${cta_image_tag}"
   cd "${project_root}/ci/orchestration"
-  [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
-  [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
-  [[ -n $dcache_image_repository ]] && extra_spawn_options+=(--dcache-image-repository "$dcache_image_repository")
-  [[ -n $eos_config ]] && extra_spawn_options+=(--eos-config "$eos_config")
-  [[ -n $cta_config ]] && extra_spawn_options+=(--cta-config "$cta_config")
-  [[ $local_telemetry == true ]] && extra_spawn_options+=(--local-telemetry)
-  [[ $publish_telemetry == true ]] && extra_spawn_options+=(--publish-telemetry)
+  ./create_instance.sh "${deployment_args[@]}"
 
-  # Assign default config based on scheduler type if not already set
-  if [[ -z $scheduler_config ]]; then
-    [[ $scheduler_type == "pgsched" ]] && \
-      scheduler_config="presets/dev-scheduler-postgres-values.yaml" || \
-      scheduler_config="presets/dev-scheduler-vfs-values.yaml"
-  fi
-  ./create_instance.sh --namespace "${namespace}" \
-    --cta-image-registry "${cta_image_registry}" \
-    --cta-image-tag "${cta_image_tag}" \
-    --catalogue-config "${catalogue_config}" \
-    --scheduler-config "${scheduler_config}" \
-    --eos-enabled ${eos_enabled} \
-    --dcache-enabled ${dcache_enabled} \
-    --reset-catalogue \
-    --reset-scheduler \
-    "${extra_spawn_options[@]}"
-
-  if [[ $local_telemetry == true ]]; then
+  if [[ $telemetry == local ]]; then
     # Prometheus is exposed through a local port-forward, not a public endpoint.
     echo
     echo "Local telemetry dashboard (Prometheus): http://localhost:9090/query"
@@ -1336,7 +1361,7 @@ test_cta() {
       ;;
     *)
       test_path="tests/${selected_test}_test.py"
-      lifecycle_options=(--setup --verification --teardown)
+      lifecycle_options=(--auto-lifecycle)
       ;;
   esac
 
@@ -1497,6 +1522,18 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
+
+  if [[ $show_help != true ]]; then
+    case "$command" in
+      deploy|up|debug|all)
+        prepare_deployment
+        (cd "${project_root}/ci/orchestration" && update_local_cta_chart_dependencies)
+        export CTA_LOCAL_CHARTS_READY="${project_root}/ci/orchestration/helm"
+        (cd "${project_root}/ci/orchestration" && \
+          ./create_instance.sh "${deployment_args[@]}" --validate-only)
+        ;;
+    esac
+  fi
 
   case "$command" in
     build|images|up|debug|all)

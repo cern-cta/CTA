@@ -27,9 +27,9 @@ The following overrides live under `ci/orchestration/presets/` and are applied o
 
 | Configuration | Purpose |
 | --- | --- |
-| `stress-cta-values.yaml` | Increases frontend catalogue connections and reduces service logging overhead. |
-| `stress-cta-pgsched-values.yaml` | Tunes PostgreSQL scheduler connections, tape buffers, and reporting workers and batches so reporting can keep pace with transfers. |
-| `stress-eos-values.yaml` | Uses `fast-ssd` storage for EOS FST and QuarkDB data, increases FST concurrency, and configures workflow communication. |
+| `cta/tests/stress.yaml` | Increases frontend catalogue connections and reduces service logging overhead. |
+| `cta/tests/stress-postgres.yaml` | Tunes PostgreSQL scheduler connections, tape buffers, and reporting workers and batches so reporting can keep pace with transfers. |
+| `eos/stress.yaml` | Uses `fast-ssd` storage for EOS FST and QuarkDB data, increases FST concurrency, and configures workflow communication. |
 
 Workload parameters live under `ci/system_tests/config/`. `test_params.toml` defines file counts and sizes, concurrency, batching, progress checks, and completion tolerances. The PostgreSQL scheduler uses `test_pgsched_params.toml`, which enables prequeueing: drives remain down while work accumulates, reducing the effect of request-generation bottlenecks. It also uses a dedicated scheduler configuration maintained on the runner.
 

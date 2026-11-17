@@ -1,0 +1,56 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+{{- if .Values.admin.enabled }}
+{{- $scheduler := .Values.global.scheduler }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-admin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Release.Name }}-admin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Release.Name }}-admin
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        {{- include "cta-admin-tools.imagePullSecrets" . | nindent 8 }}
+      containers:
+        - name: admin
+          image: {{ include "cta-admin-tools.image" . }}
+          imagePullPolicy: {{ include "cta-admin-tools.imagePullPolicy" . }}
+          securityContext:
+            allowPrivilegeEscalation: false
+          # Schema operations run explicitly via exec, never during container startup.
+          command: [bash, -c, "trap 'exit 0' TERM INT; sleep infinity & wait"]
+          env:
+            - name: SCHEDULER_BACKEND
+              value: {{ $scheduler.backend | quote }}
+          resources:
+            {{- toYaml .Values.admin.resources | nindent 12 }}
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+            - name: catalogue-config
+              mountPath: /etc/cta/cta-catalogue.conf
+              subPath: cta-catalogue.conf
+              readOnly: true
+            {{- include "common.scheduler.mounts" $scheduler | nindent 12 }}
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ .Release.Name }}-scripts
+        - name: catalogue-config
+          secret:
+            secretName: {{ .Values.global.catalogue.existingSecret }}
+        {{- include "common.scheduler.volumes" $scheduler | nindent 8 }}
+{{- end }}

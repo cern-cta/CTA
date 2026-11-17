@@ -1,0 +1,229 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CI infrastructure values",
+  "$comment":
+    "Chart-owned settings are validated here; Kubernetes extension objects and shared/dependency values remain extensible.",
+  "type": "object",
+  "properties": {
+    "credentialGeneration": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "additionalProperties": false,
+      "description": "Job that generates shared authentication credentials; separate from arbitrary secretFiles."
+    },
+    "kerberos": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "defaultRealm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adminPrinc": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "password": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "name",
+            "password"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "image",
+        "defaultRealm",
+        "adminPrinc"
+      ],
+      "additionalProperties": false
+    },
+    "postgres": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "password": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resources": {
+          "type": "object"
+        },
+        "instances": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 63,
+            "pattern": "^[a-z]([-a-z0-9]*[a-z0-9])?$"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/postgresInstance"
+          },
+          "description":
+            "Keys become Service/StatefulSet names. Database and username default to the key; secretName defaults to <key>-credentials."
+        }
+      },
+      "required": [
+        "image",
+        "password",
+        "instances"
+      ],
+      "additionalProperties": false,
+      "description":
+        "Disposable PostgreSQL servers with ephemeral emptyDir storage. Each instance is a separate server with one initial database."
+    },
+    "secretFiles": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/resourceName"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/stringMap"
+      },
+      "description":
+        "Ephemeral/fake CI credentials only, stored in Helm release values. For actual resources use manually created Secrets. Maps Secret names to templated filename/content maps."
+    },
+    "persistentVolumeClaims": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/definitions/resourceName"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/claim"
+      },
+      "description":
+        "Map of PVC names to storage requests. Omitting storageClass uses the cluster default; \"-\" requests no storage class."
+    },
+    "prometheus": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "description": "Optional upstream Prometheus chart; its values are passed through unchanged."
+    },
+    "otel": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "description": "Optional upstream OpenTelemetry Collector chart; its values are passed through unchanged."
+    },
+    "global": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "kerberos",
+    "otel",
+    "persistentVolumeClaims",
+    "postgres",
+    "prometheus",
+    "secretFiles",
+    "credentialGeneration"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 253,
+      "pattern": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$"
+    },
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "postgresInstance": {
+      "type": "object",
+      "properties": {
+        "database": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "username": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "password": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "secretName": {
+          "$ref": "#/definitions/resourceName"
+        },
+        "extraSecretData": {
+          "$ref": "#/definitions/stringMap",
+          "description":
+            "Additional Secret files rendered with .connection.host, database, username, password and uri. Generated PostgreSQL credential keys cannot be overridden."
+        }
+      },
+      "additionalProperties": false
+    },
+    "claim": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "string",
+          "minLength": 1
+        },
+        "storageClass": {
+          "type": "string"
+        },
+        "accessModes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "ReadWriteOnce",
+              "ReadOnlyMany",
+              "ReadWriteMany",
+              "ReadWriteOncePod"
+            ]
+          }
+        },
+        "annotations": {
+          "$ref": "#/definitions/stringMap"
+        }
+      },
+      "required": [
+        "size"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

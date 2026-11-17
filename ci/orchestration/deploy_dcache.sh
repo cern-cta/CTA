@@ -5,11 +5,7 @@
 
 set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
-
-log_run() {
-  log_task "Running: $*"
-  "$@"
-}
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/helm_utils.sh"
 
 usage() {
   echo
@@ -22,23 +18,17 @@ usage() {
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
   echo "  -r, --dcache-image-repository <repo>:   The dCache Docker image repository."
   echo "  -i, --dcache-image-tag <tag>:           The DCache Docker image tag."
-  echo "      --dcache-config <file>:             Optional values file overriding the dCache chart defaults."
+  echo "      --dcache-values <file>:             dCache values override; repeatable, applied in order."
   echo
-  exit 1
-}
-
-check_helm_installed() {
-  # First thing we do is check whether helm is installed
-  if ! command -v helm >/dev/null 2>&1; then
-    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-  fi
+  exit "${1:-1}"
 }
 
 deploy() {
+  dcache_values=()
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      -h | --help) usage ;;
+      -h | --help) usage 0 ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
@@ -48,8 +38,9 @@ deploy() {
       -i|--dcache-image-tag)
         dcache_image_tag="$2"
         shift ;;
-      --dcache-config)
-        dcache_config="$2"
+      --dcache-values)
+        [[ -f "$2" ]] || die "dCache values file $2 does not exist"
+        dcache_values+=(--values "$2")
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
@@ -62,12 +53,13 @@ deploy() {
   if [[ -z "${namespace}" ]]; then
     die_usage "Missing mandatory argument: -n | --namespace"
   fi
+  check_helm_installed
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
     die "Namespace $namespace does not exist. Upgrade failed"
   fi
 
 
-  helm_flags=()
+  helm_flags=("${dcache_values[@]}")
   if [[ -n "$dcache_image_repository" ]]; then
     dcache_image_registry="${dcache_image_repository%%/*}"
     dcache_image_name="${dcache_image_repository#*/}"
@@ -76,9 +68,6 @@ deploy() {
   fi
   if [[ -n "$dcache_image_tag" ]]; then
     helm_flags+=(--set-string "dcache.image.tag=${dcache_image_tag}")
-  fi
-  if [[ -n "$dcache_config" ]]; then
-    helm_flags+=(--values "$dcache_config")
   fi
 
   # Dependency update can take a few seconds to do a quick check to see if we can skip it
@@ -91,6 +80,5 @@ deploy() {
                      "${helm_flags[@]}"
 }
 
-check_helm_installed
 deploy "$@"
 log_success "Deployed dCache in namespace ${namespace}."

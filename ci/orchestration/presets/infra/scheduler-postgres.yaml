@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+postgres:
+  instances:
+    cta-scheduler-postgres-db:
+      database: cta-scheduler-postgres
+      username: cta
+      secretName: cta-scheduler-conf
+      extraSecretData:
+        cta-scheduler.conf: 'postgresql:{{ .connection.uri }}'

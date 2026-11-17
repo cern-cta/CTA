@@ -17,7 +17,7 @@ For direct inspection, use a development console or file exporter if supported b
 Deploy the local collector and Prometheus with the development instance:
 
 ```bash
-cta-dev deploy --local-telemetry
+cta-dev deploy --telemetry local
 ```
 
 This redeploys the environment; see [cta-dev Reference](../tools-and-environment/cta-dev.md#deployment-options). The local flow is:

@@ -68,6 +68,7 @@ def test_catalogue_version_is_from_version(cta_admin_api: CtaAdminApiHost, catal
     )
 
 
+@pytest.mark.destructive("catalogue")
 def test_init_catalogue_updater(
     env: TestEnv,
     project_json: dict[str, Any],
@@ -75,6 +76,7 @@ def test_init_catalogue_updater(
     catalogue_to_version: str,
     catalogue_schema_update_params: CatalogueSchemaUpdateParams,
     namespace: str | None,
+    pytestconfig: pytest.Config,
 ) -> None:
     # Just to note, this entire method is hacky and should be rewritten at some point. Suggestions welcome...
     # A few of the problems with it:
@@ -85,7 +87,6 @@ def test_init_catalogue_updater(
     # Cleanup first in case they already exist
     try:
         print("Cleaning up possible existing catalogue-updater resources")
-        env.exec_local(f"helm uninstall catalogue-updater --namespace {namespace}")
         env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")
     except Exception:
         print("Nothing to clean up")
@@ -112,21 +113,26 @@ def test_init_catalogue_updater(
         )
         print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
 
-    extra_flags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
+    extra_flags = f"--set liquibase.extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
 
-    print("Install catalogue-updater chart...")
+    print("Install administrative tools for catalogue migration...")
     env.exec_local(
-        f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
-                                                        --set catalogueSourceVersion={catalogue_from_version} \
-                                                        --set catalogueDestinationVersion={catalogue_to_version} \
-                                                        {extra_flags} --wait --timeout 2m"
+        f"helm upgrade cta-tools ../orchestration/helm/cta-admin-tools --namespace {namespace} --reuse-values "
+        "--set reset.allUnprotected=false,reset.catalogue=false,reset.scheduler=false "
+        f"--set allowDestructive={str(pytestconfig.getoption('--allow-destructive')).lower()} "
+        f"--set liquibase.catalogueSourceVersion={catalogue_from_version} "
+        f"--set liquibase.catalogueDestinationVersion={catalogue_to_version} "
+        "--set liquibase.enabled=true "
+        f"--set liquibase.customRepoFiles=true {extra_flags} --wait --timeout 2m"
     )
 
 
+@pytest.mark.destructive("catalogue")
 def test_tag_liquibase(catalogue_updater: RemoteHost) -> None:
     catalogue_updater.exec('/launch_liquibase.sh "tag --tag=test_update"')
 
 
+@pytest.mark.destructive("catalogue")
 def test_liquibase_update(
     cta_admin_api: CtaAdminApiHost, catalogue_updater: RemoteHost, catalogue_to_version: str
 ) -> None:
@@ -139,6 +145,7 @@ def test_liquibase_update(
     cta_admin_api.verify_schema()
 
 
+@pytest.mark.destructive("catalogue")
 def test_liquibase_rollback(
     cta_admin_api: CtaAdminApiHost, catalogue_updater: RemoteHost, catalogue_from_version: str
 ) -> None:
@@ -151,5 +158,9 @@ def test_liquibase_rollback(
 
 
 def test_cleanup_catalogue_updater(env: TestEnv, namespace: str | None) -> None:
-    env.exec_local(f"helm uninstall catalogue-updater --namespace {namespace}")
+    env.exec_local(
+        f"helm upgrade cta-tools ../orchestration/helm/cta-admin-tools --namespace {namespace} --reuse-values "
+        "--set liquibase.enabled=false,allowDestructive=false "
+        "--set reset.allUnprotected=false,reset.catalogue=false,reset.scheduler=false --wait --timeout 2m"
+    )
     env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")

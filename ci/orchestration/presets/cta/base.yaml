@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+global:
+  securityContext:
+    # We need privilege escalation for the tests and debugging
+    allowPrivilegeEscalation: true
+    privileged: false
+
+frontend-wfe:
+  port: 10956
+
+frontend-admin:
+  # Enabled to allow debugging after a crash
+  port: 10956
+  conf:
+    # set by more specific config
+    catalogue:
+      # Disable recycle log quarantine for tests
+      recycleLogQuarantineSecs: 0
+
+client:
+  useGrpc: true
+  conf: null # set by more specific config
+
+  extraEnv:
+    - name: GRPC_SETUP_JWT
+      value: "true"
+
+  extraVolumes:
+    volumeMounts:
+      - name: grid-security
+        mountPath: /etc/grid-security
+        readOnly: false
+      - name: grpc-certs
+        mountPath: /etc/grpc-certs
+        readOnly: true
+    volumes:
+      - name: grid-security
+        emptyDir: {}
+      - name: grpc-certs
+        secret:
+          secretName: ca-crt-pem

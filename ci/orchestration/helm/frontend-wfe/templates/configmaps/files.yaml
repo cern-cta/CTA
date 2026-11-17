@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $schedulerConfig := .Values.global.scheduler -}}
 {{- $batchingEnabled := and (eq $schedulerConfig.backend "postgres") .Values.conf.schedulerdb.opportunisticBatching.enabled -}}
 {{- $name := include "ctafrontend.fullname" . }}
 {{- $jwtRevokeListPath := include "ctafrontend.jwtRevokeList" . -}}

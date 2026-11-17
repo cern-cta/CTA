@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+postgres:
+  instances:
+    chimera-postgresql:
+      database: chimera
+      username: dcache
+      password: let-me-in
+      secretName: dcache-database
+      extraSecretData:
+        dcache.conf: |
+          dcache.db.host={{ .connection.host }}
+          dcache.db.user={{ .connection.username }}
+          dcache.db.password={{ .connection.password }}
+          {{- range $service := list "chimera" "srmmanager" "pinmanager" "spacemanager" "bulk" "qos" "qos-engine" "qos-verifier" }}
+          {{ $service }}.db.name={{ $.connection.database }}
+          {{- end }}

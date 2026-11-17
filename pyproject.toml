@@ -201,7 +201,7 @@
       'ci/checks/check_gitlab_ci_key_order.py' = ['S506']
 
       # The Kubernetes API URL always uses HTTPS.
-      'ci/orchestration/helm/auth/scripts/create_k8s_secrets.py' = ['S310']
+      'ci/orchestration/helm/ci-infra/scripts/create_k8s_secrets.py' = ['S310']
 
       # These wrappers invoke fixed, trusted executables.
       'ci/system_tests/helpers/connections/k8s_connection.py' = ['S603']

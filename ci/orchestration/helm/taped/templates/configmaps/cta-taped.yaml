@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $schedulerConfig := .Values.global.scheduler -}}
 {{- $encryptionEnabled := .Values.transfers.encryption.enabled -}}
 {{- $raoEnabled := .Values.transfers.retrieve.rao.enabled -}}
 {{ range .Values.drives }}

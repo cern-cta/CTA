@@ -152,7 +152,7 @@ class TestEnv:
                 namespace, "app.kubernetes.io/name=dcache", "dcache-door"
             ),
             scheduler_postgres_conns=TestEnv.get_k8s_connections_by_selector(
-                namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "cta-scheduler-postgres"
+                namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "postgres"
             ),
         )
 

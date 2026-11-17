@@ -1,0 +1,16 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-scripts
+data:
+  wait_database.sh: |
+    {{- .Files.Get "scripts/wait_database.sh" | nindent 4 }}
+  reset_catalogue.sh: |
+    {{- .Files.Get "scripts/reset_catalogue.sh" | nindent 4 }}
+  reset_scheduler.sh: |
+    {{- .Files.Get "scripts/reset_scheduler.sh" | nindent 4 }}
