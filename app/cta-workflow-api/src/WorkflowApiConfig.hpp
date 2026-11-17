@@ -41,9 +41,6 @@ struct WfeAuthConfig final {
     return cta::runtime::featureEnabled(enabled_methods, method, methods);
   }
 
-  /// Select settings only for explicitly enabled authentication methods.
-  bool isSectionEnabled(std::string_view name) const { return cta::runtime::featureEnabled(enabled_methods, name); }
-
   /// Validate method selection and the settings of each selected method.
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");

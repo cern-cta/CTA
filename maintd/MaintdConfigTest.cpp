@@ -18,6 +18,7 @@ namespace unitTests {
 TEST(MaintdConfig, DefaultValuesAreValidOnceBackendNameIsSet) {
   cta::maintd::MaintdConfig config;
   config.scheduler.backend_name = "vfsTest";
+  config.applyDefaults();
 
   EXPECT_TRUE(config.validate().ok());
 }
@@ -256,14 +257,34 @@ TEST(MaintdConfig, RoutineSelectionsAreValidatedInBothModes) {
   }
 }
 
-TEST(MaintdConfig, InactiveRoutineSettingsAreIgnoredOnlyWithoutStrictMode) {
-  const std::string document = "enabled_routines = []\ncycle_sleep_interval_secs = 10\n"
-                               "max_cycle_duration_secs = 900\n[repack_expand]\nmax_to_expand = 'invalid'";
-  const auto config = cta::runtime::loadFromTomlString<cta::maintd::RoutinesConfig>(document, "routines.toml", false);
-  EXPECT_FALSE(config.repack_expand);
-  EXPECT_FALSE(config.routineEnabled(cta::maintd::Routine::RepackExpand));
-  EXPECT_THROW(cta::runtime::loadFromTomlString<cta::maintd::RoutinesConfig>(document, "routines.toml", true),
-               cta::exception::UserError);
+TEST(MaintdConfig, InactiveRoutineSettingsAreParsedAndRetained) {
+  for (bool strict : {false, true}) {
+    const std::string document = "enabled_routines = []\ncycle_sleep_interval_secs = 10\n"
+                                 "max_cycle_duration_secs = 900\n[repack_expand]\n";
+    EXPECT_THROW(cta::runtime::loadFromTomlString<cta::maintd::RoutinesConfig>(document + "max_to_expand = 'invalid'",
+                                                                               "routines.toml",
+                                                                               strict),
+                 cta::exception::UserError);
+    const auto config = cta::runtime::loadFromTomlString<cta::maintd::RoutinesConfig>(document + "max_to_expand = 0",
+                                                                                      "routines.toml",
+                                                                                      strict);
+    ASSERT_TRUE(config.repack_expand);
+    EXPECT_EQ(config.repack_expand->max_to_expand, 0);
+    EXPECT_FALSE(config.routineEnabled(cta::maintd::Routine::RepackExpand));
+  }
+}
+
+TEST(MaintdConfig, RoutineDefaultsPreserveExplicitSettings) {
+  auto config = cta::runtime::loadFromTomlString<cta::maintd::RoutinesConfig>(
+    "enabled_routines = ['repack_expand', 'repack_report']\n[repack_expand]\nmax_to_expand = 7",
+    "routines.toml",
+    false);
+  ASSERT_TRUE(config.repack_expand);
+  ASSERT_TRUE(config.repack_report);
+  EXPECT_EQ(config.repack_expand->max_to_expand, 7);
+  EXPECT_EQ(config.repack_report->soft_timeout_secs, 900);
+  config.applyDefaults();
+  EXPECT_EQ(config.repack_expand->max_to_expand, 7);
 }
 
 TEST(MaintdConfig, StrictRoutinesRequireExplicitSelectionSectionsAndSettings) {

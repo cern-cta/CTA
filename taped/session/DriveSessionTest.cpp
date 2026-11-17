@@ -855,20 +855,31 @@ TEST_F(DriveSessionTest, BlockMovementRefreshesTransferLivenessAndNewSessionRese
   EXPECT_TRUE(session->isLive());
 }
 
-TEST(TapedFeatureConfig, DisabledTransferFeaturesIgnoreSettingsWithoutStrictMode) {
+TEST(TapedFeatureConfig, DisabledTransferFeaturesRetainTypedSettings) {
   using cta::runtime::loadFromTomlString;
   const std::string rao = "rao_enabled = false\nfetch_max_bytes = 1\nfetch_max_files = 1\n"
                           "drain_to_disk_timeout_secs = 1\nexternal_free_disk_space_script = ''\n"
                           "[rao]\nlto_algorithm = 'invalid'";
-  EXPECT_FALSE(loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", false).rao);
-  EXPECT_THROW(loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", true), exception::UserError);
+  const auto config = loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", false);
+  ASSERT_TRUE(config.rao);
+  EXPECT_EQ(config.rao->lto_algorithm, "invalid");
+  EXPECT_FALSE(config.rao_enabled);
+  const auto strictConfig = loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", true);
+  ASSERT_TRUE(strictConfig.rao);
+  EXPECT_EQ(strictConfig.rao->lto_algorithm, "invalid");
   EXPECT_THROW(loadFromTomlString<RetrieveTransferConfig>("rao_enabled = true\n[rao]\nlto_algorithm = 'invalid'",
                                                           "transfers.toml",
                                                           false),
                exception::UserError);
 
   const std::string encryption = "encryption_enabled = false\n[encryption]\nexternal_key_script = 42";
-  EXPECT_FALSE(loadFromTomlString<TransfersConfig>(encryption, "transfers.toml", false).encryption);
+  EXPECT_THROW(loadFromTomlString<TransfersConfig>(encryption, "transfers.toml", false), exception::UserError);
+  const auto disabled =
+    loadFromTomlString<TransfersConfig>("encryption_enabled = false\n[encryption]\nexternal_key_script = ''",
+                                        "transfers.toml",
+                                        false);
+  ASSERT_TRUE(disabled.encryption);
+  EXPECT_FALSE(disabled.encryption_enabled);
   EXPECT_THROW(loadFromTomlString<TransfersConfig>("encryption_enabled = true\n[encryption]\nexternal_key_script = 42",
                                                    "transfers.toml",
                                                    false),

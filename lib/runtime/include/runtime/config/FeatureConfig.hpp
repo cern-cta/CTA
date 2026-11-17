@@ -79,8 +79,7 @@ inline ValidationResult validateFeatureNames(const std::vector<std::string>& ena
 }
 
 /// Require and validate settings for a selected feature, attributing errors to name.
-/// Ignore unselected features; the loader rejects their sections in strict mode and discards them otherwise.
-/// Defaults retained by the loader count as present settings.
+/// Unselected settings are retained but are not semantically validated.
 template<class T>
 void validateFeature(ValidationResult& result, bool selected, std::string_view name, const std::optional<T>& section) {
   if (!selected) {
@@ -181,24 +180,6 @@ bool featureEnabled(const Config& config, typename Config::Feature id) {
   return std::apply(
     [&](const auto&... feature) { return ((feature.id == id && featureEnabled(config, feature)) || ...); },
     Config::features);
-}
-
-/// Return the selection state of a declared feature, or nullopt when name is not a feature.
-/// Uses the descriptor's experimental status to choose the corresponding selection list.
-template<class Config>
-std::optional<bool> featureSelection(const Config& config, std::string_view name) {
-  std::optional<bool> selected;
-  std::apply(
-    [&](const auto&... feature) {
-      const auto check = [&](const auto& descriptor) {
-        if (descriptor.name == name) {
-          selected = featureEnabled(config, descriptor);
-        }
-      };
-      (check(feature), ...);
-    },
-    Config::features);
-  return selected;
 }
 
 /// Return all names from a descriptor tuple in declaration order, without filtering or deduplication.

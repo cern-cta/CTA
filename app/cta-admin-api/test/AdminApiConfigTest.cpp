@@ -260,14 +260,27 @@ TEST(AdminAuthConfig, DefaultsToJwtButStrictModeRequiresExplicitSelection) {
 }
 
 TEST(AdminAuthConfig, InactiveJwtSettingsCannotEnableJwtAuthentication) {
-  const std::string document = ADMIN_AUTH_TOML + "\n[jwt]\njwks_total_timeout = 'invalid'";
-  const auto config = cta::runtime::loadFromTomlString<AdminAuthConfig>(document, "auth.toml", false);
-  EXPECT_FALSE(config.jwt);
-  EXPECT_FALSE(config.methodEnabled(cta::grpc_server::AuthMethod::JWT));
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::KERBEROS));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_THROW(cta::runtime::loadFromTomlString<AdminAuthConfig>(document, "auth.toml", true),
-               cta::exception::UserError);
+  for (bool strict : {false, true}) {
+    const std::string base = ADMIN_AUTH_TOML;
+    EXPECT_THROW(
+      cta::runtime::loadFromTomlString<AdminAuthConfig>(base + "\n[jwt]\njwks_uri = 42", "auth.toml", strict),
+      cta::exception::UserError);
+    const auto config = cta::runtime::loadFromTomlString<AdminAuthConfig>(base + R"toml(
+[jwt]
+jwks_uri = ""
+expected_issuer = ""
+expected_audience = ""
+min_generation = 0
+cache_refresh_interval = 0
+pub_key_timeout = 0
+jwks_total_timeout = 0
+)toml",
+                                                                          "auth.toml",
+                                                                          strict);
+    ASSERT_TRUE(config.jwt);
+    EXPECT_TRUE(config.methodEnabled(AuthMethod::KERBEROS));
+    EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
+  }
 }
 
 }  // namespace unitTests

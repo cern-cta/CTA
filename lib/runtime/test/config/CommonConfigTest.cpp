@@ -182,44 +182,49 @@ TEST(CommonConfig, WrongFeatureListExplainsHowToMigrate) {
   EXPECT_NE(stable.what().find("feature 'health_server' must be listed in enabled_features"), std::string::npos);
 }
 
-TEST(CommonConfig, InactiveSectionsAreIgnoredOnlyWithoutStrictMode) {
+TEST(CommonConfig, InactiveSectionsAreParsedAndRetained) {
   using cta::runtime::loadFromTomlString;
   const std::string disabled = "enabled_features = []\nenabled_experimental_features = []\n";
-  // Inactive sections may be incomplete, invalid, or not even tables; none can activate a feature.
-  for (const auto& settings : {"[telemetry]\nconfig_file = '/unused.yaml'",
-                               "[telemetry]\nconfig_file = 42\non_init_failure = 'invalid'",
-                               "telemetry = 42\nhealth_server = 'unused'"}) {
-    const auto config = loadFromTomlString<FeatureTestConfig>(disabled + settings, "test.toml", false);
-    EXPECT_FALSE(config.telemetry);
-    EXPECT_FALSE(config.health_server);
-    EXPECT_THROW(loadFromTomlString<FeatureTestConfig>(disabled + settings, "test.toml", true),
-                 cta::exception::UserError);
+  for (bool strict : {false, true}) {
+    for (const auto& settings : {"[telemetry]\nconfig_file = 42", "telemetry = 42\nhealth_server = 'unused'"}) {
+      EXPECT_THROW(loadFromTomlString<FeatureTestConfig>(disabled + settings, "test.toml", strict),
+                   cta::exception::UserError);
+    }
+    const auto config = loadFromTomlString<FeatureTestConfig>(
+      disabled + "[telemetry]\nconfig_file = '/unused.yaml'\non_init_failure = 'invalid'\n",
+      "test.toml",
+      strict);
+    ASSERT_TRUE(config.telemetry);
+    EXPECT_EQ(config.telemetry->on_init_failure, "invalid");
+    EXPECT_FALSE(cta::runtime::featureEnabled(config, FeatureTestConfig::Feature::Telemetry));
   }
-  EXPECT_THROW(
-    loadFromTomlString<FeatureTestConfig>("enabled_features = []\nenabled_experimental_features = ['telemetry']\n"
-                                          "[telemetry]\nconfig_file = 42",
-                                          "test.toml",
-                                          false),
-    cta::exception::UserError);
+  const std::string partial = disabled + "[telemetry]\nconfig_file = '/unused.yaml'\n";
+  EXPECT_NO_THROW(loadFromTomlString<FeatureTestConfig>(partial, "test.toml", false));
+  EXPECT_THROW(loadFromTomlString<FeatureTestConfig>(partial, "test.toml", true), cta::exception::UserError);
 }
 
 TEST(CommonConfig, ValidationUsesSelectionRatherThanSectionPresence) {
   FeatureTestConfig config;
   config.telemetry.emplace().on_init_failure = "invalid";
   EXPECT_TRUE(cta::runtime::validateFeatures(config).ok());
-  EXPECT_EQ(cta::runtime::featureSelection(config, "telemetry"), false);
-  EXPECT_FALSE(cta::runtime::featureSelection(config, "unrelated").has_value());
   config.enabled_experimental_features = {"telemetry"};
-  EXPECT_EQ(cta::runtime::featureSelection(config, "telemetry"), true);
   EXPECT_FALSE(cta::runtime::validateFeatures(config).ok());
 }
 
-TEST(CommonConfig, UnixTransportIgnoresInactiveTcpSettingsWithoutStrictMode) {
-  const std::string document = "transport = 'unix'\n[tcp]\nport = 'invalid'";
-  const auto config = cta::runtime::loadFromTomlString<cta::runtime::HealthServerConfig>(document, "test.toml", false);
-  EXPECT_FALSE(config.tcp);
-  EXPECT_THROW(cta::runtime::loadFromTomlString<cta::runtime::HealthServerConfig>(document, "test.toml", true),
-               cta::exception::UserError);
+TEST(CommonConfig, UnixTransportRetainsTypedInactiveTcpSettings) {
+  for (bool strict : {false, true}) {
+    const auto config = cta::runtime::loadFromTomlString<cta::runtime::HealthServerConfig>(
+      "transport = 'unix'\n[tcp]\nhost = ''\nport = 0",
+      "test.toml",
+      strict);
+    ASSERT_TRUE(config.tcp);
+    EXPECT_EQ(config.tcp->port, 0);
+    EXPECT_THROW(cta::runtime::loadFromTomlString<cta::runtime::HealthServerConfig>(
+                   "transport = 'unix'\n[tcp]\nhost = ''\nport = 'invalid'",
+                   "test.toml",
+                   strict),
+                 cta::exception::UserError);
+  }
 }
 
 TEST(CommonConfig, StrictFeatureSettingsRemainExplicit) {
@@ -261,27 +266,25 @@ TEST(CommonConfig, HealthTransportRequiresOnlyItsOwnSettings) {
 }
 
 namespace {
-struct SelectedSectionConfig {
-  // Declare the section before its selector to exercise order-independent loading.
+struct OptionalSectionConfig {
   std::optional<cta::runtime::TelemetryConfig> telemetry = cta::runtime::TelemetryConfig {"/default.yaml", "warn"};
   bool telemetry_enabled = true;
 
   static constexpr std::size_t memberCount() { return 2; }
-
-  bool isSectionEnabled(std::string_view) const { return telemetry_enabled; }
 };
 }  // namespace
 
-TEST(CommonConfig, SectionSelectionPrecedesOptionalLoading) {
-  const auto disabled =
-    cta::runtime::loadFromTomlString<SelectedSectionConfig>("telemetry_enabled = false", "test.toml", true);
-  EXPECT_FALSE(disabled.telemetry);
-  const auto defaults = cta::runtime::loadFromTomlString<SelectedSectionConfig>("", "test.toml", false);
-  ASSERT_TRUE(defaults.telemetry);
-  EXPECT_EQ(defaults.telemetry->config_file, "/default.yaml");
-  const std::string inactive = "telemetry_enabled = false\n[telemetry]\nconfig_file = 42";
-  EXPECT_FALSE(cta::runtime::loadFromTomlString<SelectedSectionConfig>(inactive, "test.toml", false).telemetry);
-  EXPECT_THROW(cta::runtime::loadFromTomlString<SelectedSectionConfig>(inactive, "test.toml", true),
-               cta::exception::UserError);
+TEST(CommonConfig, OptionalSectionPresenceIsIndependentOfSelectors) {
+  for (bool strict : {false, true}) {
+    const auto missing =
+      cta::runtime::loadFromTomlString<OptionalSectionConfig>("telemetry_enabled = true", "test.toml", strict);
+    EXPECT_FALSE(missing.telemetry);
+    const auto present = cta::runtime::loadFromTomlString<OptionalSectionConfig>(
+      "telemetry_enabled = false\n[telemetry]\nconfig_file = '/explicit.yaml'\non_init_failure = 'warn'",
+      "test.toml",
+      strict);
+    ASSERT_TRUE(present.telemetry);
+    EXPECT_EQ(present.telemetry->config_file, "/explicit.yaml");
+  }
 }
 }  // namespace unitTests

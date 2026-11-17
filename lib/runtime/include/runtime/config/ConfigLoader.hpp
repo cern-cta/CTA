@@ -88,6 +88,14 @@ T loadFromTomlString(std::string_view contents, const std::string& sourcePath, b
   if (auto res = parsing::parseTable(config, tbl, strict); !res.ok()) {
     throw cta::exception::UserError("Invalid config in '" + sourcePath + "':\n" + res.what(), false);
   }
+  // Apply section defaults only after parsing has preserved explicit input presence.
+  if (!strict) {
+    if constexpr (requires {
+                    { config.applyDefaults() } -> std::same_as<void>;
+                  }) {
+      config.applyDefaults();
+    }
+  }
   if constexpr (HasValidateMethod<T>) {
     const auto validationResult = config.validate();
     if (!validationResult.ok()) {

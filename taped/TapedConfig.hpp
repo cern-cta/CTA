@@ -321,9 +321,6 @@ struct RetrieveTransferConfig final {
   /// Recommended access order policy for reducing tape positioning during retrieval.
   std::optional<RaoConfig> rao = std::nullopt;
 
-  /// RAO settings do not enable access ordering on their own.
-  bool isSectionEnabled(std::string_view name) const { return name == "rao" && rao_enabled; }
-
   static constexpr std::size_t memberCount() { return 6; }
 
   /// Collect invalid retrieval batch limits, disk-drain timeout and RAO settings.
@@ -363,9 +360,6 @@ struct TransfersConfig final {
   RetrieveTransferConfig retrieve;
   /// Hardware encryption and key retrieval settings shared by archive and retrieve sessions.
   std::optional<EncryptionConfig> encryption = std::nullopt;
-
-  /// Encryption settings are used only when explicitly enabled.
-  bool isSectionEnabled(std::string_view name) const { return name == "encryption" && encryption_enabled; }
 
   static constexpr std::size_t memberCount() { return 9; }
 

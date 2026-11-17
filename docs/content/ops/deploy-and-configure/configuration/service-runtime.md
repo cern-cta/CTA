@@ -44,7 +44,12 @@ Strict mode requires both lists, including `[]` when empty; non-strict mode defa
 Unknown names, duplicates and selections in the wrong list are rejected.
 
 Supply settings for enabled features.
-Sections for disabled features are ignored in non-strict mode and must be removed in strict mode.
+Supplied sections are parsed and retained even when their feature is disabled.
+Their values must have valid types in both modes; strict mode also requires all non-optional settings within every supplied section.
+Only enabled features undergo semantic validation, such as checking that a URI is non-empty or a timeout is positive.
+An enabled feature requires its settings section unless non-strict mode provides section defaults, as for maintenance routines.
+Strict mode requires enabled sections explicitly.
+Section presence alone never enables a feature.
 For example, disable telemetry by removing `"telemetry"` from `enabled_experimental_features`.
 See [Metrics](../../run-and-maintain/monitoring/metrics.md) and [Health and Alerts](../../run-and-maintain/monitoring/health-and-alerts.md) for complete activation examples.
 

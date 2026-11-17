@@ -68,7 +68,7 @@ Configuration checking is split into three layers with distinct responsibilities
 2. The config struct's `ValidationResult validate() const` method checks the fully initialized struct. It collects semantic constraints such as non-empty strings, strictly positive values, supported values, and valid combinations of entries. It must not read TOML or inspect external resources.
 3. Application-specific initialization checks external state. Examples include checking that a configured file exists or is readable, connecting to a database, and verifying that a remote service is reachable.
 
-`ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct. If validation reports errors, the loader presents all of them in one `UserError`. Root and parent config structs must explicitly merge the validation result from each custom config child. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
+`ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct and applied any non-strict section defaults. If validation reports errors, the loader presents all of them in one `UserError`. Root and parent config structs must explicitly merge the validation result from each custom config child. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
 
 ### Optional fields and feature activation
 
@@ -116,9 +116,16 @@ Consumers use `config.featureEnabled(Config::Feature::Telemetry)`, or the corres
 The runtime expects `Feature::Telemetry` and `Feature::HealthServer` when the corresponding configuration sections exist; experimental status remains in the descriptors.
 
 Keep defaults in configuration member initialisers.
-For nested selectors, implement `isSectionEnabled(name)` so the loader can identify active optional members.
-Non-strict loading retains initialisers for omitted active sections; strict mode requires those sections explicitly.
-Other omitted optional fields become `std::nullopt`.
+The parser reads every supplied field independently of feature selection and retains disabled sections.
+Incorrect types are errors in both modes; strict mode also requires every non-optional field within a supplied section.
+Omitted optional sections become `std::nullopt`, so validation can require settings for selected features without treating presence as enablement.
+Only selected sections undergo feature-specific semantic validation.
+
+For configurations with defaultable sections, the root may provide `void applyDefaults()`; `ConfigLoader` calls it after successful non-strict parsing and before validation.
+Parent hooks must explicitly call the hooks of their children, including children whose entire table was omitted.
+The hook fills omitted selected sections without overwriting supplied settings, as in `MaintdConfig` and `RoutinesConfig`.
+Strict loading skips this hook, leaving selected missing sections for validation to reject.
+Keep field defaults in their settings types and keep `validate()` read-only.
 See [Service Runtime](../../ops/deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for configuration rules.
 
 ## Application configuration
