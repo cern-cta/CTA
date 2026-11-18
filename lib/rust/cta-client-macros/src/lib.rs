@@ -9,6 +9,7 @@
 //! `::cta_client` paths, so they only work in a crate depending on it (or in `cta-client` itself, which declares
 //! `extern crate self as cta_client`).
 
+mod admin_dao;
 mod args;
 mod expand;
 mod field;
@@ -16,7 +17,7 @@ mod types;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, parse_macro_input};
+use syn::{DeriveInput, ItemStruct, parse_macro_input};
 
 use crate::{args::CmdArgs, expand::expand, field::strip_proto_attrs};
 
@@ -104,6 +105,33 @@ pub fn typed_admin_cmd(args: TokenStream, input: TokenStream) -> TokenStream {
         Err(error) => {
             // Keep the struct, so that the error is reported alone rather than with every use of the struct.
             strip_proto_attrs(&mut input);
+            let error = error.into_compile_error();
+            quote!(#input #error).into()
+        }
+    }
+}
+
+/// Turn a unit struct into a data access object of `cta-client`: a handle on the `AdminClient`, for one resource.
+///
+/// The struct gets a private `client: AdminClient` field and `#[derive(Clone)]`, and `AdminClient` gets an accessor
+/// returning it, named after the struct in `snake_case` (`TapePools` is given by `client.tape_pools()`) and documented
+/// with the documentation of the struct:
+///
+/// ```ignore
+/// /// Tape pools: see [`TapePool`].
+/// #[admin_dao]
+/// pub struct TapePools;
+/// ```
+///
+/// The operations of the resource are then implemented on the struct, through `self.client`. As the accessor is an
+/// inherent method of `AdminClient`, this only works within `cta-client`.
+#[proc_macro_attribute]
+pub fn admin_dao(args: TokenStream, input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as ItemStruct);
+    match admin_dao::expand(args.into(), input.clone()) {
+        Ok(tokens) => tokens.into(),
+        // Keep the struct, so that the error is reported alone rather than with every use of the struct.
+        Err(error) => {
             let error = error.into_compile_error();
             quote!(#input #error).into()
         }

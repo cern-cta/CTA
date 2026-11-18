@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! The admin API (`cta-admin-api`): its client and the typed admin commands it sends ([`commands`]).
+//! The admin API (`cta-admin-api`): its client, the typed admin commands it sends ([`commands`]), and the data access
+//! objects built on them ([`dao`]).
 //!
 //! [`AdminClient`] sends any [`TypedAdminCmd`](commands::TypedAdminCmd) to the right frontend service: the commands answered with a stream
 //! (every `ls`, `showqueues`, `version`) go to `CtaRpcStream.GenericAdminStream`, the others to `CtaRpc.Admin`.
@@ -37,6 +38,7 @@
 
 mod client;
 pub mod commands;
+pub mod dao;
 mod error;
 mod stream;
 #[cfg(test)]

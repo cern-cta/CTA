@@ -32,7 +32,7 @@ use cta_protobuf::{
     },
 };
 
-// One folder per domain (as in `cta-model`), the command modules being re-exported here. Each command module
+// One folder per domain (as in `cta-model` and `dao`), the command modules being re-exported here. Each command module
 // is named after its `cta-admin` command, so the `admin` and `tape` folders are declared under other names, to leave
 // `admin` and `tape` to the command modules.
 #[path = "admin/mod.rs"]

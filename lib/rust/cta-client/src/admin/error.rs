@@ -3,10 +3,12 @@
 
 //! Errors of the admin commands sent through [`AdminClient`](super::AdminClient).
 
-use std::borrow::Cow;
+use std::{borrow::Cow, path::PathBuf};
 
 use cta_grpc_common::Error as RpcError;
 use cta_model::ConversionError;
+
+use super::dao::IdFileError;
 
 /// The underlying error of an [`AdminError::InvalidResponse`].
 pub type BoxedError = Box<dyn std::error::Error + Send + Sync + 'static>;
@@ -16,6 +18,10 @@ pub type BoxedError = Box<dyn std::error::Error + Send + Sync + 'static>;
 /// The variants follow the way the frontend API reports errors, so that callers can tell user errors (bad arguments,
 /// unknown or already existing resources) from failures of the frontend API or of the connection. Each variant carries, as
 /// its [`source`](std::error::Error::source), the gRPC status or error it comes from.
+///
+/// The data access objects of [`crate::admin::dao`] add the client-side errors: a `get` matching no record
+/// ([`AdminError::NotFound`]) or several ([`AdminError::MoreThanOne`]), and an unreadable list of identifiers
+/// ([`AdminError::IdFile`]).
 #[derive(thiserror::Error, Debug)]
 pub enum AdminError {
     /// The frontend API rejected the command as a user error
@@ -46,6 +52,33 @@ pub enum AdminError {
         #[source]
         source: Option<BoxedError>,
     },
+    /// No resource matches the identifier given to a `get`
+    #[error("{resource} {id} not found")]
+    NotFound {
+        /// The kind of resource (e.g. `tape pool`)
+        resource: &'static str,
+        /// The identifier, as given
+        id: String,
+    },
+    /// Several resources match the identifier given to a `get`
+    #[error("{resource} {id} has {count} matches, expected one")]
+    MoreThanOne {
+        /// The kind of resource (e.g. `tape file`)
+        resource: &'static str,
+        /// The identifier, as given
+        id: String,
+        /// The number of matching resources
+        count: usize,
+    },
+    /// A list of identifiers cannot be read from a file
+    #[error("cannot read the identifiers in {}: {source}", path.display())]
+    IdFile {
+        /// The file
+        path: PathBuf,
+        /// What went wrong
+        #[source]
+        source: IdFileError,
+    },
 }
 
 impl AdminError {
@@ -61,6 +94,9 @@ impl AdminError {
             | Self::Transport(RpcError::Status(status)) => status.message().into(),
             Self::Transport(error) => error.to_string().into(),
             Self::InvalidResponse { message, .. } => message.into(),
+            Self::NotFound { .. } | Self::MoreThanOne { .. } | Self::IdFile { .. } => {
+                self.to_string().into()
+            }
         }
     }
 
@@ -75,7 +111,11 @@ impl AdminError {
             | Self::Unauthenticated(status)
             | Self::Cancelled(status)
             | Self::Transport(RpcError::Status(status)) => Some(status),
-            Self::Transport(_) | Self::InvalidResponse { .. } => None,
+            Self::Transport(_)
+            | Self::InvalidResponse { .. }
+            | Self::NotFound { .. }
+            | Self::MoreThanOne { .. }
+            | Self::IdFile { .. } => None,
         }
     }
 
