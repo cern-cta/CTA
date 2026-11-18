@@ -252,6 +252,11 @@ if(CTA_BUILD_MODE STREQUAL "compile")
     set(CTA_RUST_BUILD_ENV
       "RUSTC_WRAPPER=${CTA_SCCACHE_EXECUTABLE}" "RUSTC_WORKSPACE_WRAPPER=" "CARGO_INCREMENTAL=0")
   endif()
+  # The versions sent by cta-client with the admin commands, as in the C++ binaries. Its build script only falls back
+  # to project.json and git without them, which fails in the packaging builds (an extracted source tree, without git).
+  list(APPEND CTA_RUST_BUILD_ENV
+    "CTA_VERSION=${CTA_VERSION}"
+    "XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}")
   foreach(crate IN LISTS CTA_RUST_CRATES)
     corrosion_set_env_vars(${crate} ${CTA_RUST_BUILD_ENV})
   endforeach()
