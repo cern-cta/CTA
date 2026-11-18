@@ -142,6 +142,7 @@ Do not use `git diff --check` as evidence that functionality works.
 Follow [Documentation Changes](docs/content/dev/contributing/documentation.md) and read nearby pages before editing.
 
 - Match the surrounding prose and established terminology.
+- A code change does not automatically require a documentation change. Update docs only when the reader’s workflow or understanding needs to change. Prefer removing obsolete text over adding explanatory notes.
 - Maintain one authoritative explanation; link rather than duplicate it.
 - Write documentation and code comments for someone encountering the final design without the conversation history.
   Freely consolidate explanations introduced or substantially changed on the current branch as the design evolves, rather than appending answers to review questions.

@@ -16,8 +16,3 @@ See [Container Image Conventions](../../../docs/content/dev/guides/conventions/c
 | `repository-publish` | CERN repository publication using Kerberos, XRootD, and DNF. |
 | `danger` | Merge-request review automation. |
 | `lintian` | Debian package inspection. |
-
-The first four use CERN's AlmaLinux 10 base independently of the platform being tested.
-Python job dependencies come from the root dependency groups and lockfile; images provide OS tools and uv where needed.
-The automation image includes managed Python 3.9 and 3.12 interpreters; jobs select their compatibility target explicitly.
-Documentation builds use the Rust image until they move to a platform build image with the required toolchains.

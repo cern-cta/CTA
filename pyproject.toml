@@ -19,6 +19,7 @@
     dev = [
         { include-group = "lint" },
         { include-group = "unit-tests" },
+        { include-group = "system-tests" },
         { include-group = "type-check" },
         "pre-commit>=4.3.0",
     ]

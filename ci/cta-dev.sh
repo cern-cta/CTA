@@ -32,7 +32,7 @@ readonly available_tests=(
   teardown
   $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done)
 )
-readonly venv_dir="${project_root}/ci/system_tests/.venv"
+readonly venv_dir="${project_root}/.venv"
 readonly program_name="cta-dev"
 readonly debug_profile_file="${project_root}/ci/orchestration/manifests/cta-debug-profile.yaml"
 
@@ -747,6 +747,15 @@ package_directory() {
   esac
 }
 
+validate_submodules() {
+  local submodule_status
+  submodule_status=$(git -C "$project_root" submodule status --recursive) \
+    || die "Could not inspect submodules."
+  if grep -q '^[+U-]' <<< "$submodule_status"; then
+    die "Submodules are out of sync. Run 'git submodule update --init --recursive' from $project_root."
+  fi
+}
+
 # Require an installed and usable Podman runtime.
 validate_podman() {
   command -v podman >/dev/null 2>&1 \
@@ -1306,7 +1315,7 @@ deploy_cta() {
 # Select and run a system test in the installed Python environment.
 test_cta() {
   [[ -x "$venv_dir/bin/python" && -x "$venv_dir/bin/pytest" ]] || \
-    die "CTA system-test environment is missing. Run '$(basename "$0") install' first."
+    die "CTA development environment is missing. Run '$(basename "$0") install' first."
   print_header "RUNNING TESTS"
 
   source "$venv_dir/bin/activate" || (log_error "Failed to activate the Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
@@ -1423,12 +1432,12 @@ all_cta() {
   print_stage_summary
 }
 
-# Install the command, Bash completion, test environment, and optional merge driver.
+# Install the command, Bash completion, development environment, and optional merge driver.
 install_cta_dev() {
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
   local -r script_path="$(realpath "$0")"
-  command -v uv >/dev/null 2>&1 || die "uv is required to install the system-test environment. Install uv and retry."
+  command -v uv >/dev/null 2>&1 || die "uv is required to install the development environment. Install uv and retry."
   local -r completion_src="${project_root}/ci/${program_name}.bash-completion"
   local -r completion_dir="$HOME/.local/share/bash-completion/completions"
   local -r completion_dst="${completion_dir}/${program_name}"
@@ -1437,9 +1446,13 @@ install_cta_dev() {
   echo "  - Install the $program_name command symlink to $link_path"
   echo "  - Install Bash completion to $completion_dst"
   echo "  - Create a Python virtual environment in $venv_dir"
-  echo "  - Install locked system-test dependencies from $project_root/uv.lock"
+  echo "  - Install the Python workspace with development dependencies"
   read -r -p "Continue? [y/N] " confirm
   [[ "$confirm" =~ ^[Yy]$ ]] || return 1
+
+  log_task "Preparing the Python development environment..."
+  UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
+    --locked --all-packages --all-extras --group dev
 
   log_task "Installing the ${program_name} command..."
   mkdir -p "$bin_dir"
@@ -1447,9 +1460,6 @@ install_cta_dev() {
 
   mkdir -p "$completion_dir"
   install -m 644 "$completion_src" "$completion_dst"
-
-  UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
-    --locked --only-group system-tests
 
   # Setup git merge driver for .secrets.baseline
   if command -v detect-secrets >/dev/null 2>&1; then
@@ -1491,6 +1501,12 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
+
+  if [[ $show_help != true ]]; then
+    case "$command" in
+      install|build|images|up|debug|all) validate_submodules ;;
+    esac
+  fi
 
   case "$command" in
     build|images|up|debug|all)
