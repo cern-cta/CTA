@@ -22,8 +22,8 @@ spec:
       type: boolean
       default: false
 ---
-# All of the below tests use only the docker image generated in the build:image stage.
-# They should not rely on any other generated artifacts.
+# These tests deploy images from the registry; image-build artifacts are not needed.
+# Version metadata, the merge-train flag and regression configuration still come from preparatory jobs.
 # These are also the only tests executed on our personal runners instead of the GitLab runners.
 
 .cta-system-test-image-targets: &cta-system-test-image-targets
@@ -80,6 +80,7 @@ spec:
       optional: true
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
+      artifacts: false
       optional: true
       parallel:
         matrix:
@@ -328,6 +329,7 @@ stress-test:
       optional: true
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
+      artifacts: false
       optional: true
       parallel:
         matrix:
