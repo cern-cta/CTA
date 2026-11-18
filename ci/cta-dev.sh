@@ -32,7 +32,8 @@ readonly available_tests=(
   teardown
   $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done)
 )
-readonly venv_dir="${project_root}/.venv"
+# Honour UV_PROJECT_ENVIRONMENT so the devcontainer keeps its own interpreter instead of the host-shared .venv.
+readonly venv_dir="${UV_PROJECT_ENVIRONMENT:-${project_root}/.venv}"
 readonly program_name="cta-dev"
 readonly debug_profile_file="${project_root}/ci/orchestration/manifests/cta-debug-profile.yaml"
 
@@ -747,15 +748,6 @@ package_directory() {
   esac
 }
 
-validate_submodules() {
-  local submodule_status
-  submodule_status=$(git -C "$project_root" submodule status --recursive) \
-    || die "Could not inspect submodules."
-  if grep -q '^[+U-]' <<< "$submodule_status"; then
-    die "Submodules are out of sync. Run 'git submodule update --init --recursive' from $project_root."
-  fi
-}
-
 # Require an installed and usable Podman runtime.
 validate_podman() {
   command -v podman >/dev/null 2>&1 \
@@ -1450,16 +1442,16 @@ install_cta_dev() {
   read -r -p "Continue? [y/N] " confirm
   [[ "$confirm" =~ ^[Yy]$ ]] || return 1
 
-  log_task "Preparing the Python development environment..."
-  UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
-    --locked --all-packages --all-extras --group dev
-
   log_task "Installing the ${program_name} command..."
   mkdir -p "$bin_dir"
   ln -sf "$script_path" "$link_path"
 
   mkdir -p "$completion_dir"
   install -m 644 "$completion_src" "$completion_dst"
+
+  log_task "Preparing the Python development environment..."
+  UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
+    --locked --all-packages --all-extras --group dev
 
   # Setup git merge driver for .secrets.baseline
   if command -v detect-secrets >/dev/null 2>&1; then
@@ -1501,12 +1493,6 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
-
-  if [[ $show_help != true ]]; then
-    case "$command" in
-      install|build|images|up|debug|all) validate_submodules ;;
-    esac
-  fi
 
   case "$command" in
     build|images|up|debug|all)

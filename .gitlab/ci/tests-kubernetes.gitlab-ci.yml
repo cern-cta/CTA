@@ -102,8 +102,8 @@ spec:
     - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
-    - UV_PROJECT_ENVIRONMENT=ci/system_tests/.venv uv sync --locked --only-group system-tests
-    - source ci/system_tests/.venv/bin/activate
+    - UV_PROJECT_ENVIRONMENT=.venv uv sync --locked --only-group system-tests
+    - source .venv/bin/activate
   script:
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
@@ -333,8 +333,8 @@ stress-test:
   before_script:
     - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
-    - UV_PROJECT_ENVIRONMENT=ci/system_tests/.venv uv sync --locked --only-group system-tests
-    - source ci/system_tests/.venv/bin/activate
+    - UV_PROJECT_ENVIRONMENT=.venv uv sync --locked --only-group system-tests
+    - source .venv/bin/activate
     - *setup-k8s-test-variables
   script:
     - |
