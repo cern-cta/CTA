@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest AS cppcheck-build
+FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2 AS cppcheck-build
 
 ARG CPPCHECK_VERSION=2.20.0
 # CI uses built-in checks, not custom PCRE1 regex rules (unavailable on EL10).
@@ -10,7 +10,7 @@ RUN dnf install -y git gcc-c++ make python3 which && \
     make -C /tmp/cppcheck install MATCHCOMPILER=yes FILESDIR=/usr/share/cppcheck \
         CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function" -j 4
 
-FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest
+FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2
 
 ARG UV_VERSION=0.13.9
 

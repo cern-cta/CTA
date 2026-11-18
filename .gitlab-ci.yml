@@ -14,6 +14,7 @@ spec:
         - "REGR_AGAINST_CTA_BRANCH"
         - "REGR_AGAINST_CTA_VERSION"
         - "UPDATE_PIPELINE_IMAGES"
+        - "UPDATE_DEPENDENCIES"
       default: "DEFAULT"
 
     # REGR_AGAINST_CTA_VERSION is retained as a backwards-compatible alias for REGR_AGAINST_CTA_BRANCH.
@@ -165,7 +166,6 @@ spec:
 stages:
   - .pre
   - trigger
-  - validate
   - lint
   - build
   - build:image
@@ -173,6 +173,7 @@ stages:
   - system-test
   - sbom
   - release
+  - deploy
   - report
   - .post
 
@@ -194,13 +195,14 @@ variables:
   IMAGE_REPOSITORY_PUBLISH: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-repository-publish:${PIPELINE_IMAGE_VERSION}"
   IMAGE_DANGER: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:${PIPELINE_IMAGE_VERSION}"
   # External images
-  IMAGE_DOCKER_IMAGE_BUILDER: "${DOCKER_IMAGE_PROXY}/quay.io/buildah/stable:v1.43-immutable"
-  IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
-  IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
+  IMAGE_RENOVATE: "${DOCKER_IMAGE_PROXY}/docker.io/renovate/renovate:44.252.3@sha256:71315c0978221efdb17304ccf117538bf5d73f4054daccc8d97aa641d124e8db"
+  IMAGE_DOCKER_IMAGE_BUILDER: "${DOCKER_IMAGE_PROXY}/quay.io/buildah/stable:v1.43-immutable@sha256:a7f924c402346631870a8d9e5617c1e4d049da42754447d82520c2c047622369"
+  IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine@sha256:3c206a451cec6d486367e758645269fd7d696c5ccb6ff59d8b03b0e45268a199"
+  IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2@sha256:85462a75c0f8efda09ddd190b92816b70e7662577c8427429e11e1b9f25a992e"
   # Trivy does not use the proxy on purpose as registries.conf takes care of that during image building
-  IMAGE_TRIVY: "docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c" # 0.69.3
-  IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest"
-  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767" # v2.0.11
+  IMAGE_TRIVY: "docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c"  # 0.69.3
+  IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest@sha256:7ea6f02ea26320ad1cf4dc48a0a2c58aae619a915654ba85b032c845f08af99d"
+  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767"  # v2.0.11
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
@@ -302,8 +304,8 @@ workflow:
         on_new_commit: none
       variables:
         ENABLE_SBOM_GENERATION: "true"
-    # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+    # Allow scheduled, manual, and API-triggered maintenance pipelines.
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" || $PIPELINE_TYPE == "UPDATE_DEPENDENCIES"'
       auto_cancel:
         on_new_commit: none
     # Merge-request pipelines use a branch cache and publish test reports for comparison.
@@ -348,11 +350,15 @@ workflow:
 include:
   - local: .gitlab/ci/templates/common.gitlab-ci.yml
   - local: .gitlab/ci/.pre.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_DEPENDENCIES"'
     inputs:
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES" || "$[[ inputs.pipeline-type ]]" == "UPDATE_PIPELINE_IMAGES"'
+        when: never
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE != "parent_pipeline"'
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
@@ -376,24 +382,20 @@ include:
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
-  - local: .gitlab/ci/validate.gitlab-ci.yml
+  - local: .gitlab/ci/lint.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
+        when: never
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
         when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
-  - local: .gitlab/ci/lint.gitlab-ci.yml
-    rules:
-      - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
-        when: never
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
-        when: never
-      # Only lint in the default pipeline
-      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/build.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_DEPENDENCIES"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
@@ -403,6 +405,8 @@ include:
       compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
+        when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - when: always
@@ -419,6 +423,8 @@ include:
       analysis: $[[ inputs.analysis ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
+        when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
@@ -442,12 +448,20 @@ include:
         when: never
       - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
         when: never
-      # Release stage only relevant in default pipeline
       - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
+  - local: .gitlab/ci/deploy.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.platform ]]" == "debian13"'
+        when: never
+      - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+        when: never
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT" || "$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES" || "$[[ inputs.pipeline-type ]]" == "UPDATE_PIPELINE_IMAGES"'
   - local: .gitlab/ci/report.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
+        when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
@@ -456,6 +470,8 @@ include:
       - when: always
   - local: .gitlab/ci/.post.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
+        when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - when: always

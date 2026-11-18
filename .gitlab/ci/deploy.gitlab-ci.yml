@@ -1,0 +1,125 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Publish validated documentation independently of RPM and image publication.
+publish-docs:
+  interruptible: false
+  stage: deploy
+  needs:
+    - job: build-docs
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - if: '$PIPELINE_TYPE != "DEFAULT" || $CI_PIPELINE_SOURCE == "parent_pipeline"'
+      when: never
+    - if: '$CI_COMMIT_TAG =~ /^v[1-9][0-9]*\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && $CI_COMMIT_REF_PROTECTED == "true"'
+  image: $IMAGE_AUTOMATION
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    GIT_TERMINAL_PROMPT: "0"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - source ci/docs/prepare-environment.sh
+  script:
+    - test -n "$CI_JOB_TOKEN"
+    - git config user.name "$GITLAB_USER_NAME"
+    - git config user.email "$GITLAB_USER_EMAIL"
+    - git remote set-url origin "$CI_REPOSITORY_URL"
+    - python ci/docs/publish.py --tag "$CI_COMMIT_TAG"
+  resource_group: cta-docs-publication
+  artifacts:
+    paths:
+      - build/docs/public/
+    expire_in: 7 days
+  pages:
+    publish: build/docs/public
+    expire_in: never
+
+# =========================================================================
+#  Deploy Review App
+# =========================================================================
+
+# set up a review app for the merge request. it will be
+# automatically stopped when the MR is closed or merged
+deploy-mr-review-app:
+  stage: deploy
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: build-docs
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    # only run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # don't run on merge trains
+    - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+      when: never
+  variables:
+    DOCS_SITE_NAME: "cta.docs.cern.ch"
+  script:
+    - echo "Pages accessible through https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
+  pages:
+    path_prefix: "review-mr-$CI_MERGE_REQUEST_IID"
+    expire_in: 1 week
+    publish: build/docs/site
+  environment:
+    name: "review/$CI_MERGE_REQUEST_IID"
+    url: "https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
+    on_stop: stop-mr-review-app
+    auto_stop_in: 1 week
+
+stop-mr-review-app:
+  stage: deploy
+  # Cleanup must remain runnable after artifacts from earlier jobs expire.
+  dependencies: []
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - echo "Stopping review app"
+  environment:
+    name: "review/$CI_MERGE_REQUEST_IID"
+    action: stop
+
+.renovate:
+  interruptible: false
+  stage: deploy
+  image: $IMAGE_RENOVATE
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    RENOVATE_PLATFORM: "gitlab"
+    RENOVATE_ENDPOINT: "$CI_API_V4_URL"
+    RENOVATE_TOKEN: "$CI_API_TOKEN"
+    GITHUB_COM_TOKEN: "$GITHUB_API_TOKEN"
+    RENOVATE_ONBOARDING: "false"
+    RENOVATE_EXIT_CODE_FOR_ERRORS: "true"
+  script:
+    - renovate "$CI_PROJECT_PATH"
+  resource_group: renovate
+
+update-dependencies:
+  extends: .renovate
+  needs: []
+  rules:
+    - if: '$PIPELINE_TYPE == "UPDATE_DEPENDENCIES" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+update-pipeline-image-version:
+  extends: .renovate
+  needs:
+    - job: generate-pipeline-images-tag
+      artifacts: true
+    - job: build-pipeline-images
+      artifacts: false
+  rules:
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: true
+  variables:
+    RENOVATE_CONFIG_FILE: "$CI_PROJECT_DIR/ci/renovate/pipeline-images.cjs"

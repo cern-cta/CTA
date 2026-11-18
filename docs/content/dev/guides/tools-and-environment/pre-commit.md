@@ -4,7 +4,7 @@ Pre-commit runs local checks before a commit. For installation, see [Enable pre-
 
 ## Configured checks
 
-The repository's `.pre-commit-config.yaml` defines the hooks, versions, and file selection.
+The repository's `.pre-commit-config.yaml` defines the hooks and file selection. Python tools other than REUSE use `uv` with the same `pyproject.toml` dependencies and `uv.lock` versions as CI; keep `uv` on `PATH`.
 
 | Hook | Purpose |
 | --- | --- |
@@ -54,9 +54,9 @@ Inspect each reported location. For a real credential, remove it and use the app
 After carefully reviewing the findings and confirming that any values to be retained are false positives or safe test fixtures, regenerate the baseline from the repository root:
 
 ```bash
-detect-secrets scan --baseline .secrets.baseline
+uv run --locked detect-secrets scan --baseline .secrets.baseline
 ```
 
-Use the `detect-secrets` version pinned in `.pre-commit-config.yaml`. This updates the baseline file without manually editing its entries; the scan itself does not establish that a finding is safe. Review the resulting diff, rerun the hook, and include the baseline change in the MR with an explanation of the accepted findings.
+This updates the baseline file without manually editing its entries; the scan itself does not establish that a finding is safe. Review the resulting diff, rerun the hook, and include the baseline change in the MR with an explanation of the accepted findings.
 
 The [detect-secrets guide](https://github.com/Yelp/detect-secrets#usage) describes baseline updates and auditing.
