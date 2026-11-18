@@ -205,10 +205,18 @@ void RecallTaskInjector::injectBulkRecalls() {
   std::vector<uint64_t> raoOrder;
 
   bool useRAO = m_raoManager.useRAO();
-  if (useRAO) {
+  // Don't query if we are stopping anyway
+  if (useRAO && !m_stopToken.stop_requested()) {
     m_lc.log(cta::log::INFO, "Performing RAO reordering");
 
     raoOrder = m_raoManager.queryRAO(m_jobs, m_lc);
+  }
+
+  if (requeueRetainedJobsOnStop()) {
+    // No first task may have been injected: release the tape worker waiting for it.
+    signalEndDataMovement();
+    setFirstTasksInjectedPromise();
+    return;
   }
 
   std::ostringstream recallOrderLog;
@@ -268,10 +276,9 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
   noFilesToRecall = false;
-  // Retained jobs still need injection even after scheduler fetching stops.
-  if (m_stopToken.stop_requested()) {
-    noFilesToRecall = m_jobs.empty();
-    return !m_jobs.empty();
+  if (requeueRetainedJobsOnStop()) {
+    noFilesToRecall = true;
+    return false;
   }
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
@@ -299,6 +306,11 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
     m_jobs.emplace_back(j.release());
   }
   m_fetched = jobsList.size();
+  // A scheduler fetch cannot be interrupted; return its jobs if stop arrived during the call.
+  if (requeueRetainedJobsOnStop()) {
+    noFilesToRecall = true;
+    return false;
+  }
   noFilesToRecall = !jobsList.size();
 
   if (m_jobs.empty()) {
@@ -308,6 +320,20 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
   cta::log::ScopedParamContainer scoped(m_lc);
   scoped.add("requestedBytes", reqSize).add("requestedFiles", reqFiles).add("fetchedFiles", m_fetched);
   m_lc.log(cta::log::INFO, "Fetched files to recall");
+  return true;
+}
+
+bool RecallTaskInjector::requeueRetainedJobsOnStop() {
+  if (!m_stopToken.stop_requested()) {
+    return false;
+  }
+  if (!m_jobs.empty()) {
+    m_lc.log(cta::log::INFO, "Drain requested: requeuing uninjected retrieve jobs");
+    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+    m_jobs.clear();
+    m_files = 0;
+    m_bytes = 0;
+  }
   return true;
 }
 
@@ -341,6 +367,7 @@ bool RecallTaskInjector::WorkerThread::popRecalls() {
   while (1) {
     Request req = m_parent.m_queue.pop();
     if (req.end) {
+      m_parent.requeueRetainedJobsOnStop();
       m_parent.m_lc.log(cta::log::INFO,
                         "Received an end notification from tape thread: triggering the end of session.");
       m_parent.signalEndDataMovement();
@@ -400,11 +427,12 @@ void RecallTaskInjector::WorkerThread::run() {
   try {
     // Wake up a blocked worker.
     // requestInjection only wakes the worker and tells it to look for work. The stop token prevents actual fetching.
-    // The worker drains acquired jobs and signals end-of-data.
+    // The worker requeues retained jobs and lets injected tasks drain.
     std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
-    if (m_parent.m_raoManager.useRAO()) {
+    if (m_parent.m_raoManager.useRAO() && !m_parent.m_stopToken.stop_requested()) {
       // Startup failure releases the workers without attempting RAO on an unavailable drive.
       if (!m_parent.waitForRAOReady()) {
+        m_parent.requeueRetainedJobsOnStop();
         m_parent.m_lc.log(cta::log::INFO, "Tape thread ended before RAO drive access");
         m_parent.signalEndDataMovement();
         m_parent.setFirstTasksInjectedPromise();

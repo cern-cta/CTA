@@ -49,7 +49,7 @@ public:
   ///
   /// Assignments with no work may finish without mounting a tape. The caller can attempt recovery if this throws.
   /// Exit the process immediately if workers cannot be confirmed stopped, avoiding unsafe cleanup.
-  /// A stop request currently stops fetching new jobs; acquired jobs and normal cleanup still finish.
+  /// A stop request stops fetching; uninjected retrieve jobs are requeued and injected tasks finish.
   /// @return Whether the assignment succeeded and, separately, whether the drive can accept more work.
   TapeSessionResult execute(std::stop_token stopToken = {});
 
