@@ -22,7 +22,7 @@ For environment setup, see [Preview locally](../documentation.md#preview-locally
 
 ### Generated references
 
-`docs/build.py` generates the command manual in `build/docs/generated/` and runs `cargo doc`. It copies Rust output into the ignored `docs/content/api/rust/` directory so Zensical includes it in both builds and previews. `--skip-rust` reuses existing `target/doc/` output; it still regenerates the manual.
+`docs/build.py` generates the command manual in `build/docs/generated/` and runs `cargo doc`. It copies Rust output into the ignored `docs/content/api/rust/` directory so Zensical includes it in both builds and previews. `--skip-rust` skips Rust generation and reuses existing `target/doc/` output if available; it still regenerates the manual. If Cargo is not installed, the helper warns and skips Rust generation automatically. Without existing output, it warns and continues without copying Rust documentation. Failures from an installed Cargo still stop the build.
 
 The Python API reference uses `mkdocstrings`. Its Python 3.9 inventory matches the supported CTA API, independently of the docs builder’s Python 3.12 runtime.
 

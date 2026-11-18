@@ -12,7 +12,7 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 
 ## Preview locally
 
-Install the Rust toolchain specified by `rust-toolchain.toml` as well as Python 3.12.
+Install Python 3.12 and, to generate Rust API documentation, the Rust toolchain specified by `rust-toolchain.toml`.
 The build helper prepares the generated references before starting Zensical.
 The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
 
@@ -22,7 +22,7 @@ Install `uv`, then from the repository root:
 docs/serve.sh
 ```
 
-Open <http://127.0.0.1:8000/>. The site is written to `build/docs/site/`. Pass `--skip-rust` to reuse an existing `target/doc/` when iterating on prose. The script synchronizes the locked docs dependencies into `docs/.venv` with Python 3.12 on each invocation and forwards arguments to the build helper. It can be invoked from any working directory.
+Open <http://127.0.0.1:8000/>. The site is written to `build/docs/site/`. Pass `--skip-rust` to skip Rust generation when iterating on prose; existing `target/doc/` output is reused if available. If Cargo is not installed, generation is skipped automatically with a warning. The script synchronizes the locked docs dependencies into `docs/.venv` with Python 3.12 on each invocation and forwards arguments to the build helper. It can be invoked from any working directory.
 
 ## Organize the content
 

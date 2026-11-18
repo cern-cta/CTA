@@ -4,7 +4,7 @@ Published at <https://cta.docs.cern.ch/>.
 
 ## Preview locally
 
-From the repository root, with [`uv`](https://docs.astral.sh/uv/), Python 3.12 and the Rust toolchain installed:
+From the repository root, with [`uv`](https://docs.astral.sh/uv/) and Python 3.12 installed (the Rust toolchain is optional for previewing):
 
 ```bash
 docs/serve.sh  # add --skip-rust to reuse target/doc when editing prose
