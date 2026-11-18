@@ -31,8 +31,8 @@ For a regression pipeline, the main inputs are:
 - `custom-cta-image-tag`: use an existing CTA image instead of building the selected Git revision. Leave empty to build that revision.
 - `custom-eos-image-tag`: select the EOS image to test.
 
-Debian 13 supports both regression modes and automatically selects the PostgreSQL scheduler and catalogue.
-For existing Debian images, select a compatible PostgreSQL-only image tag.
+Debian 13 automatically selects the PostgreSQL scheduler and catalogue.
+Debian Kubernetes system tests are currently skipped, including in regression pipelines, pending a redesign of catalogue-tool access.
 Automatic EOS selection uses an EL9 image independently of the CTA platform; an explicit EOS image tag is used unchanged.
 
 Use the input descriptions in the pipeline form for supported formats and defaults. Select compatible scheduler and Oracle settings for the chosen images. The selected Git revision still determines the pipeline configuration and test code.

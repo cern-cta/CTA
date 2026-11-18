@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from .catalogue_tools_host import CatalogueToolsHost
 from .cta_admin_api_host import CtaAdminApiHost
 from .cta_cli_host import CtaCliHost
 from .cta_maintd_host import CtaMaintdHost
@@ -20,7 +19,6 @@ from .scheduler_postgres_host import SchedulerPostgresHost
 
 __all__ = [
     "EOS_TAPE_FILESYSTEM_ID",
-    "CatalogueToolsHost",
     "CtaAdminApiHost",
     "CtaCliHost",
     "CtaMaintdHost",

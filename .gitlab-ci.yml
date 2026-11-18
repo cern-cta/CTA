@@ -405,6 +405,9 @@ include:
       analysis: $[[ inputs.analysis ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
     rules:
+      # Debian system tests await a redesign of catalogue-tool access.
+      - if: '"$[[ inputs.platform ]]" == "debian13"'
+        when: never
       - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
         when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
