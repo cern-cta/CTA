@@ -190,6 +190,20 @@ test-client-gfal2:
   extends:
     - .kubernetes-test
   stage: system-test
+  # Mostly guards EOS/GFAL behaviour, so MR pipelines run it only when the EOS deployment or this suite changes.
+  rules:
+    - !reference [.sanitizer-manual-rules, rules]
+    - if: '$CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: on_success
+    - changes:
+        - project.json
+        - ci/orchestration/helm/eos/**/*
+        - ci/orchestration/presets/eos/**/*
+        - ci/orchestration/presets/stress-eos-values.yaml
+        - ci/system_tests/tests/client_gfal_test.py
+      when: on_success
+    - when: manual
+      allow_failure: true
   variables:
     PYTESTS: "tests/client_gfal_test.py"
 

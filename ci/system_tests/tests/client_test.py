@@ -145,7 +145,7 @@ def retrieve_queue_cleanup_paths(
     test_dir: Path,
     cta_storage_class: str,
 ) -> RetrieveQueueCleanupPaths:
-    queue_cache_max_age_secs = 0  # Must match the cache settings for the dev deployment, where caching is disabled
+    queue_cache_max_age_secs = 2  # Must match retrieveQueueCacheMaxAgeSecs of the default CI deployment
     copy_count = 3
     tapes = cta_cli.list_writable_tapes()
     assert len(tapes) >= copy_count
