@@ -3,10 +3,11 @@
 
 # Paths are relative to the repository root.
 [project]
-  docs_dir = "docs/content"
+  docs_dir = "build/docs/content"
   site_dir = "build/docs/site"
   strict = true
   watch = [
+    "docs/content",
     "project.json",
     "CHANGELOG.md",
     "docs/includes",

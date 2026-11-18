@@ -15,31 +15,57 @@ LOGGER = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def prepare(skip_rust: bool) -> None:
-    """Generate the manual and expose Rust reference files as static site assets."""
-    manual = ROOT / "build/docs/generated/cta-admin.1cta.md"
+def stage_content(preview: bool = False) -> None:
+    """Assemble source content, linking directories for live preview."""
+    destination = ROOT / "build/docs/content"
+    if destination.exists():
+        shutil.rmtree(destination)
+    source = ROOT / "docs/content"
+    for directory in (Path("."), Path("api")):
+        (destination / directory).mkdir(parents=True, exist_ok=True)
+        for entry in (source / directory).iterdir():
+            relative = entry.relative_to(source)
+            if relative in (Path("api"), Path("api/rust")):
+                continue
+            target = destination / relative
+            if preview:
+                target.symlink_to(entry, target_is_directory=entry.is_dir())
+            elif entry.is_dir():
+                shutil.copytree(entry, target)
+            else:
+                shutil.copy2(entry, target)
+
+
+def prepare(skip_rust: bool, preview: bool = False) -> None:
+    """Generate references and assemble the documentation input under build/docs."""
+    stage_content(preview)
+    output = ROOT / "build/docs"
+    content = output / "content"
+    target = ROOT / "target"
+    rust_docs = target / "doc"
+    manual = output / "generated/cta-admin.1cta.md"
     manual.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(  # noqa: S603
         [sys.executable, "compile_man_md.py", "cta-admin.1cta.md.in", str(manual)],
         cwd=ROOT / "tools",
         check=True,
     )
-    if not skip_rust and shutil.which("cargo") is None:
+    cargo = shutil.which("cargo")
+    if not skip_rust and cargo is None:
         LOGGER.warning("Cargo is not installed; skipping Rust documentation generation.")
         skip_rust = True
-    if not skip_rust:
+    if not skip_rust and cargo is not None:
         LOGGER.info("Generating Rust documentation; use --skip-rust to skip this step.")
-        subprocess.run(["cargo", "doc", "-q", "--no-deps", "--workspace"], cwd=ROOT, check=True)  # noqa: S607
-    rust = ROOT / "target/doc"
-    if not (rust / "index.html").is_file():
+        subprocess.run(  # noqa: S603
+            [cargo, "doc", "-q", "--no-deps", "--workspace", "--target-dir", str(target)], cwd=ROOT, check=True
+        )
+    index = rust_docs / "index.html"
+    if not index.is_file():
         if skip_rust:
-            LOGGER.warning("No target/doc/index.html found; continuing without copying Rust documentation.")
+            LOGGER.warning("No %s found; continuing without copying Rust documentation.", index)
             return
-        raise FileNotFoundError("Rust reference missing after cargo doc: target/doc/index.html")
-    destination = ROOT / "docs/content/api/rust"
-    if destination.exists():
-        shutil.rmtree(destination)
-    shutil.copytree(rust, destination)
+        raise FileNotFoundError(f"Rust reference missing after cargo doc: {index}")
+    shutil.copytree(rust_docs, content / "api/rust")
 
 
 def main() -> None:
@@ -51,7 +77,7 @@ def main() -> None:
     )
     args, extra = parser.parse_known_args()
     os.chdir(ROOT)
-    prepare(args.skip_rust)
+    prepare(args.skip_rust, preview=args.command == "serve")
     subprocess.run([sys.executable, "-m", "zensical", args.command, *extra], check=True)  # noqa: S603
 
 

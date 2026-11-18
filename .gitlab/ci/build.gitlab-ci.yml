@@ -241,7 +241,7 @@ build-docs:
       - build/docs/site/
       # mike rebuilds with the release-series URL; reuse generated references.
       - build/docs/generated/
-      - docs/content/api/rust/
+      - build/docs/content/
     expire_in: 7 days
 
 build-python:
