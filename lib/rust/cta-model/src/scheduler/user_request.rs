@@ -8,8 +8,8 @@ use std::{
     time::Duration,
 };
 
-use chrono::{DateTime, Utc};
 use cta_protobuf::cta::admin::ShowQueuesItem;
+use jiff::Timestamp;
 use serde::Serialize;
 use strum::{Display, EnumString, IntoStaticStr};
 
@@ -52,7 +52,7 @@ pub struct UserRequest {
     /// Whether the queue waits for free space on disk
     pub is_sleeping_for_space: bool,
     /// When the queue started waiting for free space
-    pub sleep_start_time: Option<DateTime<Utc>>,
+    pub sleep_start_time: Option<Timestamp>,
     /// Scheduler backend holding the queue
     pub scheduler_backend_name: String,
     /// Files on the tapes of the pool (archives only)

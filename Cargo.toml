@@ -62,11 +62,11 @@
     # error handling, logging, misc
     anyhow        = "^1.0"
     bon           = "^3.10"
-    chrono        = "^0.4"
     clap          = "^4.6"
     clap_complete = "^4.6"
     clap_mangen   = { version = "^0.3", features = ["env"] }
     env_logger    = "^0.11"
+    jiff          = { version = "^0.2", default-features = false, features = ["std"] }
     log           = "^0.4"
     nix           = "^0.31"
     serde         = "^1.0"

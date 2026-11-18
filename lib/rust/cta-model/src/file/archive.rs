@@ -3,8 +3,8 @@
 
 //! Archived files
 
-use chrono::{DateTime, Utc};
 use cta_protobuf::cta::{admin::tape_file_ls_item, common};
+use jiff::Timestamp;
 use serde::Serialize;
 
 use crate::{ConversionError, convert::timestamp, file::Checksum};
@@ -17,7 +17,7 @@ pub struct ArchiveFile {
     /// The storage class of the archive file (e.g., `cta_storage_class`)
     pub storage_class: String,
     /// The time at which the file was archived to tape
-    pub creation_time: DateTime<Utc>,
+    pub creation_time: Timestamp,
     /// The size of the file in bytes
     pub size: u64,
     /// Checksums computed over the file content

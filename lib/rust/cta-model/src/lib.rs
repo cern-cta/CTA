@@ -8,7 +8,7 @@
 //!
 //! One type per resource (tape pools, tapes, drives, files, ...), built from the protobuf records of the streaming
 //! commands with `TryFrom` (a [`TapePool`](tape::TapePool) from a `TapePoolLsItem`, ...). The conversions give the records their
-//! meaning: timestamps become [`DateTime<Utc>`](chrono::DateTime), durations [`Duration`](std::time::Duration), empty
+//! meaning: timestamps become [`Timestamp`](jiff::Timestamp), durations [`Duration`](std::time::Duration), empty
 //! strings standing for "none" become `None`, states become enums, and the creation / modification logs are folded into
 //! a [`Metadata`]. A record that cannot be converted gives a [`ConversionError`].
 //!

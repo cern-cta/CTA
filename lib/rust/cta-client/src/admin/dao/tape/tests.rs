@@ -147,7 +147,7 @@ async fn update_with_verification_status() {
         .tapes()
         .update("I71007")
         .verification_status(cta_model::tape::VerificationStatus {
-            date: chrono::DateTime::from_timestamp_secs(1_735_689_600).unwrap(),
+            date: jiff::Timestamp::from_second(1_735_689_600).unwrap(),
             status: "finished".into(),
             file_submitted_count: 10,
             file_verified_count: 0,

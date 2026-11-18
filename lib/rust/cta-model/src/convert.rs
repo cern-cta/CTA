@@ -3,7 +3,7 @@
 
 //! The conversion of the protobuf records into the domain types: the error they give, and the helpers they share.
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 
 use crate::file::ChecksumTypeError;
 
@@ -68,11 +68,11 @@ impl ConversionError {
     }
 }
 
-/// The `DateTime` of a timestamp in seconds since the Unix epoch, as the records carry them.
-pub(crate) fn timestamp(field: &'static str, secs: u64) -> Result<DateTime<Utc>, ConversionError> {
+/// The [`Timestamp`] of a time in seconds since the Unix epoch, as the records carry them.
+pub(crate) fn timestamp(field: &'static str, secs: u64) -> Result<Timestamp, ConversionError> {
     i64::try_from(secs)
         .ok()
-        .and_then(DateTime::from_timestamp_secs)
+        .and_then(|secs| Timestamp::from_second(secs).ok())
         .ok_or(ConversionError::InvalidTimestamp { field, value: secs })
 }
 
@@ -80,7 +80,7 @@ pub(crate) fn timestamp(field: &'static str, secs: u64) -> Result<DateTime<Utc>,
 pub(crate) fn optional_timestamp(
     field: &'static str,
     secs: u64,
-) -> Result<Option<DateTime<Utc>>, ConversionError> {
+) -> Result<Option<Timestamp>, ConversionError> {
     if secs == 0 {
         Ok(None)
     } else {
