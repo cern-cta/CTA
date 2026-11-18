@@ -215,7 +215,7 @@ void PostgresArchiveFileCatalogue::getNextArchiveFileIds(rdbms::Conn& conn,
     FROM generate_series(1, :COUNT::BIGINT)
   )SQL";
   auto stmt = conn.createStmt(sql);
-  stmt.bindUint64(":COUNTBIGINT", count);
+  stmt.bindUint64(":COUNT", count);
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     ids.push_back(rset.columnUint64("ARCHIVE_FILE_ID"));
