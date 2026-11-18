@@ -23,21 +23,29 @@
 [features]
   # Generate the gRPC server traits too (not needed in clients)
   server = []
+  # `serde::Serialize` / `Deserialize` following the proto3 JSON mapping (as printed by `cta-admin --jsonl`)
+  json = ["dep:pbjson", "dep:serde", "dep:pbjson-build"]
 
 [dependencies]
   tonic       = { workspace = true }
   prost       = { workspace = true }
   tonic-prost = { workspace = true }
-  pbjson      = { workspace = true }
-  serde       = { workspace = true }
+  pbjson      = { workspace = true, optional = true }
+  serde       = { workspace = true, optional = true }
+  # `impl TryFrom<Data>` for the records of the stream frames
+  derive_more = { workspace = true, features = ["std", "try_into"] }
 
 [dev-dependencies]
   serde_json = { workspace = true }
 
 [build-dependencies]
   tonic-prost-build = { workspace = true }
-  pbjson-build      = { workspace = true }
+  pbjson-build      = { workspace = true, optional = true }
+
+[[test]]
+  name              = "json"
+  required-features = ["json"]
 
   # machete can't figure out that our auto-generated code requires these crates
   [package.metadata.cargo-machete]
-    ignored = ["prost", "tonic-prost", "pbjson", "serde"]
+    ignored = ["prost", "tonic-prost", "pbjson", "serde", "derive_more"]
