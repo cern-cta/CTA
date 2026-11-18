@@ -101,7 +101,7 @@ spec:
   before_script:
     - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
-    # Exercise telemetry across scheduled system tests without adding it to MR or stress-test deployments.
+    # Enable local telemetry if desired
     - |
       if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --local-telemetry"

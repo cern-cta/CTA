@@ -39,9 +39,9 @@ logging:
 
 scheduler:
   # Disable the tape cache so tests see tape-state changes at once. A short retrieve-queue cache avoids
-  # recomputing queue statistics under a shared lock for every request. The stress presets set their own ages.
+  # recomputing queue statistics under a shared lock for every request.
   tapeCacheMaxAgeSecs: 0
-  retrieveQueueCacheMaxAgeSecs: 2
+  retrieveQueueCacheMaxAgeSecs: 1
   numberOfConnections: 3
 
 # OpenTelemetry is entirely configured through declarative configuration
