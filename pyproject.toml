@@ -18,6 +18,7 @@
 [dependency-groups]
     dev = [
         { include-group = "lint" },
+        { include-group = "source-checks" },
         { include-group = "unit-tests" },
         { include-group = "system-tests" },
         { include-group = "type-check" },

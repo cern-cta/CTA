@@ -78,8 +78,13 @@
   "packageRules": [
     {
       "description": "CERN registry images do not need an additional cooldown.",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["registry.cern.ch/**", "gitlab-registry.cern.ch/**"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "registry.cern.ch/**",
+        "gitlab-registry.cern.ch/**"
+      ],
       "minimumReleaseAge": null
     },
     {

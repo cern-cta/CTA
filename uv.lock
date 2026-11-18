@@ -31,9 +31,12 @@ dev = [
     { name = "cattrs" },
     { name = "certifi", specifier = "==2026.7.22" },
     { name = "charset-normalizer", specifier = "==3.5.1" },
+    { name = "clang-format", specifier = "==20.1.8" },
     { name = "click", specifier = "==8.1.8" },
     { name = "colorama", specifier = "==0.4.6" },
+    { name = "cppcheck-codequality" },
     { name = "cryptography" },
+    { name = "detect-secrets", specifier = "==1.5.0" },
     { name = "fastjsonschema", specifier = ">=2.21.2" },
     { name = "ghp-import", specifier = "==2.1.0" },
     { name = "griffe", specifier = "==1.14.0" },
@@ -83,6 +86,7 @@ dev = [
     { name = "urllib3", specifier = "==2.6.3" },
     { name = "verspec", specifier = "==0.1.0" },
     { name = "watchdog", specifier = "==6.0.0" },
+    { name = "yamllint", specifier = "==1.37.1" },
     { name = "zipp", specifier = "==3.23.1" },
 ]
 docs = [
