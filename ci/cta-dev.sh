@@ -1424,7 +1424,7 @@ all_cta() {
   print_stage_summary
 }
 
-# Install the command, Bash completion, development environment, and merge driver.
+# Install the command, Bash completion, development environment, and Git hooks.
 install_cta_dev() {
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
@@ -1439,6 +1439,7 @@ install_cta_dev() {
   echo "  - Install Bash completion to $completion_dst"
   echo "  - Create a Python virtual environment in $venv_dir"
   echo "  - Install the Python workspace with development dependencies"
+  echo "  - Install the pre-commit Git hook"
   read -r -p "Continue? [y/N] " confirm
   [[ "$confirm" =~ ^[Yy]$ ]] || return 1
 
@@ -1452,6 +1453,9 @@ install_cta_dev() {
   log_task "Preparing the Python development environment..."
   UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
     --locked --all-packages --all-extras --group dev
+
+  log_task "Installing the pre-commit Git hook..."
+  UV_PROJECT_ENVIRONMENT="$venv_dir" uv run --directory "$project_root" --no-sync pre-commit install
 
   log_task "Setting up git merge driver for .secrets.baseline"
   git -C "$project_root" config merge.detect-secrets.name "Merge driver for detect-secrets baseline"
