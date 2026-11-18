@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+  name                    = "cta-model"
+  description             = "Business objects of CTA (catalogue and scheduler resources, workflow events) and their protobuf mapping"
+  version.workspace       = true
+  edition.workspace       = true
+  authors.workspace       = true
+  license.workspace       = true
+  repository.workspace    = true
+  homepage.workspace      = true
+  documentation.workspace = true
+  keywords.workspace      = true
+  categories.workspace    = true
+  publish.workspace       = true
+
+[lints]
+  workspace = true
+
+[features]
+  # The `cta-admin --jsonl` fixtures, for the tests of `cta-client`
+  test-support = []
+
+[dependencies]
+  bon              = { workspace = true }
+  chrono           = { workspace = true, features = ["serde"] }
+  cta-model-macros = { workspace = true }
+  cta-protobuf     = { workspace = true }
+  serde            = { workspace = true, features = ["derive"] }
+  serde_json       = { workspace = true }
+  strum            = { workspace = true, features = ["derive"] }
+  thiserror        = { workspace = true }
+
+[dev-dependencies]
+  # the `cta-admin --jsonl` fixtures are parsed into protobuf records
+  cta-protobuf = { workspace = true, features = ["json"] }
