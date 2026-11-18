@@ -15,13 +15,14 @@ Zensical builds the site with Python 3.12. Paths below are relative to the repos
 | `docs/content/stylesheets/extra.css`, `docs/overrides/` | CTA branding |
 | `docs/content/api/python/` | Python API reference module pages |
 
-Restart the preview after changing the build helper, Markdown extension, or generated-reference inputs. Markdown, stylesheet, and template edits reload automatically.
+Restart the preview after changing the build helper, Markdown extension, or generated-reference inputs. The preview links authored files and directories into the staging tree, so Zensical handles live reload directly. Restart it when adding a new entry directly under `docs/content/` or `docs/content/api/`; changes inside existing linked directories reload automatically.
 
 For environment setup, see [Preview locally](../documentation.md#preview-locally). Update the `docs` dependency group in `pyproject.toml` and regenerate `uv.lock` with `uv lock`.
 
 ### Generated references
 
-`docs/build.py` generates the command manual in `build/docs/generated/` and Rust API docs with `cargo doc`, then copies the Rust output to `docs/content/api/rust/` for Zensical.
+`docs/build.py` assembles Zensical’s input in `build/docs/content/`, combining authored files from `docs/content/` with Rust HTML from `target/doc/` under `api/rust/`.
+It generates the command manual in `build/docs/generated/` and Rust API docs with `cargo doc`. Generated files stay outside the authored source tree. Builds copy authored content so CI artifacts contain ordinary files rather than preview symlinks.
 See [Preview locally](../documentation.md#preview-locally) for skipping Rust generation.
 
 The Python API reference uses `mkdocstrings`. Its Python 3.9 inventory matches the supported CTA API, independently of the docs builder’s Python 3.12 runtime.
@@ -38,7 +39,7 @@ Mermaid colors are defined in `docs/content/stylesheets/extra.css`. The Markdown
 
 ## Publishing
 
-CI installs the locked `docs` group with Python 3.12. `build-docs` runs the publication integration tests and the strict Zensical build. The publication job reuses the generated manual and Rust reference artifacts, then rebuilds through the Zensical-compatible `mike` fork to set the release-series URLs.
+CI installs the locked `docs` group with Python 3.12. `build-docs` runs the publication integration tests and the strict Zensical build. The publication job reuses the assembled content and generated manual artifacts, then rebuilds through the Zensical-compatible `mike` fork to set the release-series URLs.
 
 The fork is declared in `pyproject.toml`; `uv.lock` records its exact revision. It preserves the existing `gl-pages` layout, `public/versions.json`, old version directories, and `latest` redirects. Older MkDocs versions remain available; only the published minor series is replaced. Existing numeric series must have `source_tag` and `source_commit` metadata; publication refuses to overwrite a series with unknown provenance.
 

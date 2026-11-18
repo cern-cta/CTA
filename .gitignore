@@ -106,6 +106,8 @@ Pipfile.lock
 package-lock.json
 node_modules/
 
-# Generated documentation assets and Zensical cache
+# Legacy Rust output from earlier documentation builds
 /docs/content/api/rust/
+
+# Zensical cache
 /.cache/

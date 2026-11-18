@@ -18,8 +18,11 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 from publish import publication_decision, release_key
+
+from docs import build
 
 if sys.version_info >= (3, 12):
     from typing import override
@@ -74,13 +77,14 @@ class PublicationTests(unittest.TestCase):
         self.command("git", "config", "user.name", "Docs test")
         self.command("git", "config", "user.email", "docs-test@example.invalid")
         self.command("git", "remote", "add", "origin", str(self.remote))
-        (self.repo / "docs/content").mkdir(parents=True)
+        (self.repo / "docs/content/api").mkdir(parents=True)
         (self.repo / "zensical.toml").write_text(
             '[project]\nsite_name = "Test"\nsite_url = "https://example.invalid/"\n'
-            'docs_dir = "docs/content"\nsite_dir = "build/docs/site"\nstrict = true\n'
+            'docs_dir = "build/docs/content"\nsite_dir = "build/docs/site"\nstrict = true\n'
             '[project.extra.version]\nprovider = "mike"\nalias = true\n'
         )
         (self.repo / "docs/content/index.md").write_text("# Test documentation\n")
+        (self.repo / "docs/content/api/index.md").write_text("# API reference\n")
         self.command("git", "add", "docs", "zensical.toml")
         self.command("git", "commit", "--message", "Source")
         self.command("git", "checkout", "--orphan", "gl-pages")
@@ -124,6 +128,8 @@ class PublicationTests(unittest.TestCase):
         return result
 
     def deploy(self, tag: str) -> tuple[Path, list[dict[str, Any]]]:
+        with patch.object(build, "ROOT", self.repo):
+            build.stage_content()
         self.command("git", "tag", "--force", tag)
         self.command(sys.executable, str(self.publisher), "--tag", tag)
         output = self.repo / "build/docs/public"
@@ -154,6 +160,19 @@ class PublicationTests(unittest.TestCase):
         self.deploy("v6.1.0.0-1")
         self.assertEqual(previous, self.command("git", "rev-parse", "gl-pages").stdout)
 
+    def test_publication_uses_staged_pages_and_rust(self):
+        with patch.object(build, "ROOT", self.repo):
+            build.stage_content()
+        rust = self.repo / "build/docs/content/api/rust/index.html"
+        rust.parent.mkdir(parents=True)
+        rust.write_text("<html><body>Rust reference</body></html>")
+        shutil.rmtree(self.repo / "docs/content")
+        self.command("git", "tag", "v6.1.0")
+        self.command(sys.executable, str(self.publisher), "--tag", "v6.1.0")
+        output = self.repo / "build/docs/public/6.1"
+        self.assertIn("Test documentation", (output / "index.html").read_text())
+        self.assertEqual((output / "api/rust/index.html").read_text(), rust.read_text())
+
     def test_refreshes_stale_pages_branch(self):
         self.deploy("v6.0.1-1")
         old = self.command("git", "rev-parse", "gl-pages").stdout.strip()
@@ -173,6 +192,8 @@ class PublicationTests(unittest.TestCase):
         self.command("git", "commit", "--message", "Missing snippet")
         self.command("git", "tag", "v6.1.0.0-1")
         previous = self.command("git", "ls-remote", "origin", "gl-pages").stdout
+        with patch.object(build, "ROOT", self.repo):
+            build.stage_content()
         result = self.command(sys.executable, str(self.publisher), "--tag", "v6.1.0.0-1", check=False)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("missing-file.md", result.stdout)
