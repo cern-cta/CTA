@@ -5,8 +5,8 @@ timeout = 2
 
 [database]
 
-password = "fake_password"
+  password = "fake_password"
 
 [logging]
 
-level = "DEBUG"
+  level = "DEBUG"

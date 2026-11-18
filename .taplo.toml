@@ -4,6 +4,6 @@
 # Formatting settings for toml files
 # Note that indentation is optional in toml files; it just makes things a bit more readable
 [formatting]
-indent_tables = true
-indent_entries = true
-align_entries = true
+  indent_tables  = true
+  indent_entries = true
+  align_entries  = true
