@@ -422,53 +422,72 @@
     [project.theme.icon.admonition]
       terminal = "octicons/command-palette-16"
 
+  # Expand abbreviations defined with *[CTA]: CERN Tape Archive.
   [project.markdown_extensions.abbr]
 
+  # Add callout boxes with syntax such as !!! note.
   [project.markdown_extensions.admonition]
 
+  # Attach HTML attributes to elements, such as {.class} or {#id}.
   [project.markdown_extensions.attr_list]
 
+  # Allow Markdown inside HTML elements marked with the markdown attribute.
   [project.markdown_extensions.md_in_html]
 
+  # Define terms with a following line starting with : for the definition.
   [project.markdown_extensions.def_list]
 
+  # Add footnote references [^1] and definitions [^1]: text.
   [project.markdown_extensions.footnotes]
 
+  # Replace text shortcuts such as (tm) with symbols such as ™.
   [project.markdown_extensions."pymdownx.smartsymbols"]
 
+  # Highlight inline code with a language prefix, such as `#!python print("hello")`.
   [project.markdown_extensions."pymdownx.inlinehilite"]
 
+  # Insert emoji and icons with shortcodes such as :material-information-outline:.
   [project.markdown_extensions."pymdownx.emoji"]
     emoji_index     = "zensical.extensions.emoji.twemoji"
     emoji_generator = "zensical.extensions.emoji.to_svg"
 
+  # Apply syntax highlighting to code examples.
   [project.markdown_extensions."pymdownx.highlight"]
 
+  # Include files with --8<-- syntax and load shared abbreviation definitions on every page.
   [project.markdown_extensions."pymdownx.snippets"]
     check_paths = true
     auto_append = ["docs/includes/abbreviations.md"]
     base_path   = ["."]
 
+  # Group content into tabs with headings such as === "Example".
   [project.markdown_extensions."pymdownx.tabbed"]
     alternate_style = true
 
+  # Add collapsible callouts with ??? note; use ???+ note to start expanded.
   [project.markdown_extensions."pymdownx.details"]
 
+  # Allow fenced code blocks inside lists and callouts, and render mermaid blocks as diagrams.
   [project.markdown_extensions."pymdownx.superfences"]
     custom_fences = [
       { "name" = "mermaid", "class" = "mermaid", "format" = "pymdownx.superfences.fence_code_format" },
     ]
 
+  # Build a table of contents from headings and add links to individual sections.
   [project.markdown_extensions.toc]
     permalink = "#"
     toc_depth = 3
 
+  # Prepare CTA manuals, fill in the EOS image version, and adjust diagram colors.
   [project.markdown_extensions."docs.zensical_content"]
 
+  # Let readers search the documentation from the site search box.
   [project.plugins.search]
 
+  # Link references such as [ClassName][package.ClassName] to their documentation.
   [project.plugins.autorefs]
 
+  # Generate Python API reference pages from source code and docstrings using ::: package.module directives.
   [project.plugins.mkdocstrings.handlers.python]
     paths = [
       "lib/python/cta-sdk/src",
