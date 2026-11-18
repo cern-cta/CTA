@@ -87,7 +87,7 @@
   ]
 
 [tool.pytest.ini_options]
-  addopts = "-ra --ignore=ci/system_tests --ignore=ci/docs"
+  addopts = "-ra --ignore=ci/system_tests --ignore=docs/tests"
   testpaths = [
     "ci",
     "lib/python",
