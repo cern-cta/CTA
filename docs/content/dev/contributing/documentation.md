@@ -19,11 +19,10 @@ The first build needs network access for Rust dependencies and the Python docume
 Install `uv`, then from the repository root:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=docs/.venv uv sync --locked --only-group docs --python 3.12
-docs/.venv/bin/python docs/build.py serve
+docs/serve.sh
 ```
 
-Open <http://127.0.0.1:8000/>. The site is written to `build/docs/site/`. Pass `--skip-rust` to reuse an existing `target/doc/` when iterating on prose. For later sessions, run `docs/.venv/bin/python docs/build.py serve` from the repository root. Repeat the sync command after pulling dependency updates; it installs only the docs group into its own environment.
+Open <http://127.0.0.1:8000/>. The site is written to `build/docs/site/`. Pass `--skip-rust` to reuse an existing `target/doc/` when iterating on prose. The script synchronizes the locked docs dependencies into `docs/.venv` with Python 3.12 on each invocation and forwards arguments to the build helper. It can be invoked from any working directory.
 
 ## Organize the content
 
