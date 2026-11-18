@@ -36,7 +36,8 @@ While reported Down and waiting for desired Up, it leaves the hardware untouched
 An operator Down request lets active work and cleanup finish before the drive is released.
 
 SIGTERM and SIGINT request shutdown and stop an active tape session from fetching further job batches.
-Already-fetched jobs, including jobs returned by an in-progress fetch, drain through the normal transfer, reporting, and tape cleanup paths before exit.
+Already-fetched archive jobs, including jobs returned by an in-progress fetch, drain through the normal transfer, reporting, and tape cleanup paths before exit.
+Retrieve tasks already injected into the session drain the same way; fetched retrieve jobs not yet injected, including jobs returned by an in-progress fetch, are requeued.
 Idle polling waits wake on a stop request.
 Blocking operations are not interrupted, so this does not impose a shutdown deadline.
 Crashes, blocked operations and hardware failures can prevent cleanup or catalogue state publication.
