@@ -75,12 +75,11 @@ public:
   /// Throw cta::exception::NotImplementedException; combined status is not implemented for hardware drives.
   driveStatus getDriveStatus() override { throw cta::exception::NotImplementedException(); }
 
-  /// Issue SCSI TEST UNIT READY, propagating system-call and SCSI sense errors.
-  virtual void testUnitReady() const;
+  bool prepareForMediaAccess() override;
 
   /// @brief Wait for SCSI readiness, then reopen the tape device and check its refreshed online status.
   /// @param timeoutSecond Timeout in seconds for the SCSI readiness retry loop.
-  /// @throws cta::exception::TimeOut If readiness times out or the refreshed driver status is offline.
+  /// @throws cta::exception::TimeOut If the readiness polling budget expires.
   void waitUntilReady(const uint32_t timeoutSecond) override;
 
   bool hasTapeInPlace() override {
@@ -166,6 +165,8 @@ public:
 
   void unloadTape(void) override;
 
+  void ensureTapeUnloaded() override;
+
   void flush(void) override;
 
   void writeSyncFileMarks(size_t count) override;
@@ -227,7 +228,13 @@ protected:
   /// Select whether the Linux tape driver uses fast end-of-data positioning.
   virtual void setSTFastMTEOM(bool fastMTEOM);
 
-  /// Retry SCSI readiness for timeoutSecond seconds, tolerating NotReady and UnitAttention sense errors.
+  /// Reopen the descriptor to refresh Linux tape-driver state, retaining close/open errors.
+  void reopenDevice();
+
+  /// Reopen a ready device and verify that the Linux tape driver agrees.
+  void refreshReadyDevice();
+
+  /// Retry transitional readiness responses within the loading budget.
   void waitTestUnitReady(const uint32_t timeoutSecond) const;
 
   void setLogicalBlockProtection(const unsigned char method,

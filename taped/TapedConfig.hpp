@@ -179,7 +179,7 @@ struct MountsConfig final {
   /// Maximum seconds in Mounting before liveness becomes unhealthy.
   uint32_t mount_timeout_secs = 900;
   /// Maximum seconds in Loading before liveness becomes unhealthy.
-  /// Also bounds the physical drive readiness wait, whose failure starts cleanup.
+  /// Also bounds loading readiness polling; cleanup does not repeat the loading wait.
   uint32_t tape_load_timeout_secs = 900;
   /// Maximum seconds in Unloading before liveness becomes unhealthy, including rewind, label reading and unload.
   uint32_t tape_unload_timeout_secs = 900;

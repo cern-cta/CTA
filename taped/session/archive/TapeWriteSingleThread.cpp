@@ -308,14 +308,7 @@ void TapeWriteSingleThread::run() {
       params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());
       m_logContext.log(log::INFO, "Tape session started for write");
       m_tracker.reportState(session::TapeSessionState::Mounting);
-      mountedTape.emplace(m_mediaChanger,
-                          m_volInfo,
-                          m_drive,
-                          m_catalogue,
-                          m_tapeLoadTimeout,
-                          cleanupResult,
-                          m_logContext,
-                          m_tracker);
+      mountedTape.emplace(m_mediaChanger, m_volInfo, m_drive, m_catalogue, cleanupResult, m_logContext, m_tracker);
       m_tracker.reportState(session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
       const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;

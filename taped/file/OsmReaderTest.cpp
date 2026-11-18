@@ -153,7 +153,7 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::common::dataStructures::DriveInfo driveInfo(m_devName, "0.0.0.0", "TestLogicalLibrary", m_nstDev, "dummy");
 
   cta::tape::daemon::TapeSessionTracker tracker;
-  cta::tape::daemon::DriveCleaner driveCleaner(mc, strlogger, driveInfo, m_vid, false, 0, *m_catalogue, tracker);
+  cta::tape::daemon::DriveCleaner driveCleaner(mc, strlogger, driveInfo, m_vid, *m_catalogue, tracker);
 
   // This standalone test does not publish drive-status updates.
   const auto cleanupResult = driveCleaner.cleanDrive(m_sWrapper);

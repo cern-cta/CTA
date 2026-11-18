@@ -23,11 +23,10 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
                          const VolumeInfo& volume,
                          drive::DriveInterface& drive,
                          catalogue::Catalogue& catalogue,
-                         uint32_t tapeLoadTimeout,
                          std::optional<DriveCleaner::CleanupResult>& cleanupResult,
                          log::LogContext& lc,
                          TapeSessionTracker& tracker)
-    : m_cleaner(mediaChanger, lc.logger(), drive.info, volume.vid, true, tapeLoadTimeout, catalogue, tracker),
+    : m_cleaner(mediaChanger, lc.logger(), drive.info, volume.vid, catalogue, tracker),
       m_drive(drive),
       m_cleanupResult(cleanupResult),
       m_lc(lc) {

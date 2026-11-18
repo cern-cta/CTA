@@ -46,6 +46,8 @@ public:
     DisableLogicalBlockProtection,
     UnloadTape,
     HasTapeInPlace,
+    PrepareForMediaAccess,
+    UnloadDriveState,
     TapeAlertCodes,
     TapeAlerts
   };
@@ -208,6 +210,10 @@ public:
 
   /// Return immediately unless mount failure was configured; the timeout is ignored.
   void waitUntilReady(const uint32_t timeoutSecond) final;
+
+  bool prepareForMediaAccess() final;
+
+  void ensureTapeUnloaded() final;
 
   /// Always return false; write protection is not simulated.
   bool isWriteProtected() final;

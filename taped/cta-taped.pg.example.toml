@@ -133,12 +133,16 @@ enabled_experimental_features = ["telemetry"]
   mount_timeout_secs = 900
 
   # Maximum seconds spent loading before the health endpoint reports the session as unhealthy.
-  # Also limits how long to wait for the drive to become ready; expiry starts session cleanup.
+  # Also limits loading readiness polling; expiry starts session cleanup, which does not repeat this wait.
+  # Initialize new LTO-9 media before scheduling ordinary work, or allow for first-use media optimization.
+  # IBM documents that this can take up to two hours (LTO SCSI reference, Appendix E.3):
+  # https://www.ibm.com/support/pages/system/files/inline-files/LTO%20SCSI%20Reference%20GA32-0928-09.pdf
   # Type: integer; default: 900.
   tape_load_timeout_secs = 900
 
   # Maximum time, in seconds, in Unloading before liveness becomes unhealthy. Must be positive.
-  # Covers drive acquisition, readiness waiting, configuration reset, rewind, label reading and unload.
+  # Covers drive acquisition, readiness probing, configuration reset, rewind, label reading and unload.
+  # This health limit does not cancel blocking kernel operations.
   # Type: integer; default: 900.
   tape_unload_timeout_secs = 900
 

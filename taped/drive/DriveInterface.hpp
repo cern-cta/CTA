@@ -23,6 +23,9 @@
 /// Tape-drive abstractions, status types and device factory.
 namespace cta::tape::drive {
 
+/// Drive access or driver state could not be established safely; physical ejection may still be attempted.
+CTA_GENERATE_EXCEPTION_CLASS(DriveStateError);
+
 /// Host and tape byte counters returned by DriveInterface::getCompression().
 class compressionStats {
 public:
@@ -265,6 +268,11 @@ public:
   /// Unload the cartridge from the drive mechanism so the media changer can remove it.
   virtual void unloadTape(void) = 0;
 
+  /// @brief Unload for cleanup, accepting an already absent or unloaded cartridge.
+  /// Preserve the normal driver path and recover non-ready cartridges where supported.
+  /// @throws DriveStateError If driver or transport state prevents safe reuse, even after robotic removal.
+  virtual void ensureTapeUnloaded() = 0;
+
   /// Wait until buffered writes have been committed to tape.
   virtual void flush(void) = 0;
 
@@ -298,6 +306,10 @@ public:
   /// @brief Wait for media readiness, propagating failures and timeout errors.
   /// @param timeoutSecond Readiness timeout in seconds.
   virtual void waitUntilReady(const uint32_t timeoutSecond) = 0;
+
+  /// @brief Check fresh media readiness without waiting for loading, preparing the driver only when ready.
+  /// Return false for recognized non-ready media states; other failures propagate.
+  virtual bool prepareForMediaAccess() = 0;
 
   /// Check whether the loaded cartridge prohibits writes.
   virtual bool isWriteProtected() = 0;

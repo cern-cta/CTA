@@ -20,12 +20,10 @@ public:
   ///
   /// All borrowed objects, including cleanup result and tracker, must outlive the guard.
   /// Reset cleanup result before mounting; failed mount attempts trigger cleanup before rethrowing.
-  /// @param tapeLoadTimeout Maximum media-readiness wait during cleanup, in seconds.
   MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
               const VolumeInfo& volume,
               drive::DriveInterface& drive,
               catalogue::Catalogue& catalogue,
-              uint32_t tapeLoadTimeout,
               std::optional<DriveCleaner::CleanupResult>& cleanupResult,
               log::LogContext& lc,
               TapeSessionTracker& tracker);

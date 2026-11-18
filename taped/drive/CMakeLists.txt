@@ -37,6 +37,7 @@ target_link_libraries(cta-test-tape-drive-read-write
 
 add_library(ctatapeddriveunittests SHARED
   DriveTest.cpp
+  DriveMediaTest.cpp
   DriveCleanerTest.cpp
   EmptyDriveProbeTest.cpp
   MountedTapeTest.cpp

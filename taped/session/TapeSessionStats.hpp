@@ -123,7 +123,7 @@ struct TapeCleanupStats {
   /// Time spent resetting logical block protection, in seconds.
   double lbpResetTime = 0;
 
-  /// Time spent waiting for the drive to become ready during cleanup, in seconds.
+  /// Legacy summary field, retained as zero: cleanup no longer waits for media loading.
   double readinessWaitTime = 0;
 
   /// Time spent rewinding during cleanup, in seconds.

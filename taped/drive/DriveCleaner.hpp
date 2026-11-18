@@ -31,15 +31,10 @@ public:
   /// @brief Create a cleaner; media changer, logger, catalogue and tracker must outlive it.
   ///
   /// Drive identity and VID are copied; an empty VID means the mounted tape is unknown.
-  /// @param waitMediaInDrive Wait for readiness before checking presence, even if cached status says empty.
-  /// Use true when a mount may have occurred.
-  /// @param waitMediaInDriveTimeout Readiness timeout in seconds.
   DriveCleaner(cta::mediachanger::MediaChangerFacade& mc,
                cta::log::Logger& log,
                const cta::common::dataStructures::DriveInfo& driveInfo,
                const std::string& vid,
-               const bool waitMediaInDrive,
-               const uint32_t waitMediaInDriveTimeout,
                cta::catalogue::Catalogue& catalogue,
                TapeSessionTracker& tracker);
 
@@ -48,6 +43,7 @@ public:
   /// An already-empty drive has no eject failure; configuration-reset failures still prevent reuse.
   struct CleanupResult {
     bool driveOpenFailed = false;
+    bool driveStateFailed = false;  ///< Fresh observation or driver recovery could not establish safe reuse.
     bool configurationResetFailed = false;
     bool ejectFailed = false;
     bool unexpectedFailure = false;  ///< Cleanup threw before returning a result.
@@ -55,7 +51,7 @@ public:
 
     /// Return true only if no cleanup failure flag is set.
     bool driveReusable() const {
-      return !driveOpenFailed && !configurationResetFailed && !ejectFailed && !unexpectedFailure;
+      return !driveOpenFailed && !driveStateFailed && !configurationResetFailed && !ejectFailed && !unexpectedFailure;
     }
   };
 
@@ -76,8 +72,6 @@ private:
   cta::log::LogContext m_lc;
   const cta::common::dataStructures::DriveInfo m_driveInfo;
   const std::string m_vid;
-  const bool m_waitMediaInDrive;
-  const uint32_t m_tapeLoadTimeout;
   cta::catalogue::Catalogue& m_catalogue;
 
   /// Attempt to disable a known tape when the result reports failed ejection.
@@ -85,7 +79,7 @@ private:
 
   /// @brief Reset configuration and eject the tape, retaining independent failures.
   ///
-  /// Readiness waits and label reads are best effort; attempt robotic dismount despite reset or unload errors.
+  /// Label reads are best effort; attempt robotic dismount despite reset or unload errors.
   CleanupResult cleanDriveImpl(drive::DriveInterface& drive);
 
   /// Read, count and log tape alerts, clearing them on hardware; log and suppress query failures.
@@ -98,9 +92,6 @@ private:
 
   /// Discover and open the configured drive; return ownership or propagate an error.
   std::unique_ptr<drive::DriveInterface> createDrive(System::virtualWrapper& sysWrapper);
-
-  /// Wait for readiness within the configured timeout, logging and ignoring failures.
-  void waitForMediaToBeReady(drive::DriveInterface& drive);
 
   /// Time and log the rewind operation; drive failures propagate.
   void rewindDrive(drive::DriveInterface& drive);
