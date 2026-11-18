@@ -22,8 +22,8 @@ spec:
       type: boolean
       default: false
 ---
-# All of the below tests use only the docker image generated in the build:image stage.
-# They should not rely on any other generated artifacts.
+# These tests deploy images from the registry; image-build artifacts are not needed.
+# Version metadata, the merge-train flag and regression configuration still come from preparatory jobs.
 # These are also the only tests executed on our personal runners instead of the GitLab runners.
 
 .cta-system-test-image-targets: &cta-system-test-image-targets
@@ -80,6 +80,7 @@ spec:
       optional: true
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
+      artifacts: false
       optional: true
       parallel:
         matrix:
@@ -101,6 +102,11 @@ spec:
   before_script:
     - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
+    # Enable local telemetry if desired
+    - |
+      if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
+        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --local-telemetry"
+      fi
     - *setup-k8s-test-variables
     - UV_PROJECT_ENVIRONMENT=.venv uv sync --locked --only-group system-tests
     - source .venv/bin/activate
@@ -185,10 +191,22 @@ test-client-gfal2:
   extends:
     - .kubernetes-test
   stage: system-test
+  # Mostly guards EOS/GFAL behaviour, so MR pipelines run it only when the EOS deployment or this suite changes.
+  rules:
+    - !reference [.sanitizer-manual-rules, rules]
+    - if: '$CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: on_success
+    - changes:
+        - project.json
+        - ci/orchestration/helm/eos/**/*
+        - ci/orchestration/presets/eos/**/*
+        - ci/orchestration/presets/stress-eos-values.yaml
+        - ci/system_tests/tests/client_gfal_test.py
+      when: on_success
+    - when: manual
+      allow_failure: true
   variables:
     PYTESTS: "tests/client_gfal_test.py"
-    # While the telemetry is not actually consumed, we need to ensure enabling it doesn't break anything
-    EXTRA_SPAWN_ARGS: "--local-telemetry"
 
 test-repack:
   extends:
@@ -202,7 +220,7 @@ test-cta-tools:
     - .kubernetes-test
   stage: system-test
   rules:
-    # Currently we only test cta-admin here, so this is not really doing anything with the disk side
+    # Keep tools outside dependency-regression pipelines.
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
     - !reference [.kubernetes-test, rules]
@@ -256,7 +274,7 @@ test-catalogue-schema-update:
     - FROM_CATALOGUE_VERSION=$(jq '.supportedCatalogueVersions | sort[]' project.json | head -1)
     # supportedCatalogueVersions are major versions. To spawn we need an exact version
     # As minor versions are by definition backward compatible, we must always be able to upgrade from a .0 version
-    - export EXTRA_SPAWN_ARGS="--catalogue-version ${FROM_CATALOGUE_VERSION}.0"
+    - export EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${FROM_CATALOGUE_VERSION}.0"
 
 test-lifecycle:
   extends:
@@ -311,6 +329,7 @@ stress-test:
       optional: true
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
+      artifacts: false
       optional: true
       parallel:
         matrix:

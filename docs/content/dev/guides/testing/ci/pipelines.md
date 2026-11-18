@@ -35,6 +35,8 @@ Use the input descriptions in the pipeline form for supported formats and defaul
 
 [Scheduled pipelines](https://gitlab.cern.ch/cta/CTA/-/pipeline_schedules) provide additional periodic coverage; investigate their failures even when the MR pipeline passed. Schedule administration and pinned CI-image updates are covered in [CI Maintenance](../../../contributing/maintainers/ci-maintenance.md).
 
+Scheduled system tests enable local telemetry; stress tests use their separate configuration.
+
 ## Read pipeline results
 
 Use the live graph on the GitLab pipeline page to inspect the jobs and dependencies for that run. Job availability depends on the pipeline source, inputs, and changed files. Stages group jobs; explicit `needs` dependencies also control when jobs can start.
@@ -61,7 +63,7 @@ Follow downstream pipeline links when additional configurations are tested there
 | `danger-review` | Read the MR feedback and address contribution-metadata and documentation findings. See [Contributing through CERN GitLab](../../../contributing/gitlab.md). |
 | `test-catalogue-schema-update` | Review migration results when changing catalogue schemas or migrations. See [Testing Migrations](../../../internals/components/catalogue/testing.md). |
 | `stress-test` | Assess sustained workload behaviour and performance using [Stress Tests](../stress-tests.md). |
-| `build-cta-no-sccache` / `reset-sccache` | If you suspect a compilation-cache problem, compare the no-sccache build where available. The manual `reset-sccache` job clears the MR branch's cache; retry the affected build afterwards. |
+| `reset-sccache` | If you suspect a compilation-cache problem, this manual job clears the MR branch's cache; retry the affected build afterwards. |
 
 For publication jobs and release validation, follow [Release Procedure](../../../contributing/maintainers/releases.md). When modifying jobs, keep their rationale beside the YAML and follow [GitLab CI Conventions](../../conventions/gitlab.md).
 

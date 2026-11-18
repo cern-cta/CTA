@@ -162,6 +162,15 @@ reclaim_released_pvs() {
   done
 }
 
+delete_cluster_resources() {
+  local namespace="$1" force_delete="$2"
+  local resource
+  for resource in otel-opentelemetry-collector prometheus-server prometheus-kube-state-metrics; do
+    delete_cluster_resource_if_owned "$namespace" clusterrole "$resource" "$force_delete"
+    delete_cluster_resource_if_owned "$namespace" clusterrolebinding "$resource" "$force_delete"
+  done
+}
+
 delete_cluster_resource_if_owned() {
   local namespace="$1" resource_type="$2" resource_name="$3" force_delete="$4" release_namespace
   if ! kubectl get "$resource_type" "$resource_name" >/dev/null 2>&1; then
@@ -243,24 +252,28 @@ delete_instance() {
   rm -f /tmp/${namespace}-rmcd-*-values.yaml
   rm -f /tmp/${namespace}-taped-*-values.yaml
 
-  # Delete the actual namespace
+  # Empty the namespace before deleting it. The namespace controller estimates the wait for pods that are still
+  # terminating from their spec terminationGracePeriodSeconds (60s for maintd and rmcd), not from the shortened grace
+  # period used below, and resyncs only after half of that; objects with finalizers add 15s per resync.
   log_task "Deleting CTA instance ${namespace}..."
-  kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n "${namespace}" --now --wait=false >/dev/null
+  # Remove the controllers first, keeping their pods, so that pods deleted below are not recreated with the chart's
+  # grace period. Deployments must go before their ReplicaSets, or the ReplicaSets would be recreated.
+  kubectl delete deployments,statefulsets,jobs,replicasets --all -n "${namespace}" --cascade=orphan >/dev/null
+  # Do not force the deletion: the next job needs the tape devices released by stopped containers.
+  kubectl delete pods --all -n "${namespace}" --now --timeout=120s >/dev/null \
+    || log_warn "Pods in namespace ${namespace} did not terminate in time; continuing with namespace deletion."
+  kubectl delete pvc --all -n "${namespace}" --timeout=60s >/dev/null \
+    || log_warn "Persistent volume claims in namespace ${namespace} were not removed in time; continuing with namespace deletion."
   kubectl delete namespace "${namespace}" --wait=true >/dev/null
 
   # Reclaim any PVs
   if [[ "$wipe_pvs" = true ]]; then
-    reclaim_released_pvs $namespace
+    reclaim_released_pvs "$namespace"
   else
     log_warn "Skipping reclamation of released persistent volumes."
   fi
   if [[ $delete_cluster_resources == true ]]; then
-    delete_cluster_resource_if_owned "$namespace" clusterrole otel-opentelemetry-collector "$force_delete_cluster_resources"
-    delete_cluster_resource_if_owned "$namespace" clusterrolebinding otel-opentelemetry-collector "$force_delete_cluster_resources"
-    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-server "$force_delete_cluster_resources"
-    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-server "$force_delete_cluster_resources"
-    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-kube-state-metrics "$force_delete_cluster_resources"
-    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-kube-state-metrics "$force_delete_cluster_resources"
+    delete_cluster_resources "$namespace" "$force_delete_cluster_resources"
   else
     log_warn "Skipping cleanup of shared cluster-level resources."
   fi

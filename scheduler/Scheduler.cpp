@@ -3060,7 +3060,7 @@ std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextRetrieveJobsToReportBa
   log::ScopedParamContainer(logContext)
     .add("tteltime", tteltime)
     .add("count", count)
-    .log(log::INFO, "In Scheduler::getNextArchiveJobsToReportBatch(): log kSelectToReportToUser.");
+    .log(log::INFO, "In Scheduler::getNextRetrieveJobsToReportBatch(): log kSelectToReportToUser.");
   return ret;
 }
 
@@ -3237,7 +3237,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   log::ScopedParamContainer(lc)
     .add("ttel_scheddb", ttel_scheddb)
     .add("scheddbReportedJobCount", scheddbReportedJobCount)
-    .log(log::INFO, "In Scheduler::getNextArchiveJobsToReportBatch(): log kDeleteSchedulerDB.");
+    .log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): log kDeleteSchedulerDB.");
 }
 
 //------------------------------------------------------------------------------
@@ -3349,7 +3349,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
   log::ScopedParamContainer(lc)
     .add("tteltime", tteltime)
     .add("repsize", repsize)
-    .log(log::INFO, "In Scheduler::getNextArchiveJobsToReportBatch(): log kReportToUser.");
+    .log(log::INFO, "In Scheduler::reportRetrieveJobsBatch(): log kReportToUser.");
 
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     ttel_scheddb,
@@ -3372,7 +3372,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
   log::ScopedParamContainer(lc)
     .add("ttel_scheddb", ttel_scheddb)
     .add("scheddbReportedJobCount", scheddbReportedJobCount)
-    .log(log::INFO, "In Scheduler::getNextArchiveJobsToReportBatch(): log kDeleteSchedulerDB.");
+    .log(log::INFO, "In Scheduler::reportRetrieveJobsBatch(): log kDeleteSchedulerDB.");
 }
 
 cta::catalogue::Catalogue& Scheduler::getCatalogue() {

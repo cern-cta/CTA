@@ -29,7 +29,9 @@ conf:
     threadStackSizeMb: 1
     disableRepackRequests: false
     disableUserRequests: false
-    tapeCacheMaxAgeSecs: 1
+    # Disable the tape cache so tests see tape-state changes at once. A short retrieve-queue cache avoids
+    # recomputing queue statistics under a shared lock for every request.
+    tapeCacheMaxAgeSecs: 0
     retrieveQueueCacheMaxAgeSecs: 1
     # Only takes effect with the postgres scheduler (pgsched); ignored by the objectstore
     # scheduler, which always queues one request at a time regardless of these values.

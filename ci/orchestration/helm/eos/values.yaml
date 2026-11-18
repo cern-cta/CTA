@@ -95,6 +95,8 @@ server:
 
     extraEnv:
       EOS_USE_MQ_ON_QDB: "1"
+      # Remove evicted disk replicas within a second instead.
+      EOS_FST_DELETE_QUERY_INTERVAL: "1"
       TZ: "CET"
 
   qdb:

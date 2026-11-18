@@ -88,12 +88,7 @@ struct BasicSchedulerConfig final {
     if (config_file.empty()) {
       result.addError("config_file", "cannot be empty");
     }
-    if (tape_cache_max_age_secs == 0) {
-      result.addError("tape_cache_max_age_secs", "must be greater than zero");
-    }
-    if (retrieve_queue_cache_max_age_secs == 0) {
-      result.addError("retrieve_queue_cache_max_age_secs", "must be greater than zero");
-    }
+    // A cache max age of 0 is valid: it disables the corresponding cache.
 #ifdef CTA_PGSCHED
     if (number_of_connections == 0) {
       result.addError("number_of_connections", "must be greater than zero");

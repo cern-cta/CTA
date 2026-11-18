@@ -21,7 +21,9 @@ drive:
       autoUp: false
 
 scheduler:
-  tapeCacheMaxAgeSecs: 1
+  # Disable the tape cache so tests see tape-state changes at once. A short retrieve-queue cache avoids
+  # recomputing queue statistics under a shared lock for every request.
+  tapeCacheMaxAgeSecs: 0
   retrieveQueueCacheMaxAgeSecs: 1
   numberOfConnections: 3
 

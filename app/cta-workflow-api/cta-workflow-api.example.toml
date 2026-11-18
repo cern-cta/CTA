@@ -137,12 +137,12 @@ enabled_experimental_features = ["telemetry"]
   config_file = "/etc/cta/cta-scheduler.conf"
 
   # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. Must be greater than zero.
+  # Lower values reflect scheduler changes sooner but increase backend queries; 0 disables the cache.
   # Type: integer; default: 600.
   tape_cache_max_age_secs = 600
 
   # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. Must be greater than zero.
+  # retrieves sooner but increase backend queries; 0 disables the cache.
   # Type: integer; default: 10.
   retrieve_queue_cache_max_age_secs = 10
 
