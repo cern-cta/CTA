@@ -29,6 +29,13 @@ Keep `requirements.txt` and the repository root’s `pyproject.toml` docs group 
 
 Mermaid colors are configured in `content/stylesheets/extra.css`. Prefer the default theme colors and check diagrams in both light and dark mode after styling changes.
 
+### Fonts
+
+Self-hosted fonts and their licenses live in `content/assets/fonts/`, sourced from:
+
+- [Atkinson Hyperlegible Next](https://github.com/googlefonts/atkinson-hyperlegible-next/tree/7925f50f649b3813257faf2f4c0b381011f434f1/fonts/webfonts)
+- [Atkinson Hyperlegible Mono](https://github.com/googlefonts/atkinson-hyperlegible-next-mono/tree/154d50362016cc3e873eb21d242cd0772384c8f9/fonts/webfonts)
+
 ## Publishing
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.
