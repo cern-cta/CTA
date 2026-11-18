@@ -3,8 +3,8 @@
 
 //! The recycle bin of deleted tape files
 
-use chrono::{DateTime, Utc};
 use cta_protobuf::cta::admin::RecycleTapeFileLsItem;
+use jiff::Timestamp;
 use serde::Serialize;
 
 use super::archive::checksums;
@@ -20,7 +20,7 @@ pub struct RecycleBinTapeFile {
     /// The file, as it was before its deletion
     pub file: File,
     /// When the file was deleted
-    pub deletion_time: DateTime<Utc>,
+    pub deletion_time: Timestamp,
     /// Why the file was deleted
     pub deletion_reason: String,
     /// The virtual organisation the file belonged to

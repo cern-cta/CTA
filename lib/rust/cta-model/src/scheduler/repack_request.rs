@@ -5,8 +5,8 @@
 
 use std::time::Duration;
 
-use chrono::{DateTime, Utc};
 use cta_protobuf::cta::admin::{RepackDestinationInfos, RepackLsItem};
+use jiff::Timestamp;
 use serde::Serialize;
 use strum::{Display, EnumString, IntoStaticStr};
 
@@ -131,7 +131,7 @@ pub struct RepackRequest {
     /// Time since the request was created
     pub duration: Duration,
     /// When the request reached its final state, if it did
-    pub finished_time: Option<DateTime<Utc>>,
+    pub finished_time: Option<Timestamp>,
     /// Files and bytes written to each destination tape
     pub destination_infos: Vec<RepackDestination>,
     /// Sequence number of the last file listed for repacking

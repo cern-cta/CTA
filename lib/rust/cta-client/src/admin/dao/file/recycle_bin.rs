@@ -6,9 +6,9 @@
 use std::path::PathBuf;
 
 use bon::bon;
-use chrono::{DateTime, Utc};
 use cta_client_macros::admin_dao;
 use cta_model::file::{File, FileId, RecycleBinTapeFile};
+use jiff::Timestamp;
 
 use crate::admin::{
     AdminError, AdminStream,
@@ -21,8 +21,8 @@ use crate::admin::{
 pub struct RecycleBinTapeFiles;
 
 /// The seconds since the Unix epoch of a time, as the commands take them.
-fn unix_time(time: DateTime<Utc>) -> u64 {
-    u64::try_from(time.timestamp()).unwrap_or_default()
+fn unix_time(time: Timestamp) -> u64 {
+    u64::try_from(time.as_second()).unwrap_or_default()
 }
 
 #[bon]
@@ -91,9 +91,9 @@ impl RecycleBinTapeFiles {
         #[builder(into)]
         virtual_organisation_name: Option<String>,
         /// The files deleted at or after this time
-        min_deletion_time: Option<DateTime<Utc>>,
+        min_deletion_time: Option<Timestamp>,
         /// The files deleted at or before this time
-        max_deletion_time: Option<DateTime<Utc>>,
+        max_deletion_time: Option<Timestamp>,
     ) -> Result<AdminStream<RecycleBinTapeFile>, AdminError> {
         let mut ids = disk_file_ids;
         if let Some(path) = disk_file_ids_file {

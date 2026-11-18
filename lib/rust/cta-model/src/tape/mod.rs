@@ -3,11 +3,11 @@
 
 //! Tape cartridges, the tape pools they belong to, and their media types
 
-use chrono::{DateTime, Utc};
 use cta_protobuf::cta::{
     admin::{TapeLsItem, tape_ls_item::LabelFormat as ProtoLabelFormat},
     common,
 };
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString, IntoStaticStr};
 
@@ -78,7 +78,7 @@ pub struct TapeLog {
     /// Drive name
     pub drive: String,
     /// When
-    pub time: DateTime<Utc>,
+    pub time: Timestamp,
 }
 
 impl TapeLog {
@@ -103,7 +103,7 @@ impl TapeLog {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct VerificationStatus {
     /// When the verification took place
-    pub date: DateTime<Utc>,
+    pub date: Timestamp,
     /// Outcome (e.g. `finished`)
     pub status: String,
     /// Number of files submitted for verification
@@ -154,7 +154,7 @@ impl VerificationStatus {
     #[must_use]
     pub fn to_json(&self) -> String {
         serde_json::json!({
-            "date": u64::try_from(self.date.timestamp()).unwrap_or_default(),
+            "date": u64::try_from(self.date.as_second()).unwrap_or_default(),
             "status": self.status,
             "files_submitted": self.file_submitted_count,
             "files_verified": self.file_verified_count,
@@ -198,7 +198,7 @@ pub struct TapeMetadata {
     /// Which drive read the tape last and when, if it was read
     pub last_read: Option<TapeLog>,
     /// When the state was last changed
-    pub state_update_time: DateTime<Utc>,
+    pub state_update_time: Timestamp,
     /// Who last changed the state (`user@host`)
     pub state_modified_by: String,
     /// Number of mounts for writing

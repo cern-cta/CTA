@@ -5,8 +5,8 @@
 
 use std::{fmt::Debug, hash::Hash};
 
-use chrono::{DateTime, Utc};
 use cta_protobuf::cta::common;
+use jiff::Timestamp;
 use serde::Serialize;
 
 use crate::{ConversionError, convert::timestamp};
@@ -41,7 +41,7 @@ pub struct EntryLog {
     /// Host name
     pub host: String,
     /// When
-    pub time: DateTime<Utc>,
+    pub time: Timestamp,
 }
 
 impl EntryLog {

@@ -164,8 +164,8 @@ mod recycle_bin {
             .list()
             .vid("L85033")
             .virtual_organisation_name("IT")
-            .min_deletion_time(chrono::DateTime::from_timestamp_secs(946_684_800).unwrap())
-            .max_deletion_time(chrono::DateTime::from_timestamp_secs(1_735_689_600).unwrap())
+            .min_deletion_time(jiff::Timestamp::from_second(946_684_800).unwrap())
+            .max_deletion_time(jiff::Timestamp::from_second(1_735_689_600).unwrap())
             .call()
             .await
             .unwrap()

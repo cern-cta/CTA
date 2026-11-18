@@ -7,7 +7,7 @@
 //! tests (`lib/python/cta-sdk/tests/unit/cta/sdk/daos/cta_admin/data/`): each sample is parsed into its protobuf
 //! record, converted, and compared with the model the Python DAO tests expect.
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use serde::de::DeserializeOwned;
 
 use super::*;
@@ -18,9 +18,9 @@ use crate::{
     test_support::parse,
 };
 
-/// The `DateTime` of a Unix timestamp
-pub(super) fn ts(secs: i64) -> DateTime<Utc> {
-    DateTime::from_timestamp_secs(secs).unwrap()
+/// The `Timestamp` of a Unix time in seconds
+pub(super) fn ts(secs: i64) -> Timestamp {
+    Timestamp::from_second(secs).unwrap()
 }
 
 pub(super) fn log(username: &str, host: &str, time: i64) -> EntryLog {
