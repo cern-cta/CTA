@@ -12,7 +12,7 @@ use clap::{
         styling::{AnsiColor, Color, RgbColor, Style},
     },
 };
-use cta_client::commands::recycle_tape_file;
+use cta_client::admin::commands::recycle_tape_file;
 use url::Url;
 
 const CTA_ORANGE: RgbColor = RgbColor(232, 115, 44); // #E8732C

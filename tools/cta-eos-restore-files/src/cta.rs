@@ -6,9 +6,10 @@
 
 use anyhow::bail;
 use cta_client::{
-    admin::AdminClient,
-    commands::{recycle_tape_file, tape_file},
-    errors::AdminError,
+    admin::{
+        AdminClient, AdminError,
+        commands::{recycle_tape_file, tape_file},
+    },
     types::File,
 };
 use tokio_stream::{Stream, StreamExt};

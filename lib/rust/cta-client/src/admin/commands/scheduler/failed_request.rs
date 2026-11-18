@@ -13,9 +13,8 @@ use cta_protobuf::cta::{
 };
 
 use crate::{
-    admin_cmd,
-    commands::{StreamingAdminCmd, TypedAdminCmd},
-    define_typed_admin_cmd,
+    admin::commands::{StreamingAdminCmd, TypedAdminCmd},
+    admin_cmd, define_typed_admin_cmd,
 };
 
 define_typed_admin_cmd! {
