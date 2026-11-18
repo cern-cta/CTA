@@ -407,8 +407,6 @@ include:
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
         when: never
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
-        when: never
       - when: always
     inputs:
       platform: $[[ inputs.platform ]]

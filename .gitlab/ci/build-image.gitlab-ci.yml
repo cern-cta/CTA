@@ -28,6 +28,7 @@ spec:
     entrypoint: [""]
   variables:
     CONTAINER_STORAGE: "/builds/container-storage"
+    PUSH_IMAGE: "true"
     DEST_REGISTRY_PASSWORD: ""
     DEST_REGISTRY_USERNAME: ""
     GIT_SUBMODULE_STRATEGY: "none"
@@ -53,15 +54,16 @@ spec:
       EOF
     - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
     - |
-      if [[ -z "$DEST_REGISTRY_USERNAME" || -z "$DEST_REGISTRY_PASSWORD" ]]; then
-        echo "Destination registry credentials are not configured"
-        exit 1
+      if [[ "$PUSH_IMAGE" == "true" ]]; then
+        if [[ -z "$DEST_REGISTRY_USERNAME" || -z "$DEST_REGISTRY_PASSWORD" ]]; then
+          echo "Destination registry credentials are not configured"
+          exit 1
+        fi
+        echo "$DEST_REGISTRY_PASSWORD" | buildah login \
+          -u "$DEST_REGISTRY_USERNAME" \
+          --password-stdin \
+          "$DOCKER_IMAGE_REGISTRY"
       fi
-    - |
-      echo "$DEST_REGISTRY_PASSWORD" | buildah login \
-        -u "$DEST_REGISTRY_USERNAME" \
-        --password-stdin \
-        "$DOCKER_IMAGE_REGISTRY"
     # Oracle packages are not allowed in public images. Refuse to publish an image containing any.
     - |
       check_oracle_packages_for_public_image() {
@@ -105,6 +107,9 @@ spec:
     - job: modify-project-json
       optional: true
   rules:
+    # Debian has pipeline images, but no CTA runtime image build.
+    - if: '"$[[ inputs.platform ]]" == "debian13"'
+      when: never
     - if: '$CUSTOM_CTA_IMAGE_TAG != ""'
       when: never
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
@@ -201,13 +206,39 @@ build-pipeline-images:
     - job: check-merge-train-duplicate
       optional: true
     - job: generate-pipeline-images-tag
+      optional: true  # Only image-refresh pipelines generate a release tag.
       artifacts: true
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+      variables:
+        PUSH_IMAGE: "true"
+    - if: '$CI_PIPELINE_SOURCE != "merge_request_event" || $PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    # Shared build configuration affects every image.
+    - changes:
+        - "ci/docker/registries.conf"
+        - ".gitlab/ci/build-image.gitlab-ci.yml"
+    - if: '$IMAGE_SCOPE == "shared"'
+      changes:
+        - "ci/docker/pipeline/${IMAGE_KIND}.Dockerfile"
+    - if: '$IMAGE_SCOPE == "platform"'
+      changes:
+        - "ci/docker/cta/${PLATFORM}/${IMAGE_KIND}.Dockerfile"
+    # The Debian build image derives its packages from these copied inputs.
+    - if: '$PLATFORM == "debian13" && $IMAGE_KIND == "build"'
+      changes:
+        - "project.json"
+        - "ci/project-json/generate_build_requires.py"
   variables:
+    PUSH_IMAGE: "false"
     DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
     DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME
   script:
+    # MR builds use disposable tags; refresh builds consume the generated release tag.
+    - |
+      if [[ "$PUSH_IMAGE" != "true" ]]; then
+        NEW_PIPELINE_IMAGE_VERSION="mr-${CI_PIPELINE_ID}"
+      fi
     - |
       case "$IMAGE_SCOPE" in
         shared)
@@ -236,7 +267,7 @@ build-pipeline-images:
     - echo "Building ${IMAGE_REF} from ${DOCKERFILE}"
     - buildah bud --file "${DOCKERFILE}" --tag "${IMAGE_REF}" "$CI_PROJECT_DIR"
     - if [[ "$IMAGE_SCOPE" == "platform" ]]; then check_oracle_packages_for_public_image "$IMAGE_REF"; fi
-    - buildah push "$IMAGE_REF"
+    - if [[ "$PUSH_IMAGE" == "true" ]]; then buildah push "$IMAGE_REF"; fi
   parallel:
     matrix:
       - IMAGE_SCOPE: "shared"

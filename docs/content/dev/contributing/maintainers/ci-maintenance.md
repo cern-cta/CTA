@@ -27,6 +27,9 @@ Use this procedure when a CI job needs a new tool or a change to an existing ima
 4. Run normal validation on the updated feature branch and check that the affected jobs succeed using the new images. Add any job changes that depend on the new tool after adopting the image version.
 5. Submit the feature branch through the normal review and merge workflow. Include both the Dockerfile changes and the image-version update so the default branch adopts the tested images.
 
+Merge-request pipelines automatically build affected pipeline images when their Dockerfiles or build inputs change, across all supported platforms.
+These checks do not publish images or run downstream jobs with them; use the image refresh and version-update workflow above to validate their use in CI.
+
 Changing a Dockerfile alone does not update the pinned images used by ordinary pipelines. If you revise the Dockerfile again, repeat the image build and version update before validating it.
 
 ## Scheduled pipelines
