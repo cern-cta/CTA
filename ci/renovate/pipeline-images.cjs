@@ -13,24 +13,24 @@ if (!/^\d{4}-\d{2}-\d{2}-\d+$/.test(version ?? '')) {
 // have already pushed newer tags for part of the image matrix.
 module.exports = {
   ...require('../../renovate.json'),
-  requireConfig: 'ignored',
-  branchPrefix: `renovate-images/${process.env.CI_COMMIT_REF_SLUG}/`,
-  baseBranchPatterns: [process.env.CI_COMMIT_BRANCH],
-  enabledManagers: ['custom.regex'],
-  packageRules: [{
-    matchDatasources: ['docker'],
-    allowedVersions: `/^${version}$/`,
-  }],
+  requireConfig : 'ignored',
+  branchPrefix : `renovate-images/${process.env.CI_COMMIT_REF_SLUG}/`,
+  baseBranchPatterns : [ process.env.CI_COMMIT_BRANCH ],
+  enabledManagers : [ 'custom.regex' ],
+  packageRules : [ {
+                 matchDatasources : [ 'docker' ],
+                 allowedVersions : `/^${version}$/`,
+               } ],
   // This mode replaces the general package rules; retain the CERN registry exemption.
-  minimumReleaseAge: null,
-  pinDigests: false,
-  customManagers: [{
-    customType: 'regex',
-    managerFilePatterns: ['/^\\.gitlab-ci\\.yml$/'],
-    matchStrings: ['PIPELINE_IMAGE_VERSION: "(?<currentValue>\\d{4}-\\d{2}-\\d{2}-\\d+)"'],
-    depNameTemplate: 'cta-pipeline-images',
-    packageNameTemplate: 'gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-automation',
-    datasourceTemplate: 'docker',
-    versioningTemplate: 'regex:^(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})-(?<build>\\d+)$',
-  }],
+  minimumReleaseAge : null,
+  pinDigests : false,
+  customManagers : [ {
+                   customType : 'regex',
+                   managerFilePatterns : [ '/^\\.gitlab-ci\\.yml$/' ],
+                   matchStrings : [ 'PIPELINE_IMAGE_VERSION: "(?<currentValue>\\d{4}-\\d{2}-\\d{2}-\\d+)"' ],
+                   depNameTemplate : 'cta-pipeline-images',
+                   packageNameTemplate : 'gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-automation',
+                   datasourceTemplate : 'docker',
+                   versioningTemplate : 'regex:^(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})-(?<build>\\d+)$',
+                 } ],
 };
