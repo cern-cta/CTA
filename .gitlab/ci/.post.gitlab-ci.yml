@@ -11,7 +11,7 @@ cancel-on-failure:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: on_failure
     - when: never
-  image: $IMAGE_LINT # comes with curl installed
+  image: $IMAGE_AUTOMATION
   variables:
     GIT_STRATEGY: "none" # Don't need anything from the repo for this job
   script:
@@ -37,7 +37,7 @@ update-pipeline-image-version:
       allow_failure: true
       variables:
         PIPELINE_IMAGE_AUTO_MERGE: "false"
-  image: $IMAGE_RELEASE
+  image: $IMAGE_AUTOMATION
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
     PIPELINE_IMAGE_UPDATE_BRANCH: "ci/update-pipeline-images-${CI_PIPELINE_ID}"

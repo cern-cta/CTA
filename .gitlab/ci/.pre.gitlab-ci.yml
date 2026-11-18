@@ -15,7 +15,7 @@ check-merge-train-duplicate:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
   inherit:
     default: false
-  image: $IMAGE_DEFAULT
+  image: $IMAGE_AUTOMATION
   variables:
     GIT_SUBMODULE_STRATEGY: none
     MERGE_TRAIN_DOTENV: merge-train.env
@@ -35,7 +35,7 @@ prepare-cta-version:
     - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - when: on_success
-  image: $IMAGE_DEFAULT
+  image: $IMAGE_AUTOMATION
   variables:
     GIT_SUBMODULE_STRATEGY: none
   before_script:
@@ -110,7 +110,7 @@ generate-pipeline-images-tag:
   stage: .pre
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-  image: $IMAGE_DEFAULT
+  image: $IMAGE_AUTOMATION
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
   script:

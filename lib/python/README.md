@@ -9,7 +9,7 @@ Run from the repository root:
 
 ```sh
 git submodule update --init lib/protobuf/external/xrootd-ssi-protobuf-interface
-uv sync --locked --all-packages --all-extras --all-groups --python 3.12
+uv sync --locked --all-packages --all-extras --group dev
 ```
 
 ## Development
@@ -24,7 +24,7 @@ uv build --all-packages --out-dir build/python
 ```
 
 - System tests run separately; see [ci/system_tests](../../ci/system_tests/README.md).
-- Keep existing requirements files and dependency groups in sync, then run `uv lock`.
+- Update dependencies in the appropriate `pyproject.toml`, then run `uv lock`.
 - Package versions come from CTA Git tags through the shared [version helper](../../ci/utils/cta_version.py).
   Hatch builds the packages; explicit CI release tags supply release versions.
   Local builds always use `<major>.dev1`; CI development builds use `<major>.dev<pipeline>+g<sha>[.dirty]`.

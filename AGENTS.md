@@ -8,7 +8,8 @@ Ask when unresolved ambiguity materially affects scope or correctness.
 ## Finding the relevant code
 
 Use [Development](docs/content/dev/index.md) for workflows and architecture.
-Build defaults, language versions and platform configuration live in `project.json`; compiler options live in the root `CMakeLists.txt`.
+Build defaults, the C++ language version and platform configuration live in `project.json`; compiler options live in the root `CMakeLists.txt`.
+The default Python interpreter is selected by `.python-version`; Python dependencies and compatibility settings live in `pyproject.toml`.
 
 The intended layout places reusable libraries under `lib/<language>/`, command-line tools under `tools/`, and service applications under `app/`.
 This layout is still being adopted: substantial code remains in top-level directories such as `common/`, `catalogue/`, `scheduler/` and `taped/`.
