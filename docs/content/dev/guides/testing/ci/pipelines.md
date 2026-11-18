@@ -30,9 +30,8 @@ For a regression pipeline, the main inputs are:
 
 - `custom-cta-image-tag`: use an existing CTA image instead of building the selected Git revision. Leave empty to build that revision.
 - `custom-eos-image-tag`: select the EOS image to test.
-- `custom-xrootd-version`: select the XRootD package version for builds.
 
-Use the input descriptions in the pipeline form for supported formats and defaults. Select compatible scheduler and Oracle settings for the chosen images. A dependency build option does not change packages already installed in an existing CTA image. The selected Git revision still determines the pipeline configuration and test code.
+Use the input descriptions in the pipeline form for supported formats and defaults. Select compatible scheduler and Oracle settings for the chosen images. The selected Git revision still determines the pipeline configuration and test code.
 
 [Scheduled pipelines](https://gitlab.cern.ch/cta/CTA/-/pipeline_schedules) provide additional periodic coverage; investigate their failures even when the MR pipeline passed. Schedule administration and pinned CI-image updates are covered in [CI Maintenance](../../../contributing/maintainers/ci-maintenance.md).
 

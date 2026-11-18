@@ -7,8 +7,6 @@ spec:
       type: string
     custom-eos-image-tag:
       type: string
-    custom-xrootd-version:
-      type: string
     platform:
       type: string
     enable-internal-repos:
