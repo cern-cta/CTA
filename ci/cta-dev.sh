@@ -1424,7 +1424,7 @@ all_cta() {
   print_stage_summary
 }
 
-# Install the command, Bash completion, development environment, and optional merge driver.
+# Install the command, Bash completion, development environment, and merge driver.
 install_cta_dev() {
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
@@ -1453,14 +1453,9 @@ install_cta_dev() {
   UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
     --locked --all-packages --all-extras --group dev
 
-  # Setup git merge driver for .secrets.baseline
-  if command -v detect-secrets >/dev/null 2>&1; then
-    log_task "Setting up git merge driver for .secrets.baseline"
-    git config merge.detect-secrets.name "Merge driver for detect-secrets baseline"
-    git config merge.detect-secrets.driver "$project_root/scripts/git-merge-detect-secrets %O %A %B"
-  else
-    log_warn "detect-secrets not found in PATH. Skipping merge driver setup for .secrets.baseline"
-  fi
+  log_task "Setting up git merge driver for .secrets.baseline"
+  git -C "$project_root" config merge.detect-secrets.name "Merge driver for detect-secrets baseline"
+  git -C "$project_root" config merge.detect-secrets.driver "$project_root/scripts/git-merge-detect-secrets %O %A %B"
 
   log_success "Installed ${program_name}."
   if [[ ! -r /usr/share/bash-completion/bash_completion \
