@@ -1199,6 +1199,71 @@ TEST_P(TapeSessionTest, RetrieveEmptyMountCleansUp) {
     "");
 }
 
+// A stop before the initial fetch aborts startup without reporting the mount as empty.
+template<typename Mount>
+void checkStopBeforeStartupIsNotEmptyMount(cta::catalogue::Catalogue& catalogue, std::string_view abortMessage) {
+  alarm(5);
+  cta::log::StringLogger logger("dummy", "stopBeforeStartupTest", cta::log::DEBUG);
+  Mount mount(catalogue, TransferFailurePoint::None);
+  cta::tape::System::mockWrapper system;
+  system.delegateToFake();
+  system.disableGMockCallsCounting();
+  system.fake.setupForVirtualDriveSLC6();
+  system.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive();
+  cta::common::dataStructures::DriveInfo info("T10D6116", "host", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::mediachanger::RmcProxy proxy;
+  cta::mediachanger::MediaChangerFacade changer(proxy, logger);
+  TransfersConfig config;
+  config.buffer_count = 2;
+  config.buffer_size_bytes = 1024;
+  config.disk_io_threads = 1;
+  config.encryption.enabled = false;
+  config.encryption.external_key_script.clear();
+  config.no_block_move_timeout_secs = 600;
+  TapeSession session(logger, system, info, changer, mount, config, 1, catalogue);
+  std::stop_source stop;
+  stop.request_stop();
+
+  const auto result = session.execute(stop.get_token());
+
+  EXPECT_TRUE(result.successful);
+  const auto outcome = session.tracker().outcomeSnapshot();
+  EXPECT_FALSE(outcome.hasFailures);
+  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::EmptyMount)]);
+  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToRecall)]);
+  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToMigrate)]);
+  EXPECT_FALSE(session.tracker().mountAttempted());
+  EXPECT_EQ(1, countLogMessages(logger.getLog(), std::string(abortMessage)));
+  EXPECT_EQ(std::string::npos, logger.getLog().find("Info_emptyMount"));
+  alarm(0);
+}
+
+TEST_P(TapeSessionTest, ArchiveStopBeforeStartupIsNotEmptyMount) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkStopBeforeStartupIsNotEmptyMount<FailingTransferMount<cta::MockArchiveMount>>(
+        getCatalogue(),
+        "Aborting migration mount startup: stop requested");
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveStopBeforeStartupIsNotEmptyMount) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkStopBeforeStartupIsNotEmptyMount<FailingTransferRetrieveMount>(
+        getCatalogue(),
+        "Aborting recall mount startup: stop requested");
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
 // A later fetch failure must not hide behind successful transfers and cleanup.
 TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessful) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
