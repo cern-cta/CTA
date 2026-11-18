@@ -312,7 +312,9 @@ version = "0.1.0"
 dependencies = [
  "bon",
  "chrono",
+ "cta-client-macros",
  "cta-grpc-common",
+ "cta-model",
  "cta-protobuf",
  "serde",
  "serde_json",
@@ -322,6 +324,17 @@ dependencies = [
  "tokio-stream",
  "tonic",
  "url",
+]
+
+[[package]]
+name = "cta-client-macros"
+version = "0.1.0"
+dependencies = [
+ "cta-client",
+ "cta-protobuf",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]

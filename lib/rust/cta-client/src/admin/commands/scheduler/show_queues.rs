@@ -3,12 +3,9 @@
 
 //! Queue status command
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Shows the status of the active queues (`showqueues`).
-    #[proto(Showqueues.SubcmdNone)]
-    #[item(SqItem: ShowQueuesItem)]
-    #[derive(Default)]
-    pub struct ShowQueues {}
-}
+/// Shows the status of the active queues (`showqueues`).
+#[typed_admin_cmd(Showqueues, response = ShowQueuesItem)]
+#[derive(Default)]
+pub struct ShowQueues {}

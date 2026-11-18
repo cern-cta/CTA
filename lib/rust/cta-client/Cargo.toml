@@ -18,24 +18,33 @@
 [lints]
   workspace = true
 
+[features]
+  # The records and the workflow messages as proto3 JSON (`AdminClient::stream_json`, ...), as printed by `cta-admin --jsonl`
+  json = ["cta-protobuf/json", "dep:serde_json"]
+
 [dependencies]
-  bon             = { workspace = true }
-  cta-grpc-common = { workspace = true }
-  chrono          = { workspace = true, features = ["serde"] }
-  cta-protobuf    = { workspace = true, features = ["json"] }
-  tonic           = { workspace = true, features = ["tls-native-roots", "tls-ring"] }
-  tokio-stream    = { workspace = true }
-  thiserror       = { workspace = true }
-  serde           = { workspace = true, features = ["derive"] }
-  serde_json      = { workspace = true }
-  url             = { workspace = true }
-  strum           = { workspace = true, features = ["derive"] }
+  bon               = { workspace = true }
+  cta-client-macros = { workspace = true }
+  cta-grpc-common   = { workspace = true }
+  chrono            = { workspace = true, features = ["serde"] }
+  cta-model         = { workspace = true }
+  cta-protobuf      = { workspace = true }
+  tonic             = { workspace = true, features = ["tls-native-roots", "tls-ring"] }
+  tokio-stream      = { workspace = true }
+  thiserror         = { workspace = true }
+  serde             = { workspace = true, features = ["derive"] }
+  serde_json        = { workspace = true, optional = true }
+  strum             = { workspace = true, features = ["derive"] }
 
 [build-dependencies]
   serde_json = { workspace = true }
 
 [dev-dependencies]
-  # server traits for the mock frontends of the tests
-  cta-protobuf   = { workspace = true, features = ["server"] }
+  # the `cta-admin --jsonl` fixtures shared with the conversion tests
+  cta-model      = { workspace = true, features = ["test-support"] }
+  # server traits for the mock frontends of the tests, JSON to parse the `cta-admin --jsonl` fixtures
+  cta-protobuf   = { workspace = true, features = ["server", "json"] }
+  serde_json     = { workspace = true }
   tokio          = { workspace = true, features = ["macros", "rt", "net"] }
   tokio-stream   = { workspace = true, features = ["net"] }
+  url            = { workspace = true }

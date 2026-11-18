@@ -3,43 +3,37 @@
 
 //! Disk instance commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a disk instance (`diskinstance add`).
-    #[proto(Diskinstance.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the disk instance
-        name: str => DiskInstance,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds a disk instance (`diskinstance add`).
+#[typed_admin_cmd(Diskinstance::Add)]
+pub struct Add {
+    /// Name of the disk instance
+    #[proto(DiskInstance)]
+    pub name: String,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a disk instance (`diskinstance ch`).
-    #[proto(Diskinstance.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the disk instance
-        name: str => DiskInstance,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes a disk instance (`diskinstance ch`).
+#[typed_admin_cmd(Diskinstance::Ch)]
+pub struct Ch {
+    /// Name of the disk instance
+    #[proto(DiskInstance)]
+    pub name: String,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a disk instance (`diskinstance rm`).
-    #[proto(Diskinstance.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the disk instance
-        name: str => DiskInstance,
-    }
+/// Removes a disk instance (`diskinstance rm`).
+#[typed_admin_cmd(Diskinstance::Rm)]
+pub struct Rm {
+    /// Name of the disk instance
+    #[proto(DiskInstance)]
+    pub name: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the disk instances (`diskinstance ls`).
-    #[proto(Diskinstance.SubcmdLs)]
-    #[item(DilsItem: DiskInstanceLsItem)]
-    #[derive(Default)]
-    pub struct Ls {}
-}
+/// Lists the disk instances (`diskinstance ls`).
+#[typed_admin_cmd(Diskinstance::Ls, response = DiskInstanceLsItem)]
+#[derive(Default)]
+pub struct Ls {}

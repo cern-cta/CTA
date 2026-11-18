@@ -3,68 +3,65 @@
 
 //! Tape pool commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a tape pool (`tapepool add`).
-    #[proto(Tapepool.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the tape pool
-        name: str => TapePool,
-        /// Virtual organisation owning the tape pool
-        vo: str => Vo,
-        /// Number of partially filled tapes to keep for writing
-        partial_tapes: u64 => PartialTapesNumber,
-        /// Name of the encryption key used for the tapes of the pool
-        encryption_key_name: str? => EncryptionKeyName,
-        /// Comma-separated list of the tape pools supplying this one
-        supply: str? => Supply,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds a tape pool (`tapepool add`).
+#[typed_admin_cmd(Tapepool::Add)]
+pub struct Add {
+    /// Name of the tape pool
+    #[proto(TapePool)]
+    pub name: String,
+    /// Virtual organisation owning the tape pool
+    pub vo: String,
+    /// Number of partially filled tapes to keep for writing
+    #[proto(PartialTapesNumber)]
+    pub partial_tapes: u64,
+    /// Name of the encryption key used for the tapes of the pool
+    pub encryption_key_name: Option<String>,
+    /// Comma-separated list of the tape pools supplying this one
+    pub supply: Option<String>,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a tape pool (`tapepool ch`).
-    #[proto(Tapepool.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the tape pool
-        name: str => TapePool,
-        /// New virtual organisation
-        vo: str? => Vo,
-        /// New number of partially filled tapes
-        partial_tapes: u64? => PartialTapesNumber,
-        /// New encryption key name
-        encryption_key_name: str? => EncryptionKeyName,
-        /// New list of supplying tape pools
-        supply: str? => Supply,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes a tape pool (`tapepool ch`).
+#[typed_admin_cmd(Tapepool::Ch)]
+pub struct Ch {
+    /// Name of the tape pool
+    #[proto(TapePool)]
+    pub name: String,
+    /// New virtual organisation
+    pub vo: Option<String>,
+    /// New number of partially filled tapes
+    #[proto(PartialTapesNumber)]
+    pub partial_tapes: Option<u64>,
+    /// New encryption key name
+    pub encryption_key_name: Option<String>,
+    /// New list of supplying tape pools
+    pub supply: Option<String>,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a tape pool (`tapepool rm`).
-    #[proto(Tapepool.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the tape pool
-        name: str => TapePool,
-    }
+/// Removes a tape pool (`tapepool rm`).
+#[typed_admin_cmd(Tapepool::Rm)]
+pub struct Rm {
+    /// Name of the tape pool
+    #[proto(TapePool)]
+    pub name: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists tape pools (`tapepool ls`); without filters, lists all of them.
-    #[proto(Tapepool.SubcmdLs)]
-    #[item(TplsItem: TapePoolLsItem)]
-    #[derive(Default)]
-    pub struct Ls {
-        /// Only the tape pool with this name
-        name: str? => TapePool,
-        /// Only the tape pools of this virtual organisation
-        vo: str? => Vo,
-        /// Only the encrypted (`true`) or unencrypted (`false`) tape pools
-        encrypted: bool? => Encrypted,
-        /// Only the tape pools using this encryption key
-        encryption_key_name: str? => EncryptionKeyName,
-    }
+/// Lists tape pools (`tapepool ls`); without filters, lists all of them.
+#[typed_admin_cmd(Tapepool::Ls, response = TapePoolLsItem)]
+#[derive(Default)]
+pub struct Ls {
+    /// Only the tape pool with this name
+    #[proto(TapePool)]
+    pub name: Option<String>,
+    /// Only the tape pools of this virtual organisation
+    pub vo: Option<String>,
+    /// Only the encrypted (`true`) or unencrypted (`false`) tape pools
+    pub encrypted: Option<bool>,
+    /// Only the tape pools using this encryption key
+    pub encryption_key_name: Option<String>,
 }

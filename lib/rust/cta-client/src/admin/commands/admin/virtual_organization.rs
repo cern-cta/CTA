@@ -3,63 +3,54 @@
 
 //! Virtual organisation commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a virtual organisation (`virtualorganization add`).
-    #[proto(Virtualorganization.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the virtual organisation
-        vo: str => Vo,
-        /// Maximum number of drives the virtual organisation may use for reading
-        read_max_drives: u64 => ReadMaxDrives,
-        /// Maximum number of drives the virtual organisation may use for writing
-        write_max_drives: u64 => WriteMaxDrives,
-        /// Comment
-        comment: str => Comment,
-        /// Disk instance of the virtual organisation
-        disk_instance: str => DiskInstance,
-        /// Maximum size of the files of the virtual organisation, in bytes
-        max_file_size: u64? => MaxFileSize,
-        /// Whether the virtual organisation is used for repacking
-        is_repack_vo: bool? => IsRepackVo,
-    }
+/// Adds a virtual organisation (`virtualorganization add`).
+#[typed_admin_cmd(Virtualorganization::Add)]
+pub struct Add {
+    /// Name of the virtual organisation
+    pub vo: String,
+    /// Maximum number of drives the virtual organisation may use for reading
+    pub read_max_drives: u64,
+    /// Maximum number of drives the virtual organisation may use for writing
+    pub write_max_drives: u64,
+    /// Comment
+    pub comment: String,
+    /// Disk instance of the virtual organisation
+    pub disk_instance: String,
+    /// Maximum size of the files of the virtual organisation, in bytes
+    pub max_file_size: Option<u64>,
+    /// Whether the virtual organisation is used for repacking
+    pub is_repack_vo: Option<bool>,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a virtual organisation (`virtualorganization ch`).
-    #[proto(Virtualorganization.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the virtual organisation
-        vo: str => Vo,
-        /// New comment
-        comment: str? => Comment,
-        /// New maximum number of drives for reading
-        read_max_drives: u64? => ReadMaxDrives,
-        /// New maximum number of drives for writing
-        write_max_drives: u64? => WriteMaxDrives,
-        /// New maximum file size, in bytes
-        max_file_size: u64? => MaxFileSize,
-        /// New disk instance
-        disk_instance: str? => DiskInstance,
-        /// Whether the virtual organisation is used for repacking
-        is_repack_vo: bool? => IsRepackVo,
-    }
+/// Changes a virtual organisation (`virtualorganization ch`).
+#[typed_admin_cmd(Virtualorganization::Ch)]
+pub struct Ch {
+    /// Name of the virtual organisation
+    pub vo: String,
+    /// New comment
+    pub comment: Option<String>,
+    /// New maximum number of drives for reading
+    pub read_max_drives: Option<u64>,
+    /// New maximum number of drives for writing
+    pub write_max_drives: Option<u64>,
+    /// New maximum file size, in bytes
+    pub max_file_size: Option<u64>,
+    /// New disk instance
+    pub disk_instance: Option<String>,
+    /// Whether the virtual organisation is used for repacking
+    pub is_repack_vo: Option<bool>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a virtual organisation (`virtualorganization rm`).
-    #[proto(Virtualorganization.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the virtual organisation
-        vo: str => Vo,
-    }
+/// Removes a virtual organisation (`virtualorganization rm`).
+#[typed_admin_cmd(Virtualorganization::Rm)]
+pub struct Rm {
+    /// Name of the virtual organisation
+    pub vo: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the virtual organisations (`virtualorganization ls`).
-    #[proto(Virtualorganization.SubcmdLs)]
-    #[item(VolsItem: VirtualOrganizationLsItem)]
-    #[derive(Default)]
-    pub struct Ls {}
-}
+/// Lists the virtual organisations (`virtualorganization ls`).
+#[typed_admin_cmd(Virtualorganization::Ls, response = VirtualOrganizationLsItem)]
+#[derive(Default)]
+pub struct Ls {}

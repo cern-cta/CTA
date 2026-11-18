@@ -3,56 +3,50 @@
 
 //! Logical library commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a logical library (`logicallibrary add`).
-    #[proto(Logicallibrary.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the logical library
-        name: str => LogicalLibrary,
-        /// Whether the library is disabled
-        disabled: bool? => Disabled,
-        /// Physical library the logical library belongs to
-        physical_library: str? => PhysicalLibrary,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds a logical library (`logicallibrary add`).
+#[typed_admin_cmd(Logicallibrary::Add)]
+pub struct Add {
+    /// Name of the logical library
+    #[proto(LogicalLibrary)]
+    pub name: String,
+    /// Whether the library is disabled
+    pub disabled: Option<bool>,
+    /// Physical library the logical library belongs to
+    pub physical_library: Option<String>,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a logical library (`logicallibrary ch`).
-    #[proto(Logicallibrary.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the logical library
-        name: str => LogicalLibrary,
-        /// Whether the library is disabled
-        disabled: bool? => Disabled,
-        /// New physical library
-        physical_library: str? => PhysicalLibrary,
-        /// New comment
-        comment: str? => Comment,
-        /// Why the library is disabled
-        disabled_reason: str? => DisabledReason,
-    }
+/// Changes a logical library (`logicallibrary ch`).
+#[typed_admin_cmd(Logicallibrary::Ch)]
+pub struct Ch {
+    /// Name of the logical library
+    #[proto(LogicalLibrary)]
+    pub name: String,
+    /// Whether the library is disabled
+    pub disabled: Option<bool>,
+    /// New physical library
+    pub physical_library: Option<String>,
+    /// New comment
+    pub comment: Option<String>,
+    /// Why the library is disabled
+    pub disabled_reason: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a logical library (`logicallibrary rm`).
-    #[proto(Logicallibrary.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the logical library
-        name: str => LogicalLibrary,
-    }
+/// Removes a logical library (`logicallibrary rm`).
+#[typed_admin_cmd(Logicallibrary::Rm)]
+pub struct Rm {
+    /// Name of the logical library
+    #[proto(LogicalLibrary)]
+    pub name: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the logical libraries (`logicallibrary ls`).
-    #[proto(Logicallibrary.SubcmdLs)]
-    #[item(LllsItem: LogicalLibraryLsItem)]
-    #[derive(Default)]
-    pub struct Ls {
-        /// Only the disabled (`true`) or enabled (`false`) libraries
-        disabled: bool? => Disabled,
-    }
+/// Lists the logical libraries (`logicallibrary ls`).
+#[typed_admin_cmd(Logicallibrary::Ls, response = LogicalLibraryLsItem)]
+#[derive(Default)]
+pub struct Ls {
+    /// Only the disabled (`true`) or enabled (`false`) libraries
+    pub disabled: Option<bool>,
 }

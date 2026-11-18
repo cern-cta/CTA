@@ -3,59 +3,53 @@
 
 //! Mount policy commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a mount policy (`mountpolicy add`).
-    #[proto(Mountpolicy.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the mount policy
-        name: str => MountPolicy,
-        /// Priority of archive requests
-        archive_priority: u64 => ArchivePriority,
-        /// Minimum age of archive requests before mounting, in seconds
-        min_archive_request_age: u64 => MinArchiveRequestAge,
-        /// Priority of retrieve requests
-        retrieve_priority: u64 => RetrievePriority,
-        /// Minimum age of retrieve requests before mounting, in seconds
-        min_retrieve_request_age: u64 => MinRetrieveRequestAge,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds a mount policy (`mountpolicy add`).
+#[typed_admin_cmd(Mountpolicy::Add)]
+pub struct Add {
+    /// Name of the mount policy
+    #[proto(MountPolicy)]
+    pub name: String,
+    /// Priority of archive requests
+    pub archive_priority: u64,
+    /// Minimum age of archive requests before mounting, in seconds
+    pub min_archive_request_age: u64,
+    /// Priority of retrieve requests
+    pub retrieve_priority: u64,
+    /// Minimum age of retrieve requests before mounting, in seconds
+    pub min_retrieve_request_age: u64,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a mount policy (`mountpolicy ch`).
-    #[proto(Mountpolicy.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the mount policy
-        name: str => MountPolicy,
-        /// New priority of archive requests
-        archive_priority: u64? => ArchivePriority,
-        /// New minimum age of archive requests, in seconds
-        min_archive_request_age: u64? => MinArchiveRequestAge,
-        /// New priority of retrieve requests
-        retrieve_priority: u64? => RetrievePriority,
-        /// New minimum age of retrieve requests, in seconds
-        min_retrieve_request_age: u64? => MinRetrieveRequestAge,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes a mount policy (`mountpolicy ch`).
+#[typed_admin_cmd(Mountpolicy::Ch)]
+pub struct Ch {
+    /// Name of the mount policy
+    #[proto(MountPolicy)]
+    pub name: String,
+    /// New priority of archive requests
+    pub archive_priority: Option<u64>,
+    /// New minimum age of archive requests, in seconds
+    pub min_archive_request_age: Option<u64>,
+    /// New priority of retrieve requests
+    pub retrieve_priority: Option<u64>,
+    /// New minimum age of retrieve requests, in seconds
+    pub min_retrieve_request_age: Option<u64>,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a mount policy (`mountpolicy rm`).
-    #[proto(Mountpolicy.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the mount policy
-        name: str => MountPolicy,
-    }
+/// Removes a mount policy (`mountpolicy rm`).
+#[typed_admin_cmd(Mountpolicy::Rm)]
+pub struct Rm {
+    /// Name of the mount policy
+    #[proto(MountPolicy)]
+    pub name: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the mount policies (`mountpolicy ls`).
-    #[proto(Mountpolicy.SubcmdLs)]
-    #[item(MplsItem: MountPolicyLsItem)]
-    #[derive(Default)]
-    pub struct Ls {}
-}
+/// Lists the mount policies (`mountpolicy ls`).
+#[typed_admin_cmd(Mountpolicy::Ls, response = MountPolicyLsItem)]
+#[derive(Default)]
+pub struct Ls {}

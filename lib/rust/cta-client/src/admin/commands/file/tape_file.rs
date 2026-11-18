@@ -3,63 +3,58 @@
 
 //! Tape file commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Changes the storage class of archive files (`tapefile ch`).
-    #[proto(Tapefile.SubcmdCh)]
-    pub struct Ch {
-        /// New storage class
-        storage_class: str => StorageClass,
-        /// Disk file IDs (decimal)
-        disk_file_ids: str_list? => FileId,
-        /// EOS file ID (hexadecimal)
-        fxid: str? => Fxid,
-        /// Disk file ID
-        disk_file_id: str? => DiskFileId,
-        /// Disk instance of the disk files
-        instance: str? => Instance,
-        /// Archive file ID
-        archive_file_id: u64? => ArchiveFileId,
-    }
+/// Changes the storage class of archive files (`tapefile ch`).
+#[typed_admin_cmd(Tapefile::Ch)]
+pub struct Ch {
+    /// New storage class
+    pub storage_class: String,
+    /// Disk file IDs (decimal)
+    #[proto(FileId)]
+    pub disk_file_ids: Option<Vec<String>>,
+    /// EOS file ID (hexadecimal)
+    pub fxid: Option<String>,
+    /// Disk file ID
+    pub disk_file_id: Option<String>,
+    /// Disk instance of the disk files
+    pub instance: Option<String>,
+    /// Archive file ID
+    pub archive_file_id: Option<u64>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a tape file (`tapefile rm`).
-    #[proto(Tapefile.SubcmdRm)]
-    pub struct Rm {
-        /// Volume identifier of the tape holding the file
-        vid: str => Vid,
-        /// Disk instance of the disk file
-        instance: str? => Instance,
-        /// EOS file ID (hexadecimal)
-        fxid: str? => Fxid,
-        /// Disk file ID
-        disk_file_id: str? => DiskFileId,
-        /// Archive file ID
-        archive_file_id: u64? => ArchiveFileId,
-        /// Why the tape file is removed
-        reason: str => Reason,
-    }
+/// Removes a tape file (`tapefile rm`).
+#[typed_admin_cmd(Tapefile::Rm)]
+pub struct Rm {
+    /// Volume identifier of the tape holding the file
+    pub vid: String,
+    /// Disk instance of the disk file
+    pub instance: Option<String>,
+    /// EOS file ID (hexadecimal)
+    pub fxid: Option<String>,
+    /// Disk file ID
+    pub disk_file_id: Option<String>,
+    /// Archive file ID
+    pub archive_file_id: Option<u64>,
+    /// Why the tape file is removed
+    pub reason: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists tape files (`tapefile ls`).
-    #[proto(Tapefile.SubcmdLs)]
-    #[item(TflsItem: TapeFileLsItem)]
-    #[derive(Default)]
-    pub struct Ls {
-        /// Only the files of this tape
-        vid: str? => Vid,
-        /// Disk instance of the disk files
-        instance: str? => Instance,
-        /// EOS file ID (hexadecimal)
-        fxid: str? => Fxid,
-        /// Disk file ID
-        disk_file_id: str? => DiskFileId,
-        /// Disk file IDs (decimal)
-        disk_file_ids: str_list? => FileId,
-        /// Archive file ID
-        archive_file_id: u64? => ArchiveFileId,
-    }
+/// Lists tape files (`tapefile ls`).
+#[typed_admin_cmd(Tapefile::Ls, response = TapeFileLsItem)]
+#[derive(Default)]
+pub struct Ls {
+    /// Only the files of this tape
+    pub vid: Option<String>,
+    /// Disk instance of the disk files
+    pub instance: Option<String>,
+    /// EOS file ID (hexadecimal)
+    pub fxid: Option<String>,
+    /// Disk file ID
+    pub disk_file_id: Option<String>,
+    /// Disk file IDs (decimal)
+    #[proto(FileId)]
+    pub disk_file_ids: Option<Vec<String>>,
+    /// Archive file ID
+    pub archive_file_id: Option<u64>,
 }

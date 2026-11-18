@@ -32,6 +32,7 @@
   [workspace.dependencies]
     # internal
     cta-client        = { path = "lib/rust/cta-client" }
+    cta-client-macros = { path = "lib/rust/cta-client-macros" }
     cta-grpc-common   = { path = "lib/rust/cta-grpc-common" }
     cta-model         = { path = "lib/rust/cta-model" }
     cta-model-macros  = { path = "lib/rust/cta-model-macros" }

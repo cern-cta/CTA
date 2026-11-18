@@ -3,69 +3,63 @@
 
 //! Tape media type commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a media type (`mediatype add`).
-    #[proto(Mediatype.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the media type
-        name: str => MediaType,
-        /// Cartridge model
-        cartridge: str => Cartridge,
-        /// Capacity of a cartridge, in bytes
-        capacity: u64 => Capacity,
-        /// Primary density code
-        primary_density_code: u64? => PrimaryDensityCode,
-        /// Secondary density code
-        secondary_density_code: u64? => SecondaryDensityCode,
-        /// Number of wraps
-        number_of_wraps: u64? => NumberOfWraps,
-        /// Minimum longitudinal position
-        min_lpos: u64? => MinLpos,
-        /// Maximum longitudinal position
-        max_lpos: u64? => MaxLpos,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds a media type (`mediatype add`).
+#[typed_admin_cmd(Mediatype::Add)]
+pub struct Add {
+    /// Name of the media type
+    #[proto(MediaType)]
+    pub name: String,
+    /// Cartridge model
+    pub cartridge: String,
+    /// Capacity of a cartridge, in bytes
+    pub capacity: u64,
+    /// Primary density code
+    pub primary_density_code: Option<u64>,
+    /// Secondary density code
+    pub secondary_density_code: Option<u64>,
+    /// Number of wraps
+    pub number_of_wraps: Option<u64>,
+    /// Minimum longitudinal position
+    pub min_lpos: Option<u64>,
+    /// Maximum longitudinal position
+    pub max_lpos: Option<u64>,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a media type (`mediatype ch`).
-    #[proto(Mediatype.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the media type
-        name: str => MediaType,
-        /// New cartridge model
-        cartridge: str? => Cartridge,
-        /// New primary density code
-        primary_density_code: u64? => PrimaryDensityCode,
-        /// New secondary density code
-        secondary_density_code: u64? => SecondaryDensityCode,
-        /// New number of wraps
-        number_of_wraps: u64? => NumberOfWraps,
-        /// New minimum longitudinal position
-        min_lpos: u64? => MinLpos,
-        /// New maximum longitudinal position
-        max_lpos: u64? => MaxLpos,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes a media type (`mediatype ch`).
+#[typed_admin_cmd(Mediatype::Ch)]
+pub struct Ch {
+    /// Name of the media type
+    #[proto(MediaType)]
+    pub name: String,
+    /// New cartridge model
+    pub cartridge: Option<String>,
+    /// New primary density code
+    pub primary_density_code: Option<u64>,
+    /// New secondary density code
+    pub secondary_density_code: Option<u64>,
+    /// New number of wraps
+    pub number_of_wraps: Option<u64>,
+    /// New minimum longitudinal position
+    pub min_lpos: Option<u64>,
+    /// New maximum longitudinal position
+    pub max_lpos: Option<u64>,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a media type (`mediatype rm`).
-    #[proto(Mediatype.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the media type
-        name: str => MediaType,
-    }
+/// Removes a media type (`mediatype rm`).
+#[typed_admin_cmd(Mediatype::Rm)]
+pub struct Rm {
+    /// Name of the media type
+    #[proto(MediaType)]
+    pub name: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the media types (`mediatype ls`).
-    #[proto(Mediatype.SubcmdLs)]
-    #[item(MtlsItem: MediaTypeLsItem)]
-    #[derive(Default)]
-    pub struct Ls {}
-}
+/// Lists the media types (`mediatype ls`).
+#[typed_admin_cmd(Mediatype::Ls, response = MediaTypeLsItem)]
+#[derive(Default)]
+pub struct Ls {}

@@ -3,59 +3,55 @@
 
 //! Archive route commands
 
-use crate::define_typed_admin_cmd;
+use cta_model::routing::ArchiveRouteType;
 
-define_typed_admin_cmd! {
-    /// Adds an archive route (`archiveroute add`).
-    #[proto(Archiveroute.SubcmdAdd)]
-    pub struct Add {
-        /// Storage class of the route
-        storage_class: str => StorageClass,
-        /// Copy number of the route
-        copy_nb: u64 => CopyNumber,
-        /// Type of the route
-        archive_route_type: str? => ArchiveRouteType,
-        /// Tape pool the copies are written to
-        tape_pool: str => TapePool,
-        /// Comment
-        comment: str => Comment,
-    }
+use crate::typed_admin_cmd;
+
+/// Adds an archive route (`archiveroute add`).
+#[typed_admin_cmd(Archiveroute::Add)]
+pub struct Add {
+    /// Storage class of the route
+    pub storage_class: String,
+    /// Copy number of the route
+    #[proto(CopyNumber)]
+    pub copy_nb: u64,
+    /// Type of the route
+    pub archive_route_type: Option<ArchiveRouteType>,
+    /// Tape pool the copies are written to
+    pub tape_pool: String,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes an archive route (`archiveroute ch`).
-    #[proto(Archiveroute.SubcmdCh)]
-    pub struct Ch {
-        /// Storage class of the route
-        storage_class: str => StorageClass,
-        /// Copy number of the route
-        copy_nb: u64 => CopyNumber,
-        /// Type of the route
-        archive_route_type: str => ArchiveRouteType,
-        /// New tape pool
-        tape_pool: str? => TapePool,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes an archive route (`archiveroute ch`).
+#[typed_admin_cmd(Archiveroute::Ch)]
+pub struct Ch {
+    /// Storage class of the route
+    pub storage_class: String,
+    /// Copy number of the route
+    #[proto(CopyNumber)]
+    pub copy_nb: u64,
+    /// Type of the route
+    pub archive_route_type: ArchiveRouteType,
+    /// New tape pool
+    pub tape_pool: Option<String>,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes an archive route (`archiveroute rm`).
-    #[proto(Archiveroute.SubcmdRm)]
-    pub struct Rm {
-        /// Storage class of the route
-        storage_class: str => StorageClass,
-        /// Copy number of the route
-        copy_nb: u64 => CopyNumber,
-        /// Type of the route
-        archive_route_type: str => ArchiveRouteType,
-    }
+/// Removes an archive route (`archiveroute rm`).
+#[typed_admin_cmd(Archiveroute::Rm)]
+pub struct Rm {
+    /// Storage class of the route
+    pub storage_class: String,
+    /// Copy number of the route
+    #[proto(CopyNumber)]
+    pub copy_nb: u64,
+    /// Type of the route
+    pub archive_route_type: ArchiveRouteType,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the archive routes (`archiveroute ls`).
-    #[proto(Archiveroute.SubcmdLs)]
-    #[item(ArlsItem: ArchiveRouteLsItem)]
-    #[derive(Default)]
-    pub struct Ls {}
-}
+/// Lists the archive routes (`archiveroute ls`).
+#[typed_admin_cmd(Archiveroute::Ls, response = ArchiveRouteLsItem)]
+#[derive(Default)]
+pub struct Ls {}

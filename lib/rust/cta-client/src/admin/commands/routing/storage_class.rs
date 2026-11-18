@@ -3,56 +3,53 @@
 
 //! Storage class commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a storage class (`storageclass add`).
-    #[proto(Storageclass.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the storage class
-        name: str => StorageClass,
-        /// Number of tape copies of the files of the storage class
-        number_of_copies: u64 => CopyNumber,
-        /// Virtual organisation of the storage class
-        vo: str => Vo,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds a storage class (`storageclass add`).
+#[typed_admin_cmd(Storageclass::Add)]
+pub struct Add {
+    /// Name of the storage class
+    #[proto(StorageClass)]
+    pub name: String,
+    /// Number of tape copies of the files of the storage class
+    #[proto(CopyNumber)]
+    pub number_of_copies: u64,
+    /// Virtual organisation of the storage class
+    pub vo: String,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a storage class (`storageclass ch`).
-    #[proto(Storageclass.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the storage class
-        name: str => StorageClass,
-        /// New number of tape copies
-        number_of_copies: u64? => CopyNumber,
-        /// New virtual organisation
-        vo: str? => Vo,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes a storage class (`storageclass ch`).
+#[typed_admin_cmd(Storageclass::Ch)]
+pub struct Ch {
+    /// Name of the storage class
+    #[proto(StorageClass)]
+    pub name: String,
+    /// New number of tape copies
+    #[proto(CopyNumber)]
+    pub number_of_copies: Option<u64>,
+    /// New virtual organisation
+    pub vo: Option<String>,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a storage class (`storageclass rm`).
-    #[proto(Storageclass.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the storage class
-        name: str => StorageClass,
-    }
+/// Removes a storage class (`storageclass rm`).
+#[typed_admin_cmd(Storageclass::Rm)]
+pub struct Rm {
+    /// Name of the storage class
+    #[proto(StorageClass)]
+    pub name: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists storage classes (`storageclass ls`).
-    #[proto(Storageclass.SubcmdLs)]
-    #[item(SclsItem: StorageClassLsItem)]
-    #[derive(Default)]
-    pub struct Ls {
-        /// Only the storage class with this name
-        name: str? => StorageClass,
-        /// Only the storage classes of the files on this tape
-        vid: str? => Vid,
-    }
+/// Lists storage classes (`storageclass ls`).
+#[typed_admin_cmd(Storageclass::Ls, response = StorageClassLsItem)]
+#[derive(Default)]
+pub struct Ls {
+    /// Only the storage class with this name
+    #[proto(StorageClass)]
+    pub name: Option<String>,
+    /// Only the storage classes of the files on this tape
+    pub vid: Option<String>,
 }
