@@ -273,8 +273,8 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   utils::Timer startupTimer;
 
   // The RecallTaskInjector and the TapeReadSingleThread share the promise
-  if (const auto& rao = m_transfersConfig.retrieve.rao; m_transfersConfig.retrieve.rao_enabled) {
-    configureRAO(logContext, recallTaskInjector, *rao);
+  if (m_transfersConfig.retrieve.rao_enabled) {
+    configureRAO(logContext, recallTaskInjector, *m_transfersConfig.retrieve.rao);
   }
   bool noFilesToRecall = false;
   bool jobsFetched = false;
