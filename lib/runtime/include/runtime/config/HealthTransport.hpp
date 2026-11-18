@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/config/Config.hpp"
+#include "common/utils/StringConversions.hpp"
 
 #include <optional>
 #include <string_view>
@@ -22,7 +22,7 @@ enum class HealthTransport {
 
 /// Parse the health endpoint transport from its TOML name.
 template<>
-struct cta::common::FromString<cta::runtime::HealthTransport> {
+struct cta::utils::FromString<cta::runtime::HealthTransport> {
   static std::optional<cta::runtime::HealthTransport> tryFrom(std::string_view text) {
     using enum cta::runtime::HealthTransport;
     if (text == "tcp") {

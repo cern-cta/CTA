@@ -39,6 +39,7 @@
         # Signal the default unit and every loaded template instance.
         # Rotation must still succeed when none are active.
         /usr/bin/systemctl kill --kill-whom=main --signal=HUP cta-rmcd.service > /dev/null 2>&1 || true
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP 'cta-rmcd@*.service' > /dev/null 2>&1 || true
     endscript
 }
 

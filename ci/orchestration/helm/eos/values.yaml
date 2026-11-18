@@ -37,6 +37,8 @@ server:
 
     http:
       # Generated using: openssl rand -base64 64 | base64 -w 0
+      # Note that this hardcoded secret is only for CI/dev purposes
+      # The reason that this is hardcoded is that generating it dynamically would require a bunch of extra machinery, while not gaining us anything
       macaroonsSecretKey: ZjZsMWxPT1lEc1poNFBKRTJiK05aaEhMdC9iUzdsSmxxNGZXT1Z4dE9PWElsR2I0MHhqZ3RnRDNzWnhVTW5iZAp1YWFSYmR6d0hSL3FMem1ncDNCWHFRPT0K
       sciTokens:
         enabled: true

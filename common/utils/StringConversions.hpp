@@ -7,13 +7,24 @@
 
 #include "common/utils/ErrorUtils.hpp"
 
+#include <concepts>
 #include <optional>
 #include <sstream>
 #include <stdint.h>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace cta::utils {
+
+// Specialize this trait for types that can be parsed from a string.
+template<typename T>
+struct FromString;
+
+template<typename T>
+concept HasFromString = requires(std::string_view sv) {
+  { FromString<T>::tryFrom(sv) } -> std::convertible_to<std::optional<T>>;
+};
 
 /**
  * Returns the string reprsentation of the specified value.

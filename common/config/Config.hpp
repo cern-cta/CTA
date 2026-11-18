@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
+#include "common/utils/StringConversions.hpp"
 
 #include <algorithm>
 #include <map>
@@ -17,16 +18,6 @@ namespace cta::common {
 
 template<typename T>
 struct always_false : std::false_type {};
-
-// Undefined trait (default behaviour)
-template<typename T>
-struct FromString;
-
-// A concept representing a type which implements FromString::tryFrom(...)
-template<typename T>
-concept HasFromString = requires(std::string_view sv) {
-  { FromString<T>::tryFrom(sv) } -> std::convertible_to<std::optional<T>>;
-};
 
 // Trait definition to tag vectors
 template<typename T>
@@ -137,18 +128,18 @@ public:
       return getOptionValueUInt(keyStr);
     } else if constexpr (std::is_same_v<T, bool>) {
       return getOptionValueBool(keyStr);
-    } else if constexpr (HasFromString<T>) {
+    } else if constexpr (cta::utils::HasFromString<T>) {
       // T can be turned into a string through FromString::tryFrom
       auto str = getOptionValueStr(keyStr);
       if (!str.has_value()) {
         return std::nullopt;
       }
-      auto parsedVal = FromString<T>::tryFrom(str.value());
+      auto parsedVal = cta::utils::FromString<T>::tryFrom(str.value());
       if (!parsedVal.has_value()) {
         throw std::invalid_argument("Can't parse: " + str.value());
       }
       return parsedVal;
-    } else if constexpr (is_vector<T>::value && HasFromString<typename T::value_type>) {
+    } else if constexpr (is_vector<T>::value && cta::utils::HasFromString<typename T::value_type>) {
       // if T has been tagged as a vector of FromString, we'll parse it element by element
       auto options = getOptionValueStrVector(keyStr);
       if (options.empty()) {
@@ -156,7 +147,7 @@ public:
       }
       std::vector<typename T::value_type> vec;
       std::ranges::transform(options, std::back_inserter(vec), [](const auto& str) {
-        auto val = FromString<typename T::value_type>::tryFrom(str);
+        auto val = cta::utils::FromString<typename T::value_type>::tryFrom(str);
         if (!val.has_value()) {
           throw std::invalid_argument("Can't parse argument: " + str);
         }
