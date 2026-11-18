@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description":
-    "Initial scope: container bases, external CI images, GitHub Actions, frozen pre-commit hooks and grpc-health-probe. Rust, Python workspaces, native packages, Helm, submodules and retired development images are deferred.",
+    "Initial scope: container bases, external CI images, GitHub Actions, frozen pre-commit hooks, Danger gems and grpc-health-probe. Rust, Python workspaces, native packages, Helm, submodules and retired development images are deferred.",
   "enabledManagers": [
     "dockerfile",
     "github-actions",
@@ -49,6 +49,18 @@
   "customManagers": [
     {
       "customType": "regex",
+      "description": "Keep direct Danger image gems pinned and updated together.",
+      "managerFilePatterns": [
+        "/^ci/docker/pipeline/danger\\.Dockerfile$/"
+      ],
+      "matchStrings": [
+        "(?<depName>danger|danger-gitlab|faraday-retry):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "rubygems",
+      "versioningTemplate": "ruby"
+    },
+    {
+      "customType": "regex",
       "description":
         "Resolve proxied external images upstream while preserving the CERN proxy prefix. CTA pipeline image releases are updated separately after successful builds.",
       "managerFilePatterns": [
@@ -63,9 +75,9 @@
     },
     {
       "customType": "regex",
-      "description": "Update the release URL and verified binary checksum together in both production Dockerfiles.",
+      "description": "Update the release URL and verified binary checksum together in all production Dockerfiles.",
       "managerFilePatterns": [
-        "/^ci/docker/cta/el(?:9|10)/prod\\.Dockerfile$/"
+        "/^ci/docker/cta/(?:el9|el10|debian13)/prod\\.Dockerfile$/"
       ],
       "matchStrings": [
         "https://github\\.com/grpc-ecosystem/grpc-health-probe/releases/download/(?<currentValue>v[0-9.]+)/grpc_health_probe-linux-amd64\\s+\\\\\\s+-o /grpc-health-probe && \\\\\\s+echo \"(?<currentDigest>[a-f0-9]{64})  /grpc-health-probe\""
@@ -76,6 +88,17 @@
     }
   ],
   "packageRules": [
+    {
+      "matchDatasources": [
+        "rubygems"
+      ],
+      "matchPackageNames": [
+        "danger",
+        "danger-gitlab",
+        "faraday-retry"
+      ],
+      "groupName": "Danger gems"
+    },
     {
       "description": "CERN registry images do not need an additional cooldown.",
       "matchDatasources": [
@@ -144,7 +167,7 @@
       "enabled": false
     },
     {
-      "description": "Keep the health probe release and checksum aligned across EL9 and EL10.",
+      "description": "Keep the health probe release and checksum aligned across EL9, EL10 and Debian 13.",
       "matchPackageNames": [
         "grpc-ecosystem/grpc-health-probe"
       ],
