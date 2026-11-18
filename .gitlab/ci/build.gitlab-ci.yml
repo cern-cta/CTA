@@ -151,27 +151,7 @@ build-cta:
         - .cargo/git/db/
 
 # These build jobs are not (and ideally should not) be used further down the pipeline; just compilation checks
-# All builds below disable sccache as they are not on the critical path and may pollute it.
-# They restore the DNF and Cargo download caches; only the primary build publishes updates.
-
-# Specifically build CTA without sccache and with debug packages enabled
-build-cta-no-sccache:
-  extends:
-    - build-cta
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
-      when: never
-    - !reference [build-cta, rules]
-  variables:
-    ENABLE_SCCACHE: "false"
-    ENABLE_DEBUG_INFO: "FALSE"
-  cache:
-    - <<: *dnf-cache
-      policy: pull
-    - <<: *cargo-cache
-      policy: pull
+# These jobs only restore caches; only the primary build publishes updates.
 
 build-cta-pgsched:
   extends:
@@ -190,7 +170,7 @@ build-cta-pgsched:
     # We don't have a way of separating what the user entered and what the actual value is,
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
-    ENABLE_SCCACHE: "false"
+    ENABLE_SCCACHE: "true"
   before_script:
     - !reference [.merge-train-guard, before_script]
     # This compilation check deliberately differs from the primary pipeline variant.
@@ -205,6 +185,9 @@ build-cta-pgsched:
       metrics: []
   cache:
     - <<: *dnf-cache
+      policy: pull
+    # Reuse scheduler-independent compiler results without publishing this variant's entries.
+    - <<: *sccache
       policy: pull
     - <<: *cargo-cache
       policy: pull
