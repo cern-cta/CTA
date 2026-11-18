@@ -123,8 +123,8 @@ pub_key_timeout = 0
 jwks_total_timeout = 60
 )toml";
   const auto loaded = cta::runtime::loadFromTomlString<WfeAuthConfig>(document, "auth.toml", false);
-  EXPECT_TRUE(loaded.methodEnabled(AuthMethod::JWT));
-  EXPECT_FALSE(loaded.methodEnabled(AuthMethod::MTLS));
+  EXPECT_TRUE(loaded.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(loaded.isMethodEnabled(AuthMethod::MTLS));
   EXPECT_THROW(cta::runtime::loadFromTomlString<WfeAuthConfig>(document, "auth.toml", true), cta::exception::UserError);
   EXPECT_NO_THROW(
     cta::runtime::loadFromTomlString<WfeAuthConfig>("enabled_methods = ['jwt']\n" + document, "auth.toml", true));
@@ -139,17 +139,17 @@ MtlsAuthConfig makeEnabledMtlsConfig() {
 
 TEST(WfeAuthConfig, EnumQueriesRespectSupportedMethods) {
   WfeAuthConfig config;
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::MTLS));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::MTLS));
 
   config.enabled_methods = {"mtls", "kerberos"};
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::MTLS));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::KERBEROS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::MTLS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::KERBEROS));
 
   config.enabled_methods.clear();
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::MTLS));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::MTLS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
 }
 
 TEST(WfeAuthConfig, MtlsOnlyIsValid) {
@@ -159,8 +159,8 @@ TEST(WfeAuthConfig, MtlsOnlyIsValid) {
   config.enabled_methods.push_back("mtls");
 
   EXPECT_TRUE(config.validate().ok());
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::MTLS));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::MTLS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
 }
 
 TEST(WfeAuthConfig, JwtOnlyIsValid) {
@@ -170,8 +170,8 @@ TEST(WfeAuthConfig, JwtOnlyIsValid) {
   config.enabled_methods.push_back("jwt");
 
   EXPECT_TRUE(config.validate().ok());
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::MTLS));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::MTLS));
 }
 
 TEST(WfeAuthConfig, NoEnabledMethodIsRejected) {
@@ -236,8 +236,8 @@ jwks_total_timeout = 0
                                                                         "auth.toml",
                                                                         strict);
     ASSERT_TRUE(config.jwt);
-    EXPECT_TRUE(config.methodEnabled(AuthMethod::MTLS));
-    EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
+    EXPECT_TRUE(config.isMethodEnabled(AuthMethod::MTLS));
+    EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
   }
 }
 

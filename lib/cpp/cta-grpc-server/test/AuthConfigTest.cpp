@@ -8,6 +8,7 @@
 #include "grpc-server/config/ListenerConfig.hpp"
 #include "grpc-server/server/ServerBuilderHelper.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <limits>
 
@@ -78,10 +79,10 @@ TEST(JwtAuthConfig, PubKeyTimeoutIsValidatedWheneverSectionIsPresent) {
 }
 
 TEST(ServerBuilderHelper, AutomaticThreadLimitHandlesUnknownCpuCountAndOverflow) {
-  EXPECT_EQ(8, cta::grpc_server::automaticThreadLimit(0));
-  EXPECT_EQ(32, cta::grpc_server::automaticThreadLimit(4));
+  EXPECT_EQ(8, cta::grpc_server::calculateAutomaticThreadLimit(0));
+  EXPECT_EQ(32, cta::grpc_server::calculateAutomaticThreadLimit(4));
   EXPECT_EQ((std::numeric_limits<int>::max() / 8) * 8,
-            cta::grpc_server::automaticThreadLimit(std::numeric_limits<unsigned>::max()));
+            cta::grpc_server::calculateAutomaticThreadLimit(std::numeric_limits<uint32_t>::max()));
 }
 
 TEST(ListenerConfig, RejectsNegativeThreadCount) {

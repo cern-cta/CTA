@@ -7,31 +7,6 @@ Upgrading CTA is relatively easy as CTA is the tape backend and separated from d
 
 RPM upgrades preserve whether each packaged service is enabled and restart it only when it is already running. See [RPM Packages and Services](../../deploy-and-configure/deployment/installation/rpm-packages.md#package-lifecycle) for the complete package lifecycle contract.
 
-## Migrating TOML feature activation
-
-When upgrading from configuration files using section-local `enabled` flags or `[experimental]`, migrate them before starting the new binaries.
-The old keys are not aliases for the new schema; validate the migrated file with `--config-strict --config-check`.
-
-| Previous setting | Replacement |
-| --- | --- |
-| `experimental.telemetry_enabled` | Root `enabled_experimental_features` contains `"telemetry"`; retain `[telemetry]` only when enabled. |
-| `health_server.enabled` | Root `enabled_features` contains `"health_server"`. |
-| `health_server.use_unix_domain_socket` | `health_server.transport = "unix"` or `"tcp"`; move TCP host and port into `[health_server.tcp]`. |
-| `auth.<method>.enabled` | `auth.enabled_methods` lists selected methods; omit inactive method sections. |
-| `experimental.opportunistic_batching_enabled` | Root `enabled_experimental_features` contains `"opportunistic_batching"` in PostgreSQL workflow API configurations. |
-| `routines.<routine>.enabled` | `routines.enabled_routines` lists selected routines; omit inactive sections. The objectstore `garbage_collect` routine needs no section. |
-| `transfers.encryption.enabled` | `transfers.encryption_enabled = true`; retain the section only when enabled. |
-| `transfers.retrieve.rao.enabled` | `transfers.retrieve.rao_enabled = true`; retain the section only when enabled. |
-
-Remove `[experimental]` after migrating its flags and remove sections for disabled features.
-Preserve your intended selections, including routines, encryption and RAO that were previously enabled by default.
-Supply both root feature lists in strict mode.
-See [Service Runtime](../../deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for selection rules and non-strict defaults.
-
-Set `grpc.number_of_threads = 0` to preserve automatic sizing and, in objectstore API configurations, `scheduler.client.thread_stack_size_mb = 0` to preserve the system stack size.
-Set `defaults.repack.max_files_to_select = 0` to preserve the previous omission behaviour of selecting all files.
-Retain positive values where a fixed count, size or limit is intended.
-
 ## Test upgrade path
 
 !!! danger

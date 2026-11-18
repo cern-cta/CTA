@@ -56,12 +56,12 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
 #endif
 
   // JWT authentication: the JWKS cache is refreshed in the background by the manager itself
-  auto jwtAuthManager = config.auth.methodEnabled(cta::grpc_server::AuthMethod::JWT) ?
+  auto jwtAuthManager = config.auth.isMethodEnabled(cta::grpc_server::AuthMethod::JWT) ?
                           grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log) :
                           nullptr;
 
   // mTLS: the clients present a certificate which is checked against the configured aliases
-  const bool useMtls = config.auth.methodEnabled(cta::grpc_server::AuthMethod::MTLS);
+  const bool useMtls = config.auth.isMethodEnabled(cta::grpc_server::AuthMethod::MTLS);
   if (useMtls) {
     lc.log(cta::log::INFO, "Using mutual TLS to authenticate WFE client requests");
   }

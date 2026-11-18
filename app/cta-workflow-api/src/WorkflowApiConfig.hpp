@@ -37,14 +37,14 @@ struct WfeAuthConfig final {
   };
 
   /// Query only authentication methods supported by this service.
-  bool methodEnabled(cta::grpc_server::AuthMethod method) const {
+  bool isMethodEnabled(cta::grpc_server::AuthMethod method) const {
     return cta::runtime::featureEnabled(enabled_methods, method, methods);
   }
 
   /// Validate method selection and the settings of each selected method.
   cta::runtime::ValidationResult validate() const {
     auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
-    if (methodEnabled(cta::grpc_server::AuthMethod::JWT) == methodEnabled(cta::grpc_server::AuthMethod::MTLS)) {
+    if (isMethodEnabled(cta::grpc_server::AuthMethod::JWT) == isMethodEnabled(cta::grpc_server::AuthMethod::MTLS)) {
       result.addError("enabled_methods",
                       "WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
     }

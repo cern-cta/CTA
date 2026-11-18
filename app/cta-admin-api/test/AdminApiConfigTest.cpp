@@ -128,8 +128,8 @@ pub_key_timeout = 0
 jwks_total_timeout = 60
 )toml";
   const auto loaded = cta::runtime::loadFromTomlString<AdminAuthConfig>(document, "auth.toml", false);
-  EXPECT_TRUE(loaded.methodEnabled(AuthMethod::JWT));
-  EXPECT_FALSE(loaded.methodEnabled(AuthMethod::KERBEROS));
+  EXPECT_TRUE(loaded.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(loaded.isMethodEnabled(AuthMethod::KERBEROS));
   EXPECT_THROW(cta::runtime::loadFromTomlString<AdminAuthConfig>(document, "auth.toml", true),
                cta::exception::UserError);
   EXPECT_NO_THROW(
@@ -154,17 +154,17 @@ service_principal = "svc/host@REALM"
 
 TEST(AdminAuthConfig, EnumQueriesRespectSupportedMethods) {
   AdminAuthConfig config;
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::KERBEROS));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::KERBEROS));
 
   config.enabled_methods = {"kerberos", "mtls"};
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::KERBEROS));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::MTLS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::KERBEROS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::MTLS));
 
   config.enabled_methods.clear();
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::KERBEROS));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::KERBEROS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
 }
 
 TEST(AdminAuthConfig, KerberosOnlyIsValid) {
@@ -174,8 +174,8 @@ TEST(AdminAuthConfig, KerberosOnlyIsValid) {
   config.enabled_methods.push_back("kerberos");
 
   EXPECT_TRUE(config.validate().ok());
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::KERBEROS));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::KERBEROS));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
 }
 
 TEST(AdminAuthConfig, JwtOnlyIsValid) {
@@ -185,8 +185,8 @@ TEST(AdminAuthConfig, JwtOnlyIsValid) {
   config.enabled_methods.push_back("jwt");
 
   EXPECT_TRUE(config.validate().ok());
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_FALSE(config.methodEnabled(AuthMethod::KERBEROS));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_FALSE(config.isMethodEnabled(AuthMethod::KERBEROS));
 }
 
 TEST(AdminAuthConfig, JwtAndKerberosIsValid) {
@@ -198,8 +198,8 @@ TEST(AdminAuthConfig, JwtAndKerberosIsValid) {
   config.enabled_methods.push_back("kerberos");
 
   EXPECT_TRUE(config.validate().ok());
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::JWT));
-  EXPECT_TRUE(config.methodEnabled(AuthMethod::KERBEROS));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::JWT));
+  EXPECT_TRUE(config.isMethodEnabled(AuthMethod::KERBEROS));
 }
 
 TEST(AdminAuthConfig, NoEnabledMethodIsRejected) {
@@ -278,8 +278,8 @@ jwks_total_timeout = 0
                                                                           "auth.toml",
                                                                           strict);
     ASSERT_TRUE(config.jwt);
-    EXPECT_TRUE(config.methodEnabled(AuthMethod::KERBEROS));
-    EXPECT_FALSE(config.methodEnabled(AuthMethod::JWT));
+    EXPECT_TRUE(config.isMethodEnabled(AuthMethod::KERBEROS));
+    EXPECT_FALSE(config.isMethodEnabled(AuthMethod::JWT));
   }
 }
 

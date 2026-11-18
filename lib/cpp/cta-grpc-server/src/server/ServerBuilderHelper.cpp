@@ -17,8 +17,9 @@
 
 namespace cta::grpc_server {
 
-int automaticThreadLimit(unsigned detectedCpuCount) {
-  const auto cpus = std::clamp(detectedCpuCount, 1u, static_cast<unsigned>(std::numeric_limits<int>::max() / 8));
+int calculateAutomaticThreadLimit(uint32_t detectedCpuCount) {
+  const auto cpus =
+    std::clamp(detectedCpuCount, uint32_t {1}, static_cast<uint32_t>(std::numeric_limits<int>::max() / 8));
   return static_cast<int>(8 * cpus);
 }
 
@@ -44,7 +45,7 @@ ServerBuilderHelper::ServerBuilderHelper(const ListenerConfig& config,
   // Fix the number of request processing threads
   int threads = config.number_of_threads;
   if (threads == 0) {
-    threads = automaticThreadLimit(std::thread::hardware_concurrency());
+    threads = calculateAutomaticThreadLimit(std::thread::hardware_concurrency());
   }
   ::grpc::ResourceQuota quota;
   quota.SetMaxThreads(threads);
