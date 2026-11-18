@@ -31,11 +31,13 @@
   # Single source of truth for dependency versions across the workspace.
   [workspace.dependencies]
     # internal
-    cta-client      = { path = "lib/rust/cta-client" }
-    cta-grpc-common = { path = "lib/rust/cta-grpc-common" }
-    cta-protobuf    = { path = "lib/rust/cta-protobuf" }
-    eos-client      = { path = "lib/rust/eos-client" }
-    eos-protobuf    = { path = "lib/rust/eos-protobuf" }
+    cta-client        = { path = "lib/rust/cta-client" }
+    cta-grpc-common   = { path = "lib/rust/cta-grpc-common" }
+    cta-model         = { path = "lib/rust/cta-model" }
+    cta-model-macros  = { path = "lib/rust/cta-model-macros" }
+    cta-protobuf      = { path = "lib/rust/cta-protobuf" }
+    eos-client        = { path = "lib/rust/eos-client" }
+    eos-protobuf      = { path = "lib/rust/eos-protobuf" }
     # gRPC / protobuf
     prost             = "^0.14"
     tonic             = "^0.14"
@@ -53,6 +55,9 @@
     http-body-util = "^0.1"
     # procedural macros
     derive_more = { version = "^2", default-features = false }
+    proc-macro2 = "^1.0"
+    quote       = "^1.0"
+    syn         = "^2.0"
     # error handling, logging, misc
     anyhow        = "^1.0"
     bon           = "^3.10"

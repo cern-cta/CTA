@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+  name                    = "cta-model-macros"
+  description             = "Procedural macros of cta-model, deriving the keys of the resources"
+  version.workspace       = true
+  edition.workspace       = true
+  authors.workspace       = true
+  license.workspace       = true
+  repository.workspace    = true
+  homepage.workspace      = true
+  documentation.workspace = true
+  keywords.workspace      = true
+  categories.workspace    = true
+  publish.workspace       = true
+
+[lib]
+  proc-macro = true
+
+[lints]
+  workspace = true
+
+[dependencies]
+  proc-macro2 = { workspace = true }
+  quote       = { workspace = true }
+  syn         = { workspace = true, features = ["full"] }
+
+[dev-dependencies]
+  # the doc tests use the derive through `cta-model`, as its users do
+  cta-model = { workspace = true }
