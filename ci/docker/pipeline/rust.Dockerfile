@@ -10,6 +10,7 @@ ARG CARGO_MACHETE_VERSION="=0.9.2"
 ARG CARGO_NEXTEST_VERSION="=0.9.145"
 ARG CARGO_SONAR_VERSION="=1.6.0"
 ARG CARGO_LLVM_COV_VERSION="=0.9.1"
+ARG TAPLO_VERSION="=0.10.0"
 
 RUN dnf install -y epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
@@ -33,5 +34,6 @@ RUN cargo install cargo-deny@${CARGO_DENY_VERSION} \
                   cargo-llvm-cov@${CARGO_LLVM_COV_VERSION} \
                   cargo-machete@${CARGO_MACHETE_VERSION} \
                   cargo-nextest@${CARGO_NEXTEST_VERSION} \
-                  cargo-sonar@${CARGO_SONAR_VERSION} && \
+                  cargo-sonar@${CARGO_SONAR_VERSION} \
+                  taplo-cli@${TAPLO_VERSION} && \
     rm -rf /root/.cargo/registry /root/.cargo/git /tmp/cargo-install*
