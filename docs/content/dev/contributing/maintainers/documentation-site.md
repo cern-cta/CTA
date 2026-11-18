@@ -9,8 +9,7 @@ Zensical builds the site with Python 3.12. Paths below are relative to the repos
 | Location | Purpose |
 | --- | --- |
 | `zensical.toml` | Site configuration, navigation, Markdown extensions, and theme |
-| `pyproject.toml`, `uv.lock` | Shared dependency declarations, cooldown policy, and lockfile; docs use the `docs` group |
-| `docs/.venv/` | Separate docs environment, created with `uv sync --python 3.12` |
+| `pyproject.toml`, `uv.lock` | Dependencies and lockfile for the `docs` group |
 | `docs/build.py` | Generate the command manual and Rust reference, then invoke Zensical |
 | `docs/zensical_content.py` | Repository substitutions, manual metadata stripping, and diagram defaults |
 | `docs/content/stylesheets/extra.css`, `docs/overrides/` | CTA branding |
@@ -22,7 +21,8 @@ For environment setup, see [Preview locally](../documentation.md#preview-locally
 
 ### Generated references
 
-`docs/build.py` generates the command manual in `build/docs/generated/` and runs `cargo doc`. It copies Rust output into the ignored `docs/content/api/rust/` directory so Zensical includes it in both builds and previews. `--skip-rust` skips Rust generation and reuses existing `target/doc/` output if available; it still regenerates the manual. If Cargo is not installed, the helper warns and skips Rust generation automatically. Without existing output, it warns and continues without copying Rust documentation. Failures from an installed Cargo still stop the build.
+`docs/build.py` generates the command manual in `build/docs/generated/` and Rust API docs with `cargo doc`, then copies the Rust output to `docs/content/api/rust/` for Zensical.
+See [Preview locally](../documentation.md#preview-locally) for skipping Rust generation.
 
 The Python API reference uses `mkdocstrings`. Its Python 3.9 inventory matches the supported CTA API, independently of the docs builder’s Python 3.12 runtime.
 
