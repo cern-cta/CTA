@@ -38,7 +38,6 @@ data:
     # Only used by the objectstore scheduler backend
     [scheduler.client]
       number_of_threads = {{ .Values.conf.schedulerdb.numberOfThreads | int }}
-      thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
       {{- end }}
 
 

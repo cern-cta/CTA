@@ -29,7 +29,6 @@ conf:
   schedulerdb:
     numberOfConnections: 3
     numberOfThreads: 500
-    threadStackSizeMb: 1
     disableRepackRequests: false
     disableUserRequests: false
     tapeCacheMaxAgeSecs: 1

@@ -37,8 +37,6 @@ struct ConnectionOptions final {
 #ifndef CTA_PGSCHED
   /// Objectstore thread pool size (no thread pool if not set)
   std::optional<uint32_t> osThreadPoolSize = std::nullopt;
-  /// Objectstore thread stack size (MB)
-  std::optional<uint32_t> osThreadStackSizeMb = std::nullopt;
 #endif
 };
 

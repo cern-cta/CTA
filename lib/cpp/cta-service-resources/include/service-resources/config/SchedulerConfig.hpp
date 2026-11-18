@@ -10,7 +10,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 
 namespace cta::service_resources {
 
@@ -20,18 +19,13 @@ namespace cta::service_resources {
 struct SchedulerClientConfig final {
   /// Scheduler DB thread pool size (REQUIRED, must be > 0)
   uint32_t number_of_threads = 0;
-  /// Scheduler DB thread stack size (MB); zero uses the system default.
-  uint32_t thread_stack_size_mb = 0;
 
-  static constexpr std::size_t memberCount() { return 2; }
+  static constexpr std::size_t memberCount() { return 1; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (number_of_threads == 0) {
       result.addError("number_of_threads", "must be greater than zero");
-    }
-    if (thread_stack_size_mb > static_cast<uint32_t>(std::numeric_limits<int>::max())) {
-      result.addError("thread_stack_size_mb", "exceeds the supported integer range");
     }
     return result;
   }

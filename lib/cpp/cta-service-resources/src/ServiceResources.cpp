@@ -26,9 +26,6 @@ ConnectionOptions makeConnectionOptions(const ServiceCatalogueConfig& catalogueC
   connections.archiveFileListingConns = NB_ARCHIVE_FILE_LISTING_CONNS;
 #ifndef CTA_PGSCHED
   connections.osThreadPoolSize = schedulerConfig.client.number_of_threads;
-  if (schedulerConfig.client.thread_stack_size_mb != 0) {
-    connections.osThreadStackSizeMb = schedulerConfig.client.thread_stack_size_mb;
-  }
 #endif
   return connections;
 }
@@ -73,11 +70,7 @@ ServiceResources::ServiceResources(const Params& params, log::Logger& log) : m_l
 #ifndef CTA_PGSCHED
   // [[OStoreDB specific]] thread pool settings, to be removed together with OStoreDB
   if (params.connections.osThreadPoolSize.has_value()) {
-    std::optional<int> threadStackSize;
-    if (params.connections.osThreadStackSizeMb.has_value()) {
-      threadStackSize = static_cast<int>(*params.connections.osThreadStackSizeMb);
-    }
-    m_schedDb->initConfig(static_cast<int>(*params.connections.osThreadPoolSize), threadStackSize);
+    m_schedDb->initConfig(static_cast<int>(*params.connections.osThreadPoolSize), std::nullopt);
   }
 #endif
 
