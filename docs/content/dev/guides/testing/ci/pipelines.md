@@ -35,9 +35,6 @@ Use the input descriptions in the pipeline form for supported formats and defaul
 
 [Scheduled pipelines](https://gitlab.cern.ch/cta/CTA/-/pipeline_schedules) provide additional periodic coverage; investigate their failures even when the MR pipeline passed. Schedule administration and pinned CI-image updates are covered in [CI Maintenance](../../../contributing/maintainers/ci-maintenance.md).
 
-Direct MR pipelines select system-test suites from changed files, leaving unrelated suites available manually.
-Test-module changes select their owning suites; documentation and docs/review tooling select none; other changes select all four.
-Run a manual or child pipeline for full coverage under the usual pipeline rules.
 Scheduled system tests enable local telemetry; stress tests use their separate configuration.
 
 ## Read pipeline results

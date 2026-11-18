@@ -69,20 +69,6 @@ spec:
       when: manual
       allow_failure: true
 
-# Only narrow direct MR pipelines; explicitly requested child variants retain full coverage.
-.system-test-change-rules:
-  rules:
-    - !reference [.sanitizer-manual-rules, rules]
-    - if: '$CI_PIPELINE_SOURCE != "merge_request_event"'
-      when: on_success
-    # Unknown paths and shared code run every suite. Exclude only documentation, unrelated tooling,
-    # and the exact suite modules selected by each job below (GitLab 19.2+).
-    - changes:
-        regexp: >-
-          (?mx)\A(?!docs/|ci/(?:docs|danger)/|.*\.(?i:md|markdown)\z|
-          ci/system_tests/tests/(?:tape_rest_api|client|client_gfal|repack|cta_admin|tape_tools|eos_restore_files)_test\.py\z)
-      when: on_success
-
 .kubernetes-test:
   needs:
     - job: prepare-cta-version
@@ -197,14 +183,6 @@ test-client:
   extends:
     - .kubernetes-test
   stage: system-test
-  rules:
-    - !reference [.system-test-change-rules, rules]
-    - changes:
-        - ci/system_tests/tests/tape_rest_api_test.py
-        - ci/system_tests/tests/client_test.py
-      when: on_success
-    - when: manual
-      allow_failure: true
   variables:
     PYTESTS: "tests/tape_rest_api_test.py tests/client_test.py"
 
@@ -212,13 +190,6 @@ test-client-gfal2:
   extends:
     - .kubernetes-test
   stage: system-test
-  rules:
-    - !reference [.system-test-change-rules, rules]
-    - changes:
-        - ci/system_tests/tests/client_gfal_test.py
-      when: on_success
-    - when: manual
-      allow_failure: true
   variables:
     PYTESTS: "tests/client_gfal_test.py"
 
@@ -226,13 +197,6 @@ test-repack:
   extends:
     - .kubernetes-test
   stage: system-test
-  rules:
-    - !reference [.system-test-change-rules, rules]
-    - changes:
-        - ci/system_tests/tests/repack_test.py
-      when: on_success
-    - when: manual
-      allow_failure: true
   variables:
     PYTESTS: "tests/repack_test.py"
 
@@ -244,14 +208,7 @@ test-cta-tools:
     # Keep tools outside dependency-regression pipelines.
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
-    - !reference [.system-test-change-rules, rules]
-    - changes:
-        - ci/system_tests/tests/cta_admin_test.py
-        - ci/system_tests/tests/tape_tools_test.py
-        - ci/system_tests/tests/eos_restore_files_test.py
-      when: on_success
-    - when: manual
-      allow_failure: true
+    - !reference [.kubernetes-test, rules]
   variables:
     PYTESTS: "tests/cta_admin_test.py tests/tape_tools_test.py tests/eos_restore_files_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
