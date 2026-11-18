@@ -3,123 +3,121 @@
 
 //! Tape commands
 
-use crate::define_typed_admin_cmd;
+use cta_model::tape::TapeState;
 
-define_typed_admin_cmd! {
-    /// Adds a tape (`tape add`).
-    #[proto(Tape.SubcmdAdd)]
-    pub struct Add {
-        /// Volume identifier of the tape
-        vid: str => Vid,
-        /// Media type of the tape
-        media_type: str => MediaType,
-        /// Vendor of the tape
-        vendor: str => Vendor,
-        /// Logical library holding the tape
-        logical_library: str => LogicalLibrary,
-        /// Tape pool of the tape
-        tape_pool: str => TapePool,
-        /// Whether the tape is full
-        full: bool => Full,
-        /// State of the tape
-        state: str? => State,
-        /// Purchase order of the tape
-        purchase_order: str? => MediaPurchaseOrderNumber,
-        /// Reason for the state of the tape
-        reason: str? => Reason,
-        /// Comment
-        comment: str? => Comment,
-    }
+use crate::typed_admin_cmd;
+
+/// Adds a tape (`tape add`).
+#[typed_admin_cmd(Tape::Add)]
+pub struct Add {
+    /// Volume identifier of the tape
+    pub vid: String,
+    /// Media type of the tape
+    pub media_type: String,
+    /// Vendor of the tape
+    pub vendor: String,
+    /// Logical library holding the tape
+    pub logical_library: String,
+    /// Tape pool of the tape
+    pub tape_pool: String,
+    /// Whether the tape is full
+    pub full: bool,
+    /// State of the tape
+    pub state: Option<TapeState>,
+    /// Purchase order of the tape
+    #[proto(MediaPurchaseOrderNumber)]
+    pub purchase_order: Option<String>,
+    /// Reason for the state of the tape
+    pub reason: Option<String>,
+    /// Comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a tape (`tape ch`).
-    #[proto(Tape.SubcmdCh)]
-    pub struct Ch {
-        /// Volume identifier of the tape
-        vid: str => Vid,
-        /// New media type
-        media_type: str? => MediaType,
-        /// New vendor
-        vendor: str? => Vendor,
-        /// New logical library
-        logical_library: str? => LogicalLibrary,
-        /// New tape pool
-        tape_pool: str? => TapePool,
-        /// New encryption key name
-        encryption_key_name: str? => EncryptionKeyName,
-        /// Whether the tape is full
-        full: bool? => Full,
-        /// New verification status
-        verification_status: str? => VerificationStatus,
-        /// New state
-        state: str? => State,
-        /// New purchase order
-        purchase_order: str? => MediaPurchaseOrderNumber,
-        /// Reason for the new state
-        reason: str? => Reason,
-        /// New comment
-        comment: str? => Comment,
-        /// Whether the tape is dirty
-        dirty_bit: bool? => DirtyBit,
-    }
+/// Changes a tape (`tape ch`).
+#[typed_admin_cmd(Tape::Ch)]
+pub struct Ch {
+    /// Volume identifier of the tape
+    pub vid: String,
+    /// New media type
+    pub media_type: Option<String>,
+    /// New vendor
+    pub vendor: Option<String>,
+    /// New logical library
+    pub logical_library: Option<String>,
+    /// New tape pool
+    pub tape_pool: Option<String>,
+    /// New encryption key name
+    pub encryption_key_name: Option<String>,
+    /// Whether the tape is full
+    pub full: Option<bool>,
+    /// New verification status
+    pub verification_status: Option<String>,
+    /// New state
+    pub state: Option<TapeState>,
+    /// New purchase order
+    #[proto(MediaPurchaseOrderNumber)]
+    pub purchase_order: Option<String>,
+    /// Reason for the new state
+    pub reason: Option<String>,
+    /// New comment
+    pub comment: Option<String>,
+    /// Whether the tape is dirty
+    pub dirty_bit: Option<bool>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a tape (`tape rm`).
-    #[proto(Tape.SubcmdRm)]
-    pub struct Rm {
-        /// Volume identifier of the tape
-        vid: str => Vid,
-    }
+/// Removes a tape (`tape rm`).
+#[typed_admin_cmd(Tape::Rm)]
+pub struct Rm {
+    /// Volume identifier of the tape
+    pub vid: String,
 }
 
-define_typed_admin_cmd! {
-    /// Reclaims a tape, making it available for writing again (`tape reclaim`).
-    #[proto(Tape.SubcmdReclaim)]
-    pub struct Reclaim {
-        /// Volume identifier of the tape
-        vid: str => Vid,
-    }
+/// Reclaims a tape, making it available for writing again (`tape reclaim`).
+#[typed_admin_cmd(Tape::Reclaim)]
+pub struct Reclaim {
+    /// Volume identifier of the tape
+    pub vid: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists tapes (`tape ls`).
-    #[proto(Tape.SubcmdLs)]
-    #[item(TalsItem: TapeLsItem)]
-    #[derive(Default)]
-    pub struct Ls {
-        /// Only the tape with this volume identifier
-        vid: str? => Vid,
-        /// Only the tapes of this media type
-        media_type: str? => MediaType,
-        /// Only the tapes of this vendor
-        vendor: str? => Vendor,
-        /// Only the tapes of this logical library
-        logical_library: str? => LogicalLibrary,
-        /// Only the tapes of this tape pool
-        tape_pool: str? => TapePool,
-        /// Only the tapes of this virtual organisation
-        vo: str? => Vo,
-        /// Only the tapes of this capacity, in bytes
-        capacity: u64? => Capacity,
-        /// Only the full (`true`) or non-full (`false`) tapes
-        full: bool? => Full,
-        /// Only the tapes holding these disk file IDs (decimal)
-        disk_file_ids: str_list? => FileId,
-        /// All the tapes, when no other filter is set
-        all: flag => All,
-        /// Only the tapes in this state
-        state: str? => State,
-        /// Only the tapes imported (`true`) or not (`false`) from CASTOR
-        from_castor: bool? => FromCastor,
-        /// Only the tapes with this purchase order
-        purchase_order: str? => MediaPurchaseOrderNumber,
-        /// Only the tapes of this physical library
-        physical_library: str? => PhysicalLibrary,
-        /// Only the tapes holding files with missing copies
-        missing_file_copies: flag => MissingFileCopies,
-        /// Include the file counts and data size per storage class
-        storage_class_stats: flag => GetStorageClassStatistics,
-    }
+/// Lists tapes (`tape ls`).
+#[typed_admin_cmd(Tape::Ls, response = TapeLsItem)]
+#[derive(Default)]
+pub struct Ls {
+    /// Only the tape with this volume identifier
+    pub vid: Option<String>,
+    /// Only the tapes of this media type
+    pub media_type: Option<String>,
+    /// Only the tapes of this vendor
+    pub vendor: Option<String>,
+    /// Only the tapes of this logical library
+    pub logical_library: Option<String>,
+    /// Only the tapes of this tape pool
+    pub tape_pool: Option<String>,
+    /// Only the tapes of this virtual organisation
+    pub vo: Option<String>,
+    /// Only the tapes of this capacity, in bytes
+    pub capacity: Option<u64>,
+    /// Only the full (`true`) or non-full (`false`) tapes
+    pub full: Option<bool>,
+    /// Only the tapes holding these disk file IDs (decimal)
+    #[proto(FileId)]
+    pub disk_file_ids: Option<Vec<String>>,
+    /// All the tapes, when no other filter is set
+    #[proto(only_if_true)]
+    pub all: bool,
+    /// Only the tapes in this state
+    pub state: Option<TapeState>,
+    /// Only the tapes imported (`true`) or not (`false`) from CASTOR
+    pub from_castor: Option<bool>,
+    /// Only the tapes with this purchase order
+    #[proto(MediaPurchaseOrderNumber)]
+    pub purchase_order: Option<String>,
+    /// Only the tapes of this physical library
+    pub physical_library: Option<String>,
+    /// Only the tapes holding files with missing copies
+    #[proto(only_if_true)]
+    pub missing_file_copies: bool,
+    /// Include the file counts and data size per storage class
+    #[proto(GetStorageClassStatistics, only_if_true)]
+    pub storage_class_stats: bool,
 }

@@ -3,12 +3,9 @@
 
 //! Version command
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Shows the versions of the client, the frontend and the catalogue (`version`).
-    #[proto(Version.SubcmdNone)]
-    #[item(VersionItem: VersionItem)]
-    #[derive(Default)]
-    pub struct Version {}
-}
+/// Shows the versions of the client, the frontend and the catalogue (`version`).
+#[typed_admin_cmd(Version, response = VersionItem)]
+#[derive(Default)]
+pub struct Version {}

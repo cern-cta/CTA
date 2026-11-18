@@ -3,59 +3,50 @@
 
 //! Disk system commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds a disk system (`disksystem add`).
-    #[proto(Disksystem.SubcmdAdd)]
-    pub struct Add {
-        /// Name of the disk system
-        disk_system: str => DiskSystem,
-        /// Regular expression matching the destination URLs of the disk system
-        file_regexp: str => FileRegexp,
-        /// Disk instance of the disk system
-        disk_instance: str => DiskInstance,
-        /// Disk instance space of the disk system
-        disk_instance_space: str => DiskInstanceSpace,
-        /// Free space to keep before processing requests, in bytes
-        targeted_free_space: u64 => TargetedFreeSpace,
-        /// How long to wait when the free space is insufficient, in seconds
-        sleep_time: u64 => SleepTime,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds a disk system (`disksystem add`).
+#[typed_admin_cmd(Disksystem::Add)]
+pub struct Add {
+    /// Name of the disk system
+    pub disk_system: String,
+    /// Regular expression matching the destination URLs of the disk system
+    pub file_regexp: String,
+    /// Disk instance of the disk system
+    pub disk_instance: String,
+    /// Disk instance space of the disk system
+    pub disk_instance_space: String,
+    /// Free space to keep before processing requests, in bytes
+    pub targeted_free_space: u64,
+    /// How long to wait when the free space is insufficient, in seconds
+    pub sleep_time: u64,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes a disk system (`disksystem ch`).
-    #[proto(Disksystem.SubcmdCh)]
-    pub struct Ch {
-        /// Name of the disk system
-        disk_system: str => DiskSystem,
-        /// New regular expression matching the destination URLs
-        file_regexp: str? => FileRegexp,
-        /// New free space to keep, in bytes
-        targeted_free_space: u64? => TargetedFreeSpace,
-        /// New waiting time, in seconds
-        sleep_time: u64? => SleepTime,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes a disk system (`disksystem ch`).
+#[typed_admin_cmd(Disksystem::Ch)]
+pub struct Ch {
+    /// Name of the disk system
+    pub disk_system: String,
+    /// New regular expression matching the destination URLs
+    pub file_regexp: Option<String>,
+    /// New free space to keep, in bytes
+    pub targeted_free_space: Option<u64>,
+    /// New waiting time, in seconds
+    pub sleep_time: Option<u64>,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes a disk system (`disksystem rm`).
-    #[proto(Disksystem.SubcmdRm)]
-    pub struct Rm {
-        /// Name of the disk system
-        disk_system: str => DiskSystem,
-    }
+/// Removes a disk system (`disksystem rm`).
+#[typed_admin_cmd(Disksystem::Rm)]
+pub struct Rm {
+    /// Name of the disk system
+    pub disk_system: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the disk systems (`disksystem ls`).
-    #[proto(Disksystem.SubcmdLs)]
-    #[item(DslsItem: DiskSystemLsItem)]
-    #[derive(Default)]
-    pub struct Ls {}
-}
+/// Lists the disk systems (`disksystem ls`).
+#[typed_admin_cmd(Disksystem::Ls, response = DiskSystemLsItem)]
+#[derive(Default)]
+pub struct Ls {}

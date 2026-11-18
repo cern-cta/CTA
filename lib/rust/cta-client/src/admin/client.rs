@@ -6,21 +6,19 @@
 use std::pin::Pin;
 
 use cta_grpc_common::{AuthorizationInterceptor, EndpointConfig};
-use cta_protobuf::cta::{
-    admin::AdminCmd,
-    xrd::{
-        Request, Response, StreamResponse, cta_rpc_client::CtaRpcClient,
-        cta_rpc_stream_client::CtaRpcStreamClient, data::Data, request::Request as RequestType,
-        response::ResponseType, stream_response::Contents,
-    },
+use cta_model::ConversionError;
+use cta_protobuf::cta::xrd::{
+    Response, cta_rpc_client::CtaRpcClient, cta_rpc_stream_client::CtaRpcStreamClient,
 };
+#[cfg(feature = "json")]
 use serde_json::Value;
 use tokio_stream::{Stream, StreamExt};
-use tonic::{Streaming, service::interceptor::InterceptedService, transport::Channel};
+use tonic::{service::interceptor::InterceptedService, transport::Channel};
 
 use super::{
     AdminError,
-    commands::{StreamingAdminCmd, TypedAdminCmd},
+    commands::{StreamingAdminCmd, UnaryAdminCmd},
+    stream::{check_header, check_response_type, records, request},
 };
 
 type Service = InterceptedService<Channel, AuthorizationInterceptor>;
@@ -32,8 +30,7 @@ pub type AdminStream<T> = Pin<Box<dyn Stream<Item = Result<T, AdminError>> + Sen
 
 /// An authenticated client for the admin services of the CTA frontend.
 ///
-/// Both services share one channel. The client is cheap to clone, and its methods take `&self`, so it can be used by
-/// concurrent tasks.
+/// Handles both unary and streaming commands. The sub-clients share the same channel.
 #[derive(Clone)]
 pub struct AdminClient {
     unary: CtaRpcClient<Service>,
@@ -61,28 +58,11 @@ impl AdminClient {
 
     /// Sends a unary command to `CtaRpc.Admin` and returns the response.
     ///
-    /// Only compiles for commands that are not [`TypedAdminCmd::STREAMING`]:
-    ///
-    /// ```compile_fail
-    /// # use cta_client::admin::{AdminClient, commands::tape_pool};
-    /// # #[tokio::main(flavor = "current_thread")]
-    /// # async fn main() {
-    /// # let client = None::<AdminClient>.unwrap();
-    /// client.unary(tape_pool::Ls::default()).await;
-    /// # }
-    /// ```
-    ///
     /// # Errors
     ///
     /// Returns the [`AdminError`] matching the gRPC status, or [`AdminError::InvalidResponse`] if the frontend
     /// answered with a non-success response type.
-    pub async fn unary<C: TypedAdminCmd>(&self, cmd: C) -> Result<Response, AdminError> {
-        const {
-            assert!(
-                !C::STREAMING,
-                "streaming commands must be sent with `AdminClient::stream`"
-            )
-        };
+    pub async fn unary<C: UnaryAdminCmd>(&self, cmd: C) -> Result<Response, AdminError> {
         let response = self
             .unary
             .clone()
@@ -93,21 +73,20 @@ impl AdminClient {
         Ok(response)
     }
 
+    /// Same as [`Self::unary`], for the commands whose response carries nothing of interest (adding, changing or
+    /// deleting a resource): only tells whether the command succeeded.
+    ///
+    /// # Errors
+    ///
+    /// Same as [`Self::unary`].
+    pub async fn run<C: UnaryAdminCmd>(&self, cmd: C) -> Result<(), AdminError> {
+        self.unary(cmd).await.map(drop)
+    }
+
     /// Sends a streaming command to `CtaRpcStream.GenericAdminStream` and returns its records.
     ///
     /// The stream header is read before returning, so that the errors reported at the start of the command (user
     /// errors, authentication, ...) are returned here rather than as the first item of the stream.
-    ///
-    /// Only compiles for [`StreamingAdminCmd`]s:
-    ///
-    /// ```compile_fail
-    /// # use cta_client::admin::{AdminClient, commands::tape_pool};
-    /// # #[tokio::main(flavor = "current_thread")]
-    /// # async fn main() {
-    /// # let client = None::<AdminClient>.unwrap();
-    /// client.stream(tape_pool::Rm::builder().name("pool").build()).await;
-    /// # }
-    /// ```
     ///
     /// # Errors
     ///
@@ -129,15 +108,18 @@ impl AdminClient {
     }
 
     /// Same as [`Self::stream`], but returns each record as the proto3 JSON printed by `cta-admin --jsonl`
-    /// (lowerCamelCase keys, 64-bit integers as strings, enums as names, defaults always printed).
+    /// (lowerCamelCase keys, 64-bit integers as strings, enums as names, defaults always printed). Requires the
+    /// `json` feature.
     ///
     /// # Errors
     ///
     /// See [`Self::stream`]; a record that cannot be serialized is an [`AdminError::InvalidResponse`] item.
-    pub async fn stream_json<C: StreamingAdminCmd>(
-        &self,
-        cmd: C,
-    ) -> Result<AdminStream<Value>, AdminError> {
+    #[cfg(feature = "json")]
+    pub async fn stream_json<C>(&self, cmd: C) -> Result<AdminStream<Value>, AdminError>
+    where
+        C: StreamingAdminCmd,
+        C::Item: serde::Serialize,
+    {
         let items = self.stream(cmd).await?;
         Ok(Box::pin(items.map(|item| {
             serde_json::to_value(item?).map_err(|e| {
@@ -145,81 +127,22 @@ impl AdminClient {
             })
         })))
     }
-}
 
-fn request(cmd: AdminCmd) -> Request {
-    Request {
-        request: Some(RequestType::Admincmd(Box::new(cmd))),
+    /// Same as [`Self::stream`], but converts each record into the domain type `T` (see [`cta_model`]).
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::stream`]; a record that cannot be converted is an [`AdminError::InvalidResponse`] item.
+    pub async fn stream_as<C, T>(&self, cmd: C) -> Result<AdminStream<T>, AdminError>
+    where
+        C: StreamingAdminCmd,
+        T: TryFrom<C::Item, Error = ConversionError> + Send + 'static,
+    {
+        let items = self.stream(cmd).await?;
+        Ok(Box::pin(
+            items.map(|item| T::try_from(item?).map_err(AdminError::from)),
+        ))
     }
-}
-
-/// Checks the type of a unary response or stream header.
-///
-/// The frontend reports every error as the status of the call, so anything other than `RSP_SUCCESS` breaks the
-/// protocol.
-fn check_response_type(r#type: ResponseType, message: &str) -> Result<(), AdminError> {
-    match r#type {
-        ResponseType::RspSuccess => Ok(()),
-        other => Err(AdminError::invalid_response(format!(
-            "unexpected response type {}: {message}",
-            other.as_str_name()
-        ))),
-    }
-}
-
-/// Reads the first frame of `stream`, which must be a success header.
-async fn check_header(stream: &mut Streaming<StreamResponse>) -> Result<(), AdminError> {
-    match stream.message().await? {
-        Some(StreamResponse {
-            contents: Some(Contents::Header(header)),
-        }) => check_response_type(header.r#type(), &header.message_txt),
-        Some(StreamResponse {
-            contents: Some(Contents::Data(_)),
-        }) => Err(AdminError::invalid_response(
-            "stream data received before the header",
-        )),
-        Some(StreamResponse { contents: None }) => Err(AdminError::invalid_response(
-            "empty frame received before the header",
-        )),
-        None => Err(AdminError::invalid_response(
-            "stream ended without a header",
-        )),
-    }
-}
-
-/// The records of `stream` (after the header), extracted with `item` (the [`StreamingAdminCmd::item`] of the
-/// command), ending after the first error.
-fn records<T: 'static>(
-    stream: Streaming<StreamResponse>,
-    item: fn(Data) -> Result<T, Box<Data>>,
-) -> impl Stream<Item = Result<T, AdminError>> + Send {
-    let mut failed = false;
-    stream
-        .filter_map(move |frame| match frame {
-            Ok(StreamResponse {
-                contents: Some(Contents::Data(data)),
-            }) => data.data.map(|data| {
-                item(data).map_err(|other| {
-                    AdminError::invalid_response(format!("unexpected record: {other:?}"))
-                })
-            }),
-            Ok(StreamResponse {
-                contents: Some(Contents::Header(_)),
-            }) => Some(Err(AdminError::invalid_response(
-                "second stream header received",
-            ))),
-            // frames without a payload carry nothing to report
-            Ok(StreamResponse { contents: None }) => None,
-            Err(status) => Some(Err(status.into())),
-        })
-        // `Streaming` already ends after a failed status; this also ends the stream after a protocol error
-        .map_while(move |item| {
-            if failed {
-                return None;
-            }
-            failed = item.is_err();
-            Some(item)
-        })
 }
 
 #[cfg(test)]

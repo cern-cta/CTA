@@ -3,59 +3,53 @@
 
 //! Activity mount rule commands
 
-use crate::define_typed_admin_cmd;
+use crate::typed_admin_cmd;
 
-define_typed_admin_cmd! {
-    /// Adds an activity mount rule (`activitymountrule add`).
-    #[proto(Activitymountrule.SubcmdAdd)]
-    pub struct Add {
-        /// Disk instance of the requester
-        instance: str => Instance,
-        /// User name of the requester
-        name: str => Username,
-        /// Regular expression matching the activity of the requests
-        activity_regex: str => ActivityRegex,
-        /// Mount policy applied to the requests
-        mount_policy: str => MountPolicy,
-        /// Comment
-        comment: str => Comment,
-    }
+/// Adds an activity mount rule (`activitymountrule add`).
+#[typed_admin_cmd(Activitymountrule::Add)]
+pub struct Add {
+    /// Disk instance of the requester
+    pub instance: String,
+    /// User name of the requester
+    #[proto(Username)]
+    pub name: String,
+    /// Regular expression matching the activity of the requests
+    pub activity_regex: String,
+    /// Mount policy applied to the requests
+    pub mount_policy: String,
+    /// Comment
+    pub comment: String,
 }
 
-define_typed_admin_cmd! {
-    /// Changes an activity mount rule (`activitymountrule ch`).
-    #[proto(Activitymountrule.SubcmdCh)]
-    pub struct Ch {
-        /// Disk instance of the requester
-        instance: str => Instance,
-        /// User name of the requester
-        name: str => Username,
-        /// Regular expression matching the activity of the requests
-        activity_regex: str => ActivityRegex,
-        /// New mount policy
-        mount_policy: str? => MountPolicy,
-        /// New comment
-        comment: str? => Comment,
-    }
+/// Changes an activity mount rule (`activitymountrule ch`).
+#[typed_admin_cmd(Activitymountrule::Ch)]
+pub struct Ch {
+    /// Disk instance of the requester
+    pub instance: String,
+    /// User name of the requester
+    #[proto(Username)]
+    pub name: String,
+    /// Regular expression matching the activity of the requests
+    pub activity_regex: String,
+    /// New mount policy
+    pub mount_policy: Option<String>,
+    /// New comment
+    pub comment: Option<String>,
 }
 
-define_typed_admin_cmd! {
-    /// Removes an activity mount rule (`activitymountrule rm`).
-    #[proto(Activitymountrule.SubcmdRm)]
-    pub struct Rm {
-        /// Disk instance of the requester
-        instance: str => Instance,
-        /// User name of the requester
-        name: str => Username,
-        /// Regular expression matching the activity of the requests
-        activity_regex: str => ActivityRegex,
-    }
+/// Removes an activity mount rule (`activitymountrule rm`).
+#[typed_admin_cmd(Activitymountrule::Rm)]
+pub struct Rm {
+    /// Disk instance of the requester
+    pub instance: String,
+    /// User name of the requester
+    #[proto(Username)]
+    pub name: String,
+    /// Regular expression matching the activity of the requests
+    pub activity_regex: String,
 }
 
-define_typed_admin_cmd! {
-    /// Lists the activity mount rules (`activitymountrule ls`).
-    #[proto(Activitymountrule.SubcmdLs)]
-    #[item(AmrlsItem: ActivityMountRuleLsItem)]
-    #[derive(Default)]
-    pub struct Ls {}
-}
+/// Lists the activity mount rules (`activitymountrule ls`).
+#[typed_admin_cmd(Activitymountrule::Ls, response = ActivityMountRuleLsItem)]
+#[derive(Default)]
+pub struct Ls {}

@@ -11,104 +11,113 @@ use cta_protobuf::cta::admin::{
 };
 
 use super::{
-    StreamingAdminCmd, TypedAdminCmd, activity_mount_rule, admin, archive_route, disk_instance,
-    disk_instance_space, disk_system, drive, failed_request, group_mount_rule, logical_library,
-    media_type, mount_policy, physical_library, recycle_tape_file, repack, requester_mount_rule,
-    show_queues, storage_class, tape, tape_file, tape_pool, version, virtual_organization,
+    StreamingAdminCmd, TypedAdminCmd, UnaryAdminCmd, activity_mount_rule, admin, archive_route,
+    disk_instance, disk_instance_space, disk_system, drive, failed_request, group_mount_rule,
+    logical_library, media_type, mount_policy, physical_library, recycle_tape_file, repack,
+    requester_mount_rule, show_queues, storage_class, tape, tape_file, tape_pool, version,
+    virtual_organization,
 };
-use crate::admin::commands::{CLIENT_VERSION, PROTOBUF_TAG};
+use crate::{
+    admin::commands::{CLIENT_VERSION, PROTOBUF_TAG},
+    typed_admin_cmd,
+};
 
-/// (command, subcommand, streaming) of a typed command
-fn pair<T: TypedAdminCmd>() -> (Cmd, SubCmd, bool) {
-    (T::CMD, T::SUBCMD, T::STREAMING)
+/// (command, subcommand, streaming) of a unary command
+fn unary<T: UnaryAdminCmd>() -> (Cmd, SubCmd, bool) {
+    (T::CMD, T::SUBCMD, false)
+}
+
+/// (command, subcommand, streaming) of a streaming command
+fn streaming<T: StreamingAdminCmd>() -> (Cmd, SubCmd, bool) {
+    (T::CMD, T::SUBCMD, true)
 }
 
 /// Every typed command, except `failed_request::Summary` which shares the pair of `failed_request::Ls`
 fn typed_pairs() -> Vec<(Cmd, SubCmd, bool)> {
     vec![
-        pair::<admin::Add>(),
-        pair::<admin::Ch>(),
-        pair::<admin::Rm>(),
-        pair::<admin::Ls>(),
-        pair::<virtual_organization::Add>(),
-        pair::<virtual_organization::Ch>(),
-        pair::<virtual_organization::Rm>(),
-        pair::<virtual_organization::Ls>(),
-        pair::<disk_instance::Add>(),
-        pair::<disk_instance::Ch>(),
-        pair::<disk_instance::Rm>(),
-        pair::<disk_instance::Ls>(),
-        pair::<disk_instance_space::Add>(),
-        pair::<disk_instance_space::Ch>(),
-        pair::<disk_instance_space::Rm>(),
-        pair::<disk_instance_space::Ls>(),
-        pair::<disk_system::Add>(),
-        pair::<disk_system::Ch>(),
-        pair::<disk_system::Rm>(),
-        pair::<disk_system::Ls>(),
-        pair::<recycle_tape_file::Ls>(),
-        pair::<recycle_tape_file::Restore>(),
-        pair::<tape_file::Ch>(),
-        pair::<tape_file::Rm>(),
-        pair::<tape_file::Ls>(),
-        pair::<drive::Up>(),
-        pair::<drive::Down>(),
-        pair::<drive::Ls>(),
-        pair::<drive::Rm>(),
-        pair::<drive::Ch>(),
-        pair::<logical_library::Add>(),
-        pair::<logical_library::Ch>(),
-        pair::<logical_library::Rm>(),
-        pair::<logical_library::Ls>(),
-        pair::<media_type::Add>(),
-        pair::<media_type::Ch>(),
-        pair::<media_type::Rm>(),
-        pair::<media_type::Ls>(),
-        pair::<physical_library::Add>(),
-        pair::<physical_library::Ch>(),
-        pair::<physical_library::Rm>(),
-        pair::<physical_library::Ls>(),
-        pair::<activity_mount_rule::Add>(),
-        pair::<activity_mount_rule::Ch>(),
-        pair::<activity_mount_rule::Rm>(),
-        pair::<activity_mount_rule::Ls>(),
-        pair::<group_mount_rule::Add>(),
-        pair::<group_mount_rule::Ch>(),
-        pair::<group_mount_rule::Rm>(),
-        pair::<group_mount_rule::Ls>(),
-        pair::<mount_policy::Add>(),
-        pair::<mount_policy::Ch>(),
-        pair::<mount_policy::Rm>(),
-        pair::<mount_policy::Ls>(),
-        pair::<requester_mount_rule::Add>(),
-        pair::<requester_mount_rule::Ch>(),
-        pair::<requester_mount_rule::Rm>(),
-        pair::<requester_mount_rule::Ls>(),
-        pair::<failed_request::Ls>(),
-        pair::<failed_request::Rm>(),
-        pair::<show_queues::ShowQueues>(),
-        pair::<repack::Add>(),
-        pair::<repack::Rm>(),
-        pair::<repack::Ls>(),
-        pair::<repack::Err>(),
-        pair::<archive_route::Add>(),
-        pair::<archive_route::Ch>(),
-        pair::<archive_route::Rm>(),
-        pair::<archive_route::Ls>(),
-        pair::<storage_class::Add>(),
-        pair::<storage_class::Ch>(),
-        pair::<storage_class::Rm>(),
-        pair::<storage_class::Ls>(),
-        pair::<tape_pool::Add>(),
-        pair::<tape_pool::Ch>(),
-        pair::<tape_pool::Rm>(),
-        pair::<tape_pool::Ls>(),
-        pair::<tape::Add>(),
-        pair::<tape::Ch>(),
-        pair::<tape::Rm>(),
-        pair::<tape::Reclaim>(),
-        pair::<tape::Ls>(),
-        pair::<version::Version>(),
+        unary::<admin::Add>(),
+        unary::<admin::Ch>(),
+        unary::<admin::Rm>(),
+        streaming::<admin::Ls>(),
+        unary::<virtual_organization::Add>(),
+        unary::<virtual_organization::Ch>(),
+        unary::<virtual_organization::Rm>(),
+        streaming::<virtual_organization::Ls>(),
+        unary::<disk_instance::Add>(),
+        unary::<disk_instance::Ch>(),
+        unary::<disk_instance::Rm>(),
+        streaming::<disk_instance::Ls>(),
+        unary::<disk_instance_space::Add>(),
+        unary::<disk_instance_space::Ch>(),
+        unary::<disk_instance_space::Rm>(),
+        streaming::<disk_instance_space::Ls>(),
+        unary::<disk_system::Add>(),
+        unary::<disk_system::Ch>(),
+        unary::<disk_system::Rm>(),
+        streaming::<disk_system::Ls>(),
+        streaming::<recycle_tape_file::Ls>(),
+        unary::<recycle_tape_file::Restore>(),
+        unary::<tape_file::Ch>(),
+        unary::<tape_file::Rm>(),
+        streaming::<tape_file::Ls>(),
+        unary::<drive::Up>(),
+        unary::<drive::Down>(),
+        streaming::<drive::Ls>(),
+        unary::<drive::Rm>(),
+        unary::<drive::Ch>(),
+        unary::<logical_library::Add>(),
+        unary::<logical_library::Ch>(),
+        unary::<logical_library::Rm>(),
+        streaming::<logical_library::Ls>(),
+        unary::<media_type::Add>(),
+        unary::<media_type::Ch>(),
+        unary::<media_type::Rm>(),
+        streaming::<media_type::Ls>(),
+        unary::<physical_library::Add>(),
+        unary::<physical_library::Ch>(),
+        unary::<physical_library::Rm>(),
+        streaming::<physical_library::Ls>(),
+        unary::<activity_mount_rule::Add>(),
+        unary::<activity_mount_rule::Ch>(),
+        unary::<activity_mount_rule::Rm>(),
+        streaming::<activity_mount_rule::Ls>(),
+        unary::<group_mount_rule::Add>(),
+        unary::<group_mount_rule::Ch>(),
+        unary::<group_mount_rule::Rm>(),
+        streaming::<group_mount_rule::Ls>(),
+        unary::<mount_policy::Add>(),
+        unary::<mount_policy::Ch>(),
+        unary::<mount_policy::Rm>(),
+        streaming::<mount_policy::Ls>(),
+        unary::<requester_mount_rule::Add>(),
+        unary::<requester_mount_rule::Ch>(),
+        unary::<requester_mount_rule::Rm>(),
+        streaming::<requester_mount_rule::Ls>(),
+        streaming::<failed_request::Ls>(),
+        unary::<failed_request::Rm>(),
+        streaming::<show_queues::ShowQueues>(),
+        unary::<repack::Add>(),
+        unary::<repack::Rm>(),
+        streaming::<repack::Ls>(),
+        unary::<repack::Err>(),
+        unary::<archive_route::Add>(),
+        unary::<archive_route::Ch>(),
+        unary::<archive_route::Rm>(),
+        streaming::<archive_route::Ls>(),
+        unary::<storage_class::Add>(),
+        unary::<storage_class::Ch>(),
+        unary::<storage_class::Rm>(),
+        streaming::<storage_class::Ls>(),
+        unary::<tape_pool::Add>(),
+        unary::<tape_pool::Ch>(),
+        unary::<tape_pool::Rm>(),
+        streaming::<tape_pool::Ls>(),
+        unary::<tape::Add>(),
+        unary::<tape::Ch>(),
+        unary::<tape::Rm>(),
+        unary::<tape::Reclaim>(),
+        streaming::<tape::Ls>(),
+        streaming::<version::Version>(),
     ]
 }
 
@@ -149,15 +158,10 @@ fn commands_are_unique() {
 #[test]
 fn streaming_commands() {
     // `streamCmds` in `tools/CtaAdminCmdParser.hpp`: every `ls`, plus `showqueues` and `version`
-    let streaming = typed_pairs().into_iter().filter(|(_, _, s)| *s).count();
-    assert_eq!(streaming, 23);
-    const { assert!(show_queues::ShowQueues::STREAMING) };
-    const { assert!(version::Version::STREAMING) };
-    const { assert!(failed_request::Summary::STREAMING) };
-    const { assert!(tape::Ls::STREAMING) };
-    const { assert!(!tape::Reclaim::STREAMING) };
-    const { assert!(!drive::Up::STREAMING) };
-    const { assert!(!repack::Err::STREAMING) };
+    let streaming_count = typed_pairs().into_iter().filter(|(_, _, s)| *s).count();
+    assert_eq!(streaming_count, 23);
+    // not in `typed_pairs`, as it shares the pair of `failed_request::Ls`
+    streaming::<failed_request::Summary>();
 }
 
 /// The record of each streaming command is the one of its `#[item]`, any other record is given back
@@ -276,6 +280,95 @@ fn required_and_optional_options() {
 }
 
 #[test]
+fn converted_options() {
+    use cta_model::{routing::ArchiveRouteType, tape::TapeState};
+
+    let cmd: AdminCmd = tape::Ls::builder()
+        .state(TapeState::RepackingDisabled)
+        .build()
+        .into();
+    assert_eq!(
+        cmd.option_str,
+        vec![string(StrKey::State, "REPACKING_DISABLED")]
+    );
+
+    let cmd: AdminCmd = archive_route::Rm::builder()
+        .storage_class("sc")
+        .copy_nb(1)
+        .archive_route_type(ArchiveRouteType::Repack)
+        .build()
+        .into();
+    assert!(
+        cmd.option_str
+            .contains(&string(StrKey::ArchiveRouteType, "REPACK"))
+    );
+
+    let cmd = crate::admin_cmd!(Tape.SubcmdLs {
+        State: Option<TapeState> => Some(TapeState::Active),
+        Vid: Option<String> => None,
+        Capacity: u64 => 5u32,
+        Full: Option<bool> => Some(true),
+        FileId: Vec<String> => ["1", "2"].map(String::from).to_vec(),
+    });
+    assert_eq!(cmd.option_str, vec![string(StrKey::State, "ACTIVE")]);
+    assert_eq!(cmd.option_uint64, vec![uint(U64Key::Capacity, 5)]);
+    assert_eq!(cmd.option_bool, vec![boolean(BoolKey::Full, true)]);
+    assert_eq!(
+        cmd.option_str_list,
+        vec![OptionStrList {
+            key: StrListKey::FileId.into(),
+            item: vec!["1".to_owned(), "2".to_owned()],
+        }]
+    );
+}
+
+/// Domain values of the test of non-string targets
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Capacity(u64);
+
+impl super::OptionValue for Capacity {
+    type Key = U64Key;
+
+    fn push(self, cmd: &mut AdminCmd, key: Self::Key) {
+        self.0.push(cmd, key);
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Fullness {
+    Full,
+    NotFull,
+}
+
+impl super::OptionValue for Fullness {
+    type Key = BoolKey;
+
+    fn push(self, cmd: &mut AdminCmd, key: Self::Key) {
+        (self == Fullness::Full).push(cmd, key);
+    }
+}
+
+/// A tape listing with options of other types than strings
+#[typed_admin_cmd(Tape::Ls)]
+struct ConvertedLs {
+    pub capacity: Capacity,
+    pub full: Option<Fullness>,
+}
+
+#[test]
+fn converted_options_of_other_types() {
+    let cmd: AdminCmd = ConvertedLs::builder()
+        .capacity(Capacity(42))
+        .full(Fullness::NotFull)
+        .build()
+        .into();
+
+    assert!(cmd.option_str.is_empty());
+    assert_eq!(cmd.option_uint64, vec![uint(U64Key::Capacity, 42)]);
+    assert_eq!(cmd.option_bool, vec![boolean(BoolKey::Full, false)]);
+}
+
+#[test]
 fn failed_request_summary() {
     let cmd: AdminCmd = failed_request::Summary::builder()
         .just_archive(true)
@@ -321,7 +414,7 @@ fn server_table(source: &str, table: &str) -> Vec<(Cmd, SubCmd)> {
         .collect()
 }
 
-/// Check that `STREAMING` routes each command to the service implementing it on the admin API: streaming commands
+/// Check that the kind of each command (unary or streaming) routes it to the service implementing it on the admin API: streaming commands
 /// to `STREAM_CMD_TABLE` (`GenericAdminStream`), the others to `SYNC_CMD_TABLE` (`Admin`).
 #[test]
 fn streaming_matches_admin_api() {

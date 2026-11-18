@@ -6,6 +6,7 @@
 use std::borrow::Cow;
 
 use cta_grpc_common::Error as RpcError;
+use cta_model::ConversionError;
 
 /// The underlying error of an [`AdminError::InvalidResponse`].
 pub type BoxedError = Box<dyn std::error::Error + Send + Sync + 'static>;
@@ -35,12 +36,13 @@ pub enum AdminError {
     /// The frontend API could not be reached, or the connection could not be configured or was lost
     #[error(transparent)]
     Transport(RpcError),
-    /// The frontend API answered with something that does not follow the protocol
+    /// The frontend API answered with something that does not follow the protocol, or with a record that cannot be
+    /// converted into its domain type
     #[error("Invalid response: {message}")]
     InvalidResponse {
         /// What is wrong with the response
         message: String,
-        /// The error raised while decoding the response, if any
+        /// The error raised while decoding or converting the response, if any
         #[source]
         source: Option<BoxedError>,
     },
@@ -126,5 +128,11 @@ impl From<RpcError> for AdminError {
             RpcError::Status(status) => status.into(),
             error => Self::Transport(error),
         }
+    }
+}
+
+impl From<ConversionError> for AdminError {
+    fn from(error: ConversionError) -> Self {
+        Self::invalid_response_from(format!("record cannot be converted: {error}"), error)
     }
 }

@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Generic client for the typed admin commands of [`commands`].
+//! The admin API (`cta-admin-api`): its client and the typed admin commands it sends ([`commands`]).
 //!
 //! [`AdminClient`] sends any [`TypedAdminCmd`](commands::TypedAdminCmd) to the right frontend service: the commands answered with a stream
 //! (every `ls`, `showqueues`, `version`) go to `CtaRpcStream.GenericAdminStream`, the others to `CtaRpc.Admin`.
 //! The records of a stream are returned as the protobuf type of the command ([`StreamingAdminCmd::Item`](commands::StreamingAdminCmd::Item)), or as
-//! the proto3 JSON printed by `cta-admin --jsonl` ([`AdminClient::stream_json`]); errors are [`AdminError`]s.
+//! the proto3 JSON printed by `cta-admin --jsonl` (`AdminClient::stream_json`, with the `json` feature); errors are [`AdminError`]s.
 //!
 //! ```no_run
 //! use cta_client::admin::AdminClient;
@@ -38,6 +38,9 @@
 mod client;
 pub mod commands;
 mod error;
+mod stream;
+#[cfg(test)]
+mod test_support;
 
 pub use client::{AdminClient, AdminStream};
 pub use error::{AdminError, BoxedError};
