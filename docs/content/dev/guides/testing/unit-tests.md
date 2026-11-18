@@ -56,10 +56,12 @@ Python tooling has its own tests and dependencies, separate from the C++ package
 The `unit-test-python` CI job currently runs:
 
 ```bash
-python -m pytest ci --ignore=ci/system_tests
+uv sync --locked --all-packages --all-extras --no-default-groups --group unit-tests
+uv run --no-sync pytest
 ```
 
-This covers Python tooling tests under `ci/`, including release tooling and documentation publication. It is not repository-wide Python test discovery. The documentation publication tests need the MkDocs/mike environment prepared by `ci/docs/prepare-environment.sh`; consult `.gitlab/ci/tests.gitlab-ci.yml` for the job's current setup.
+Root test discovery covers CI tooling, Python libraries, and CLI/udev tests, excluding system tests and documentation publication tests.
+The `build-docs` job runs publication tests separately in the documentation environment prepared by `ci/docs/prepare-environment.sh`.
 
 With the required dependencies installed, run a narrower suite, for example:
 

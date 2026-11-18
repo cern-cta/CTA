@@ -16,23 +16,28 @@
     ]
 
 [dependency-groups]
-    dev = [{ include-group = "lint" }, { include-group = "unit-tests" }]
-    lint = [
-        "ruff==0.14.9",
-        "pyright[nodejs]",
+    dev = [
+        { include-group = "lint" },
+        { include-group = "unit-tests" },
+        { include-group = "system-tests" },
+        { include-group = "type-check" },
         "pre-commit>=4.3.0",
-        "hatchling>=1.27.0",
+    ]
+    lint = ["ruff==0.14.9"]
+    source-checks = [
+        "clang-format==20.1.8",
+        "cppcheck-codequality",
+        "detect-secrets==1.5.0",
+        "yamllint==1.37.1",
+        "PyYAML",
     ]
     unit-tests = [
+        { include-group = "scripts" },
         "hatchling>=1.27.0",
         "pytest>=8",
         "pytest-cov",
         "cattrs",
         "grpcio-tools",
-        "PyYAML",
-        "jsonschema",
-        "typing-extensions>=4.4.0",
-        { include-group = "docs" },
     ]
     # These scripts also run independently in existing pipeline environments.
     scripts = [
@@ -43,13 +48,12 @@
         "pyjwt",
         "cryptography",
     ]
-    # Imports needed for static analysis; pytest-asyncio is only needed to run system tests.
     type-check = [
-        { include-group = "dev" },
-        { include-group = "scripts" },
-        "kubernetes>=35.0.0,<36",
-        "oauthlib>=3.2.2",
-        "fastjsonschema>=2.21.2",
+        "pyright[nodejs]",
+        { include-group = "unit-tests" },
+        { include-group = "system-tests" },
+        # Resolve imports in docs/hooks.py.
+        { include-group = "docs" },
     ]
     system-tests = [
         "kubernetes>=35.0.0,<36",
@@ -104,7 +108,7 @@
     ]
 
 [tool.pytest.ini_options]
-    addopts = "-ra --ignore=ci/system_tests"
+    addopts = "-ra --ignore=ci/system_tests --ignore=ci/docs"
     testpaths = [
         "ci",
         "lib/python",

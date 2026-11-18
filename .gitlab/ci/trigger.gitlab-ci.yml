@@ -238,7 +238,7 @@ spec:
       variables:
         # Branch pipelines do not have a merge-request source branch.
         BRANCH_NAME: $CI_COMMIT_BRANCH
-  image: $IMAGE_LINT
+  image: $IMAGE_AUTOMATION
   variables:
     GIT_STRATEGY: "none"  # Don't need anything from the repo for this job
     TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches

@@ -106,7 +106,7 @@ The failure record comes from [pytest's local cache](https://docs.pytest.org/en/
 Use pytest directly when working on the runner or needing explicit lifecycle control. From the repository root, activate the environment created by `cta-dev install`, then change to the test directory:
 
 ```bash
-source ci/system_tests/.venv/bin/activate
+source .venv/bin/activate
 cd ci/system_tests
 python -m pytest tests/client_test.py --namespace dev --setup --verification --teardown
 ```

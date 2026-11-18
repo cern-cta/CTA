@@ -32,7 +32,8 @@ For machine preparation and initial installation, follow [Environment Setup](../
 ./ci/cta-dev.sh install
 ```
 
-The installer creates the command symlink, installs Bash completion, and prepares the system-test Python environment. Ensure `~/.local/bin` is on `PATH`.
+The installer requires uv and prepares the shared development environment in `.venv`, the command symlink, and Bash completion.
+Rerun it after dependency changes and ensure `~/.local/bin` is on `PATH`.
 
 The installed command uses the checkout its symlink points to, even when you invoke it from another checkout. Check the target with:
 

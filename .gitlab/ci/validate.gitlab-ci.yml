@@ -33,7 +33,7 @@ validate-project-json:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
   script:
-    - python3 ./ci/project-json/validate_project_json.py
+    - uv run --locked --only-group scripts python ci/project-json/validate_project_json.py
 
 validate-python-lock:
   stage: validate
@@ -44,10 +44,10 @@ validate-python-lock:
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - !reference [.python-workspace, rules]
-  image: $IMAGE_DEFAULT
+  image: $IMAGE_AUTOMATION
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
   before_script:
-    - !reference [.python-version, before_script]
+    - !reference [.merge-train-guard, before_script]
   script:
     - uv lock --check --verbose

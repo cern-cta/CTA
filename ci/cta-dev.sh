@@ -32,7 +32,8 @@ readonly available_tests=(
   teardown
   $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done)
 )
-readonly venv_dir="${project_root}/ci/system_tests/.venv"
+# Honour UV_PROJECT_ENVIRONMENT so the devcontainer keeps its own interpreter instead of the host-shared .venv.
+readonly venv_dir="${UV_PROJECT_ENVIRONMENT:-${project_root}/.venv}"
 readonly program_name="cta-dev"
 readonly debug_profile_file="${project_root}/ci/orchestration/manifests/cta-debug-profile.yaml"
 
@@ -1306,7 +1307,7 @@ deploy_cta() {
 # Select and run a system test in the installed Python environment.
 test_cta() {
   [[ -x "$venv_dir/bin/python" && -x "$venv_dir/bin/pytest" ]] || \
-    die "CTA system-test environment is missing. Run '$(basename "$0") install' first."
+    die "CTA development environment is missing. Run '$(basename "$0") install' first."
   print_header "RUNNING TESTS"
 
   source "$venv_dir/bin/activate" || (log_error "Failed to activate the Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
@@ -1423,12 +1424,12 @@ all_cta() {
   print_stage_summary
 }
 
-# Install the command, Bash completion, test environment, and optional merge driver.
+# Install the command, Bash completion, development environment, and optional merge driver.
 install_cta_dev() {
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
   local -r script_path="$(realpath "$0")"
-  local -r requirements_path="${project_root}/ci/system_tests/requirements.txt"
+  command -v uv >/dev/null 2>&1 || die "uv is required to install the development environment. Install uv and retry."
   local -r completion_src="${project_root}/ci/${program_name}.bash-completion"
   local -r completion_dir="$HOME/.local/share/bash-completion/completions"
   local -r completion_dst="${completion_dir}/${program_name}"
@@ -1437,7 +1438,7 @@ install_cta_dev() {
   echo "  - Install the $program_name command symlink to $link_path"
   echo "  - Install Bash completion to $completion_dst"
   echo "  - Create a Python virtual environment in $venv_dir"
-  echo "  - Install dependencies from $requirements_path"
+  echo "  - Install the Python workspace with development dependencies"
   read -r -p "Continue? [y/N] " confirm
   [[ "$confirm" =~ ^[Yy]$ ]] || return 1
 
@@ -1448,13 +1449,9 @@ install_cta_dev() {
   mkdir -p "$completion_dir"
   install -m 644 "$completion_src" "$completion_dst"
 
-  if command -v uv >/dev/null 2>&1; then
-    uv venv "$venv_dir"
-    uv pip install --python "$venv_dir/bin/python" -r "$requirements_path"
-  else
-    python3 -m venv "$venv_dir"
-    "$venv_dir/bin/pip" install -r "$requirements_path"
-  fi
+  log_task "Preparing the Python development environment..."
+  UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
+    --locked --all-packages --all-extras --group dev
 
   # Setup git merge driver for .secrets.baseline
   if command -v detect-secrets >/dev/null 2>&1; then
