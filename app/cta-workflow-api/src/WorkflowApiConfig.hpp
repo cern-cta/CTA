@@ -6,6 +6,7 @@
 #pragma once
 
 #include "grpc-server/config/AuthConfig.hpp"
+#include "grpc-server/config/AuthMethod.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "service-resources/config/CatalogueConfig.hpp"
@@ -13,12 +14,47 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <vector>
 
 namespace cta::workflow_api {
 
-/// @brief Archive-related options of the workflow API.
+/// Authentication method selection and credentials for workflow API requests.
+struct WfeAuthConfig final {
+  /// JWT is the non-strict default; strict mode requires an explicit selection.
+  std::vector<std::string> enabled_methods = {"jwt"};
+  /// JWT auth config (optional)
+  std::optional<cta::grpc_server::JwtAuthConfig> jwt;
+  /// mTLS auth config (optional)
+  std::optional<cta::grpc_server::MtlsAuthConfig> mtls;
+
+  static constexpr auto methods = std::tuple {
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::JWT, "jwt", &WfeAuthConfig::jwt),
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::MTLS, "mtls", &WfeAuthConfig::mtls),
+  };
+
+  /// Query only authentication methods supported by this service.
+  bool isMethodEnabled(cta::grpc_server::AuthMethod method) const {
+    return cta::runtime::featureEnabled(enabled_methods, method, methods);
+  }
+
+  /// Validate method selection and the settings of each selected method.
+  cta::runtime::ValidationResult validate() const {
+    auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
+    if (isMethodEnabled(cta::grpc_server::AuthMethod::JWT) == isMethodEnabled(cta::grpc_server::AuthMethod::MTLS)) {
+      result.addError("enabled_methods",
+                      "WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
+    }
+    return result;
+  }
+
+  static constexpr std::size_t memberCount() { return 3; }
+};
+
+/// Archive-related options of the workflow API.
 struct ArchiveConfig final {
   /// Whether 0-length files are rejected
   bool zero_length_files_forbidden = true;
@@ -30,7 +66,7 @@ struct ArchiveConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Prepare (retrieve) request options of the workflow API.
+/// Prepare (retrieve) request options of the workflow API.
 struct PrepareConfig final {
   /// Mount policy used for verification requests
   std::string verification_mount_policy = "";
@@ -40,7 +76,7 @@ struct PrepareConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Request-related options of the workflow API.
+/// Request-related options of the workflow API.
 struct RequestsConfig final {
   ArchiveConfig archive;
   PrepareConfig prepare;
@@ -53,23 +89,6 @@ struct RequestsConfig final {
     result.merge("prepare", prepare.validate());
     return result;
   }
-};
-
-/// @brief Experimental options of the workflow API: the common ones plus the workflow-specific ones.
-struct WorkflowApiExperimentalConfig final {
-  /// Whether OpenTelemetry, configured by `[telemetry]`, is enabled
-  bool telemetry_enabled = false;
-
-#ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 1; }
-#else
-  /// Whether opportunistic batching, configured by `[opportunistic_batching]`, is enabled
-  bool opportunistic_batching_enabled = false;
-
-  static constexpr std::size_t memberCount() { return 2; }
-#endif
-
-  cta::runtime::ValidationResult validate() const { return {}; }
 };
 
 #ifdef CTA_PGSCHED
@@ -98,33 +117,54 @@ struct OpportunisticBatchingConfig final {
 
 #endif
 
+/// Backend connections, authentication, request handling and monitoring for the workflow API.
 struct WorkflowApiConfig final {
+  enum class Feature {
+    Telemetry,
+#ifdef CTA_PGSCHED
+    Batching,
+#endif
+  };
+
   /// Name of the instance, used by auth verification and gRPC messages
   std::string instance_name;
 
   cta::service_resources::ServiceCatalogueConfig catalogue;
   cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
-  cta::runtime::TelemetryConfig telemetry;
-  WorkflowApiExperimentalConfig experimental;
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
+  std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
 
 #ifdef CTA_PGSCHED
-  OpportunisticBatchingConfig opportunistic_batching;
+  std::optional<OpportunisticBatchingConfig> opportunistic_batching = std::nullopt;
 #endif
 
   cta::grpc_server::ListenerConfig grpc;
-  cta::grpc_server::WfeAuthConfig auth;
+  WfeAuthConfig auth;
 
   RequestsConfig requests;
 
 #ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 9; }
-#else
   static constexpr std::size_t memberCount() { return 10; }
+#else
+  static constexpr std::size_t memberCount() { return 11; }
 #endif
 
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &WorkflowApiConfig::telemetry),
+#ifdef CTA_PGSCHED
+    cta::runtime::experimentalFeature(Feature::Batching,
+                                      "opportunistic_batching",
+                                      &WorkflowApiConfig::opportunistic_batching),
+#endif
+  };
+
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
+
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
 
     if (instance_name.empty()) {
       result.addError("instance_name", "cannot be empty");
@@ -133,11 +173,6 @@ struct WorkflowApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("experimental", experimental.validate());
-#ifdef CTA_PGSCHED
-    result.merge("opportunistic_batching", opportunistic_batching.validate());
-#endif
     result.merge("requests", requests.validate());
     result.merge("grpc", grpc.validate());
     // Workflow API: exactly one of JWT or mTLS (Kerberos is not representable in WfeAuthConfig)

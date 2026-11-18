@@ -70,10 +70,64 @@ Configuration checking is split into three layers with distinct responsibilities
 
 `ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct. If validation reports errors, the loader presents all of them in one `UserError`. Root and parent config structs must explicitly merge the validation result from each custom config child. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
 
+### Optional fields and feature activation
+
+See the operator [configuration rules](../../ops/deploy-and-configure/configuration/service-runtime.md#using-the-example-configurations) for strict checking and feature selection.
+Use optional fields only for sections controlled by a feature or mode selector, or for values whose absence is a supported state.
+Initialise optional values to `std::nullopt` unless they have documented non-strict defaults.
+Document what absence means and preserve that state in consumers rather than substitute a fallback.
+Validate active settings and genuinely optional values normally.
+Empty strings, zero and empty collections are explicit values, subject to their own validation rules.
+
+#### Example configuration comments
+
+Describe each setting briefly, including units and special values, followed by `Type: <TOML type>; default: <value>.`.
+Add `Allowed: ...` for constrained strings.
+Use `default: none; required` for values required in either mode and `default: none; optional` when absence is supported in either mode.
+Explain the strict-mode rule once in the file header.
+
+Examples should provide recommended starting configurations with clearly identified deployment-specific placeholders.
+Keep defaults and accepted values consistent with the configuration structs and validators.
+Group related settings, explain prerequisites at section level, and comment out unused alternatives.
+Check examples and supported feature variants with the service's `--config-strict --config-check` options.
+
+#### Automatic sizing and integer sentinels
+
+For integer settings supporting automatic sizing or system defaults, use an explicit `0` to select that behaviour and positive values for fixed counts or sizes.
+Document the meaning of the sentinel, validate it, and resolve it before calling an API that requires a positive value.
+Preserve other documented meanings of zero, such as “unlimited”.
+
+#### How features are enabled
+
+Use root `enabled_features` and `enabled_experimental_features` lists for stable and experimental service-wide capabilities.
+For nested behaviour, put a domain-specific selector in the parent, such as `auth.enabled_methods` or `transfers.encryption_enabled`.
+Use a mode selector for mutually exclusive alternatives, such as `transport = "tcp"` or `"unix"`.
+
+The [application configuration example](#application-configuration) shows how to declare feature descriptors, query selection and validate enabled settings.
+
+For a domain-specific selection list, use `validateFeatureSelection(config, enabled, descriptors, fieldName)`.
+Descriptors without settings can omit the member pointer; `featureNames(descriptors)` supplies an all-enabled default.
+Consumers use `config.featureEnabled(Config::Feature::Telemetry)`, or the corresponding boolean or mode field, before using the settings.
+The runtime expects `Feature::Telemetry` and `Feature::HealthServer` when the corresponding configuration sections exist; experimental status remains in the descriptors.
+
+The parser reads every supplied field independently of feature selection and retains disabled sections.
+Incorrect types are errors in both modes; strict mode also requires every non-optional field within a supplied section.
+Non-strict parsing preserves member initialisers for omitted fields, including optional sections.
+Strict parsing resets omitted optional sections to `std::nullopt`, so validation can require settings for selected features without treating presence as enablement.
+Only selected sections undergo feature-specific semantic validation.
+
+Keep field defaults in their settings types and initialise defaultable optional sections with a settings object, as in `RoutinesConfig`.
+Keep `validate()` read-only; consumers must use selection rather than section presence to determine activation.
+
 ## Application configuration
 
 ```c++
 struct CustomConfig final {
+  enum class Feature {
+    Telemetry,
+    HealthServer,
+  };
+
   // Add this if the app/tool uses the catalogue
   cta::runtime::CatalogueConfig catalogue;
   // Add this if the app/tool uses the scheduler
@@ -81,13 +135,13 @@ struct CustomConfig final {
   // Must always be present; all tools and apps support logging
   cta::runtime::LoggingConfig logging;
   // Add this if the app should be able to produce telemetry
-  cta::runtime::TelemetryConfig telemetry;
+  std::optional<cta::runtime::TelemetryConfig> telemetry;
   // Add this if the app needs a separate health endpoint
   // Don't add this if the app already natively exposes a health endpoint (e.g. a REST API)
-  cta::runtime::HealthServerConfig health_server;
-  // Add this if the app has experimental options
-  // For now, this must be added if telemetry is there as telemetry is considered experimental
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::HealthServerConfig> health_server;
+  // Explicitly select optional capabilities.
+  std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
   // Add this if the app uses XRootD
   cta::runtime::XRootDConfig xrootd;
   // Put whatever you want here; will be populated from the config file and available in the run() function
@@ -95,16 +149,22 @@ struct CustomConfig final {
 
   // All configs must have this function (limitation of custom reflection implementation)
   // If this number is not consistent with the actual number of members, it won't compile
-  static constexpr std::size_t memberCount() { return 8; }
+  static constexpr std::size_t memberCount() { return 9; }
+
+  // Associate each feature with its settings section.
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &CustomConfig::telemetry),
+    cta::runtime::stableFeature(Feature::HealthServer, "health_server", &CustomConfig::health_server),
+  };
+
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("health_server", health_server.validate());
-    result.merge("experimental", experimental.validate());
     result.merge("xrootd", xrootd.validate());
     result.merge("customConf", customConf.validate());
     return result;

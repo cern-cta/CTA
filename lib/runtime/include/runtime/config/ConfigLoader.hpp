@@ -69,7 +69,7 @@ concept HasValidateMethod = requires(const T& config) {
  * @tparam T The struct to populate with the data from the .toml file.
  * @param contents TOML text to parse, either original or already resolved.
  * @param sourcePath Source label used in diagnostics; no file is accessed.
- * @param strict If set to true, treat unknown keys, missing keys, and type mismatches in the config file as errors.
+ * @param strict If set to true, treat unknown keys, missing required keys, and type mismatches in the config file as errors.
  * If T defines validate() const, semantic validation is performed after parsing.
  * @return T The populated struct.
  */

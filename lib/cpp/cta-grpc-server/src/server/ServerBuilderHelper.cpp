@@ -8,12 +8,20 @@
 #include "common/exception/Exception.hpp"
 #include "grpc-server/server/TlsCredentials.hpp"
 
+#include <algorithm>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/resource_quota.h>
+#include <limits>
 #include <thread>
 
 namespace cta::grpc_server {
+
+int calculateThreadLimit(uint32_t detectedCpuCount) {
+  const auto cpus =
+    std::clamp(detectedCpuCount, uint32_t {1}, static_cast<uint32_t>(std::numeric_limits<int>::max() / 8));
+  return static_cast<int>(8 * cpus);
+}
 
 ServerBuilderHelper::ServerBuilderHelper(const ListenerConfig& config,
                                          bool requireClientCertificate,
@@ -35,7 +43,10 @@ ServerBuilderHelper::ServerBuilderHelper(const ListenerConfig& config,
   m_builder.AddListeningPort(m_serverAddress, creds);
 
   // Fix the number of request processing threads
-  const int threads = config.number_of_threads.value_or(8 * std::thread::hardware_concurrency());
+  int threads = config.number_of_threads;
+  if (threads == 0) {
+    threads = calculateThreadLimit(std::thread::hardware_concurrency());
+  }
   ::grpc::ResourceQuota quota;
   quota.SetMaxThreads(threads);
   lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");

@@ -5,5 +5,4 @@
 
 tail -F /var/log/cta/cta-workflow-api.log &
 
-# TODO: add --config-strict to the command once cta/CTA#1743 is closed
-exec /usr/bin/cta-workflow-api --log-file /var/log/cta/cta-workflow-api.log --config /etc/cta/cta-workflow-api.toml --runtime-dir /run/cta
+exec /usr/bin/cta-workflow-api --log-file /var/log/cta/cta-workflow-api.log --config-strict --config /etc/cta/cta-workflow-api.toml --runtime-dir /run/cta

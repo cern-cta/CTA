@@ -122,9 +122,10 @@ void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std:
   log::ScopedParamContainer params(lc);
   if (osThreadPoolSize.has_value()) {
     params.add("osThreadPoolSize", osThreadPoolSize.value());
-    OStoreDB::setThreadNumber(
-      osThreadPoolSize.value(),
-      osThreadStackSize.has_value() ? std::optional<size_t>(osThreadStackSize.value() * 1024 * 1024) : std::nullopt);
+    OStoreDB::setThreadNumber(osThreadPoolSize.value(),
+                              osThreadStackSize.has_value() ?
+                                std::optional<size_t>(static_cast<size_t>(osThreadStackSize.value()) * 1024 * 1024) :
+                                std::nullopt);
     lc.log(log::INFO, "In OStoreDB::initConfig(): Objectstore thread pool initialised.");
   } else if (osThreadStackSize.has_value()) {
     params.add("osThreadStackSize_MB", osThreadStackSize.value());

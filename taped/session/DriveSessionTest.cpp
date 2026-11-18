@@ -8,6 +8,7 @@
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/log/StringLogger.hpp"
+#include "runtime/config/ConfigLoader.hpp"
 #include "taped/SchedulerContext.hpp"
 #include "taped/drive/FakeDrive.hpp"
 
@@ -275,7 +276,7 @@ protected:
     config.transfers.buffer_count = 10;
     config.transfers.buffer_size_bytes = 1024 * 1024;
     config.transfers.disk_io_threads = 1;
-    config.transfers.encryption.enabled = false;
+    config.transfers.encryption.reset();
     config.transfers.archive.fetch_max_files = 10;
     config.transfers.archive.fetch_max_bytes = 1000000;
   }
@@ -852,6 +853,37 @@ TEST_F(DriveSessionTest, BlockMovementRefreshesTransferLivenessAndNewSessionRese
   tracker->beginTapeSession(session::SessionType::Archive, now);
   tracker->reportState(Transferring, now);
   EXPECT_TRUE(session->isLive());
+}
+
+TEST(TapedFeatureConfig, DisabledTransferFeaturesRetainTypedSettings) {
+  using cta::runtime::loadFromTomlString;
+  const std::string rao = "rao_enabled = false\nfetch_max_bytes = 1\nfetch_max_files = 1\n"
+                          "drain_to_disk_timeout_secs = 1\nexternal_free_disk_space_script = ''\n"
+                          "[rao]\nlto_algorithm = 'invalid'";
+  const auto config = loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", false);
+  ASSERT_TRUE(config.rao);
+  EXPECT_EQ(config.rao->lto_algorithm, "invalid");
+  EXPECT_FALSE(config.rao_enabled);
+  const auto strictConfig = loadFromTomlString<RetrieveTransferConfig>(rao, "transfers.toml", true);
+  ASSERT_TRUE(strictConfig.rao);
+  EXPECT_EQ(strictConfig.rao->lto_algorithm, "invalid");
+  EXPECT_THROW(loadFromTomlString<RetrieveTransferConfig>("rao_enabled = true\n[rao]\nlto_algorithm = 'invalid'",
+                                                          "transfers.toml",
+                                                          false),
+               exception::UserError);
+
+  const std::string encryption = "encryption_enabled = false\n[encryption]\nexternal_key_script = 42";
+  EXPECT_THROW(loadFromTomlString<TransfersConfig>(encryption, "transfers.toml", false), exception::UserError);
+  const auto disabled =
+    loadFromTomlString<TransfersConfig>("encryption_enabled = false\n[encryption]\nexternal_key_script = ''",
+                                        "transfers.toml",
+                                        false);
+  ASSERT_TRUE(disabled.encryption);
+  EXPECT_FALSE(disabled.encryption_enabled);
+  EXPECT_THROW(loadFromTomlString<TransfersConfig>("encryption_enabled = true\n[encryption]\nexternal_key_script = 42",
+                                                   "transfers.toml",
+                                                   false),
+               exception::UserError);
 }
 
 }  // namespace cta::tape::daemon

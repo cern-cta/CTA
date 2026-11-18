@@ -16,7 +16,9 @@ void ValidationResult::addError(std::string_view field, std::string message) {
 
 void ValidationResult::merge(std::string_view prefix, ValidationResult child) {
   for (auto& error : child.m_errors) {
-    error.field = error.field.empty() ? std::string(prefix) : std::string(prefix) + "." + error.field;
+    if (!prefix.empty()) {
+      error.field = error.field.empty() ? std::string(prefix) : std::string(prefix) + "." + error.field;
+    }
     m_errors.push_back(std::move(error));
   }
 }

@@ -13,8 +13,8 @@ cta::runtime::ValidationResult ListenerConfig::validate() const {
     result.addError("port", "must be greater than zero");
   }
   // check that our number of threads is OK
-  if (number_of_threads.has_value() && *number_of_threads < 1) {
-    result.addError("number_of_threads", "must be at least 1");
+  if (number_of_threads < 0) {
+    result.addError("number_of_threads", "must be zero (automatic) or positive");
   }
   result.merge("tls", tls.validate());
   return result;

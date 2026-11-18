@@ -105,6 +105,7 @@ Use appropriate schema checks or deployment/system tests when the change require
   Move shared types into the common library when needed.
 - **Configuration:** TOML loading uses reflection through `lib/runtime/include/runtime/config/ConfigLoader.hpp`.
   Config fields use snake_case matching the TOML keys; keep `memberCount()` equal to the number of data members.
+  Follow [Optional fields and feature activation](docs/content/dev/internals/service-runtime.md#optional-fields-and-feature-activation) when designing or changing configuration fields, defaults, feature gates and their consumers.
 - **Errors:** user/configuration errors throw `cta::exception::UserError` with actionable context such as the file path and offending value.
   Shared exceptions belong in `common/exception/`; module-specific exceptions belong beside the code that throws them.
 - **Test helpers:** prefer `tests/TempFile.hpp` and `tests/Argv.hpp`, in namespace `unitTests`, over hand-rolled equivalents.
@@ -141,6 +142,9 @@ Follow [Documentation Changes](docs/content/dev/contributing/documentation.md) a
 
 - Match the surrounding prose and established terminology.
 - Maintain one authoritative explanation; link rather than duplicate it.
+- Write documentation and code comments for someone encountering the final design without the conversation history.
+  Freely consolidate explanations introduced or substantially changed on the current branch as the design evolves, rather than appending answers to review questions.
+  For pre-existing documentation, prefer targeted corrections needed by the task; broader rewrites require a concrete clarity or correctness problem relevant to the change.
 - Keep steady-state operation in deployment/configuration guides and version-specific migration in upgrade guides.
 - Keep CI Helm guidance in development/CI documentation, not operator deployment instructions.
 - Edit the original manual or example when a documentation page includes it.

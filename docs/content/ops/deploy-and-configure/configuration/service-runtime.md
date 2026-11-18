@@ -15,12 +15,44 @@ When defining a config file for a service, there are multiple problems that can 
 Services that use the CTA Runtime Library support the `--config-strict` flag which can prevent all of these. Concretely it enforces the following rules:
 
 - Every provided config value MUST be a valid config entry. That means it will fail when entries are present that are not consumed by CTA. This mitigates (1) and (2).
-- Every single config value parsed by CTA MUST be present in the config file. As a result, changes in default values will not affect the deployment, because every value is explicit and defaults are no longer relied upon. This mitigates (2) and (3).
+- Every applicable setting MUST be explicit, including settings with defaults. Genuinely optional values and sections for disabled features may be absent. This mitigates (2) and (3).
+
+Settings that support automatic sizing or system defaults still require an explicit value in strict mode, such as `grpc.number_of_threads = 0`.
+Consult each setting's description for the meaning of zero and other special values.
 
 It is possible to check the validity of a config beforehand using the `--config-check` flag, which can be combined with the `--config-strict` flag. This checks the configuration and exits without starting the service.
 `--config-check` cannot be combined with `--runtime-dir`, so checking configuration does not overwrite a service's runtime snapshots.
 
 It is highly recommended to use `--config-strict` when deploying CTA to ensure operators have full control and transparency over the consumed config values.
+
+## Using the example configurations
+
+The packaged examples are recommended starting configurations.
+Replace deployment-specific names, endpoints and credential paths, and select the features your service needs.
+
+Field comments distinguish three cases:
+
+| Metadata | Meaning when the section is active |
+| --- | --- |
+| `default: <value>` | May be omitted in non-strict mode; must be supplied in strict mode. |
+| `default: none; required` | Must be supplied in either mode. |
+| `default: none; optional` | May be omitted in either mode; the description explains the effect. |
+
+Select service-wide capabilities through root `enabled_features` and `enabled_experimental_features` lists.
+Experimental features may change or be removed; supported names are listed in each service's example.
+Strict mode requires both lists, including `[]` when empty; non-strict mode defaults both to empty.
+Unknown names, duplicates and selections in the wrong list are rejected.
+
+Section presence alone never enables a feature.
+Supply settings for enabled features and omit disabled sections.
+Non-strict mode may provide section defaults where documented; strict mode requires enabled sections explicitly.
+If a disabled section is supplied, its values must still have valid types and, in strict mode, include all non-optional settings.
+The parser checks all supplied sections before feature selection is validated, so disabling a feature does not bypass these checks.
+Only enabled features undergo feature-specific semantic validation.
+See [Metrics](../../run-and-maintain/monitoring/metrics.md) and [Health and Alerts](../../run-and-maintain/monitoring/health-and-alerts.md) for complete activation examples.
+
+Nested selectors work independently: authentication uses `auth.enabled_methods`, maintenance uses `routines.enabled_routines`, and tape transfers use `transfers.encryption_enabled` and `transfers.retrieve.rao_enabled`.
+In strict mode, supply each selector and its selected sections explicitly.
 
 ## Environment Variables
 

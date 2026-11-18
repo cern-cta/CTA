@@ -128,10 +128,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   if (!node) {
-    if (strict) {
-      return ParseResult::error("Expected field '" + std::string(fieldName) + "' is missing.");
-    }
-    // In non-strict mode, a missing optional is fine
+    out.reset();
     return ParseResult::success();
   }
   using InnerType = typename std::remove_cvref_t<T>::value_type;
@@ -257,7 +254,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
 
   std::vector<ParseResult> errs;
 
-  auto assignField = [&tbl, &errs, &knownFields, strict](std::string_view tableFieldName, auto& field) {
+  auto assignField = [&out, &tbl, &errs, &knownFields, strict](std::string_view tableFieldName, auto& field) {
     if constexpr (EmptyConfig<std::remove_cvref_t<decltype(field)>>) {
       // Empty configs have no members and the parser should fail when
       // presented with a value for one, in strict mode. Hence, let's
@@ -267,7 +264,12 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
       const auto node = tbl[tableFieldName];
 
       if (!node) {
-        if (strict) {
+        if constexpr (StdOptional<decltype(field)>) {
+          // Strict loading preserves absence so validation can require selected sections.
+          if (strict) {
+            field.reset();
+          }
+        } else if (strict) {
           errs.push_back(ParseResult::error("Expected field '" + std::string(tableFieldName) + "' is missing."));
         }
         return;
@@ -281,7 +283,6 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
     }
   };
 
-  // Do a pass over the fields of T and try to assign its members
   reflection::forEachMember(out, assignField);
 
   if (strict) {

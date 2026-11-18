@@ -203,11 +203,10 @@ std::optional<std::string> addRepack(const SyncCmdContext& ctx, const AdminCmdOp
 
   bool noRecall = opts.hasFlag(OptionBoolean::NO_RECALL);
   const auto maxFilesToSelectOpt = opts.getOptional(OptionUInt64::MAX_FILES_TO_EXPAND);
-  // 1. If the 'MAX_FILES_TO_EXPAND' parameter was received, use its value.
-  // 2. Else, if the 'defaults.repack.max_files_to_select' configuration option is defined, use its value.
-  // 3. Else, use 0 as a default. Zero means that all files will be expanded.
+  // If the 'MAX_FILES_TO_EXPAND' parameter was received, use its value.
+  // Otherwise use the configured limit; zero means all files.
   uint64_t maxFilesToSelect =
-    maxFilesToSelectOpt ? maxFilesToSelectOpt.value() : ctx.defaults.repack.max_files_to_select.value_or(0);
+    maxFilesToSelectOpt ? maxFilesToSelectOpt.value() : ctx.defaults.repack.max_files_to_select;
 
   // Process each item in the list
   for (auto it = vid_list.begin(); it != vid_list.end(); ++it) {

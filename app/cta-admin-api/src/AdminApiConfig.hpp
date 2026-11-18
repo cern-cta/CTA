@@ -7,6 +7,7 @@
 
 #include "AdminCmdMode.hpp"
 #include "grpc-server/config/AuthConfig.hpp"
+#include "grpc-server/config/AuthMethod.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "service-resources/config/CatalogueConfig.hpp"
@@ -16,15 +17,51 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <tuple>
+#include <vector>
 
 namespace cta::admin_api {
 
-/// @brief Repack-related options of the admin API.
+/// Authentication method selection and credentials for admin API requests.
+struct AdminAuthConfig final {
+  /// JWT is the non-strict default; strict mode requires an explicit selection.
+  std::vector<std::string> enabled_methods = {"jwt"};
+  /// JWT auth config (optional)
+  std::optional<cta::grpc_server::JwtAuthConfig> jwt;
+  /// Kerberos auth config (optional)
+  std::optional<cta::grpc_server::KerberosAuthConfig> kerberos;
+
+  static constexpr auto methods = std::tuple {
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::JWT, "jwt", &AdminAuthConfig::jwt),
+    cta::runtime::stableFeature(cta::grpc_server::AuthMethod::KERBEROS, "kerberos", &AdminAuthConfig::kerberos),
+  };
+
+  /// Query only authentication methods supported by this service.
+  bool isMethodEnabled(cta::grpc_server::AuthMethod method) const {
+    return cta::runtime::featureEnabled(enabled_methods, method, methods);
+  }
+
+  /// Validate method selection and the settings of each selected method.
+  cta::runtime::ValidationResult validate() const {
+    auto result = cta::runtime::validateFeatureSelection(*this, enabled_methods, methods, "enabled_methods");
+    if (!isMethodEnabled(cta::grpc_server::AuthMethod::JWT)
+        && !isMethodEnabled(cta::grpc_server::AuthMethod::KERBEROS)) {
+      result.addError("enabled_methods",
+                      "Admin frontend authentication requires at least one of JWT or Kerberos to be enabled");
+    }
+    return result;
+  }
+
+  static constexpr std::size_t memberCount() { return 3; }
+};
+
+/// Repack-related options of the admin API.
 struct RepackConfig final {
   /// URL of the repack buffer
   std::optional<std::string> buffer_url = std::nullopt;
   /// Max number of files to expand during a repack
-  std::optional<uint64_t> max_files_to_select = std::nullopt;
+  uint64_t max_files_to_select = 0;
 
   static constexpr std::size_t memberCount() { return 2; }
 
@@ -33,14 +70,11 @@ struct RepackConfig final {
     if (buffer_url.has_value() && buffer_url->empty()) {
       result.addError("buffer_url", "cannot be empty when provided");
     }
-    if (max_files_to_select.has_value() && *max_files_to_select == 0) {
-      result.addError("max_files_to_select", "must be greater than zero");
-    }
     return result;
   }
 };
 
-/// @brief Fixed rules applied by the admin API to tape commands (tape ls, tape reclaim).
+/// Fixed rules applied by the admin API to tape commands (tape ls, tape reclaim).
 struct TapePoliciesConfig final {
   /// Minimum age of missing tape file copies before they are reported
   uint64_t missing_file_copies_min_age_secs = 0;
@@ -52,7 +86,7 @@ struct TapePoliciesConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Archive-related options of the admin API.
+/// Archive-related options of the admin API.
 struct AdminArchiveConfig final {
   /// Default maximum size of an archived file, in GB (0 = no limit)
   uint64_t max_file_size_gb = 0;
@@ -65,7 +99,7 @@ struct AdminArchiveConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-/// @brief Default values applied by the admin API when a command does not set them explicitly.
+/// Default values applied by the admin API when a command does not set them explicitly.
 struct DefaultsConfig final {
   AdminArchiveConfig archive;
   RepackConfig repack;
@@ -80,7 +114,7 @@ struct DefaultsConfig final {
   }
 };
 
-/// @brief Fixed rules enforced by the admin API, which cannot be overridden by command options.
+/// Fixed rules enforced by the admin API, which cannot be overridden by command options.
 struct PoliciesConfig final {
   /// Role of the admin API with respect to the repacks, meant to match the scheduler DB it is connected to when the
   /// user and the repack requests are served from separate ones (see AdminCmdMode):
@@ -101,27 +135,40 @@ struct PoliciesConfig final {
   }
 };
 
+/// Backend connections, authentication, command policies and monitoring for the admin API.
 struct AdminApiConfig final {
+  enum class Feature {
+    Telemetry,
+  };
+
   /// Name of the instance, used by auth verification and gRPC messages
   std::string instance_name;
 
   cta::service_resources::ServiceCatalogueConfig catalogue;
   cta::service_resources::ServiceSchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
-  cta::runtime::TelemetryConfig telemetry;
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
+  std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
 
   PoliciesConfig policies;
 
   cta::grpc_server::ListenerConfig grpc;
-  cta::grpc_server::AdminAuthConfig auth;
+  AdminAuthConfig auth;
 
   DefaultsConfig defaults;
 
-  static constexpr std::size_t memberCount() { return 10; }
+  static constexpr std::size_t memberCount() { return 11; }
+
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &AdminApiConfig::telemetry),
+  };
+
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
 
     if (instance_name.empty()) {
       result.addError("instance_name", "cannot be empty");
@@ -130,8 +177,6 @@ struct AdminApiConfig final {
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("experimental", experimental.validate());
     result.merge("policies", policies.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());

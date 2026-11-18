@@ -47,7 +47,6 @@ conf:
 
   auth:
     methods:
-      - kerberos
       - jwt
     config:
       jwt:

@@ -8,10 +8,13 @@
 #include "runtime/config/CommonConfig.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
+#include <vector>
 
 namespace cta::rmcd {
 
+/// Device used to control the tape library through SCSI media-changer commands.
 struct MediaChangerConfig final {
   std::string device = "/dev/smc";
 
@@ -26,6 +29,7 @@ struct MediaChangerConfig final {
   }
 };
 
+/// Listening port and network scope of the remote media-changer protocol server.
 struct RmcServerConfig final {
   uint16_t port = 5014;
   std::string listen_scope = "loopback";
@@ -44,22 +48,34 @@ struct RmcServerConfig final {
   }
 };
 
+/// Device, listener and monitoring settings for the remote media-changer daemon.
 struct RmcdConfig final {
+  enum class Feature {
+    Telemetry,
+    HealthServer,
+  };
+
   cta::runtime::LoggingConfig logging;
-  cta::runtime::TelemetryConfig telemetry;
-  cta::runtime::HealthServerConfig health_server;
-  cta::runtime::ExperimentalConfig experimental;
+  std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
+  std::optional<cta::runtime::HealthServerConfig> health_server = std::nullopt;
+  std::vector<std::string> enabled_features;
+  std::vector<std::string> enabled_experimental_features;
   MediaChangerConfig media_changer;
   RmcServerConfig rmc_server;
 
-  static constexpr std::size_t memberCount() { return 6; }
+  static constexpr std::size_t memberCount() { return 7; }
+
+  static constexpr auto features = std::tuple {
+    cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &RmcdConfig::telemetry),
+    cta::runtime::stableFeature(Feature::HealthServer, "health_server", &RmcdConfig::health_server),
+  };
+
+  /// Query selection using the feature's stable or experimental list.
+  bool featureEnabled(Feature feature) const { return cta::runtime::featureEnabled(*this, feature); }
 
   cta::runtime::ValidationResult validate() const {
-    cta::runtime::ValidationResult result;
+    auto result = cta::runtime::validateFeatures(*this);
     result.merge("logging", logging.validate());
-    result.merge("telemetry", telemetry.validate());
-    result.merge("health_server", health_server.validate());
-    result.merge("experimental", experimental.validate());
     result.merge("media_changer", media_changer.validate());
     result.merge("rmc_server", rmc_server.validate());
     return result;

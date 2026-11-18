@@ -1,153 +1,181 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-####################################################################################################
-#
 # CTA Maintd Service Configuration
-#
-####################################################################################################
 
-# This is an example, not a ready-to-run configuration. Copy it to
-# /etc/cta/cta-maintd.toml, replace all deployment-specific values, and run:
-#   cta-maintd --config=/etc/cta/cta-maintd.toml --config-strict --config-check
-# before enabling or starting the service.
+# Recommended starting configuration. Replace deployment-specific values before use.
+# With --config-strict, set values explicitly rather than relying on defaults.
 
+# Optional features to enable. Remove a feature and its section to disable it.
+# Type: array of strings; default: [].
+# Allowed: "health_server" (no duplicates).
+enabled_features = ["health_server"]
 
-# Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
-# Here [A -> B -> C] is a single cycle of routine execution.
-# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
-# Due to this operating model, it is not possible to define different sleep intervals per routine.
-# If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
-# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
+# Experimental features to enable. These may change or be removed in future releases.
+# Type: array of strings; default: [].
+# Allowed: "telemetry" (no duplicates).
+enabled_experimental_features = ["telemetry"]
+
+# Run each enabled routine in turn, then sleep before starting the next cycle.
+# To use different schedules, run separate maintd processes with different routine selections.
+# All routines are enabled by default; an empty list disables maintenance.
 [routines]
-  # The sleep duration in between cycles of routine executions.
-  # If omitted, 10 is used.
+  # Routines to enable; include matching sections below.
+  # "garbage_collect" cleans up stale agents and objects in the objectstore and has no settings section.
+  # Type: array of strings; default: all routines listed below.
+  # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "queue_cleanup",
+  # "garbage_collect" (no duplicates).
+  enabled_routines = [
+    "disk_report_archive",
+    "disk_report_retrieve",
+    "repack_expand",
+    "repack_report",
+    "garbage_collect",
+    "queue_cleanup",
+  ]
+
+  # Seconds to wait after each cycle of maintenance routines.
+  # Type: integer; default: 10.
   cycle_sleep_interval_secs = 10
 
-  # The maximum duration in seconds a single cycle of routine execution is allowed to take.
-  # If a cycle takes longer than this value, it will not be interrupted.
-  # Instead, the process will no longer be considered alive by the health server.
-  # If omitted, 900 is used (15 minutes).
+  # Maximum cycle duration in seconds before the health endpoint reports the process as unhealthy.
+  # A slow cycle continues running; this timeout does not interrupt it.
+  # Type: integer; default: 900.
   max_cycle_duration_secs = 900
 
-  # Routine that reports archive transfer success/failures to the disk system.
-  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 0 }
-  # Routine that reports retrieve transfer success/failures to the disk system.
-  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30, iter_sleep_ms = 0 }
-  # Routine that expands repack requests.
-  repack_expand        = { enabled = true, max_to_expand = 2 }
-  # Routine that handles the reporting of the requests created by repack requests.
-  repack_report        = { enabled = true, soft_timeout_secs = 30 }
-  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
-  queue_cleanup        = { enabled = true, batch_size = 500 }
-  # Objectstore routine that garbage collects stale agents and objects.
-  garbage_collect      = { enabled = true }
+  # Report archive successes and failures to the disk system.
+  [routines.disk_report_archive]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 30.
+    soft_timeout_secs = 30
+
+    # Pause in milliseconds between iterations; 0 means no pause.
+    # Type: integer; default: 0.
+    iter_sleep_ms = 0
+
+  # Report retrieve successes and failures to the disk system.
+  [routines.disk_report_retrieve]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
+
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 30.
+    soft_timeout_secs = 30
+
+    # Pause in milliseconds between iterations; 0 means no pause.
+    # Type: integer; default: 0.
+    iter_sleep_ms = 0
+
+  # Expand repack requests into individual archive and retrieve jobs.
+  [routines.repack_expand]
+    # Maximum number of repack requests expanded per cycle.
+    # Type: integer; default: 2.
+    max_to_expand = 2
+
+  # Process transfer reports for repack requests.
+  [routines.repack_report]
+    # Soft time limit in seconds for this routine; checked between batches.
+    # Type: integer; default: 900.
+    soft_timeout_secs = 900
+
+  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests
+  # to other queues.
+  [routines.queue_cleanup]
+    # Maximum number of entries processed per batch.
+    # Type: integer; default: 500.
+    batch_size = 500
 
 [catalogue]
-  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
-  # specifies how to connect to the Catalogue DB.
+  # Path to the file containing the catalogue database connection string.
   # Examples:
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
   # See /usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf for further details.
-  # This setting is required.
+  # Type: string; default: "/etc/cta/cta-catalogue.conf".
   config_file = "/etc/cta/cta-catalogue.conf"
 
-
 [scheduler]
-  # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
+  # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
+  # Type: string; default: none; required.
   backend_name = "cephUser"
-  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
-  # specifies how to connect to the scheduler backend.
+
+  # Path to the file containing the scheduler backend connection string.
   # Examples:
   #   rados://user@pool:namespace
   #   file:///path/to/objectstore
   # See /usr/share/doc/cta-lib-scheduler/examples/cta-scheduler.example.conf for further details.
-  # This setting is required.
+  # Type: string; default: "/etc/cta/cta-scheduler.conf".
   config_file = "/etc/cta/cta-scheduler.conf"
+
   # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
+  # Lower values reflect scheduler changes sooner but increase backend queries.
+  # Type: integer; default: 600.
   tape_cache_max_age_secs = 600
+
   # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. If omitted, 10 is used.
+  # retrieves sooner but increase backend queries.
+  # Type: integer; default: 10.
   retrieve_queue_cache_max_age_secs = 10
 
-
-[logging]
-  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
-  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
-  # If omitted, INFO is used.
-  level = "INFO"
-
-  # Log format. Possible values are "json" and "kv" (key-value).
-  # If omitted json is used.
-  format = "json"
-
-  # The following key-value pairs are added to all log lines.
-  # All keys are optional as this is purely for monitoring purposes.
-  [logging.attributes]
-    # Monitoring-only label identifying the CTA instance served by this process, such as "production" or
-    # "preproduction". It should identify the catalogue instance consistently across CTA services.
-    # This attribute is optional and has no behavioral effect.
-    instance = "production"
-    # Monitoring-only label identifying the scheduler backend. It should normally match scheduler.backend_name.
-    # This attribute is optional and has no behavioral effect.
-    sched_backend = "cephUser"
-
-
-# Note that telemetry is experimental and disabled by default.
-# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
-[telemetry]
-  # Path to the declarative config file to initialise the OpenTelemetry SDK.
-  # If omitted or an empty string, telemetry will be disabled.
-  config_file = "/etc/cta/cta-otel.yaml"
-  # Controls how the application reacts if telemetry initialization fails.
-  # Possible values:
-  #   "warn": log a warning and continue startup without telemetry.
-  #   "fatal": treat the failure as an error and abort startup.
-  # If omitted, "warn" is used
-  on_init_failure = "warn"
-
-
-# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
-# - host:port/health/ready
-# - host:port/health/live
-# This allows for configuring readiness and liveness probes if so desired.
-[health_server]
-  # Whether to enable the health server or not.
-  # If omitted, false is used.
-  enabled = false
-  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
-  # Set to 0.0.0.0 to accept connections from anywhere.
-  # When use_unix_domain_socket is enabled, this host value will be unused.
-  # If omitted, 127.0.0.1 is used.
-  host = "127.0.0.1"
-  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
-  # When use_unix_domain_socket is enabled, this port value will be unused.
-  # If omitted, 8080 is used.
-  port = 8080
-  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
-  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
-  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
-  # If omitted, false is used.
-  use_unix_domain_socket = false
-
-
-# Makes XRootD environment variables explicit.
-# XRootD is what is used to connect to the disk instance.
 [xrootd]
   # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins. If omitted, "sss" is used.
+  # Valid values depend on the installed XRootD security plugins.
+  # Type: string; default: "sss".
   security_protocol = "sss"
+
   # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
   # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
+  # Type: string; default: "etc/cta/sss.keytab".
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
+[logging]
+  # Lowest severity to log. DEBUG produces the most output.
+  # Type: string; default: "INFO".
+  # Allowed: "EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "USERERR", "INFO", "DEBUG".
+  level = "INFO"
 
-[experimental]
-  # Enables experimental OpenTelemetry support configured by [telemetry]. Experimental features may
-  # change incompatibly and should be evaluated before production use.
-  # If omitted, false is used.
-  telemetry_enabled = false
+  # Log format: structured JSON or key-value pairs.
+  # Type: string; default: "json".
+  # Allowed: "json", "kv".
+  format = "json"
+
+  # Custom string labels added to every log line for filtering and monitoring.
+  # Keys are freely chosen and optional; they do not change service behaviour.
+  # Type: table of strings; default: {}.
+  [logging.attributes]
+    # CTA catalogue instance served by this process, for example "production" or "preproduction".
+    # Use the same label across services sharing that catalogue; omit it if unused.
+    instance = "production"
+
+# Telemetry (experimental). Recommended for monitoring.
+[telemetry]
+  # Path to the OpenTelemetry SDK declarative configuration file.
+  # Type: string; default: none; required.
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # What to do if telemetry cannot start.
+  # Type: string; default: "warn".
+  # Allowed: "warn" (continue without telemetry), "fatal" (abort startup).
+  on_init_failure = "warn"
+
+# Health endpoints. Recommended for monitoring.
+[health_server]
+  # Use "unix" for <runtime-dir>/health.sock; start the service with --runtime-dir.
+  # For Unix sockets, remove the entire [health_server.tcp] section.
+  # Type: string; default: "tcp".
+  # Allowed: "tcp", "unix".
+  transport = "tcp"
+
+  [health_server.tcp]
+    # Use 127.0.0.1 for local probes, or 0.0.0.0 to listen on all IPv4 interfaces.
+    # Type: string; default: "127.0.0.1".
+    host = "127.0.0.1"
+
+    # TCP port for the health endpoints.
+    # Type: integer; default: 8080.
+    port = 8080

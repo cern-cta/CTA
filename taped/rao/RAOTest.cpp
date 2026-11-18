@@ -5,6 +5,7 @@
 #include "CTACostHeuristic.hpp"
 #include "InterpolationFilePositionEstimator.hpp"
 #include "RAOHelpers.hpp"
+#include "RAOManager.hpp"
 #include "SLTFRAOAlgorithm.hpp"
 
 #include <gtest/gtest.h>
@@ -14,6 +15,17 @@
 namespace unitTests {
 
 using namespace cta::tape;
+
+TEST(RAOManager, ConfigurationEnablesManagerUntilDisabled) {
+  rao::RAOManager disabled;
+  EXPECT_FALSE(disabled.useRAO());
+
+  const rao::RAOParams params("linear", "", "V12345");
+  rao::RAOManager configured(params, nullptr, nullptr);
+  EXPECT_TRUE(configured.useRAO());
+  configured.disableRAO();
+  EXPECT_FALSE(configured.useRAO());
+}
 
 class RAOTestEnvironment : public ::testing::Environment {
 public:
