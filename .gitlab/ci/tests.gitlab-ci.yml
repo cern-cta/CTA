@@ -20,6 +20,7 @@ spec:
       # Resolve only the requested tests/tools and their dependencies from this build's artifacts.
       shopt -s nullglob
       packages=(build/debian13/DEB/*.deb build/debian13/DEB/*.ddeb)
+      shopt -u nullglob
       if (( ${#packages[@]} == 0 )); then
         echo "No Debian binary packages found in build/debian13/DEB" >&2
         exit 1
@@ -31,8 +32,9 @@ spec:
         dpkg-scanpackages --multiversion --type ddeb . /dev/null >> Packages
       )
       printf 'deb [trusted=yes] file:%s ./\n' "${CTAREPODIR}" > /etc/apt/sources.list.d/cta-local-testing.list
-      apt-get update
-      DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cta-tests cta-tests-dbgsym cta-tools
+      apt-get update || exit 75
+      DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cta-tests cta-tests-dbgsym cta-tools \
+        || exit 75
     else
       cp -r build/$[[ inputs.platform ]]/RPM "${CTAREPODIR}"
       createrepo "${CTAREPODIR}"

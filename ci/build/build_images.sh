@@ -169,6 +169,7 @@ cancel_builds() {
     done
   fi
   remove_build_containers
+  [[ -z "${staged_package_dir}" ]] || rm -rf -- "${staged_package_dir}"
   exit "$exit_status"
 }
 
@@ -182,6 +183,20 @@ wait_build() {
 trap 'cancel_builds 130' INT
 trap 'cancel_builds 143' TERM
 trap 'cancel_builds "$?"' EXIT
+
+# A Debian package directory also holds source and build trees.
+# Pass only its top-level binary packages so they are not copied and hashed into the image build.
+staged_package_dir=""
+shopt -s nullglob
+debian_packages=("${package_src}"/*.deb "${package_src}"/*.ddeb)
+shopt -u nullglob
+if (( ${#debian_packages[@]} )); then
+  staged_package_dir=$(mktemp -d "$(dirname "${package_src}")/.image-packages.XXXXXX")
+  # Hard links avoid copying; fall back to a copy across file systems.
+  cp --link -- "${debian_packages[@]}" "${staged_package_dir}/" 2>/dev/null \
+    || cp --preserve=timestamps -- "${debian_packages[@]}" "${staged_package_dir}/"
+  package_src="${staged_package_dir}"
+fi
 
 BUILD_ID=$(date +%Y%m%d-%H%M%S)
 SECONDS=0
