@@ -13,7 +13,7 @@ Review and merge the generated MRs through the normal GitLab workflow. Definitio
 Both pipeline types can also be started manually. On feature branches, the image refresh's `update-pipeline-image-version` job is manual and targets that branch.
 
 Renovate reads the dependency references selected by `renovate.json` and queries upstream container registries and GitHub/Git tags or releases for newer versions and updated digests. It applies the configured versioning rules and opens or refreshes MRs; automatic merging is disabled.
-There is currently no release-age cooldown: the weekly schedule controls when checks run, not how old a release must be. Renovate's [`minimumReleaseAge`](https://docs.renovatebot.com/key-concepts/minimum-release-age/) can add a cooldown where the upstream source provides release timestamps. The image-refresh run only proposes the image version built successfully by that pipeline.
+Upstream updates have a 14-day [release-age cooldown](https://docs.renovatebot.com/key-concepts/minimum-release-age/), matching Python and Cargo. `registry.cern.ch` and `gitlab-registry.cern.ch` are exempt. Updates without an upstream release timestamp are held. This currently affects Quay and GHCR, whose pins may need manual updating.
 
 Renovate uses `CI_API_TOKEN`, which needs GitLab API and repository write access for the bot account. It uses `GITHUB_API_TOKEN` for GitHub dependency lookups.
 

@@ -9,6 +9,9 @@
     "custom.regex"
   ],
   "automerge": false,
+  "minimumReleaseAge": "14 days",
+  "minimumReleaseAgeBehaviour": "timestamp-required",
+  "internalChecksFilter": "strict",
   "prConcurrentLimit": 3,
   "semanticCommits": "disabled",
   "commitMessagePrefix": "[ci]",
@@ -73,6 +76,12 @@
     }
   ],
   "packageRules": [
+    {
+      "description": "CERN registry images do not need an additional cooldown.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["registry.cern.ch/**", "gitlab-registry.cern.ch/**"],
+      "minimumReleaseAge": null
+    },
     {
       "description":
         "Only container references are in scope for the Dockerfile manager; package installation locks are deferred.",

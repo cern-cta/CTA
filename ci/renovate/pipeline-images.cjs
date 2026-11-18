@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+// Renovate config for UPDATE_PIPELINE_IMAGES: update only PIPELINE_IMAGE_VERSION
+// to the release just built successfully, keeping image adoption separate from upstream dependency updates.
+
 const version = process.env.NEW_PIPELINE_IMAGE_VERSION;
 if (!/^\d{4}-\d{2}-\d{2}-\d+$/.test(version ?? '')) {
   throw new Error('NEW_PIPELINE_IMAGE_VERSION must identify a completed image build');
@@ -18,6 +21,8 @@ module.exports = {
     matchDatasources: ['docker'],
     allowedVersions: `/^${version}$/`,
   }],
+  // This mode replaces the general package rules; retain the CERN registry exemption.
+  minimumReleaseAge: null,
   pinDigests: false,
   customManagers: [{
     customType: 'regex',
