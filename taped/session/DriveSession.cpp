@@ -166,7 +166,7 @@ void DriveSession::run(std::stop_token stopToken) {
         endReason = result.endReason;
         break;
       }
-      if (result.action == IterationAction::RetryAfterDelay && !stopToken.stop_requested()) {
+      if (result.action == IterationAction::RetryAfterDelay) {
         utils::interruptibleSleep(stopToken, std::chrono::seconds(m_config.mounts.idle_scheduling_interval_secs));
       }
     }

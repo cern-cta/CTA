@@ -68,11 +68,19 @@ void TapeReadSingleThread::TapeThreadFinalizer::setRAOReady() {
 //------------------------------------------------------------------------------
 TapeReadSingleThread::TapeThreadFinalizer::~TapeThreadFinalizer() {
   try {
-    m_this.m_taskInjector->finish();
     // Only the tape thread publishes readiness, including failure before the normal handoff.
+    // Publish it first so a failing finish() cannot leave the injector blocked in waitForRAOReady().
     if (m_this.m_useRAO && !m_raoReady) {
       m_this.m_taskInjector->setRAOReady(false);
     }
+  } catch (...) {
+    m_this.m_tracker.recordFailure(TapeSessionFailure::WorkerSignalling);
+    try {
+      m_this.m_logContext.log(log::ERR, "Failed to publish RAO readiness during tape cleanup");
+    } catch (...) {}
+  }
+  try {
+    m_this.m_taskInjector->finish();
   } catch (...) {
     m_this.m_tracker.recordFailure(TapeSessionFailure::WorkerSignalling);
     // Still clean the drive; failed signalling does not guarantee injector shutdown.
