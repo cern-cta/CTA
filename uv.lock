@@ -3,7 +3,8 @@ revision = 5
 requires-python = ">=3.9"
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
     "python_full_version > '3.9' and python_full_version < '3.10'",
     "python_full_version <= '3.9'",
@@ -41,16 +42,10 @@ dev = [
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },
     { name = "kubernetes", specifier = ">=35.0.0,<36" },
-    { name = "markdown", marker = "python_full_version == '3.12.*'", specifier = "==3.9" },
-    { name = "mike", marker = "python_full_version == '3.12.*'", git = "https://github.com/squidfunk/mike" },
-    { name = "mkdocs-autorefs", marker = "python_full_version == '3.12.*'", specifier = "==1.4.2" },
-    { name = "mkdocstrings", marker = "python_full_version == '3.12.*'", specifier = "==0.30.1" },
-    { name = "mkdocstrings-python", marker = "python_full_version == '3.12.*'", specifier = "==1.18.2" },
     { name = "oauthlib", specifier = ">=3.2.2" },
     { name = "packaging", specifier = ">=24.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pyjwt" },
-    { name = "pymdown-extensions", marker = "python_full_version == '3.12.*'", specifier = "==11.0.2" },
     { name = "pyright", extras = ["nodejs"] },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
@@ -59,16 +54,15 @@ dev = [
     { name = "ruff", specifier = "==0.14.9" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
     { name = "yamllint", specifier = "==1.37.1" },
-    { name = "zensical", marker = "python_full_version == '3.12.*'", specifier = "==0.1.1" },
 ]
 docs = [
-    { name = "markdown", marker = "python_full_version == '3.12.*'", specifier = "==3.9" },
-    { name = "mike", marker = "python_full_version == '3.12.*'", git = "https://github.com/squidfunk/mike" },
-    { name = "mkdocs-autorefs", marker = "python_full_version == '3.12.*'", specifier = "==1.4.2" },
-    { name = "mkdocstrings", marker = "python_full_version == '3.12.*'", specifier = "==0.30.1" },
-    { name = "mkdocstrings-python", marker = "python_full_version == '3.12.*'", specifier = "==1.18.2" },
-    { name = "pymdown-extensions", marker = "python_full_version == '3.12.*'", specifier = "==11.0.2" },
-    { name = "zensical", marker = "python_full_version == '3.12.*'", specifier = "==0.1.1" },
+    { name = "markdown", marker = "python_full_version >= '3.12'", specifier = "==3.9" },
+    { name = "mike", marker = "python_full_version >= '3.12'", git = "https://github.com/squidfunk/mike" },
+    { name = "mkdocs-autorefs", marker = "python_full_version >= '3.12'", specifier = "==1.4.2" },
+    { name = "mkdocstrings", marker = "python_full_version >= '3.12'", specifier = "==0.30.1" },
+    { name = "mkdocstrings-python", marker = "python_full_version >= '3.12'", specifier = "==1.18.2" },
+    { name = "pymdown-extensions", marker = "python_full_version >= '3.12'", specifier = "==11.0.2" },
+    { name = "zensical", marker = "python_full_version >= '3.12'", specifier = "==0.1.1" },
 ]
 lint = [{ name = "ruff", specifier = "==0.14.9" }]
 scripts = [
@@ -103,22 +97,15 @@ type-check = [
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },
     { name = "kubernetes", specifier = ">=35.0.0,<36" },
-    { name = "markdown", marker = "python_full_version == '3.12.*'", specifier = "==3.9" },
-    { name = "mike", marker = "python_full_version == '3.12.*'", git = "https://github.com/squidfunk/mike" },
-    { name = "mkdocs-autorefs", marker = "python_full_version == '3.12.*'", specifier = "==1.4.2" },
-    { name = "mkdocstrings", marker = "python_full_version == '3.12.*'", specifier = "==0.30.1" },
-    { name = "mkdocstrings-python", marker = "python_full_version == '3.12.*'", specifier = "==1.18.2" },
     { name = "oauthlib", specifier = ">=3.2.2" },
     { name = "packaging", specifier = ">=24.0" },
     { name = "pyjwt" },
-    { name = "pymdown-extensions", marker = "python_full_version == '3.12.*'", specifier = "==11.0.2" },
     { name = "pyright", extras = ["nodejs"] },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
     { name = "pytest-cov" },
     { name = "pyyaml" },
     { name = "typing-extensions", specifier = ">=4.4.0" },
-    { name = "zensical", marker = "python_full_version == '3.12.*'", specifier = "==0.1.1" },
 ]
 unit-tests = [
     { name = "cattrs" },
@@ -135,9 +122,7 @@ unit-tests = [
 ]
 
 [manifest.group-requires-python]
-dev = ">=3.12,<3.13"
-docs = ">=3.12,<3.13"
-type-check = ">=3.12,<3.13"
+docs = ">=3.12"
 
 [[package]]
 name = "attrs"
@@ -181,7 +166,8 @@ version = "26.2.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -307,7 +293,8 @@ version = "2.1.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -436,7 +423,8 @@ version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/4e/b5/721b8799b04bf9afe054a3899c6cf4e880fcf8563cc71c15610242490a0c/cfgv-3.5.0.tar.gz", hash = "sha256:d5b1034354820651caa73ede66a6294d6e95c1b00acc5e9b098e917404669132", size = 7334, upload-time = "2025-11-19T20:55:51.612Z" }
@@ -931,7 +919,8 @@ version = "7.17.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d2/79/e78bd8f75a9b8e32233ce92d4607f0a21ce88a9156cace2884e7175a82f5/coverage-7.17.0.tar.gz", hash = "sha256:cc010a0a7fbdd9bb8bdfd0d3f04a5151275860213cbd7e2b876b29778489c712", size = 991021, upload-time = "2026-10-22T16:06:50.009Z" }
 wheels = [
@@ -1136,7 +1125,8 @@ version = "50.0.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
     "python_full_version > '3.9' and python_full_version < '3.10'",
 ]
@@ -1373,7 +1363,8 @@ version = "2.22.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/a4/9473c7c3b87009d9c1d74034e4a0f6a35ff0d42dd0f9866d0c3ec4e9217b/fastjsonschema-2.22.2.tar.gz", hash = "sha256:72064e12356a7d6ef02165be2946b9abadbdf238536e07eb587e3dbaa33099cf", size = 385171, upload-time = "2026-08-15T19:47:08.853Z" }
@@ -1412,7 +1403,8 @@ version = "4.2.4"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d8/28/3893324bcadf8f89b1616637468d766af3f625008c0735bf704fdfa86617/filelock-4.2.4.tar.gz", hash = "sha256:c6d8663535e1650ee430507b4ffbac7b464dd64b7647ea0112a9f406499d163d", size = 652444, upload-time = "2026-10-19T01:57:51.001Z" }
 wheels = [
@@ -1524,7 +1516,8 @@ version = "1.84.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -1617,7 +1610,8 @@ version = "1.84.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -1712,7 +1706,8 @@ version = "1.84.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -1810,7 +1805,8 @@ version = "1.32.4"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -1845,7 +1841,8 @@ version = "2.6.20"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/53/35/d70c0006c7cee65999ea94a6273e60b2094f600a3d8b71b04318253fc643/identify-2.6.20.tar.gz", hash = "sha256:ad729860a923858d26917c2f4fb0a1d83d27a75b1e090c06440c573f048f3285", size = 99681, upload-time = "2026-09-26T20:29:07.187Z" }
@@ -1881,7 +1878,8 @@ version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/01/e1/2069291243c926a2ff1cd706c7f3eeb9b62144bf60f77c9fb9ff2fb26bd3/iniconfig-2.3.1.tar.gz", hash = "sha256:67f4b9c50da0dedf52af349e7749a80a9057a5031199791b906c3bb3ae878960", size = 21209, upload-time = "2026-10-06T22:48:38.076Z" }
@@ -1935,7 +1933,8 @@ version = "4.26.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -2015,7 +2014,8 @@ version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -2314,7 +2314,8 @@ version = "1.7.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/bf/db/7fc19e6f2dc92a966727031389fc2e08b558f0f25eb7403c1119ad4713cd/pluggy-1.7.0.tar.gz", hash = "sha256:d1eaa46ebb595891b860ab086b4d09c8588af65ebd4361b8e8f4bb8920b90ba8", size = 123304, upload-time = "2026-10-15T09:50:58.343Z" }
@@ -2367,7 +2368,8 @@ version = "4.7.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
 ]
 dependencies = [
     { name = "cfgv", version = "3.5.0", source = { registry = "https://pypi.org/simple" } },
@@ -2408,7 +2410,8 @@ version = "7.36.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d9/89/5b8517baa72f84a67b8a307ba953c91057af618bf40bf676f3c03551f8f0/protobuf-7.36.2.tar.gz", hash = "sha256:497d0463ff3316681da6c0b9e8d06cb465d61abce00b613ab42226175644d1bb", size = 512737, upload-time = "2026-09-17T20:07:59.326Z" }
@@ -2453,7 +2456,8 @@ version = "3.12"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cb/27/eeb9f307bf07060f3d9f9aa0fb8c15b01bdfded0a941e4b2719c7f94cacd/pycparser-3.12.tar.gz", hash = "sha256:f03387877eab82ce01bbdfd0ba7252ee55a90b1c708d5129e2ce915475cf1db6", size = 158785, upload-time = "2026-10-22T13:40:03.56Z" }
 wheels = [
@@ -2549,7 +2553,8 @@ version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -2590,7 +2595,8 @@ version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -2666,7 +2672,8 @@ version = "0.24.5"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6a/45/770eda636216c62be4a06af01c7235923ca0580d72fd3e3178fb01b3ae01/pyudev-0.24.5.tar.gz", hash = "sha256:4e7faaec419b81a902d057568101819f448972c0cf448bb9c22203e4fc6a8eb9", size = 55343, upload-time = "2026-09-28T16:36:14.53Z" }
@@ -2783,7 +2790,8 @@ version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 dependencies = [
@@ -3136,7 +3144,8 @@ version = "2026.9.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/68/3bd46b8a5e01d3c2ebdf9c5e9497912e3fe0cde02bac21a7130ca866e403/rpds_py-2026.9.1.tar.gz", hash = "sha256:4793ef7f78268b124b73fa933440f01d258bbae01de9fa53e9080c9ab0425a12", size = 63948, upload-time = "2026-10-04T16:32:36.469Z" }
 wheels = [
@@ -3314,7 +3323,8 @@ version = "84.2.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/70/b3/c19426f783614d625699a4b247faf628ea9ab1db228674491767b417f9e1/setuptools-84.2.1.tar.gz", hash = "sha256:3ff8b3b5492a0aa66960f4419365a86b84e013070d4313e4d4a6894f5d64d6bc", size = 1230289, upload-time = "2026-10-20T19:01:37.742Z" }
@@ -3480,7 +3490,8 @@ version = "21.14.13"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
 ]
 dependencies = [
     { name = "distlib" },
@@ -3550,7 +3561,8 @@ version = "1.9.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version == '3.12.*'",
-    "python_full_version == '3.11.*' or python_full_version >= '3.13'",
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.11.*'",
     "python_full_version == '3.10.*'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d8/cb/a5abcc2891249f393827c650c6296660ce40374ac22d99ab9aea41f9d2a2/websocket_client-1.9.2.tar.gz", hash = "sha256:0fcb57545848be86992e128218fd96dd87a6769ffdb1a968dff79632b85604d0", size = 84110, upload-time = "2026-08-31T14:08:40.964Z" }
