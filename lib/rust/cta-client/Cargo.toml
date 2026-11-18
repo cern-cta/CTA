@@ -20,7 +20,7 @@
 
 [features]
   # The records and the workflow messages as proto3 JSON (`AdminClient::stream_json`, ...), as printed by `cta-admin --jsonl`
-  json = ["cta-protobuf/json", "dep:serde_json"]
+  json = ["cta-protobuf/json", "dep:serde", "dep:serde_json"]
 
 [dependencies]
   bon          = { workspace = true }
@@ -32,7 +32,7 @@
   tonic        = { workspace = true, features = ["tls-native-roots", "tls-ring"] }
   tokio-stream = { workspace = true }
   thiserror    = { workspace = true }
-  serde        = { workspace = true, features = ["derive"] }
+  serde        = { workspace = true, optional = true }
   serde_json   = { workspace = true, optional = true }
   strum        = { workspace = true, features = ["derive"] }
 

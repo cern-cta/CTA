@@ -13,8 +13,6 @@
 //! | ------ | ----------- |
 //! | [`admin`] | `cta-admin-api`: [`admin::AdminClient`], the typed admin commands ([`admin::commands`]), the data access objects ([`admin::dao`], e.g. [`admin::dao::TapePools`]), and [`admin::AdminError`] |
 //! | [`workflow`] | `cta-workflow-api`: [`workflow::WorkflowClient`] sending the events of [`cta_model::events`], their requests ([`workflow::WorkflowRequest`]), and [`workflow::WorkflowError`] |
-//! | [`types`] | Domain types built from the protobuf records ([`types::File`], [`types::Checksum`], [`types::ChecksumType`]) |
-//! | [`errors`] | Errors of the conversions into the domain types ([`errors::ChecksumTypeError`], ...) |
 //!
 //! The macros defining the admin commands ([`macro@typed_admin_cmd`], [`admin_cmd!`]) are exported at the root of the
 //! crate.
@@ -75,8 +73,6 @@
 extern crate self as cta_client;
 
 pub mod admin;
-pub mod errors;
-pub mod types;
 pub mod workflow;
 
 #[doc(inline)]
@@ -88,6 +84,3 @@ pub mod __private {
     pub use bon;
     pub use cta_protobuf;
 }
-
-#[cfg(test)]
-mod tests;

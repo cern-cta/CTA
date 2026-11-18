@@ -347,6 +347,7 @@ dependencies = [
  "clap_mangen",
  "cta-client",
  "cta-grpc-common",
+ "cta-model",
  "env_logger",
  "eos-client",
  "eos-protobuf",

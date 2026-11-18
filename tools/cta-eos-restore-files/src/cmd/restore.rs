@@ -3,18 +3,15 @@
 
 use std::collections::HashMap;
 
-use anyhow::Context;
-use cta_client::{
-    admin::AdminClient,
-    errors::ChecksumTypeError,
-    types::{Checksum, ChecksumType, DiskFile, File},
-};
+use anyhow::{Context, bail};
+use cta_client::admin::{AdminClient, AdminError};
 use cta_grpc_common::EndpointConfig;
+use cta_model::file::{Checksum, ChecksumType, DiskFile, File};
 use eos_client::EosEndpointMap;
 use eos_protobuf::eos::rpc::{MdId, Type};
 use tokio_stream::StreamExt;
 
-use crate::{cli::CommonOptions, cta, eos::restore_deleted_file};
+use crate::{cli::CommonOptions, eos::restore_deleted_file};
 
 async fn do_sanity_check(
     client: &AdminClient,
@@ -22,9 +19,15 @@ async fn do_sanity_check(
     file: File,
 ) -> anyhow::Result<()> {
     // Let's get the metadata
-    let tape_file = cta::get_file(client, file.archive_file.id)
-        .await?
-        .with_context(|| format!("File {} not found in CTA", file.archive_file.id))?;
+    let archive_file_id = file.archive_file.id;
+    let vid = &file.tape_file.vid;
+    let tape_file = match client.tape_files().get(archive_file_id, vid).await {
+        Err(AdminError::NotFound { .. }) => {
+            bail!("Copy of file {archive_file_id} on tape {vid} not found in CTA")
+        }
+        copy => copy?,
+    };
+    log::debug!("Retrieved tape file information: {tape_file:?}");
     let DiskFile {
         id: disk_id,
         instance: disk_instance,
@@ -89,9 +92,8 @@ async fn do_sanity_check(
         .archive_file
         .checksums
         .iter()
-        .map(|cs| -> Result<_, ChecksumTypeError<()>> { Ok((cs.r#type, cs.clone())) })
-        .collect::<Result<_, ChecksumTypeError<_>>>()
-        .map_err(|e| anyhow::anyhow!("Error parsing CTA checksums: {e:?}"))?;
+        .map(|cs| (cs.r#type, cs.clone()))
+        .collect();
 
     let matching: Vec<&ChecksumType> = eos_checksums
         .iter()
@@ -124,10 +126,10 @@ pub(crate) async fn command(
     common: CommonOptions,
 ) -> anyhow::Result<()> {
     let client = AdminClient::connect(config).await?;
-    let mut deleted_files = cta::list_deleted_files(&client, common.recycle_bin_query()).await?;
+    let mut deleted_files = common.deleted_files(&client).await?;
 
     while let Some(file) = deleted_files.next().await {
-        let mut file = file?;
+        let mut file = file?.file;
         let File {
             disk_file:
                 DiskFile {
@@ -149,7 +151,12 @@ pub(crate) async fn command(
             file.disk_file.id = new_disk_file_id.to_string();
         };
 
-        cta::restore_deleted_file_copy(&client, &file).await?;
+        log::info!(
+            "Restoring file copy in CTA catalogue: {}",
+            file.disk_file.path
+        );
+        let message = client.recycle_bin_tape_files().restore(&file).await?;
+        log::info!("Restored file copy in CTA catalogue: {message}");
 
         log::info!("Running a sanity check on the recovered file...");
 

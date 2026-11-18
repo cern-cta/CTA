@@ -13,6 +13,7 @@ import shlex
 import time
 import uuid
 from collections.abc import Iterator
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -31,7 +32,7 @@ EOS_GRPC_GID = 2
 
 @dataclass(frozen=True)
 class DeletedFile:
-    """An archived file that has been deleted, so it sits in the recycle bin."""
+    """A copy of an archived file that has been deleted, so it sits in the recycle bin."""
 
     path: Path
     archive_file_id: int
@@ -139,14 +140,15 @@ def restore_files_tool(
             eos_mgm.exec(f"eos -r 0 0 vid rm {rule_name}", throw_on_failure=False)
 
 
-@pytest.fixture
-def deleted_file(
+def _archive_and_delete(
     eos_client: EosClientHost,
     cta_cli: CtaCliHost,
     disk_instance_name: str,
     test_dir: Path,
-) -> DeletedFile:
-    """Archive a file, record its metadata and delete it into the recycle bin."""
+    *,
+    copies: int,
+) -> list[DeletedFile]:
+    """Archive a file with the given number of tape copies, delete it, and return its copies in the recycle bin."""
     source_path = Path(f"/tmp/restore_files_source_{uuid.uuid4().hex}")
     file_path = test_dir / f"restore_files_{uuid.uuid4().hex}"
 
@@ -158,7 +160,7 @@ def deleted_file(
     try:
         # The archived file is evicted from disk, so the restore has to recreate the
         # namespace entry rather than just relink an existing one
-        eos_client.archive_file(disk_instance_name, file_path, source_path, wait_timeout_secs=60)
+        eos_client.archive_file(disk_instance_name, file_path, source_path, wait_timeout_secs=60 * copies)
     finally:
         eos_client.exec(f"rm -f {source_path}", throw_on_failure=False)
 
@@ -169,29 +171,102 @@ def deleted_file(
             f"cta-admin --json tf ls --fxid {file_info['fxid']} -i {shlex.quote(disk_instance_name)}"
         )
     )
-    assert len(tape_files) == 1, f"Expected exactly one tape file for {file_path}"
-    tape_file = tape_files[0]
+    assert len(tape_files) == copies, f"Expected {copies} tape file(s) for {file_path}, got {len(tape_files)}"
 
     eos_client.delete_file(disk_instance_name, file_path)
 
-    deleted = DeletedFile(
-        path=file_path,
-        archive_file_id=int(tape_file["af"]["archiveId"]),
-        disk_file_id=disk_file_id,
-        size_in_bytes=int(tape_file["af"]["size"]),
-        checksum=tape_file["af"]["checksum"][0]["value"],
-        vid=tape_file["tf"]["vid"],
-        copy_nb=int(tape_file["tf"]["copyNb"]),
-    )
+    deleted = [
+        DeletedFile(
+            path=file_path,
+            archive_file_id=int(tape_file["af"]["archiveId"]),
+            disk_file_id=disk_file_id,
+            size_in_bytes=int(tape_file["af"]["size"]),
+            checksum=tape_file["af"]["checksum"][0]["value"],
+            vid=tape_file["tf"]["vid"],
+            copy_nb=int(tape_file["tf"]["copyNb"]),
+        )
+        for tape_file in tape_files
+    ]
+    archive_file_id = deleted[0].archive_file_id
 
-    # The frontend reports the deletion asynchronously, so wait for the recycle-bin entry
+    # The frontend reports the deletion asynchronously, so wait for the recycle-bin entries
     with Timeout(30) as timeout:
         while not timeout.expired:
-            entries = json.loads(cta_cli.exec_with_output(f"cta-admin --json rtf ls --id {deleted.archive_file_id}"))
-            if entries:
+            entries = json.loads(cta_cli.exec_with_output(f"cta-admin --json rtf ls --id {archive_file_id}"))
+            if len(entries) == copies:
                 return deleted
             time.sleep(1)
-    raise TimeoutError(f"{file_path} did not appear in the recycle bin after deletion")
+    raise TimeoutError(f"The {copies} copies of {file_path} did not appear in the recycle bin after deletion")
+
+
+@pytest.fixture
+def deleted_file(
+    eos_client: EosClientHost,
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    test_dir: Path,
+) -> DeletedFile:
+    """Archive a file, record its metadata and delete it into the recycle bin."""
+    (deleted,) = _archive_and_delete(eos_client, cta_cli, disk_instance_name, test_dir, copies=1)
+    return deleted
+
+
+@pytest.fixture
+def two_copies(
+    cta_cli: CtaCliHost,
+    cta_storage_class: str,
+    cta_default_tape_pool: str,
+) -> Iterator[None]:
+    """Give the files of the test storage class a second copy, on a tape lent to a temporary tape pool.
+
+    Everything is put back afterwards; the files archived meanwhile keep their two copies.
+    """
+    tape_pool = f"tp_restore_files_copy2_{uuid.uuid4().hex[:6]}"
+    tapes = [
+        tape
+        for tape in cta_cli.list_writable_tapes()
+        if tape["tapepool"] == cta_default_tape_pool and tape["state"] == "ACTIVE"
+    ]
+    # One tape stays in the default pool for the first copy
+    assert len(tapes) >= 2, f"Need two writable tapes in {cta_default_tape_pool}, one per copy"
+    vid = tapes[-1]["vid"]
+
+    with ExitStack() as cleanup:
+        cta_cli.exec(
+            f"cta-admin tapepool add --name {tape_pool} --vo vo --partialtapesnumber 0 "
+            "--comment 'Temp pool: restore of a file with two copies'"
+        )
+        cleanup.callback(cta_cli.exec, f"cta-admin tapepool rm --name {tape_pool}")
+
+        cta_cli.exec(f"cta-admin tape ch --vid {vid} --tapepool {tape_pool}")
+        cleanup.callback(cta_cli.exec, f"cta-admin tape ch --vid {vid} --tapepool {cta_default_tape_pool}")
+
+        cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
+        cleanup.callback(cta_cli.exec, f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
+
+        cta_cli.exec(
+            f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool {tape_pool} "
+            "--comment 'Temp route: restore of a file with two copies'"
+        )
+        cleanup.callback(
+            cta_cli.exec,
+            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT",
+        )
+
+        yield
+
+
+@pytest.fixture
+def deleted_copies(
+    two_copies: None,
+    eos_client: EosClientHost,
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    test_dir: Path,
+) -> list[DeletedFile]:
+    """Archive a file with two copies, on two tapes, and delete it into the recycle bin."""
+    del two_copies  # Only needed for the storage class it sets up
+    return _archive_and_delete(eos_client, cta_cli, disk_instance_name, test_dir, copies=2)
 
 
 def test_list_reports_the_deleted_file(
@@ -264,3 +339,37 @@ def test_restore_recreates_the_file_in_eos_and_cta(
     # A restored file is no longer a deleted file
     assert restore_files_tool.list(selection) == []
     assert json.loads(cta_cli.exec_with_output(f"cta-admin --json rtf ls --id {deleted_file.archive_file_id}")) == []
+
+
+def test_restore_brings_back_every_copy(
+    restore_files_tool: RestoreFilesTool,
+    deleted_copies: list[DeletedFile],
+    eos_client: EosClientHost,
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+) -> None:
+    """Restore must bring back each copy of a file that has several.
+
+    The copies are restored one after the other, so the sanity check of the second copy finds the first one
+    already back in the catalogue; it must not take that for an inconsistency.
+    """
+    archive_file_id = deleted_copies[0].archive_file_id
+    selection = f"--archive-file-id {archive_file_id}"
+    assert len(restore_files_tool.list(selection)) == len(deleted_copies)
+
+    restore_files_tool.restore(selection)
+
+    # Both copies point at the single namespace entry recreated for the first one
+    file_info = _wait_for_namespace_entry(eos_client, disk_instance_name, deleted_copies[0].path)
+    restored_disk_file_id = str(int(file_info["fxid"], 16))
+    assert file_info["xattr"]["sys.archive.file_id"] == str(archive_file_id)
+
+    tape_files = json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --id {archive_file_id}"))
+    assert sorted((tape_file["tf"]["vid"], int(tape_file["tf"]["copyNb"])) for tape_file in tape_files) == sorted(
+        (copy.vid, copy.copy_nb) for copy in deleted_copies
+    )
+    for tape_file in tape_files:
+        assert tape_file["df"]["diskId"] == restored_disk_file_id
+        assert tape_file["df"]["diskInstance"] == disk_instance_name
+
+    assert restore_files_tool.list(selection) == []

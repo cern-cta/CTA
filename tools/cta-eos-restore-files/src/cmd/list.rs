@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! The `list` command: the deleted files matching the selection, from the recycle bin of the catalogue.
+
 use cta_client::admin::AdminClient;
 use cta_grpc_common::EndpointConfig;
 
 use crate::{
     cli::CommonOptions,
-    cta,
     output::{output_as_json, output_as_table},
 };
 
@@ -22,7 +23,7 @@ pub(crate) async fn command(
         println!("Listing deleted files in CTA Catalogue:");
     }
 
-    let files = cta::list_deleted_files(&client, options.recycle_bin_query()).await?;
+    let files = options.deleted_files(&client).await?;
 
     // Process stream based on output format (collection vs rendering)
     if json {
@@ -32,5 +33,6 @@ pub(crate) async fn command(
         // Stream items to table output
         output_as_table(files).await?;
     }
+
     Ok(())
 }

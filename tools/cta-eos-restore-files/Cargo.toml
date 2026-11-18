@@ -20,6 +20,7 @@
 
 [dependencies]
   cta-grpc-common = { workspace = true }
+  cta-model       = { workspace = true }
   eos-client      = { workspace = true }
   eos-protobuf    = { workspace = true }
 

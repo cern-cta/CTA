@@ -12,7 +12,8 @@ use clap::{
         styling::{AnsiColor, Color, RgbColor, Style},
     },
 };
-use cta_client::admin::commands::recycle_tape_file;
+use cta_client::admin::{AdminClient, AdminError, AdminStream};
+use cta_model::file::RecycleBinTapeFile;
 use url::Url;
 
 const CTA_ORANGE: RgbColor = RgbColor(232, 115, 44); // #E8732C
@@ -60,15 +61,21 @@ pub(crate) struct CommonOptions {
 }
 
 impl CommonOptions {
-    /// The recycle bin query selecting the files of these options
-    pub(crate) fn recycle_bin_query(self) -> recycle_tape_file::Ls {
-        recycle_tape_file::Ls::builder()
+    /// The recycle bin entries selected by the options (`recycletf ls`).
+    pub(crate) async fn deleted_files(
+        self,
+        client: &AdminClient,
+    ) -> Result<AdminStream<RecycleBinTapeFile>, AdminError> {
+        client
+            .recycle_bin_tape_files()
+            .list()
             .maybe_vid(self.vid)
-            .maybe_instance(self.disk_instance)
+            .maybe_disk_instance_name(self.disk_instance)
             .maybe_archive_file_id(self.archive_file_id)
-            .maybe_copy_nb(self.copy_number)
+            .maybe_copy_number(self.copy_number)
             .maybe_disk_file_ids(self.file_ids)
-            .build()
+            .call()
+            .await
     }
 }
 
