@@ -642,7 +642,7 @@ TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwn
   EXPECT_GT(desiredAttempts, 0);
   EXPECT_TRUE(canUseHardware());
   EXPECT_TRUE(reported().desiredUp);
-  EXPECT_EQ(DriveStatus::Unloading, reported().driveStatus);
+  EXPECT_EQ(DriveStatus::Unmounting, reported().driveStatus);
   EXPECT_FALSE(activeTracker());
 
   // A failed request does not acknowledge release; teardown publishes Down after releasing ownership.
@@ -668,7 +668,7 @@ TEST_F(DriveSessionTest, CleanupReportedDownFailurePropagatesAfterOwnershipIsRel
   EXPECT_EQ(1, downAttempts);
   EXPECT_FALSE(canUseHardware());
   EXPECT_FALSE(reported().desiredUp);
-  EXPECT_EQ(DriveStatus::Unloading, reported().driveStatus);
+  EXPECT_EQ(DriveStatus::Unmounting, reported().driveStatus);
   ASSERT_TRUE(reported().reasonUpDown);
   EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Failed to clear encryption key"));
   EXPECT_FALSE(activeTracker());

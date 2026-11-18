@@ -179,14 +179,18 @@ mount_timeout_secs *(default: 600)*
 
 :   Maximum time in Mounting before liveness becomes unhealthy.
 
-tape_load_timeout_secs *(default: 300)*
+tape_load_timeout_secs *(default: 900)*
 
 :   Maximum time in Loading before liveness becomes unhealthy.
-Also limits the existing physical drive readiness wait, whose failure starts cleanup.
+Also limits loading readiness polling; cleanup does not repeat this wait.
+Initialize new LTO-9 media before scheduling ordinary work, or configure a loading timeout that accommodates first-use media optimization.
+IBM documents that this operation can take up to two hours; see the [IBM LTO SCSI reference, Appendix E.3](https://www.ibm.com/support/pages/system/files/inline-files/LTO%20SCSI%20Reference%20GA32-0928-09.pdf).
 
 tape_unload_timeout_secs *(default: 900)*
 
 :   Maximum time in Unloading before liveness becomes unhealthy.
+Covers drive acquisition, readiness probing, configuration reset, label inspection, and unloading.
+This health limit does not cancel blocking kernel operations.
 Must be positive and nonzero.
 
 unmount_timeout_secs *(default: 900)*

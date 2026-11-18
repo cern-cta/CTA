@@ -312,6 +312,18 @@ void cta::tape::drive::FakeDrive::waitUntilReady(const uint32_t timeoutSecond) {
   }
 }
 
+bool cta::tape::drive::FakeDrive::prepareForMediaAccess() {
+  throwIfFailurePoint(FailurePoint::PrepareForMediaAccess);
+  return m_tapeInPlace && !m_failToMount;
+}
+
+void cta::tape::drive::FakeDrive::ensureTapeUnloaded() {
+  if (m_failurePoints.contains(FailurePoint::UnloadDriveState)) {
+    throw DriveStateError("Injected unsafe unload driver state");
+  }
+  unloadTape();
+}
+
 bool cta::tape::drive::FakeDrive::isWriteProtected() {
   return false;
 }

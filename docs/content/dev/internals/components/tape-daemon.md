@@ -28,7 +28,9 @@ If a tape session throws without returning an outcome, recovery runs under the e
 
 `DriveCleaner` can borrow an already-open drive.
 It reports cleanup results and progress; the enclosing drive session owns the final `Down` publication.
-An empty drive alone is insufficient for reuse if resetting persistent drive configuration failed.
+Cleanup probes readiness without waiting for media to load and skips label inspection when media is not ready.
+Robotic dismount establishes cartridge removal even when the tape driver reports no media; an unloaded cartridge may still occupy the library's drive slot.
+An empty slot alone is insufficient for reuse if configuration reset or establishing safe driver state failed.
 
 `DriveReservation` currently tracks ownership within the process only.
 It does not exclude another process from the device and is not a SCSI reservation.

@@ -11,12 +11,90 @@
 #include "common/exception/MemException.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <climits>
 #include <errno.h>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
+#include <thread>
+#include <utility>
 
 namespace cta::tape::drive {
+
+namespace {
+
+using MediaClock = std::chrono::steady_clock;
+constexpr auto mediaProbeTimeout = std::chrono::seconds(30);
+constexpr unsigned maxUnitAttentionAttempts = 3;
+
+// Keep command sense details local: callers need readiness, not a model of cartridge position.
+struct MediaSense {
+  uint8_t key;
+  uint8_t asc;
+  uint8_t ascq;
+  std::string message;
+
+  bool isBecomingReady() const {
+    // Becoming ready, formatting, operation/security-association creation in progress, or cleaning.
+    return key == SCSI::senseKeys::notReady
+           && ((asc == 0x04 && (ascq == 0x01 || ascq == 0x04 || ascq == 0x07 || ascq == 0x13))
+               || (asc == 0x00 && ascq == 0x16) || (asc == 0x30 && ascq == 0x03));
+  }
+
+  bool isNonReadyMedia() const {
+    // These also include absent media, unthreaded media with accessible MAM, and a required LOAD command.
+    return isBecomingReady()
+           || (key == SCSI::senseKeys::notReady
+               && ((asc == 0x3a && (ascq == 0x00 || ascq == 0x04)) || (asc == 0x04 && ascq == 0x02)));
+  }
+};
+
+// A missing sense result means GOOD. Never interpret truncated, deferred, or transport-error sense as absence.
+std::optional<MediaSense> mediaCommand(System::virtualWrapper& wrapper,
+                                       int fd,
+                                       std::array<uint8_t, 6> command,
+                                       std::chrono::milliseconds timeout,
+                                       const std::string& context) {
+  SCSI::Structures::senseData_t<255> sense;
+  SCSI::Structures::LinuxSGIO_t sgh;
+  sgh.setCDB(&command);
+  sgh.setSenseBuffer(&sense);
+  sgh.dxfer_direction = SG_DXFER_NONE;
+  sgh.timeout = static_cast<unsigned>(std::clamp<int64_t>(timeout.count(), 1, UINT_MAX));
+  exception::Errnum::throwOnMinusOne(wrapper.ioctl(fd, SG_IO, &sgh), context);
+  SCSI::checkAndThrowSgHostStatus(sgh, context);
+  if (sgh.driver_status != SCSI::DriverStatus::OK && sgh.driver_status != SCSI::DriverStatus::SENSE) {
+    SCSI::checkAndThrowSgDriverStatus(sgh, context);
+  }
+  if (sgh.status == SCSI::Status::CHECK_CONDITION) {
+    const auto* bytes = reinterpret_cast<const uint8_t*>(&sense);
+    const bool fixed = sense.isFixedFormat();
+    const bool descriptor = sense.isDescriptorFormat();
+    if ((!fixed && !descriptor) || sgh.sb_len_wr < 8 || (fixed && (sgh.sb_len_wr < 14 || bytes[7] < 6))) {
+      throw exception::Exception(context + ": malformed or truncated SCSI sense data");
+    }
+    const auto key = sense.getSenseKey();
+    if (sense.isCurrent() && (key == SCSI::senseKeys::notReady || key == SCSI::senseKeys::unitAttention)) {
+      return MediaSense {key,
+                         sense.getASC(),
+                         sense.getASCQ(),
+                         SCSI::Exception(sgh.status, &sense, context).getMessageValue()};
+    }
+  }
+  SCSI::ExceptionLauncher(sgh, context);
+  return std::nullopt;
+}
+
+std::chrono::milliseconds remainingCommandTime(MediaClock::time_point deadline,
+                                               std::chrono::milliseconds commandLimit) {
+  return std::min(commandLimit, std::chrono::ceil<std::chrono::milliseconds>(deadline - MediaClock::now()));
+}
+
+}  // namespace
 
 std::unique_ptr<DriveInterface> createDrive(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) {
   // For now we need this code as we can only determine that the drive
@@ -2737,83 +2815,149 @@ std::map<std::string, uint32_t> cta::tape::drive::DriveMHVTL::getVolumeStats() {
   return std::map<std::string, uint32_t>();
 }
 
-void drive::DriveGeneric::testUnitReady() const {
-  SCSI::Structures::testUnitReadyCDB_t cdb;
+void drive::DriveGeneric::reopenDevice() {
+  // close() may have released the descriptor even on failure. Never close that numeric fd a second time.
+  const int fd = std::exchange(m_tapeFD, -1);
+  if (fd < 0) {
+    throw DriveStateError("Cannot reopen an invalid tape descriptor: " + m_SCSIInfo.nst_dev);
+  }
+  try {
+    exception::Errnum::throwOnMinusOne(m_sysWrapper.close(fd), "Could not close device: " + m_SCSIInfo.nst_dev);
+    exception::Errnum::throwOnMinusOne(m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
+                                       "Could not reopen device: " + m_SCSIInfo.nst_dev);
+  } catch (...) {
+    throw DriveStateError(exception::currentExceptionMessage());
+  }
+}
 
-  SCSI::Structures::senseData_t<255> senseBuff;
-  SCSI::Structures::LinuxSGIO_t sgh;
+void drive::DriveGeneric::refreshReadyDevice() {
+  reopenDevice();
+  struct mtget status {};
+  try {
+    exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &status),
+                                       "Could not read refreshed drive status: " + m_SCSIInfo.nst_dev);
+  } catch (...) {
+    throw DriveStateError(exception::currentExceptionMessage());
+  }
+  if (!GMT_ONLINE(status.mt_gstat)) {
+    throw DriveStateError("Tape driver is offline after successful TEST UNIT READY: " + m_SCSIInfo.nst_dev);
+  }
+}
 
-  sgh.setCDB(&cdb);
-  sgh.setSenseBuffer(&senseBuff);
-  sgh.dxfer_direction = SG_DXFER_NONE;
-
-  /* Manage both system error and SCSI errors. */
-  cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
-                                          "Failed SG_IO ioctl in DriveGeneric::testUnitReady");
-
-  SCSI::ExceptionLauncher(sgh, "SCSI error in testUnitReady:");
+bool drive::DriveGeneric::prepareForMediaAccess() {
+  const auto deadline = MediaClock::now() + mediaProbeTimeout;
+  for (unsigned attempt = 0; attempt < maxUnitAttentionAttempts; ++attempt) {
+    const auto remaining = remainingCommandTime(deadline, mediaProbeTimeout);
+    if (remaining <= std::chrono::milliseconds::zero()) {
+      break;
+    }
+    const auto sense =
+      mediaCommand(m_sysWrapper, m_tapeFD, {}, remaining, "TEST UNIT READY for cleanup: " + m_SCSIInfo.nst_dev);
+    if (!sense) {
+      refreshReadyDevice();
+      return true;
+    }
+    if (sense->key == SCSI::senseKeys::unitAttention) {
+      continue;
+    }
+    if (sense->isNonReadyMedia()) {
+      return false;
+    }
+    throw DriveStateError(sense->message);
+  }
+  throw DriveStateError("Could not establish media readiness after bounded unit-attention handling: "
+                        + m_SCSIInfo.nst_dev);
 }
 
 void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond) {
   waitTestUnitReady(timeoutSecond);
-
-  // we need to reopen the drive to update the GMT_ONLINE cache of the st driver
-  cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
-                                          std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
-  cta::exception::Errnum::throwOnMinusOne(m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
-                                          std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
-
-  struct mtget mtInfo;
-
-  /* Read drive status */
-  {
-    const int ioctl_rc = m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo);
-    const int ioctl_errno = errno;
-    if (-1 == ioctl_rc) {
-      std::ostringstream errMsg;
-      errMsg << "Could not read drive status in waitUntilReady: " << m_SCSIInfo.nst_dev;
-      if (EBADF == ioctl_errno) {
-        errMsg << " tapeFD=" << m_tapeFD;
-      }
-      throw cta::exception::Errnum(ioctl_errno, errMsg.str());
-    }
-  }
-
-  if (GMT_ONLINE(mtInfo.mt_gstat) == 0) {
-    cta::exception::TimeOut ex;
-    ex.getMessage() << "Tape drive empty after waiting " << timeoutSecond << " seconds.";
-    throw ex;
-  }
+  refreshReadyDevice();
 }
 
 void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const {
-  std::string lastTestUnitReadyExceptionMsg("");
-  cta::utils::Timer t;
-  // Query the tape drive at least once hence a do while loop/
-  do {
-    // testUnitReady() uses SG_IO TEST_UNIT_READY to avoid calling open on the
-    // st driver, because the open of the st driver is not as tolerant of
-    // certain types of error such as when an incompatible media type is mounted
-    // into a drive
-    try {
-      testUnitReady();
-      return;
-    } catch (cta::tape::SCSI::NotReadyException& ex) {
-      lastTestUnitReadyExceptionMsg = ex.getMessage().str();
-    } catch (cta::tape::SCSI::UnitAttentionException& ex) {
-      lastTestUnitReadyExceptionMsg = ex.getMessage().str();
-    } catch (...) {
-      throw;
+  const auto start = MediaClock::now();
+  const auto deadline = start + std::chrono::seconds(timeoutSecond);
+  std::string lastResponse;
+  // A zero budget permits one probe for existing diagnostic callers, but never a retry or sleep.
+  bool first = true;
+  while (first || MediaClock::now() < deadline) {
+    first = false;
+    const auto remaining = remainingCommandTime(deadline, mediaProbeTimeout);
+    const auto sense =
+      mediaCommand(m_sysWrapper, m_tapeFD, {}, remaining, "TEST UNIT READY while loading: " + m_SCSIInfo.nst_dev);
+    if (!sense) {
+      if (timeoutSecond == 0 || MediaClock::now() <= deadline) {
+        return;
+      }
+      lastResponse = "TEST UNIT READY completed after the loading deadline";
+      break;
     }
-
-    usleep(100 * 1000);  // 1/10 second
-  } while (t.secs() < timeoutSecond);
-
-  // Throw an exception for the last tolerated exception that exceeded the timer
-  cta::exception::TimeOut ex;
-  ex.getMessage() << "Failed to test unit ready after waiting " << timeoutSecond
-                  << " seconds: " << lastTestUnitReadyExceptionMsg;
+    lastResponse = sense->message;
+    if (sense->key != SCSI::senseKeys::unitAttention && !sense->isBecomingReady()) {
+      throw exception::Exception(lastResponse);
+    }
+    const auto sleepTime = std::min(deadline - MediaClock::now(),
+                                    std::chrono::duration_cast<MediaClock::duration>(std::chrono::milliseconds(100)));
+    if (sleepTime > MediaClock::duration::zero()) {
+      std::this_thread::sleep_for(sleepTime);
+    }
+  }
+  exception::TimeOut ex;
+  ex.getMessage() << "Drive readiness timed out after "
+                  << std::chrono::duration<double>(MediaClock::now() - start).count() << " seconds (configured timeout "
+                  << timeoutSecond << " seconds): " << lastResponse;
   throw ex;
+}
+
+void drive::DriveGeneric::ensureTapeUnloaded() {
+  try {
+    unloadTape();
+    return;
+  } catch (const exception::Errnum& ex) {
+    if (ex.errorNumber() != ENOMEDIUM && ex.errorNumber() != EIO) {
+      throw DriveStateError(ex.getMessageValue());
+    }
+    // MTUNLOAD may reject cached non-ready state without sending a command.
+    // MTIOCGET also passes through the driver's buffer handling; failure here must not be bypassed.
+    struct mtget status {};
+    if (m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &status) < 0 || GMT_ONLINE(status.mt_gstat)) {
+      throw DriveStateError("Cannot safely recover a failed driver unload: " + ex.getMessageValue());
+    }
+  }
+
+  // Close the old driver session before recovery so write/close errors cannot be silently discarded.
+  reopenDevice();
+  std::optional<std::string> recoveryError;
+  try {
+    const auto deadline = MediaClock::now() + std::chrono::milliseconds(SCSI::defaultTimeout);
+    const std::array<uint8_t, 6> unload {SCSI::Commands::START_STOP, 0, 0, 0, 0, 0};
+    for (unsigned attempt = 0;; ++attempt) {
+      const auto remaining = remainingCommandTime(deadline, std::chrono::milliseconds(SCSI::defaultTimeout));
+      if (remaining <= std::chrono::milliseconds::zero()) {
+        throw exception::TimeOut("Recovery unload command budget exhausted: " + m_SCSIInfo.nst_dev);
+      }
+      const auto sense =
+        mediaCommand(m_sysWrapper, m_tapeFD, unload, remaining, "SCSI recovery unload: " + m_SCSIInfo.nst_dev);
+      if (!sense || (sense->key == SCSI::senseKeys::notReady && sense->asc == 0x3a && sense->ascq == 0)) {
+        break;
+      }
+      if (sense->key != SCSI::senseKeys::unitAttention || attempt + 1 >= maxUnitAttentionAttempts) {
+        throw exception::Exception(sense->message);
+      }
+    }
+  } catch (...) {
+    recoveryError = exception::currentExceptionMessage();
+  }
+  // SG_IO does not update the Linux driver's media state, including when an unload fails partway through.
+  try {
+    reopenDevice();
+  } catch (...) {
+    const auto error = exception::currentExceptionMessage();
+    recoveryError = recoveryError ? *recoveryError + "; " + error : error;
+  }
+  if (recoveryError) {
+    throw DriveStateError(*recoveryError);
+  }
 }
 
 }  // namespace cta::tape::drive

@@ -450,14 +450,7 @@ bool DriveSession::cleanDrive(const std::string& vid, TapeSessionTracker& tracke
   bool reusable = false;
   std::string error;
   try {
-    DriveCleaner cleaner(m_mediaChanger,
-                         m_lc.logger(),
-                         m_driveInfo,
-                         vid,
-                         true,
-                         m_config.mounts.tape_load_timeout_secs,
-                         m_schedulerContext.catalogue(),
-                         tracker);
+    DriveCleaner cleaner(m_mediaChanger, m_lc.logger(), m_driveInfo, vid, m_schedulerContext.catalogue(), tracker);
     const auto result = cleaner.cleanDrive(m_sysWrapper);
     reusable = result.driveReusable();
     error = result.errorMessage;

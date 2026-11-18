@@ -52,8 +52,6 @@ DriveCleaner::DriveCleaner(mediachanger::MediaChangerFacade& mc,
                            log::Logger& log,
                            const common::dataStructures::DriveInfo& driveInfo,
                            const std::string& vid,
-                           const bool waitMediaInDrive,
-                           const uint32_t waitMediaInDriveTimeout,
                            catalogue::Catalogue& catalogue,
                            TapeSessionTracker& tracker)
     : m_tracker(tracker),
@@ -61,8 +59,6 @@ DriveCleaner::DriveCleaner(mediachanger::MediaChangerFacade& mc,
       m_lc(log),
       m_driveInfo(driveInfo),
       m_vid(vid),
-      m_waitMediaInDrive(waitMediaInDrive),
-      m_tapeLoadTimeout(waitMediaInDriveTimeout),
       m_catalogue(catalogue) {
   m_lc.push(log::Param("tapeVid", m_vid));
 }
@@ -156,7 +152,7 @@ void DriveCleaner::disableTapeAfterFailedEject(const std::string& errorMsg) noex
 }
 
 auto DriveCleaner::cleanDrive(drive::DriveInterface& drive) -> CleanupResult {
-  // Include readiness, configuration reset and rewind in the unloading budget.
+  // Include the readiness probe, configuration reset and rewind in the unloading budget.
   m_tracker.reportState(session::TapeSessionState::Unloading);
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   auto result = cleanDriveImpl(drive);
@@ -178,10 +174,24 @@ auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive) -> CleanupResult
     m_lc.log(log::WARNING, "Cleaner failed to reset drive configuration; continuing with tape eject");
   };
 
-  if (m_waitMediaInDrive) {
-    // Presence may be cached as empty after a partially completed mount.
-    // Wait for readiness to refresh device status before checking for media.
-    waitForMediaToBeReady(drive);
+  auto recordDriveStateFailure = [&] {
+    result.driveStateFailed = true;
+    m_tracker.recordFailure(TapeSessionFailure::UnexpectedCleanup);
+    if (!result.errorMessage.empty()) {
+      result.errorMessage += "; ";
+    }
+    result.errorMessage += exception::currentExceptionMessage();
+  };
+
+  bool ready = false;
+  try {
+    m_lc.log(log::DEBUG, "Cleaner checking media readiness without waiting for loading");
+    ready = drive.prepareForMediaAccess();
+  } catch (...) {
+    recordDriveStateFailure();
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, result.errorMessage);
+    m_lc.log(log::WARNING, "Cleaner could not establish drive state; continuing with tape eject");
   }
 
   // Reset persistent configuration even when the drive is empty.
@@ -201,35 +211,32 @@ auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive) -> CleanupResult
     }
   }
 
-  try {
-    if (!drive.hasTapeInPlace()) {
-      m_lc.log(log::INFO, "Cleaner found no tape in the drive; nothing to do");
-      return result;
-    }
-  } catch (...) {
-    log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, exception::currentExceptionMessage());
-    m_lc.log(log::WARNING, "Cleaner could not determine whether the drive contains a tape");
-  }
-
   std::optional<std::string> volumeLabel;
-  try {
-    rewindDrive(drive);
-    volumeLabel = readVolumeLabel(drive);
-  } catch (...) {
-    log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, exception::currentExceptionMessage());
-    m_lc.log(log::WARNING,
-             "Cleaner failed to prepare the drive or read the volume label; continuing with the provided VID");
+  if (ready) {
+    try {
+      rewindDrive(drive);
+      volumeLabel = readVolumeLabel(drive);
+    } catch (...) {
+      log::ScopedParamContainer params(m_lc);
+      params.add(semconv::log::exceptionMessage, exception::currentExceptionMessage());
+      m_lc.log(log::WARNING,
+               "Cleaner failed to prepare the drive or read the volume label; continuing with the provided VID");
+    }
   }
 
   try {
     unloadTape(drive);
+  } catch (const drive::DriveStateError&) {
+    recordDriveStateFailure();
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, result.errorMessage);
+    m_lc.log(log::WARNING, "Cleaner could not restore driver state; attempting robotic dismount");
   } catch (...) {
     log::ScopedParamContainer params(m_lc);
     params.add(semconv::log::exceptionMessage, exception::currentExceptionMessage());
     m_lc.log(log::WARNING, "Cleaner unload command failed; attempting robotic dismount");
   }
+  // Driver media status cannot prove the library slot is empty, even after successful unload.
   std::string dismountVid = m_vid;
   if (volumeLabel) {
     if (!m_vid.empty() && *volumeLabel != m_vid) {
@@ -316,23 +323,6 @@ std::unique_ptr<drive::DriveInterface> DriveCleaner::createDrive(System::virtual
   return drive;
 }
 
-void DriveCleaner::waitForMediaToBeReady(drive::DriveInterface& drive) {
-  CleanupTiming timing(m_tracker, &TapeCleanupStats::readinessWaitTime);
-  log::ScopedParamContainer params(m_lc);
-  params.add("waitMediaInDriveTimeout", m_tapeLoadTimeout);
-
-  try {
-    m_lc.log(log::DEBUG, "Cleaner waiting for drive to become ready");
-    drive.waitUntilReady(m_tapeLoadTimeout);
-    m_lc.log(log::DEBUG, "Cleaner detected that the drive is ready");
-  } catch (...) {
-    params.add(semconv::log::exceptionMessage, exception::currentExceptionMessage());
-    m_lc.log(log::DEBUG,
-             "Cleaner caught a non-fatal exception while waiting for"
-             " drive to become ready");
-  }
-}
-
 void DriveCleaner::rewindDrive(drive::DriveInterface& drive) {
   CleanupTiming timing(m_tracker, &TapeCleanupStats::rewindTime);
   m_lc.log(log::DEBUG, "Cleaner rewinding tape");
@@ -374,7 +364,7 @@ void DriveCleaner::unloadTape(drive::DriveInterface& drive) {
   m_lc.log(log::DEBUG, "Cleaner unloading tape");
   utils::Timer timer;
   try {
-    drive.unloadTape();
+    drive.ensureTapeUnloaded();
   } catch (...) {
     m_tracker.addTapeCleanupStats({.unloadTime = timer.secs()});
     m_tracker.recordFailure(TapeSessionFailure::TapeUnload);

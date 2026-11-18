@@ -281,18 +281,19 @@ protected:
 
   cta::tape::daemon::DriveCleaner::CleanupResult m_cleanupResult;
 
-  bool runCleaner(const std::string& vid,
-                  bool robotFails = false,
-                  bool wait = false,
-                  cta::catalogue::Catalogue* catalogue = nullptr) {
+  bool runCleaner(const std::string& vid, bool robotFails = false, cta::catalogue::Catalogue* catalogue = nullptr) {
     cta::mediachanger::RmcProxy rmcProxy("localhost", 0, 1, 1);
     cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
     auto info = m_driveInfo;
     if (robotFails) {
       info.rawLibrarySlot = "smc0";
     }
-    cta::tape::daemon::DriveCleaner
-      cleaner(mediaChanger, m_sessionLog, info, vid, wait, 0, catalogue ? *catalogue : *m_catalogue, m_tracker);
+    cta::tape::daemon::DriveCleaner cleaner(mediaChanger,
+                                            m_sessionLog,
+                                            info,
+                                            vid,
+                                            catalogue ? *catalogue : *m_catalogue,
+                                            m_tracker);
     const auto result = cleaner.cleanDrive(m_systemWrapper);
     m_cleanupError = result.errorMessage;
     m_cleanupResult = result;
@@ -321,8 +322,7 @@ protected:
 
     auto* drive = installDrive();
     drive->setFailurePoint(failurePoint);
-    cta::tape::daemon::DriveCleaner
-      cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
+    cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
 
     const bool resetFailed = failurePoint != cta::tape::drive::FakeDrive::FailurePoint::Rewind;
     const auto result = cleaner.cleanDrive(m_systemWrapper);
@@ -375,8 +375,7 @@ TEST_P(DriveCleanerTest, EjectsBlankTape) {
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
 
   installDrive();
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
 
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
   ASSERT_NE(std::string::npos,
@@ -398,8 +397,7 @@ TEST_P(DriveCleanerTest, EjectsLabeledTape) {
 
   auto* drive = installDrive();
   cta::tape::tapeFile::LabelSession::label(drive, m_vid, false);
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
 
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner read the VSN from the volume label"));
@@ -428,8 +426,7 @@ TEST_P(DriveCleanerTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWithou
   drive.setTapeInPlace(true);
   drive.enableCRC32CLogicalBlockProtectionReadWrite();
   drive.setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::ClearEncryptionKey);
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
 
   const auto result = cleaner.cleanDrive(drive);
   ASSERT_EQ(1,
@@ -455,14 +452,13 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
   drive.setTapeInPlace(false);
   drive.setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::ClearEncryptionKey);
   drive.setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, true, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
 
   const auto result = cleaner.cleanDrive(drive);
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  EXPECT_EQ(cta::tape::session::TapeSessionState::Unloading, m_tracker.state());
+  EXPECT_EQ(cta::tape::session::TapeSessionState::Unmounting, m_tracker.state());
   ASSERT_EQ(std::nullopt, m_tracker.type());
   ASSERT_EQ(1,
             m_tracker.outcomeSnapshot()
@@ -472,7 +468,7 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
     m_tracker.outcomeSnapshot().failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable)]);
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to clear encryption key"));
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to disable logical block protection"));
-  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
 TEST_P(DriveCleanerTest, DismountsTapeAfterUnloadFailure) {
@@ -489,8 +485,7 @@ TEST_P(DriveCleanerTest, DismountsTapeAfterUnloadFailure) {
       EXPECT_TRUE(m_systemWrapper.fake.m_pathToDrive.contains("/dev/nst0"));
     }
   });
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, tracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, tracker);
 
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
   EXPECT_EQ(
@@ -528,8 +523,7 @@ TEST_P(DriveCleanerTest, DisablesTapeAndRejectsReuseWhenBothDismountAttemptsFail
                          .tapeSession = cta::common::dataStructures::TapeSessionReport {.state = state}},
                         logContext);
   });
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, driveInfo, m_vid, false, 0, *m_catalogue, reportingTracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, driveInfo, m_vid, *m_catalogue, reportingTracker);
 
   const auto result = cleaner.cleanDrive(m_systemWrapper);
   ASSERT_FALSE(result.driveReusable());
@@ -558,48 +552,45 @@ TEST_P(DriveCleanerTest, DisablesTapeAndRejectsReuseWhenBothDismountAttemptsFail
   ASSERT_EQ(cta::common::dataStructures::DriveStatus::Unmounting, tapeDrive->driveStatus);
 }
 
-TEST_P(DriveCleanerTest, AcceptsEmptyDriveWithoutDismounting) {
+TEST_P(DriveCleanerTest, ConfirmsEmptyDriveWithRobot) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
 
   installDrive(false);
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
 
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
-  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
-}
-
-TEST_P(DriveCleanerTest, EmptyDriveStillAttemptsRequestedReadinessWaitAndResetsConfiguration) {
-  cta::mediachanger::RmcProxy rmcProxy;
-  cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
-  // Even an empty indication must not skip the wait; a readiness failure still permits configuration reset.
-  cta::tape::drive::FakeDrive drive(5000, cta::tape::drive::FakeDrive::OnFlush, true);
-  drive.setTapeInPlace(false);
-  drive.enableCRC32CLogicalBlockProtectionReadWrite();
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, true, 300, *m_catalogue, m_tracker);
-
-  ASSERT_TRUE(cleaner.cleanDrive(drive).driveReusable());
-  ASSERT_EQ(cta::tape::drive::lbpToUse::disabled, drive.getLbpToUse());
-  ASSERT_GT(m_tracker.stats().cleanup.readinessWaitTime, 0);
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner waiting for drive to become ready"));
-  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
-}
-
-TEST_P(DriveCleanerTest, OccupiedDriveWaitsForReadinessBeforeEjecting) {
-  installDrive();
-  ASSERT_TRUE(runCleaner(m_vid, false, true));
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner detected that the drive is ready"));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
-TEST_P(DriveCleanerTest, MediaDetectionFailureRetainsReadinessWaitAndEjects) {
+TEST_P(DriveCleanerTest, RepeatedEmptyCleanupResetsConfigurationWithoutLoadingWait) {
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
+  // A loading wait would throw; both cleanup calls must still succeed and consult the robot.
+  cta::tape::drive::FakeDrive drive(5000, cta::tape::drive::FakeDrive::OnFlush, true);
+  drive.setTapeInPlace(false);
+  drive.enableCRC32CLogicalBlockProtectionReadWrite();
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
+
+  ASSERT_TRUE(cleaner.cleanDrive(drive).driveReusable());
+  ASSERT_EQ(cta::tape::drive::lbpToUse::disabled, drive.getLbpToUse());
+  ASSERT_EQ(m_tracker.stats().cleanup.readinessWaitTime, 0);
+  ASSERT_TRUE(cleaner.cleanDrive(drive).driveReusable());
+  ASSERT_EQ(0, m_tracker.stats().cleanup.rewindTime);
+  ASSERT_EQ(0, m_tracker.stats().cleanup.labelReadTime);
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
+TEST_P(DriveCleanerTest, ReadyDriveReadsLabelBeforeEjecting) {
+  installDrive();
+  ASSERT_TRUE(runCleaner(m_vid));
+  ASSERT_GT(m_tracker.stats().cleanup.rewindTime, 0);
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
+TEST_P(DriveCleanerTest, PresenceCacheIsNotUsedToDecideWhetherToDismount) {
   installDrive()->setFailurePoint(FailurePoint::HasTapeInPlace);
-  ASSERT_TRUE(runCleaner(m_vid, false, true));
-  ASSERT_NE(std::string::npos,
-            m_sessionLog.getLog().find("Cleaner could not determine whether the drive contains a tape"));
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner detected that the drive is ready"));
+  ASSERT_TRUE(runCleaner(m_vid));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
@@ -608,13 +599,12 @@ TEST_P(DriveCleanerTest, RejectsEmptyDriveReuseAfterConfigurationResetFailure) {
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
   auto* drive = installDrive(false);
   drive->setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
-  cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, true, 300, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
 
   const auto result = cleaner.cleanDrive(m_systemWrapper);
   ASSERT_FALSE(result.driveReusable());
-  ASSERT_GT(m_tracker.stats().cleanup.readinessWaitTime, 0);
-  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(m_tracker.stats().cleanup.readinessWaitTime, 0);
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   cta::log::LogContext logContext(m_sessionLog);
   ASSERT_TRUE(cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName).up);
   EXPECT_THAT(result.errorMessage, testing::HasSubstr("Failed to disable logical block protection"));
@@ -626,8 +616,12 @@ TEST_P(DriveCleanerTest, EjectsTapeWithUnknownVid) {
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
 
   installDrive();
-  cta::tape::daemon::DriveCleaner
-    unknownVidCleaner(mediaChanger, m_sessionLog, m_driveInfo, "", false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner unknownVidCleaner(mediaChanger,
+                                                    m_sessionLog,
+                                                    m_driveInfo,
+                                                    "",
+                                                    *m_catalogue,
+                                                    m_tracker);
   ASSERT_TRUE(unknownVidCleaner.cleanDrive(m_systemWrapper).driveReusable());
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
@@ -668,22 +662,33 @@ TEST_P(DriveCleanerTest, DriveOpenAndDismountFailureDisableTapeAndRejectReuse) {
   EXPECT_THAT(m_cleanupError, testing::HasSubstr("failed to dismount the tape"));
 }
 
-TEST_P(DriveCleanerTest, ReadinessFailureDoesNotPreventResetsAndEject) {
+TEST_P(DriveCleanerTest, NonReadyMediaDoesNotPreventResetsAndEject) {
   auto* drive = new cta::tape::drive::FakeDrive(5000, cta::tape::drive::FakeDrive::OnFlush, true);
   drive->enableCRC32CLogicalBlockProtectionReadWrite();
   m_systemWrapper.fake.m_pathToDrive["/dev/nst0"] = drive;
-  ASSERT_TRUE(runCleaner(m_vid, false, true));
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("non-fatal exception while waiting"));
+  ASSERT_TRUE(runCleaner(m_vid));
+  ASSERT_EQ(0, m_tracker.stats().cleanup.rewindTime);
+  ASSERT_EQ(0, m_tracker.stats().cleanup.labelReadTime);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   ASSERT_EQ(0, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeLbpDisable)]);
 }
 
-TEST_P(DriveCleanerTest, MediaPresenceFailureStillAttemptsEject) {
-  installDrive()->setFailurePoint(FailurePoint::HasTapeInPlace);
-  ASSERT_TRUE(runCleaner(m_vid));
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("could not determine whether the drive contains a tape"));
+TEST_P(DriveCleanerTest, FailedReadinessObservationStillEjectsButRejectsReuse) {
+  installDrive()->setFailurePoint(FailurePoint::PrepareForMediaAccess);
+  ASSERT_FALSE(runCleaner(m_vid));
+  ASSERT_TRUE(m_cleanupResult.driveStateFailed);
+  ASSERT_FALSE(m_cleanupResult.ejectFailed);
+  ASSERT_EQ(0, m_tracker.stats().cleanup.rewindTime);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
+TEST_P(DriveCleanerTest, FailedDriverRecoveryStillDismountsButRejectsReuse) {
+  installDrive()->setFailurePoint(FailurePoint::UnloadDriveState);
+  ASSERT_FALSE(runCleaner(m_vid));
+  ASSERT_TRUE(m_cleanupResult.driveStateFailed);
+  ASSERT_FALSE(m_cleanupResult.ejectFailed);
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
@@ -754,7 +759,7 @@ TEST_P(DriveCleanerTest, TapeLookupFailureDoesNotPreventCleanupFailureResult) {
   installDrive();
   CleanerCatalogue catalogue(*m_catalogue);
   catalogue.failures().lookupFailure = std::make_exception_ptr(std::runtime_error("tape lookup failed"));
-  ASSERT_FALSE(runCleaner(m_vid, true, false, &catalogue));
+  ASSERT_FALSE(runCleaner(m_vid, true, &catalogue));
   ASSERT_EQ(0, catalogue.failures().modifications);
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("tape lookup failed"));
@@ -765,7 +770,7 @@ TEST_P(DriveCleanerTest, TapeStateModificationFailureDoesNotPreventCleanupFailur
   installDrive();
   CleanerCatalogue catalogue(*m_catalogue);
   catalogue.failures().modificationFailure = std::make_exception_ptr(cta::exception::Exception("state update failed"));
-  ASSERT_FALSE(runCleaner(m_vid, true, false, &catalogue));
+  ASSERT_FALSE(runCleaner(m_vid, true, &catalogue));
   ASSERT_EQ(1, catalogue.failures().modifications);
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("state update failed"));
@@ -777,7 +782,7 @@ TEST_P(DriveCleanerTest, LabelFormatLookupFailureStillEjectsWithProvidedVid) {
   cta::tape::tapeFile::LabelSession::label(drive, m_vid, false);
   CleanerCatalogue catalogue(*m_catalogue);
   catalogue.failures().labelFailure = std::make_exception_ptr(std::runtime_error("label format unavailable"));
-  ASSERT_TRUE(runCleaner(m_vid, false, false, &catalogue));
+  ASSERT_TRUE(runCleaner(m_vid, false, &catalogue));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("label format unavailable"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find(R"(dismountVid="TSTVID")"));
 }
@@ -789,9 +794,9 @@ TEST_P(DriveCleanerTest, FailedCleanupDoesNotPublishTerminalOrDesiredState) {
   failures.desiredFailure = std::make_exception_ptr(std::runtime_error("desired publication failed"));
   failures.reportedFailure = std::make_exception_ptr(std::runtime_error("reported publication failed"));
 
-  ASSERT_FALSE(runCleaner(m_vid, false, false, &catalogue));
+  ASSERT_FALSE(runCleaner(m_vid, false, &catalogue));
   EXPECT_THAT(m_cleanupError, testing::HasSubstr("Failed to clear encryption key"));
-  // An empty drive needs no progress reports, and terminal publication belongs to DriveSession.
+  // Progress goes through the tracker; terminal publication belongs to DriveSession.
   EXPECT_EQ(0, failures.reportedCalls);
   EXPECT_EQ(0, failures.desiredCalls);
   assertFailureReturnedWithoutPublishingDown();
@@ -855,8 +860,7 @@ TEST_P(DriveCleanerTest, BorrowedCleanupReportsProgressBeforeHardwareOperations)
     EXPECT_EQ(state, reportingTracker.state());
     EXPECT_EQ(state == TapeSessionState::Unloading, drive.hasTapeInPlace());
   });
-  cta::tape::daemon::DriveCleaner
-    cleaner(changer, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, reportingTracker);
+  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, reportingTracker);
   // Simulate cleanup after a loading timeout without waiting in the test.
   reportingTracker.reportState(TapeSessionState::Loading, cleanupStarted - std::chrono::hours(1));
   const auto result = cleaner.cleanDrive(drive);
@@ -878,8 +882,7 @@ TEST_P(DriveCleanerTest, ProgressPublicationFailuresDoNotPreventEject) {
     }
     throw 42;
   });
-  cta::tape::daemon::DriveCleaner
-    cleaner(changer, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, reportingTracker);
+  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, reportingTracker);
   const auto result = cleaner.cleanDrive(drive);
   EXPECT_TRUE(result.driveReusable());
   EXPECT_FALSE(drive.hasTapeInPlace());
@@ -893,7 +896,7 @@ TEST_P(DriveCleanerTest, BorrowedDriveRemainsOwnedByCallerAndResetsPersistentCon
   cta::mediachanger::MediaChangerFacade changer(proxy, m_changerLog);
   cta::tape::drive::FakeDrive drive;
   drive.enableCRC32CLogicalBlockProtectionReadWrite();
-  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, m_driveInfo, m_vid, *m_catalogue, m_tracker);
   const auto result = cleaner.cleanDrive(drive);
   ASSERT_TRUE(result.driveReusable());
   ASSERT_FALSE(result.configurationResetFailed);
@@ -909,7 +912,7 @@ TEST_P(DriveCleanerTest, BorrowedFailedEjectDisablesTapeWithoutPublishingDown) {
   cta::tape::drive::FakeDrive drive;
   auto info = m_driveInfo;
   info.rawLibrarySlot = "smc0";
-  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, info, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, info, m_vid, *m_catalogue, m_tracker);
   const auto result = cleaner.cleanDrive(drive);
   ASSERT_FALSE(result.driveReusable());
   ASSERT_TRUE(result.ejectFailed);
@@ -929,7 +932,7 @@ TEST_P(DriveCleanerTest, DismountRetriesWithEmptyVidAfterCartridgeNameFailure) {
   installDrive();
   auto info = m_driveInfo;
   info.rawLibrarySlot = "smc0";
-  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, info, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, info, m_vid, *m_catalogue, m_tracker);
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
   ASSERT_EQ((std::vector<std::string> {m_vid, ""}), robot.requests());
   ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeDismount)]);
@@ -945,7 +948,7 @@ TEST_P(DriveCleanerTest, MismatchedLabelUsesActualLabelForRoboticDismount) {
   cta::tape::tapeFile::LabelSession::label(drive, actualVid, false);
   auto info = m_driveInfo;
   info.rawLibrarySlot = "smc0";
-  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, info, m_vid, false, 0, *m_catalogue, m_tracker);
+  cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, info, m_vid, *m_catalogue, m_tracker);
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
   ASSERT_EQ((std::vector<std::string> {actualVid}), robot.requests());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("volume label does not match provided VID"));
