@@ -5,13 +5,14 @@
 
 //! High-level client library for the CTA frontend gRPC interface.
 //!
-//! This crate talks to the admin service of the CTA frontend over the generated gRPC bindings of [`cta_protobuf`], and
-//! returns the business objects of [`cta_model`]. Callers use both crates: `cta_model` for the resources, this crate
-//! for the client.
+//! This crate talks to the two services of the CTA frontend over the generated gRPC bindings of [`cta_protobuf`], and
+//! returns the business objects of [`cta_model`]. Callers use both crates: `cta_model` for the resources and the
+//! events, this crate for the clients. One module per service, each with everything about it:
 //!
 //! | Module | Description |
 //! | ------ | ----------- |
 //! | [`admin`] | `cta-admin-api`: [`admin::AdminClient`], the typed admin commands ([`admin::commands`]), the data access objects ([`admin::dao`], e.g. [`admin::dao::TapePools`]), and [`admin::AdminError`] |
+//! | [`workflow`] | `cta-workflow-api`: [`workflow::WorkflowClient`] sending the events of [`cta_model::events`], their requests ([`workflow::WorkflowRequest`]), and [`workflow::WorkflowError`] |
 //! | [`types`] | Domain types built from the protobuf records ([`types::File`], [`types::Checksum`], [`types::ChecksumType`]) |
 //! | [`errors`] | Errors of the conversions into the domain types ([`errors::ChecksumTypeError`], ...) |
 //!
@@ -76,6 +77,7 @@ extern crate self as cta_client;
 pub mod admin;
 pub mod errors;
 pub mod types;
+pub mod workflow;
 
 #[doc(inline)]
 pub use cta_client_macros::typed_admin_cmd;

@@ -1,8 +1,8 @@
 # cta-client
 
 High-level client library for the [CTA](https://gitlab.cern.ch/cta/CTA)
-frontend gRPC API. It sends typed admin commands over the gRPC bindings of
-`cta-protobuf`, and returns the business
+frontend gRPC API. It sends typed admin commands and the workflow events of
+`cta-model` over the gRPC bindings of `cta-protobuf`, and returns the business
 objects of `cta-model` (`cta_model::tape::Tape`, `cta_model::tape::TapePool`, ...).
 
 ```rust
@@ -14,7 +14,9 @@ client.drives().down("my_drive").reason("maintenance").call().await?;
 
 ## How it is organised
 
-The `admin` module (`cta-admin-api`) has three layers, each built on the previous one:
+One module per frontend service: `admin` (`cta-admin-api`) and `workflow` (`cta-workflow-api`).
+
+The `admin` side has three layers, each built on the previous one:
 
 | Layer    | Module            | Crate        | Description |
 |----------|-------------------|--------------|-------------|
@@ -166,15 +168,40 @@ Two helpers are provided fir use in `get` methods:
 The types (in `cta-model`), the commands and the DAOs are grouped by the same
 domains (`admin`, `disk`, `file`, `library`, `routing`, `scheduler`, `tape`).
 
+
+## Workflow events
+
+`workflow` sends the events of a disk system to the workflow API
+(`cta-workflow-api`). Each event is a struct (`Create`, `Archive`, `Retrieve`,
+`CancelRetrieve`, `Delete`, defined in `cta_model::events`), sent to the RPC
+endpoint by `WorkflowClient::send`. The protobuf notification of an event is
+built by `cta-model` (`cta_model::events::Event::notification`, which validates
+the event first); this crate routes it to the RPC of the event and sends it:
+
+```rust
+let client = WorkflowClient::connect(&config, "ctaeos").await?;
+
+let file = FileInfo::builder().archive_file_id(4242).disk_file_id(42).path("/eos/f").build();
+let event = Retrieve::builder()
+    .file(file)
+    .requester(Requester::new("user", "group"))
+    .dst_url("root://eos//eos/f?eos.lfn=fxid:0000002a")
+    .build();
+let reply = client.send(&event).await?;
+```
+
 ## Tests
 
 Each group has a `tests.rs` next to its code.
 
-- **Type tests** are in `cta-model`, next to the conversions they test. The JSONL fixtures shared by both crates come from the
+- **Type tests** are in `cta-model`, next to the conversions and the event
+  encoding they test. The JSONL fixtures shared by both crates come from the
   `test-support` feature of `cta-model`, enabled only as a dev-dependency of
   this crate;
 - **DAO tests** run each method against a mock frontend, and compare the
-  command it sent with the expected one.
+  command it sent with the expected one;
+- **Workflow tests** send each event to a mock workflow API, and check the RPC
+  it reaches, the local checks and the error mapping.
 
 Run them with:
 
