@@ -162,19 +162,6 @@ reclaim_released_pvs() {
   done
 }
 
-# Runs a teardown step and reports its duration, so slow steps are visible in the job log.
-timed_step() {
-  local label="$1" start=$SECONDS rc=0
-  shift
-  "$@" || rc=$?
-  echo "  ${label} took $((SECONDS - start))s"
-  return "$rc"
-}
-
-quiet() {
-  "$@" >/dev/null
-}
-
 delete_cluster_resources() {
   local namespace="$1" force_delete="$2"
   local resource
@@ -255,7 +242,7 @@ delete_instance() {
 
   # Optional log collection
   if [[ -n "${log_directory}" ]]; then
-    if ! timed_step "Log collection" save_logs "$namespace" "$log_directory"; then
+    if ! save_logs "$namespace" "$log_directory"; then
       log_error "Log collection failed for namespace ${namespace}; continuing with namespace deletion."
     fi
   fi
@@ -271,26 +258,22 @@ delete_instance() {
   log_task "Deleting CTA instance ${namespace}..."
   # Remove the controllers first, keeping their pods, so that pods deleted below are not recreated with the chart's
   # grace period. Deployments must go before their ReplicaSets, or the ReplicaSets would be recreated.
-  timed_step "Workload controller deletion" \
-    quiet kubectl delete deployments,statefulsets,jobs,replicasets --all -n "${namespace}" --cascade=orphan
+  kubectl delete deployments,statefulsets,jobs,replicasets --all -n "${namespace}" --cascade=orphan >/dev/null
   # Do not force the deletion: the next job needs the tape devices released by stopped containers.
-  timed_step "Pod deletion" \
-    quiet kubectl delete pods --all -n "${namespace}" --now --timeout=120s \
+  kubectl delete pods --all -n "${namespace}" --now --timeout=120s >/dev/null \
     || log_warn "Pods in namespace ${namespace} did not terminate in time; continuing with namespace deletion."
-  timed_step "Persistent volume claim deletion" \
-    quiet kubectl delete pvc --all -n "${namespace}" --timeout=60s \
+  kubectl delete pvc --all -n "${namespace}" --timeout=60s >/dev/null \
     || log_warn "Persistent volume claims in namespace ${namespace} were not removed in time; continuing with namespace deletion."
-  timed_step "Namespace deletion" quiet kubectl delete namespace "${namespace}" --wait=true
+  kubectl delete namespace "${namespace}" --wait=true >/dev/null
 
   # Reclaim any PVs
   if [[ "$wipe_pvs" = true ]]; then
-    timed_step "Persistent volume reclamation" reclaim_released_pvs "$namespace"
+    reclaim_released_pvs "$namespace"
   else
     log_warn "Skipping reclamation of released persistent volumes."
   fi
   if [[ $delete_cluster_resources == true ]]; then
-    timed_step "Cluster resource cleanup" \
-      delete_cluster_resources "$namespace" "$force_delete_cluster_resources"
+    delete_cluster_resources "$namespace" "$force_delete_cluster_resources"
   else
     log_warn "Skipping cleanup of shared cluster-level resources."
   fi

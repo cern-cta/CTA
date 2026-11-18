@@ -41,12 +41,21 @@ TEST(CommonConfig, SchedulerConfigRequiresBackendName) {
   EXPECT_TRUE(config.validate().ok());
 }
 
-TEST(CommonConfig, RejectsNonPositiveValue) {
+TEST(CommonConfig, RejectsEmptyConfigFile) {
+  cta::runtime::SchedulerConfig config;
+  config.backend_name = "vfsTest";
+  config.config_file = "";
+
+  EXPECT_FALSE(config.validate().ok());
+}
+
+TEST(CommonConfig, AcceptsZeroCacheMaxAge) {
   cta::runtime::SchedulerConfig config;
   config.backend_name = "vfsTest";
   config.tape_cache_max_age_secs = 0;
+  config.retrieve_queue_cache_max_age_secs = 0;
 
-  EXPECT_FALSE(config.validate().ok());
+  EXPECT_TRUE(config.validate().ok());
 }
 
 TEST(CommonConfig, ReportsAllInvalidFields) {

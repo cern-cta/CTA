@@ -95,6 +95,9 @@ server:
 
     extraEnv:
       EOS_USE_MQ_ON_QDB: "1"
+      # Remove evicted disk replicas within a second instead of the chart's 5 seconds.
+      # EOS versions without the interval fix in fst/storage/Remover.cc still query only every 10 seconds.
+      EOS_FST_DELETE_QUERY_INTERVAL: "1"
       TZ: "CET"
 
   qdb:

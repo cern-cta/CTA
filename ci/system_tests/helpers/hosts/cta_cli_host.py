@@ -139,8 +139,12 @@ class CtaCliHost(RemoteHost):
         if wait:
             self.wait_for_tape_state(vid, state)
 
-    def transition_tape_state(self, vid: str, state: str, *, cache_delay_secs: float = 1) -> None:
-        """Change state through REPACKING when either endpoint is REPACKING_DISABLED."""
+    def transition_tape_state(self, vid: str, state: str, *, cache_delay_secs: float = 0) -> None:
+        """Change state through REPACKING when either endpoint is REPACKING_DISABLED.
+
+        Pass the deployment's tape cache max age as cache_delay_secs when caching is enabled, so later requests do not
+        use a cached tape state.
+        """
         tape_list = json.loads(self.exec_with_output(f"cta-admin --json tape ls --vid '{vid}'"))
         if len(tape_list) != 1:
             raise RuntimeError(f"Expected exactly one tape for VID {vid}, found {len(tape_list)}")

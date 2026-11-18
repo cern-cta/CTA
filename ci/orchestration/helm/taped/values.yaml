@@ -21,8 +21,9 @@ drive:
       autoUp: false
 
 scheduler:
-  tapeCacheMaxAgeSecs: 1
-  retrieveQueueCacheMaxAgeSecs: 1
+  # Disable caching so tests see tape-state and queue changes at once; the stress presets re-enable it.
+  tapeCacheMaxAgeSecs: 0
+  retrieveQueueCacheMaxAgeSecs: 0
   numberOfConnections: 3
 
 mounts:

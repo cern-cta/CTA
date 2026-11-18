@@ -38,8 +38,9 @@ logging:
   level: "INFO"
 
 scheduler:
-  tapeCacheMaxAgeSecs: 600
-  retrieveQueueCacheMaxAgeSecs: 10
+  # Disable caching so tests see tape-state and queue changes at once; the stress presets re-enable it.
+  tapeCacheMaxAgeSecs: 0
+  retrieveQueueCacheMaxAgeSecs: 0
   numberOfConnections: 3
 
 # OpenTelemetry is entirely configured through declarative configuration
