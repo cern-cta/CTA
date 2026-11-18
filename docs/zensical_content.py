@@ -5,19 +5,13 @@
 
 import json
 import re
-import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 from markdown import Markdown
 from markdown.extensions import Extension
 from markdown.postprocessors import Postprocessor
 from markdown.preprocessors import Preprocessor
-
-if sys.version_info >= (3, 12):
-    from typing import override
-else:
-    from typing_extensions import override
 
 ROOT = Path(__file__).resolve().parent.parent
 

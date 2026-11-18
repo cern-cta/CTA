@@ -37,7 +37,6 @@ dev = [
     { name = "cryptography" },
     { name = "detect-secrets", specifier = "==1.5.0" },
     { name = "fastjsonschema", specifier = ">=2.21.2" },
-    { name = "griffe", marker = "python_full_version == '3.12.*'", specifier = "==1.14.0" },
     { name = "grpcio-tools" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },
@@ -63,7 +62,6 @@ dev = [
     { name = "zensical", marker = "python_full_version == '3.12.*'", specifier = "==0.1.1" },
 ]
 docs = [
-    { name = "griffe", marker = "python_full_version == '3.12.*'", specifier = "==1.14.0" },
     { name = "markdown", marker = "python_full_version == '3.12.*'", specifier = "==3.9" },
     { name = "mike", marker = "python_full_version == '3.12.*'", git = "https://github.com/squidfunk/mike" },
     { name = "mkdocs-autorefs", marker = "python_full_version == '3.12.*'", specifier = "==1.4.2" },
@@ -101,7 +99,6 @@ type-check = [
     { name = "cattrs" },
     { name = "cryptography" },
     { name = "fastjsonschema", specifier = ">=2.21.2" },
-    { name = "griffe", marker = "python_full_version == '3.12.*'", specifier = "==1.14.0" },
     { name = "grpcio-tools" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },

@@ -10,7 +10,7 @@ Zensical builds the site with Python 3.12. Paths below are relative to the repos
 | --- | --- |
 | `zensical.toml` | Site configuration, navigation, Markdown extensions, and theme |
 | `pyproject.toml`, `uv.lock` | Shared dependency declarations, cooldown policy, and lockfile; docs use the `docs` group |
-| `docs/.python-version`, `docs/.venv/` | Python 3.12 selection and separate docs environment |
+| `docs/.venv/` | Separate docs environment, created with `uv sync --python 3.12` |
 | `docs/build.py` | Generate the command manual and Rust reference, then invoke Zensical |
 | `docs/zensical_content.py` | Repository substitutions, manual metadata stripping, and diagram defaults |
 | `docs/content/stylesheets/extra.css`, `docs/overrides/` | CTA branding |
