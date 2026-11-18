@@ -340,8 +340,10 @@ def test_multiple_checksums_are_stored_in_cta(
     }
 
     checksum_type_names = {"adler": "ADLER32", "sha": "SHA1"}
+
+    # EOS checksum values may have leading spaces, replace them with zeroes before comparing with CTA.
     expected_checksums = {
-        checksum_type_names.get(checksum_type, checksum_type.upper()): value
+        checksum_type_names.get(checksum_type, checksum_type.upper()): value.strip().zfill(len(value))
         for checksum_type, value in eos_checksums.items()
     }
 
