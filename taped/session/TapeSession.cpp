@@ -331,6 +331,12 @@ void TapeSession::executeRead(log::LogContext& logContext,
     }
     // Nothing transferred
     m_tapeSessionTracker->updateTapeTransferStats({});
+    // On stop, the fetch reports no files even though queued work may exist; do not record an empty mount.
+    // Ensure we don't publish a misleading event
+    if (noFilesToRecall && stopToken.stop_requested()) {
+      logContext.log(log::INFO, "Aborting recall mount startup: stop requested");
+      return;
+    }
     if (noFilesToRecall) {
       m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToRecall);
     }
@@ -455,6 +461,12 @@ void TapeSession::executeWrite(log::LogContext& logContext,
     }
     // Nothing transferred
     m_tapeSessionTracker->updateTapeTransferStats({});
+    // On stop, the injection reports no files even though queued work may exist; do not record an empty mount.
+    // Ensure we don't publish a misleading event
+    if (stopToken.stop_requested()) {
+      logContext.log(log::INFO, "Aborting migration mount startup: stop requested");
+      return;
+    }
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToMigrate);
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
     logContext.log(log::WARNING, "Aborting migration mount startup: empty mount");
