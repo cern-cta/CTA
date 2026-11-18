@@ -208,20 +208,29 @@ void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
   lc.log(log::INFO, "Archive file deleted from CTA catalogue");
 }
 
-uint64_t OracleArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn& conn) {
-  const char* const sql = R"SQL(
-    SELECT
-      ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID
-    FROM
-      DUAL
-  )SQL";
-  auto stmt = conn.createStmt(sql);
-  auto rset = stmt.executeQuery();
-  if (!rset.next()) {
-    throw exception::Exception(std::string("Result set is unexpectedly empty"));
+void OracleArchiveFileCatalogue::getNextArchiveFileIds(rdbms::Conn& conn,
+                                                       uint64_t count,
+                                                       std::vector<uint64_t>& archiveFileIds) {
+  if (count == 0) {
+    return;
   }
 
-  return rset.columnUint64("ARCHIVE_FILE_ID");
+  const char* const sql = R"SQL(
+    SELECT ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID
+    FROM (
+      SELECT LEVEL
+      FROM DUAL
+      CONNECT BY LEVEL <= :COUNT
+    )
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindUint64(":COUNT", count);
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    archiveFileIds.push_back(rset.columnUint64("ARCHIVE_FILE_ID"));
+  }
 }
 
 void OracleArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(

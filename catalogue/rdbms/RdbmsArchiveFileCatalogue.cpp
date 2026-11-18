@@ -41,7 +41,9 @@ RdbmsArchiveFileCatalogue::RdbmsArchiveFileCatalogue(log::Logger& log,
                                                      RdbmsCatalogue* rdbmsCatalogue)
     : m_log(log),
       m_connPool(connPool),
-      m_rdbmsCatalogue(rdbmsCatalogue) {}
+      m_rdbmsCatalogue(rdbmsCatalogue) {
+  m_archiveFileIdPool.reserve(m_archiveFileIdBatchSize);
+}
 
 uint64_t
 RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
@@ -89,8 +91,25 @@ RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskI
 
     // Now that we have found both the archive routes and the mount policy it's
     // safe to consume an archive file identifier
-    auto conn = m_connPool->getConn();
-    return getNextArchiveFileId(conn);
+    std::lock_guard<std::mutex> lock(m_archiveFileIdPoolMutex);
+
+    if (m_archiveFileIdPool.empty()) {
+      try {
+        auto conn = m_connPool->getConn();
+        getNextArchiveFileIds(conn, m_archiveFileIdBatchSize, m_archiveFileIdPool);
+
+        if (m_archiveFileIdPool.size() != m_archiveFileIdBatchSize) {
+          throw exception::Exception("Archive file ID allocation returned an unexpected number of IDs");
+        }
+      } catch (...) {
+        m_archiveFileIdPool.clear();
+        throw;
+      }
+    }
+
+    const uint64_t archiveFileId = m_archiveFileIdPool.back();
+    m_archiveFileIdPool.pop_back();
+    return archiveFileId;
   } catch (exception::UserErrorWithCacheInfo& ue) {
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);

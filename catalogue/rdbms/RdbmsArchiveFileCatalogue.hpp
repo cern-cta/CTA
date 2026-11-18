@@ -12,6 +12,8 @@
 #include "common/log/Logger.hpp"
 
 #include <memory>
+#include <mutex>
+#include <vector>
 
 namespace cta {
 
@@ -87,18 +89,16 @@ protected:
                             RdbmsCatalogue* rdbmsCatalogue);
 
   /**
-   * Returns a unique archive ID that can be used by a new archive file within
-   * the catalogue.
+   * Allocates count unique archive file IDs using the database backend and
+   * appends them to ids. The IDs may have gaps.
    *
-   * This method must be implemented by the sub-classes of RdbmsCatalogue
-   * because different database technologies propose different solution to the
-   * problem of generating ever increasing numeric identifiers.
+   * Each backend uses its own rules to allocate archive file IDs.
    *
    * @param conn The database connection.
-   * @return A unique archive ID that can be used by a new archive file within
-   * the catalogue.
+   * @param count Number of IDs to allocate.
+   * @param ids Vector to append the allocated IDs
    */
-  virtual uint64_t getNextArchiveFileId(rdbms::Conn& conn) = 0;
+  virtual void getNextArchiveFileIds(rdbms::Conn& conn, uint64_t count, std::vector<uint64_t>& ids) = 0;
 
   friend class OracleFileRecycleLogCatalogue;
   friend class PostgresFileRecycleLogCatalogue;
@@ -135,6 +135,12 @@ protected:
   RdbmsCatalogue* m_rdbmsCatalogue;
 
 private:
+  // Reserved IDs that have not yet been assigned to requests.
+  std::vector<uint64_t> m_archiveFileIdPool;
+  std::mutex m_archiveFileIdPoolMutex;
+
+  // Number of archive file IDs fetched from the database when the pool is empty.
+  static constexpr uint64_t m_archiveFileIdBatchSize = 100;
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.

@@ -25,7 +25,7 @@ public:
                                                log::LogContext& lc) override;
 
 private:
-  uint64_t getNextArchiveFileId(rdbms::Conn& conn) override;
+  void getNextArchiveFileIds(rdbms::Conn& conn, uint64_t count, std::vector<uint64_t>& ids) override;
 
   void copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn& conn,
                                                const common::dataStructures::DeleteArchiveRequest& request,

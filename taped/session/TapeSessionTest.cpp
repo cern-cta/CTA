@@ -4465,7 +4465,8 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
   // First file failed migration, rest made it to the catalogue (fixe for cta/CTA#1096)
   for (auto& sf : sourceFiles) {
     auto afi = *(afiiter++);
-    if (afi == 1) {
+    // The first file may be assigned an archive ID other than 1.
+    if (afi == archiveFileIds.front()) {
       ASSERT_THROW(catalogue.ArchiveFile()->getArchiveFileById(afi), cta::exception::Exception);
     } else {
       auto afs = catalogue.ArchiveFile()->getArchiveFileById(afi);
@@ -5375,11 +5376,13 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullMigration) {
       auto afs = afsItor.next();
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
-      // Get the element of the list sourceFiles correspondent with afs.archiveFileID (https://stackoverflow.com/a/16747600)
-      // archiveFileID starts on "1" that's why it removes one position in the list
-      auto sourceFiles_front = sourceFiles.begin();
-      std::advance(sourceFiles_front, afs.archiveFileID - 1);
-      checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
+      // Find the file using the position of its ID in archiveFileIds.
+      const auto idIt = std::find(archiveFileIds.begin(), archiveFileIds.end(), afs.archiveFileID);
+      ASSERT_NE(idIt, archiveFileIds.end());
+
+      auto sourceFileIt = sourceFiles.begin();
+      std::advance(sourceFileIt, std::distance(archiveFileIds.begin(), idIt));
+      checksumBlob.insert(cta::checksum::ADLER32, (*sourceFileIt)->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {
@@ -5623,11 +5626,13 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullOnFlushMigration) {
       auto afs = afsItor.next();
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
-      // Get the element of the list sourceFiles correspondent with afs.archiveFileID (https://stackoverflow.com/a/16747600)
-      // archiveFileID starts on "1" that's why it removes one position in the list
-      auto sourceFiles_front = sourceFiles.begin();
-      std::advance(sourceFiles_front, afs.archiveFileID - 1);
-      checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
+      // Find the file using the position of its ID in archiveFileIds.
+      const auto idIt = std::find(archiveFileIds.begin(), archiveFileIds.end(), afs.archiveFileID);
+      ASSERT_NE(idIt, archiveFileIds.end());
+
+      auto sourceFileIt = sourceFiles.begin();
+      std::advance(sourceFileIt, std::distance(archiveFileIds.begin(), idIt));
+      checksumBlob.insert(cta::checksum::ADLER32, (*sourceFileIt)->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
       ASSERT_EQ(1000, afs.fileSize);
     } else {

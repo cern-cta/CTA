@@ -152,26 +152,37 @@ void SqliteArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
   lc.log(log::INFO, "Archive file deleted from CTA catalogue");
 }
 
-uint64_t SqliteArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn& conn) {
-  conn.executeNonQuery(R"SQL(INSERT INTO ARCHIVE_FILE_ID VALUES(NULL))SQL");
-  uint64_t archiveFileId = 0;
-  {
-    const char* const sql = R"SQL(
-      SELECT LAST_INSERT_ROWID() AS ID
-    )SQL";
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    if (!rset.next()) {
-      throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
-    }
-    archiveFileId = rset.columnUint64("ID");
-    if (rset.next()) {
-      throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
-    }
-  }
-  conn.executeNonQuery(R"SQL(DELETE FROM ARCHIVE_FILE_ID)SQL");
+void SqliteArchiveFileCatalogue::getNextArchiveFileIds(rdbms::Conn& conn,
+                                                       uint64_t count,
+                                                       std::vector<uint64_t>& archiveFileIds) {
+  for (uint64_t i = 0; i < count; ++i) {
+    conn.executeNonQuery(R"SQL(
+      INSERT INTO ARCHIVE_FILE_ID VALUES(NULL)
+    )SQL");
 
-  return archiveFileId;
+    uint64_t archiveFileId;
+    {
+      const char* const sql = R"SQL(
+        SELECT LAST_INSERT_ROWID() AS ID
+      )SQL";
+
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+
+      if (!rset.next()) {
+        throw exception::Exception("Archive file ID result set is unexpectedly empty");
+      }
+
+      archiveFileId = rset.columnUint64("ID");
+
+      if (rset.next()) {
+        throw exception::Exception("Archive file ID result set contains multiple rows");
+      }
+    }
+
+    conn.executeNonQuery(R"SQL(DELETE FROM ARCHIVE_FILE_ID)SQL");
+    archiveFileIds.push_back(archiveFileId);
+  }
 }
 
 //------------------------------------------------------------------------------

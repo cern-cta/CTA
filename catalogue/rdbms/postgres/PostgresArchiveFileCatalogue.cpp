@@ -207,16 +207,19 @@ void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const
   lc.log(log::INFO, "Archive file deleted from CTA catalogue");
 }
 
-uint64_t PostgresArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn& conn) {
+void PostgresArchiveFileCatalogue::getNextArchiveFileIds(rdbms::Conn& conn,
+                                                         uint64_t count,
+                                                         std::vector<uint64_t>& ids) {
   const char* const sql = R"SQL(
     SELECT NEXTVAL('ARCHIVE_FILE_ID_SEQ') AS ARCHIVE_FILE_ID
+    FROM generate_series(1, :COUNT::BIGINT)
   )SQL";
   auto stmt = conn.createStmt(sql);
+  stmt.bindUint64(":COUNTBIGINT", count);
   auto rset = stmt.executeQuery();
-  if (!rset.next()) {
-    throw exception::Exception("Result set is unexpectedly empty");
+  while (rset.next()) {
+    ids.push_back(rset.columnUint64("ARCHIVE_FILE_ID"));
   }
-  return rset.columnUint64("ARCHIVE_FILE_ID");
 }
 
 void PostgresArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(
