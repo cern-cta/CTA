@@ -478,6 +478,8 @@ format-toml:
     FORMAT_DIFF: artifacts/taplo.diff
   before_script:
     - !reference [.merge-train-guard, before_script]
+    # Temporary until Taplo is included in the published Rust image.
+    - cargo install taplo-cli --version 0.10.0 --locked
     - mkdir -p artifacts
     - echo "Running Taplo on all TOML files"
     - taplo fmt
