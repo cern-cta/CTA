@@ -31,9 +31,9 @@ use tonic::{Status, transport::Server};
 use url::Url;
 
 use super::AdminClient;
-use crate::{
+use crate::admin::{
+    AdminError,
     commands::{StreamingAdminCmd, drive, repack, show_queues, tape_pool},
-    errors::AdminError,
 };
 
 const TOKEN: &str = "a.token.value";

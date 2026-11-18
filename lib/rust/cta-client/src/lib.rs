@@ -10,10 +10,9 @@
 //!
 //! | Module | Description |
 //! | ------ | ----------- |
-//! | [`admin`] | Client for `cta-admin-api` ([`admin::AdminClient`]) |
-//! | [`commands`] | Typed admin commands, converted into admin command protobufs ([`commands::TypedAdminCmd`]), with the record type of the streaming ones ([`commands::StreamingAdminCmd`]) |
+//! | [`admin`] | Client for `cta-admin-api` ([`admin::AdminClient`]) and its typed admin commands ([`admin::commands`]) |
 //! | [`types`] | Domain types built from the protobuf records ([`types::File`], [`types::Checksum`], [`types::ChecksumType`]) |
-//! | [`errors`] | Error types raised by client operations ([`errors::AdminError`]) |
+//! | [`errors`] | Errors of the conversions into the domain types ([`errors::ChecksumTypeError`], ...) |
 //! | [`macros`] | Helper macros, most notably [`admin_cmd!`] for building admin-command payloads |
 
 //!
@@ -22,7 +21,7 @@
 //! Listing the contents of the CTA tape-file recycle bin:
 //!
 //! ```no_run
-//! use cta_client::{admin::AdminClient, commands::recycle_tape_file};
+//! use cta_client::admin::{AdminClient, commands::recycle_tape_file};
 //! use cta_grpc_common::{EndpointConfig, JwtAuth};
 //! use tokio_stream::StreamExt;
 //!
@@ -48,7 +47,6 @@
 #![warn(missing_docs)]
 
 pub mod admin;
-pub mod commands;
 pub mod errors;
 pub mod macros;
 pub mod types;

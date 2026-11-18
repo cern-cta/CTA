@@ -8,7 +8,7 @@
 //! an [`AdminCmd`]:
 //!
 //! ```
-//! use cta_client::commands::{TypedAdminCmd, tape_pool, virtual_organization};
+//! use cta_client::admin::commands::{TypedAdminCmd, tape_pool, virtual_organization};
 //! use cta_protobuf::cta::admin::{AdminCmd, admin_cmd::SubCmd};
 //!
 //! let cmd: AdminCmd = tape_pool::Ls::builder().name("my_pool").build().into();
@@ -26,28 +26,29 @@ use cta_protobuf::cta::{
     xrd::data::Data,
 };
 
-// One folder per area; the command modules are re-exported here
-mod access;
-mod disks;
-mod files;
-mod libraries;
-mod mount_policies;
-mod queues;
-pub mod repack;
+// One folder per domain (as in `cta-model` and `dao`), the command modules being re-exported here. Each command module
+// is named after its `cta-admin` command, so the `admin` and `tape` folders are declared under other names, to leave
+// `admin` and `tape` to the command modules.
+#[path = "admin/mod.rs"]
+mod admin_commands;
+mod disk;
+mod file;
+mod library;
 mod routing;
-mod tapes;
-pub mod version;
+mod scheduler;
+#[path = "tape/mod.rs"]
+mod tape_commands;
 
-pub use access::{admin, virtual_organization};
-pub use disks::{disk_instance, disk_instance_space, disk_system};
-pub use files::{recycle_tape_file, tape_file};
-pub use libraries::{drive, logical_library, media_type, physical_library};
-pub use mount_policies::{
-    activity_mount_rule, group_mount_rule, mount_policy, requester_mount_rule,
+pub use admin_commands::{admin, version, virtual_organization};
+pub use disk::{disk_instance, disk_instance_space, disk_system};
+pub use file::{recycle_tape_file, tape_file};
+pub use library::{drive, logical_library, physical_library};
+pub use routing::{
+    activity_mount_rule, archive_route, group_mount_rule, mount_policy, requester_mount_rule,
+    storage_class,
 };
-pub use queues::{failed_request, show_queues};
-pub use routing::{archive_route, storage_class};
-pub use tapes::{tape, tape_pool};
+pub use scheduler::{failed_request, repack, show_queues};
+pub use tape_commands::{media_type, tape, tape_pool};
 
 /// A typed admin command, implemented by [`define_typed_admin_cmd!`](crate::define_typed_admin_cmd).
 pub trait TypedAdminCmd: Into<AdminCmd> {

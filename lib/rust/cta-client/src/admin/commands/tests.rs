@@ -16,7 +16,7 @@ use super::{
     media_type, mount_policy, physical_library, recycle_tape_file, repack, requester_mount_rule,
     show_queues, storage_class, tape, tape_file, tape_pool, version, virtual_organization,
 };
-use crate::commands::{CLIENT_VERSION, PROTOBUF_TAG};
+use crate::admin::commands::{CLIENT_VERSION, PROTOBUF_TAG};
 
 /// (command, subcommand, streaming) of a typed command
 fn pair<T: TypedAdminCmd>() -> (Cmd, SubCmd, bool) {

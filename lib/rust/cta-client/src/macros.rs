@@ -60,8 +60,8 @@ macro_rules! admin_cmd {
         let mut cmd = AdminCmd {
             cmd: admin_cmd::Cmd::$cmd.into(),
             subcmd: admin_cmd::SubCmd::$sub_cmd.into(),
-            client_version: $crate::commands::CLIENT_VERSION.to_string(),
-            protobuf_tag: $crate::commands::PROTOBUF_TAG.to_string(),
+            client_version: $crate::admin::commands::CLIENT_VERSION.to_string(),
+            protobuf_tag: $crate::admin::commands::PROTOBUF_TAG.to_string(),
             ..Default::default()
         };
         $crate::admin_cmd!(@fields cmd, $($fields)*);
@@ -118,7 +118,7 @@ macro_rules! admin_cmd {
 }
 
 /// Define a typed admin command: a struct with a [`bon`] builder, its conversion into an [`AdminCmd`] and its
-/// [`TypedAdminCmd`](crate::commands::TypedAdminCmd) implementation.
+/// [`TypedAdminCmd`](crate::admin::commands::TypedAdminCmd) implementation.
 ///
 /// ```
 /// # use cta_client::define_typed_admin_cmd;
@@ -152,12 +152,12 @@ macro_rules! admin_cmd {
 ///
 /// `#[item(Variant: Type)]` marks a streaming command, answered with records of the given
 /// [`Data`](cta_protobuf::cta::xrd::data::Data) variant and type. It makes the struct implement
-/// [`StreamingAdminCmd`](crate::commands::StreamingAdminCmd) and sets
-/// [`TypedAdminCmd::STREAMING`](crate::commands::TypedAdminCmd::STREAMING):
+/// [`StreamingAdminCmd`](crate::admin::commands::StreamingAdminCmd) and sets
+/// [`TypedAdminCmd::STREAMING`](crate::admin::commands::TypedAdminCmd::STREAMING):
 ///
 /// ```
 /// # use cta_client::define_typed_admin_cmd;
-/// use cta_client::commands::{StreamingAdminCmd, TypedAdminCmd};
+/// use cta_client::admin::commands::{StreamingAdminCmd, TypedAdminCmd};
 /// use cta_protobuf::cta::{admin::DriveLsItem, xrd::data::Data};
 ///
 /// define_typed_admin_cmd! {
@@ -215,7 +215,7 @@ macro_rules! define_typed_admin_cmd {
             }
         }
 
-        impl $crate::commands::TypedAdminCmd for $name {
+        impl $crate::admin::commands::TypedAdminCmd for $name {
             const CMD: ::cta_protobuf::cta::admin::admin_cmd::Cmd = ::cta_protobuf::cta::admin::admin_cmd::Cmd::$cmd;
             const SUBCMD: ::cta_protobuf::cta::admin::admin_cmd::SubCmd =
                 ::cta_protobuf::cta::admin::admin_cmd::SubCmd::$sub_cmd;
@@ -230,7 +230,7 @@ macro_rules! define_typed_admin_cmd {
     (@streaming $variant:ident $type:ident) => { true };
     (@item $name:ident) => {};
     (@item $name:ident $variant:ident $type:ident) => {
-        impl $crate::commands::StreamingAdminCmd for $name {
+        impl $crate::admin::commands::StreamingAdminCmd for $name {
             type Item = ::cta_protobuf::cta::admin::$type;
 
             fn item(
