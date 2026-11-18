@@ -11,23 +11,17 @@ Zensical builds the site with Python 3.12. Paths below are relative to the repos
 | `zensical.toml` | Site configuration, navigation, Markdown extensions, and theme |
 | `pyproject.toml`, `uv.lock` | Dependencies and lockfile for the `docs` group |
 | `docs/build.py` | Generate the command manual and Rust reference, then invoke Zensical |
-| `docs/zensical_content.py` | Repository substitutions, manual metadata stripping, and diagram defaults |
+| `docs/zensical_content.py` | Prepare manuals, examples, and diagrams for display |
 | `docs/content/stylesheets/extra.css`, `docs/overrides/` | CTA branding |
 | `docs/content/api/python/` | Python API reference module pages |
-
-Restart the preview after changing the build helper, Markdown extension, or generated-reference inputs. The preview links authored files and directories into the staging tree, so Zensical handles live reload directly. Restart it when adding a new entry directly under `docs/content/` or `docs/content/api/`; changes inside existing linked directories reload automatically.
 
 For environment setup, see [Preview locally](../documentation.md#preview-locally). Update the `docs` dependency group in `pyproject.toml` and regenerate `uv.lock` with `uv lock`.
 
 ### Generated references
 
-`docs/build.py` assembles Zensical’s input in `build/docs/content/`, combining authored files from `docs/content/` with Rust HTML from `target/doc/` under `api/rust/`.
-It generates the command manual in `build/docs/generated/` and Rust API docs with `cargo doc`. Generated files stay outside the authored source tree. Builds copy authored content so CI artifacts contain ordinary files rather than preview symlinks.
-See [Preview locally](../documentation.md#preview-locally) for skipping Rust generation.
-
-The Python API reference uses `mkdocstrings`. Its Python 3.9 inventory matches the supported CTA API, independently of the docs builder’s Python 3.12 runtime.
-
-The final site is written to `build/docs/site/`. Generated references must be prepared before invoking Zensical directly.
+Use `docs/build.py` to build the site. It generates the command manual and Rust API documentation before running Zensical; the Python API reference is generated from source docstrings.
+The finished site is written to `build/docs/site/`.
+See [Preview locally](../documentation.md#preview-locally) for setup and skipping Rust generation.
 
 ### Theme
 
@@ -35,19 +29,19 @@ Theme customizations live in `docs/content/stylesheets/extra.css` and `docs/over
 
 ### Diagram colors
 
-Mermaid colors are defined in `docs/content/stylesheets/extra.css`. The Markdown extension sets sequence arrowheads to follow the selected palette. Check diagrams in both light and dark modes after changes.
+Mermaid colors are defined in `docs/content/stylesheets/extra.css`. Check diagrams in both light and dark modes after changes.
 
 ## Publishing
 
-CI installs the locked `docs` group with Python 3.12. `build-docs` runs the publication integration tests and the strict Zensical build. The publication job reuses the assembled content and generated manual artifacts, then rebuilds through the Zensical-compatible `mike` fork to set the release-series URLs.
-
-The fork is declared in `pyproject.toml`; `uv.lock` records its exact revision. It preserves the existing `gl-pages` layout, `public/versions.json`, old version directories, and `latest` redirects. Older MkDocs versions remain available; only the published minor series is replaced. Existing numeric series must have `source_tag` and `source_commit` metadata; publication refuses to overwrite a series with unknown provenance.
+The `build-docs` job runs the documentation tests and a strict site build. Publication uses a Zensical-compatible `mike` fork to rebuild the site with versioned URLs. Its dependency is declared in `pyproject.toml` and pinned in `uv.lock`.
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.
 
 Publication uses `CI_JOB_TOKEN` to push to the protected `gl-pages` branch. Repository pushes must be enabled for job tokens, and the triggering user must have permission to push to that branch (maintainer or higher). Use the publication workflow rather than editing `gl-pages` manually.
 
-Each tag updates its minor-series documentation: for example, `v6.1.0` updates `6.1`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
+Each tag updates its minor-series documentation while preserving other versions: for example, `v6.1.0` updates `6.1`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
+
+Published minor versions must record their source tag and commit (`source_tag` and `source_commit`). Publication refuses to replace a version without this information because it cannot check whether the update is newer.
 
 If publication fails, inspect the `publish-docs` log and resolve the cause, such as missing push permissions. Retry the job in the original tag pipeline when the source contents are unchanged. If a source fix is needed, use a new tag; do not move the existing tag. Check the published version after the retry.
 

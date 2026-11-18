@@ -24,6 +24,8 @@ docs/serve.sh
 Open <http://127.0.0.1:8000/>. The script installs the locked docs dependencies into `docs/.venv`.
 Pass `--skip-rust` to skip Rust generation and reuse existing output if available. Without Cargo, Rust generation is skipped automatically with a warning.
 
+Edits to existing pages reload automatically. Restart the preview after changing the build scripts or the inputs used to generate the command manual and Rust reference. Also restart it when adding a file or directory directly under `docs/content/` or `docs/content/api/`.
+
 ## Organize the content
 
 Choose the section by its audience:

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Prepare generated references, then build or preview the Zensical site."""
+"""Prepare the command manual and Rust API documentation, then build or preview the website."""
 
 import argparse
 import logging
@@ -16,11 +16,12 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def stage_content(preview: bool = False) -> None:
-    """Assemble source content, linking directories for live preview."""
+    """Copy pages into build/docs/content, or symlink them so preview picks up edits."""
     destination = ROOT / "build/docs/content"
     if destination.exists():
         shutil.rmtree(destination)
     source = ROOT / "docs/content"
+    # Keep api/ as a real directory so generated Rust HTML can be added beside the Python reference pages.
     for directory in (Path("."), Path("api")):
         (destination / directory).mkdir(parents=True, exist_ok=True)
         for entry in (source / directory).iterdir():
@@ -37,7 +38,7 @@ def stage_content(preview: bool = False) -> None:
 
 
 def prepare(skip_rust: bool, preview: bool = False) -> None:
-    """Generate references and assemble the documentation input under build/docs."""
+    """Prepare pages, the command manual, and Rust HTML for Zensical to read from build/docs."""
     stage_content(preview)
     output = ROOT / "build/docs"
     content = output / "content"

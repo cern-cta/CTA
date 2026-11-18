@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Apply CTA content transformations through the extension registered in zensical.toml.
+"""Prepare CTA manuals, examples, and diagrams for display on the documentation site.
 
-These hooks run during rendering, including mike publication; docs/build.py handles
-reference generation before rendering starts.
+Zensical loads this Markdown extension through zensical.toml, both for local builds
+and when mike rebuilds the site for publication. The manual and Rust documentation
+files are generated separately by docs/build.py.
 """
 
 import json
@@ -21,12 +22,13 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def repository_content(text: str, root: Path) -> str:
-    """Resolve the EOS image tag and strip Pandoc metadata from included manuals."""
-    # Keep documented EOS examples aligned with the development image configuration.
+    """Fill in the EOS image version and remove manual metadata that should not appear on the website."""
+    # Use the same EOS image version in documentation examples as in the development environment.
     if "{{ eos_image_tag }}" in text:
         project = json.loads((root / "project.json").read_text(encoding="utf-8"))
         text = text.replace("{{ eos_image_tag }}", project["dev"]["eosImageTag"])
-    # Manual wrapper pages reuse the installed manual source, but its Pandoc header is not page content.
+    # Some pages contain only an instruction to include a command manual.
+    # Read that manual here and remove its opening YAML metadata, which Pandoc uses to build man pages.
     match = re.fullmatch(r"\s*--8<--\s*\n([^\n]+\.1cta\.md)\s*\n--8<--\s*", text)
     if match:
         manual = (root / match.group(1).strip()).read_text(encoding="utf-8")
@@ -35,7 +37,7 @@ def repository_content(text: str, root: Path) -> str:
 
 
 class RepositoryContent(Preprocessor):
-    """Resolve repository substitutions and manual includes before Markdown parsing."""
+    """Update examples and load command manuals before Markdown is converted to HTML."""
 
     @override
     def run(self, lines: list[str]) -> list[str]:
@@ -43,11 +45,11 @@ class RepositoryContent(Preprocessor):
 
 
 class DiagramDefaults(Postprocessor):
-    """Add theme-aware defaults to rendered Mermaid sequence diagrams without explicit configuration."""
+    """Make Mermaid sequence-diagram arrows readable in both light and dark mode."""
 
     @override
     def run(self, text: str) -> str:
-        # Sequence arrowheads need currentColor to follow the selected palette.
+        # Use the surrounding text color for arrows. Leave diagrams with their own configuration unchanged.
         return re.sub(
             r'(<pre class="mermaid"><code>)(\s*sequenceDiagram\b)',
             r"\1---\nconfig:\n  themeVariables:\n    signalColor: currentColor\n---\n\2",
@@ -58,11 +60,13 @@ class DiagramDefaults(Postprocessor):
 class CTAContent(Extension):
     @override
     def extendMarkdown(self, md: Markdown) -> None:
-        # Resolve manual wrappers before snippets expand them; adjust diagrams after code fences render.
+        # Run before the snippets extension replaces include instructions with file contents.
+        # This lets us recognize pages that include a manual and remove the manual metadata.
         md.preprocessors.register(RepositoryContent(md), "cta_repository", 35)
+        # Run after Markdown conversion, when Mermaid diagrams are wrapped in HTML <pre><code> elements.
         md.postprocessors.register(DiagramDefaults(md), "cta_diagrams", 0)
 
 
 def makeExtension(**kwargs: Any) -> CTAContent:  # noqa: N802 - name required by Python-Markdown
-    """Entry point used by Python-Markdown to load this extension from the site configuration."""
+    """Create the extension when Python-Markdown loads it from zensical.toml."""
     return CTAContent(**kwargs)
