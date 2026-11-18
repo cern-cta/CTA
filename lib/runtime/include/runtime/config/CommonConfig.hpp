@@ -6,6 +6,7 @@
 #pragma once
 
 #include "FeatureConfig.hpp"
+#include "HealthTransport.hpp"
 #include "ValidationResult.hpp"
 
 #include <algorithm>
@@ -174,17 +175,14 @@ struct HealthTcpConfig final {
 
 /// Transport and listener settings for readiness and liveness endpoints.
 struct HealthServerConfig final {
-  std::string transport = "tcp";
+  HealthTransport transport = HealthTransport::TCP;
   std::optional<HealthTcpConfig> tcp = std::nullopt;
 
   static constexpr std::size_t memberCount() { return 2; }
 
   ValidationResult validate() const {
     ValidationResult result;
-    if (transport != "tcp" && transport != "unix") {
-      result.addError("transport", "must be one of [tcp, unix]");
-    }
-    validateFeature(result, transport == "tcp", "tcp", tcp);
+    validateFeature(result, transport == HealthTransport::TCP, "tcp", tcp);
     return result;
   }
 };

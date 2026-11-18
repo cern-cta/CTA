@@ -237,12 +237,17 @@ TEST(CommonConfig, StrictFeatureSettingsRemainExplicit) {
 
 TEST(CommonConfig, HealthTransportRequiresOnlyItsOwnSettings) {
   using cta::runtime::HealthServerConfig;
+  using cta::runtime::HealthTransport;
   using cta::runtime::loadFromTomlString;
+  EXPECT_EQ(HealthServerConfig {}.transport, HealthTransport::TCP);
   for (const bool strict : {false, true}) {
-    EXPECT_NO_THROW(loadFromTomlString<HealthServerConfig>("transport = 'unix'", "test.toml", strict));
-    EXPECT_NO_THROW(loadFromTomlString<HealthServerConfig>("transport = 'tcp'\n[tcp]\nhost = '127.0.0.1'\nport = 8080",
-                                                           "test.toml",
-                                                           strict));
+    EXPECT_EQ(loadFromTomlString<HealthServerConfig>("transport = 'unix'", "test.toml", strict).transport,
+              HealthTransport::UNIX);
+    EXPECT_EQ(loadFromTomlString<HealthServerConfig>("transport = 'tcp'\n[tcp]\nhost = '127.0.0.1'\nport = 8080",
+                                                     "test.toml",
+                                                     strict)
+                .transport,
+              HealthTransport::TCP);
     EXPECT_THROW(loadFromTomlString<HealthServerConfig>("transport = 'tcp'", "test.toml", strict),
                  cta::exception::UserError);
     EXPECT_THROW(loadFromTomlString<HealthServerConfig>("transport = 'invalid'", "test.toml", strict),

@@ -384,7 +384,7 @@ private:
     if (config.featureEnabled(TConfig::Feature::HealthServer)) {
       std::string host;
       uint16_t port;
-      if (config.health_server->transport == "unix") {
+      if (config.health_server->transport == HealthTransport::UNIX) {
         if (cliOptions.runtimeDir.empty()) {
           throw exception::UserError(
             "health_server.transport is unix, but the program was not started with --runtime-dir.");
