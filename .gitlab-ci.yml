@@ -44,17 +44,6 @@ spec:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
 
-    custom-xrootd-version:
-      description: |-
-        XRootD RPM versionlock value for regression pipelines.
-
-        Include the epoch, package release, and platform when applicable: `1:5.8.4-1.PLATFORM`.
-        Leave empty to use the version declared by the selected CTA ref.
-      type: string
-      rules:
-        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
-          default: ""
-
     # =========================================================================
     # Build and architecture
     # =========================================================================
@@ -349,7 +338,6 @@ include:
   - local: .gitlab/ci/templates/common.gitlab-ci.yml
   - local: .gitlab/ci/.pre.gitlab-ci.yml
     inputs:
-      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
     rules:
@@ -362,7 +350,6 @@ include:
     inputs:
       pipeline-type: $[[ inputs.pipeline-type ]]
       custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
-      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       build-generator: $[[ inputs.build-generator ]]
