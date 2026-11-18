@@ -37,6 +37,23 @@ pub(crate) enum Reply {
     StreamFailure(Status),
 }
 
+impl Reply {
+    /// A successful unary reply.
+    pub(crate) fn success() -> Self {
+        Self::Unary(Ok(response(ResponseType::RspSuccess, "done")))
+    }
+
+    /// A successful stream of `records`.
+    pub(crate) fn records(records: impl IntoIterator<Item = Data>) -> Self {
+        Self::Stream(
+            std::iter::once(success_header())
+                .chain(records.into_iter().map(data))
+                .collect(),
+            None,
+        )
+    }
+}
+
 /// A call received by the mock frontend.
 #[derive(Debug, Clone)]
 pub(crate) struct Call {

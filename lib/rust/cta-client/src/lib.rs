@@ -5,11 +5,13 @@
 
 //! High-level client library for the CTA frontend gRPC interface.
 //!
-//! This crate talks to the admin service of the CTA frontend over the generated gRPC bindings of [`cta_protobuf`].
+//! This crate talks to the admin service of the CTA frontend over the generated gRPC bindings of [`cta_protobuf`], and
+//! returns the business objects of [`cta_model`]. Callers use both crates: `cta_model` for the resources, this crate
+//! for the client.
 //!
 //! | Module | Description |
 //! | ------ | ----------- |
-//! | [`admin`] | `cta-admin-api`: [`admin::AdminClient`], the typed admin commands ([`admin::commands`]), and [`admin::AdminError`] |
+//! | [`admin`] | `cta-admin-api`: [`admin::AdminClient`], the typed admin commands ([`admin::commands`]), the data access objects ([`admin::dao`], e.g. [`admin::dao::TapePools`]), and [`admin::AdminError`] |
 //! | [`types`] | Domain types built from the protobuf records ([`types::File`], [`types::Checksum`], [`types::ChecksumType`]) |
 //! | [`errors`] | Errors of the conversions into the domain types ([`errors::ChecksumTypeError`], ...) |
 //!
@@ -18,7 +20,38 @@
 //!
 //! # Example
 //!
-//! Sending a typed command, to get the protobuf records:
+//! Listing the tape pools of a virtual organisation, through the data access objects:
+//!
+//! ```no_run
+//! use cta_client::admin::AdminClient;
+//! use cta_grpc_common::{EndpointConfig, JwtAuth};
+//! use tokio_stream::StreamExt;
+//!
+//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+//! let config = EndpointConfig::new(
+//!     "https://cta-admin-api.example.org:17017".parse()?,
+//!     JwtAuth::new(std::fs::read("/etc/cta/token.jwt")?)?,
+//!     None,
+//!     None,
+//! );
+//!
+//! let client = AdminClient::connect(&config).await?;
+//!
+//! let mut pools = client
+//!     .tape_pools()
+//!     .list()
+//!     .virtual_organisation_name("ATLAS")
+//!     .call()
+//!     .await?;
+//! while let Some(pool) = pools.next().await {
+//!     let pool = pool?; // a `TapePool`
+//!     println!("{}: {} tapes", pool.name, pool.statistics.tape_count);
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! The typed commands can also be sent directly, to get the protobuf records:
 //!
 //! ```no_run
 //! use cta_client::admin::AdminClient;
