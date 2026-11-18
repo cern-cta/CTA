@@ -16,7 +16,7 @@
 namespace cta::grpc_server {
 
 /// Calculate eight threads per CPU, with a one-CPU fallback and a bound imposed by the gRPC integer range.
-int calculateAutomaticThreadLimit(uint32_t detectedCpuCount);
+int calculateThreadLimit(uint32_t detectedCpuCount);
 
 /// @brief Prepares a gRPC ServerBuilder with the settings common to the CTA gRPC servers: listening address, TLS,
 /// thread quota, health checking and reflection. Services and completion queues are added by the caller through

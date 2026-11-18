@@ -79,10 +79,10 @@ TEST(JwtAuthConfig, PubKeyTimeoutIsValidatedWheneverSectionIsPresent) {
 }
 
 TEST(ServerBuilderHelper, AutomaticThreadLimitHandlesUnknownCpuCountAndOverflow) {
-  EXPECT_EQ(8, cta::grpc_server::calculateAutomaticThreadLimit(0));
-  EXPECT_EQ(32, cta::grpc_server::calculateAutomaticThreadLimit(4));
+  EXPECT_EQ(8, cta::grpc_server::calculateThreadLimit(0));
+  EXPECT_EQ(32, cta::grpc_server::calculateThreadLimit(4));
   EXPECT_EQ((std::numeric_limits<int>::max() / 8) * 8,
-            cta::grpc_server::calculateAutomaticThreadLimit(std::numeric_limits<uint32_t>::max()));
+            cta::grpc_server::calculateThreadLimit(std::numeric_limits<uint32_t>::max()));
 }
 
 TEST(ListenerConfig, RejectsNegativeThreadCount) {
