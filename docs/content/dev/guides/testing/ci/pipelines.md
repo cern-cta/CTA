@@ -23,6 +23,7 @@ Ordinary feature-branch pushes do not create push pipelines. Use the branch’s 
 | `DEFAULT` | Validate the selected revision with the configured builds and tests. |
 | `REGR_AGAINST_CTA_BRANCH` | Test a dependency combination, either building CTA from the selected revision or using an existing CTA image. |
 | `REGR_AGAINST_CTA_VERSION` | Compatibility alias for `REGR_AGAINST_CTA_BRANCH`; use the latter for new runs. |
+| `UPDATE_DEPENDENCIES` | Propose upstream dependency updates using Renovate. |
 | `UPDATE_PIPELINE_IMAGES` | Rebuild the images used to execute CI jobs and propose updated image tags. See [CI Maintenance](../../../contributing/maintainers/ci-maintenance.md#weekly-pipeline-image-updates). |
 
 For a regression pipeline, the main inputs are:

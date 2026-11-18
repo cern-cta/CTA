@@ -47,12 +47,12 @@
     {
       "customType": "regex",
       "description":
-        "Resolve proxied external images upstream while preserving the CERN proxy prefix. CTA pipeline images remain owned by the existing image updater.",
+        "Resolve proxied external images upstream while preserving the CERN proxy prefix. CTA pipeline image releases are updated separately after successful builds.",
       "managerFilePatterns": [
         "/^\\.gitlab-ci\\.yml$/"
       ],
       "matchStrings": [
-        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|LICENSE_CHECK|SBOM_HELPER): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
+        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|LICENSE_CHECK|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
         "IMAGE_(?:TRIVY|SBOMQS): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\" +# (?<currentValue>v?[0-9.]+)"
       ],
       "datasourceTemplate": "docker",

@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+.renovate:
+  interruptible: false
+  stage: renovate
+  image: $IMAGE_RENOVATE
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    RENOVATE_PLATFORM: "gitlab"
+    RENOVATE_ENDPOINT: "$CI_API_V4_URL"
+    RENOVATE_TOKEN: "$CI_API_TOKEN"
+    GITHUB_COM_TOKEN: "$GITHUB_API_TOKEN"
+    RENOVATE_ONBOARDING: "false"
+    RENOVATE_EXIT_CODE_FOR_ERRORS: "true"
+  script:
+    - renovate "$CI_PROJECT_PATH"
+  resource_group: renovate
+
+update-dependencies:
+  extends: .renovate
+  needs: []
+  rules:
+    - if: '$PIPELINE_TYPE == "UPDATE_DEPENDENCIES" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+update-pipeline-image-version:
+  extends: .renovate
+  needs:
+    - job: generate-pipeline-images-tag
+      artifacts: true
+    - job: build-pipeline-images
+      artifacts: false
+  rules:
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: true
+  variables:
+    RENOVATE_CONFIG_FILE: "$CI_PROJECT_DIR/ci/renovate/pipeline-images.cjs"
