@@ -30,7 +30,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     chmod 0755 /grpc-health-probe && \
     rm -rf /var/lib/apt/lists/*
 
-# hadolint ignore=DL3007
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest@sha256:e92a563cb0755d351faaa535916fcb0d96b41aed90d86deb038b5ee757c6fd00 AS cern-ca
 
 FROM debian:13-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2 AS base
@@ -69,7 +68,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-debian13-base
       > /etc/apt/sources.list.d/cta-dependencies.list
 
 # Mounted input changes must invalidate installation even when package versions are unchanged.
-# hadolint ignore=DL3022
 COPY --from=repo-builder /packages/.package-hash /tmp/cta-package-hash
 
 FROM base AS cta-taped

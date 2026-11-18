@@ -978,7 +978,6 @@ build_cta() {
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
           log_warn "Repository mode changed: internal repositories ${old_value} -> ${new_value}"
-          reinstall_source_packages=true
           ;;
       esac
     done < <(jq -r --argjson desired "$build_configuration_json" '
@@ -994,8 +993,6 @@ build_cta() {
       automatic_clean_build_dirs=true
     fi
   else
-    rebuild_source_packages=true
-    reinstall_source_packages=true
     if [[ $build_output_exists == true ]]; then
       if [[ -f "$build_state_file" ]]; then
         log_warn "Build state change detected."
@@ -1006,19 +1003,13 @@ build_cta() {
     fi
   fi
 
-  if [[ $state_matches_configuration == false ]]; then
-    rebuild_source_packages=true
-    reinstall_source_packages=true
-  fi
-
   if [[ $automatic_clean_build_dirs == true ]]; then
     log_warn "Automatically cleaning build/${platform}/."
     clean_build_dirs=true
-    rebuild_source_packages=true
-    reinstall_source_packages=true
   fi
 
-  if [[ $clean_build_dirs == true ]]; then
+  # Regenerate source packages and refresh dependencies together when build inputs or output change.
+  if [[ $state_matches_configuration == false || $clean_build_dirs == true ]]; then
     rebuild_source_packages=true
     reinstall_source_packages=true
   fi
@@ -1097,6 +1088,8 @@ build_cta() {
   fi
 
   if [[ $package_command == binary && $install_source_packages == true ]]; then
+    local source_package_directory
+    source_package_directory=$(package_directory source)
     build_package_flags+=(
       --install-source-packages
       --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"

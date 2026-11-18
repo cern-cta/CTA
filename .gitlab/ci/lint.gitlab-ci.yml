@@ -1,12 +1,6 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-spec:
-  inputs:
-    platform:
-      type: string
----
-
 .source-checks:
   before_script:
     - !reference [.merge-train-guard, before_script]

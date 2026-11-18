@@ -61,7 +61,6 @@ modify-project-json:
     GIT_SUBMODULE_STRATEGY: "none"
   script:
     - project_json_file="project.json"
-    - touch pipeline.env
     # Replace EOS image tag
     - trimmed_eos_image_tag=$(echo "$CUSTOM_EOS_IMAGE_TAG" | xargs)
     # Grab the latest stable EOS release if not provided

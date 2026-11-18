@@ -375,8 +375,6 @@ include:
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
         when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
-    inputs:
-      platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/build.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_DEPENDENCIES"'
