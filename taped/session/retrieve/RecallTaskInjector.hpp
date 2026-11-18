@@ -158,6 +158,9 @@ public:
   bool testDiskSpaceReservationWorking();
 
 private:
+  /// Return uninjected jobs on stop
+  bool requeueRetainedJobsOnStop();
+
   /**
    * It will signal to the disk read thread  pool, tape write single thread
    * and to the mem manager they have to stop their threads(s)
@@ -291,7 +294,7 @@ private:
    */
   TapeSessionTracker& m_tracker;
 
-  /// Stop scheduler fetching while allowing acquired jobs to drain.
+  /// Stop fetching, return retained jobs, and allow injected tasks to drain.
   std::stop_token m_stopToken;
 };
 
