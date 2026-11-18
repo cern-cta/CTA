@@ -51,6 +51,8 @@
     bytes          = "^1"
     http-body      = "^1"
     http-body-util = "^0.1"
+    # procedural macros
+    derive_more = { version = "^2", default-features = false }
     # error handling, logging, misc
     anyhow        = "^1.0"
     bon           = "^3.10"
