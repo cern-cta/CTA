@@ -182,14 +182,14 @@ bool cta::admin_api::rpc::kerberos::NegotiationRequestHandler::next(const bool b
       case StreamState::PROCESSING: {
         log::ScopedParamContainer params(lc);
         params.add("tag", m_tag);
-        lc.log(cta::log::ERR,
+        lc.log(cta::log::INFO,
                "In grpc::server::NegotiationRequestHandler::next(): Server has been shut down before receiving a "
                "matching request.");
       } break;
       default: {
         log::ScopedParamContainer params(lc);
         params.add("tag", m_tag);
-        lc.log(cta::log::ERR,
+        lc.log(cta::log::DEBUG,
                "In grpc::server::NegotiationRequestHandler::next(): Request processing aborted: call is cancelled or "
                "connection is dropped.");
       } break;
