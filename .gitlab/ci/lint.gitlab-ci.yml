@@ -18,6 +18,8 @@ lint-cpp:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -69,6 +71,8 @@ lint-bash:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -100,6 +104,8 @@ lint-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
@@ -126,6 +132,8 @@ lint-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -182,6 +190,8 @@ deny-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: never
     - if: $CI_COMMIT_TAG
@@ -213,6 +223,8 @@ machete-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -241,6 +253,8 @@ lint-yaml:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -275,6 +289,8 @@ lint-licenses:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - when: always
@@ -292,6 +308,8 @@ lint-secrets:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - when: always
@@ -311,6 +329,8 @@ lint-dockerfile:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -339,6 +359,8 @@ lint-dockerfile:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - when: always
@@ -377,6 +399,8 @@ format-cpp:
   extends:
     - .format-report
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -407,6 +431,8 @@ format-python:
   extends:
     - .format-report
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
@@ -428,6 +454,8 @@ format-rust:
   extends:
     - .format-report
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -455,6 +483,8 @@ type-check-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
@@ -463,3 +493,54 @@ type-check-python:
   script:
     - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check
     - uv run --no-sync pyright --pythonpath .venv/bin/python .
+
+validate-catalogue-schema-version:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    # Tags and the default branch require the catalogue schema submodule commit to be tagged.
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
+    # Other pipelines validate the schema versions without requiring a submodule tag.
+    - when: on_success
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: ""
+  script:
+    - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS}
+
+validate-project-json:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: modify-project-json
+      optional: true
+  rules:
+    - when: on_success
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  script:
+    - uv run --locked --only-group scripts python ci/project-json/validate_project_json.py
+
+validate-python-lock:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - !reference [.python-workspace, rules]
+  image: $IMAGE_AUTOMATION
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+  script:
+    - uv lock --check --verbose

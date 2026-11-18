@@ -22,7 +22,7 @@ For example, a validation job with its own setup should include:
 
 ```yaml
 example-job:
-  stage: validate
+  stage: lint
   needs:
     - job: check-merge-train-duplicate
       optional: true

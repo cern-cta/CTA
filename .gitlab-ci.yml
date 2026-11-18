@@ -166,7 +166,6 @@ spec:
 stages:
   - .pre
   - trigger
-  - validate
   - lint
   - build
   - build:image
@@ -174,8 +173,8 @@ stages:
   - system-test
   - sbom
   - release
+  - deploy
   - report
-  - renovate
   - .post
 
 # User-facing settings are defined as inputs. Internal variables expose their effective values to included templates
@@ -383,7 +382,7 @@ include:
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
-  - local: .gitlab/ci/validate.gitlab-ci.yml
+  - local: .gitlab/ci/lint.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
         when: never
@@ -392,14 +391,6 @@ include:
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
-  - local: .gitlab/ci/lint.gitlab-ci.yml
-    rules:
-      - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
-        when: never
-      - if: '"$[[ inputs.platform ]]" == "debian13"'
-        when: never
-      # Only lint in the default pipeline
-      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/build.gitlab-ci.yml
@@ -457,10 +448,16 @@ include:
         when: never
       - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
         when: never
-      # Release stage only relevant in default pipeline
       - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
+  - local: .gitlab/ci/deploy.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.platform ]]" == "debian13"'
+        when: never
+      - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+        when: never
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT" || "$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES" || "$[[ inputs.pipeline-type ]]" == "UPDATE_PIPELINE_IMAGES"'
   - local: .gitlab/ci/report.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_DEPENDENCIES"'
@@ -478,4 +475,3 @@ include:
       - if: '"$[[ inputs.platform ]]" == "debian13"'
         when: never
       - when: always
-  - local: .gitlab/ci/renovate.gitlab-ci.yml
