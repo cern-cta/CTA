@@ -330,7 +330,6 @@ bool RecallTaskInjector::requeueRetainedJobsOnStop() {
   if (!m_jobs.empty()) {
     m_lc.log(cta::log::INFO, "Drain requested: requeuing uninjected retrieve jobs");
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
-    m_jobs.clear();
     m_files = 0;
     m_bytes = 0;
   }
