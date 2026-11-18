@@ -17,26 +17,20 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 from unittest.mock import patch
 
-from publish import publication_decision, release_key
-
+from ci.docs import publish
 from docs import build
-
-if sys.version_info >= (3, 12):
-    from typing import override
-else:
-    from typing_extensions import override
 
 
 class VersionTests(unittest.TestCase):
     def test_canonical_versions(self):
-        self.assertEqual(release_key("v6.2.4"), (6, 2, 4, 0, 0))
-        self.assertEqual(release_key("v6.2.4-1"), (6, 2, 4, 0, 1))
-        self.assertEqual(release_key("v6.1.0.0-1"), (6, 1, 0, 0, 1))
-        self.assertGreater(release_key("v6.1.0.0-1"), release_key("v6.0.99.0-1"))
-        self.assertGreater(release_key("v6.1.0.0-10"), release_key("v6.1.0.0-2"))
+        self.assertEqual(publish.release_key("v6.2.4"), (6, 2, 4, 0, 0))
+        self.assertEqual(publish.release_key("v6.2.4-1"), (6, 2, 4, 0, 1))
+        self.assertEqual(publish.release_key("v6.1.0.0-1"), (6, 1, 0, 0, 1))
+        self.assertGreater(publish.release_key("v6.1.0.0-1"), publish.release_key("v6.0.99.0-1"))
+        self.assertGreater(publish.release_key("v6.1.0.0-10"), publish.release_key("v6.1.0.0-2"))
 
     def test_noncanonical_tags(self):
         for tag in [
@@ -50,14 +44,14 @@ class VersionTests(unittest.TestCase):
             "v6.2.4-1.pgall",
         ]:
             with self.subTest(tag=tag), self.assertRaises(ValueError):
-                release_key(tag)
+                publish.release_key(tag)
 
     def test_missing_provenance_and_retagging_fail_closed(self):
         with self.assertRaises(KeyError):
-            publication_decision("v6.2.4-1", "new", [{"version": "6.2"}])
+            publish.publication_decision("v6.2.4-1", "new", [{"version": "6.2"}])
         versions = [{"version": "6.2", "properties": {"source_tag": "v6.2.4-1", "source_commit": "old"}}]
         with self.assertRaises(ValueError):
-            publication_decision("v6.2.4-1", "new", versions)
+            publish.publication_decision("v6.2.4-1", "new", versions)
 
 
 @unittest.skipUnless(shutil.which("mike") and shutil.which("zensical"), "Run in the docs environment")
@@ -69,7 +63,7 @@ class PublicationTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.repo = self.root / "checkout"
         self.remote = self.root / "remote.git"
-        self.publisher = Path(__file__).with_name("publish.py").resolve()
+        self.publisher = Path(publish.__file__).resolve()
         self.env = dict(os.environ, PATH=f"{Path(sys.executable).parent}:{os.environ['PATH']}")
         self.env.pop("GITLAB_CI", None)
         self.command("git", "init", "--bare", str(self.remote), cwd=self.root)
