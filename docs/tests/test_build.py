@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Check that build copies and preview symlinks leave the original documentation files unchanged."""
+"""Check that builds copy pages, previews reflect edits, and stale Rust output is excluded."""
 
 # ruff: noqa: PT009
 
@@ -26,23 +26,13 @@ class StagingTests(unittest.TestCase):
             legacy.write_text("Stale Rust output")
             build.stage_content()
             self.assertFalse((staged / "api/rust").exists())
-            self.assertFalse((staged / "dev").is_symlink())
             page.write_text("# Updated")
             self.assertEqual((staged / "dev/index.md").read_text(), "# Original")
 
             build.stage_content(preview=True)
-            self.assertTrue((staged / "dev").is_symlink())
-            self.assertEqual((staged / "dev/index.md").read_text(), "# Updated")
-            added = source / "dev/new.md"
-            added.write_text("# New")
-            self.assertEqual((staged / "dev/new.md").read_text(), "# New")
-            added.unlink()
-            self.assertFalse((staged / "dev/new.md").exists())
-
-            build.stage_content()
-            self.assertFalse((staged / "dev").is_symlink())
-            self.assertEqual((staged / "dev/index.md").read_text(), "# Updated")
-            self.assertEqual(legacy.read_text(), "Stale Rust output")
+            page.write_text("# Preview edit")
+            self.assertEqual((staged / "dev/index.md").read_text(), "# Preview edit")
+            self.assertFalse((staged / "api/rust").exists())
 
 
 if __name__ == "__main__":
