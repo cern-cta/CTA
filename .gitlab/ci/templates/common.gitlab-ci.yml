@@ -37,6 +37,7 @@
     - changes:
         - "**/*.py"
         - "**/pyproject.toml"
+        - "**/pyrightconfig.json"
         - "**/requirements.txt"
         - "**/{ruff,.ruff}.toml"
         - ".gitlab-ci.yml"

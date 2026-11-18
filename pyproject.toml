@@ -15,77 +15,76 @@
     "grpcio-tools==1.84.1; python_full_version >= '3.10'",
   ]
 
-# Explicit exceptions for the requested Zensical release and matching UI package.
-[tool.uv.exclude-newer-package]
-    zensical = "2026-11-11T00:00:00Z"
+  # Explicit exceptions for the requested Zensical release and matching UI package.
+  # Remove after November 24, 2026, once all selected artifacts have cleared the 14-day cooldown.
+  [tool.uv.exclude-newer-package]
+    zensical    = "2026-11-11T00:00:00Z"
     zensical-ui = "2026-11-11T00:00:00Z"
 
-[tool.uv.dependency-groups]
-    docs = { requires-python = ">=3.12,<3.13" }
+  [tool.uv.dependency-groups]
+    docs = { requires-python = ">=3.12" }
 
-# Zensical-compatible mike; uv.lock records the exact revision.
-[tool.uv.sources]
+  # Zensical-compatible mike; uv.lock records the exact revision.
+  [tool.uv.sources]
     mike = { git = "https://github.com/squidfunk/mike" }
 
 [dependency-groups]
-    dev = [
-        { include-group = "lint" },
-        { include-group = "source-checks" },
-        { include-group = "unit-tests" },
-        { include-group = "system-tests" },
-        { include-group = "type-check" },
-        "pre-commit>=4.3.0",
-    ]
-    lint = ["ruff==0.14.9"]
-    source-checks = [
-        "clang-format==20.1.8",
-        "cppcheck-codequality",
-        "detect-secrets==1.5.0",
-        "yamllint==1.37.1",
-        "PyYAML",
-    ]
-    unit-tests = [
-        { include-group = "scripts" },
-        "hatchling>=1.27.0",
-        "pytest>=8",
-        "pytest-cov",
-        "cattrs",
-        "grpcio-tools",
-    ]
-    # These scripts also run independently in existing pipeline environments.
-    scripts = [
-        "PyYAML",
-        "jsonschema",
-        "packaging>=24",
-        "typing-extensions>=4.4.0",
-        "pyjwt",
-        "cryptography",
-    ]
-    type-check = [
-        "pyright[nodejs]",
-        { include-group = "unit-tests" },
-        { include-group = "system-tests" },
-        # Resolve imports in docs/hooks.py.
-        { include-group = "docs" },
-    ]
-    system-tests = [
-        "kubernetes>=35.0.0,<36",
-        "pytest>=8.0.0",
-        "pytest-asyncio>=1.2.0",
-        "oauthlib>=3.2.2",
-        "fastjsonschema>=2.21.2",
-        "packaging>=24.0",
-        "typing-extensions>=4.4.0",
-    ]
-    docs = [
-        "zensical==0.1.1",
-        "mike",
-        "mkdocstrings-python==1.18.2",
-        "mkdocstrings==0.30.1",
-        "mkdocs-autorefs==1.4.2",
-        "markdown==3.9",
-        "pymdown-extensions==11.0.2",
-    ]
+  dev = [
+    { include-group = "lint" },
+    { include-group = "source-checks" },
+    { include-group = "unit-tests" },
+    { include-group = "system-tests" },
+    { include-group = "type-check" },
+    "pre-commit>=4.3.0",
+  ]
+  lint = ["ruff==0.14.9"]
+  source-checks = [
+    "clang-format==20.1.8",
+    "cppcheck-codequality",
+    "detect-secrets==1.5.0",
+    "yamllint==1.37.1",
+    "PyYAML",
+  ]
+  unit-tests = [
+    { include-group = "scripts" },
+    "hatchling>=1.27.0",
+    "pytest>=8",
+    "pytest-cov",
+    "cattrs",
+    "grpcio-tools",
+  ]
+  # These scripts also run independently in existing pipeline environments.
+  scripts = [
+    "PyYAML",
+    "jsonschema",
+    "packaging>=24",
+    "typing-extensions>=4.4.0",
+    "pyjwt",
+    "cryptography",
+  ]
+  type-check = [
+    "pyright[nodejs]",
+    { include-group = "unit-tests" },
+    { include-group = "system-tests" },
+  ]
+  system-tests = [
+    "kubernetes>=35.0.0,<36",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=1.2.0",
+    "oauthlib>=3.2.2",
+    "fastjsonschema>=2.21.2",
+    "packaging>=24.0",
+    "typing-extensions>=4.4.0",
+  ]
+  docs = [
+    "zensical==0.1.1",
+    "mike",
+    "mkdocstrings-python==1.18.2",
+    "mkdocstrings==0.30.1",
+    "mkdocs-autorefs==1.4.2",
+    "markdown==3.9",
+    "pymdown-extensions==11.0.2",
+  ]
 
 [tool.pytest.ini_options]
   addopts = "-ra --ignore=ci/system_tests --ignore=ci/docs"
@@ -133,6 +132,9 @@
     "catalogue/cta-catalogue-schema",
     "common/jwt-cpp",
   ]
+
+  [tool.ruff.per-file-target-version]
+    "docs/**/*.py" = "py312"
 
   [tool.ruff.lint]
     select = [
@@ -227,9 +229,11 @@
       ]
 
 [tool.pyright]
+  pythonVersion = "3.9"
   typeCheckingMode = "strict"
   extraPaths = ["ci/release/src", "."]
   exclude = [
+    "docs",
     "**/__pycache__",
     "**/.venv",
     "**/venv",
