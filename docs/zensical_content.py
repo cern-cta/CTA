@@ -1,7 +1,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Resolve CTA repository content and diagram defaults during Markdown rendering."""
+"""Apply CTA content transformations through the extension registered in zensical.toml.
+
+These hooks run during rendering, including mike publication; docs/build.py handles
+reference generation before rendering starts.
+"""
 
 import json
 import re
@@ -18,9 +22,11 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def repository_content(text: str, root: Path) -> str:
     """Resolve the EOS image tag and strip Pandoc metadata from included manuals."""
+    # Keep documented EOS examples aligned with the development image configuration.
     if "{{ eos_image_tag }}" in text:
         project = json.loads((root / "project.json").read_text(encoding="utf-8"))
         text = text.replace("{{ eos_image_tag }}", project["dev"]["eosImageTag"])
+    # Manual wrapper pages reuse the installed manual source, but its Pandoc header is not page content.
     match = re.fullmatch(r"\s*--8<--\s*\n([^\n]+\.1cta\.md)\s*\n--8<--\s*", text)
     if match:
         manual = (root / match.group(1).strip()).read_text(encoding="utf-8")
@@ -29,12 +35,16 @@ def repository_content(text: str, root: Path) -> str:
 
 
 class RepositoryContent(Preprocessor):
+    """Resolve repository substitutions and manual includes before Markdown parsing."""
+
     @override
     def run(self, lines: list[str]) -> list[str]:
         return repository_content("\n".join(lines), ROOT).splitlines()
 
 
 class DiagramDefaults(Postprocessor):
+    """Add theme-aware defaults to rendered Mermaid sequence diagrams without explicit configuration."""
+
     @override
     def run(self, text: str) -> str:
         # Sequence arrowheads need currentColor to follow the selected palette.
@@ -46,11 +56,15 @@ class DiagramDefaults(Postprocessor):
 
 
 class CTAContent(Extension):
+    """Register CTA transformations with Python-Markdown."""
+
     @override
     def extendMarkdown(self, md: Markdown) -> None:
+        # Resolve manual wrappers before snippets expand them; adjust diagrams after code fences render.
         md.preprocessors.register(RepositoryContent(md), "cta_repository", 35)
         md.postprocessors.register(DiagramDefaults(md), "cta_diagrams", 0)
 
 
 def makeExtension(**kwargs: Any) -> CTAContent:  # noqa: N802 - name required by Python-Markdown
+    """Entry point used by Python-Markdown to load this extension from the site configuration."""
     return CTAContent(**kwargs)
