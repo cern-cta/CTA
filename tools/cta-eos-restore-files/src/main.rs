@@ -8,7 +8,6 @@
 
 mod cli;
 mod cmd;
-mod cta;
 mod env;
 mod eos;
 mod output;
