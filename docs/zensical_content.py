@@ -56,8 +56,6 @@ class DiagramDefaults(Postprocessor):
 
 
 class CTAContent(Extension):
-    """Register CTA transformations with Python-Markdown."""
-
     @override
     def extendMarkdown(self, md: Markdown) -> None:
         # Resolve manual wrappers before snippets expand them; adjust diagrams after code fences render.
