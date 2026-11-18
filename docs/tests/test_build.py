@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Check staged documentation updates without writing into authored sources."""
+"""Check that build copies and preview symlinks leave the original documentation files unchanged."""
 
 # ruff: noqa: PT009
 

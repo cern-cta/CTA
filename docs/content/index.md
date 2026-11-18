@@ -11,6 +11,8 @@ hide:
 Technical documentation for understanding, deploying, operating and developing **CERN Tape Archive (CTA)**.
 CTA manages tape storage alongside a disk system such as [EOS](https://eos.web.cern.ch/) or [dCache](https://www.dcache.org/).
 
+Select the documentation version matching your deployment.
+
 ## Getting started
 
 Choose a starting point below.

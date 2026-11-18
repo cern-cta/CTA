@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Exercise release ordering and Zensical/mike publication against a local Git remote."""
+"""Check documentation publication and release ordering using temporary local Git repositories."""
 
 # Use unittest for the temporary-repository integration tests.
 # ruff: noqa: PT009, PT027
@@ -171,7 +171,7 @@ class PublicationTests(unittest.TestCase):
         self.deploy("v6.0.1-1")
         old = self.command("git", "rev-parse", "gl-pages").stdout.strip()
         self.deploy("v6.1.0.0-1")
-        # Simulate a second serialized publisher whose local branch is stale.
+        # Start the next publication with an outdated local branch to check that it fetches the published version.
         self.command("git", "update-ref", "refs/heads/gl-pages", old)
         _, versions = self.deploy("v6.0.2-1")
         self.assertIn("6.1", [entry["version"] for entry in versions])

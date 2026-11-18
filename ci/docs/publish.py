@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Publish one CTA release without regressing existing documentation versions."""
+"""Publish release documentation while keeping newer releases and other versions available."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ SERIES = re.compile(r"(\d+)\.(\d+)")
 
 
 def release_key(tag: str) -> tuple[int, ...]:
-    """Compare neutral tags and historical documentation provenance."""
+    """Convert a release tag, such as v6.2.4 or v6.1.0.0-1, into numbers that can be compared."""
     match = CANONICAL_TAG.fullmatch(tag)
     if not match:
         raise ValueError(f"Not a canonical release tag: {tag}")
@@ -29,6 +29,7 @@ def release_key(tag: str) -> tuple[int, ...]:
 
 
 def publication_decision(tag: str, commit: str, versions: list[dict[str, Any]]) -> tuple[str, bool, str]:
+    """Return the minor version to publish, whether to replace it, and the version to mark as latest."""
     key = release_key(tag)
     series = f"{key[0]}.{key[1]}"
     publish = True
@@ -40,7 +41,8 @@ def publication_decision(tag: str, commit: str, versions: list[dict[str, Any]]) 
         if name != series:
             continue
 
-        # Refuse to replace a numeric series whose provenance is unknown.
+        # The existing version must record which source tag and commit produced it.
+        # Without those fields, we cannot safely decide whether to replace it.
         properties = version.get("properties", {})
         previous = release_key(properties["source_tag"])
         if previous == key and properties["source_commit"] != commit:
@@ -62,7 +64,8 @@ def publish(tag: str, remote: str, branch: str) -> None:
     if run("git", "rev-parse", f"refs/tags/{tag}^{{commit}}") != commit:
         raise ValueError("The checkout does not match the release tag")
 
-    # CI serializes this entire operation, including fetching and exporting Pages.
+    # The CI resource_group allows only one publication job at a time.
+    # Start from the published branch so this job keeps versions added by earlier jobs.
     run("git", "fetch", "--no-tags", remote, f"refs/heads/{branch}")
     run("git", "update-ref", f"refs/heads/{branch}", run("git", "rev-parse", "FETCH_HEAD"))
     versions = json.loads(run("git", "show", f"{branch}:public/versions.json"))
@@ -92,7 +95,7 @@ def publish(tag: str, remote: str, branch: str) -> None:
         )
         run("mike", "alias", *common, "--update-aliases", "--alias-type", "redirect", latest, "latest")
         run("mike", "set-default", *common, "latest")
-        # Publish one branch update after all local mike operations succeed.
+        # Push only after the site build and version redirects have all succeeded.
         push = ["git", "push"]
         if os.environ.get("GITLAB_CI") == "true":
             push.extend(["--push-option", "ci.skip"])
@@ -100,7 +103,8 @@ def publish(tag: str, remote: str, branch: str) -> None:
     else:
         print(f"Keeping the newer documentation already published for {series}")
 
-    # Export the complete branch even on an older-tag retry, preserving all versions.
+    # GitLab Pages deploys this directory as the whole site, so include every published version.
+    # Do this even when the requested release was too old to replace the existing documentation.
     output = Path("build/docs/public")
     with tempfile.TemporaryDirectory() as temp:
         archive = Path(temp) / "pages.tar"
