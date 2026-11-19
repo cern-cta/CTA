@@ -168,6 +168,3 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 if(CTA_BUILD_TEST_PACKAGES)
   install(TARGETS ctacommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-
-add_executable(mutexLtrace process/threading/MutexLtrace.cpp)
-target_link_libraries(mutexLtrace ctacommon)

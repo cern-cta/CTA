@@ -328,8 +328,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
   }
   // Checks are fine, let's just drop the queue from the map
   g_queues.erase(queueIndex);
-  // Lock the queue, to make sure the last user is done posting. We could do this after
-  // releasing the global lock, but helgrind objects.
+  // Lock the queue to make sure the last user is done posting.
   threading::MutexLocker ulq(maq->m_mutex);
   // Our mem queue is now unreachable so we can let the global part go
   globalLock.unlock();
@@ -357,7 +356,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
     std::list<JobAndRequest> jta;
     // First add the job for this thread
     jta.push_back({job, request});
-    // We are done with the queue: release the lock to make helgrind happy.
+    // The queue is unreachable and its last writer has finished; release the lock.
     ulq.unlock();
     // We do the same for all the queued requests
     for (auto& maqr : maq->m_requests) {

@@ -8,7 +8,7 @@ Component test cases live alongside their implementation or in component-local t
 | `runners/` | Entry point for the main and multiprocess suites. |
 | `runners/rdbms/` | Dedicated database runner, command-line parsing and catalogue factory. |
 | `support/` | Shared C++ test utilities, including temporary files, temporary directories and argument vectors. |
-| `analysis/` | Dynamic-analysis scripts, Makefile templates and Valgrind, Helgrind and ThreadSanitizer suppressions. |
+| `analysis/` | Dynamic-analysis scripts, Makefile templates and Valgrind and ThreadSanitizer suppressions. |
 
 `CMakeLists.txt` defines the runners and analysis targets and links the component test libraries.
 The executables and generated analysis files are written directly into the build tree's `tests/` directory.

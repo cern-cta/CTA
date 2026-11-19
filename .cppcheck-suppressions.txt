@@ -1,6 +1,5 @@
 syntaxError:*Test.cpp
 syntaxError:*Tests.cpp
-localMutex:common/process/threading/MutexLtrace.cpp
 unknownMacro:taped/file/FileTest.cpp
 unknownMacro:taped/file/OSMFileTest.cpp
 nullPointer:common/utils/utils.cpp
