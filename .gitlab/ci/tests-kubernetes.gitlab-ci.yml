@@ -109,7 +109,7 @@ spec:
     # Enable local telemetry if desired
     - |
       if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --local-telemetry"
+        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --telemetry local"
       fi
     - *setup-k8s-test-variables
     - UV_PROJECT_ENVIRONMENT=.venv uv sync --locked --only-group system-tests
@@ -204,7 +204,6 @@ test-client-gfal2:
         - project.json
         - ci/orchestration/helm/eos/**/*
         - ci/orchestration/presets/eos/**/*
-        - ci/orchestration/presets/stress-eos-values.yaml
         - ci/system_tests/tests/client_gfal_test.py
       when: on_success
     - when: manual

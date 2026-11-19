@@ -1,35 +1,9 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-global:
-  # Keep crash evidence in a pod volume for stress-run investigation
-  extraVolumes:
-    volumes:
-      - name: coredumps
-        emptyDir: {}
-    volumeMounts:
-      - name: coredumps
-        mountPath: /var/log/tmp
-
-frontend-admin:
-  conf:
-    catalogue:
-      # Allow concurrent requests without a small catalogue connection pool limiting throughput.
-      numberOfConnections: 50
-    logger:
-      # Reduce per-request logging overhead during sustained load.
-      logLevel: "WARNING"
-    schedulerdb:
-      # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
-      tapeCacheMaxAgeSecs: 1
-      retrieveQueueCacheMaxAgeSecs: 1
-
 frontend-wfe:
   conf:
     schedulerdb:
-      # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
-      tapeCacheMaxAgeSecs: 1
-      retrieveQueueCacheMaxAgeSecs: 1
       # Tuning only, applied whether or not batching ends up enabled: does NOT itself turn batching
       # on. That is controlled solely by the enable-opportunistic-batching pipeline input, via
       # presets/cta/tests/opportunistic-batching.yaml -- this file used to also hardcode
@@ -49,18 +23,8 @@ taped:
   scheduler:
     # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
     numberOfConnections: 3
-    # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
-    tapeCacheMaxAgeSecs: 1
-    retrieveQueueCacheMaxAgeSecs: 1
 
 maintd:
-  logging:
-    # Reduce routine logging overhead while retaining warnings and errors.
-    level: "WARNING"
-  scheduler:
-    # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
-    tapeCacheMaxAgeSecs: 600
-    retrieveQueueCacheMaxAgeSecs: 10
   routines:
     # Note that the snake_case version of all these options (including the names)
     # should match the corresponding names in the maintd conf file
