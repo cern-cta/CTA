@@ -89,13 +89,16 @@ Add feature options such as `-DCTA_WITH_ORACLE=OFF` to either configuration comm
 
 ## Build container images (optional)
 
-Build service images from the RPMs, using the same version and build variant:
+Build service images from the packages, using the same version and build variant:
 
 ```bash
 ./ci/cta-dev.sh images --cta-version 6-local-test
 ```
 
-This creates local Podman images for `cta-taped`, `cta-maintd`, `cta-rmcd`, `cta-frontend`, and `cta-tools`, under `localhost/cta/ctageneric/`, tagged `6-local-test` in this example:
+For another platform, pass the same `--platform` option to both `build` and `images`, for example `--platform el10` or `--platform debian13`.
+See [Build options](cta-dev.md#build-options) for supported configurations and package locations.
+
+This creates local Podman images for `cta-taped`, `cta-maintd`, `cta-rmcd`, `cta-admin-api`, `cta-workflow-api`, and `cta-tools`, under `localhost/cta/ctageneric/`, tagged `6-local-test` in this example:
 
 ```bash
 podman images --filter reference='localhost/cta/ctageneric/*:6-local-test'

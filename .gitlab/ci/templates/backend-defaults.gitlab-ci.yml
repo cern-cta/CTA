@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+spec:
+  inputs:
+    scheduler-type:
+      type: string
+      options: ["pgsched", "objectstore"]
+    enable-oracle-support:
+      type: boolean
+---
+# Child variants can still forward their effective backend settings as pipeline variables.
+variables:
+  SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
+  ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"

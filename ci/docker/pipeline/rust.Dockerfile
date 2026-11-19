@@ -12,6 +12,8 @@ ARG CARGO_SONAR_VERSION="=1.6.0"
 ARG CARGO_LLVM_COV_VERSION="=0.9.1"
 ARG TAPLO_VERSION="=0.10.0"
 
+# OS packages intentionally receive repository fixes on image rebuild.
+# hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
     dnf install -y git curl jq python3 python3-pip bat gcc gcc-c++ make \

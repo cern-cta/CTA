@@ -5,7 +5,7 @@
 # - Alma9-minimal vs alma. The minimal image is significantly smaller. The main difference is that it comes with microdnf instead of dnf
 # - We install and remove cta-release in the same layer to minimise image size. Putting it in the base image would increase the image size substantially
 # - note sharing=locked and id for concurrency (dnf caching is not thread safe)
-# - AlmaLinux 9 and repository package versions intentionally float to receive upstream fixes on rebuild
+# - Base-image digests are updated by Renovate; repository packages receive fixes on rebuild
 # - dnf clean is unnecessary because the package caches are BuildKit cache mounts and are not committed to the image
 # - package_context is an external BuildKit build context supplied by the build command
 # - Containers log to stdout by default. The CI deployment overrides this command to exercise file logging and mirrors that file to stdout
@@ -121,7 +121,7 @@ RUN setcap \
     cap_sys_rawio=+ep /usr/bin/cta-tape-label
 
 USER cta
-CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict"]
+CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-rmcd
@@ -137,7 +137,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st"
 
 USER cta
-CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
+CMD ["/usr/bin/cta-rmcd", "--config=/etc/cta/cta-rmcd.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-maintd
@@ -153,7 +153,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-maintd"
 
 USER cta
-CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta"]
+CMD ["/usr/bin/cta-maintd", "--config=/etc/cta/cta-maintd.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-admin-api
@@ -171,7 +171,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-admin-api cta-catalogue-utils krb5-workstation"
 
 USER cta
-CMD ["/usr/bin/cta-admin-api"]
+CMD ["/usr/bin/cta-admin-api", "--config=/etc/cta/cta-admin-api.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-workflow-api
@@ -189,7 +189,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-workflow-api"
 
 USER cta
-CMD ["/usr/bin/cta-workflow-api"]
+CMD ["/usr/bin/cta-workflow-api", "--config=/etc/cta/cta-workflow-api.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  TOOLS cta-tools

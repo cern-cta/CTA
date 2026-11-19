@@ -10,6 +10,8 @@ ARG CARGO_CYCLONEDX_VERSION="=0.5.9"
 ARG SCCACHE_VERSION="=0.18.0"
 
 # Base build tools belong in the image; build-essential also supplies dpkg-dev.
+# OS packages intentionally receive repository fixes on image rebuild.
+# hadolint ignore=DL3008
 RUN test "$(dpkg --print-architecture)" = amd64 && \
     apt-get update && apt-get install -y --no-install-recommends \
       build-essential fakeroot ca-certificates python3 curl && \
@@ -20,6 +22,8 @@ RUN printf 'deb [arch=amd64 trusted=yes] %s trixie main\n' "$CTA_DEPENDENCY_REPO
     > /etc/apt/sources.list.d/cta-dependencies.list
 
 # Backported debhelper restores stop-on-removal handling when --no-start is used.
+# OS packages intentionally receive repository fixes on image rebuild.
+# hadolint ignore=DL3008
 RUN printf 'deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] https://deb.debian.org/debian trixie-backports main\n' \
       > /etc/apt/sources.list.d/debian-backports.list && \
     apt-get update && apt-get install -y --no-install-recommends -t trixie-backports debhelper && \

@@ -5,6 +5,8 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da
 
 ARG UV_VERSION=0.13.9
 
+# OS packages intentionally receive repository fixes on image rebuild.
+# hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core && \
     dnf install -y git curl jq python3 python3-pip bat && \
     python3 -m pip install --only-binary :all: --no-cache-dir "uv==${UV_VERSION}" && \
