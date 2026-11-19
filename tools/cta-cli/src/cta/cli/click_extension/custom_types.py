@@ -5,7 +5,7 @@ import re
 from collections.abc import Callable
 from datetime import timedelta
 from enum import Enum
-from typing import ClassVar, TypeVar, override
+from typing import ClassVar, override
 
 import click
 from cta.sdk.models import TapeState
@@ -118,9 +118,6 @@ class TapeStateType(click.ParamType):
             )
 
         return tape_state, reason
-
-
-E = TypeVar("E", bound=Enum)
 
 
 def enum_choice[E: Enum](enum_type: type[E]) -> Callable[[click.Context, click.Parameter, str | None], E | None]:

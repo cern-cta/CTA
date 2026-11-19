@@ -9,7 +9,7 @@ Developers with an established environment should use their installed `cta-dev` 
 Use a Linux machine with working Podman, Git, Bash, `curl`, `jq`, and uv. Docker is not supported by the build scripts. Compilation and build dependencies run inside a container.
 The build images provide the pinned Python interpreter.
 Direct CMake and source-package builds require Python 3.15 or newer on `PATH`, or an explicit `-DPython3_EXECUTABLE=/path/to/python`.
-Build tools do not install Python; see [Python tooling and compatibility](../conventions/coding/python.md#tooling-and-compatibility) for the separation between environment setup and interpreter requirements.
+See [Python tooling and compatibility](../conventions/coding/python.md#tooling-and-compatibility).
 
 Kubernetes and virtual tape hardware are only needed when running a development instance, not for these build stages.
 

@@ -31,7 +31,7 @@ import tomllib
 import warnings
 from dataclasses import is_dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypeVar, override
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, override
 
 if TYPE_CHECKING:
     from typing import Self
@@ -84,8 +84,6 @@ and fields that have not been set at all. The NOT_SET value is used as a default
     where a default hardcoded value has no sense
 like password or secret keys.
 """
-
-T = TypeVar("T", bound=DataclassWithValidation)
 
 
 class CtaConfigLoader[T: DataclassWithValidation]:

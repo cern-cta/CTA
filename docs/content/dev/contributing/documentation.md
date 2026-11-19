@@ -76,10 +76,10 @@ Escape the first hyphen of long options outside code spans (`\--config`) so Pand
 
 ## Check before submitting
 
-Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From `docs/`, with the Python environment activated, run:
+Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From the repository root, run:
 
 ```bash
-mkdocs build --strict
+uv run --locked --only-group docs mkdocs build --strict --config-file docs/mkdocs.yml
 ```
 
 The strict build must pass before submission. Use the normal [contribution workflow](index.md) for review.

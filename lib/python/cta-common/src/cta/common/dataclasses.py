@@ -18,7 +18,7 @@ Protocols:
 from collections.abc import Iterator
 from dataclasses import Field, fields, is_dataclass
 from functools import lru_cache
-from typing import Any, ClassVar, Protocol, TypeVar, cast, get_args, get_origin, get_type_hints
+from typing import Any, ClassVar, Protocol, cast, get_args, get_origin, get_type_hints
 
 from cta.common.typing import normalize_types
 
@@ -33,9 +33,6 @@ class DataclassProtocol(Protocol):
     """
 
     __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
-
-
-D = TypeVar("D", bound=DataclassProtocol)
 
 
 def _iter_dataclass_properties(obj_type: type) -> Iterator[tuple[str, property]]:
