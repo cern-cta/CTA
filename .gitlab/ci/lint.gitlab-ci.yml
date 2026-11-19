@@ -289,12 +289,14 @@ lint-licenses:
       when: always
     - when: always
   image:
-    name: $IMAGE_LICENSE_CHECK
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: [""]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.source-checks, before_script]
   script:
-    - reuse lint
+    - uv run --no-sync reuse lint
 
 lint-secrets:
   stage: lint

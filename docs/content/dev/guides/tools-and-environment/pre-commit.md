@@ -4,7 +4,7 @@ Pre-commit runs local checks before a commit. For installation, see [Enable pre-
 
 ## Configured checks
 
-The repository's `.pre-commit-config.yaml` defines the hooks and file selection. Python tools other than REUSE use `uv` with the same `pyproject.toml` dependencies and `uv.lock` versions as CI; keep `uv` on `PATH`.
+The repository's `.pre-commit-config.yaml` defines the hooks and file selection. Python tools use `uv` with the same `pyproject.toml` dependencies and `uv.lock` versions as CI; keep `uv` on `PATH`.
 
 | Hook | Purpose |
 | --- | --- |
@@ -45,7 +45,7 @@ Formatters can modify files, including during an all-files run. Review their cha
 | Hook environment fails to initialize | Read the installation error for missing dependencies or download failures. If the cached environment is broken, run `pre-commit clean`, then retry. |
 | Automatic fixes conflict with unstaged changes | Separate or stage the intended edits before retrying; inspect the working tree first. |
 
-Pinned hook environments are installed automatically when needed. `pre-commit autoupdate` changes the repository configuration; use it for a deliberate hook-version update, not routine troubleshooting. See the [command reference](https://pre-commit.com/#command-line-interface).
+Tool versions are maintained in `pyproject.toml` and `uv.lock`.
 
 ## Secret-detection findings
 

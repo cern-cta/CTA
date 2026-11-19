@@ -1,11 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description":
-    "Update container bases, external CI images, GitHub Actions, pre-commit hooks, Python interpreters and uv workspaces, Danger gems and grpc-health-probe. Native packages, Rust, general Helm dependencies and submodules remain deferred.",
+    "Update container bases, external CI images, GitHub Actions, Python interpreters and uv workspaces, Danger gems and grpc-health-probe. Native packages, Rust, general Helm dependencies and submodules remain deferred.",
   "enabledManagers": [
     "dockerfile",
     "github-actions",
-    "pre-commit",
     "custom.regex",
     "pyenv",
     "pep621"
@@ -41,12 +40,6 @@
       "/^\\.github/workflows/[^/]+\\.ya?ml$/"
     ]
   },
-  "pre-commit": {
-    "enabled": true,
-    "managerFilePatterns": [
-      "/^\\.pre-commit-config\\.yaml$/"
-    ]
-  },
   "customManagers": [
     {
       "customType": "regex",
@@ -68,7 +61,7 @@
         "/^\\.gitlab-ci\\.yml$/"
       ],
       "matchStrings": [
-        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|LICENSE_CHECK|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
+        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
         "IMAGE_(?:TRIVY|SBOMQS): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\" +# (?<currentValue>v?[0-9.]+)"
       ],
       "datasourceTemplate": "docker",
@@ -177,16 +170,6 @@
       ],
       "matchDepTypes": [
         "github-runner"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "Update frozen hook repositories only; additional Python dependencies are deferred.",
-      "matchManagers": [
-        "pre-commit"
-      ],
-      "matchDepTypes": [
-        "!repository"
       ],
       "enabled": false
     },
