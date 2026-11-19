@@ -10,7 +10,6 @@ set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
   LabelMount.cpp
-  MountType.cpp
   PositioningMethod.cpp
   RepackRequest.cpp
   RetrieveJob.cpp

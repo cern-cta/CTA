@@ -85,9 +85,6 @@ set (COMMON_LIB_SRC_FILES
   log/StdoutLogger.cpp
   log/StringLogger.cpp
   log/TimingList.cpp
-  priorities/DriveQuota.cpp
-  priorities/MountCriteria.cpp
-  priorities/UserGroup.cpp
   process/ProcessCap.cpp
   process/threading/CondVar.cpp
   process/threading/Mutex.cpp

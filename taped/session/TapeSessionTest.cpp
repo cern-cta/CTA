@@ -27,7 +27,6 @@
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
-#include "scheduler/MountType.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/testingMocks/MockArchiveJob.hpp"
 #include "scheduler/testingMocks/MockArchiveMount.hpp"

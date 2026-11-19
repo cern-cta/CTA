@@ -5,7 +5,6 @@ add_subdirectory(librmc)
 add_subdirectory(rmcd)
 
 set (MEDIACHANGER_LIB_SRC_FILES
-  CmdLine.cpp
   CmdLineTool.cpp
   CommonMarshal.cpp
   DebugBuf.cpp
