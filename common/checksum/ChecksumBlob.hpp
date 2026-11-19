@@ -7,7 +7,6 @@
 
 #include "common/log/LogContext.hpp"
 
-#include <common/exception/ChecksumBlobSizeMismatch.hpp>
 #include <common/exception/ChecksumTypeMismatch.hpp>
 #include <common/exception/ChecksumValueMismatch.hpp>
 #include <map>
@@ -128,6 +127,13 @@ public:
   size_t size() const { return m_cs.size(); }
 
   /*!
+   * Return true if this blob contains the specified checksum type
+   *
+   * This checks only whether the type exists or not
+   */
+  bool hasChecksum(ChecksumType type) const { return m_cs.contains(type); }
+
+  /*!
    * Get a const reference to the implementation (for conversion to protobuf)
    */
   const std::map<ChecksumType, std::string>& getMap() const { return m_cs; }
@@ -146,44 +152,24 @@ public:
   }
 
   /*!
-   * Check that a single checksum is in the blob and that it has the value expected, throw an exception if not
+   * Validate one specific checksum type between two blobs
+   * Throw an exception if either blob does not contain the requested type
+   * or if their values are different. Other checksum types are ignored
    */
-  void validate(ChecksumType type, const std::string& value) const;
+  void validateOn(ChecksumType type, const ChecksumBlob& blob) const;
 
   /*!
-   * Check all the checksums in the blob match, throw an exception if they don't
+   * Validate all checksum types shared by two blobs
+   * Throw an exception if the blobs have no checksum type in common or if
+   * any shared checksum has a different value. Types present in only one
+   * blob are ignored
    */
   void validate(const ChecksumBlob& blob) const;
 
   /*!
-   * Returns true if the checksum is in the blob and that it has the value expected
+   * Return true if both blobs contain exactly the same checksum types and values
    */
-  bool contains(ChecksumType type, const std::string& value) const {
-    try {
-      validate(type, value);
-    } catch (exception::ChecksumTypeMismatch&) {
-      return false;
-    } catch (exception::ChecksumValueMismatch&) {
-      return false;
-    }
-    return true;
-  }
-
-  /*!
-   * Returns true if all the checksums in the blob match
-   */
-  bool operator==(const ChecksumBlob& blob) const {
-    try {
-      validate(blob);
-    } catch (exception::ChecksumBlobSizeMismatch&) {
-      return false;
-    } catch (exception::ChecksumTypeMismatch&) {
-      return false;
-    } catch (exception::ChecksumValueMismatch&) {
-      return false;
-    }
-    return true;
-  }
+  bool hasSameChecksums(const ChecksumBlob& blob) const { return m_cs == blob.m_cs; }
 
   /**
    * Adds the first checksum of the list of checksums
@@ -191,11 +177,6 @@ public:
    * @param spc the log param container to put the first checksum in
    */
   void addFirstChecksumToLog(cta::log::ScopedParamContainer& spc) const;
-
-  /*!
-   * Returns false if all the checksums in the blob match
-   */
-  bool operator!=(const ChecksumBlob& blob) const { return !(*this == blob); }
 
   /*!
    * Convert hexadecimal string to little-endian byte array

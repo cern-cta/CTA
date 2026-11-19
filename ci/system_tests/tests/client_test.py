@@ -16,6 +16,7 @@ from typing import Any, Callable, Optional, Union, cast
 
 import fastjsonschema
 import pytest
+from packaging.version import Version
 
 from system_tests.helpers.connections.remote_connection import ExecResult
 from system_tests.helpers.error_expectations import ErrorExpectations
@@ -303,6 +304,69 @@ def test_simple_archive_retrieve(
 
     # Remove the namespace entry once the full lifecycle has been exercised
     eos_client.delete_file(disk_instance_name, file_path)
+
+
+def test_multiple_checksums_are_stored_in_cta(
+    eos_client: EosClientHost,
+    eos_mgm: EosMgmHost,
+    cta_cli: CtaCliHost,
+    cta_storage_class: str,
+    disk_instance_name: str,
+    test_dir: Path,
+) -> None:
+    minimum_eos_version = Version("5.5.2")
+    if eos_mgm.eos_version < minimum_eos_version:
+        pytest.skip(f"This test requires EOS >= {minimum_eos_version}, got {eos_mgm.eos_version}")
+
+    cta_cli.set_all_drives_up()
+
+    checksum_dir = test_dir / "multiple_checksums"
+    eos_mgm.exec("eos space config default space.altxs=on")
+    eos_mgm.exec(f"eos mkdir -p '{checksum_dir}'")
+    eos_mgm.exec(f"eos attr set sys.archive.storage_class='{cta_storage_class}' '{checksum_dir}'")
+    eos_mgm.exec(f"eos attr set sys.altxs='crc32,crc32c,md5,sha1,crc64,sha256,xxhash64,blake3,hwh64' '{checksum_dir}'")
+
+    file_path = eos_client.generate_and_archive_file(
+        disk_instance_name,
+        destination_path=checksum_dir / "test_multiple_checksums",
+        wait=True,
+        append_uid=True,
+    )
+
+    eos_file = json.loads(eos_client.file_info(disk_instance_name, file_path, json_output=True))
+    eos_checksums = {
+        eos_file["checksumtype"]: eos_file["checksumvalue"],
+        **{checksum["type"]: checksum["value"] for checksum in eos_file["altchecksums"]},
+    }
+
+    checksum_type_names = {"adler": "ADLER32", "sha": "SHA1"}
+
+    # EOS checksum values may have leading spaces, replace them with zeroes before comparing with CTA.
+    expected_checksums = {
+        checksum_type_names.get(checksum_type, checksum_type.upper()): value.strip().zfill(len(value))
+        for checksum_type, value in eos_checksums.items()
+    }
+
+    expected_types = {
+        "ADLER32",
+        "CRC32",
+        "CRC32C",
+        "MD5",
+        "SHA1",
+        "CRC64",
+        "SHA256",
+        "XXHASH64",
+        "BLAKE3",
+        "HWH64",
+    }
+    assert expected_checksums.keys() == expected_types
+
+    archive_id = eos_file["xattr"]["sys.archive.file_id"]
+    tape_files = json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --id '{archive_id}'"))
+    assert len(tape_files) == 1
+
+    cta_checksums = {checksum["type"]: checksum["value"] for checksum in tape_files[0]["af"]["checksum"]}
+    assert cta_checksums == expected_checksums
 
 
 def test_archive(
@@ -769,6 +833,41 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
     finally:
         # Keep reruns independent even when an assertion above fails
         eos_client.exec(f"{eos_admin} rm -rf '{test_directory}'", throw_on_failure=False)
+
+
+def test_delete_on_closew_without_adler32(
+    eos_client: EosClientHost,
+    eos_mgm: EosMgmHost,
+    disk_instance_name: str,
+    test_dir: Path,
+) -> None:
+    # Reject a file without ADLER32 during CLOSEW
+    # EOS removes that file through delete-on-close
+    test_directory = test_dir / "closew_without_adler32"
+    test_file = test_directory / str(uuid.uuid4())
+
+    eos_mgm.force_remove_directory(test_directory)
+    eos_mgm.exec(f"eos mkdir -p '{test_directory}'")
+
+    try:
+        # Make EOS calculate MD5 instead of the ADLER32 required by CTA.
+        eos_mgm.exec(f"eos attr set sys.forced.checksum=md5 '{test_directory}'")
+
+        copy_result = eos_client.exec(
+            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+        assert not copy_result.success, "xrdcp succeeded without an ADLER32 checksum"
+
+        file_info_status = eos_client.exec_with_output(
+            f"eos root://{disk_instance_name} fileinfo '{test_file}' >/dev/null 2>&1; printf '%s' $?"
+        )
+        assert file_info_status == "2", (
+            f"Expected EOS to remove the file after CLOSEW rejection, got fileinfo exit status {file_info_status}"
+        )
+    finally:
+        eos_mgm.force_remove_directory(test_directory)
 
 
 def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:

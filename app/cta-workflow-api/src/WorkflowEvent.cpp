@@ -283,8 +283,13 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
     }
   }
 
+  // EOS must provide ADLER32, so it can later be compared with the ADLER32 that is independently calculated by CTA while archiving
+  // Therefore, reject a CLOSEW event that does not have an ADLER32 checksum as this is the minimum requirement for a file to be archived
   common::dataStructures::ArchiveRequest request;
   checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob);
+  if (!request.checksumBlob.hasChecksum(checksum::ADLER32)) {
+    throw exception::UserError("CLOSEW: file has no ADLER32 checksum, archive request rejected");
+  }
   request.diskFileInfo.owner_uid = m_event.file().owner().uid();
   request.diskFileInfo.gid = m_event.file().owner().gid();
   request.diskFileInfo.path = m_event.file().lpath();

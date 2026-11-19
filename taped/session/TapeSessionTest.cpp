@@ -4235,7 +4235,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
     ASSERT_EQ(1, afs.tapeFiles.size());
     cta::checksum::ChecksumBlob checksumBlob;
     checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
-    ASSERT_EQ(afs.checksumBlob, checksumBlob);
+    ASSERT_TRUE(afs.checksumBlob.hasSameChecksums(checksumBlob));
     ASSERT_EQ(1000, afs.fileSize);
   }
 
@@ -4452,7 +4452,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
       checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
-      ASSERT_EQ(afs.checksumBlob, checksumBlob);
+      ASSERT_TRUE(afs.checksumBlob.hasSameChecksums(checksumBlob));
       ASSERT_EQ(1000, afs.fileSize);
     }
   }
@@ -4900,7 +4900,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFilesizeInMiddleOfBatchMigration) {
       ASSERT_EQ(1, afs.tapeFiles.size());
       cta::checksum::ChecksumBlob checksumBlob;
       checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
-      ASSERT_EQ(afs.checksumBlob, checksumBlob);
+      ASSERT_TRUE(afs.checksumBlob.hasSameChecksums(checksumBlob));
       ASSERT_EQ(1000, afs.fileSize);
     } else {
       ASSERT_THROW(catalogue.ArchiveFile()->getArchiveFileById(afi), cta::exception::Exception);
@@ -5352,7 +5352,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullMigration) {
       auto sourceFiles_front = sourceFiles.begin();
       std::advance(sourceFiles_front, afs.archiveFileID - 1);
       checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
-      ASSERT_EQ(afs.checksumBlob, checksumBlob);
+      ASSERT_TRUE(afs.checksumBlob.hasSameChecksums(checksumBlob));
       ASSERT_EQ(1000, afs.fileSize);
     } else {
       ASSERT_FALSE(afsItor.hasMore());
@@ -5598,7 +5598,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullOnFlushMigration) {
       auto sourceFiles_front = sourceFiles.begin();
       std::advance(sourceFiles_front, afs.archiveFileID - 1);
       checksumBlob.insert(cta::checksum::ADLER32, (*sourceFiles_front)->adler32());
-      ASSERT_EQ(afs.checksumBlob, checksumBlob);
+      ASSERT_TRUE(afs.checksumBlob.hasSameChecksums(checksumBlob));
       ASSERT_EQ(1000, afs.fileSize);
     } else {
       ASSERT_FALSE(afsItor.hasMore());

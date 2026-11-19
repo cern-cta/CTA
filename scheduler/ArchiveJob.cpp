@@ -39,6 +39,7 @@ double cta::ArchiveJob::reportTime() {
 //------------------------------------------------------------------------------
 cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWritten() {
   validate();
+  tapeFile.checksumBlob = archiveFile.checksumBlob;
   auto fileReportUP = std::make_unique<catalogue::TapeFileWritten>();
   auto& fileReport = *fileReportUP;
   fileReport.archiveFileId = archiveFile.archiveFileID;
@@ -69,7 +70,6 @@ void cta::ArchiveJob::validate() {
   if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty()) {
     throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
   }
-  // And matches
   archiveFile.checksumBlob.validate(tapeFile.checksumBlob);
 }
 
