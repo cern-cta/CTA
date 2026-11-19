@@ -58,7 +58,7 @@ add_library (ctardbmssqlite SHARED
 set_property(TARGET ctardbmssqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmssqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_VERSION}")
+set_property(SOURCE SqliteConnFactory.cpp APPEND PROPERTY COMPILE_DEFINITIONS VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctardbmssqlite ctardbms ctacommon ctapluginmanager
   ${SQLITE_LIBRARIES})
@@ -71,7 +71,7 @@ add_library (ctardbmspostgres SHARED
 set_property(TARGET ctardbmspostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}")
+set_property(SOURCE PostgresConnFactory.cpp APPEND PROPERTY COMPILE_DEFINITIONS VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctardbmspostgres ctardbms ctacommon ctapluginmanager
   PostgreSQL::PostgreSQL)
@@ -85,7 +85,7 @@ if(CTA_WITH_ORACLE)
   set_property(TARGET ctardbmsocci PROPERTY SOVERSION "${CTA_SOVERSION}")
   set_property(TARGET ctardbmsocci PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-  target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_VERSION}")
+  set_property(SOURCE OcciConnFactory.cpp APPEND PROPERTY COMPILE_DEFINITIONS VERSION_API="${CTA_VERSION}")
 
   target_link_libraries (ctardbmsocci ctardbms ctacommon ctapluginmanager
     ${ORACLE-INSTANTCLIENT_LIBRARIES})
@@ -98,9 +98,10 @@ add_library (ctardbmswrapper SHARED
 set_property(TARGET ctardbmswrapper PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmswrapper PRIVATE
-  CTA_ABI_SOVERSION="${CTA_SOVERSION}"
-  VERSION_API="${CTA_VERSION}")
+target_compile_definitions(ctardbmswrapper PRIVATE CTA_ABI_SOVERSION="${CTA_SOVERSION}")
+
+# Keep the build version on plugin registration and validation sources to preserve cache reuse elsewhere.
+set_property(SOURCE ConnFactoryFactory.cpp APPEND PROPERTY COMPILE_DEFINITIONS VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctardbmswrapper
   ctacommon
