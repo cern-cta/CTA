@@ -18,7 +18,7 @@ file(COPY "@CMAKE_SOURCE_DIR@/"
   DESTINATION "${CMAKE_INSTALL_PREFIX}"
   ${source_exclusions})
 
-# Preserve the pin for environment setup from a source archive.
+# The source exclusions omit dotfiles; include .python-version so uv can select Python from the source archive.
 file(COPY "@CMAKE_SOURCE_DIR@/.python-version" DESTINATION "${CMAKE_INSTALL_PREFIX}")
 
 # Rust doctests need this header even though the documentation site is excluded.

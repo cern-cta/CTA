@@ -165,7 +165,7 @@ public-release-cta-stable:
     GIT_SUBMODULE_STRATEGY: none
   before_script:
     - !reference [.merge-train-guard, before_script]
-    # The Buildah image needs distribution Python for release progress notes.
+    # Buildah ships without Python; add it for add_release_note.py in after_script.
     - dnf install -y python3
     - |
       if [[ -z "$SOURCE_REGISTRY_USERNAME" || -z "$SOURCE_REGISTRY_PASSWORD" ]]; then

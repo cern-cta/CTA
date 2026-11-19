@@ -14,7 +14,7 @@ RUN dnf install -y epel-release dnf-plugins-core && \
 RUN command -v kinit && command -v xrdfs && command -v xrdcp && \
     dnf repoquery --help >/dev/null
 
-# Select build Python through PATH; system tools retain /usr/bin/python3.
+# Put the pinned Python first on PATH without replacing /usr/bin/python3, which OS tools use.
 COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /usr/local/bin/uv
 ENV UV_PYTHON_INSTALL_DIR=/opt/cta/python
 ENV UV_PYTHON_BIN_DIR=/opt/cta/bin

@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# udev must use distribution Python independently of PATH and the uv workspace.
+# Keep /usr/bin/python3 in the shebang so udev can run this installed helper without a development environment.
 
 import json
 import logging

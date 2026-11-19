@@ -111,7 +111,8 @@
 [tool.ruff]
   line-length    = 120
   target-version = "py315"
-  # Preserve the Python-only scope when upgrading Ruff.
+  # Exclude Markdown until Ruff's handling of partial Python examples has been reviewed.
+  # TODO: Check findings and formatting changes in docs before enabling Markdown discovery.
   include = ["*.py", "*.pyi", "*.ipynb", "**/pyproject.toml"]
   extend-exclude = [
     "tmp",
@@ -121,7 +122,7 @@
     "common/jwt-cpp",
   ]
 
-  # These entry points also run with distribution Python or in externally maintained images.
+  # Keep these helpers compatible with the Python installed in their runtime environments.
   [tool.ruff.per-file-target-version]
     # Installed cta-udev and cta-versionlock use /usr/bin/python3 (Python 3.9 on EL9).
     "tools/cta-udev/**/*.py"                  = "py39"
@@ -129,7 +130,7 @@
     "ci/sbom/*.py"                            = "py39"
     "ci/system_tests/tests/remote_scripts/**" = "py39"
 
-    # Release progress notes and their shared modules run in the Fedora 43 Buildah image.
+    # add_release_note.py imports these shared modules in Buildah, where Fedora 43 provides Python 3.14.
     "ci/release/add_release_note.py" = "py314"
     "ci/release/src/*.py"            = "py314"
     "ci/utils/cta_version.py"        = "py314"
