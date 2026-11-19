@@ -3,6 +3,7 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Use distribution Python to load the matching system RPM bindings.
 import argparse
 import json
 import os

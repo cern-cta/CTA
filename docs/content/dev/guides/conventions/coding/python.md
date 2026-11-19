@@ -8,11 +8,11 @@ Follow [General Coding Conventions](general.md). These conventions apply to Pyth
 - Keep code compatible with its supported Python interpreter. The repository Ruff configuration targets Python 3.15, with Python 3.9 overrides for system-integrated helpers and scripts executed in externally maintained images.
 - Follow `[tool.pyright]` in the root `pyproject.toml` for type checking; CI runs Pyright. Add type annotations to function interfaces and meaningful data structures, and keep suppressions narrow and explained.
 
-The root `.python-version` pins the Python 3.15 patch release used by local uv commands, CI checks and documentation builds.
-Pipeline images preinstall that interpreter without replacing distribution Python.
-Renovate groups patch updates to this pin and the auth job’s Python image; adopting another minor version requires updating its allowed-version range and validating compatibility.
-Package compatibility requirements and tool targets belong in `pyproject.toml`; keep the minimum supported version separate from the interpreter patch pin.
-Installed helpers such as `cta-versionlock` and `cta-udev`, build/bootstrap helpers, and EOS remote scripts retain their existing system interpreter.
+The root `.python-version` pins the Python release used by local uv commands, CI checks and documentation builds.
+Package minimum versions and tool targets belong in `pyproject.toml`.
+
+`cta-versionlock` and `cta-udev` must use system Python at `/usr/bin/python3` and remain compatible with Python 3.9 on EL9.
+Build/bootstrap helpers and EOS remote scripts also retain their existing system interpreter.
 
 ## Code structure and behaviour
 
