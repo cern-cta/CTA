@@ -37,6 +37,11 @@ repos:
         entry: uv run --locked --only-group source-checks yamllint
         language: system
         types: [file, yaml]
+      - id: taplo
+        name: taplo fmt
+        entry: taplo fmt
+        language: system
+        types: [toml]
       - id: gitlab-ci
         name: GitLab CI check
         entry: >-
