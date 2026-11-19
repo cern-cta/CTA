@@ -7,7 +7,7 @@
 
 #include "common/exception/UserError.hpp"
 #include "runtime/config/ConfigLoader.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <gtest/gtest.h>
 #include <string>

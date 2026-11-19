@@ -29,7 +29,7 @@
 #include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/RootEntry.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 namespace unitTests {
 

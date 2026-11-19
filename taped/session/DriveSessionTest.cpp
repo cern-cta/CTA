@@ -27,7 +27,7 @@
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "taped/file/LabelSession.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 #endif
 
 namespace cta::tape::daemon {

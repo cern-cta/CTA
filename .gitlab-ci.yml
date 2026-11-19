@@ -169,6 +169,10 @@ stages:
 # User-facing settings are defined as inputs. Internal variables expose their effective values to included templates
 # when workflow rules may override the selected input.
 variables:
+  # Scan Python workspace dependencies through uv.lock; pip-compile cannot resolve workspace sources.
+  # Keep pip resolution for the standalone documentation requirements.
+  DS_PIP_MANIFEST_FILE_NAME_PATTERN: "requirements.txt"
+
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
   PIPELINE_IMAGE_VERSION: "2026-11-18-16431664"

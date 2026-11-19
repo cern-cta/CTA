@@ -11,7 +11,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/utils/Timer.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 #include <atomic>
 #include <future>

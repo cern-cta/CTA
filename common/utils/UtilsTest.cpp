@@ -6,7 +6,7 @@
 #include "common/utils/utils.hpp"
 
 #include "common/exception/Exception.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <gtest/gtest.h>
 #include <set>

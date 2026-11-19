@@ -19,7 +19,7 @@
 #include "RetrieveQueueAlgorithms.hpp"
 #include "RootEntry.hpp"
 #include "objectstore/RetrieveQueueAlgorithms.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 namespace unitTests {
 

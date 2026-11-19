@@ -13,7 +13,7 @@
 #include "common/utils/Regex.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 #include <dirent.h>
 #include <fcntl.h>

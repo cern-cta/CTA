@@ -34,24 +34,6 @@ private:
   Mutex m_mutexPosterProtection;
 };
 
-/**
-   * An exception throwing alternative implementation of semaphores, for systems
-   * where posix semaphores are not availble (MacOSX at the time of writing)
-   */
-class CondVarSemaphore {
-public:
-  explicit CondVarSemaphore(int initial = 0);
-  ~CondVarSemaphore();
-  void acquire();
-  bool tryAcquire();
-  void release(int n = 1);
-
-private:
-  pthread_cond_t m_cond;
-  pthread_mutex_t m_mutex;
-  int m_value;
-};
-
 class Semaphore : public PosixSemaphore {
 public:
   explicit Semaphore(int initial = 0) : PosixSemaphore(initial) {}

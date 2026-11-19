@@ -11,7 +11,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 #include <algorithm>
 #include <exception>

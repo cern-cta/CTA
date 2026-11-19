@@ -14,7 +14,7 @@ import pytest
 
 from system_tests.helpers.error_expectations import ErrorExpectations
 from system_tests.helpers.hosts import EosClientHost, EosMgmHost
-from system_tests.helpers.test_config import TestConfig
+from system_tests.helpers.test_config import TestConfig as SystemTestConfig
 from system_tests.helpers.utils import find_line
 
 # =========================================================================
@@ -30,7 +30,7 @@ class GfalParams:
 
 
 @pytest.fixture(scope="module")
-def gfal_params(test_config: TestConfig) -> GfalParams:
+def gfal_params(test_config: SystemTestConfig) -> GfalParams:
     gfal_config = test_config["tests"]["gfal"]
     return GfalParams(
         file_count=gfal_config["file_count"],

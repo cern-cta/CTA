@@ -22,7 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>

@@ -5,9 +5,9 @@
 
 #include "runtime/Application.hpp"
 
-#include "tests/Argv.hpp"
-#include "tests/TempDirectory.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/Argv.hpp"
+#include "tests/support/TempDirectory.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <cerrno>
 #include <chrono>
