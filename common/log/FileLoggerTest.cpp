@@ -5,7 +5,7 @@
 
 #include "FileLogger.hpp"
 
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <fstream>
 #include <gtest/gtest.h>

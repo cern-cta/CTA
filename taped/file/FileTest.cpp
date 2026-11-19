@@ -21,8 +21,8 @@
 #include "taped/drive/FakeDrive.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/system/Wrapper.hpp"
-#include "tests/TempFile.hpp"
-#include "tests/TestingArchiveJob.hpp"
+#include "taped/test/TestArchiveJob.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -67,7 +67,7 @@ protected:
   uint32_t m_block_size;
   std::string m_label;
   TestingRetrieveJob m_fileToRecall;
-  TestingArchiveJob m_fileToMigrate;
+  TestArchiveJob m_fileToMigrate;
   cta::tape::daemon::VolumeInfo m_volInfo;
 };
 

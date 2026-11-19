@@ -10,9 +10,9 @@
 
 namespace unitTests {
 
-class TestingArchiveJob : public cta::ArchiveJob {
+class TestArchiveJob : public cta::ArchiveJob {
 public:
-  TestingArchiveJob() : cta::ArchiveJob(nullptr, catalogue(), {}, "", {}) {}
+  TestArchiveJob() : cta::ArchiveJob(nullptr, catalogue(), {}, "", {}) {}
 
 private:
   static cta::catalogue::Catalogue& catalogue() {

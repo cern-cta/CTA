@@ -109,7 +109,7 @@ Use appropriate schema checks or deployment/system tests when the change require
   Follow [Optional fields and feature activation](docs/content/dev/internals/service-runtime.md#optional-fields-and-feature-activation) when designing or changing configuration fields, defaults, feature gates and their consumers.
 - **Errors:** user/configuration errors throw `cta::exception::UserError` with actionable context such as the file path and offending value.
   Shared exceptions belong in `common/exception/`; module-specific exceptions belong beside the code that throws them.
-- **Test helpers:** prefer `tests/TempFile.hpp` and `tests/Argv.hpp`, in namespace `unitTests`, over hand-rolled equivalents.
+- **Test helpers:** prefer `tests/support/TempFile.hpp` and `tests/support/Argv.hpp`, in namespace `unitTests`, over hand-rolled equivalents.
 - **Helm configuration:** when a value appears repeatedly in a template, bind it to a template variable once, as with `$jwtRevokeListPath` in `frontend-wfe`.
 
 ### Code comments and documentation

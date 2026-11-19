@@ -40,7 +40,7 @@
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <atomic>
 #include <cerrno>

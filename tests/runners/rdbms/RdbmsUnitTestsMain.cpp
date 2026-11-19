@@ -12,8 +12,7 @@
 #endif
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
-#include "tests/GlobalCatalogueFactoryForUnitTests.hpp"
-#include "tests/RdbmsUnitTestsCmdLineArgs.hpp"
+#include "tests/runners/rdbms/RdbmsTestContext.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

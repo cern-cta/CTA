@@ -11,7 +11,7 @@
 #include "scheduler/ArchiveMount.hpp"
 #include "taped/session/pipeline/DataConsumer.hpp"
 #include "taped/session/pipeline/MemBlock.hpp"
-#include "tests/TestingArchiveJob.hpp"
+#include "taped/test/TestArchiveJob.hpp"
 
 #include <cmath>
 #include <ext/stdio_filebuf.h>
@@ -88,7 +88,7 @@ TEST(cta_tape_daemon, DiskReadTaskTest) {
   const unsigned long original_checksum = mycopy(out, fileSize);
   cta::tape::daemon::MigrationMemoryManager mm(1, blockSize, lc);
 
-  TestingArchiveJob file;
+  TestArchiveJob file;
 
   file.archiveFile.fileSize = fileSize;
   file.srcURL = url;

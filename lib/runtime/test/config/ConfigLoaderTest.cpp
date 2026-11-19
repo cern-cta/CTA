@@ -6,7 +6,7 @@
 #include "runtime/config/ConfigLoader.hpp"
 
 #include "runtime/config/CommonConfig.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <chrono>
 #include <cstdint>

@@ -24,7 +24,7 @@
 #include "catalogue/tests/modules/TapeFileCatalogueTest.hpp"
 #include "catalogue/tests/modules/TapePoolCatalogueTest.hpp"
 #include "catalogue/tests/modules/VirtualOrganizationCatalogueTest.hpp"
-#include "tests/GlobalCatalogueFactoryForUnitTests.hpp"
+#include "tests/runners/rdbms/RdbmsTestContext.hpp"
 
 namespace unitTests {
 

@@ -21,7 +21,7 @@ TEST(cta_threading, Mutex_properly_throws_exceptions) {
   /* Duplicate lock */
   ASSERT_THROW(m.lock(), cta::exception::Errnum);
   ASSERT_NO_THROW(m.unlock());
-  // Intentional duplicate release; tests/tsan.suppr suppresses this test's expected mutex report.
+  // Intentional duplicate release; tests/analysis/tsan.suppr suppresses this test's expected mutex report.
   ASSERT_THROW(m.unlock(), cta::exception::Errnum);
 }
 
