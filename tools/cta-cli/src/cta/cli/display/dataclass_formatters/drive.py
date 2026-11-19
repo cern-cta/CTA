@@ -1,12 +1,13 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import override
+
 from cta.cli.display.encoders import TableFieldEncoder, encode_table_field
 from cta.cli.display.formatters import DataClassBaseFormatter, TableEntry
 from cta.cli.models.drive import EnrichedDrive
 from cta.sdk.models import Drive, DriveOperatingState
 from rich.text import Text
-from typing_extensions import override
 
 
 class DriveFormatter(DataClassBaseFormatter[Drive], dataclass_type=Drive):
@@ -49,7 +50,7 @@ class DriveFormatter(DataClassBaseFormatter[Drive], dataclass_type=Drive):
         return [
             custom_field_encoders.get(col_name, encode_table_field)(value, *col_types)
             for value, col_name, col_types in zip(
-                self._raw_table_entry(obj), self._raw_columns_names(), self._raw_columns_types()
+                self._raw_table_entry(obj), self._raw_columns_names(), self._raw_columns_types(), strict=False
             )
         ]
 
@@ -97,6 +98,6 @@ class EnrichedDriveFormatter(DataClassBaseFormatter[EnrichedDrive], dataclass_ty
         return [
             custom_field_encoders.get(col_name, encode_table_field)(value, *col_types)
             for value, col_name, col_types in zip(
-                self._raw_table_entry(obj), self._raw_columns_names(), self._raw_columns_types()
+                self._raw_table_entry(obj), self._raw_columns_names(), self._raw_columns_types(), strict=False
             )
         ]

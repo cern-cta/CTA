@@ -9,15 +9,15 @@ CTA SDK objects, enums, and complex types into human-readable display formats.
 
 import json
 import re
+from collections.abc import Callable
 from datetime import date, datetime, timedelta
 from enum import Enum
 from functools import partial, singledispatch
 from ipaddress import IPv4Address, IPv6Address
-from typing import Any, Callable, Optional, Protocol
+from typing import Any, Protocol, override
 
 from cta.sdk.units import Byte, BytePerSecond, FreeText, Percentage, Unit
 from rich.text import Text
-from typing_extensions import override
 
 
 class TableFieldEncoder(Protocol):
@@ -93,7 +93,7 @@ _unit_encoders: dict[Any, FieldFormatterFn] = {
 
 
 @singledispatch
-def field_encoder(value: Any, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def field_encoder(value: Any, unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Dispatch encoder selection based on value type.
 
     Returns a formatter function appropriate for the given value type.
@@ -110,7 +110,7 @@ def field_encoder(value: Any, unit_type: Optional[type[Unit]] = None) -> FieldFo
 
 
 @field_encoder.register(list)
-def _(value: list[object], unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def _(value: list[object], unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Encode list values.
 
     Args:
@@ -124,7 +124,7 @@ def _(value: list[object], unit_type: Optional[type[Unit]] = None) -> FieldForma
 
 
 @field_encoder.register
-def _(value: int, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def _(value: int, unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Encode integer values.
 
     Args:
@@ -138,7 +138,7 @@ def _(value: int, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(value: float, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def _(value: float, unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Encode float values.
 
     Args:
@@ -152,7 +152,7 @@ def _(value: float, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(value: datetime, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def _(value: datetime, unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Encode datetime values.
 
     Args:
@@ -166,7 +166,7 @@ def _(value: datetime, unit_type: Optional[type[Unit]] = None) -> FieldFormatter
 
 
 @field_encoder.register
-def _(value: timedelta, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def _(value: timedelta, unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Encode timedelta values.
 
     Args:
@@ -176,8 +176,8 @@ def _(value: timedelta, unit_type: Optional[type[Unit]] = None) -> FieldFormatte
     Returns:
         Formatter that converts timedelta to <>d<>h<>m<>s format.
     """
-    return (
-        lambda value: (f"{value.days}d" if value.days else "")
+    return lambda value: (
+        (f"{value.days}d" if value.days else "")
         + (f"{value.seconds // 3600}h" if value.total_seconds() >= 3600 else "")
         + (f"{value.seconds % 3600 // 60}m" if value.total_seconds() >= 60 else "")
         + (f"{value.seconds % 60}s" if value.total_seconds() < 60 else "")
@@ -185,7 +185,7 @@ def _(value: timedelta, unit_type: Optional[type[Unit]] = None) -> FieldFormatte
 
 
 @field_encoder.register
-def _(value: Enum, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def _(value: Enum, unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Encode Enum values.
 
     Args:
@@ -199,7 +199,7 @@ def _(value: Enum, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
 
 
 @field_encoder.register
-def _(_: None, unit_type: Optional[type[Unit]] = None) -> FieldFormatterFn:
+def _(_: None, unit_type: type[Unit] | None = None) -> FieldFormatterFn:
     """Encode None/null values.
 
     Args:

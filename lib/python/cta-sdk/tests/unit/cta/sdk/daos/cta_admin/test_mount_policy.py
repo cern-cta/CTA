@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -30,10 +30,10 @@ def ref_obj() -> MountPolicy:
         metadata=Metadata(
             creation_user_name="jleduc",
             creation_host_name="eosctafst0017.cern.ch",
-            creation_time=datetime(2020, 6, 29, 21, 1, 7, tzinfo=timezone.utc),
+            creation_time=datetime(2020, 6, 29, 21, 1, 7, tzinfo=UTC),
             update_user_name="jleduc",
             update_host_name="cta-frontend01",
-            update_time=datetime(2023, 2, 28, 14, 40, 24, tzinfo=timezone.utc),
+            update_time=datetime(2023, 2, 28, 14, 40, 24, tzinfo=UTC),
             comment="Mount policy for Atlas",
         ),
     )

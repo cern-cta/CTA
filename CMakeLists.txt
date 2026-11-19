@@ -16,6 +16,7 @@ if(CTA_PACKAGE_FORMAT STREQUAL "unknown")
     "(${PLATFORM}), but this platform is not supported yet")
 endif()
 
+find_package(Python3 3.15 REQUIRED COMPONENTS Interpreter)
 include(cmake/LoadProjectJson.cmake)
 
 # -----------------------------------------------------------------------------

@@ -4,10 +4,9 @@
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from typing import Annotated, Final, NewType, Optional
+from typing import Annotated, Final, NewType, override
 
 from cta.sdk.units import FreeText
-from typing_extensions import override
 
 from .tape_session import TapeSession
 
@@ -72,7 +71,7 @@ class Drive:
     device_path: str
     physical_library_name: str
     physical_library_slot: str
-    tape_session: Optional[TapeSession]
+    tape_session: TapeSession | None
     state_change_age: timedelta
     config: DriveConfig
     metadata: DriveMetadata

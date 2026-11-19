@@ -5,12 +5,11 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import override
 
 from kubernetes import client, config
 from kubernetes.client import ApiException, V1ContainerStateTerminated, V1Pod
 from kubernetes.stream import stream
-from typing_extensions import override
 
 from system_tests.helpers.utils.timeout import Timeout
 
@@ -20,10 +19,10 @@ from .remote_connection import ExecResult, RemoteConnection
 @dataclass(frozen=True)
 class ContainerSnapshot:
     pod_uid: str
-    container_id: Optional[str]
+    container_id: str | None
     restart_count: int
     ready: bool
-    last_termination: Optional[V1ContainerStateTerminated]
+    last_termination: V1ContainerStateTerminated | None
 
 
 class K8sConnection(RemoteConnection):
@@ -35,7 +34,7 @@ class K8sConnection(RemoteConnection):
         self.ordinal = ordinal
         self.container = container
         self._cached_pod = None
-        self._stateful_pod_name: Optional[str] = None
+        self._stateful_pod_name: str | None = None
         config.load_kube_config()
         self.core = client.CoreV1Api()
 
@@ -127,7 +126,7 @@ class K8sConnection(RemoteConnection):
         src_path: Path,
         dst_path: Path,
         throw_on_failure: bool = True,
-        permissions: Optional[str] = None,
+        permissions: str | None = None,
     ) -> None:
         # TODO: replace these kubectl calls so that we rely only on the SDK
         pod_target = f"{self.namespace}/{self._pod_name}:{dst_path}"
@@ -190,7 +189,7 @@ class K8sConnection(RemoteConnection):
     def is_up(self) -> bool:
         try:
             pod = self._resolve_pod()
-        except (ApiException, RuntimeError):
+        except ApiException, RuntimeError:
             return False
 
         if pod.status is None:

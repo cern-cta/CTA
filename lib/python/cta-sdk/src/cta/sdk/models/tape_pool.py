@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import dataclass
-from typing import Annotated, Final, Optional
+from typing import Annotated, Final, override
 
 from cta.sdk.units import Byte, Percentage
-from typing_extensions import override
 
 from .metadata import Metadata
 
@@ -49,7 +48,7 @@ class TapePool:
     name: Final[str]
     virtual_organisation_name: str
     min_writable_tape_count: int
-    encryption_key_name: Optional[str]
+    encryption_key_name: str | None
     supply_tape_pool_names: list[str]
     statistics: TapePoolStatistics
     metadata: Metadata

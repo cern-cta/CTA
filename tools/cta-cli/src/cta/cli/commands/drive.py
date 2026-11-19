@@ -1,13 +1,13 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from logging import getLogger
 from socket import gethostname
 from time import perf_counter
-from typing import Callable, Literal, Optional
+from typing import Literal
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -31,7 +31,7 @@ def drive():
 @click.option("--all", "-a", is_flag=True, help="Mutually exclusive with --local.")
 @tapeserver_option("--local", "-l", is_flag=True, help="Mutually exclusive with --all.")
 @click.pass_obj
-def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
+def list_command(obj: AppContext, all: bool, local: bool | None = None):
     """List drive in cta catalogue."""
 
     def update_drives_with_disabled_libraries(drives: Iterable[Drive]) -> list[Drive]:
@@ -86,7 +86,7 @@ def list_command(obj: AppContext, all: bool, local: Optional[bool] = None):
 @click.argument("name")
 @tapeserver_option("-l", "--local", is_flag=True, help="Don't fail if library not present in CTA")
 @click.pass_obj
-def get(obj: AppContext, name: str, local: Optional[bool] = None):
+def get(obj: AppContext, name: str, local: bool | None = None):
     """Get drive registered in CTA."""
     if EXTRA_TPSRV:
         from cta.cli.models.drive import EnrichedDrive
@@ -129,7 +129,7 @@ def get(obj: AppContext, name: str, local: Optional[bool] = None):
 @click.option("-r", "--reason")
 @tapeserver_option("-l", "--local", is_flag=True)
 @click.pass_obj
-def up(obj: AppContext, name: Optional[str], reason: Optional[str], local: Optional[bool] = None):
+def up(obj: AppContext, name: str | None, reason: str | None, local: bool | None = None):
     """Put the CTA drive up."""
     if not (bool(name is not None) ^ bool(local)):
         raise click.UsageError("Provide either a drive arg or --local flag")
@@ -154,7 +154,7 @@ def up(obj: AppContext, name: Optional[str], reason: Optional[str], local: Optio
 @click.option("-f", "--force", is_flag=True)
 @tapeserver_option("-l", "--local", is_flag=True)
 @click.pass_obj
-def down(obj: AppContext, name: Optional[str], reason: str, force: bool, local: Optional[bool] = None):
+def down(obj: AppContext, name: str | None, reason: str, force: bool, local: bool | None = None):
     """Put the CTA drive down."""
     if not (bool(name is not None) ^ bool(local)):
         raise click.UsageError("Provide either a drive arg or --local flag")
@@ -178,7 +178,7 @@ def down(obj: AppContext, name: Optional[str], reason: str, force: bool, local: 
 @click.argument("name")
 @click.option("--comment", "-c")
 @click.pass_obj
-def update(obj: AppContext, name: str, comment: Optional[str]):
+def update(obj: AppContext, name: str, comment: str | None):
     """Update the comment of a drive."""
     obj.cta_client.drive.update(name, comment=comment)
     print(f"Drive({name}) UPDATED")
@@ -212,7 +212,7 @@ if EXTRA_TPSRV:
     )
     from pyudev import Context
 
-    def read_sensor(read: Callable[[], int], drive: NamedDrive, sensor: str) -> Optional[int]:
+    def read_sensor(read: Callable[[], int], drive: NamedDrive, sensor: str) -> int | None:
         try:
             return read()
         except DriveOperationError as e:
@@ -281,7 +281,7 @@ if EXTRA_TPSRV:
     @click.argument("drive_name", required=False)
     @click.option("--all", "-a", is_flag=True, help="Unmount all local drives (even no CTA ones !)")
     @click.pass_obj
-    def unmount(obj: AppContext, drive_name: Optional[str], all: bool):
+    def unmount(obj: AppContext, drive_name: str | None, all: bool):
         if not (bool(drive_name is not None) ^ all):
             raise click.UsageError("Drive name and --all option are mutually exclusive")
 
@@ -419,7 +419,7 @@ if EXTRA_TPSRV:
         all: bool,
         jobs: int,
         output_content: Literal["sensors", "prom-metrics"],
-        prom_output_file: Optional[str],
+        prom_output_file: str | None,
     ):
         """Show temperature and humidity of local drives."""
         if not (bool(drive_names) ^ all):

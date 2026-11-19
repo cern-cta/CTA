@@ -3,16 +3,16 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2
 
-ARG UV_VERSION=0.13.9
-
 # OS packages intentionally receive repository fixes on image rebuild.
 # hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core && \
-    dnf install -y git curl jq python3 python3-pip bat && \
-    python3 -m pip install --only-binary :all: --no-cache-dir "uv==${UV_VERSION}" && \
-    dnf remove -y --setopt=clean_requirements_on_remove=False python3-pip && \
+    dnf install -y git curl jq python3 bat && \
     dnf clean all --enablerepo=\*
 
-# Python packages and tooling select their interpreter independently of native build platforms.
-# Compatibility checks select 3.9; docs select 3.12. Keep OS tools on system Python.
-RUN uv python install 3.9 3.12
+# Put the pinned Python first on PATH without replacing /usr/bin/python3, which OS tools use.
+COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /usr/local/bin/uv
+ENV UV_PYTHON_INSTALL_DIR=/opt/cta/python
+ENV UV_PYTHON_BIN_DIR=/opt/cta/bin
+ENV PATH="/opt/cta/bin:${PATH}"
+COPY .python-version /opt/cta/.python-version
+RUN uv python install --default "$(cat /opt/cta/.python-version)"

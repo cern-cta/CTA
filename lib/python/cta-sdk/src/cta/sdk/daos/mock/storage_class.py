@@ -3,13 +3,12 @@
 
 from collections.abc import Iterator
 from itertools import chain
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import StorageClassDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, RecycleBinTapeFile, StorageClass, TapeFile, VirtualOrganisation
-from typing_extensions import override
 
 
 class StorageClassDaoMock(StorageClassDao):
@@ -69,9 +68,9 @@ class StorageClassDaoMock(StorageClassDao):
         name: str,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        replica_count: Optional[int] = None,
-        comment: Optional[str] = None,
+        virtual_organisation_name: str | None = None,
+        replica_count: int | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as storage_class:
             if virtual_organisation_name is not None:

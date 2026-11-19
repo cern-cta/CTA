@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from pathlib import Path
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -27,11 +26,11 @@ def tape_file():
 @click.pass_obj
 def list_command(
     obj: AppContext,
-    vid: Optional[str],
-    disk_instance: Optional[str],
-    disk_file_id: Optional[str],
-    archive_id: Optional[int],
-    fid_file: Optional[str],
+    vid: str | None,
+    disk_instance: str | None,
+    disk_file_id: str | None,
+    archive_id: int | None,
+    fid_file: str | None,
 ):
     """List CTA tape files."""
     if fid_file and not disk_instance:
@@ -81,9 +80,9 @@ def get(obj: AppContext, vid: str, archive_id: int):
 def delete(
     obj: AppContext,
     vid: str,
-    disk_instance: Optional[str],
-    disk_file_id: Optional[str],
-    archive_id: Optional[int],
+    disk_instance: str | None,
+    disk_file_id: str | None,
+    archive_id: int | None,
     reason: str,
 ):
     """Remove CTA tape files located on a tape."""

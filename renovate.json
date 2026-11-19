@@ -1,12 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description":
-    "Initial scope: container bases, external CI images, GitHub Actions, frozen pre-commit hooks, Danger gems and grpc-health-probe. Rust, Python workspaces, native packages, Helm, submodules and retired development images are deferred.",
+    "Update container bases, external CI images, GitHub Actions, Python interpreters and uv workspaces, Danger gems and grpc-health-probe. Native packages, Rust, general Helm dependencies and submodules remain deferred.",
   "enabledManagers": [
     "dockerfile",
     "github-actions",
-    "pre-commit",
-    "custom.regex"
+    "custom.regex",
+    "pyenv",
+    "pep621"
   ],
   "automerge": false,
   "minimumReleaseAge": "14 days",
@@ -25,7 +26,6 @@
     "build_srpm/**",
     "target/**",
     "ci/build/development/**",
-    "ci/orchestration/**",
     "catalogue/cta-catalogue-schema/**",
     "common/jwt-cpp/**",
     "lib/protobuf/external/**"
@@ -38,12 +38,6 @@
   "github-actions": {
     "managerFilePatterns": [
       "/^\\.github/workflows/[^/]+\\.ya?ml$/"
-    ]
-  },
-  "pre-commit": {
-    "enabled": true,
-    "managerFilePatterns": [
-      "/^\\.pre-commit-config\\.yaml$/"
     ]
   },
   "customManagers": [
@@ -67,7 +61,7 @@
         "/^\\.gitlab-ci\\.yml$/"
       ],
       "matchStrings": [
-        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|LICENSE_CHECK|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
+        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
         "IMAGE_(?:TRIVY|SBOMQS): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\" +# (?<currentValue>v?[0-9.]+)"
       ],
       "datasourceTemplate": "docker",
@@ -85,6 +79,29 @@
       "depNameTemplate": "grpc-ecosystem/grpc-health-probe",
       "datasourceTemplate": "github-release-attachments",
       "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the auth job on the same Python patch release as the workspace.",
+      "managerFilePatterns": [
+        "/^ci/orchestration/helm/auth/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "image: registry\\.cern\\.ch/docker\\.io/(?<depName>python):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+-slim)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the isolated protobuf build constraint aligned with workspace gRPC updates.",
+      "managerFilePatterns": [
+        "/^pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "\"(?<depName>grpcio-tools)==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
+      ],
+      "datasourceTemplate": "pypi"
     }
   ],
   "packageRules": [
@@ -157,21 +174,52 @@
       "enabled": false
     },
     {
-      "description": "Update frozen hook repositories only; additional Python dependencies are deferred.",
-      "matchManagers": [
-        "pre-commit"
-      ],
-      "matchDepTypes": [
-        "!repository"
-      ],
-      "enabled": false
-    },
-    {
       "description": "Keep the health probe release and checksum aligned across EL9, EL10 and Debian 13.",
       "matchPackageNames": [
         "grpc-ecosystem/grpc-health-probe"
       ],
       "groupName": "grpc-health-probe"
+    },
+    {
+      "description":
+        "Review Python minor upgrades explicitly; patch updates keep the workspace and auth image together.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "python"
+      ],
+      "groupName": "Python runtime",
+      "allowedVersions": "<3.16",
+      "pinDigests": false
+    },
+    {
+      "description": "Minimum Python support is a project compatibility decision.",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "requires-python"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Keep protobuf generation and runtime dependencies in one update.",
+      "matchManagers": [
+        "pep621",
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "grpcio",
+        "grpcio-tools",
+        "grpcio-health-checking",
+        "protobuf"
+      ],
+      "groupName": "Python gRPC",
+      "rangeStrategy": "bump"
     }
-  ]
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  }
 }

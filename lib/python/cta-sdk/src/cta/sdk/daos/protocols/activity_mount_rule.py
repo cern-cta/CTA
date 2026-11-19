@@ -9,7 +9,7 @@ tape mounting decisions based on user access patterns and activity levels.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import ActivityMountRule
 
@@ -86,8 +86,8 @@ class ActivityMountRuleDao(Protocol):
         disk_instance_name: str,
         regex: str,
         /,
-        mount_policy_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        mount_policy_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing activity mount rule.
 

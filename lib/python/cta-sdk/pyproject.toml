@@ -3,11 +3,7 @@
 
 [build-system]
   # Hatch reads release tags or local development identifiers through the shared version helper.
-  requires = [
-    "typing-extensions>=4.4.0",
-    "hatchling>=1.27.0",
-    "grpcio-tools>=1.60",
-  ]
+  requires      = ["hatchling>=1.27.0", "grpcio-tools>=1.60"]
   build-backend = "hatchling.build"
 
 [project]
@@ -15,7 +11,7 @@
   authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
   description = "PYTHON CTA SDK"
   readme = "README.md"
-  requires-python = ">=3.9"
+  requires-python = ">=3.15"
   license = "GPL-3.0-or-later"
   license-files = ["LICENSE"]
   classifiers = [
@@ -24,13 +20,8 @@
   ]
   keywords = ["CTA", "tape", "CERN"]
 
-  dynamic = ["version"]
-  dependencies = [
-    "typing-extensions>=4.4.0",
-    "grpcio>=1.80.0; python_full_version < '3.10'",
-    "grpcio-tools>=1.84.1; python_full_version >= '3.10'",
-    "protobuf",
-  ]
+  dynamic      = ["version"]
+  dependencies = ["grpcio-tools>=1.84.1", "protobuf"]
 
   [project.urls]
     Source              = "https://gitlab.cern.ch/cta/CTA/"
@@ -38,11 +29,7 @@
     "CTA Documentation" = "https://cta.docs.cern.ch/"
 
 [dependency-groups]
-  dev = [
-    "cattrs",
-    "grpcio-tools>=1.80.0; python_full_version < '3.10'",
-    "grpcio-tools>=1.84.1; python_full_version >= '3.10'",
-  ]
+  dev = ["cattrs", "grpcio-tools>=1.84.1"]
 
 [tool.hatch.version]
   source     = "code"

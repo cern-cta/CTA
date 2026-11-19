@@ -4,10 +4,9 @@
 from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Annotated, Any, ClassVar, Final, Literal, Optional
+from typing import Annotated, Any, ClassVar, Final, Literal, override
 
 from cta.sdk.units import Byte
-from typing_extensions import override
 
 from .mount_type import MountType
 
@@ -40,7 +39,7 @@ class UserRequest:
 
     mount_type: Final[MountType]
     tape_pool_name: Final[str]
-    vid: Final[Optional[str]]
+    vid: Final[str | None]
     virtual_organisation_name: str
     logical_library_name: str
     queued_file_count: int
@@ -52,7 +51,7 @@ class UserRequest:
     transferred_file_count: int
     transferred_byte_count: Annotated[int, Byte]
     is_sleeping_for_space: bool
-    sleep_start_time: Optional[datetime]
+    sleep_start_time: datetime | None
     scheduler_backend_name: str
     tapes_file_count: int
     tapes_byte_count: Annotated[int, Byte]
@@ -99,7 +98,7 @@ class UserRequestSummary(ABC):
         highest_priority: Highest priority in group
     """
 
-    _registry: ClassVar[dict[str, type["UserRequestSummary"]]] = {}
+    _registry: ClassVar[dict[str, type[UserRequestSummary]]] = {}
     group_key: ClassVar[str]
     """Key than subclasses need to specify"""
 
@@ -130,7 +129,7 @@ class UserRequestSummary(ABC):
     mount_count: int = 0
     transferred_file_count: int = 0
     transferred_byte_count: Annotated[int, Byte] = 0
-    tapes_count: Optional[int] = None
+    tapes_count: int | None = None
     tapes_file_count: int = 0
     tapes_byte_count: Annotated[int, Byte] = 0
     tapes_capacity: Annotated[int, Byte] = 0
@@ -139,7 +138,7 @@ class UserRequestSummary(ABC):
     @classmethod
     def group_by(
         cls, key: Literal["tape_pool_name", "logical_library_name", "virtual_organisation_name"]
-    ) -> type["UserRequestSummary"]:
+    ) -> type[UserRequestSummary]:
         """Get a real UserRequestSummary with the corresponding grouping key set.
 
         Returns:

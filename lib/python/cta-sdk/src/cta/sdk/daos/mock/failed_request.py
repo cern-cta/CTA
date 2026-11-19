@@ -4,12 +4,11 @@
 import builtins
 from collections.abc import Iterator
 from dataclasses import replace
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import FailedRequestDao
 from cta.sdk.models import FailedRequest, FailedRequestSummary, MountType
-from typing_extensions import override
 
 
 class FailedRequestDaoMock(FailedRequestDao):
@@ -29,9 +28,9 @@ class FailedRequestDaoMock(FailedRequestDao):
     def list(
         self,
         *,
-        type: Optional[MountType] = None,
-        tape_pool_name: Optional[str] = None,
-        vid: Optional[str] = None,
+        type: MountType | None = None,
+        tape_pool_name: str | None = None,
+        vid: str | None = None,
         logs: bool = False,
     ) -> Iterator[FailedRequest]:
         for failed_request in self._handler.iter(self.resource_type):

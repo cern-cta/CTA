@@ -33,9 +33,7 @@ import shutil
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
-from typing_extensions import override
+from typing import override
 
 try:
     from rich.logging import RichHandler
@@ -65,7 +63,7 @@ class LoggingConfiguration:
               "WARNING", "ERROR", "CRITICAL". Defaults to "WARNING".
     """
 
-    file_path: Optional[str] = None
+    file_path: str | None = None
     max_log_file_size: int = 1_000_000_000
     keep_file_count: int = 5
     date_format: str = "%Y-%m-%d %H:%M:%S"
@@ -108,7 +106,7 @@ class RotatingCompressingGroupFileHandler(logging.handlers.RotatingFileHandler):
         mode: str = "a",
         max_bytes: int = 0,
         backup_count: int = 0,
-        encoding: Optional[str] = "utf-8",
+        encoding: str | None = "utf-8",
         delay: bool = False,
     ):
         """

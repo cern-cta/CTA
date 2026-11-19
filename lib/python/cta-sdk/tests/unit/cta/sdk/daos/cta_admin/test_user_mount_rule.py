@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -28,10 +28,10 @@ def ref_obj() -> UserMountRule:
         metadata=Metadata(
             creation_user_name="jleduc",
             creation_host_name="ctapreproductionfrontend11",
-            creation_time=datetime(2025, 5, 5, 8, 24, 41, tzinfo=timezone.utc),
+            creation_time=datetime(2025, 5, 5, 8, 24, 41, tzinfo=UTC),
             update_user_name="jleduc",
             update_host_name="ctapreproductionfrontend11",
-            update_time=datetime(2025, 5, 5, 9, 45, 9, tzinfo=timezone.utc),
+            update_time=datetime(2025, 5, 5, 9, 45, 9, tzinfo=UTC),
             comment="AMS for rucio IT Service service tests (operations #1644)",
         ),
     )

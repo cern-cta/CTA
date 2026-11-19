@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import StorageClassDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import Metadata, StorageClass
-from typing_extensions import override
 
 
 class StorageClassDaoCtaAdmin(StorageClassDao):
@@ -29,10 +28,10 @@ class StorageClassDaoCtaAdmin(StorageClassDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -86,9 +85,9 @@ class StorageClassDaoCtaAdmin(StorageClassDao):
         name: str,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        replica_count: Optional[int] = None,
-        comment: Optional[str] = None,
+        virtual_organisation_name: str | None = None,
+        replica_count: int | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if virtual_organisation_name is None else {"virtualorganisation": virtual_organisation_name}

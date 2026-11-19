@@ -10,10 +10,7 @@
   exclude-newer = "14 days"
   # Build-time requirements are not covered by uv.lock. Pin the protobuf generator to the locked runtime
   # version so that the generated gRPC stubs never require a newer grpcio than the one installed.
-  build-constraint-dependencies = [
-    "grpcio-tools==1.80.0; python_full_version < '3.10'",
-    "grpcio-tools==1.84.1; python_full_version >= '3.10'",
-  ]
+  build-constraint-dependencies = ["grpcio-tools==1.84.1"]
 
   # Explicit exceptions for the requested Zensical release and matching UI package.
   # Remove after November 24, 2026, once all selected artifacts have cleared the 14-day cooldown.
@@ -22,7 +19,7 @@
     zensical-ui = "2026-11-11T00:00:00Z"
 
   [tool.uv.dependency-groups]
-    docs = { requires-python = ">=3.12" }
+    docs = { requires-python = ">=3.15" }
 
   # Zensical-compatible mike; uv.lock records the exact revision.
   [tool.uv.sources]
@@ -37,8 +34,9 @@
     { include-group = "type-check" },
     "pre-commit>=4.3.0",
   ]
-  lint = ["ruff==0.14.9"]
+  lint = ["ruff==0.17.3"]
   source-checks = [
+    "reuse[charset-normalizer]==6.2.0",
     "clang-format==20.1.8",
     "cppcheck-codequality",
     "detect-secrets==1.5.0",
@@ -75,7 +73,6 @@
     "fastjsonschema>=2.21.2",
     "tomli>=2.0.1; python_version < '3.11'",
     "packaging>=24.0",
-    "typing-extensions>=4.4.0",
   ]
   docs = [
     "zensical==0.1.1",
@@ -124,8 +121,11 @@
   ]
 
 [tool.ruff]
-  line-length = 120
-  target-version = "py39"
+  line-length    = 120
+  target-version = "py315"
+  # Exclude Markdown until Ruff's handling of partial Python examples has been reviewed.
+  # TODO: Check findings and formatting changes in docs before enabling Markdown discovery.
+  include = ["*.py", "*.pyi", "*.ipynb", "**/pyproject.toml"]
   extend-exclude = [
     "tmp",
     "**/protobuf_generated",
@@ -134,8 +134,14 @@
     "common/jwt-cpp",
   ]
 
+  # Keep these helpers compatible with the Python installed in their runtime environments.
   [tool.ruff.per-file-target-version]
-    "docs/**/*.py" = "py312"
+    # Installed cta-udev and cta-versionlock use /usr/bin/python3 (Python 3.9 on EL9).
+    "tools/cta-udev/**/*.py"                  = "py39"
+    "tools/cta-release/**/*.py"               = "py39"
+    "ci/sbom/*.py"                            = "py39"
+    "ci/system_tests/tests/remote_scripts/**" = "py39"
+
 
   [tool.ruff.lint]
     select = [
@@ -230,7 +236,6 @@
       ]
 
 [tool.pyright]
-  pythonVersion = "3.9"
   typeCheckingMode = "strict"
   extraPaths = ["ci/release/src", "."]
   exclude = [

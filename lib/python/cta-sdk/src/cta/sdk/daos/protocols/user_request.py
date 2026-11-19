@@ -12,7 +12,7 @@ import builtins
 from abc import ABC, abstractmethod
 from collections.abc import Iterator, Sequence
 from itertools import groupby
-from typing import Literal, Optional
+from typing import Literal
 
 from cta.sdk.models import (
     MountType,
@@ -51,7 +51,7 @@ class UserRequestDao(ABC):
     """
 
     @abstractmethod
-    def list(self, *, request_type: Optional[MountType] = None) -> Iterator[UserRequest]:
+    def list(self, *, request_type: MountType | None = None) -> Iterator[UserRequest]:
         """List scheduler requests with optional type filtering.
 
         Args:

@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from ipaddress import ip_address
 from logging import getLogger
-from typing import Literal, Optional
+from typing import Literal
 
 import click
 import grpc
@@ -188,13 +188,13 @@ def frontend():
 def health_check(
     obj: AppContext,
     service: tuple[str, ...],
-    port: Optional[int],
+    port: int | None,
     families: list[Family],
     tls_ca_cert: str,
     timeout: float,
     jobs: int,
     output_content: Literal["prom-metrics", "availability", "probe"],
-    prom_output_file: Optional[str],
+    prom_output_file: str | None,
 ) -> None:
     """List CTA failed requests."""
     if prom_output_file is not None and output_content != "prom-metrics":

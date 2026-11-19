@@ -3,7 +3,7 @@
 
 """Main module referencing all CTA SDK exceptions."""
 
-from typing import Any, Union
+from typing import Any
 
 
 class CtaSdkError(Exception):
@@ -23,7 +23,7 @@ class BackendError(CtaSdkError):
 class ResourceNotFoundError(CtaSdkError):
     """Resource not found in CTA."""
 
-    def __init__(self, resource_type: str, id: Union[dict[str, Any], str], *args: object, **kwargs: object):
+    def __init__(self, resource_type: str, id: dict[str, Any] | str, *args: object, **kwargs: object):
         self.resource_type = resource_type
         self.id = id
         super().__init__(f"{resource_type}({id}) not found", *args, **kwargs)
@@ -32,7 +32,7 @@ class ResourceNotFoundError(CtaSdkError):
 class ResourceAlreadyExistsError(CtaSdkError):
     """Cta resource already exists."""
 
-    def __init__(self, resource_type: str, id: Union[dict[str, Any], str], *args: object, **kwargs: object):
+    def __init__(self, resource_type: str, id: dict[str, Any] | str, *args: object, **kwargs: object):
         self.resource_type = resource_type
         self.id = id
         super().__init__(f"{resource_type}({id}) already exists in CTA", *args, **kwargs)
@@ -41,9 +41,7 @@ class ResourceAlreadyExistsError(CtaSdkError):
 class ResourceConflictError(CtaSdkError):
     """More than one resource found where only one was expected."""
 
-    def __init__(
-        self, resource_type: str, id: Union[dict[str, Any], str], match_count: int, *args: object, **kwargs: object
-    ):
+    def __init__(self, resource_type: str, id: dict[str, Any] | str, match_count: int, *args: object, **kwargs: object):
         self.resource_type = resource_type
         self.id = id
         self.match_count = match_count

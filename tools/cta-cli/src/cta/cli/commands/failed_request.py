@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -26,7 +25,7 @@ def failed_request():
 @click.option("--vid", "-v")
 @click.option("--logs", "-l", is_flag=True)
 @click.pass_obj
-def list_command(obj: AppContext, type: Optional[MountType], tape_pool: Optional[str], vid: Optional[str], logs: bool):
+def list_command(obj: AppContext, type: MountType | None, tape_pool: str | None, vid: str | None, logs: bool):
     """List CTA failed requests."""
     print_dataclasses(
         obj.cta_client.failed_request.list(type=type, tape_pool_name=tape_pool, vid=vid, logs=logs),

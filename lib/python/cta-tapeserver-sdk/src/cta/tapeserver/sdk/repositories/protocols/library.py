@@ -17,9 +17,7 @@ and
 """
 
 from dataclasses import dataclass
-from typing import Protocol
-
-from typing_extensions import override
+from typing import Protocol, override
 
 
 @dataclass(frozen=True)

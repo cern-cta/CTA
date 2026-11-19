@@ -7,6 +7,7 @@ import unittest
 from contextlib import nullcontext, redirect_stdout
 from io import StringIO
 from pathlib import Path
+from typing import override
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,7 +15,6 @@ from commands import tag
 from confirmation import ConfirmationError
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
-from typing_extensions import override
 
 
 class TagCommandTest(unittest.TestCase):

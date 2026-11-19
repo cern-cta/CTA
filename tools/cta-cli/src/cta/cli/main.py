@@ -11,10 +11,8 @@ CTA client initialization. It also manages dynamic loading of command modules.
 import importlib
 import pkgutil
 import sys
-import typing as t
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional
 
 import click
 from cta.cli.display.printers import print_dataclasses
@@ -54,7 +52,7 @@ from .context import AppContext, __version__
     show_default=True,
 )
 @click.pass_context
-def cta(ctx: click.Context, format: str, verbose: int, config_file: Optional[Path]):
+def cta(ctx: click.Context, format: str, verbose: int, config_file: Path | None):
     """Manage CERN Tape Archive (CTA) operations from the command line.
 
     This is the main entry point for the CTA operations Cli. Use subcommands to
@@ -115,7 +113,7 @@ def load_commands(package_name: str):
                 cta.add_command(attr)
 
 
-def _infer_output_format(argv: t.Optional[list[str]] = None) -> t.Optional[str]:
+def _infer_output_format(argv: list[str] | None = None) -> str | None:
     """Infer the output format from command-line arguments or config file."""
     # Unfortunately, the only way to do this seems to be creating a temporary Click
     # context and parsing the arguments.
@@ -154,7 +152,7 @@ class WorkflowConfigCliError(click.ClickException):
     exit_code = 3
 
 
-def run(argv: t.Optional[list[str]] = None) -> None:
+def run(argv: list[str] | None = None) -> None:
     """Run the Cli application and map exceptions to standard exit codes."""
     load_commands("cta.cli.commands")
     try:

@@ -289,12 +289,14 @@ lint-licenses:
       when: always
     - when: always
   image:
-    name: $IMAGE_LICENSE_CHECK
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: [""]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.source-checks, before_script]
   script:
-    - reuse lint
+    - uv run --no-sync reuse lint
 
 lint-secrets:
   stage: lint
@@ -524,8 +526,8 @@ type-check-python:
   script:
     - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check
     - uv run --no-sync pyright --pythonpath .venv/bin/python .
-    # Some of the project is already on 3.12; run that separately
-    - UV_PROJECT_ENVIRONMENT=docs/.venv uv sync --locked --only-group docs --python 3.12
+    # Check docs with their own dependency environment.
+    - UV_PROJECT_ENVIRONMENT=docs/.venv uv sync --locked --only-group docs
     - uv run --no-sync pyright --project docs/pyrightconfig.json --pythonpath docs/.venv/bin/python
 
 validate-catalogue-schema-version:

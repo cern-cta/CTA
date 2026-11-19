@@ -10,7 +10,7 @@ various criteria including volume, archive ID, virtual organisation, and deletio
 
 from collections.abc import Iterator
 from datetime import datetime
-from typing import Optional, Protocol, Union, overload
+from typing import Protocol, overload
 
 from cta.sdk.models import RecycleBinTapeFile
 
@@ -75,9 +75,9 @@ class RecycleBinTapeFileDao(Protocol):
         self,
         *,
         vid: str,
-        virtual_organisation_name: Optional[str] = None,
-        min_deletion_time: Union[datetime, int, None] = None,
-        max_deletion_time: Union[datetime, int, None] = None,
+        virtual_organisation_name: str | None = None,
+        min_deletion_time: datetime | int | None = None,
+        max_deletion_time: datetime | int | None = None,
     ) -> Iterator[RecycleBinTapeFile]: ...
 
     @overload
@@ -86,9 +86,9 @@ class RecycleBinTapeFileDao(Protocol):
         *,
         fids_file: str,
         disk_instance_name: str,
-        virtual_organisation_name: Optional[str] = None,
-        min_deletion_time: Union[datetime, int, None] = None,
-        max_deletion_time: Union[datetime, int, None] = None,
+        virtual_organisation_name: str | None = None,
+        min_deletion_time: datetime | int | None = None,
+        max_deletion_time: datetime | int | None = None,
     ) -> Iterator[RecycleBinTapeFile]: ...
 
     @overload
@@ -96,8 +96,8 @@ class RecycleBinTapeFileDao(Protocol):
         self,
         *,
         virtual_organisation_name: str,
-        min_deletion_time: Union[datetime, int, None] = None,
-        max_deletion_time: Union[datetime, int, None] = None,
+        min_deletion_time: datetime | int | None = None,
+        max_deletion_time: datetime | int | None = None,
     ) -> Iterator[RecycleBinTapeFile]: ...
 
     def list(self, **kwargs) -> Iterator[RecycleBinTapeFile]:

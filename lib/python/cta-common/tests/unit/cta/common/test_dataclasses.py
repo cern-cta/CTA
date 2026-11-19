@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import dataclass
-from typing import Annotated, Any, Final, Optional, Union
+from typing import Annotated, Any, Final
 
 import pytest
 from cta.common.dataclasses import (
@@ -31,7 +31,7 @@ class Address:
     street: str
     city: str
     zipcode: str
-    apartment: Optional[Apartment] = None
+    apartment: Apartment | None = None
 
 
 @dataclass
@@ -50,15 +50,15 @@ class CompanyInfo:
 class Contractor:
     name: Final[str]
     rate: float
-    company: Optional[CompanyInfo]
-    address: Union[Address, str, None]
+    company: CompanyInfo | None
+    address: Address | str | None
 
 
 @dataclass
 class Person:
     name: str
     address: Address
-    car: Optional[Car]
+    car: Car | None
 
 
 @pytest.mark.parametrize(
@@ -145,7 +145,7 @@ class Person:
 )
 def test_flatten_dataclass_instance(
     dataclass_instance: DataclassProtocol,
-    max_depth: Optional[int],
+    max_depth: int | None,
     extra_flatten_fields: tuple[str, ...],
     include_properties: bool,
     expected: dict[str, Any],
@@ -257,7 +257,7 @@ def test_flatten_dataclass_instance(
 )
 def test_flatten_dataclass_class(
     dataclass_class: type,
-    max_depth: Optional[int],
+    max_depth: int | None,
     extra_flatten_fields: tuple[str, ...],
     include_properties: bool,
     expected: list[tuple[str, frozenset[type]]],

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -31,10 +31,10 @@ def ref_obj() -> DiskSystem:
         metadata=Metadata(
             creation_user_name="vyurchen",
             creation_host_name="cta-frontend01",
-            creation_time=datetime(2022, 10, 24, 9, 32, 39, tzinfo=timezone.utc),
+            creation_time=datetime(2022, 10, 24, 9, 32, 39, tzinfo=UTC),
             update_user_name="vyurchen",
             update_host_name="cta-frontend01",
-            update_time=datetime(2022, 10, 24, 9, 32, 39, tzinfo=timezone.utc),
+            update_time=datetime(2022, 10, 24, 9, 32, 39, tzinfo=UTC),
             comment="free space for ftstest on eosctaatlaspps",
         ),
     )

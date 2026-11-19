@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import PhysicalLibraryDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Metadata, PhysicalLibrary, PhysicalLibraryState
-from typing_extensions import override
 
 
 class PhysicalLibraryDaoCtaAdmin(PhysicalLibraryDao):
@@ -38,10 +37,10 @@ class PhysicalLibraryDaoCtaAdmin(PhysicalLibraryDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -56,7 +55,7 @@ class PhysicalLibraryDaoCtaAdmin(PhysicalLibraryDao):
         return self.raw_data_to_resource(raw_pl)
 
     @override
-    def list(self, *, state: Optional[PhysicalLibraryState] = None) -> Iterator[PhysicalLibrary]:
+    def list(self, *, state: PhysicalLibraryState | None = None) -> Iterator[PhysicalLibrary]:
         yield from (
             self.raw_data_to_resource(raw_item)
             for raw_item in self._wrapper.list(self.resource_type)
@@ -77,11 +76,11 @@ class PhysicalLibraryDaoCtaAdmin(PhysicalLibraryDao):
         model: str,
         physical_cartridge_slots: int,
         physical_drive_slots: int,
-        gui_url: Optional[str] = None,
-        webcam_url: Optional[str] = None,
-        type: Optional[str] = None,
-        location: Optional[str] = None,
-        available_cartridge_slots: Optional[int] = None,
+        gui_url: str | None = None,
+        webcam_url: str | None = None,
+        type: str | None = None,
+        location: str | None = None,
+        available_cartridge_slots: int | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         data = {
@@ -109,13 +108,13 @@ class PhysicalLibraryDaoCtaAdmin(PhysicalLibraryDao):
         name: str,
         /,
         *,
-        gui_url: Optional[str] = None,
-        webcam_url: Optional[str] = None,
-        location: Optional[str] = None,
-        physical_cartridge_slots: Optional[int] = None,
-        available_cartridge_slots: Optional[int] = None,
-        physical_drive_slots: Optional[int] = None,
-        comment: Optional[str] = None,
+        gui_url: str | None = None,
+        webcam_url: str | None = None,
+        location: str | None = None,
+        physical_cartridge_slots: int | None = None,
+        available_cartridge_slots: int | None = None,
+        physical_drive_slots: int | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if gui_url is None else {"guiurl": gui_url}

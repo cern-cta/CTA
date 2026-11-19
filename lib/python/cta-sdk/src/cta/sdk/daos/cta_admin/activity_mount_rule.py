@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import ActivityMountRuleDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import ActivityMountRule, Metadata
-from typing_extensions import override
 
 
 class ActivityMountRuleDaoCtaAdmin(ActivityMountRuleDao):
@@ -30,10 +29,10 @@ class ActivityMountRuleDaoCtaAdmin(ActivityMountRuleDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -95,8 +94,8 @@ class ActivityMountRuleDaoCtaAdmin(ActivityMountRuleDao):
         disk_instance_name: str,
         regex: str,
         /,
-        mount_policy_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        mount_policy_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if mount_policy_name is None else {"mountpolicy": mount_policy_name}

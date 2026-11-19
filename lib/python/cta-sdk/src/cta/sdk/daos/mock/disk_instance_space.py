@@ -3,13 +3,12 @@
 
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Optional, Union
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler, as_timedelta
 from cta.sdk.daos.protocols import DiskInstanceSpaceDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import DiskInstance, DiskInstanceSpace, DiskSystem
-from typing_extensions import override
 
 
 class DiskInstanceSpaceDaoMock(DiskInstanceSpaceDao):
@@ -26,7 +25,7 @@ class DiskInstanceSpaceDaoMock(DiskInstanceSpaceDao):
         /,
         *,
         free_space_url: str,
-        refresh_interval: Union[int, timedelta] = 10,
+        refresh_interval: int | timedelta = 10,
         comment: str = "From python cta-sdk",
     ) -> None:
         try:
@@ -69,9 +68,9 @@ class DiskInstanceSpaceDaoMock(DiskInstanceSpaceDao):
         disk_instance_name: str,
         /,
         *,
-        free_space_url: Optional[str] = None,
-        refresh_interval: Union[int, timedelta, None] = None,
-        comment: Optional[str] = None,
+        free_space_url: str | None = None,
+        refresh_interval: int | timedelta | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name, disk_instance_name) as disk_instance_space:
             if free_space_url is not None:

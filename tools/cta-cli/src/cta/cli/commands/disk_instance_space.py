@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from datetime import timedelta
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -59,9 +58,9 @@ def update(
     obj: AppContext,
     name: str,
     disk_instance_name: str,
-    free_space_query_url: Optional[str],
-    refresh_interval: Optional[timedelta],
-    comment: Optional[str],
+    free_space_query_url: str | None,
+    refresh_interval: timedelta | None,
+    comment: str | None,
 ):
     """Update CTA disk instance space."""
     obj.cta_client.disk_instance_space.update(

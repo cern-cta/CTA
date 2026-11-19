@@ -34,7 +34,7 @@ class AppConfig:
     logging: LoggingConfiguration = field(default_factory=LoggingConfiguration)
     workflow: WorkflowConfig = field(default_factory=WorkflowConfig)
 
-    def validate(self) -> "AppConfig":
+    def validate(self) -> AppConfig:
         print(asdict(self.database))
         if any(v is NOT_SET for v in astuple(self.database)):
             raise ValueError("Database configuration is incomplete")

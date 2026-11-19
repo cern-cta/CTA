@@ -3,7 +3,7 @@
 
 from collections.abc import Iterator
 from itertools import chain
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import DiskInstanceDao
@@ -17,7 +17,6 @@ from cta.sdk.models import (
     UserMountRule,
     VirtualOrganisation,
 )
-from typing_extensions import override
 
 
 class DiskInstanceDaoMock(DiskInstanceDao):
@@ -68,6 +67,6 @@ class DiskInstanceDaoMock(DiskInstanceDao):
         yield from self._handler.iter(self.resource_type)
 
     @override
-    def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
+    def update(self, name: str, /, *, comment: str | None = None) -> None:
         with self._handler.update(self.resource_type, name) as disk_instance:
             disk_instance.metadata = self._handler.refresh_metadata(disk_instance.metadata, comment=comment)

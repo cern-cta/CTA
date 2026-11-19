@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -28,10 +28,10 @@ def ref_obj() -> GroupMountRule:
         metadata=Metadata(
             creation_user_name="vyurchen",
             creation_host_name="eosctafst0108.cern.ch",
-            creation_time=datetime(2021, 6, 16, 6, 38, 15, tzinfo=timezone.utc),
+            creation_time=datetime(2021, 6, 16, 6, 38, 15, tzinfo=UTC),
             update_user_name="vyurchen",
             update_host_name="eosctafst0108.cern.ch",
-            update_time=datetime(2021, 6, 16, 6, 38, 15, tzinfo=timezone.utc),
+            update_time=datetime(2021, 6, 16, 6, 38, 15, tzinfo=UTC),
             comment="Group for tests",
         ),
     )

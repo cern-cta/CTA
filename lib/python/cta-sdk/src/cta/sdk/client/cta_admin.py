@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
+
+from typing import override
 
 from cta.sdk.client.protocol import CtaClient
 from cta.sdk.daos.cta_admin import (
@@ -30,7 +31,6 @@ from cta.sdk.daos.cta_admin import (
 )
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.models import CtaCliVersion, CtaServerVersion, CtaVersion
-from typing_extensions import override
 
 
 class CtaClientCtaAdmin(CtaClient):
@@ -38,8 +38,8 @@ class CtaClientCtaAdmin(CtaClient):
         self,
         exec_path: str = "/usr/bin/cta-admin",
         timeout: int = 60,
-        sss_keytab_file: Optional[str] = None,
-        cta_conf_file: Optional[str] = None,
+        sss_keytab_file: str | None = None,
+        cta_conf_file: str | None = None,
     ) -> None:
         """Initialise the CTA_ADMIN backend client.
 

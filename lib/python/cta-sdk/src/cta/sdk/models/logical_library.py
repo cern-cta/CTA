@@ -3,9 +3,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Final, Optional
-
-from typing_extensions import override
+from typing import Final, override
 
 from .metadata import Metadata
 
@@ -30,7 +28,7 @@ class LogicalLibrary:
     name: Final[str]
     physical_library_name: str
     state: LogicalLibraryState
-    state_reason: Optional[str]
+    state_reason: str | None
     metadata: Metadata
 
     @override

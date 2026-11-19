@@ -9,7 +9,7 @@ operations and configuration options for tape data optimization.
 """
 
 from collections.abc import Iterator
-from typing import Literal, Optional, Protocol
+from typing import Literal, Protocol
 
 from cta.sdk.models import RepackRequest
 
@@ -58,9 +58,9 @@ class RepackRequestDao(Protocol):
         *,
         mount_policy_name: str,
         no_recall: bool = False,
-        buffer_url: Optional[str] = None,
-        max_files_to_select: Optional[int] = None,
-        custom_operation: Optional[Literal["MOVE", "ADDCOPIES"]] = None,
+        buffer_url: str | None = None,
+        max_files_to_select: int | None = None,
+        custom_operation: Literal["MOVE", "ADDCOPIES"] | None = None,
     ) -> None:
         """Create a new repack request.
 

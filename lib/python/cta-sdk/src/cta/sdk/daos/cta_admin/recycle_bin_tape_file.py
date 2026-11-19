@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Union
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import RecycleBinTapeFileDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Checksum, DiskFile, RecycleBinTapeFile
-from typing_extensions import override
 
 
 class RecycleBinTapeFileDaoCtaAdmin(RecycleBinTapeFileDao):
@@ -25,7 +24,7 @@ class RecycleBinTapeFileDaoCtaAdmin(RecycleBinTapeFileDao):
         return RecycleBinTapeFile(
             int(raw_data["archiveFileId"]),
             storage_class_name=raw_data["storageClass"],
-            creation_time=datetime.fromtimestamp(int(raw_data["archiveFileCreationTime"]), tz=timezone.utc),
+            creation_time=datetime.fromtimestamp(int(raw_data["archiveFileCreationTime"]), tz=UTC),
             size=int(raw_data["sizeInBytes"]),
             checksum=Checksum(algo_name=raw_data["checksum"][0]["type"], value=raw_data["checksum"][0]["value"]),
             disk_file=DiskFile(
@@ -38,13 +37,13 @@ class RecycleBinTapeFileDaoCtaAdmin(RecycleBinTapeFileDao):
             vid=str(raw_data["vid"]),
             block_id=int(raw_data["blockId"]),
             fseq=int(raw_data["fseq"]),
-            deletion_time=datetime.fromtimestamp(int(raw_data["recycleLogTime"]), tz=timezone.utc),
+            deletion_time=datetime.fromtimestamp(int(raw_data["recycleLogTime"]), tz=UTC),
             deletion_reason=raw_data["reasonLog"],
             virtual_organisation_name=raw_data["virtualOrganization"],
         )
 
     @override
-    def get_all_copies(self, *args: Union[int, str]) -> tuple[RecycleBinTapeFile, ...]:
+    def get_all_copies(self, *args: int | str) -> tuple[RecycleBinTapeFile, ...]:
         resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1]}
         tape_files = tuple(
             self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, resource_id)
@@ -54,7 +53,7 @@ class RecycleBinTapeFileDaoCtaAdmin(RecycleBinTapeFileDao):
         return tape_files
 
     @override
-    def get(self, *args: Union[int, str], vid: str) -> RecycleBinTapeFile:
+    def get(self, *args: int | str, vid: str) -> RecycleBinTapeFile:
         resource_id = (
             {"id": args[0], "vid": vid} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1], "vid": vid}
         )

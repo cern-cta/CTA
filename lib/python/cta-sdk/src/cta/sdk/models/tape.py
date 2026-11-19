@@ -4,10 +4,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
-from typing import Annotated, Any, Final, Optional
+from typing import Annotated, Any, Final, override
 
 from cta.sdk.units import Byte, Percentage
-from typing_extensions import override
 
 from .metadata import Metadata
 
@@ -31,7 +30,7 @@ class VerificationStatus:
     file_failed_count: int
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "VerificationStatus":
+    def from_dict(cls, data: dict[str, Any]) -> VerificationStatus:
         return cls(
             date=data[""],
             status=data[""],
@@ -58,12 +57,12 @@ class TapeMetadata(Metadata):
         read_mount_count: Number of read mounts.
     """
 
-    label_time: Optional[datetime]
-    label_drive_name: Optional[str]
-    last_write_time: Optional[datetime]
-    last_write_drive_name: Optional[str]
-    last_read_time: Optional[datetime]
-    last_read_drive_name: Optional[str]
+    label_time: datetime | None
+    label_drive_name: str | None
+    last_write_time: datetime | None
+    last_write_drive_name: str | None
+    last_read_time: datetime | None
+    last_read_drive_name: str | None
     update_state_time: datetime
     update_state_info: str
     write_mount_count: int
@@ -85,7 +84,7 @@ class TapeState(Enum):
             out of repacking states while a repack is ongoing).
     """
 
-    # Enum supplies the member name, not self, to this Python 3.9 hook.
+    # Enum supplies the member name, not self, to this hook.
     def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]  # noqa: N805
         return name.lower().replace("_", "-")
 
@@ -150,12 +149,12 @@ class Tape:
     physical_library_name: str
     tape_pool_name: str
     virtual_organisation_name: str
-    encryption_key_name: Optional[str]
+    encryption_key_name: str | None
     capacity: Annotated[int, Byte]
     format: str
     state: TapeState
     state_reason: str
-    verification_status: Optional[VerificationStatus]
+    verification_status: VerificationStatus | None
     usage_ratio: Annotated[float, Percentage] = field(init=False)
 
     statistics: TapeStatistics

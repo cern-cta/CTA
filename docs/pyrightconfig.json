@@ -1,6 +1,5 @@
 {
   "extends": "../pyproject.toml",
-  "pythonVersion": "3.12",
   "include": [
     "."
   ],

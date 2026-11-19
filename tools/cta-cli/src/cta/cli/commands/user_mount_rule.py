@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -35,9 +34,7 @@ def create(obj: AppContext, user_name: str, disk_instance_name: str, mount_polic
 @click.option("--mount-policy", "--mp")
 @click.option("--comment", "-c")
 @click.pass_obj
-def update(
-    obj: AppContext, user_name: str, disk_instance_name: str, mount_policy: Optional[str], comment: Optional[str]
-):
+def update(obj: AppContext, user_name: str, disk_instance_name: str, mount_policy: str | None, comment: str | None):
     """Update CTA requester mount rule."""
     obj.cta_client.user_mount_rule.update(
         user_name, disk_instance_name, comment=comment, mount_policy_name=mount_policy

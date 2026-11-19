@@ -9,7 +9,7 @@ how many copies of archived data are maintained on tape.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import StorageClass
 
@@ -79,9 +79,9 @@ class StorageClassDao(Protocol):
         name: str,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        replica_count: Optional[int] = None,
-        comment: Optional[str] = None,
+        virtual_organisation_name: str | None = None,
+        replica_count: int | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing storage class.
 

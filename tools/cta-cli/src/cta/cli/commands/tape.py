@@ -26,7 +26,6 @@ from datetime import timedelta
 from logging import getLogger
 from pathlib import Path
 from time import perf_counter
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -106,17 +105,17 @@ def create(
 def update(
     obj: AppContext,
     vid: str,
-    media_type: Optional[str],
-    vendor: Optional[str],
-    logical_library: Optional[str],
-    tape_pool: Optional[str],
-    full: Optional[bool],
-    verification_status: Optional[str],
-    state: Optional[tuple[TapeState, str]],
-    purchase_order: Optional[str],
-    dirty: Optional[bool],
-    comment: Optional[str],
-    encryption_key: Optional[str],
+    media_type: str | None,
+    vendor: str | None,
+    logical_library: str | None,
+    tape_pool: str | None,
+    full: bool | None,
+    verification_status: str | None,
+    state: tuple[TapeState, str] | None,
+    purchase_order: str | None,
+    dirty: bool | None,
+    comment: str | None,
+    encryption_key: str | None,
 ):
     """Update tape properties or state.
 
@@ -171,15 +170,15 @@ def update(
 def list_command(
     obj: AppContext,
     all: bool,
-    media_type: Optional[str],
-    vendor: Optional[str],
-    logical_library: Optional[str],
-    tape_pool: Optional[str],
-    virtual_organisation: Optional[str],
-    full: Optional[bool],
-    state: Optional[TapeState],
-    purchase_order: Optional[str],
-    physical_library: Optional[str],
+    media_type: str | None,
+    vendor: str | None,
+    logical_library: str | None,
+    tape_pool: str | None,
+    virtual_organisation: str | None,
+    full: bool | None,
+    state: TapeState | None,
+    purchase_order: str | None,
+    physical_library: str | None,
     missing_file_copies: bool,
 ):
     """List CTA tapes in CTA."""
@@ -485,14 +484,14 @@ if EXTRA_TPSRV:
     @click.pass_obj
     def label(
         obj: AppContext,
-        vid: Optional[str],
-        file: Optional[Path],
-        srcpool: Optional[str],
-        limit: Optional[int],
+        vid: str | None,
+        file: Path | None,
+        srcpool: str | None,
+        limit: int | None,
         drive: str,
-        old_label: Optional[str],
+        old_label: str | None,
         force: bool,
-        dstpool: Optional[str],
+        dstpool: str | None,
     ):
         if bool(vid) + bool(srcpool) + bool(file) != 1:
             raise click.UsageError("Please choose either vid arg, a srcpool, or a file")
@@ -510,7 +509,7 @@ if EXTRA_TPSRV:
             if dstpool:
                 _move_labelled_tape(obj, vid, dstpool)
 
-        def treat_srcpool(library_controller: ManagedLibraryController, srcpool: str, limit: Optional[int]):
+        def treat_srcpool(library_controller: ManagedLibraryController, srcpool: str, limit: int | None):
             LOGGER.info("Getting tape list from tapepool %s", srcpool)
             obj.cta_client.tape_pool.get(srcpool)
             tapes = obj.cta_client.tape.list(tape_pool_name=srcpool)
@@ -530,7 +529,7 @@ if EXTRA_TPSRV:
                 if dstpool:
                     _move_labelled_tape(obj, t.vid, dstpool)
 
-        def treat_file(library_controller: ManagedLibraryController, file: Path, limit: Optional[int]):
+        def treat_file(library_controller: ManagedLibraryController, file: Path, limit: int | None):
             tapes = []
             LOGGER.info("Reading tape list from file %s", file)
             with open(file, encoding="utf-8") as f:
@@ -573,7 +572,7 @@ if EXTRA_TPSRV:
     )
     @click.option("--all", "-a", is_flag=True, help="Import for all connected local libraries (even no CTA ones !)")
     @click.pass_obj
-    def tape_import(obj: AppContext, physical_library_name: Optional[str], all: bool):
+    def tape_import(obj: AppContext, physical_library_name: str | None, all: bool):
         if not (bool(physical_library_name is not None) ^ all):
             raise click.UsageError("Drive name and --all option are mutually exclusive")
 
@@ -606,11 +605,11 @@ if EXTRA_TPSRV:
     @click.pass_obj
     def tape_export(
         obj: AppContext,
-        vid: Optional[str],
-        file: Optional[Path],
-        srcpool: Optional[str],
-        ioport_capacity: Optional[int],
-        limit: Optional[int],
+        vid: str | None,
+        file: Path | None,
+        srcpool: str | None,
+        ioport_capacity: int | None,
+        limit: int | None,
         physical_library: str,
     ):
         if bool(vid) + bool(srcpool) + bool(file) != 1:
@@ -631,13 +630,13 @@ if EXTRA_TPSRV:
                 )
             return tape.vid
 
-        def get_vids_from_srcpool(srcpool: str, limit: Optional[int]) -> list[str]:
+        def get_vids_from_srcpool(srcpool: str, limit: int | None) -> list[str]:
             LOGGER.info("Getting tape list from tapepool %s", srcpool)
             obj.cta_client.tape_pool.get(srcpool)
             tapes = obj.cta_client.tape.list(tape_pool_name=srcpool)
             return [t.vid for t in tapes if library_controller.name == t.physical_library_name][slice(limit)]
 
-        def get_vids_from_file(file: Path, limit: Optional[int]) -> list[str]:
+        def get_vids_from_file(file: Path, limit: int | None) -> list[str]:
             LOGGER.info("Reading tape list from file %s", file)
             with open(file, encoding="utf-8") as f:
                 return [line.strip() for line in f if not line.startswith("#")][slice(limit)]

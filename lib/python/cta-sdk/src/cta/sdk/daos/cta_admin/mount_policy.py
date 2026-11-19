@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Union
+from datetime import UTC, datetime, timedelta
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import MountPolicyDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Metadata, MountPolicy
-from typing_extensions import override
 
 
 class MountPolicyDaoCtaAdmin(MountPolicyDao):
@@ -31,10 +30,10 @@ class MountPolicyDaoCtaAdmin(MountPolicyDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -63,9 +62,9 @@ class MountPolicyDaoCtaAdmin(MountPolicyDao):
         /,
         *,
         archive_priority: int = 250,
-        min_archive_age: Union[timedelta, int] = 14_400,
+        min_archive_age: timedelta | int = 14_400,
         retrieve_priority: int = 150,
-        min_retrieve_age: Union[timedelta, int] = 14_400,
+        min_retrieve_age: timedelta | int = 14_400,
         comment: str = "From python cta-sdk",
     ) -> None:
         self._wrapper.create(
@@ -92,11 +91,11 @@ class MountPolicyDaoCtaAdmin(MountPolicyDao):
         name: str,
         /,
         *,
-        archive_priority: Optional[int] = None,
-        min_archive_age: Union[timedelta, int, None] = None,
-        retrieve_priority: Optional[int] = None,
-        min_retrieve_age: Union[timedelta, int, None] = None,
-        comment: Optional[str] = None,
+        archive_priority: int | None = None,
+        min_archive_age: timedelta | int | None = None,
+        retrieve_priority: int | None = None,
+        min_retrieve_age: timedelta | int | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if archive_priority is None else {"archivepriority": archive_priority}

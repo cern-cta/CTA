@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -25,7 +25,7 @@ def ref_obj() -> TapeFile:
     return TapeFile(
         archive_id=4303580667,
         storage_class_name="digital_memory",
-        creation_time=datetime(2023, 2, 23, 15, 37, 50, tzinfo=timezone.utc),
+        creation_time=datetime(2023, 2, 23, 15, 37, 50, tzinfo=UTC),
         size=5,
         checksum=Checksum("ADLER32", "058801ab"),
         disk_file=DiskFile(

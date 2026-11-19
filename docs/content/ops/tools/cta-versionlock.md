@@ -2,6 +2,8 @@
 
 Inspect and manage RPM dependency version locks supplied by `cta-release`.
 
+`cta-versionlock` uses the system Python at `/usr/bin/python3` and the distribution's RPM bindings.
+
 ## Usage
 
 ```text

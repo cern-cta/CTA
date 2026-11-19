@@ -13,7 +13,7 @@ set -eo pipefail
 script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 readonly script_dir
 
-for required_command in curl jq git python3; do
+for required_command in curl jq git uv; do
   if ! command -v "$required_command" >/dev/null 2>&1 || ! "$required_command" --version >/dev/null 2>&1; then
     echo "ERROR: Required command '$required_command' is missing or unusable." >&2
     exit 1
@@ -24,6 +24,11 @@ if ! project_root=$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null);
   exit 1
 fi
 readonly project_root
+
+# Use the managed interpreter directly without installing executables into the user's PATH.
+uv python install --no-bin "$(cat "$project_root/.python-version")"
+build_python=$(uv python find --no-project --managed-python "$(cat "$project_root/.python-version")")
+readonly build_python
 
 # shellcheck disable=SC2207
 readonly available_tests=(
@@ -49,7 +54,7 @@ enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
 # Neutral source version; native packaging adds its revision separately.
-cta_version=$(python3 "${project_root}/ci/utils/cta_version.py")
+cta_version=$("$build_python" "${project_root}/ci/utils/cta_version.py")
 cta_image_tag=""
 
 # Build
@@ -690,7 +695,7 @@ parse_options() {
     cta_image_tag_is_valid "$cta_image_tag" || \
       unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
   else
-    cta_image_tag=$(python3 "${project_root}/ci/utils/cta_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+    cta_image_tag=$("$build_python" "${project_root}/ci/utils/cta_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
   fi
 
   # An explicit image tag refers to an image built elsewhere, most commonly by the CI. Without
@@ -826,6 +831,7 @@ create_build_configuration() {
 
   jq -cn \
     --arg projectFingerprint "$project_fingerprint" \
+    --arg pythonVersion "$(cat "${project_root}/.python-version")" \
     --arg platform "$platform" \
     --arg schedulerType "$scheduler_type" \
     --argjson oracleSupport "$oracle_support" \
@@ -841,7 +847,7 @@ create_build_configuration() {
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
-    '{projectFingerprint: $projectFingerprint, platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
+    '{projectFingerprint: $projectFingerprint, pythonVersion: $pythonVersion, platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
       enableSccache: $enableSccache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
       sanitizers: $sanitizers, runUnitTests: ($skipUnitTests | not),
@@ -973,6 +979,7 @@ build_cta() {
           log_warn "Build platform changed: ${old_value} -> ${new_value}"
           automatic_clean_build_dirs=true
           ;;
+        pythonVersion) log_warn "Build Python changed: ${old_value} -> ${new_value}" ;;
         cmakeBuildType) log_warn "CMake build type changed: ${old_value} -> ${new_value}" ;;
         enableSccache) log_warn "Sccache setting changed: ${old_value} -> ${new_value}" ;;
         buildTestPackages) log_warn "Test package setting changed: ${old_value} -> ${new_value}" ;;
@@ -990,7 +997,7 @@ build_cta() {
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
        "enableSccache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "sanitizers",
-       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos", "projectFingerprint"][] as $field
+       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos", "projectFingerprint", "pythonVersion"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' <<<"$previous_configuration_json")
@@ -1127,7 +1134,7 @@ build_cta() {
 
   # Resolve native package metadata before invoking the container build.
   local package_version
-  package_version=$(python3 "${project_root}/ci/utils/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+  package_version=$("$build_python" "${project_root}/ci/utils/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 
   print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.

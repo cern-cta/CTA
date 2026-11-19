@@ -6,5 +6,5 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 export UV_PROJECT_ENVIRONMENT="$PWD/docs/.venv"
-uv sync --locked --only-group docs --python 3.12
+uv sync --locked --only-group docs
 exec "$UV_PROJECT_ENVIRONMENT/bin/python" docs/build.py serve "$@"

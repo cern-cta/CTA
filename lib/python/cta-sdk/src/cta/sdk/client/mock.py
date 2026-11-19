@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import override
+
 from cta.sdk.client.protocol import CtaClient
 from cta.sdk.daos.mock import (
     ActivityMountRuleDaoMock,
@@ -28,7 +30,6 @@ from cta.sdk.daos.mock import (
 )
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.models import CtaCliVersion, CtaServerVersion, CtaVersion
-from typing_extensions import override
 
 
 class CtaClientMock(CtaClient):

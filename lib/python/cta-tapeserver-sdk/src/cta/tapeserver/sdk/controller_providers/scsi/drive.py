@@ -12,13 +12,12 @@ instances sharing a single pyudev `Context`.
 
 import logging
 import re
-from typing import Optional
+from typing import override
 
 from cta.tapeserver.sdk.controller_providers.protocols.drive import DriveControllerProvider
 from cta.tapeserver.sdk.controllers.scsi.drive import ScsiDriveController
 from cta.tapeserver.sdk.exceptions import ResourceNotFoundError
 from pyudev import Context, Device
-from typing_extensions import override
 
 LOGGER = logging.getLogger("cta.tapeserver.sdk")
 
@@ -46,7 +45,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
         ```
     """
 
-    def __init__(self, context: Optional[Context] = None, drive_name_key: str = "CTA_NAME"):
+    def __init__(self, context: Context | None = None, drive_name_key: str = "CTA_NAME"):
         LOGGER.debug("Initializing ScsiDriveControllerProvider")
         self._context = Context() if context is None else context
         self._drive_name_key = drive_name_key
@@ -63,7 +62,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
     def find_drive_controller(
         self,
         serial_number: str,
-    ) -> Optional[ScsiDriveController]:
+    ) -> ScsiDriveController | None:
         LOGGER.debug("Searching for drive controller with serial=%s", serial_number)
         return next(
             (
@@ -93,7 +92,7 @@ class ScsiDriveControllerProvider(DriveControllerProvider):
     def find_drive_controller_by_name(
         self,
         name: str,
-    ) -> Optional[ScsiDriveController]:
+    ) -> ScsiDriveController | None:
         LOGGER.debug("Searching for drive controller with name=%s", name)
         return next(
             (
