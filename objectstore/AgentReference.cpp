@@ -35,8 +35,7 @@ AgentReference::AgentReference(const std::string& clientType, log::Logger& logge
       << localNow.tm_hour << ":" << std::setw(2) << localNow.tm_min << ":" << std::setw(2) << localNow.tm_sec << "-"
       << id;
   m_agentAddress = aid.str();
-  // Initialize the serialization token for queued actions (lock will make helgrind
-  // happy, but not really needed
+  // Initialize the serialization token for queued actions.
   threading::MutexLocker ml(m_currentQueueMutex);
   m_nextQueueExecutionPromise.reset(new std::promise<void>);
   m_nextQueueExecutionFuture = m_nextQueueExecutionPromise->get_future();

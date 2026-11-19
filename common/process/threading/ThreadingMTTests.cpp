@@ -9,8 +9,7 @@
 
 #include <gtest/gtest.h>
 
-/* This is a collection of multi threaded unit tests, which can (and should)
- be passed through helgrind, as well as valgrind */
+// Multithreaded tests for synchronization primitives.
 
 namespace threadedUnitTests {
 
@@ -29,7 +28,6 @@ private:
 };
 
 TEST(cta_threading, Thread_and_basic_locking) {
-  /* If we have race conditions here, helgrind will trigger. */
   Thread_and_basic_locking mt;
   mt.counter = 0;
   mt.start();

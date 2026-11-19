@@ -10,9 +10,6 @@
 #include <gtest/gtest.h>
 #include <time.h>
 
-/* Note: those tests create multi threading errors on purpose and should not
- * be run in helgrind */
-
 namespace unitTests {
 TEST(cta_threading, Mutex_properly_throws_exceptions) {
   // Verify that invalid operations on an error-checking mutex throw exceptions.
