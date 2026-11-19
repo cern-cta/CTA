@@ -183,11 +183,6 @@ enabled_experimental_features = ["telemetry"]
     # Type: integer; default: none; required.
     number_of_threads = 500
 
-    # Stack size of each scheduler DB thread, in MiB.
-    # Set to 0 to use the system's thread-stack size.
-    # Type: integer; default: 0.
-    thread_stack_size_mb = 0
-
 [logging]
   # Lowest severity to log. DEBUG produces the most output.
   # Type: string; default: "INFO".

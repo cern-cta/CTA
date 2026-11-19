@@ -26,7 +26,6 @@ conf:
   schedulerdb:
     numberOfConnections: 3
     numberOfThreads: 500
-    threadStackSizeMb: 1
     disableRepackRequests: false
     disableUserRequests: false
     # Disable the tape cache so tests see tape-state changes at once. A short retrieve-queue cache avoids
