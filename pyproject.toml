@@ -129,6 +129,11 @@
     "ci/sbom/*.py"                            = "py39"
     "ci/system_tests/tests/remote_scripts/**" = "py39"
 
+    # Release progress notes and their shared modules run in the Fedora 43 Buildah image.
+    "ci/release/add_release_note.py" = "py314"
+    "ci/release/src/*.py"            = "py314"
+    "ci/utils/cta_version.py"        = "py314"
+
   [tool.ruff.lint]
     select = [
       'E',      # pycodestyle (errors)

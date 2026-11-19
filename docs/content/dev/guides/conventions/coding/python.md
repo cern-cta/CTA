@@ -5,7 +5,7 @@ Follow [General Coding Conventions](general.md). These conventions apply to Pyth
 ## Tooling and compatibility
 
 - Use Ruff for formatting and linting, following `[tool.ruff]` in the root `pyproject.toml`. Run the configured [Pre-commit Hooks](../../tools-and-environment/pre-commit.md) rather than duplicating formatting rules manually.
-- Keep code compatible with its supported Python interpreter. The repository Ruff configuration targets Python 3.15, with Python 3.9 overrides for system-integrated helpers and scripts executed in externally maintained images.
+- Keep code compatible with its supported Python interpreter. The repository Ruff configuration targets Python 3.15, with per-file overrides for system-integrated helpers and scripts executed in externally maintained images.
 - Follow `[tool.pyright]` in the root `pyproject.toml` for type checking; CI runs Pyright. Add type annotations to function interfaces and meaningful data structures, and keep suppressions narrow and explained.
 
 Environment setup owns the exact Python version: build and CI images, CI setup and local development launchers use uv with the root `.python-version` pin.
@@ -15,6 +15,7 @@ CMake requires Python 3.15 or newer and uses its discovered `Python3_EXECUTABLE`
 Package minimum versions and tool targets belong in `pyproject.toml`.
 
 `cta-versionlock` and `cta-udev` must use system Python at `/usr/bin/python3` and remain compatible with Python 3.9 on EL9.
+Release progress notes use distribution Python 3.14 in the Buildah image.
 EOS remote scripts and the external SBOM helper retain their image-provided interpreter.
 
 ## Code structure and behaviour
