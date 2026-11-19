@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import DriveDao
 from cta.sdk.models import Drive, DriveOperatingState
-from typing_extensions import override
 
 
 class DriveDaoMock(DriveDao):
@@ -39,7 +38,7 @@ class DriveDaoMock(DriveDao):
         yield from self._handler.iter(self.resource_type)
 
     @override
-    def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
+    def update(self, name: str, /, *, comment: str | None = None) -> None:
         with self._handler.update(self.resource_type, name) as drive:
             if comment is not None:
                 drive.metadata.comment = comment
@@ -53,7 +52,7 @@ class DriveDaoMock(DriveDao):
             drive.state_reason = reason
 
     @override
-    def up(self, name: str, /, *, reason: Optional[str] = None) -> None:
+    def up(self, name: str, /, *, reason: str | None = None) -> None:
         with self._handler.update(self.resource_type, name) as drive:
             drive.desired_state = DriveOperatingState.UP
             drive.state = DriveOperatingState.UP

@@ -13,5 +13,6 @@ RUN dnf install -y epel-release dnf-plugins-core && \
     dnf remove -y --setopt=clean_requirements_on_remove=False python3-pip && \
     dnf clean all --enablerepo=\*
 
-# Compatibility checks select 3.9; newer tooling can explicitly select 3.12.
-RUN uv python install 3.9 3.12
+# Preinstall the repository interpreter without replacing distribution Python.
+COPY .python-version /opt/cta/.python-version
+RUN uv python install "$(cat /opt/cta/.python-version)"

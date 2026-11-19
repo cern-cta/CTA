@@ -9,7 +9,7 @@ logical access patterns independent of physical arrangements.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import LogicalLibrary, LogicalLibraryState
 
@@ -33,7 +33,7 @@ class LogicalLibraryDao(Protocol):
         """
         ...
 
-    def list(self, *, state: Optional[LogicalLibraryState] = None) -> Iterator[LogicalLibrary]:
+    def list(self, *, state: LogicalLibraryState | None = None) -> Iterator[LogicalLibrary]:
         """List logical libraries, optionally filtered by disabled status.
 
         Args:
@@ -84,8 +84,8 @@ class LogicalLibraryDao(Protocol):
         name: str,
         /,
         *,
-        physical_library_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        physical_library_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing logical library.
 

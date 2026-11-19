@@ -12,7 +12,7 @@ no match is visible; the `find_*` variants return `None` instead so
 callers can branch on existence without exception handling.
 """
 
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.tapeserver.sdk.controllers.protocols.drive import DriveController
 
@@ -37,7 +37,7 @@ class DriveControllerProvider(Protocol):
     def find_drive_controller(
         self,
         serial_number: str,
-    ) -> Optional[DriveController]:
+    ) -> DriveController | None:
         """Return the drive controller matching `serial_number`, or `None`."""
         ...
 
@@ -55,6 +55,6 @@ class DriveControllerProvider(Protocol):
     def find_drive_controller_by_name(
         self,
         name: str,
-    ) -> Optional[DriveController]:
+    ) -> DriveController | None:
         """Return the drive controller matching `name`, or `None`."""
         ...

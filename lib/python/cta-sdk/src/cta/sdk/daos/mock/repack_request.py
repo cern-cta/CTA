@@ -3,7 +3,7 @@
 
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Literal, Optional
+from typing import Literal, override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import RepackRequestDao
@@ -14,7 +14,6 @@ from cta.sdk.models import (
     RepackStatistics,
     Tape,
 )
-from typing_extensions import override
 
 
 class RepackRequestDaoMock(RepackRequestDao):
@@ -31,9 +30,9 @@ class RepackRequestDaoMock(RepackRequestDao):
         *,
         mount_policy_name: str,
         no_recall: bool = False,
-        buffer_url: Optional[str] = None,
-        max_files_to_select: Optional[int] = None,
-        custom_operation: Optional[Literal["MOVE", "ADDCOPIES"]] = None,
+        buffer_url: str | None = None,
+        max_files_to_select: int | None = None,
+        custom_operation: Literal["MOVE", "ADDCOPIES"] | None = None,
     ) -> None:
         # `RepackRequest` has no field for mount_policy_name, no_recall, max_files_to_select or
         # custom_operation, so those only steer the request that the real scheduler would run;

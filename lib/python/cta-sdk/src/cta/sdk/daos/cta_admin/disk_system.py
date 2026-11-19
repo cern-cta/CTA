@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Union
+from datetime import UTC, datetime, timedelta
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import DiskSystemDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import DiskSystem, Metadata
-from typing_extensions import override
 
 
 class DiskSystemDaoCtaAdmin(DiskSystemDao):
@@ -32,10 +31,10 @@ class DiskSystemDaoCtaAdmin(DiskSystemDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -67,7 +66,7 @@ class DiskSystemDaoCtaAdmin(DiskSystemDao):
         disk_instance_space_name: str,
         file_regex: str,
         desired_min_free_space: int = 1_000_000_000_000,
-        sleep_time: Union[int, timedelta] = 3600,
+        sleep_time: int | timedelta = 3600,
         comment: str = "From python cta-sdk",
     ) -> None:
         self._wrapper.create(
@@ -89,10 +88,10 @@ class DiskSystemDaoCtaAdmin(DiskSystemDao):
         name: str,
         /,
         *,
-        file_regex: Optional[str] = None,
-        desired_min_free_space: Optional[int] = None,
-        sleep_time: Union[int, timedelta, None] = None,
-        comment: Optional[str] = None,
+        file_regex: str | None = None,
+        desired_min_free_space: int | None = None,
+        sleep_time: int | timedelta | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if file_regex is None else {"fileregexp": file_regex}

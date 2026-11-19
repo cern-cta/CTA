@@ -4,11 +4,9 @@
 
 set -euo pipefail
 
-export PATH="/opt/docs/bin:$PATH"
-
-# For now just a convenience script so that we don't have to rebuild the pipeline images
-if [[ ! -f /opt/docs-requirements.txt ]] || ! cmp --silent docs/requirements.txt /opt/docs-requirements.txt; then
-  python3 -m venv --clear build/docs/venv
-  uv pip sync --python build/docs/venv/bin/python docs/requirements.txt
-  export PATH="$CI_PROJECT_DIR/build/docs/venv/bin:$PATH"
-fi
+# Use the same interpreter and locked dependencies as local documentation builds.
+cta_docs_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+UV_PROJECT_ENVIRONMENT="$cta_docs_root/build/docs/venv" uv sync \
+  --project "$cta_docs_root" --locked --only-group docs
+export PATH="$cta_docs_root/build/docs/venv/bin:$PATH"
+unset cta_docs_root

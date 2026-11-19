@@ -39,3 +39,7 @@ RUN cargo install cargo-deny@${CARGO_DENY_VERSION} \
                   cargo-sonar@${CARGO_SONAR_VERSION} \
                   taplo-cli@${TAPLO_VERSION} && \
     rm -rf /root/.cargo/registry /root/.cargo/git /tmp/cargo-install*
+
+# Preinstall the repository interpreter without replacing distribution Python.
+COPY .python-version /opt/cta/.python-version
+RUN uv python install "$(cat /opt/cta/.python-version)"

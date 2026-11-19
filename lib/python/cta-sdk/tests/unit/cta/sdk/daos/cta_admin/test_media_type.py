@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -30,10 +30,10 @@ def ref_obj() -> MediaType:
         metadata=Metadata(
             creation_user_name="jleduc",
             creation_host_name="cta-frontend01.cern.ch",
-            creation_time=datetime(2020, 6, 29, 21, 8, 22, tzinfo=timezone.utc),
+            creation_time=datetime(2020, 6, 29, 21, 8, 22, tzinfo=UTC),
             update_user_name="jleduc",
             update_host_name="cta-frontend01.cern.ch",
-            update_time=datetime(2020, 6, 29, 21, 8, 22, tzinfo=timezone.utc),
+            update_time=datetime(2020, 6, 29, 21, 8, 22, tzinfo=UTC),
             comment="IBM 3592JC cartridge formated at 7 TB",
         ),
     )

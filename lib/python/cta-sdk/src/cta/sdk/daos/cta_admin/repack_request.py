@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
-from typing import Any, Literal, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any, Literal, override
 
 from cta.sdk.daos.cta_admin._wrapper import FLAG, CtaAdminWrapper
 from cta.sdk.daos.protocols import RepackRequestDao
@@ -13,7 +13,6 @@ from cta.sdk.models import (
     RepackState,
     RepackStatistics,
 )
-from typing_extensions import override
 
 
 class RepackRequestDaoCtaAdmin(RepackRequestDao):
@@ -34,7 +33,7 @@ class RepackRequestDaoCtaAdmin(RepackRequestDao):
             disk_buffer_url=raw_data["repackBufferUrl"],
             duration=timedelta(seconds=int(raw_data["repackTime"])),
             finished_time=(
-                datetime.fromtimestamp(int(time), tz=timezone.utc)
+                datetime.fromtimestamp(int(time), tz=UTC)
                 if ((time := raw_data.get("repackFinishedTime")) and time != "0")
                 else None
             ),
@@ -45,7 +44,7 @@ class RepackRequestDaoCtaAdmin(RepackRequestDao):
                 byte_count=int(raw_data["totalBytesOnTapeAtStart"]),
                 creation_user_name=raw_data["creationLog"]["username"],
                 creation_host_name=raw_data["creationLog"]["host"],
-                creation_time=datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                creation_time=datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 is_all_files_selected_at_start=raw_data["allFilesSelectedAtStart"],
             ),
             archive_statistics=RepackStatistics(
@@ -86,9 +85,9 @@ class RepackRequestDaoCtaAdmin(RepackRequestDao):
         *,
         mount_policy_name: str,
         no_recall: bool = False,
-        buffer_url: Optional[str] = None,
-        max_files_to_select: Optional[int] = None,
-        custom_operation: Optional[Literal["MOVE", "ADDCOPIES"]] = None,
+        buffer_url: str | None = None,
+        max_files_to_select: int | None = None,
+        custom_operation: Literal["MOVE", "ADDCOPIES"] | None = None,
     ) -> None:
         data = {"mountpolicy": mount_policy_name}
         data |= {} if buffer_url is None else {"bufferurl": buffer_url}

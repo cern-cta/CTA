@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -26,10 +26,10 @@ def ref_obj() -> DiskInstance:
         metadata=Metadata(
             creation_user_name="mvelosob",
             creation_host_name="ctapreproductionfrontend01",
-            creation_time=datetime(2022, 4, 27, 13, 10, 9, tzinfo=timezone.utc),
+            creation_time=datetime(2022, 4, 27, 13, 10, 9, tzinfo=UTC),
             update_user_name="mvelosob",
             update_host_name="ctapreproductionfrontend01",
-            update_time=datetime(2022, 4, 27, 13, 10, 9, tzinfo=timezone.utc),
+            update_time=datetime(2022, 4, 27, 13, 10, 9, tzinfo=UTC),
             comment="eosctaatlaspps instance for existing archive file entries",
         ),
     )

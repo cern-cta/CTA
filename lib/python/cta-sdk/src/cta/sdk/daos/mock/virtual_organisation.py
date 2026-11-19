@@ -3,13 +3,12 @@
 
 from collections.abc import Iterator
 from itertools import chain
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import VirtualOrganisationDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import DiskInstance, StorageClass, TapePool, VirtualOrganisation
-from typing_extensions import override
 
 
 class VirtualOrganisationDaoMock(VirtualOrganisationDao):
@@ -74,12 +73,12 @@ class VirtualOrganisationDaoMock(VirtualOrganisationDao):
         name: str,
         /,
         *,
-        disk_instance_name: Optional[str] = None,
-        is_repack_vo: Optional[bool] = None,
-        max_read_drives: Optional[int] = None,
-        max_write_drives: Optional[int] = None,
-        max_file_size: Optional[int] = None,
-        comment: Optional[str] = None,
+        disk_instance_name: str | None = None,
+        is_repack_vo: bool | None = None,
+        max_read_drives: int | None = None,
+        max_write_drives: int | None = None,
+        max_file_size: int | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as virtual_organisation:
             if disk_instance_name is not None:

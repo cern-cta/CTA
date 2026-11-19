@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import UserRequestDao
 from cta.sdk.models import MountType, UserRequest
-from typing_extensions import override
 
 
 class UserRequestDaoMock(UserRequestDao):
@@ -24,7 +23,7 @@ class UserRequestDaoMock(UserRequestDao):
         self._handler = mock_handler
 
     @override
-    def list(self, *, request_type: Optional[MountType] = None) -> Iterator[UserRequest]:
+    def list(self, *, request_type: MountType | None = None) -> Iterator[UserRequest]:
         yield from (
             user_request
             for user_request in self._handler.iter(self.resource_type)

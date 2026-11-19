@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import ActivityMountRuleDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import ActivityMountRule, DiskInstance, MountPolicy
-from typing_extensions import override
 
 
 class ActivityMountRuleDaoMock(ActivityMountRuleDao):
@@ -61,8 +60,8 @@ class ActivityMountRuleDaoMock(ActivityMountRuleDao):
         disk_instance_name: str,
         regex: str,
         /,
-        mount_policy_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        mount_policy_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, user_name, disk_instance_name, regex) as activity_mount_rule:
             if mount_policy_name is not None:

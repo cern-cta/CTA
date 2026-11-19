@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import PhysicalLibraryDao
 from cta.sdk.exceptions import BackendError
 from cta.sdk.models import LogicalLibrary, PhysicalLibrary, PhysicalLibraryState
-from typing_extensions import override
 
 
 class PhysicalLibraryDaoMock(PhysicalLibraryDao):
@@ -27,11 +26,11 @@ class PhysicalLibraryDaoMock(PhysicalLibraryDao):
         model: str,
         physical_cartridge_slots: int,
         physical_drive_slots: int,
-        gui_url: Optional[str] = None,
-        webcam_url: Optional[str] = None,
-        type: Optional[str] = None,
-        location: Optional[str] = None,
-        available_cartridge_slots: Optional[int] = None,
+        gui_url: str | None = None,
+        webcam_url: str | None = None,
+        type: str | None = None,
+        location: str | None = None,
+        available_cartridge_slots: int | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         physical_library = PhysicalLibrary(
@@ -70,7 +69,7 @@ class PhysicalLibraryDaoMock(PhysicalLibraryDao):
         self._handler.delete(self.resource_type, name)
 
     @override
-    def list(self, *, state: Optional[PhysicalLibraryState] = None) -> Iterator[PhysicalLibrary]:
+    def list(self, *, state: PhysicalLibraryState | None = None) -> Iterator[PhysicalLibrary]:
         yield from (
             physical_library
             for physical_library in self._handler.iter(self.resource_type)
@@ -83,13 +82,13 @@ class PhysicalLibraryDaoMock(PhysicalLibraryDao):
         name: str,
         /,
         *,
-        gui_url: Optional[str] = None,
-        webcam_url: Optional[str] = None,
-        location: Optional[str] = None,
-        physical_cartridge_slots: Optional[int] = None,
-        available_cartridge_slots: Optional[int] = None,
-        physical_drive_slots: Optional[int] = None,
-        comment: Optional[str] = None,
+        gui_url: str | None = None,
+        webcam_url: str | None = None,
+        location: str | None = None,
+        physical_cartridge_slots: int | None = None,
+        available_cartridge_slots: int | None = None,
+        physical_drive_slots: int | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as physical_library:
             if gui_url is not None:

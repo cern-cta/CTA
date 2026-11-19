@@ -3,9 +3,8 @@
 
 import os
 import tempfile
-from typing import Union
 
-Value = Union[str, int]
+Value = str | int
 Labels = dict[str, Value]
 
 

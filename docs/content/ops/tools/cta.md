@@ -24,7 +24,8 @@ See the [system requirements](../../dev/guides/python/cta-tapeserver-sdk/index.m
 
 ### Prerequisites
 
-- Python 3.9 or later.
+- Python 3.15 or later, installed alongside distribution Python.
+  Run the installation commands in a virtual environment using that interpreter.
 - A reachable CTA frontend, plus the `cta-admin` binary on the host running the CLI.
 - An XRootD SSS keytab for authentication (typically `/etc/cta/tape-local.sss.keytab`).
 - A CTA configuration file (typically `/etc/cta/cta-cli.conf`).

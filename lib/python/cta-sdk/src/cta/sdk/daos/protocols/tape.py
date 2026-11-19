@@ -9,7 +9,7 @@ space and changing tape state.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import Tape, TapeState, VerificationStatus
 
@@ -38,16 +38,16 @@ class TapeDao(Protocol):
         self,
         /,
         *,
-        media_type_name: Optional[str] = None,
-        vendor: Optional[str] = None,
-        logical_library_name: Optional[str] = None,
-        tape_pool_name: Optional[str] = None,
-        virtual_organisation_name: Optional[str] = None,
-        full: Optional[bool] = None,
-        fxid_file: Optional[str] = None,
-        state: Optional[TapeState] = None,
-        purchase_order: Optional[str] = None,
-        physical_library_name: Optional[str] = None,
+        media_type_name: str | None = None,
+        vendor: str | None = None,
+        logical_library_name: str | None = None,
+        tape_pool_name: str | None = None,
+        virtual_organisation_name: str | None = None,
+        full: bool | None = None,
+        fxid_file: str | None = None,
+        state: TapeState | None = None,
+        purchase_order: str | None = None,
+        physical_library_name: str | None = None,
         missing_file_copies: bool = False,
     ) -> Iterator[Tape]:
         """List tapes with optional filtering.
@@ -105,7 +105,7 @@ class TapeDao(Protocol):
         logical_library_name: str,
         tape_pool_name: str,
         full: bool = False,
-        purchase_order: Optional[str] = None,
+        purchase_order: str | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         """Create a new tape.
@@ -131,16 +131,16 @@ class TapeDao(Protocol):
         vid: str,
         /,
         *,
-        media_type_name: Optional[str] = None,
-        vendor: Optional[str] = None,
-        logical_library_name: Optional[str] = None,
-        tape_pool_name: Optional[str] = None,
-        verification_status: Optional[VerificationStatus] = None,
-        full: Optional[bool] = None,
-        purchase_order: Optional[str] = None,
-        dirty: Optional[bool] = None,
-        encryption_key_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        media_type_name: str | None = None,
+        vendor: str | None = None,
+        logical_library_name: str | None = None,
+        tape_pool_name: str | None = None,
+        verification_status: VerificationStatus | None = None,
+        full: bool | None = None,
+        purchase_order: str | None = None,
+        dirty: bool | None = None,
+        encryption_key_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update a tape's metadata.
 

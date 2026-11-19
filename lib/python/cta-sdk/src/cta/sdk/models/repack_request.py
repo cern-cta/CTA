@@ -4,10 +4,9 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Annotated, Any, Final, Optional
+from typing import Annotated, Any, Final, override
 
 from cta.sdk.units import Byte, Percentage
-from typing_extensions import override
 
 
 class RepackState(Enum):
@@ -22,7 +21,7 @@ class RepackState(Enum):
         TO_EXPAND: UserRequest waiting to be popped by the maintenance daemon.
     """
 
-    # Enum supplies the member name, not self, to this Python 3.9 hook.
+    # Enum supplies the member name, not self, to this hook.
     def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]  # noqa: N805
         return name.lower().replace("_", "-")
 
@@ -111,7 +110,7 @@ class RepackRequest:
     failed_file_count: int
     disk_buffer_url: str
     duration: timedelta
-    finished_time: Optional[datetime]
+    finished_time: datetime | None
     destination_infos: list[dict[str, Any]]
     last_expanded_fseq: int
     start_info: RepackStartInfo

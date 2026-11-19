@@ -9,7 +9,6 @@ repositories without real hardware.
 """
 
 from collections.abc import Callable
-from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -47,7 +46,7 @@ def _drive_device(
     cta_name: str = "T0-LIB0-DRV0",
     address: str = "257",
     ordinal: str = "0",
-    parent: Optional[MagicMock] = None,
+    parent: MagicMock | None = None,
 ):
     drive = make_device(
         sys_name=sys_name,

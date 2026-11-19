@@ -9,7 +9,7 @@ Media types define the technical characteristics of tape media that can be used 
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import MediaType
 
@@ -83,10 +83,10 @@ class MediaTypeDao(Protocol):
         name: str,
         /,
         *,
-        cartridge_type: Optional[str] = None,
-        primary_density_code: Optional[int] = None,
-        secondary_density_code: Optional[int] = None,
-        comment: Optional[str] = None,
+        cartridge_type: str | None = None,
+        primary_density_code: int | None = None,
+        secondary_density_code: int | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing media type.
 

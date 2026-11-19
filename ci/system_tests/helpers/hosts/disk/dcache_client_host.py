@@ -5,8 +5,7 @@ import json
 import shlex
 import time
 from pathlib import Path
-
-from typing_extensions import override
+from typing import override
 
 from system_tests.helpers.utils.timeout import Timeout
 

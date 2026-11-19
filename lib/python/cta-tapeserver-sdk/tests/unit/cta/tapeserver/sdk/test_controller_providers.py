@@ -4,7 +4,6 @@
 """Tests for the SCSI-backed controller providers."""
 
 from collections.abc import Callable
-from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -30,7 +29,7 @@ def _drive_nst(
     device_factory: Callable[..., MagicMock],
     *,
     sys_name: str = "nst0",
-    serial: Optional[str] = "DRSN",
+    serial: str | None = "DRSN",
     cta_name: str = "T0-LIB0-DRV0",
 ):
     parent = MagicMock(name="ScsiTarget")
@@ -103,7 +102,7 @@ def _library_sg(
     device_factory: Callable[..., MagicMock],
     *,
     sys_name: str = "sg0",
-    serial: Optional[str] = "LIBSN",
+    serial: str | None = "LIBSN",
     cta_name: str = "T0-LIB0",
 ):
     return device_factory(

@@ -8,7 +8,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 
 import pytest
 
@@ -94,7 +94,7 @@ def _submit_repack_request(
     move_only: bool = False,
     with_back_pressure: bool = False,
     no_recall: bool = False,
-    max_files_to_select: Optional[int] = None,
+    max_files_to_select: int | None = None,
     submit_only: bool = False,
 ) -> None:
     repack_timeout_secs = 120

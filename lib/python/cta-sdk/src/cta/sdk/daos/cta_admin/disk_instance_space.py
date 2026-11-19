@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Union
+from datetime import UTC, datetime, timedelta
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import DiskInstanceSpaceDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import DiskInstanceSpace, Metadata
-from typing_extensions import override
 
 
 class DiskInstanceSpaceDaoCtaAdmin(DiskInstanceSpaceDao):
@@ -31,10 +30,10 @@ class DiskInstanceSpaceDaoCtaAdmin(DiskInstanceSpaceDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -68,7 +67,7 @@ class DiskInstanceSpaceDaoCtaAdmin(DiskInstanceSpaceDao):
         /,
         *,
         free_space_url: str,
-        refresh_interval: Union[int, timedelta] = 10,
+        refresh_interval: int | timedelta = 10,
         comment: str = "From python cta-sdk",
     ) -> None:
         self._wrapper.create(
@@ -92,9 +91,9 @@ class DiskInstanceSpaceDaoCtaAdmin(DiskInstanceSpaceDao):
         disk_instance_name: str,
         /,
         *,
-        free_space_url: Optional[str] = None,
-        refresh_interval: Union[int, timedelta, None] = None,
-        comment: Optional[str] = None,
+        free_space_url: str | None = None,
+        refresh_interval: int | timedelta | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if free_space_url is None else {"freespacequeryurl": free_space_url}

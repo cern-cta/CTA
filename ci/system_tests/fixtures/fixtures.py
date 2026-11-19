@@ -3,12 +3,12 @@
 
 import json
 import shutil
-import sys
+import tomllib
 import uuid
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -31,11 +31,6 @@ from system_tests.helpers.hosts import (
 from system_tests.helpers.restart_expectations import RestartExpectations
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 # This file could be split into multiple files eventually when necessary
 
@@ -178,19 +173,17 @@ def remote_scripts_dir() -> Path:
 
 
 @pytest.fixture(scope="session")
-def namespace(request: SubRequest) -> Optional[str]:
+def namespace(request: SubRequest) -> str | None:
     return request.config.getoption("--namespace", default=None)
 
 
 @pytest.fixture(scope="session")
-def connection_config(request: SubRequest) -> Optional[Path]:
+def connection_config(request: SubRequest) -> Path | None:
     return request.config.getoption("--connection-config", default=None)
 
 
 @pytest.fixture(scope="session")
-def env(
-    connection_config: Optional[Path], namespace: Optional[str], restart_expectations: RestartExpectations
-) -> TestEnv:
+def env(connection_config: Path | None, namespace: str | None, restart_expectations: RestartExpectations) -> TestEnv:
     """Give tests access to the different hosts (CLI, frontend, taped, and others)."""
     if namespace and connection_config:
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")

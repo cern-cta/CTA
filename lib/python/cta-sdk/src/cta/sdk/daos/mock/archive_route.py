@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import ArchiveRouteDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, ArchiveRouteType, StorageClass, TapePool
-from typing_extensions import override
 
 
 class ArchiveRouteDaoMock(ArchiveRouteDao):
@@ -63,8 +62,8 @@ class ArchiveRouteDaoMock(ArchiveRouteDao):
         type: ArchiveRouteType,
         /,
         *,
-        tape_pool_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        tape_pool_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, storage_class_name, copy_number, type) as archive_route:
             if tape_pool_name is not None:

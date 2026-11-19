@@ -5,9 +5,7 @@ import shlex
 import socket
 import subprocess
 from pathlib import Path
-from typing import Optional
-
-from typing_extensions import override
+from typing import override
 
 from .remote_connection import ExecResult, RemoteConnection
 
@@ -51,7 +49,7 @@ class SSHConnection(RemoteConnection):
         src_path: Path,
         dst_path: Path,
         throw_on_failure: bool = True,
-        permissions: Optional[str] = None,
+        permissions: str | None = None,
     ) -> None:
         command_args = ["scp", str(src_path), f"{self.user}@{self.host}:{dst_path}"]
         full_command = shlex.join(command_args)

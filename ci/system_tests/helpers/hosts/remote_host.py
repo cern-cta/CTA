@@ -4,7 +4,6 @@
 import asyncio
 import time
 from pathlib import Path
-from typing import Optional
 
 from system_tests.helpers.connections.remote_connection import ExecResult, RemoteConnection
 from system_tests.helpers.utils.timeout import Timeout
@@ -57,7 +56,7 @@ class RemoteHost:
         dst_path: Path,
         *,
         throw_on_failure: bool = True,
-        permissions: Optional[str] = None,
+        permissions: str | None = None,
     ) -> None:
         return self.conn.copy_to(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
 

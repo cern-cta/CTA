@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from datetime import timedelta
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -59,10 +58,10 @@ def create(
 def update(
     obj: AppContext,
     name: str,
-    file_regex: Optional[str],
-    targeted_free_space: Optional[int],
-    sleep_time: Optional[timedelta],
-    comment: Optional[str],
+    file_regex: str | None,
+    targeted_free_space: int | None,
+    sleep_time: timedelta | None,
+    comment: str | None,
 ):
     """Update CTA disk disk system."""
     obj.cta_client.disk_system.update(

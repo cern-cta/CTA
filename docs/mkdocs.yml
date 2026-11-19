@@ -70,7 +70,7 @@ plugins:
             - ../lib/python/cta-common/src
             - ../tools/cta-cli/src
           inventories:
-            - https://docs.python.org/3.9/objects.inv
+            - https://docs.python.org/3.15/objects.inv
           options:
             allow_inspection: false
             show_if_no_docstring: true

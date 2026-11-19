@@ -8,11 +8,11 @@ import shlex
 import sys
 import time
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional, Union, cast
+from typing import Any, cast
 
 import fastjsonschema
 import pytest
@@ -55,7 +55,7 @@ class RetrieveQueueCleanupPaths:
     files: list[Path]
     tapes: list[list[str]]
     queue_cache_max_age_secs: int
-    last_prepare_time: Optional[float] = None
+    last_prepare_time: float | None = None
 
 
 def _response_for_path(response: dict[str, Any], path: Path) -> dict[str, Any]:
@@ -1153,7 +1153,10 @@ class TestEosdf:
 
 def _set_tape_states(cta_cli: CtaCliHost, tapes: list[str], states: list[str]) -> None:
     with ThreadPoolExecutor(max_workers=len(tapes)) as executor:
-        futures = [executor.submit(cta_cli.transition_tape_state, vid, state) for vid, state in zip(tapes, states)]
+        futures = [
+            executor.submit(cta_cli.transition_tape_state, vid, state)
+            for vid, state in zip(tapes, states, strict=False)
+        ]
         for future in futures:
             future.result()
 
@@ -1267,7 +1270,7 @@ class TestRetrieveQueueCleanup:
         disk_instance_name: str,
         retrieve_queue_cleanup_paths: RetrieveQueueCleanupPaths,
         states: tuple[str, str, str],
-        selected_queue: Optional[int],
+        selected_queue: int | None,
     ) -> None:
         tapes = retrieve_queue_cleanup_paths.tapes[2]
         path = retrieve_queue_cleanup_paths.files[2]
@@ -1365,7 +1368,7 @@ class TestRetrieveQueueCleanup:
         start_states: tuple[str, str],
         start_queue: int,
         end_states: tuple[str, str],
-        end_queue: Optional[int],
+        end_queue: int | None,
     ) -> None:
         path = retrieve_queue_cleanup_paths.files[1]
         tapes = retrieve_queue_cleanup_paths.tapes[1]
@@ -1438,8 +1441,8 @@ class TestRetrieveQueueCleanup:
             )
 
             # Detect which ACTIVE tape received the job; tape_1 (DISABLED) must never win.
-            initial_tape: Optional[str] = None
-            other_active: Optional[str] = None
+            initial_tape: str | None = None
+            other_active: str | None = None
             deadline = time.monotonic() + 30
             while time.monotonic() < deadline:
                 queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
@@ -1590,7 +1593,7 @@ class TestRuntimeDeployment:
             with path.open(encoding="utf-8") as f:
                 return json.load(f)
 
-        def iter_lines(path: Union[Path, str]) -> Iterator[str]:
+        def iter_lines(path: Path | str) -> Iterator[str]:
             if path == "-":
                 for line in sys.stdin:
                     yield line

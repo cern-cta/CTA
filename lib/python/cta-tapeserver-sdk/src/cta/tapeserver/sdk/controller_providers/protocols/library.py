@@ -21,7 +21,7 @@ The `get_*` methods raise
 no match is visible; the `find_*` variants return `None` instead.
 """
 
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.tapeserver.sdk.controllers.protocols.library import LibraryController, ManagedLibraryController
 
@@ -46,7 +46,7 @@ class LibraryControllerProvider(Protocol):
     def find_library_controller(
         self,
         serial_number: str,
-    ) -> Optional[LibraryController]:
+    ) -> LibraryController | None:
         """Return the library controller matching `serial_number`, or `None`."""
         ...
 
@@ -64,7 +64,7 @@ class LibraryControllerProvider(Protocol):
     def find_library_controller_by_name(
         self,
         name: str,
-    ) -> Optional[LibraryController]:
+    ) -> LibraryController | None:
         """Return the library controller matching `name`, or `None`."""
         ...
 
@@ -91,7 +91,7 @@ class ManagedLibraryControllerProvider(Protocol):
     def find_library_controller(
         self,
         serial_number: str,
-    ) -> Optional[ManagedLibraryController]:
+    ) -> ManagedLibraryController | None:
         """Return the managed library controller matching `serial_number`, or `None`."""
         ...
 
@@ -109,7 +109,7 @@ class ManagedLibraryControllerProvider(Protocol):
     def find_library_controller_by_name(
         self,
         name: str,
-    ) -> Optional[ManagedLibraryController]:
+    ) -> ManagedLibraryController | None:
         """Return the managed library controller matching `name`, or `None`."""
         ...
 
@@ -132,6 +132,6 @@ class ManagedLibraryControllerProvider(Protocol):
     def find_library_controller_from_drive_name(
         self,
         drive_name: str,
-    ) -> Optional[ManagedLibraryController]:
+    ) -> ManagedLibraryController | None:
         """Return the managed library controller hosting drive `drive_name`, or `None`."""
         ...

@@ -15,12 +15,12 @@ Functions:
 import types
 from functools import lru_cache
 from inspect import isclass
-from typing import Annotated, Any, ClassVar, Final, Literal, Optional, Union, get_args, get_origin
+from typing import Annotated, Any, ClassVar, Final, Literal, Union, get_args, get_origin
 
 TRANSPARENT_TYPES = {Annotated, Final, ClassVar}
 
 
-def unwrap_optional_type(tp: Any) -> Optional[type]:
+def unwrap_optional_type(tp: Any) -> type | None:
     """Return the inner type of an Optional type, or None if not Optional."""
     origin = get_origin(tp)
 

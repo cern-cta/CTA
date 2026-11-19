@@ -9,9 +9,10 @@ It also manages version detection for the Cli package.
 """
 
 import importlib.util
+from collections.abc import Callable
 from dataclasses import dataclass
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import click
 from cta.cli.config import AppConfig
@@ -44,8 +45,8 @@ class AppContext:
 
     config: AppConfig
     cta_client: CtaClient
-    workflow_client: Optional["WorkflowRpcClient"] = None
-    workflow_cmd_opts: Optional[dict[str, Any]] = None
+    workflow_client: WorkflowRpcClient | None = None
+    workflow_cmd_opts: dict[str, Any] | None = None
 
 
 F = TypeVar("F", bound=Callable[..., Any])

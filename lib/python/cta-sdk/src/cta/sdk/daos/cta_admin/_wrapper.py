@@ -7,7 +7,7 @@ import os
 import subprocess
 from collections.abc import Generator, Mapping
 from logging import getLogger
-from typing import Any, Optional, Union
+from typing import Any
 
 from cta.sdk.exceptions import BackendError, ResourceAlreadyExistsError, ResourceConflictError, ResourceNotFoundError
 
@@ -20,8 +20,8 @@ class CtaAdminWrapper:
         self,
         exec_path: str = "/usr/bin/cta-admin",
         timeout: int = 60,
-        sss_keytab_file: Optional[str] = None,
-        cta_conf_file: Optional[str] = None,
+        sss_keytab_file: str | None = None,
+        cta_conf_file: str | None = None,
     ):
         self.base_command = [exec_path, "--jsonl"] + (["--config", cta_conf_file] if cta_conf_file is not None else [])
         self.timeout = timeout
@@ -63,7 +63,7 @@ class CtaAdminWrapper:
     def run_streaming_command(
         self,
         cmd: list[str],
-    ) -> Generator[str, None, None]:
+    ) -> Generator[str]:
         LOGGER.debug("Executing shell command (streaming): %s", cmd)
 
         with subprocess.Popen(  # noqa: S603 - configured executable, argv only.
@@ -97,8 +97,8 @@ class CtaAdminWrapper:
     def create(
         self,
         resource_type: str,
-        resource_id: Union[dict[str, Any], str],
-        data: Optional[dict[str, Any]] = None,
+        resource_id: dict[str, Any] | str,
+        data: dict[str, Any] | None = None,
     ) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaAdminWrapper.build_options(resource_id)
         payload += CtaAdminWrapper.build_options(data)
@@ -109,7 +109,7 @@ class CtaAdminWrapper:
                 raise ResourceAlreadyExistsError(resource_type, resource_id) from e
             raise
 
-    def update(self, resource_type: str, resource_id: Union[dict[str, Any], str], data: dict[str, Any]) -> None:
+    def update(self, resource_type: str, resource_id: dict[str, Any] | str, data: dict[str, Any]) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaAdminWrapper.build_options(resource_id)
         payload += CtaAdminWrapper.build_options(data)
 
@@ -120,9 +120,7 @@ class CtaAdminWrapper:
                 raise ResourceNotFoundError(resource_type, resource_id) from e
             raise
 
-    def delete(
-        self, resource_type: str, resource_id: Union[dict[str, Any], str], data: Optional[dict[str, Any]] = None
-    ) -> None:
+    def delete(self, resource_type: str, resource_id: dict[str, Any] | str, data: dict[str, Any] | None = None) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaAdminWrapper.build_options(resource_id)
         payload += CtaAdminWrapper.build_options(data)
 
@@ -133,7 +131,7 @@ class CtaAdminWrapper:
                 raise ResourceNotFoundError(resource_type, resource_id) from e
             raise
 
-    def get(self, resource_type: str, resource_id: Union[dict[str, Any], str]) -> dict[str, Any]:
+    def get(self, resource_type: str, resource_id: dict[str, Any] | str) -> dict[str, Any]:
         payload = [resource_id] if isinstance(resource_id, str) else CtaAdminWrapper.build_options(resource_id)
         try:
             cmd_call = self._run_command([*self.base_command, resource_type, "ls", *payload])
@@ -149,43 +147,39 @@ class CtaAdminWrapper:
             else:
                 return json.loads(lines[0])
 
-    def list(self, resource_type: str, filters: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+    def list(self, resource_type: str, filters: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         payload = CtaAdminWrapper.build_options(filters)
 
         cmd_call = self._run_command([*self.base_command, resource_type, "ls", *payload])
         return [json.loads(line) for line in cmd_call.stdout.splitlines()]
 
-    def iter(
-        self, resource_type: str, filters: Optional[dict[str, Any]] = None
-    ) -> Generator[dict[str, Any], None, None]:
+    def iter(self, resource_type: str, filters: dict[str, Any] | None = None) -> Generator[dict[str, Any]]:
         payload = CtaAdminWrapper.build_options(filters)
         yield from (
             json.loads(line) for line in self.run_streaming_command([*self.base_command, resource_type, "ls", *payload])
         )
 
-    def put_up(
-        self, resource_type: str, resource_id: Union[dict[str, Any], str], data: Optional[dict[str, Any]] = None
-    ) -> None:
+    def put_up(self, resource_type: str, resource_id: dict[str, Any] | str, data: dict[str, Any] | None = None) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaAdminWrapper.build_options(resource_id)
         payload += CtaAdminWrapper.build_options(data)
         self._run_command([*self.base_command, resource_type, "up", *payload])
 
     def put_down(
-        self, resource_type: str, resource_id: Union[dict[str, Any], str], data: Optional[dict[str, Any]] = None
+        self, resource_type: str, resource_id: dict[str, Any] | str, data: dict[str, Any] | None = None
     ) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaAdminWrapper.build_options(resource_id)
         payload += CtaAdminWrapper.build_options(data)
         self._run_command([*self.base_command, resource_type, "down", *payload])
 
     def reclaim(
-        self, resource_type: str, resource_id: Union[dict[str, Any], str], data: Optional[dict[str, Any]] = None
+        self, resource_type: str, resource_id: dict[str, Any] | str, data: dict[str, Any] | None = None
     ) -> None:
         payload = [resource_id] if isinstance(resource_id, str) else CtaAdminWrapper.build_options(resource_id)
         payload += CtaAdminWrapper.build_options(data)
         self._run_command([*self.base_command, resource_type, "reclaim", *payload])
 
     @staticmethod
-    def build_options(data: Optional[Mapping[str, object]] = None) -> builtins.list[str]:
+    def build_options(data: Mapping[str, object] | None = None) -> builtins.list[str]:
         if data is None:
             return []
 

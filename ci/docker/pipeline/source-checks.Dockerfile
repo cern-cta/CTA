@@ -27,3 +27,7 @@ RUN dnf install -y epel-release && \
 
 COPY --from=cppcheck-build /usr/bin/cppcheck /usr/bin/cppcheck
 COPY --from=cppcheck-build /usr/share/cppcheck /usr/share/cppcheck
+
+# Preinstall the repository interpreter without replacing distribution Python.
+COPY .python-version /opt/cta/.python-version
+RUN uv python install "$(cat /opt/cta/.python-version)"

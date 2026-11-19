@@ -12,21 +12,19 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 
 ## Preview locally
 
-Install the Rust toolchain specified by `rust-toolchain.toml` as well as Python 3.9 or later.
+Install the Rust toolchain specified by `rust-toolchain.toml` and uv.
+uv installs the Python interpreter selected by the repository’s `.python-version`.
 The build generates the Rust and Python API references automatically.
 The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
 
 From the repository root:
 
 ```bash
-cd docs
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-mkdocs serve
+uv run --locked --only-group docs mkdocs serve --config-file docs/mkdocs.yml
 ```
 
-Open <http://127.0.0.1:8000/>. For later sessions, enter `docs/`, activate the same environment, and run `mkdocs serve`.
+Open <http://127.0.0.1:8000/>.
+Run the same command from the repository root for later sessions.
 
 ## Organize the content
 

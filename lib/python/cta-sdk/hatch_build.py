@@ -6,11 +6,10 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, override
 
 from hatchling.builders.config import BuilderConfig
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
-from typing_extensions import override
 
 
 def _has_git_repo(root: Path) -> bool:

@@ -56,7 +56,7 @@ class CtaRmcdHost(RemoteHost):
         return [(drive["driveOrdinal"], drive["vid"]) for drive in drives if drive["vid"]]
 
     @staticmethod
-    def list_all_tapes_in_libraries(cta_rmcd_hosts: Sequence["CtaRmcdHost"]) -> list[str]:
+    def list_all_tapes_in_libraries(cta_rmcd_hosts: Sequence[CtaRmcdHost]) -> list[str]:
         """List unique volume tags from multiple tape libraries."""
         volume_tags = set()
         for rmcd in cta_rmcd_hosts:

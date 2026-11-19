@@ -3,13 +3,12 @@
 
 import builtins
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import FLAG, CtaAdminWrapper
 from cta.sdk.daos.protocols import FailedRequestDao
 from cta.sdk.models import Checksum, DiskFile, FailedRequest, FailedRequestSummary, MountType, TapeFile
-from typing_extensions import override
 
 
 class FailedRequestDaoCtaAdmin(FailedRequestDao):
@@ -30,7 +29,7 @@ class FailedRequestDaoCtaAdmin(FailedRequestDao):
             tape_file=TapeFile(
                 int(raw_data["af"]["archiveId"]),
                 storage_class_name=raw_data["af"]["storageClass"],
-                creation_time=datetime.fromtimestamp(int(raw_data["af"]["creationTime"]), tz=timezone.utc),
+                creation_time=datetime.fromtimestamp(int(raw_data["af"]["creationTime"]), tz=UTC),
                 size=int(raw_data["af"]["size"]),
                 checksum=Checksum(
                     algo_name="UNKNOWN",
@@ -56,9 +55,9 @@ class FailedRequestDaoCtaAdmin(FailedRequestDao):
     def list(
         self,
         *,
-        type: Optional[MountType] = None,
-        tape_pool_name: Optional[str] = None,
-        vid: Optional[str] = None,
+        type: MountType | None = None,
+        tape_pool_name: str | None = None,
+        vid: str | None = None,
         logs: bool = False,
     ) -> Iterator[FailedRequest]:
         filters = {}

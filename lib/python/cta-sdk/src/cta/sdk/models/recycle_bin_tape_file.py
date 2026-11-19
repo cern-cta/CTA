@@ -3,8 +3,7 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-
-from typing_extensions import override
+from typing import override
 
 from .tape_file import TapeFile
 

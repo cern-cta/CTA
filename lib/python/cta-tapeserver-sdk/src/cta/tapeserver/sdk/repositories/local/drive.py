@@ -14,7 +14,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Container
 from logging import getLogger
-from typing import Optional
+from typing import override
 
 from cta.tapeserver.sdk.exceptions import ResourceNotFoundError
 from cta.tapeserver.sdk.repositories.protocols.drive import (
@@ -29,13 +29,12 @@ from cta.tapeserver.sdk.repositories.protocols.drive import (
     NamedDriveRepository,
 )
 from pyudev import Context, Device
-from typing_extensions import override
 
 LOGGER = getLogger("cta.tapeserver.sdk")
 
 
 class _LocalAbstractDriveRepository(ABC):
-    def __init__(self, context: Optional[Context] = None):
+    def __init__(self, context: Context | None = None):
         self._context = Context() if context is None else context
 
     def _list_drive_nst_devices(self) -> set[Device]:
@@ -50,7 +49,7 @@ class _LocalAbstractDriveRepository(ABC):
     def _find_media_changer_serial_number(
         self,
         nst_device: Device,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Locate the SCSI serial of the changer that is the drive's sibling.
 
         Walks up to the drive's `scsi_target` parent and looks for a
@@ -121,7 +120,7 @@ class LocalNamedDriveRepository(_LocalAbstractDriveRepository, NamedDriveReposit
     `nstN` device. Drives without `CTA_NAME` are skipped.
     """
 
-    def __init__(self, context: Optional[Context] = None, drive_name_key: str = "CTA_NAME"):
+    def __init__(self, context: Context | None = None, drive_name_key: str = "CTA_NAME"):
         super().__init__(context)
         self._drive_name_key = drive_name_key
 
@@ -178,7 +177,7 @@ class LocalLocatedDriveRepository(_LocalAbstractDriveRepository, LocatedDriveRep
 
     def __init__(
         self,
-        context: Optional[Context] = None,
+        context: Context | None = None,
         drive_library_address_key: str = "CTA_LIBRARY_ADDRESS",
         drive_library_ordinal_key: str = "CTA_LIBRARY_ORDINAL",
     ):
@@ -187,7 +186,7 @@ class LocalLocatedDriveRepository(_LocalAbstractDriveRepository, LocatedDriveRep
         self._drive_library_ordinal_key = drive_library_ordinal_key
 
     @override
-    def list_drives(self, lib_serial_number: Optional[str] = None) -> set[LocatedDrive]:
+    def list_drives(self, lib_serial_number: str | None = None) -> set[LocatedDrive]:
         """
         See the base implementation.
 
@@ -211,7 +210,7 @@ class LocalLocatedDriveRepository(_LocalAbstractDriveRepository, LocatedDriveRep
         }
 
     @override
-    def get_drive(self, serial_number: str, lib_serial_number: Optional[str] = None) -> LocatedDrive:
+    def get_drive(self, serial_number: str, lib_serial_number: str | None = None) -> LocatedDrive:
         """
         See the base implementation.
 
@@ -254,7 +253,7 @@ class LocalLocatedNamedDriveRepository(_LocalAbstractDriveRepository, LocatedNam
 
     def __init__(
         self,
-        context: Optional[Context] = None,
+        context: Context | None = None,
         drive_name_key: str = "CTA_NAME",
         drive_library_address_key: str = "CTA_LIBRARY_ADDRESS",
         drive_library_ordinal_key: str = "CTA_LIBRARY_ORDINAL",
@@ -265,7 +264,7 @@ class LocalLocatedNamedDriveRepository(_LocalAbstractDriveRepository, LocatedNam
         self._drive_library_ordinal_key = drive_library_ordinal_key
 
     @override
-    def list_drives(self, lib_serial_number: Optional[str] = None) -> set[LocatedNamedDrive]:
+    def list_drives(self, lib_serial_number: str | None = None) -> set[LocatedNamedDrive]:
         """
         See the base implementation.
 
@@ -291,7 +290,7 @@ class LocalLocatedNamedDriveRepository(_LocalAbstractDriveRepository, LocatedNam
         }
 
     @override
-    def get_drive(self, serial_number: str, lib_serial_number: Optional[str] = None) -> LocatedNamedDrive:
+    def get_drive(self, serial_number: str, lib_serial_number: str | None = None) -> LocatedNamedDrive:
         """
         See the base implementation.
 
@@ -303,7 +302,7 @@ class LocalLocatedNamedDriveRepository(_LocalAbstractDriveRepository, LocatedNam
             raise ResourceNotFoundError(f"Drive {serial_number} not found locally") from e
 
     @override
-    def get_drive_by_name(self, name: str, lib_serial_number: Optional[str] = None) -> LocatedNamedDrive:
+    def get_drive_by_name(self, name: str, lib_serial_number: str | None = None) -> LocatedNamedDrive:
         """
         See the base implementation.
 

@@ -9,7 +9,7 @@ Virtual organisations control resource isolation and operational policies.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import VirtualOrganisation
 
@@ -85,12 +85,12 @@ class VirtualOrganisationDao(Protocol):
         name: str,
         /,
         *,
-        disk_instance_name: Optional[str] = None,
-        is_repack_vo: Optional[bool] = None,
-        max_read_drives: Optional[int] = None,
-        max_write_drives: Optional[int] = None,
-        max_file_size: Optional[int] = None,
-        comment: Optional[str] = None,
+        disk_instance_name: str | None = None,
+        is_repack_vo: bool | None = None,
+        max_read_drives: int | None = None,
+        max_write_drives: int | None = None,
+        max_file_size: int | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing virtual organisation.
 

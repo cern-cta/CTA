@@ -11,7 +11,7 @@
   authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
   description = "Main CLI to interact with CTA"
   readme = "README.md"
-  requires-python = ">=3.9"
+  requires-python = ">=3.15"
   license = "GPL-3.0-or-later"
   license-files = ["LICENSE"]
   classifiers = [
@@ -22,7 +22,6 @@
 
   dynamic = ["version"]
   dependencies = [
-    "typing-extensions>=4.4.0",
     "cta-common",
     "cta-sdk",
     "click",

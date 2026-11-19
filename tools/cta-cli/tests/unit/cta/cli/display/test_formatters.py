@@ -6,7 +6,7 @@
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, override
 
 import pytest
 from cta.cli.display.formatters import (
@@ -18,7 +18,6 @@ from cta.sdk.units import Byte, FreeText, Percentage
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from typing_extensions import override
 
 
 @dataclass
@@ -32,7 +31,7 @@ class Address:
     street: str
     city: str
     zipcode: str
-    apartment: Optional[Apartment] = None
+    apartment: Apartment | None = None
 
 
 @dataclass
@@ -49,9 +48,9 @@ class Contractor:
     quota: Annotated[int, Byte]
     hired_at: datetime
     seniority: timedelta
-    address: Optional[Address]
+    address: Address | None
     metadata: Meta
-    car: Optional[str] = None
+    car: str | None = None
 
 
 def get_formatter(dataclass_type: type, *exclude_fields: str) -> DataClassBaseFormatter[Any]:
@@ -177,7 +176,7 @@ class TestDataClassToRichTable:
     def test_recursion_is_bounded(self):
         @dataclass
         class Node:
-            child: Optional["Node"] = None
+            child: Node | None = None
 
         deep = Node(Node(Node(Node())))
         rendered = dataclass_to_rich_table(deep, max_depth=2)

@@ -10,7 +10,7 @@ and refresh intervals for monitoring available capacity.
 
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Optional, Protocol, Union
+from typing import Protocol
 
 from cta.sdk.models import DiskInstanceSpace
 
@@ -61,7 +61,7 @@ class DiskInstanceSpaceDao(Protocol):
         /,
         *,
         free_space_url: str,
-        refresh_interval: Union[int, timedelta] = 10,
+        refresh_interval: int | timedelta = 10,
         comment: str = "From python cta-sdk",
     ) -> None:
         """Create a new disk instance space.
@@ -86,9 +86,9 @@ class DiskInstanceSpaceDao(Protocol):
         disk_instance_name: str,
         /,
         *,
-        free_space_url: Optional[str] = None,
-        refresh_interval: Union[int, timedelta, None] = None,
-        comment: Optional[str] = None,
+        free_space_url: str | None = None,
+        refresh_interval: int | timedelta | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing disk instance space.
 

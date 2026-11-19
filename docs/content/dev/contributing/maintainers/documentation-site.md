@@ -9,7 +9,7 @@ MkDocs Material builds the site. Paths below are relative to `docs/` unless stat
 | Location | Purpose |
 | --- | --- |
 | `mkdocs.yml` | Site configuration and navigation |
-| `requirements.txt` | Python dependencies |
+| `pyproject.toml` docs group and `uv.lock` (repository root) | Python dependencies |
 | `content/stylesheets/extra.css`, `overrides/` | Shared styling and template overrides |
 | `content/assets/images/` | Shared images and favicons |
 | `hooks.py` | Generated content and include handling |
@@ -23,7 +23,7 @@ Restart `mkdocs serve` after changing hooks; live reload does not reload the Pyt
 The build generates the Python reference with `mkdocstrings` and the Rust reference with `cargo doc`.
 Both are included in each published documentation version under `api/python/` and `api/rust/`.
 
-Keep `requirements.txt` and the repository root’s `pyproject.toml` docs group synchronized, and update `uv.lock` after dependency changes.
+Maintain documentation dependencies in the repository root’s `pyproject.toml` docs group and update `uv.lock` after dependency changes.
 
 ### Diagram colors
 

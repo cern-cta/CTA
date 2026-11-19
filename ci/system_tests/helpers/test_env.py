@@ -115,7 +115,7 @@ class TestEnv:
         return connections
 
     @staticmethod
-    def from_namespace(namespace: str) -> "TestEnv":
+    def from_namespace(namespace: str) -> TestEnv:
         config.load_kube_config()
         core = client.CoreV1Api()
         try:
@@ -157,7 +157,7 @@ class TestEnv:
         )
 
     @staticmethod
-    def from_config(path: Path) -> "TestEnv":
+    def from_config(path: Path) -> TestEnv:
         """Create a test environment from a YAML connection configuration.
 
         The file contains connection details for each host. For example:

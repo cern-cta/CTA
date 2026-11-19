@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Literal, Optional
+from typing import Literal
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -34,8 +34,8 @@ def create(
     name: str,
     mount_policy: str,
     action: Literal["MOVE", "ADDCOPIES"],
-    buffer_url: Optional[str],
-    max_files_to_select: Optional[int],
+    buffer_url: str | None,
+    max_files_to_select: int | None,
     no_recall: bool,
 ):
     """Create CTA tape repack."""

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -37,10 +37,10 @@ def ref_obj() -> PhysicalLibrary:
         metadata=Metadata(
             creation_user_name="vlado",
             creation_host_name="cta-frontend01",
-            creation_time=datetime(2023, 7, 14, 9, 22, 20, tzinfo=timezone.utc),
+            creation_time=datetime(2023, 7, 14, 9, 22, 20, tzinfo=UTC),
             update_user_name="vlado",
             update_host_name="cta-frontend01",
-            update_time=datetime(2024, 2, 1, 12, 28, 11, tzinfo=timezone.utc),
+            update_time=datetime(2024, 2, 1, 12, 28, 11, tzinfo=UTC),
             comment="",
         ),
     )

@@ -7,9 +7,9 @@ import re
 import shlex
 from functools import cached_property
 from pathlib import Path
+from typing import override
 
 from packaging.version import Version
-from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 

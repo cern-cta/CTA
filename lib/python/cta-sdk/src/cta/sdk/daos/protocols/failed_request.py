@@ -10,7 +10,7 @@ by type, tape pool, volume, and deletion status, with optional error log retriev
 
 import builtins
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import FailedRequest, FailedRequestSummary, MountType
 
@@ -26,9 +26,9 @@ class FailedRequestDao(Protocol):
     def list(
         self,
         *,
-        type: Optional[MountType] = None,
-        tape_pool_name: Optional[str] = None,
-        vid: Optional[str] = None,
+        type: MountType | None = None,
+        tape_pool_name: str | None = None,
+        vid: str | None = None,
         logs: bool = False,
     ) -> Iterator[FailedRequest]:
         """List failed requests with optional filtering and log retrieval.

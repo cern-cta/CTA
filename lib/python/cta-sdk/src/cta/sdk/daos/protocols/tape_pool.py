@@ -9,7 +9,7 @@ Tape pools support encryption, supply pool relationships, and writable tape mana
 """
 
 from collections.abc import Iterable, Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import TapePool
 
@@ -37,8 +37,8 @@ class TapePoolDao(Protocol):
         self,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        encrypted: Optional[bool] = None,
+        virtual_organisation_name: str | None = None,
+        encrypted: bool | None = None,
     ) -> Iterator[TapePool]:
         """List tape pools, optionally filtered by virtual organisation and encryption status.
 
@@ -70,8 +70,8 @@ class TapePoolDao(Protocol):
         *,
         virtual_organisation_name: str,
         min_writable_tape_count: int = 1,
-        encryption_key_name: Optional[str] = None,
-        supply_tape_pool_names: Optional[Iterable[str]] = None,
+        encryption_key_name: str | None = None,
+        supply_tape_pool_names: Iterable[str] | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         """Create a new tape pool.
@@ -97,10 +97,10 @@ class TapePoolDao(Protocol):
         name: str,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        min_writable_tape_count: Optional[int] = None,
-        supply_tape_pool_names: Optional[Iterable[str]] = None,
-        comment: Optional[str] = None,
+        virtual_organisation_name: str | None = None,
+        min_writable_tape_count: int | None = None,
+        supply_tape_pool_names: Iterable[str] | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing tape pool.
 

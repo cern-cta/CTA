@@ -27,7 +27,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
         transport: cta_eos_pb2.Transport,
         file_metadata: cta_eos_pb2.Metadata,
         *,
-        workflow_options: t.Optional[dict[str, t.Any]] = None,
+        workflow_options: dict[str, t.Any] | None = None,
     ):
         """Send a workflow event to the CTA gRPC frontend service.
 
@@ -73,7 +73,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
     def send_create_event(
         self,
-        file_info: "WorkflowFileInfo",
+        file_info: WorkflowFileInfo,
         storage_class: str,
         user_group: tuple[str, str],
     ) -> tuple[str, str]:
@@ -88,13 +88,13 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
     def send_archive_event(
         self,
-        file_info: "WorkflowFileInfo",
+        file_info: WorkflowFileInfo,
         storage_class: str,
         user_group: tuple[str, str],
         *,
-        service_url: t.Optional[str] = None,
-        report_url: t.Optional[str] = None,
-        error_report_url: t.Optional[str] = None,
+        service_url: str | None = None,
+        report_url: str | None = None,
+        error_report_url: str | None = None,
     ) -> tuple[str, str]:
         """Invoke the EOS event on the WFE frontend."""
         report_url = report_url or get_disk_buffer_mode_url("archive_report_url", self.workflow_cfg, file_info)
@@ -121,14 +121,14 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
     def send_prepare_event(
         self,
-        file_info: "WorkflowFileInfo",
-        vid: t.Optional[str],
+        file_info: WorkflowFileInfo,
+        vid: str | None,
         verify_only: bool,
         user_group: tuple[str, str],
         *,
-        service_url: t.Optional[str] = None,
-        dst_url: t.Optional[str] = None,
-        error_report_url: t.Optional[str] = None,
+        service_url: str | None = None,
+        dst_url: str | None = None,
+        error_report_url: str | None = None,
     ) -> tuple[str, str]:
         """Invoke the EOS event on the WFE frontend."""
         workflow_options = {}
@@ -172,7 +172,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
     def send_abort_prepare_event(
         self,
-        file_info: "WorkflowFileInfo",
+        file_info: WorkflowFileInfo,
         object_store_id: str,
         user_group: tuple[str, str],
     ) -> tuple[str, str]:
@@ -185,7 +185,7 @@ class WorkflowRpcClient(ProtobufRpcClient):
 
     def send_delete_event(
         self,
-        file_info: "WorkflowFileInfo",
+        file_info: WorkflowFileInfo,
         user_group: tuple[str, str],
     ) -> tuple[str, str]:
         transport = cta_eos_pb2.Transport()

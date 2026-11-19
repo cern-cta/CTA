@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -38,10 +37,10 @@ def create(obj: AppContext, name: str, cartridge: str, capacity: int, comment: s
 def update(
     obj: AppContext,
     name: str,
-    cartridge: Optional[str],
-    primary_density_code: Optional[int],
-    secondary_density_code: Optional[int],
-    comment: Optional[str],
+    cartridge: str | None,
+    primary_density_code: int | None,
+    secondary_density_code: int | None,
+    comment: str | None,
 ):
     """Update CTA mediatype."""
     obj.cta_client.media_type.update(

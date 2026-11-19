@@ -27,16 +27,14 @@ Usage:
 """
 
 import os
+import tomllib
 import warnings
 from dataclasses import is_dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, Optional, Protocol, TypeVar
-
-import tomli
-from typing_extensions import override
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Protocol, TypeVar, override
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
 
 
 from . import dataclasses as dc
@@ -54,7 +52,7 @@ class DataclassWithValidation(Protocol):
 
     __dataclass_fields__: ClassVar[dict[str, Any]]
 
-    def validate(self) -> "Self": ...
+    def validate(self) -> Self: ...
 
 
 class NotSetType:
@@ -90,7 +88,7 @@ like password or secret keys.
 T = TypeVar("T", bound=DataclassWithValidation)
 
 
-class CtaConfigLoader(Generic[T]):
+class CtaConfigLoader[T: DataclassWithValidation]:
     """
     A generic configuration loader for dataclasses.
 
@@ -117,8 +115,8 @@ class CtaConfigLoader(Generic[T]):
         self._config: T = config_class()
 
     def load_from_toml(
-        self, toml_path: Optional[Path], file_exist_error: Literal["raise", "warn", "ignore"] = "raise"
-    ) -> "CtaConfigLoader[T]":
+        self, toml_path: Path | None, file_exist_error: Literal["raise", "warn", "ignore"] = "raise"
+    ) -> CtaConfigLoader[T]:
         """
         Load configuration from a TOML file.
 
@@ -144,13 +142,13 @@ class CtaConfigLoader(Generic[T]):
             return self
 
         with open(toml_path, "rb") as f:
-            toml_data = tomli.load(f)
+            toml_data = tomllib.load(f)
 
         dc.load_data(self._config, toml_data)
 
         return self
 
-    def load_from_dict(self, raw_dict: dict[str, Any]) -> "CtaConfigLoader[T]":
+    def load_from_dict(self, raw_dict: dict[str, Any]) -> CtaConfigLoader[T]:
         """
         Load configuration from a dictionary.
 
@@ -163,7 +161,7 @@ class CtaConfigLoader(Generic[T]):
         dc.load_data(self._config, raw_dict)
         return self
 
-    def set(self, *keys: str, value: object) -> "CtaConfigLoader[T]":
+    def set(self, *keys: str, value: object) -> CtaConfigLoader[T]:
         """
         Set a configuration value for a nested key.
 
@@ -213,7 +211,7 @@ class CtaConfigLoader(Generic[T]):
     def find_default_config_file(
         project_name: str,
         file_name: str,
-    ) -> Optional[Path]:
+    ) -> Path | None:
         files: list[Path] = []
 
         if (xdg_config_home := os.environ.get("XDG_CONFIG_HOME")) is not None:
