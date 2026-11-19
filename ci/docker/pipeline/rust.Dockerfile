@@ -3,8 +3,6 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2
 
-ARG UV_VERSION=0.13.9
-
 ARG CARGO_DENY_VERSION="=0.20.2"
 ARG CARGO_MACHETE_VERSION="=0.9.2"
 ARG CARGO_NEXTEST_VERSION="=0.9.145"
@@ -16,10 +14,8 @@ ARG TAPLO_VERSION="=0.10.0"
 # hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
-    dnf install -y git curl jq python3 python3-pip bat gcc gcc-c++ make \
+    dnf install -y git curl jq python3 bat gcc gcc-c++ make \
         openssl-devel pkgconf-pkg-config protobuf-compiler && \
-    python3 -m pip install --only-binary :all: --no-cache-dir "uv==${UV_VERSION}" && \
-    dnf remove -y --setopt=clean_requirements_on_remove=False python3-pip && \
     dnf clean all --enablerepo=\*
 
 # Match repository components explicitly; coverage additionally needs llvm-tools-preview.
@@ -40,6 +36,10 @@ RUN cargo install cargo-deny@${CARGO_DENY_VERSION} \
                   taplo-cli@${TAPLO_VERSION} && \
     rm -rf /root/.cargo/registry /root/.cargo/git /tmp/cargo-install*
 
-# Preinstall the repository interpreter without replacing distribution Python.
+# Select build Python through PATH; system tools retain /usr/bin/python3.
+COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /usr/local/bin/uv
+ENV UV_PYTHON_INSTALL_DIR=/opt/cta/python
+ENV UV_PYTHON_BIN_DIR=/opt/cta/bin
+ENV PATH="/opt/cta/bin:${PATH}"
 COPY .python-version /opt/cta/.python-version
-RUN uv python install "$(cat /opt/cta/.python-version)"
+RUN uv python install --default "$(cat /opt/cta/.python-version)"

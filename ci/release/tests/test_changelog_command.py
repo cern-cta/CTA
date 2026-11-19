@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from typing import override
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -12,7 +13,6 @@ from commands import changelog
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
 from release_version import CTAVersion
-from typing_extensions import override
 
 
 class ChangelogCommandTest(unittest.TestCase):

@@ -33,7 +33,7 @@ list(JOIN SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS ", " SUPPORTED_CTA_CATALOGUE_S
 
 # Version constraint variables for packages based on project.json
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 "${Python3_EXECUTABLE}"
           ${CMAKE_SOURCE_DIR}/ci/project-json/generate_version_constraints.py
           --platform ${PLATFORM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -51,7 +51,7 @@ endforeach()
 
 # Native package build requirements based on project.json
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 "${Python3_EXECUTABLE}"
           ${CMAKE_SOURCE_DIR}/ci/project-json/generate_build_requires.py
           --platform ${PLATFORM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

@@ -32,7 +32,8 @@ For machine preparation and initial installation, follow [Environment Setup](../
 ./ci/cta-dev.sh install
 ```
 
-The installer requires uv and prepares the shared development environment in `.venv`, the command symlink, Bash completion, and the pre-commit Git hook.
+All commands require uv to select the pinned build Python.
+The installer prepares the shared development environment in `.venv`, the command symlink, Bash completion, and the pre-commit Git hook.
 Rerun it after dependency changes and ensure `~/.local/bin` is on `PATH`.
 
 The installed command uses the checkout its symlink points to, even when you invoke it from another checkout. Check the target with:

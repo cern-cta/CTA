@@ -156,6 +156,8 @@ public-release-cta-stable:
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
   variables:
+    UV_PYTHON_INSTALL_DIR: "${CI_PROJECT_DIR}/.ci-python"
+    UV_PYTHON_BIN_DIR: "${CI_PROJECT_DIR}/.ci-bin"
     DEST_REGISTRY_AUTH_FILE: "${CI_PROJECT_DIR}/.buildah-destination-auth.json"
     DEST_REGISTRY_PASSWORD: ""
     DEST_REGISTRY_USERNAME: ""
@@ -165,6 +167,11 @@ public-release-cta-stable:
     GIT_SUBMODULE_STRATEGY: none
   before_script:
     - !reference [.merge-train-guard, before_script]
+    # Install the pinned interpreter in the upstream Buildah image.
+    - curl -LsSf https://astral.sh/uv/0.13.9/install.sh -o /tmp/install-uv.sh
+    - UV_UNMANAGED_INSTALL="$UV_PYTHON_BIN_DIR" sh /tmp/install-uv.sh
+    - export PATH="$UV_PYTHON_BIN_DIR:$PATH"
+    - uv python install --default "$(cat .python-version)"
     - |
       if [[ -z "$SOURCE_REGISTRY_USERNAME" || -z "$SOURCE_REGISTRY_PASSWORD" ]]; then
         echo "Source registry credentials are not configured"
@@ -195,6 +202,7 @@ public-release-cta-stable:
     - buildah tag "$SRC_IMAGE" "$DST_IMAGE"
     - buildah push --authfile "$DEST_REGISTRY_AUTH_FILE" "$DST_IMAGE"
   after_script:
+    - export PATH="$UV_PYTHON_BIN_DIR:$PATH"
     - rm -f "$SOURCE_REGISTRY_AUTH_FILE" "$DEST_REGISTRY_AUTH_FILE"
     - |
       if [[ -z "${CI_COMMIT_TAG:-}" ]]; then exit 0; fi
