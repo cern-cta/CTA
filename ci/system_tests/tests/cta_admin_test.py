@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -419,7 +420,11 @@ def test_cta_admin_drive(
             dr_updated1,
             ["driveStatus", "driveStatusSince", "timeSinceLastUpdate", "reason", "desiredDriveState"],
         )
-        assert dr_updated2["reason"] == "cta-admin systest down"
+        # Down reasons include the authenticated admin and the server's current UTC date.
+        assert re.fullmatch(
+            r"\[ctaadmin1 \d{4}-\d{2}-\d{2}\] cta-admin systest down",
+            dr_updated2["reason"],
+        ), dr_updated2["reason"]
         assert dr_updated2["desiredDriveState"] == "DOWN"
 
         cta_cli.exec(f"cta-admin dr ch {dr_name} -m 'Updated {dr_name}'")

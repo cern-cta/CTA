@@ -10,6 +10,8 @@
 #include "common/utils/utils.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <format>
 #include <functional>
 #include <sstream>
 #include <string_view>
@@ -65,6 +67,8 @@ std::optional<std::string> setDriveDown(const SyncCmdContext& ctx, const AdminCm
   if (utils::trimString(reason).empty()) {
     throw exception::UserError("You must provide a reason in order to set the drive down");
   }
+  const auto now = std::chrono::system_clock::now();
+  reason = std::format("[{} {:%Y-%m-%d}] {}", ctx.identity.username, now, reason);
   const common::dataStructures::DriveDownRequest request {.reason = reason,
                                                           .force = opts.hasFlag(OptionBoolean::FORCE)};
   return applyToDrives(ctx,
