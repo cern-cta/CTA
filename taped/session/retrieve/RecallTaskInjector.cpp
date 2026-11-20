@@ -381,7 +381,7 @@ bool RecallTaskInjector::WorkerThread::popRecalls() {
 
     if (m_parent.m_jobs.empty()) {
       if (req.lastCall || m_parent.m_stopToken.stop_requested()) {
-        m_parent.m_lc.log(cta::log::INFO, "No more file to recall: triggering the end of session.");
+        m_parent.m_lc.log(cta::log::INFO, "Ending recall task injection");
         m_parent.signalEndDataMovement();
         return false;
       } else {
