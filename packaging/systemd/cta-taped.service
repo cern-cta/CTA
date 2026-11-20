@@ -34,7 +34,7 @@ OOMScoreAdjust=-10
 Restart=on-failure
 RestartSec=5
 # Acquired jobs and tape cleanup may take hours to drain after SIGTERM.
-TimeoutStopSec=12h
+TimeoutStopSec=2h
 
 AmbientCapabilities=CAP_SYS_RAWIO
 CapabilityBoundingSet=CAP_SYS_RAWIO
