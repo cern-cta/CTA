@@ -28,10 +28,10 @@ flowchart LR
   TD <==>|"(3) file data"| DS
   S -->|"results"| MD -->|"(4) report"| DS
 
-  class DS ext
-  class WF api
-  class S store
-  class TD,MD daemon
+  class DS grey
+  class WF blue
+  class S amber
+  class TD,MD green
 ```
 
 1. The disk system sends an archive or retrieve request to the Frontend's **Workflow API**, which checks it against the catalogue and stores it in the Scheduler DB. The disk system is acknowledged straight away - no tape work has happened yet.
@@ -88,9 +88,9 @@ flowchart LR
   QP2 -.->|"mount"| D2
   QT7 -.->|"mount"| D3
 
-  class A,B,C ext
-  class QP1,QP2,QT7 store
-  class D1,D2,D3 daemon
+  class A,B,C grey
+  class QP1,QP2,QT7 amber
+  class D1,D2,D3 green
   class QUEUES group
 ```
 
@@ -120,9 +120,9 @@ flowchart TD
   R -->|"missing"| W
   P -->|"otherwise"| W
 
-  class Q,W ext
-  class T,R,P store
-  class M daemon
+  class Q,W grey
+  class T,R,P amber
+  class M green
 ```
 
 ### When a batch warrants a mount
@@ -158,9 +158,9 @@ flowchart LR
   A --> CA -->|"qualifies"| M
   B --> CB -.->|"does not qualify,<br/>served anyway"| M
 
-  class A,B ext
-  class CA,CB store
-  class M daemon
+  class A,B grey
+  class CA,CB amber
+  class M green
   class T7 group
 ```
 
