@@ -12,8 +12,8 @@ The catalogue stores metadata, not file contents or the disk system's namespace.
 
 | Service | Uses the catalogue to… |
 | --- | --- |
-| Workflow Frontend | Validate file identities and policies. |
-| Admin Frontend | Inspect and manage resources and policies. |
+| Workflow Frontend API | Validate file identities and policies. |
+| Admin Frontend API | Inspect and manage resources and policies. |
 | Tape daemon | Locate copies, record successful writes and update drive/tape state. |
 | Maintenance daemon | Obtain metadata needed for reporting, repack and background work. |
 

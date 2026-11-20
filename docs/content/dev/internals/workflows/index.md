@@ -23,7 +23,7 @@ Deleted and repacked copies are kept in the catalogue's [Recycle Bin](../shared-
     - No central component hands out work. Each idle **drive asks for its own mount** and, once mounted, **claims batches of jobs** from that one queue until it is empty.
     - `cta-maintd` **reports** the outcome of each job back to the disk system.
 
-Archive and retrieve requests follow the same path: the workflow frontend checks them against the catalogue and queues jobs in the scheduler DB, a tape daemon picks the jobs up and transfers the data, and the maintenance daemon reports the result. The processes never call each other; they communicate through the [shared state](../shared-state/index.md): the **scheduler DB** holds the queues of jobs, the **catalogue** holds the long-lived configuration (tapes, pools, VOs, mount policies) and the live state of every drive.
+Archive and retrieve requests follow the same path: the workflow frontend API checks them against the catalogue and queues jobs in the scheduler DB, a tape daemon picks the jobs up and transfers the data, and the maintenance daemon reports the result. The processes never call each other; they communicate through the [shared state](../shared-state/index.md): the **scheduler DB** holds the queues of jobs, the **catalogue** holds the long-lived configuration (tapes, pools, VOs, mount policies) and the live state of every drive.
 
 ```mermaid
 flowchart LR
@@ -77,8 +77,8 @@ flowchart LR
 
 | Component | Role in the request path |
 | --- | --- |
-| `cta-workflow-api` | Receives workflow events from the disk system (archive, retrieve, delete, cancel). Resolves the file, its storage class and its mount policy in the catalogue and inserts jobs into the scheduler DB (`frontend/common/WorkflowEvent.cpp`). See [Workflow Frontend](../components/workflow-frontend.md). |
-| `cta-admin-api` | Serves `cta-admin`: configuration, drive up/down, queue listings and queuing repack requests (`frontend/common/AdminCmd.cpp`). See [Admin Frontend](../components/admin-frontend.md). |
+| `cta-workflow-api` | Receives workflow events from the disk system (archive, retrieve, delete, cancel). Resolves the file, its storage class and its mount policy in the catalogue and inserts jobs into the scheduler DB (`frontend/common/WorkflowEvent.cpp`). See [Workflow Frontend API](../components/workflow-frontend.md). |
+| `cta-admin-api` | Serves `cta-admin`: configuration, drive up/down, queue listings and queuing repack requests (`frontend/common/AdminCmd.cpp`). See [Admin Frontend API](../components/admin-frontend.md). |
 | `cta-taped` | One process per drive. When the drive is idle, it decides which mount to do, runs the session and claims jobs. All scheduling decisions happen here. |
 | `cta-maintd` | Reports finished jobs back to the disk system and cleans up after mounts that died. See [Maintenance Daemon](../components/maintenance-daemon.md). |
 | Scheduler DB | Job queues and their summaries, behind the `SchedulerDatabase` interface. See [Scheduler DB](../shared-state/scheduler-db/index.md). |

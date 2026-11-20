@@ -1,6 +1,6 @@
-# Workflow Frontend {#workflow-api}
+# Workflow Frontend API {#workflow-api}
 
-The **Workflow Frontend** accepts disk-system workflow requests over gRPC. The disk system retains ownership of the namespace and client-facing interface; file data travels directly between the disk buffer and tape daemons.
+The **Workflow Frontend API** accepts disk-system workflow requests over gRPC. The disk system retains ownership of the namespace and client-facing interface; file data travels directly between the disk buffer and tape daemons.
 
 ## Responsibilities
 
@@ -11,6 +11,6 @@ The disk system learns transfer outcomes through its reporting or transfer-compl
 
 ## Relationships with other components
 
-The [Catalogue](catalogue.md) holds file identities, recorded copies and policies. The [Scheduler DB](scheduler-db.md) tracks pending work, and tape daemons transfer the data. Operator commands use the separate [Admin Frontend](admin-frontend.md).
+The [Catalogue](catalogue.md) holds file identities, recorded copies and policies. The [Scheduler DB](scheduler-db.md) tracks pending work, and tape daemons transfer the data. Operator commands use the separate [Admin Frontend API](admin-frontend.md).
 
-See [Authentication](authentication.md) for workflow identities and [Workflow Frontend Configuration](../../ops/deploy-and-configure/configuration/workflow-frontend.md) for service settings.
+See [Authentication](authentication.md) for workflow identities and [Workflow Frontend API Configuration](../../ops/deploy-and-configure/configuration/workflow-frontend.md) for service settings.

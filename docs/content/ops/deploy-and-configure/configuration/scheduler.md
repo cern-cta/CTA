@@ -24,7 +24,7 @@ The schema is created and dropped with `cta-scheduler-schema-create` and `cta-sc
 
 ### Opportunistic batching
 
-With the PostgreSQL backend, the workflow frontend can merge concurrent archive and retrieve queueing requests into a single bulk insert. The feature is experimental and disabled by default. To enable it in `cta-workflow-api.toml` (see `app/cta-workflow-api/cta-workflow-api.pg.example.toml`), add `"opportunistic_batching"` to the root `enabled_experimental_features` list and supply an `[opportunistic_batching]` section; omit the section when the feature is disabled. Both keys are required in strict mode; the defaults apply only in non-strict mode:
+With the PostgreSQL backend, the workflow frontend API can merge concurrent archive and retrieve queueing requests into a single bulk insert. The feature is experimental and disabled by default. To enable it in `cta-workflow-api.toml` (see `app/cta-workflow-api/cta-workflow-api.pg.example.toml`), add `"opportunistic_batching"` to the root `enabled_experimental_features` list and supply an `[opportunistic_batching]` section; omit the section when the feature is disabled. Both keys are required in strict mode; the defaults apply only in non-strict mode:
 
 | Key | Default | Meaning |
 | --- | --- | --- |
@@ -46,7 +46,7 @@ Separating User and Repack sheduler backends allows to completely isolate these 
 Separating User and Repack requires:
 
 - separate resources for another scheduler backend for repack
-- 1 dedicated Admin Frontend (`cta-frontend-admin`) endpoint to allow operators to submit repack requests
+- 1 dedicated Admin Frontend API (`cta-frontend-admin`) endpoint to allow operators to submit repack requests
 - moving some tape drives from user scheduler to repack scheduler when repack is needed
 
 !!! tip

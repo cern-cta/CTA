@@ -21,8 +21,8 @@ Request state is shorter-lived than archive metadata, but it is not disposable. 
 
 | Service | Uses the scheduler DB to… |
 | --- | --- |
-| Workflow Frontend | Queue file requests as jobs. |
-| Admin Frontend | Inspect and manage queued work, and start repacks. |
+| Workflow Frontend API | Queue file requests as jobs. |
+| Admin Frontend API | Inspect and manage queued work, and start repacks. |
 | Tape daemon | Read queue summaries to choose its next mount, claim jobs and update their outcomes. |
 | Maintenance daemon | Send queued reports, advance repack work and recover or clean up stale state. |
 

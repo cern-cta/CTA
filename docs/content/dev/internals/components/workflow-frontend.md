@@ -2,9 +2,9 @@
 
     This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
 
-# Workflow Frontend Internals {#workflow-api-internals}
+# Workflow Frontend API Internals {#workflow-api-internals}
 
-Request dispatch for disk-system workflows. Operator settings belong in [Workflow Frontend Configuration](../../../ops/deploy-and-configure/configuration/workflow-frontend.md).
+Request dispatch for disk-system workflows. Operator settings belong in [Workflow Frontend API Configuration](../../../ops/deploy-and-configure/configuration/workflow-frontend.md).
 
 ## Workflow request dispatch
 
@@ -56,7 +56,7 @@ mTLS relies on the gRPC TLS stack and standard X.509 certificate infrastructure.
 
 The APIs currently share frontend code and dependencies. This separation follows their responsibilities; it does not imply that the implementation split is complete.
 
-See [Admin Frontend Internals](admin-frontend.md) for administrative commands.
+See [Admin Frontend API Internals](admin-frontend.md) for administrative commands.
 
 With the PostgreSQL backend, archive and retrieve queueing calls can go through `FrontendBatchingLayer`, which merges concurrent requests into one bulk insert; see [PostgreSQL Opportunistic Batching](../shared-state/scheduler-db/postgresql/opportunistic-batching.md). For what happens to a request after it is queued, see the [request path](../workflows/index.md#the-request-path).
 

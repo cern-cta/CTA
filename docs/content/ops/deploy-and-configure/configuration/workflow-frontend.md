@@ -1,4 +1,4 @@
-# Workflow Frontend Configuration {#workflow-api-configuration}
+# Workflow Frontend API Configuration {#workflow-api-configuration}
 
 Configure the API that receives archive, retrieve, and delete workflow requests from the disk system.
 

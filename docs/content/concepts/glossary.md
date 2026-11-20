@@ -14,8 +14,8 @@ Use these definitions to distinguish file identities, copies, requests and compo
 
 ### A
 
-**Admin Frontend** {#admin-frontend}
-: CTA's interface for authorized operator requests. See [Admin Frontend](components/admin-frontend.md).
+**Admin Frontend API** {#admin-frontend}
+: CTA's interface for authorized operator requests. See [Admin Frontend API](components/admin-frontend.md).
 
 **Archive (verb)** {#archive}
 : Create the required tape copies of a disk-system file. See [Archival](data-management/archival.md).
@@ -47,13 +47,13 @@ Use these definitions to distinguish file identities, copies, requests and compo
 : Identifies a required or recorded tape copy within an archive file, starting at 1. See [Storage Model](data-management/storage-model.md#files-and-tape-copies).
 
 **CTA frontend** {#cta-frontend}
-: Service configured for the [Workflow Frontend](components/workflow-frontend.md) or [Admin Frontend](components/admin-frontend.md) role, with distinct interfaces and authentication.
+: Service configured for the [Workflow Frontend API](components/workflow-frontend.md) or [Admin Frontend API](components/admin-frontend.md) role, with distinct interfaces and authentication.
 
 **CTA instance** {#cta-instance}
 : A deployment of CTA services and their configured backends. See [Component Overview](components/index.md).
 
 **`cta-admin`** {#cta-admin}
-: Administrative command-line client of the Admin Frontend. See [cta-admin reference](../ops/tools/cta-admin.md).
+: Administrative command-line client of the Admin Frontend API. See [cta-admin reference](../ops/tools/cta-admin.md).
 
 ### D
 
@@ -104,7 +104,7 @@ Use these definitions to distinguish file identities, copies, requests and compo
 ### K
 
 **Kerberos** {#kerberos}
-: Network authentication protocol supported by the Admin Frontend. See [Authentication](components/authentication.md).
+: Network authentication protocol supported by the Admin Frontend API. See [Authentication](components/authentication.md).
 
 ### L
 
@@ -138,7 +138,7 @@ Use these definitions to distinguish file identities, copies, requests and compo
 : Maps a requester or requester group within a disk instance to a mount policy; retrieval can also match requester activities. See [Storage Model](data-management/storage-model.md#mount-policies-and-requesters).
 
 **mTLS** {#mtls}
-: Mutual TLS: certificate-based authentication of both peers. The Workflow Frontend maps its client's certificate identity to a disk instance. See [Authentication](components/authentication.md).
+: Mutual TLS: certificate-based authentication of both peers. The Workflow Frontend API maps its client's certificate identity to a disk instance. See [Authentication](components/authentication.md).
 
 ### O
 
@@ -244,8 +244,8 @@ Use these definitions to distinguish file identities, copies, requests and compo
 
 ### W
 
-**Workflow Frontend** {#workflow-frontend}
-: CTA's gRPC interface for disk-system registration, archive, retrieve, cancel and delete events. See [Workflow Frontend](components/workflow-frontend.md).
+**Workflow Frontend API** {#workflow-frontend}
+: CTA's gRPC interface for disk-system registration, archive, retrieve, cancel and delete events. See [Workflow Frontend API](components/workflow-frontend.md).
 
 ### X
 

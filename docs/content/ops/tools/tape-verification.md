@@ -22,7 +22,7 @@ You must configure a specific mount policy for verification jobs to ensure they 
     ```
     *Note: Adjust priorities and ages as required.*
 
-*   **In Workflow Frontend Configuration:**
+*   **In Workflow Frontend API Configuration:**
     Edit `/etc/cta/cta-workflow-api.toml` to map the verification system to this policy. **If this is missing, verification requests will fail or be rejected**.
     ```toml
     [requests.prepare]

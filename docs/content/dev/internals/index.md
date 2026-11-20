@@ -6,7 +6,7 @@ Use this section to trace an operation through CTA code or understand the compon
 | --- | --- |
 | Interfaces & Protocols | [Shared interface contracts](interfaces.md) |
 | Workflows | [Request path](workflows/index.md#the-request-path) and the page for the operation you are changing |
-| Components | [Workflow Frontend](components/workflow-frontend.md), [Admin Frontend](components/admin-frontend.md), [Tape Daemon](components/tape-daemon.md), [Maintenance Daemon](components/maintenance-daemon.md), and [Media Changer Daemon](components/media-changer-daemon.md) |
+| Components | [Workflow Frontend API](components/workflow-frontend.md), [Admin Frontend API](components/admin-frontend.md), [Tape Daemon](components/tape-daemon.md), [Maintenance Daemon](components/maintenance-daemon.md), and [Media Changer Daemon](components/media-changer-daemon.md) |
 | Shared State | [Overview](shared-state/index.md), [Catalogue](shared-state/catalogue/index.md), [Scheduler DB](shared-state/scheduler-db/index.md) and its [Scheduling Algorithm](shared-state/scheduler-db/scheduling-algorithm.md) |
 | Shared Libraries | [Service Runtime](service-runtime.md), [Telemetry Internals](telemetry.md), and [Readiness and Liveness](health-checks.md) |
 
