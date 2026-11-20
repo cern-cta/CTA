@@ -264,11 +264,6 @@ private:
    */
   cta::tape::rao::RAOManager m_raoManager;
 
-  /** Number of jobs to be fetched before the tape is mounted.
-   *  The desired number is m_raoLimits.maxSupported
-   */
-  unsigned int m_fetched = 0;
-
   // The tape thread publishes true when RAO may access the drive, or false on startup failure.
   std::promise<bool> m_raoPromise;
   std::future<bool> m_raoFuture;
