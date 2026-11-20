@@ -279,23 +279,21 @@ void TapeSession::executeRead(log::LogContext& logContext,
   if (m_transfersConfig.retrieve.rao.enabled) {
     configureRAO(logContext, recallTaskInjector);
   }
-  bool noFilesToRecall = false;
-  bool jobsFetched = false;
+  bool hasWork = false;
   bool diskSpaceReservationSucceeded = false;
   // Do an initial fetch to see if there is something to retrieve in the first place (might be an empty mount)
   try {
-    // TODO for separate MR: we don't need both a return value and reference arg here
-    jobsFetched = recallTaskInjector.synchronousFetch(noFilesToRecall);
+    hasWork = recallTaskInjector.synchronousFetch();
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
-  if (jobsFetched) {
+  if (hasWork) {
     // Check disk space reservation before committing to a tape mount.
     diskSpaceReservationSucceeded = recallTaskInjector.testDiskSpaceReservationWorking();
   }
   // Only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
-  if (jobsFetched && diskSpaceReservationSucceeded) {
+  if (hasWork && diskSpaceReservationSucceeded) {
     // We got something to retrieve. Time to start the machinery
     tapeReadThread.setWaitForInstructionsTime(startupTimer.secs());
 
@@ -326,22 +324,19 @@ void TapeSession::executeRead(log::LogContext& logContext,
     }
     return;
   } else {
-    if (!noFilesToRecall && !jobsFetched) {
-      m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::TaskInjection);
-    }
     // Nothing transferred
     m_tapeSessionTracker->updateTapeTransferStats({});
     // On stop, the fetch reports no files even though queued work may exist; do not record an empty mount.
     // Ensure we don't publish a misleading event
-    if (noFilesToRecall && stopToken.stop_requested()) {
+    if (!hasWork && stopToken.stop_requested()) {
       logContext.log(log::INFO, "Aborting recall mount startup: stop requested");
       return;
     }
-    if (noFilesToRecall) {
+    if (!hasWork) {
       m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToRecall);
     }
     // Couldn't reserve free disk space
-    if (jobsFetched && !diskSpaceReservationSucceeded) {
+    if (hasWork && !diskSpaceReservationSucceeded) {
       m_tapeSessionTracker->recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
     }
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
@@ -406,18 +401,16 @@ void TapeSession::executeWrite(log::LogContext& logContext,
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
   utils::Timer startupTimer;
-  bool noFilesToMigrate = false;
-  bool jobsInjected = false;
+  bool hasWork = false;
   // Do an initial inject to see if there is something to archive in the first place (might be an empty mount)
   try {
-    // TODO for separate MR: we don't need both a return value and reference arg here
-    jobsInjected = migrationTaskInjector.synchronousInjection(noFilesToMigrate);
+    hasWork = migrationTaskInjector.synchronousInjection();
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
   // Only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
-  if (jobsInjected) {
+  if (hasWork) {
     logContext.log(log::DEBUG, "After if (taskInjector.synchronousInjection())");
     const uint64_t firstFseqFromClient = migrationTaskInjector.firstFseqToWrite();
 
@@ -456,9 +449,6 @@ void TapeSession::executeWrite(log::LogContext& logContext,
     }
     return;
   } else {
-    if (!noFilesToMigrate) {
-      m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::TaskInjection);
-    }
     // Nothing transferred
     m_tapeSessionTracker->updateTapeTransferStats({});
     // On stop, the injection reports no files even though queued work may exist; do not record an empty mount.

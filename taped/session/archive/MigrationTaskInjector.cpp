@@ -102,11 +102,9 @@ void MigrationTaskInjector::requestInjection(bool lastCall) {
 //------------------------------------------------------------------------------
 //synchronousInjection
 //------------------------------------------------------------------------------
-bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
+bool MigrationTaskInjector::synchronousInjection() {
   std::list<std::unique_ptr<cta::ArchiveJob>> jobs;
-  noFilesToMigrate = false;
   if (m_stopToken.stop_requested()) {
-    noFilesToMigrate = true;
     return false;
   }
   // Preserve the original exception for session failure handling.
@@ -119,7 +117,6 @@ bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
   cta::log::ScopedParamContainer scoped(m_lc);
   scoped.add("byteSizeThreshold", m_maxBytes).add("maxFiles", m_maxFiles);
   if (jobs.empty()) {
-    noFilesToMigrate = true;
     m_lc.log(cta::log::WARNING, "No files to migrate: empty mount");
     return false;
   } else {
