@@ -151,7 +151,8 @@ Drives of the same library choose one at a time; drives of different libraries a
 
 ## Known limitations
 
-Ranked by impact, as reviewed in November 2026. None is confirmed by a test yet; update this list as they are fixed.
+!!! warning "Work in Progress"
+    Ranked by impact, as reviewed in November 2026. None is confirmed by a test yet; update this list as they are fixed.
 
 **Lock covers one library, but VO limits are global (high).**
 Mount choice locks the drive's logical library, while the VO count is taken over every drive in the `DRIVE_STATE` table. Two drives in different libraries can both read the table before either writes its reservation, both see the VO under its limit, and both create a mount (see the diagram above). The code comments in `createArchiveMount` and `updateTapeDriveStatus` saying other-library schedulers "see the marker" only hold when one writes before the other reads.
