@@ -58,9 +58,9 @@ void TapeReadSingleThread::startThreadsWithInjector(RecallTaskInjector& injector
   TapeSingleThreadInterface<TapeReadTask>::startThreads();
 }
 
-void TapeReadSingleThread::TapeThreadFinalizer::setRAOReady() {
-  m_this.m_taskInjector->setRAOReady(true);
-  m_raoReady = true;
+void TapeReadSingleThread::TapeThreadFinalizer::setDriveReadyForRAO() {
+  m_this.m_taskInjector->setDriveReadyForRAO(true);
+  m_driveReadyForRAO = true;
 }
 
 //------------------------------------------------------------------------------
@@ -69,14 +69,14 @@ void TapeReadSingleThread::TapeThreadFinalizer::setRAOReady() {
 TapeReadSingleThread::TapeThreadFinalizer::~TapeThreadFinalizer() {
   try {
     // Only the tape thread publishes readiness, including failure before the normal handoff.
-    // Publish it first so a failing finish() cannot leave the injector blocked in waitForRAOReady().
-    if (m_this.m_useRAO && !m_raoReady) {
-      m_this.m_taskInjector->setRAOReady(false);
+    // Publish it first so a failing finish() cannot leave the injector blocked in waitForDriveReadyForRAO().
+    if (m_this.m_useRAO && !m_driveReadyForRAO) {
+      m_this.m_taskInjector->setDriveReadyForRAO(false);
     }
   } catch (...) {
     m_this.m_tracker.recordFailure(TapeSessionFailure::WorkerSignalling);
     try {
-      m_this.m_logContext.log(log::ERR, "Failed to publish RAO readiness during tape cleanup");
+      m_this.m_logContext.log(log::ERR, "Failed to publish drive readiness for RAO during tape cleanup");
     } catch (...) {}
   }
   try {
@@ -290,7 +290,7 @@ void TapeReadSingleThread::run() {
       }
       if (m_useRAO) {
         /* Give the RecallTaskInjector access to the drive to perform RAO query */
-        finalizer.setRAOReady();
+        finalizer.setDriveReadyForRAO();
       }
       // Then we have to initialise the tape read session
       currentErrorToCount = TapeSessionFailure::TapesCheckLabelBeforeReading;
