@@ -201,9 +201,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
   daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc);
 
-  bool noFilesToRecall;
-  ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
-  ASSERT_FALSE(noFilesToRecall);
+  ASSERT_TRUE(rti.synchronousFetch());
 
   //Jobs are no longer injected at synchronousFetch, only when the threads start
   //ASSERT_EQ(maxNbJobsInjectedAtOnce, diskWrite.m_tasks.size());
@@ -264,9 +262,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorDrainBeforeFetch) {
     rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc, drain.get_token());
 
   drain.request_stop();
-  bool noFilesToRecall = false;
-  EXPECT_FALSE(rti.synchronousFetch(noFilesToRecall));
-  EXPECT_TRUE(noFilesToRecall);
+  EXPECT_FALSE(rti.synchronousFetch());
   EXPECT_EQ(0, trm.getJobs);
   EXPECT_FALSE(tracker.hasFailures());
 }
@@ -298,8 +294,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorDrainWakesWorker) {
     daemon::RecallTaskInjector
       rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc, drain.get_token());
 
-    bool noFilesToRecall = false;
-    ASSERT_TRUE(rti.synchronousFetch(noFilesToRecall));
+    ASSERT_TRUE(rti.synchronousFetch());
     const int fetchedJobs = trm.getJobs;
     if (producerAlreadyFinished) {
       // Queue finish before the callback wakeup to exercise the terminal-notification race.
@@ -387,9 +382,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorRequeuesRetainedJobs) {
     daemon::RecallTaskInjector
       rti(mm, tapeRead, diskWrite, drive, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc, drain.get_token());
 
-    bool noFilesToRecall;
-    EXPECT_EQ(!stopDuringFetch, rti.synchronousFetch(noFilesToRecall));
-    EXPECT_EQ(stopDuringFetch, noFilesToRecall);
+    EXPECT_EQ(!stopDuringFetch, rti.synchronousFetch());
 
     const int fetchedJobs = trm.getJobs;
     EXPECT_EQ(maxNbJobsInjectedAtOnce, fetchedJobs);
@@ -411,8 +404,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorRequeuesRetainedJobs) {
     rti.finish();
     rti.waitThreads();
     // Repeated stop handling must neither fetch again nor return any job twice.
-    EXPECT_FALSE(rti.synchronousFetch(noFilesToRecall));
-    EXPECT_TRUE(noFilesToRecall);
+    EXPECT_FALSE(rti.synchronousFetch());
     EXPECT_EQ(fetchedJobs, trm.getJobs);
     if (!stopDuringFetch) {
       for (const auto& job : trm.m_requeuedJobs) {
@@ -447,11 +439,9 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
   FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
   daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, drive, trm, 6, blockSize, tracker, lc);
 
-  bool noFilesToRecall;
-  ASSERT_FALSE(rti.synchronousFetch(noFilesToRecall));
+  ASSERT_FALSE(rti.synchronousFetch());
   ASSERT_EQ(0U, diskWrite.m_tasks.size());
   ASSERT_EQ(0U, tapeRead.m_tasks.size());
   ASSERT_EQ(1, trm.getJobs);
-  ASSERT_TRUE(noFilesToRecall);
 }
 }  // namespace unitTests

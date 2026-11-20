@@ -274,10 +274,8 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 //synchronousFetch
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
-  noFilesToRecall = false;
+bool RecallTaskInjector::synchronousFetch() {
   if (requeueRetainedJobsOnStop()) {
-    noFilesToRecall = true;
     return false;
   }
   /* If RAO is enabled, we must ask for files up to 1PB.
@@ -308,10 +306,8 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
   m_fetched = jobsList.size();
   // A scheduler fetch cannot be interrupted; return its jobs if stop arrived during the call.
   if (requeueRetainedJobsOnStop()) {
-    noFilesToRecall = true;
     return false;
   }
-  noFilesToRecall = !jobsList.size();
 
   if (m_jobs.empty()) {
     m_lc.log(cta::log::INFO, "No files left to recall on the queue or in the injector");
@@ -377,8 +373,7 @@ bool RecallTaskInjector::WorkerThread::popRecalls() {
                                  Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
 
     if (!m_parent.m_diskSpaceReservationFailed) {
-      bool noFilesToRecall;
-      m_parent.synchronousFetch(noFilesToRecall);
+      m_parent.synchronousFetch();
       m_parent.injectBulkRecalls();
       if (m_parent.m_diskSpaceReservationFailed) {
         m_parent.signalEndDataMovement();
@@ -453,9 +448,7 @@ void RecallTaskInjector::WorkerThread::run() {
       std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
       if (maxFilesSupportedByRAO && m_parent.m_fetched < maxFilesSupportedByRAO.value()) {
         /* Fetching until we reach maxSupported for the tape drive RAO */
-        //unused boolean here but need to be kept to respect the synchronousFetch signature
-        bool noFilesToRecall;
-        m_parent.synchronousFetch(noFilesToRecall);
+        m_parent.synchronousFetch();
       }
     }
 

@@ -101,15 +101,9 @@ public:
    */
   void finish();
 
-  /**
-     * Pop jobs from the queue to reach a threshold of files held by the injector
-     * This threshold is either m_maxBatchBytes/m_maxBatchFiles or the values supported by the
-     * RAO implementation
-     *
-     * @param noFilesToRecall will be true if no files were popped from the queue during the call
-     * @return true if there are jobs left to be done on the injector, false otherwise
-     */
-  bool synchronousFetch(bool& noFilesToRecall);
+  /// Fetch retrieve jobs as needed to replenish the injector.
+  /// @return True if jobs are available, including retained jobs; false if empty or stopping.
+  bool synchronousFetch();
 
   /**
    * Wait for the inner thread to finish
