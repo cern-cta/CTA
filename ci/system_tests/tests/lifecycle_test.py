@@ -37,11 +37,12 @@ def _restart_daemon_with_sigterm(
     restart_expectations: RestartExpectations,
     *,
     timeout_secs: int = 120,
-    transfer_log_message: Optional[str] = None,
+    file_transferred_log_message: Optional[str] = None,
     start_transfers: Optional[Callable[[], None]] = None,
 ) -> list[dict[str, Any]]:
     """Send SIGTERM, verify one clean container restart, and return the new log records.
 
+    When file_transferred_log_message is provided, wait for it in new logs before sending SIGTERM.
     For a busy restart, arm the log trigger before starting transfers so short tape sessions cannot be missed.
     """
     connection = daemon.conn
@@ -73,7 +74,7 @@ def _restart_daemon_with_sigterm(
     signal_trigger_pid: Optional[str] = None
     try:
         with restart_expectations.expect_container_restarts(daemon):
-            if transfer_log_message is None:
+            if file_transferred_log_message is None:
                 # Detach the sender so the exec connection closes before container shutdown.
                 daemon.exec("(sleep 1; kill -TERM 1) </dev/null >/dev/null 2>&1 &")
             else:
@@ -81,7 +82,7 @@ def _restart_daemon_with_sigterm(
                 # Observe new records locally: catalogue polling can miss a fast virtual-tape transfer.
                 trigger = (
                     f"until tail -n +{len(previous_records) + 1} {log_file} | "
-                    f"grep -Fq {shlex.quote(transfer_log_message)}; do sleep 0.02; done; kill -TERM 1"
+                    f"grep -Fq {shlex.quote(file_transferred_log_message)}; do sleep 0.02; done; kill -TERM 1"
                 )
                 signal_trigger_pid = daemon.exec_with_output(
                     f"timeout {timeout_secs} sh -c {shlex.quote(trigger)} </dev/null >/dev/null 2>&1 & echo $!"
@@ -141,16 +142,16 @@ def _restart_daemon_with_sigterm(
 
 
 def _assert_tape_session_drained(
-    records: list[dict[str, Any]], transfer_log_message: str, submitted_file_count: int
+    records: list[dict[str, Any]], file_transferred_log_message: str, submitted_file_count: int
 ) -> None:
     """Require an active tape session to finish after SIGTERM, before all submitted files are transferred."""
     signal_record_index = next(
         i for i, record in enumerate(records) if record.get("message") == "Signal reactor received SIGTERM"
     )
-    assert any(record.get("message") == transfer_log_message for record in records[:signal_record_index])
+    assert any(record.get("message") == file_transferred_log_message for record in records[:signal_record_index])
     stopped_record_index = next(i for i, record in enumerate(records) if record.get("event_name") == "program_stopped")
     transferred_file_count = sum(
-        record.get("message") == transfer_log_message for record in records[:stopped_record_index]
+        record.get("message") == file_transferred_log_message for record in records[:stopped_record_index]
     )
     assert 0 < transferred_file_count < submitted_file_count, (
         f"Expected shutdown with queued work remaining; transferred {transferred_file_count}/{submitted_file_count}"
@@ -412,7 +413,7 @@ class TestGracefulRestart:
                 assert time.monotonic() < enqueue_deadline, "Not all files reached the scheduler queue"
                 time.sleep(0.1)
             assert queued_file_count() == len(files), "Unexpected work appeared in the scheduler queue"
-            transfer_log_message = (
+            file_transferred_log_message = (
                 "File successfully transmitted to drive"
                 if operation == "archive"
                 else "File successfully read from tape"
@@ -422,10 +423,10 @@ class TestGracefulRestart:
                 "cta-taped",
                 restart_expectations,
                 timeout_secs=min(120, remaining_secs()),
-                transfer_log_message=transfer_log_message,
+                file_transferred_log_message=file_transferred_log_message,
                 start_transfers=lambda: cta_cli.set_drive_up(drive_name, wait=False),
             )
-            _assert_tape_session_drained(records, transfer_log_message, submitted_file_count=len(files))
+            _assert_tape_session_drained(records, file_transferred_log_message, submitted_file_count=len(files))
             assert queued_file_count() > 0, "SIGTERM drained the entire scheduler queue instead of stopping fetching"
             # SIGTERM requests Down; explicitly authorize the restarted daemon to finish the backlog.
             cta_cli.set_drive_up(drive_name, wait=False)
