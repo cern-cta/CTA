@@ -59,18 +59,18 @@ void RecallTaskInjector::startThreads() {
 //------------------------------------------------------------------------------
 void RecallTaskInjector::initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue) {
   m_raoManager = cta::tape::rao::RAOManager(dataConfig, &m_drive, catalogue);
-  m_raoFuture = m_raoPromise.get_future();
+  m_driveReadyForRAOFuture = m_driveReadyForRAOPromise.get_future();
 }
 
 //------------------------------------------------------------------------------
-//waitForRAOReady
+//waitForDriveReadyForRAO
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::waitForRAOReady() {
-  return m_raoFuture.get();
+bool RecallTaskInjector::waitForDriveReadyForRAO() {
+  return m_driveReadyForRAOFuture.get();
 }
 
-void RecallTaskInjector::setRAOReady(bool ready) {
-  m_raoPromise.set_value(ready);
+void RecallTaskInjector::setDriveReadyForRAO(bool ready) {
+  m_driveReadyForRAOPromise.set_value(ready);
 }
 
 /**
@@ -424,7 +424,7 @@ void RecallTaskInjector::WorkerThread::run() {
     std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
     if (m_parent.m_raoManager.useRAO() && !m_parent.m_stopToken.stop_requested()) {
       // Startup failure releases the workers without attempting RAO on an unavailable drive.
-      if (!m_parent.waitForRAOReady()) {
+      if (!m_parent.waitForDriveReadyForRAO()) {
         m_parent.requeueRetainedJobs();
         m_parent.m_lc.log(cta::log::INFO, "Tape thread ended before RAO drive access");
         m_parent.signalEndDataMovement();

@@ -126,11 +126,11 @@ public:
    */
   void initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
 
-  /// Wait for tape startup; false means the drive could not be made ready for RAO.
-  bool waitForRAOReady();
+  /// Wait until tape loading and encryption setup permit RAO queries; return false if startup fails.
+  bool waitForDriveReadyForRAO();
 
   /// Publish the startup outcome exactly once from the tape thread.
-  void setRAOReady(bool ready);
+  void setDriveReadyForRAO(bool ready);
 
   /**
    * This method will tell the TapeReadSingleThread that the
@@ -265,8 +265,8 @@ private:
   cta::tape::rao::RAOManager m_raoManager;
 
   // The tape thread publishes true when RAO may access the drive, or false on startup failure.
-  std::promise<bool> m_raoPromise;
-  std::future<bool> m_raoFuture;
+  std::promise<bool> m_driveReadyForRAOPromise;
+  std::future<bool> m_driveReadyForRAOFuture;
 
   std::promise<void> m_firstTasksInjectedPromise;
   std::future<void> m_firstTasksInjectedFuture;
