@@ -1197,9 +1197,11 @@ TEST_P(TapeSessionTest, RetrieveEmptyMountCleansUp) {
     "");
 }
 
-// A stop before the initial fetch aborts startup without reporting the mount as empty.
+// A stop before the initial fetch follows the empty-mount path without attempting a physical mount.
 template<typename Mount>
-void checkStopBeforeStartupIsNotEmptyMount(cta::catalogue::Catalogue& catalogue, std::string_view abortMessage) {
+void checkStopBeforeStartupIsEmptyMount(cta::catalogue::Catalogue& catalogue,
+                                        std::string_view abortMessage,
+                                        TapeSessionEvent noFilesEvent) {
   alarm(5);
   cta::log::StringLogger logger("dummy", "stopBeforeStartupTest", cta::log::DEBUG);
   Mount mount(catalogue, TransferFailurePoint::None);
@@ -1227,35 +1229,45 @@ void checkStopBeforeStartupIsNotEmptyMount(cta::catalogue::Catalogue& catalogue,
   EXPECT_TRUE(result.successful);
   const auto outcome = session.tracker().outcomeSnapshot();
   EXPECT_FALSE(outcome.hasFailures);
-  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::EmptyMount)]);
-  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToRecall)]);
-  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToMigrate)]);
+  EXPECT_EQ(1, outcome.events[static_cast<size_t>(TapeSessionEvent::EmptyMount)]);
+  EXPECT_EQ(noFilesEvent == TapeSessionEvent::NoFilesToRecall ? 1 : 0,
+            outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToRecall)]);
+  EXPECT_EQ(noFilesEvent == TapeSessionEvent::NoFilesToMigrate ? 1 : 0,
+            outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToMigrate)]);
   EXPECT_FALSE(session.tracker().mountAttempted());
   EXPECT_EQ(1, countLogMessages(logger.getLog(), std::string(abortMessage)));
-  EXPECT_EQ(std::string::npos, logger.getLog().find("Info_emptyMount"));
+  EXPECT_NE(std::string::npos, logger.getLog().find("Info_emptyMount"));
+  const auto* testResult = ::testing::UnitTest::GetInstance()->current_test_info()->result();
+  for (int i = 0; i < testResult->total_part_count(); ++i) {
+    const auto& part = testResult->GetTestPartResult(i);
+    if (part.failed()) {
+      std::fprintf(stderr, "%s\n", part.summary());
+    }
+  }
   alarm(0);
 }
 
-TEST_P(TapeSessionTest, ArchiveStopBeforeStartupIsNotEmptyMount) {
+TEST_P(TapeSessionTest, ArchiveStopBeforeStartupIsEmptyMount) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
-      checkStopBeforeStartupIsNotEmptyMount<FailingTransferMount<cta::MockArchiveMount>>(
+      checkStopBeforeStartupIsEmptyMount<FailingTransferMount<cta::MockArchiveMount>>(
         getCatalogue(),
-        "Aborting migration mount startup: stop requested");
+        "Aborting migration mount startup: empty mount",
+        TapeSessionEvent::NoFilesToMigrate);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),
     "");
 }
 
-TEST_P(TapeSessionTest, RetrieveStopBeforeStartupIsNotEmptyMount) {
+TEST_P(TapeSessionTest, RetrieveStopBeforeStartupIsEmptyMount) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
-      checkStopBeforeStartupIsNotEmptyMount<FailingTransferRetrieveMount>(
-        getCatalogue(),
-        "Aborting recall mount startup: stop requested");
+      checkStopBeforeStartupIsEmptyMount<FailingTransferRetrieveMount>(getCatalogue(),
+                                                                       "Aborting recall mount startup: empty mount",
+                                                                       TapeSessionEvent::NoFilesToRecall);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),
