@@ -116,7 +116,7 @@ bool RecallTaskInjector::testDiskSpaceReservationWorking() {
     return true;
   } else {
     m_lc.log(cta::log::INFO, "Disk space reservation test failed, will not mount tape");
-    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+    requeueRetainedJobs();
     return false;
   }
 }
@@ -159,9 +159,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     for (auto& jobptr : nextJobBatch) {
       m_jobs.emplace_back(jobptr.release());
     }
-    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
-    m_files = 0;
-    m_bytes = 0;
+    requeueRetainedJobs();
     m_lc.log(cta::log::WARNING,
              "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed, "
              "requeued all pending jobs");
@@ -305,7 +303,7 @@ bool RecallTaskInjector::synchronousFetch() {
     m_bytes += j->archiveFile.fileSize;
     m_jobs.emplace_back(j.release());
   }
-  m_fetched = jobsList.size();
+  const auto fetchedFiles = jobsList.size();
   // A scheduler fetch cannot be interrupted; return its jobs if stop arrived during the call.
   if (m_stopToken.stop_requested()) {
     requeueRetainedJobs();
@@ -317,7 +315,7 @@ bool RecallTaskInjector::synchronousFetch() {
     return false;
   }
   cta::log::ScopedParamContainer scoped(m_lc);
-  scoped.add("requestedBytes", reqSize).add("requestedFiles", reqFiles).add("fetchedFiles", m_fetched);
+  scoped.add("requestedBytes", reqSize).add("requestedFiles", reqFiles).add("fetchedFiles", fetchedFiles);
   m_lc.log(cta::log::INFO, "Fetched files to recall");
   return true;
 }
@@ -447,7 +445,7 @@ void RecallTaskInjector::WorkerThread::run() {
         m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
       }
       std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
-      if (maxFilesSupportedByRAO && m_parent.m_fetched < maxFilesSupportedByRAO.value()) {
+      if (maxFilesSupportedByRAO && m_parent.m_files < maxFilesSupportedByRAO.value()) {
         /* Fetching until we reach maxSupported for the tape drive RAO */
         m_parent.synchronousFetch();
       }
