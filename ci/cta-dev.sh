@@ -25,7 +25,8 @@ if ! project_root=$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null);
 fi
 readonly project_root
 
-uv python install "$(cat "$project_root/.python-version")"
+# Use the managed interpreter directly without installing executables into the user's PATH.
+uv python install --no-bin "$(cat "$project_root/.python-version")"
 build_python=$(uv python find --no-project --managed-python "$(cat "$project_root/.python-version")")
 readonly build_python
 
