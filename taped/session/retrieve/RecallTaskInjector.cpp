@@ -212,7 +212,8 @@ void RecallTaskInjector::injectBulkRecalls() {
     raoOrder = m_raoManager.queryRAO(m_jobs, m_lc);
   }
 
-  if (requeueRetainedJobsOnStop()) {
+  if (m_stopToken.stop_requested()) {
+    requeueRetainedJobs();
     // No first task may have been injected: release the tape worker waiting for it.
     signalEndDataMovement();
     setFirstTasksInjectedPromise();
@@ -275,7 +276,8 @@ void RecallTaskInjector::injectBulkRecalls() {
 //synchronousFetch
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousFetch() {
-  if (requeueRetainedJobsOnStop()) {
+  if (m_stopToken.stop_requested()) {
+    requeueRetainedJobs();
     return false;
   }
   /* If RAO is enabled, we must ask for files up to 1PB.
@@ -305,7 +307,8 @@ bool RecallTaskInjector::synchronousFetch() {
   }
   m_fetched = jobsList.size();
   // A scheduler fetch cannot be interrupted; return its jobs if stop arrived during the call.
-  if (requeueRetainedJobsOnStop()) {
+  if (m_stopToken.stop_requested()) {
+    requeueRetainedJobs();
     return false;
   }
 
@@ -319,17 +322,13 @@ bool RecallTaskInjector::synchronousFetch() {
   return true;
 }
 
-bool RecallTaskInjector::requeueRetainedJobsOnStop() {
-  if (!m_stopToken.stop_requested()) {
-    return false;
-  }
+void RecallTaskInjector::requeueRetainedJobs() {
   if (!m_jobs.empty()) {
-    m_lc.log(cta::log::INFO, "Drain requested: requeuing uninjected retrieve jobs");
+    m_lc.log(cta::log::INFO, "Requeuing uninjected retrieve jobs");
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
     m_files = 0;
     m_bytes = 0;
   }
-  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -362,7 +361,9 @@ bool RecallTaskInjector::WorkerThread::popRecalls() {
   while (1) {
     Request req = m_parent.m_queue.pop();
     if (req.end) {
-      m_parent.requeueRetainedJobsOnStop();
+      if (m_parent.m_stopToken.stop_requested()) {
+        m_parent.requeueRetainedJobs();
+      }
       m_parent.m_lc.log(cta::log::INFO,
                         "Received an end notification from tape thread: triggering the end of session.");
       m_parent.signalEndDataMovement();
@@ -426,7 +427,7 @@ void RecallTaskInjector::WorkerThread::run() {
     if (m_parent.m_raoManager.useRAO() && !m_parent.m_stopToken.stop_requested()) {
       // Startup failure releases the workers without attempting RAO on an unavailable drive.
       if (!m_parent.waitForRAOReady()) {
-        m_parent.requeueRetainedJobsOnStop();
+        m_parent.requeueRetainedJobs();
         m_parent.m_lc.log(cta::log::INFO, "Tape thread ended before RAO drive access");
         m_parent.signalEndDataMovement();
         m_parent.setFirstTasksInjectedPromise();

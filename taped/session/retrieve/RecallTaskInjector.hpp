@@ -152,8 +152,8 @@ public:
   bool testDiskSpaceReservationWorking();
 
 private:
-  /// Return uninjected jobs on stop
-  bool requeueRetainedJobsOnStop();
+  /// Return uninjected jobs to the scheduler.
+  void requeueRetainedJobs();
 
   /**
    * It will signal to the disk read thread  pool, tape write single thread
