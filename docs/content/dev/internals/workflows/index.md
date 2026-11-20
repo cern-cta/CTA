@@ -68,10 +68,10 @@ flowchart LR
   TD  <==>|"file data"| DS
   MD  -.->|"success / failure"| DS
 
-  class DS,OP ext
-  class WF,ADM api
-  class CAT,SDB store
-  class TD,MD daemon
+  class DS,OP grey
+  class WF,ADM blue
+  class CAT,SDB amber
+  class TD,MD green
   class EXT,FE,STATE,TAPE group
 ```
 
@@ -110,9 +110,9 @@ flowchart LR
   OP  -->|"repack"| ADM --> RP
   AJ & RJ & RP --> SDB
 
-  class DS,OP,REF ext
-  class WF,ADM api
-  class SDB store
+  class DS,OP,REF grey
+  class WF,ADM blue
+  class SDB amber
 ```
 
 ### Resolving scheduling parameters

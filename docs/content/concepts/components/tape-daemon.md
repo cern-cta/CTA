@@ -34,6 +34,27 @@ The drive lifecycle has four operational states:
 | `Up` | Preparation has succeeded; the daemon is waiting for work or running tape sessions. |
 | `Stopping` | The daemon has been requested to stop using the drive; it finishes ongoing work and cleanup before becoming `Down`. |
 
+```mermaid
+stateDiagram-v2
+--8<-- "docs/includes/mermaid-classes.txt"
+
+    direction LR
+    [*] --> Down
+    Down --> Starting: Desired Up
+    Starting --> Up: Preparation succeeds
+    Starting --> Down: Preparation fails
+    Starting --> Stopping: Desired Down<br/>or stop request
+    Up --> Stopping: Desired Down,<br/>stop request or<br/>drive not reusable
+    Stopping --> Down: Cleanup finished,<br/>hardware released
+
+    class Down grey
+    class Starting blue
+    class Up green
+    class Stopping amber
+```
+
+A drive is `Stopping` while desired `Down` is set but the daemon still owns the hardware, so a tape session can remain active in this state.
+
 Every drive session follows these rules:
 
 - **Prepare before scheduling.** Report `Starting` before accessing hardware.
@@ -87,6 +108,8 @@ It ends by releasing hardware ownership and reporting `Down`.
 ```mermaid
 %%{init: {"flowchart": {"nodeSpacing": 15, "rankSpacing": 15, "padding": 8, "subGraphTitleMargin": {"top": 8, "bottom": 20}}}}%%
 flowchart LR
+--8<-- "docs/includes/mermaid-classes.txt"
+
     before["Waiting<br/>No hardware access"]
 
     subgraph drive["Drive session · owns drive hardware"]
@@ -100,6 +123,11 @@ flowchart LR
     after["Waiting<br/>No hardware access"]
     before --> clean
     tape2 --> after
+
+    class before,after grey
+    class clean blue
+    class tape1,idle,tape2 green
+    class drive group
 ```
 
 Preparation may include a cleanup tape session [if configured](#cleaning-the-drive-at-the-start-of-a-drive-session).
@@ -125,6 +153,8 @@ Once the drive is reported `Down` and the daemon is waiting, it must not access 
 
 ```mermaid
 flowchart TB
+--8<-- "docs/includes/mermaid-classes.txt"
+
     config["Read config file"]
     cat["Initialise catalogue"]
     sched["Initialise scheduler"]
@@ -169,6 +199,10 @@ flowchart TB
     wait --> desiredUpQ
     desiredUpQ -- Yes --> driveSession["Run drive session<br/>Prepare drive before reporting Up"]
     driveSession -- Session ends; daemon keeps running --> desiredUpQ
+
+    class desiredDown,preserveDown,wait,invalid grey
+    class desiredUp,driveSession green
+    class registration group
 ```
 
 #### On startup
@@ -234,6 +268,8 @@ It runs tape sessions sequentially and permits another only after safe reuse has
 
 ```mermaid
 flowchart TB
+--8<-- "docs/includes/mermaid-classes.txt"
+
     start{"Desired Up and no stop request?"}
 
     subgraph preparation["Drive preparation"]
@@ -286,6 +322,12 @@ flowchart TB
         done["Return to daemon"]
         release --> reportDown --> done
     end
+
+    class acquire,clean,probe blue
+    class findMount,tapeSession green
+    class requestDown,release amber
+    class reportDown grey
+    class preparation,ending group
 ```
 
 #### On entry
@@ -522,8 +564,10 @@ Two disk threads are shown as an example; the number of threads is configurable.
 
 ```mermaid
 flowchart TB
+--8<-- "docs/includes/mermaid-classes.txt"
+
     disk[("Disk buffer<br/>Archive source files")]
-    subgraph daemon["Tape daemon"]
+    subgraph taped["Tape daemon"]
         reader1["Disk thread 1<br/>Read file A"]
         reader2["Disk thread 2<br/>Read file B"]
         memory("Shared memory buffers<br/>Reusable memory blocks")
@@ -540,6 +584,11 @@ flowchart TB
     disk --> reader1
     disk --> reader2
     writer --> buffer
+
+    class disk grey
+    class reader1,reader2,writer green
+    class memory,buffer,tape amber
+    class taped,drive group
 ```
 
 1. Disk threads read source files from the disk buffer into the daemon's memory blocks.
@@ -557,12 +606,14 @@ After tape reading ends, data already in the daemon's memory buffers can continu
 
 ```mermaid
 flowchart TB
+--8<-- "docs/includes/mermaid-classes.txt"
+
     subgraph drive["Tape drive hardware"]
         tape[("Physical tape")]
         buffer("Internal read buffer")
         tape -->|Read from medium| buffer
     end
-    subgraph daemon["Tape daemon"]
+    subgraph taped["Tape daemon"]
         reader["Tape thread<br/>Tape reads"]
         memory("Shared memory buffers<br/>Reusable memory blocks")
         writer1["Disk thread 1<br/>Write file A"]
@@ -575,6 +626,11 @@ flowchart TB
     buffer --> reader
     writer1 --> disk
     writer2 --> disk
+
+    class disk grey
+    class reader,writer1,writer2 green
+    class memory,buffer,tape amber
+    class drive,taped group
 ```
 
 1. The tape thread reads file data from the drive into the daemon's memory blocks.

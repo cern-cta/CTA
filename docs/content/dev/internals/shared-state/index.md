@@ -57,10 +57,10 @@ flowchart TB
   REL --> RDB
   OST --> OBJ
 
-  class PROC daemon
-  class CAT,SCH,SDB api
-  class RCAT,OST,REL store
-  class RDB,OBJ ext
+  class PROC green
+  class CAT,SCH,SDB blue
+  class RCAT,OST,REL amber
+  class RDB,OBJ grey
   class LIB,CATLIB,SCHLIB,API group
 ```
 
