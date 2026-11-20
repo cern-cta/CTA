@@ -725,8 +725,8 @@ drive (dr)
 
     **\-\-reason** specifies the reason (free text) why the drive is being put down. The reason will
     be displayed in the output of **ls**.
-    For **down**, the server prepends `[<user> YYYY-MM-dd HH:mm]` using the authenticated identity and
-    the server's current UTC time.
+    For **down**, the server prepends `[<user> YYYY-MM-dd]` using the authenticated identity and
+    the server's current UTC date.
 
     **ls** lists the drives matching *drive_name*, or all drives by default. An exclamation mark (**!**)
     is displayed in front of the drive name for drives in disabled libraries.

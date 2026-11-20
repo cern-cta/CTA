@@ -68,7 +68,7 @@ std::optional<std::string> setDriveDown(const SyncCmdContext& ctx, const AdminCm
     throw exception::UserError("You must provide a reason in order to set the drive down");
   }
   const auto now = std::chrono::system_clock::now();
-  reason = std::format("[{} {:%Y-%m-%d %H:%M}] {}", ctx.identity.username, now, reason);
+  reason = std::format("[{} {:%Y-%m-%d}] {}", ctx.identity.username, now, reason);
   const common::dataStructures::DriveDownRequest request {.reason = reason,
                                                           .force = opts.hasFlag(OptionBoolean::FORCE)};
   return applyToDrives(ctx,

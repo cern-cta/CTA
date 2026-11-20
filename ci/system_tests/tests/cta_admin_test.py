@@ -420,9 +420,9 @@ def test_cta_admin_drive(
             dr_updated1,
             ["driveStatus", "driveStatusSince", "timeSinceLastUpdate", "reason", "desiredDriveState"],
         )
-        # Down reasons include the authenticated admin and a server-generated timestamp.
+        # Down reasons include the authenticated admin and the server's current UTC date.
         assert re.fullmatch(
-            r"\[ctaadmin1 \d{4}-\d{2}-\d{2} \d{2}:\d{2}\] cta-admin systest down",
+            r"\[ctaadmin1 \d{4}-\d{2}-\d{2}\] cta-admin systest down",
             dr_updated2["reason"],
         ), dr_updated2["reason"]
         assert dr_updated2["desiredDriveState"] == "DOWN"
