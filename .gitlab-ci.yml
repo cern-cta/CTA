@@ -327,14 +327,19 @@ workflow:
 # - The rules: section of the job
 include:
   # Select backend defaults without short-circuiting the shared workflow rules.
+  # Image-update pipelines have no scheduler input and do not need backend defaults.
   - local: .gitlab/ci/templates/backend-defaults.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_PIPELINE_IMAGES"'
+        when: never
       - if: '"$[[ inputs.platform ]]" == "debian13"'
     inputs:
       scheduler-type: pgsched
       enable-oracle-support: false
   - local: .gitlab/ci/templates/backend-defaults.gitlab-ci.yml
     rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "UPDATE_PIPELINE_IMAGES"'
+        when: never
       - if: '"$[[ inputs.platform ]]" != "debian13"'
     inputs:
       scheduler-type: $[[ inputs.scheduler-type ]]
