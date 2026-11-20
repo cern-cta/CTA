@@ -93,7 +93,7 @@ Active-queue routines move jobs belonging to dead mounts back to the correspondi
 | `RepackArchiveInactiveMountPendingQueueRoutine` | Clears inactive mount assignments from pending repack archive jobs. |
 | `RepackRetrieveInactiveMountPendingQueueRoutine` | Clears inactive mount assignments from pending repack retrieve jobs. |
 
-See [PostgreSQL maintenance](scheduler/garbage-collection.md) for dead-mount detection and queue cleanup.
+See [PostgreSQL Garbage Collection](../shared-state/scheduler-db/postgresql/garbage-collection.md) for dead-mount detection and queue cleanup.
 
 #### Reporting and scheduler maintenance
 
@@ -110,7 +110,7 @@ TODO: Expand routine contracts, backend differences, failure handling, and tests
 
 ## Queue Cleanup Routine
 
-The queue ownership and agent mechanisms below describe the objectstore backend. See [Scheduler](scheduler/index.md) for backend scope and missing objectstore guidance and [PostgreSQL maintenance](scheduler/garbage-collection.md) for that backend.
+The queue ownership and agent mechanisms below describe the objectstore backend. See [Scheduler DB](../shared-state/scheduler-db/index.md) for backend scope and missing objectstore guidance and [PostgreSQL Garbage Collection](../shared-state/scheduler-db/postgresql/garbage-collection.md) for that backend.
 
 TODO: Move the detailed reservation and locking algorithm into the objectstore backend during its content review; retain the routine contract here.
 

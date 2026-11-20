@@ -69,7 +69,7 @@ A Repack request can have all these status during the Repack workflow:
 
 The Repack "just move" workflow allows the user to **move** the files located in a source tape into another one (destination tape).
 
-The files located in the source tape will be [moved to the recycle bin](recycle-bin.md). After a successful repack "just move", the source tape can be **reclaimed**.
+The files located in the source tape will be [moved to the recycle bin](../shared-state/catalogue/recycle-bin.md). After a successful repack "just move", the source tape can be **reclaimed**.
 
 In order to launch a Repack "just move" workflow, add the `--justmove` or `-m` option to the *repack add* command.
 

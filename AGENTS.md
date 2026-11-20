@@ -100,7 +100,7 @@ Use appropriate schema checks or deployment/system tests when the change require
 - **Catalogue schema:** `catalogue/cta-catalogue-schema/` is a submodule; changes are exceptional and normally undertaken only at a developer's explicit instruction.
   Implement general features against the existing schema rather than assuming it can be changed.
   If a schema change would significantly improve the solution or simplify the implementation, explain the benefit to the developer before proceeding with that change.
-  Schema changes require coordinated Liquibase migration work and deployment testing; follow [Schema Development](docs/content/dev/internals/components/catalogue/schema-development.md).
+  Schema changes require coordinated Liquibase migration work and deployment testing; follow [Schema Development](docs/content/dev/internals/shared-state/catalogue/schema-development.md).
 - **C++ naming:** use the `m_` prefix for class data members.
 - **Layering:** the common library must not depend on higher layers such as frontend, scheduler or tape-daemon code, regardless of directory layout.
   Move shared types into the common library when needed.

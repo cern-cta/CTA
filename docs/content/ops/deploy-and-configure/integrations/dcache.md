@@ -8,7 +8,7 @@ dCache integrates with CTA through the [dCache CTA nearline-storage plugin](http
 | CTA plugin installation and configuration | [dCache CTA plugin README](https://github.com/dCache/dcache-cta#readme) |
 | dCache upgrades | [Upgrading Disk System](../../run-and-maintain/upgrades/disk-system.md#dcache) |
 
-Check the plugin's requirements against the dCache and CTA versions being deployed. CTA's [Workflow Frontend](../configuration/workflow-frontend.md) and [authentication](../configuration/authentication.md) documentation describe the CTA side of the integration.
+Check the plugin's requirements against the dCache and CTA versions being deployed. CTA's [Workflow Frontend API](../configuration/workflow-frontend.md) and [authentication](../configuration/authentication.md) documentation describe the CTA side of the integration.
 
 !!! note "Contributions welcome"
 

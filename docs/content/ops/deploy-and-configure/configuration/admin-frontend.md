@@ -1,4 +1,4 @@
-# Admin Frontend Configuration {#admin-api-configuration}
+# Admin Frontend API Configuration {#admin-api-configuration}
 
 Configure the API used by operators and administrative tools, including `cta-admin`.
 

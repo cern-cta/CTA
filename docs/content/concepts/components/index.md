@@ -1,6 +1,6 @@
 # Component Overview
 
-CTA services coordinate tape storage through shared catalogue and scheduler backends. The disk system provides client access, the file namespace, and disk storage; operators access CTA through the Admin Frontend.
+CTA services coordinate tape storage through shared catalogue and scheduler backends. The disk system provides client access, the file namespace, and disk storage; operators access CTA through the Admin Frontend API.
 
 ## Architecture
 
@@ -12,8 +12,8 @@ flowchart TB
     operator["Operator<br/>cta-admin"]
 
     subgraph CTA["CTA"]
-        workflow["Workflow Frontend<br/>Archive / retrieve requests"]
-        admin["Admin Frontend<br/>Queries / configuration"]
+        workflow["Workflow Frontend API<br/>Archive / retrieve requests"]
+        admin["Admin Frontend API<br/>Queries / configuration"]
         subgraph stores["Catalogue and scheduler"]
             catalogue[("Catalogue<br/>Policies · File and tape metadata")]
             scheduler[("Scheduler<br/>Requests · Queues · Job state")]
@@ -49,8 +49,8 @@ flowchart TB
 
 | Component | Role |
 | --- | --- |
-| [Workflow Frontend](workflow-frontend.md) | Accepts disk-system registration, archive, retrieve, cancellation and deletion requests. |
-| [Admin Frontend](admin-frontend.md) | Accepts operator queries and resource-management commands. |
+| [Workflow Frontend API](workflow-frontend.md) | Accepts disk-system registration, archive, retrieve, cancellation and deletion requests. |
+| [Admin Frontend API](admin-frontend.md) | Accepts operator queries and resource-management commands. |
 | [Tape Daemon](tape-daemon.md) | Controls one drive and transfers files between tape and disk. |
 | [Maintenance Daemon](maintenance-daemon.md) | Sends queued reports, advances repack and recovers or cleans up scheduler work. |
 | [Media Changer Daemon](media-changer-daemon.md) | Handles cartridge movements through library robotics. |
@@ -58,7 +58,7 @@ flowchart TB
 ## Databases and backends
 
 - [Catalogue](catalogue.md): stores **non-transient metadata** describing archived files, tape copies, resources and policies. These records remain necessary after individual transfers finish.
-- [Scheduler](scheduler.md): stores **transient work state**, including requests, queues and job progress, and coordinates work across tape drives. This state is needed while work is pending or in progress, including reporting and cleanup.
+- [Scheduler DB](scheduler-db.md): stores **transient work state**, including requests, queues and job progress, and is the shared state through which tape drives coordinate their mounts. This state is needed while work is pending or in progress, including reporting and cleanup.
 
 Transient does not mean held only in memory: the scheduler backend persists work across service restarts. Losing that backend's stored state means losing the work it tracks, even if the catalogue and recorded tape copies remain intact.
 
@@ -67,7 +67,7 @@ Transient does not mean held only in memory: the scheduler backend persists work
 A CTA deployment normally has **one logical catalogue**, shared by its services, and **one or more scheduler backends**. Each scheduler backend holds its own requests, queues, and coordination state. A typical reason to use two is to separate normal archival and retrieval from repack. Both use the same catalogue, but a request queued in one backend is not automatically visible in the other.
 
 Services connect directly to the catalogue and the scheduler backend they serve; they do not send all database access through an API service.
-For example, a separate repack scheduler has an Admin Frontend endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow Frontend continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
+For example, a separate repack scheduler has an Admin Frontend API endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow Frontend API continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
 
 ## Integration and access boundaries
 

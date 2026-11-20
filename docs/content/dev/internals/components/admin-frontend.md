@@ -2,9 +2,9 @@
 
     This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
 
-# Admin Frontend Internals {#admin-api-internals}
+# Admin Frontend API Internals {#admin-api-internals}
 
-Command dispatch and authentication for administrative clients. Operator settings belong in [Admin Frontend Configuration](../../../ops/deploy-and-configure/configuration/admin-frontend.md).
+Command dispatch and authentication for administrative clients. Operator settings belong in [Admin Frontend API Configuration](../../../ops/deploy-and-configure/configuration/admin-frontend.md).
 
 ## Admin request dispatch
 
@@ -94,7 +94,7 @@ The Kerberos implementation relies on the system's GSSAPI libraries (typically p
 
 The APIs currently share frontend code and dependencies. This separation follows their responsibilities; it does not imply that the implementation split is complete.
 
-See [Workflow Frontend Internals](workflow-frontend.md) for disk-system workflow requests.
+See [Workflow Frontend API Internals](workflow-frontend.md) for disk-system workflow requests.
 
 ## Add or change an administrative command
 

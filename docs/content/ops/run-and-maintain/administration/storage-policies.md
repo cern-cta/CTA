@@ -14,7 +14,7 @@ TODO: Document registration, ownership, and operational limits.
 
 TODO: Document initial policy setup and changes to placement or copy count.
 
-## Mount policies and requester rules
+## Mount policies and mount rules
 
 TODO: Document scheduling policy assignment and validation.
 

@@ -1,0 +1,14 @@
+:root {
+  --md-mermaid-edge-color: #546e7a;
+  --md-mermaid-node-bg-color: #ffffff;
+  --md-mermaid-node-fg-color: #263238;
+  --md-mermaid-label-bg-color: #ffffff;
+  --md-mermaid-label-fg-color: #263238;
+}
+[data-md-color-scheme="slate"] {
+  --md-mermaid-edge-color: #90a4ae;
+  --md-mermaid-node-bg-color: #1e2530;
+  --md-mermaid-node-fg-color: #eceff1;
+  --md-mermaid-label-bg-color: #1b1f27;
+  --md-mermaid-label-fg-color: #eceff1;
+}

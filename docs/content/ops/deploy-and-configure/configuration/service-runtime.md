@@ -104,8 +104,8 @@ To enable this feature, use the `--runtime-dir <path>` flag. The lifecycle of th
 
 Example files are included with the component they configure:
 
-- [Workflow Frontend](workflow-frontend.md#example-configuration)
-- [Admin Frontend](admin-frontend.md#example-configuration)
+- [Workflow Frontend API](workflow-frontend.md#example-configuration)
+- [Admin Frontend API](admin-frontend.md#example-configuration)
 - [Tape Daemon](tape-daemon.md#example-configuration)
 - [Maintenance Daemon](maintenance-daemon.md#example-configuration)
 - [Media Changer Daemon](media-changer-daemon.md#example-configuration)
