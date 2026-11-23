@@ -693,6 +693,35 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   // BASE_INSERT - the original copy NB from the retrieve
   // ALTERNATE_INSERT - the alternative COPY_NB to re-archive if any
   //
+  // One archive job per entry in REPACK_REARCHIVE_COPY_NBS, and nothing else - that set is the
+  // authoritative list of copies this repack has to (re-)write, and the objectstore scheduler
+  // builds its archive jobs by iterating exactly it (one SorterArchiveJob per copyNbsToRearchive
+  // entry). Keeping to that contract is what makes three separate numbers agree:
+  //   rows inserted here == CARDINALITY(REPACK_REARCHIVE_COPY_NBS) == REQUEST_JOB_COUNT
+  //                      == the REPACK_REQUEST_TRACKING TOTAL_FILES_TO_ARCHIVE contribution
+  // (Scheduler::expandRepackRequest() increments totalFilesToArchive once per copyNb it adds to
+  // that same set, so the tracking total is |set| for every repack type).
+  //
+  // Hence BASE_INSERT's EXISTS filter: it may only fire when the retrieved copy is itself one of
+  // the copies to re-archive. For MoveOnly and MoveAndAddCopies it always is - expandRepackRequest()
+  // inserts the moved copy's own copyNb into the set - so BASE_INSERT writes that copy and
+  // ALTERNATE_INSERT writes the rest (its REARCHIVE_COPY_VAL <> M.COPY_NB filter). For
+  // AddCopiesOnly the moved-copy block is skipped (the tape is read, not drained), so the set holds
+  // only the missing copies, every one of them goes through ALTERNATE_INSERT, and BASE_INSERT must
+  // write nothing: without the filter it queued an extra archive job re-writing a copy that is
+  // already on tape, left REQUEST_JOB_COUNT one short of the rows actually inserted, and overshot
+  // TOTAL_FILES_TO_ARCHIVE by one per file. A REQUEST_JOB_COUNT that undercounts its own group is
+  // not merely a statistics error: every multi-copy completeness check keys on it
+  // (updateRepackJobSuccess(), moveFailedRepackJobBatchToFailedQueueTable()), so the first copy to
+  // settle would satisfy the group and release the shared repack buffer file while the other copy
+  // was still being written.
+  //
+  // REPACK_REARCHIVE_COPY_NBS is NULL only if expandRepackRequest() produced an empty set, which it
+  // never does for a subrequest it keeps (AddCopiesOnly with nothing to add drops the subrequest
+  // outright). The column reaches this point intact: every writer of REPACK_RETRIEVE_ACTIVE_QUEUE
+  // carries it (moveJobsToDbActiveQueue(), requeueFailedJob(), requeueJobBatch(),
+  // failTransferBatchRequeue()).
+  //
   // Archive-route resolution for repack:
   // TAPE_POOL in REPACK_RETRIEVE_ACTIVE_QUEUE carries the archive destination pool set at
   // expand time (makeJobRow). BASE_INSERT copies it directly to REPACK_ARCHIVE_PENDING_QUEUE
@@ -703,9 +732,8 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   // If archive-route resolution were moved here instead of being fixed in
   // moveJobsToDbActiveQueue, both paths would need independent handling: BASE_INSERT covers
   // only the copy whose COPY_NB matches the retrieved copy, while ALTERNATE_INSERT covers
-  // copies where REARCHIVE_COPY_VAL != M.COPY_NB. A file without a REPACK route for its
-  // primary copy number goes through BASE_INSERT only; if that case were resolved here via
-  // a catalogue lookup, the lookup would need to be per (STORAGE_CLASS, COPY_NB) and would
+  // copies where REARCHIVE_COPY_VAL != M.COPY_NB. If that resolution were done here via a
+  // catalogue lookup instead, the lookup would need to be per (STORAGE_CLASS, COPY_NB) and would
   // not see the ALTERNATE_INSERT entries, which already have their pools set.
 
   // START_TIME is set to the time the job enters the archive queue instead of being carried over
@@ -1714,7 +1742,13 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
     values_rows += "(:JID" + s + "::BIGINT, :TRR" + s + "::SMALLINT, :RFL" + s + "::TEXT)";
   }
 
-  // Step 1: update counters and reset IS_REPORTING in ACTIVE queue
+  // Step 1: write the terminal status and the counters, reset IS_REPORTING in the ACTIVE queue.
+  // STATUS = ReadyForDeletion is what the single-job updateJobStatusForFailedReport() writes before
+  // its own moveJobToFailedQueueTable() call, so a terminally-failed report lands in
+  // RETRIEVE_FAILED_QUEUE with the same status whichever path handled it - that column is what
+  // `cta-admin failedrequest ls` shows. Safe to set in step 1 here, unlike the archive user path in
+  // ArchiveJobQueue.cpp's failReportBatchExceedRetries(): the move below is a separate statement, so
+  // the row is modified once per statement and PostgreSQL does not discard the DELETE.
   std::string sql = R"SQL(
   WITH per_job(job_id, total_report_retries, report_failure_log) AS (
     VALUES )SQL";
@@ -1723,6 +1757,7 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   )
   UPDATE RETRIEVE_ACTIVE_QUEUE a
   SET
+    STATUS = :STATUS::RETRIEVE_JOB_STATUS,
     TOTAL_REPORT_RETRIES = d.total_report_retries,
     IS_REPORTING = FALSE,
     REPORT_FAILURE_LOG = d.report_failure_log,
@@ -1732,6 +1767,7 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(RetrieveJobStatus::ReadyForDeletion));
   for (size_t i = 0; i < jobs.size(); ++i) {
     const auto* row = jobs[i];
     const std::string s = std::to_string(i);

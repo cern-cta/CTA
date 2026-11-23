@@ -926,8 +926,10 @@ public:
   // see RelationalDB::failRetrieveJobBatchReport()'s comment for why.
   static uint64_t failReportBatchRequeue(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs);
 
-  // failReportBatchExceedRetries: batch UPDATE counters for jobs that have exhausted report
-  // retries or have NoReportRequired, then batch-moves them to RETRIEVE_FAILED_QUEUE.
+  // failReportBatchExceedRetries: batch UPDATE for jobs that have exhausted report retries or have
+  // NoReportRequired - writes STATUS=ReadyForDeletion plus the counters, then batch-moves them to
+  // RETRIEVE_FAILED_QUEUE, so a terminally-failed report ends up with the same status whether it
+  // was handled here or by the single-job updateJobStatusForFailedReport().
   // No isRepack parameter - see failReportBatchRequeue() above.
   static uint64_t failReportBatchExceedRetries(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs);
 #endif

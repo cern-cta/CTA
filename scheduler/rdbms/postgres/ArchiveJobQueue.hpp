@@ -971,7 +971,8 @@ VALUES )SQL";
    *
    * Sets the given jobIDs' own STATUS to AJS_ToReportToRepackForSuccess (or ReadyForDeletion
    * directly for a REQUEST_JOB_COUNT=1 row, which has no siblings to wait for). For
-   * REQUEST_JOB_COUNT>1, also checks every sibling sharing the same ARCHIVE_FILE_ID that is
+   * REQUEST_JOB_COUNT>1, also checks every sibling in the same (REPACK_REQUEST_ID,
+   * ARCHIVE_FILE_ID) group that is
    * already at AJS_ToReportToRepackForSuccess (locked FOR UPDATE to serialize against a sibling
    * settling concurrently via its own call to this function): once every copy has reached that
    * status, promotes the whole group to ReadyForDeletion together. Never touches a sibling that
@@ -1063,12 +1064,14 @@ VALUES )SQL";
 
   /**
    * Moves up to `limit` permanently-failed repack copies (STATUS=AJS_ToReportToRepackForFailure)
-   * to REPACK_ARCHIVE_FAILED_QUEUE, together with every sibling copy (by ARCHIVE_FILE_ID) that
-   * has itself already settled - success or failure. Only acts once every copy of a multi-copy
-   * request (REQUEST_JOB_COUNT of them) has settled: a still-mid-transfer sibling is never
-   * touched, since moving this row triggers the caller's disk-source deletion and that sibling
-   * may still need to read the source. REQUEST_JOB_COUNT=1 has no siblings, so it moves the
-   * instant it is itself a candidate.
+   * to REPACK_ARCHIVE_FAILED_QUEUE, together with every sibling copy in the same
+   * (REPACK_REQUEST_ID, ARCHIVE_FILE_ID) group that has itself already settled - success or
+   * failure. Only acts once every copy of a multi-copy request (REQUEST_JOB_COUNT of them) has
+   * settled: a still-mid-transfer sibling is never touched, since moving this row triggers the
+   * caller's disk-source deletion and that sibling may still need to read the source.
+   * REQUEST_JOB_COUNT=1 has no siblings, so it moves the instant it is itself a candidate.
+   * Scoping by REPACK_REQUEST_ID matters because the same ARCHIVE_FILE_ID can be in two repack
+   * requests at once (two tapes each holding one of its copies); those rows are not siblings.
    *
    * @param txn                  Transaction to use for this query
    * @param limit                Max number of newly-failed candidate copies to consider per call
@@ -1107,7 +1110,9 @@ VALUES )SQL";
    * Batch DELETE-from-active + INSERT-into-pending for jobs that have not exhausted
    * their total retry limit.  Reads retry counters directly from each row's m_jobRow
    * (already updated in-memory by prepareFailTransfer).
-   * keepMountId is decided per-row based on retriesWithinMount < maxRetriesWithinMount.
+   * keepMountId is decided per-row based on retriesWithinMount < maxRetriesWithinMount;
+   * when it comes out false the row is requeued with RETRIES_WITHIN_MOUNT reset to 0, as
+   * ArchiveRdbJob::requeueJobToMount() does on the single-job path.
    */
   static uint64_t
   failTransferBatchRequeue(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
@@ -1116,6 +1121,11 @@ VALUES )SQL";
    * Batch UPDATE of the active queue to ToReportToUser/RepackForFailure for jobs that
    * have exhausted their total retry limit.  Reads retry counters directly from each
    * row's m_jobRow (already updated in-memory by prepareFailTransfer).
+   *
+   * USER multi-copy requests are failed as a whole, by ARCHIVE_REQUEST_ID; REPACK is strictly
+   * per-JOB_ID, even for a multi-copy file. That asymmetry is required, not incidental - see the
+   * comment in the definition: only repack owns a shared source file whose deletion is gated on
+   * every copy of the group having settled.
    */
   static uint64_t
   failTransferBatchExceedRetries(Transaction& txn, const std::vector<ArchiveJobQueueRow*>& jobs, bool isRepack);
@@ -1125,8 +1135,11 @@ VALUES )SQL";
    * report). Reads totalReportRetries and reportFailureLogs from each row's m_jobRow (already
    * updated in-memory by prepareFailReport).
    *
-   * USER: a genuine terminal failure - UPDATE sets STATUS=ReadyForDeletion, IS_REPORTING=FALSE
-   * and moves each row from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_FAILED_QUEUE, all in one CTE.
+   * USER: a genuine terminal failure - statement 1 sets STATUS=ReadyForDeletion and
+   * IS_REPORTING=FALSE (expanding to every sibling copy by ARCHIVE_REQUEST_ID) and returns the
+   * JOB_IDs it touched; statement 2 moves exactly those rows from ARCHIVE_ACTIVE_QUEUE to
+   * ARCHIVE_FAILED_QUEUE. Two statements deliberately - see the definition for why one chained CTE
+   * cannot work here.
    *
    * REPACK: "exceeded report retries" means the DB WRITE failed repeatedly, not that the job
    * failed - delegates the STATUS transition to updateRepackJobSuccess(), exactly like the
