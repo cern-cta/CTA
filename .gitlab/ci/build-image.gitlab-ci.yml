@@ -244,7 +244,7 @@ build-pipeline-images:
   parallel:
     matrix:
       - IMAGE_SCOPE: "shared"
-        IMAGE_KIND: ["automation", "rust", "source-checks", "repository-publish", "lintian", "danger"]
+        IMAGE_KIND: ["python", "rust", "source-checks", "repository-publish", "lintian", "danger"]
       # Add one platform entry and its ci/docker/cta/<platform>/{build,test}.Dockerfiles per supported platform.
       - IMAGE_SCOPE: "platform"
         PLATFORM: ["el9", "el10", "debian13"]

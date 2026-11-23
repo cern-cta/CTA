@@ -5,6 +5,7 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest@sha256:e92a563cb0755d351faaa535916fcb0d96b41aed90d86deb038b5ee757c6fd00
 
+# Build helpers must support the distribution Python; newer Python tooling belongs in the Python CI image.
 ARG CARGO_CYCLONEDX_VERSION="=0.5.9"
 ARG SCCACHE_VERSION="=0.18.0"
 

@@ -10,7 +10,7 @@ See [Container Image Conventions](../../../docs/content/dev/guides/conventions/c
 
 | Image | Purpose |
 | --- | --- |
-| `automation` | Pipeline helpers and Python linting, tests, builds, and publication. |
+| `python` | Python linting, tests, builds, docs, publication, and pipeline helpers. |
 | `rust` | Rust checks, tests, coverage, and documentation builds. |
 | `source-checks` | C++ static analysis and formatting, shell, YAML, and secret checks. |
 | `repository-publish` | CERN repository publication using Kerberos, XRootD, and DNF. |

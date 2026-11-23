@@ -58,7 +58,7 @@
         - "uv.lock"
       when: on_success
   image:
-    name: $IMAGE_AUTOMATION
+    name: $IMAGE_PYTHON
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
