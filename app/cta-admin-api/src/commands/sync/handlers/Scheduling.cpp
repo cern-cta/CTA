@@ -47,7 +47,7 @@ std::string applyToDrives(const SyncCmdContext& ctx,
     }
   }
   if (!is_found) {
-    cmdlineOutput << "No drives match \"" << regex << "\". No action was taken." << std::endl;
+    throw exception::UserError("No drives match \"" + regex + "\". No action was taken.");
   }
 
   return cmdlineOutput.str();
@@ -124,7 +124,7 @@ std::optional<std::string> removeDrive(const SyncCmdContext& ctx, const AdminCmd
   }
 
   if (!drivesFound) {
-    cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
+    throw exception::UserError("No drives match \"" + regex + "\". No drives were removed.");
   }
 
   return cmdlineOutput.str();

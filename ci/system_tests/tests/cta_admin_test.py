@@ -387,6 +387,28 @@ def test_cta_admin_tape_pool(cta_cli: CtaCliHost, disk_instance_name: str) -> No
     assert ls_before == cta_cli.exec_with_output("cta-admin --json tp ls")
 
 
+@pytest.mark.parametrize(
+    ("subcommand", "options", "message"),
+    [
+        ("up", "", "No action was taken."),
+        ("down", "--reason 'missing drive test'", "No action was taken."),
+        ("down", "--reason 'missing drive test' --force", "No action was taken."),
+        ("ch", "--comment 'missing drive test'", "No action was taken."),
+        ("rm", "", "No drives were removed."),
+        ("rm", "--force", "No drives were removed."),
+    ],
+)
+def test_cta_admin_missing_drive(cta_cli: CtaCliHost, subcommand: str, options: str, message: str) -> None:
+    drive_name = "cta_admin_test_nonexistent_drive"
+    drives = json.loads(cta_cli.exec_with_output("cta-admin --json dr ls --all"))
+    assert all(drive["driveName"] != drive_name for drive in drives)
+
+    with pytest.raises(RuntimeError) as error:
+        cta_cli.exec(f"cta-admin dr {subcommand} {drive_name} {options}")
+    assert "failed with exit code 2" in str(error.value)
+    assert f'No drives match "^{drive_name}$". {message}' in str(error.value)
+
+
 def test_cta_admin_drive(
     cta_cli: CtaCliHost,
     cta_taped: CtaTapedHost,
