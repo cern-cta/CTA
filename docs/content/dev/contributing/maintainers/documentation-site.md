@@ -33,13 +33,9 @@ Mermaid colors are defined in `docs/content/stylesheets/extra.css`. Check diagra
 
 ## Publishing
 
-`build-rust-docs` generates the Rust reference in the Rust image and uploads `target/doc/` as an artifact.
-The `build-docs` job uses the Python automation image to run the documentation tests and assemble a strict site build with `docs/build.py build --rust-docs target/doc --clean`.
-The supplied Rust reference must contain `index.html`; a missing artifact fails assembly instead of silently omitting the reference.
-
-Publication uses a Zensical-compatible `mike` fork to rebuild the staged pages with versioned URLs.
+`build-rust-docs` generates the Rust reference for `build-docs`, which runs the documentation tests and a strict site build.
+Publication uses a Zensical-compatible `mike` fork to rebuild the staged pages with versioned URLs, reusing the generated Rust reference and command manual.
 Its dependency is declared in `pyproject.toml` and pinned in `uv.lock`.
-`build-docs` supplies the staged content, including Rust HTML, and the generated command manual, so publication does not run Cargo or regenerate native references.
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.
 
