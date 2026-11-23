@@ -49,6 +49,12 @@ spec:
     fi
 
 .cpp-test:
+  rules:
+    # Temporarily allow ASan failures: the default runner lacks ptrace capabilities required by LeakSanitizer.
+    - if: '"$[[ inputs.analysis ]]" == "address" || "$[[ inputs.analysis ]]" == "address,undefined"'
+      when: on_success
+      allow_failure: true
+    - when: on_success
   retry: !reference [.retry-package-install, retry]
   before_script:
     - !reference [.merge-train-guard, before_script]
@@ -162,7 +168,7 @@ unit-test-cta:
       optional: true
     - job: build-cta
   rules:
-    - when: on_success
+    - !reference [.cpp-test, rules]
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
@@ -180,7 +186,7 @@ unit-test-postgresql:
       optional: true
     - job: build-cta
   rules:
-    - when: on_success
+    - !reference [.cpp-test, rules]
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
@@ -200,7 +206,7 @@ unit-test-oracle:
       when: never
     - if: '$ENABLE_ORACLE_SUPPORT == "false"'
       when: never
-    - when: on_success
+    - !reference [.cpp-test, rules]
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job

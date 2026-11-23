@@ -21,7 +21,8 @@ function(cta_enable_sanitizers)
   add_link_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # Keep sanitizer-related false positives visible without failing compilation.
+    # GCC 14 reports optional/variant and regex internals as possibly uninitialized with sanitizers.
+    # Keep diagnostics visible; only sanitizer builds relax -Werror for this warning.
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=maybe-uninitialized>)
   endif()
 
