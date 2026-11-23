@@ -4,9 +4,9 @@ Follow [General Coding Conventions](general.md). These conventions apply to Pyth
 
 ## Tooling and compatibility
 
-- Use Ruff for formatting and linting, following `[tool.ruff]` in the root `pyproject.toml`. Run the configured [Pre-commit Hooks](../../tools-and-environment/pre-commit.md) rather than duplicating formatting rules manually.
-- Keep code compatible with its supported Python interpreter. The repository Ruff configuration currently targets Python 3.9; using newer syntax or APIs requires updating and validating the affected execution environments.
-- Follow `[tool.pyright]` in the root `pyproject.toml` for type checking; CI runs Pyright. Add type annotations to function interfaces and meaningful data structures, and keep suppressions narrow and explained.
+- Use Ruff for formatting and linting, following `[tool.ruff]` in `pyproject.toml`. Run the configured [Pre-commit Hooks](../../tools-and-environment/pre-commit.md) rather than duplicating formatting rules manually.
+- Keep code compatible with its supported Python interpreter. Ruff and Pyright default to Python 3.9. The docs tooling uses Python 3.12, selected by Ruff’s `per-file-target-version` and `docs/pyrightconfig.json`. For a directory with a newer runtime, inherit the shared Pyright rules in a separate configuration and check it with its own dependency environment in CI. Validate its runtime and tests with the supported interpreter.
+- Follow `[tool.pyright]` in `pyproject.toml` for type checking; CI runs Pyright. Add type annotations to function interfaces and meaningful data structures, and keep suppressions narrow and explained.
 
 The root `.python-version` selects Python 3.9 for local uv commands and general CI checks.
 Package compatibility requirements and tool targets belong in `pyproject.toml`; commands for tooling that needs a newer interpreter select it explicitly with `--python`.

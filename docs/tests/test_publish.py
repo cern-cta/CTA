@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Exercise release ordering and real mike publication against a local Git remote."""
+"""Check documentation publication and release ordering using temporary local Git repositories."""
 
 # Use unittest for the temporary-repository integration tests.
 # ruff: noqa: PT009, PT027
@@ -10,24 +10,27 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
+from typing import Any, override
+from unittest.mock import patch
 
-from publish import publication_decision, release_key
-from typing_extensions import override
+from ci.docs import publish
+from docs import build
 
 
 class VersionTests(unittest.TestCase):
     def test_canonical_versions(self):
-        self.assertEqual(release_key("v6.2.4"), (6, 2, 4, 0, 0))
-        self.assertEqual(release_key("v6.2.4-1"), (6, 2, 4, 0, 1))
-        self.assertEqual(release_key("v6.1.0.0-1"), (6, 1, 0, 0, 1))
-        self.assertGreater(release_key("v6.1.0.0-1"), release_key("v6.0.99.0-1"))
-        self.assertGreater(release_key("v6.1.0.0-10"), release_key("v6.1.0.0-2"))
+        self.assertEqual(publish.release_key("v6.2.4"), (6, 2, 4, 0, 0))
+        self.assertEqual(publish.release_key("v6.2.4-1"), (6, 2, 4, 0, 1))
+        self.assertEqual(publish.release_key("v6.1.0.0-1"), (6, 1, 0, 0, 1))
+        self.assertGreater(publish.release_key("v6.1.0.0-1"), publish.release_key("v6.0.99.0-1"))
+        self.assertGreater(publish.release_key("v6.1.0.0-10"), publish.release_key("v6.1.0.0-2"))
 
     def test_noncanonical_tags(self):
         for tag in [
@@ -41,16 +44,17 @@ class VersionTests(unittest.TestCase):
             "v6.2.4-1.pgall",
         ]:
             with self.subTest(tag=tag), self.assertRaises(ValueError):
-                release_key(tag)
+                publish.release_key(tag)
 
     def test_missing_provenance_and_retagging_fail_closed(self):
         with self.assertRaises(KeyError):
-            publication_decision("v6.2.4-1", "new", [{"version": "6.2"}])
+            publish.publication_decision("v6.2.4-1", "new", [{"version": "6.2"}])
         versions = [{"version": "6.2", "properties": {"source_tag": "v6.2.4-1", "source_commit": "old"}}]
         with self.assertRaises(ValueError):
-            publication_decision("v6.2.4-1", "new", versions)
+            publish.publication_decision("v6.2.4-1", "new", versions)
 
 
+@unittest.skipUnless(shutil.which("mike") and shutil.which("zensical"), "Run in the docs environment")
 class PublicationTests(unittest.TestCase):
     @override
     def setUp(self) -> None:
@@ -59,7 +63,7 @@ class PublicationTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.repo = self.root / "checkout"
         self.remote = self.root / "remote.git"
-        self.publisher = Path(__file__).with_name("publish.py").resolve()
+        self.publisher = Path(publish.__file__).resolve()
         self.env = dict(os.environ, PATH=f"{Path(sys.executable).parent}:{os.environ['PATH']}")
         self.env.pop("GITLAB_CI", None)
         self.command("git", "init", "--bare", str(self.remote), cwd=self.root)
@@ -67,17 +71,19 @@ class PublicationTests(unittest.TestCase):
         self.command("git", "config", "user.name", "Docs test")
         self.command("git", "config", "user.email", "docs-test@example.invalid")
         self.command("git", "remote", "add", "origin", str(self.remote))
-        (self.repo / "docs/content").mkdir(parents=True)
-        (self.repo / "docs/mkdocs.yml").write_text(
-            "site_name: Test\nsite_url: https://example.invalid/\n"
-            "docs_dir: content\nsite_dir: ../build/docs/site\nstrict: true\n"
+        (self.repo / "docs/content/api").mkdir(parents=True)
+        (self.repo / "zensical.toml").write_text(
+            '[project]\nsite_name = "Test"\nsite_url = "https://example.invalid/"\n'
+            'docs_dir = "build/docs/content"\nsite_dir = "build/docs/site"\nstrict = true\n'
+            '[project.extra.version]\nprovider = "mike"\nalias = true\n'
         )
         (self.repo / "docs/content/index.md").write_text("# Test documentation\n")
-        self.command("git", "add", "docs")
+        (self.repo / "docs/content/api/index.md").write_text("# API reference\n")
+        self.command("git", "add", "docs", "zensical.toml")
         self.command("git", "commit", "--message", "Source")
         self.command("git", "checkout", "--orphan", "gl-pages")
-        self.command("git", "rm", "-r", "--force", "docs")
-        for version in ["v4", "v5"]:
+        self.command("git", "rm", "-r", "--force", "docs", "zensical.toml")
+        for version in ["v4", "v5", "6.0"]:
             directory = self.repo / "public" / version
             directory.mkdir(parents=True)
             (directory / "index.html").write_text(f"Historical {version}")
@@ -85,6 +91,12 @@ class PublicationTests(unittest.TestCase):
         (self.repo / "public/versions.json").write_text(
             json.dumps(
                 [
+                    {
+                        "version": "6.0",
+                        "title": "6.0",
+                        "aliases": [],
+                        "properties": {"source_tag": "v6.0.0", "source_commit": "historical-mkdocs-commit"},
+                    },
                     {"version": "v5", "title": "v5", "aliases": ["latest"]},
                     {"version": "v4", "title": "v4", "aliases": []},
                 ]
@@ -110,6 +122,8 @@ class PublicationTests(unittest.TestCase):
         return result
 
     def deploy(self, tag: str) -> tuple[Path, list[dict[str, Any]]]:
+        with patch.object(build, "ROOT", self.repo):
+            build.stage_content()
         self.command("git", "tag", "--force", tag)
         self.command(sys.executable, str(self.publisher), "--tag", tag)
         output = self.repo / "build/docs/public"
@@ -127,32 +141,56 @@ class PublicationTests(unittest.TestCase):
         self.assertIn("latest/", (output / "index.html").read_text())
         self.assertIn("6.1/", (output / "latest/index.html").read_text())
         self.assertFalse((output / "latest").is_symlink())
+        current = (output / "6.1/index.html").read_text()
+        self.assertIn("zensical-", current)
+        self.assertIn("zensical-", (output / "6.0/index.html").read_text())
+        self.assertIn("https://example.invalid/6.1/", current)
+        settings = re.search(r'<script id="__config" type="application/json">(.*?)</script>', current)
+        assert settings is not None, "Missing Zensical client configuration"
+        self.assertEqual(json.loads(settings.group(1))["version"]["provider"], "mike")
+        historical = next(version for version in versions if version["version"] == "v4")
+        self.assertEqual(historical, {"version": "v4", "title": "v4", "aliases": []})
         previous = self.command("git", "rev-parse", "gl-pages").stdout
         self.deploy("v6.1.0.0-1")
         self.assertEqual(previous, self.command("git", "rev-parse", "gl-pages").stdout)
+
+    def test_publication_uses_staged_pages_and_rust(self):
+        with patch.object(build, "ROOT", self.repo):
+            build.stage_content()
+        rust = self.repo / "build/docs/content/api/rust/index.html"
+        rust.parent.mkdir(parents=True)
+        rust.write_text("<html><body>Rust reference</body></html>")
+        shutil.rmtree(self.repo / "docs/content")
+        self.command("git", "tag", "v6.1.0")
+        self.command(sys.executable, str(self.publisher), "--tag", "v6.1.0")
+        output = self.repo / "build/docs/public/6.1"
+        self.assertIn("Test documentation", (output / "index.html").read_text())
+        self.assertEqual((output / "api/rust/index.html").read_text(), rust.read_text())
 
     def test_refreshes_stale_pages_branch(self):
         self.deploy("v6.0.1-1")
         old = self.command("git", "rev-parse", "gl-pages").stdout.strip()
         self.deploy("v6.1.0.0-1")
-        # Simulate a second serialized publisher whose local branch is stale.
+        # Start the next publication with an outdated local branch to check that it fetches the published version.
         self.command("git", "update-ref", "refs/heads/gl-pages", old)
         _, versions = self.deploy("v6.0.2-1")
         self.assertIn("6.1", [entry["version"] for entry in versions])
         self.assertEqual(next(entry["version"] for entry in versions if "latest" in entry["aliases"]), "6.1")
 
     def test_missing_snippet_prevents_publication(self):
-        config = self.repo / "docs/mkdocs.yml"
+        config = self.repo / "zensical.toml"
         with config.open("a") as stream:
-            stream.write("markdown_extensions:\n  - pymdownx.snippets:\n      check_paths: true\n")
+            stream.write('[project.markdown_extensions."pymdownx.snippets"]\ncheck_paths = true\n')
         (self.repo / "docs/content/index.md").write_text('--8<-- "missing-file.md"\n')
-        self.command("git", "add", "docs")
+        self.command("git", "add", "docs", "zensical.toml")
         self.command("git", "commit", "--message", "Missing snippet")
         self.command("git", "tag", "v6.1.0.0-1")
         previous = self.command("git", "ls-remote", "origin", "gl-pages").stdout
+        with patch.object(build, "ROOT", self.repo):
+            build.stage_content()
         result = self.command(sys.executable, str(self.publisher), "--tag", "v6.1.0.0-1", check=False)
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Snippet at path 'missing-file.md' could not be found", result.stdout)
+        self.assertIn("missing-file.md", result.stdout)
         self.assertEqual(previous, self.command("git", "ls-remote", "origin", "gl-pages").stdout)
 
 

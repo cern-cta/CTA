@@ -456,6 +456,8 @@ format-toml:
   extends:
     - .format-report
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -522,6 +524,9 @@ type-check-python:
   script:
     - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check
     - uv run --no-sync pyright --pythonpath .venv/bin/python .
+    # Some of the project is already on 3.12; run that separately
+    - UV_PROJECT_ENVIRONMENT=docs/.venv uv sync --locked --only-group docs --python 3.12
+    - uv run --no-sync pyright --project docs/pyrightconfig.json --pythonpath docs/.venv/bin/python
 
 validate-catalogue-schema-version:
   stage: lint

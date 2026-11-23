@@ -4,45 +4,44 @@ This page covers site configuration and publication. For page edits, local previ
 
 ## Site configuration
 
-MkDocs Material builds the site. Paths below are relative to `docs/` unless stated otherwise.
+Zensical builds the site with Python 3.12. Paths below are relative to the repository root.
 
 | Location | Purpose |
 | --- | --- |
-| `mkdocs.yml` | Site configuration and navigation |
-| `requirements.txt` | Python dependencies |
-| `content/stylesheets/extra.css`, `overrides/` | Shared styling and template overrides |
-| `content/assets/images/` | Shared images and favicons |
-| `hooks.py` | Generated content and include handling |
-| `content/api/python/` | Python API reference module pages |
-| `ci/docs/` (repository root) | Publication scripts and tests |
+| `zensical.toml` | Site configuration, navigation, Markdown extensions, and theme |
+| `pyproject.toml`, `uv.lock` | Dependencies and lockfile for the `docs` group |
+| `docs/build.py` | Generate the command manual and Rust reference, then invoke Zensical |
+| `docs/zensical_content.py` | Prepare manuals, examples, and diagrams for display |
+| `docs/content/stylesheets/extra.css`, `docs/overrides/` | CTA branding |
+| `docs/content/api/python/` | Python API reference module pages |
 
-Restart `mkdocs serve` after changing hooks; live reload does not reload the Python module.
+For environment setup, see [Preview locally](../documentation.md#preview-locally). Update the `docs` dependency group in `pyproject.toml` and regenerate `uv.lock` with `uv lock`.
 
 ### Generated references
 
-The build generates the Python reference with `mkdocstrings` and the Rust reference with `cargo doc`.
-Both are included in each published documentation version under `api/python/` and `api/rust/`.
+Use `docs/build.py` to build the site. It generates the command manual and Rust API documentation before running Zensical; the Python API reference is generated from source docstrings.
+The finished site is written to `build/docs/site/`.
+See [Preview locally](../documentation.md#preview-locally) for setup and skipping Rust generation.
 
-Keep `requirements.txt` and the repository root’s `pyproject.toml` docs group synchronized, and update `uv.lock` after dependency changes.
+### Theme
+
+Theme customizations live in `docs/content/stylesheets/extra.css` and `docs/overrides/`. Self-hosted fonts and their licenses are under `docs/content/assets/fonts/`. Keep template overrides small so upstream theme updates remain easy to adopt.
 
 ### Diagram colors
 
-Mermaid colors are configured in `content/stylesheets/extra.css`. Prefer the default theme colors and check diagrams in both light and dark mode after styling changes.
-
-### Fonts
-
-Self-hosted fonts and their licenses live in `content/assets/fonts/`, sourced from:
-
-- [Atkinson Hyperlegible Next](https://github.com/googlefonts/atkinson-hyperlegible-next/tree/7925f50f649b3813257faf2f4c0b381011f434f1/fonts/webfonts)
-- [Atkinson Hyperlegible Mono](https://github.com/googlefonts/atkinson-hyperlegible-next-mono/tree/154d50362016cc3e873eb21d242cd0772384c8f9/fonts/webfonts)
+Mermaid colors are defined in `docs/content/stylesheets/extra.css`. Check diagrams in both light and dark modes after changes.
 
 ## Publishing
+
+The `build-docs` job runs the documentation tests and a strict site build. Publication uses a Zensical-compatible `mike` fork to rebuild the site with versioned URLs. Its dependency is declared in `pyproject.toml` and pinned in `uv.lock`.
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.
 
 Publication uses `CI_JOB_TOKEN` to push to the protected `gl-pages` branch. Repository pushes must be enabled for job tokens, and the triggering user must have permission to push to that branch (maintainer or higher). Use the publication workflow rather than editing `gl-pages` manually.
 
-Each tag updates its minor-series documentation: for example, `v6.1.0` updates `6.1`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
+Each tag updates its minor-series documentation while preserving other versions: for example, `v6.1.0` updates `6.1`. The `latest` alias points to the highest published series. After publication, check the affected version and `latest` on the [public site](https://cta.docs.cern.ch/).
+
+Published minor versions must record their source tag and commit (`source_tag` and `source_commit`). Publication refuses to replace a version without this information because it cannot check whether the update is newer.
 
 If publication fails, inspect the `publish-docs` log and resolve the cause, such as missing push permissions. Retry the job in the original tag pipeline when the source contents are unchanged. If a source fix is needed, use a new tag; do not move the existing tag. Check the published version after the retry.
 

@@ -234,11 +234,12 @@ build-docs:
     - !reference [.merge-train-guard, before_script]
     - source ci/docs/prepare-environment.sh
   script:
-    - python -m unittest discover --start-directory ci/docs --pattern 'test_*.py'
-    - mkdocs build --strict --config-file docs/mkdocs.yml
+    - python -m unittest discover --start-directory docs/tests --pattern 'test_*.py'
+    - python docs/build.py build --clean
   artifacts:
     paths:
-      - build/docs/site/
+      # Include the site and inputs for mike's rebuild with the release-series URL.
+      - build/docs/
     expire_in: 7 days
 
 build-python:
