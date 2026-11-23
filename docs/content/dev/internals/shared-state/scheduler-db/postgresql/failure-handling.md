@@ -2,7 +2,17 @@
 
     This page describes the PostgreSQL scheduler backend.
 
-# Batching failed-job reports
+# Failure handling
+
+How a failed archive or retrieve job reaches a terminal state in the PostgreSQL scheduler backend:
+which copies fail together, where the row ends up, and how the failure is accounted for. Two axes
+run through all of it — user versus repack, and a *transfer* failure versus a *report* failure — and
+they do not behave the same way. [Who fails together](#who-fails-together-the-userrepack-split) is
+the short version of that matrix; the lifecycle diagrams further down trace every path in full.
+
+The mechanism underneath all of them is batching, covered first.
+
+## Batching failed-job reports
 
 Reporting a failure back to the scheduler DB is on the same hot path as reporting a success, but it
 used to pay for it file by file: each failed read, write, or report cost its own scheduler-DB round
@@ -11,8 +21,8 @@ trouble (many files failing in quick succession). Batching merges many jobs' fai
 one SQL statement, the same idea as [opportunistic batching](opportunistic-batching.md) applied to
 the report path instead of the queueing path.
 
-This page covers two related but distinct mechanisms, built the same way but triggered from
-different places: batching *transfer*-retry decisions below, and
+Two related but distinct mechanisms are built this way, triggered from different places: batching
+*transfer*-retry decisions below, and
 [batching *report*-retry decisions](#batching-failed-report-retries) further down.
 
 Both are implemented for the postgres scheduler backend (pgsched) only. The objectstore backend
@@ -35,7 +45,7 @@ flowchart TB
     class A,F,M,R,E action;
 ```
 
-## In-memory accumulation
+### In-memory accumulation
 
 When a task fails, `MigrationReportPacker`/`RecallReportPacker` call `prepareFailTransfer(reason)` on
 the job. This updates the job's in-memory state only — it appends to `failureLogs`/`reportFailureLogs`
@@ -55,7 +65,7 @@ So in practice 600 only matters as a *worst case within one flush window*: a den
 anyway. If `failTransferBatch()` throws, the whole in-flight batch is dropped (not retried) and left
 for the garbage collector to pick up later — see [Garbage Collection](garbage-collection.md).
 
-## The batched SQL
+### The batched SQL
 
 `flushFailedJobs()` hands the accumulated jobs to `ArchiveMount::failTransferBatch()` /
 `RetrieveMount::failTransferBatch()`, which buckets them by `isRepack` and by whether each job has
@@ -69,7 +79,7 @@ exceeded `maxTotalRetries`, then issues **one** SQL statement per bucket:
 This is live for repack on both archive and retrieve, as well as for ordinary user jobs — the
 counters and retry/exceed logic are identical; only the destination queue/status differs.
 
-### Append-once `FAILURE_LOG`
+#### Append-once `FAILURE_LOG`
 
 Each row's `FAILURE_LOG`/`REPORT_FAILURE_LOG` column must never be duplicated across retries.
 `updateJobRowFailureLog()` appends onto a value that was *already loaded from the DB column* at
@@ -79,7 +89,7 @@ old+new text. The SQL binds that string directly (`:FL`) rather than re-concaten
 literal marker (e.g. `"UNPROCESSED_TASK_QUEUE_JOB_REQUEUED"`), not from the loaded log, and are
 correctly additive.
 
-### Repack reporting is a separate mechanism entirely
+#### Repack reporting is a separate mechanism entirely
 
 Repack's failure *reporting* to the operator (aggregate `FILE_COUNT`/`FILE_BYTES` stats per repack
 request) is architecturally unrelated to anything on this page: `getNextFailedArchiveRepackReportBatch()` /
@@ -92,7 +102,7 @@ exactly like user jobs, but repack's own *reporting* of the outcome to the opera
 layer downstream. Repack does, however, reach the *other* batching mechanism this page covers —
 see [Batching failed report retries](#batching-failed-report-retries) below.
 
-## Batching failed report retries
+### Batching failed report retries
 
 A second, distinct batching mechanism covers a different kind of failure: not the tape transfer
 itself, but the two things that happen *after* a transfer succeeds — persisting that success to
@@ -133,7 +143,7 @@ Both funnel into the same `ArchiveJobQueueRow`/`RetrieveJobQueueRow`::`failRepor
 under budget requeues (`IS_REPORTING = FALSE`, retry counters bumped, status otherwise unchanged);
 over budget — or `NoReportRequired`, which is permanently true for every repack job — is terminal.
 
-### Repack's "terminal" failure here isn't a failure
+#### Repack's "terminal" failure here isn't a failure
 
 For repack, landing in the "exceeded report retries" bucket doesn't mean the *job* failed — it
 means the DB *write* of an already-successful transfer failed repeatedly. Recovery means replaying
@@ -145,6 +155,115 @@ other copies have also succeeded, and bypassing it would risk
 `ArchiveJobQueueRow::failReportBatchExceedRetries()` branches on `isRepack` for exactly this reason
 — the non-repack branch's UPDATE+INSERT+DELETE sequence (a genuine terminal failure, moving the row
 to `ARCHIVE_FAILED_QUEUE`) does not apply to repack at all.
+
+## Who fails together: the user/repack split
+
+Both mechanisms above decide one thing before they touch the DB: when a job fails terminally, does
+it drag the other copies of its request down with it? The answer differs between the user and the
+repack workflow, and the difference is deliberate — getting it wrong in either direction causes data
+to be mishandled, so it is worth stating once, plainly, for all eight combinations.
+
+| Workflow | Transfer failure, retries exhausted | Report failure, retries exhausted |
+|---|---|---|
+| **archive · user · single copy** | `AJS_ToReportToUserForFailure`, this `JOB_ID` | `ReadyForDeletion`, row moved to `ARCHIVE_FAILED_QUEUE` |
+| **archive · user · multi copy** | **every** copy of the `ARCHIVE_REQUEST_ID`, together | **every** copy of the `ARCHIVE_REQUEST_ID`, moved together |
+| **archive · repack · single copy** | `AJS_ToReportToRepackForFailure`, this `JOB_ID` | not a failure at all — `updateRepackJobSuccess()` recovers the lost write |
+| **archive · repack · multi copy** | this `JOB_ID` **only**; siblings keep transferring | same recovery, still per `JOB_ID` |
+| **retrieve · user** | `RJS_ToReportToUserForFailure`, this `JOB_ID` | `ReadyForDeletion`, row moved to `RETRIEVE_FAILED_QUEUE` |
+| **retrieve · repack** | `RJS_ToReportToRepackForFailure`, this `JOB_ID` | n/a — repack retrieve never reports to a disk system |
+
+Retrieve has no multi-copy rows to reconcile: a retrieve request is one row per file, and its other
+tape copies live in that same row's `ALTERNATE_VIDS`/`ALTERNATE_FSEQS` columns, used to rotate to
+another tape on requeue rather than to fan out into sibling jobs. So every retrieve row, user or
+repack, is keyed on `JOB_ID` alone on both the transfer and the report side.
+
+### Why user requests fail as a group
+
+For a user archive request the copies exist to satisfy a redundancy goal. Once one copy is
+permanently lost the request cannot meet that goal, so there is nothing to gain by letting the
+others run: `failTransferBatchExceedRetries()` and `failReportBatchExceedRetries()` both expand to
+every copy of the `ARCHIVE_REQUEST_ID` when `REQUEST_JOB_COUNT > 1`, matching the single-job
+`updateFailedJobStatus()` and `moveJobToFailedQueueTable()`.
+
+It is safe to settle a sibling copy that a drive is still writing, because **nothing in the user
+workflow reads "all copies are terminal" as permission to delete anything**. The source file belongs
+to the user's disk system; CTA only reports the failure to it. The one thing that has to be guarded
+is the reverse direction — that still-writing sibling eventually succeeding and resurrecting the
+request — and `updateMultiCopyJobSuccess()` does that with a single predicate:
+`STATUS <> AJS_ToReportToUserForFailure`.
+
+### Why repack copies must fail alone
+
+Repack is the case that paragraph does not apply to, because repack **does** own a shared source
+file: the repack buffer copy on disk, which every copy of the file reads from and which CTA itself
+deletes. The deletion is gated on the whole group having settled —
+`getNextFailedArchiveRepackReportBatch()` calls `deleteDiskFiles()` once
+`moveFailedRepackJobBatchToFailedQueueTable()` reports the group complete, and
+`getNextSuccessfulArchiveRepackReportBatch()` does the same on the success side once the group
+reaches `ReadyForDeletion` — and that completeness is inferred from `STATUS` alone.
+
+Marking a copy another drive is still writing as failed makes that inference false. The group would
+read as complete, the buffer would be deleted from under a live reader, and a copy that nevertheless
+finished writing would land in the catalogue with no scheduler row left to report it. So a failed
+repack copy settles alone and the group waits; it is swept up, surviving successes included, only
+once every copy has reached a terminal status of its own.
+
+That wait costs nothing in the statistics. The repack counters are per **copy**, not per file:
+`Scheduler::expandRepackRequest()` increments `totalFilesToArchive` once per copy it adds to
+`copyNbsToRearchive`, and both the success path (`deleteSuccessfulRepackArchiveJobBatch()`) and the
+failure path (`getNextFailedArchiveRepackReportBatch()`) credit one per row. A request is complete
+when `archivedFiles + failedArchiveFiles + failedToCreateArchiveReq >= totalFilesToArchive`, and it
+ends `RRS_Failed` if *any* failure was recorded (`repackRequestStatusSql()`). The safety property
+operators rely on — a repack that lost a copy does not end `RRS_Complete`, so its source tape is not
+reclaimed — therefore comes from `failedArchiveFiles > 0`, not from how many copies were counted as
+failed.
+
+!!! note "Known attribution gap"
+
+    When a group is swept after one copy failed, every row in it is credited as a failure, including
+    a sibling copy that genuinely reached tape. Totals still balance and the request still ends
+    `RRS_Failed`, so nothing unsafe follows, but `cta-admin repack ls` under-reports archived files
+    and over-reports failures by the number of surviving copies. Fixing it means returning `STATUS`
+    from `moveFailedRepackJobBatchToFailedQueueTable()` and bucketing the swept rows into the
+    archived and failed counters separately; the group gate itself would not change, since the
+    buffer deletion needs it either way.
+
+## Invariants the group logic rests on
+
+Four properties hold the repack grouping together. Each has been a bug at least once, and each is
+load-bearing for the shared buffer file's lifetime.
+
+**`REQUEST_JOB_COUNT` equals the number of archive rows the file actually has.**
+`transformJobBatchToArchive()` inserts exactly one archive job per entry in
+`REPACK_REARCHIVE_COPY_NBS` — the same contract the objectstore scheduler keeps by construction, one
+`SorterArchiveJob` per `copyNbsToRearchive` entry — so
+`rows == CARDINALITY(REPACK_REARCHIVE_COPY_NBS) == REQUEST_JOB_COUNT`, and that is also the request's
+`TOTAL_FILES_TO_ARCHIVE` contribution. `BASE_INSERT` is therefore gated on the retrieved copy being
+one of the copies to re-archive: true for `MoveOnly` and `MoveAndAddCopies`, where
+`expandRepackRequest()` puts the moved copy's own `copyNb` in the set, and false for
+`AddCopiesOnly`, where the tape is read but not drained and only the missing copies are queued. A
+count below the real group size makes every completeness check pass on the first copy to settle.
+
+**A group is `(REPACK_REQUEST_ID, ARCHIVE_FILE_ID)`, never `ARCHIVE_FILE_ID` alone.** The same file
+can be in two repack requests at once — two tapes each holding one of its copies, both being
+repacked. Those rows are not siblings: each request has its own buffer copy, its own completeness
+and its own statistics. Counting them together both stalls genuinely complete groups and lets one
+request's progress sweep away the other's rows.
+
+**A row is modified once per statement.** PostgreSQL discards a `DELETE` of a row that the same
+statement has already updated — all sub-statements of one statement share a snapshot and a command
+id, so `ExecDelete` sees `TM_SelfModified` and skips the row without an error. Every queue-to-queue
+move is therefore shaped `DELETE … RETURNING *` first, `INSERT` second, and the user report-failure
+move (which has to write a status as well) is split into two statements rather than chained into one
+CTE. Folding it back together strands the row in the active queue at `ReadyForDeletion`, where
+nothing collects it.
+
+**Row locks never block across groups.** `moveFailedRepackJobBatchToFailedQueueTable()` takes both
+its candidate lock and its sibling lock with `SKIP LOCKED`. A blocking sibling lock deadlocks two
+concurrent reporters working the two copies of one file — each holds the row the other wants, and
+PostgreSQL aborts one with `40P01`, losing a whole batch. Skipping cannot deadlock and fails in the
+safe direction: a sibling locked elsewhere drops out of the count, the group reads as incomplete,
+and the move is deferred to whichever pass finds the group uncontended.
 
 ## The full archive lifecycle: every path to a terminal state
 
@@ -189,7 +308,7 @@ flowchart TB
     SPLIT -- no --> TOREPORTOK["ACTIVE_QUEUE\nAJS_ToReportToUserForSuccess"]
     SPLIT -- yes --> URS1["updateRepackJobSuccess()"]
 
-    URS1 --> MC{"multi-copy: every sibling\n(same ARCHIVE_FILE_ID) also\nAJS_ToReportToRepackForSuccess?"}
+    URS1 --> MC{"multi-copy: every sibling\n(same REPACK_REQUEST_ID +\nARCHIVE_FILE_ID) also\nAJS_ToReportToRepackForSuccess?"}
     URS2 --> MC
     MC -- "no" --> WAITING["ACTIVE_QUEUE (this copy only)\nAJS_ToReportToRepackForSuccess"]
     WAITING -. last sibling completes .-> MC
@@ -212,8 +331,11 @@ flowchart TB
 
     RFD --> REPACKOK["maintd RepackReportRoutine:\ngetNextSuccessfulArchiveRepackReportBatch()"]
     REPACKOK --> REPACKDEL["DELETED, repack request credited\n(archivedFiles/Bytes), SOURCE disk\nfile deleted - all copies done first"]
-    TOREPORTFAIL -. "repack copy only\n(see note 2 below)" .-> REPACKFAIL["maintd routine:\ngetNextFailedArchiveRepackReportBatch()"]
-    REPACKFAIL --> REPACKFAILQ["REPACK_ARCHIVE_FAILED_QUEUE,\nrequest's failedFiles credited,\nSOURCE file deleted NOW -\nper-copy, see note 2"]
+    TOREPORTFAIL -. "repack copy\n(see note 2 below)" .-> REPACKFAIL["maintd routine:\ngetNextFailedArchiveRepackReportBatch()"]
+    REPACKFAIL --> GRP{"every copy of the group\nsettled (success or failure)?"}
+    GRP -- no --> WAITFAIL["ACTIVE_QUEUE (this copy only)\nAJS_ToReportToRepackForFailure\nwaits for its siblings"]
+    WAITFAIL -. last sibling settles .-> GRP
+    GRP -- "yes, or single-copy" --> REPACKFAILQ["REPACK_ARCHIVE_FAILED_QUEUE\n(whole group, successes included),\nrequest's failedFiles credited,\nSOURCE file deleted - safe now"]
 
     classDef pending fill:#f39c12,color:#fff,stroke:#333;
     classDef active fill:#3498db,color:#fff,stroke:#333;
@@ -221,7 +343,7 @@ flowchart TB
     classDef failterm fill:#c0392b,color:#fff,stroke:#333;
 
     class PENDING pending;
-    class TOREPORTFAIL,TOREPORTOK,WAITING,RFD,RETRYWRITE,RETRYEOS active;
+    class TOREPORTFAIL,TOREPORTOK,WAITING,WAITFAIL,RFD,RETRYWRITE,RETRYEOS active;
     class DELOK,DELFAIL,REPACKDEL okterm;
     class FAILEDQ1,FAILEDQ2,REPACKFAILQ failterm;
 ```
@@ -246,20 +368,19 @@ problem: it is fed by a fresh `getNextArchiveJobsToReportBatch()` fetch, whose `
 sees the real `AJS_ToReportToUserFor{Success,Failure}` status, so `reportType` is genuinely
 `CompletionReport`/`FailureReport` there and the retry budget is honoured.
 
-**Note 2 — repack's failure-side source-file deletion does not wait for sibling copies, unlike its
-success side.** `updateRepackJobSuccess()` (the success side) is deliberately careful: for a
-multi-copy request it only reaches `ReadyForDeletion` — and therefore only lets
-`getNextSuccessfulArchiveRepackReportBatch()` delete the source file — once *every* copy
-(same `ARCHIVE_FILE_ID`) has succeeded. `getNextFailedArchiveRepackReportBatch()` /
-`moveFailedRepackJobBatchToFailedQueueTable()` on the failure side has no equivalent check: each
-copy that exhausts its transfer retries is moved to `REPACK_ARCHIVE_FAILED_QUEUE` and has its
-`SRC_URL` queued for disk deletion independently, with no query against sibling copies' state at
-all. For a `MoveAndAddCopies` request where one copy permanently fails while a sibling copy is
-still mid-transfer (or not yet dispatched), this deletes the very file that sibling copy still
-needs to read from disk. This predates the batching work on this page — it is part of the original
-repack-for-the-relational-DB-backend implementation — but is a real correctness question for
-multi-copy repack, not merely a documentation nuance, and is called out here because this page is
-where that asymmetry becomes visible.
+**Note 2 — repack's two sides gate the source-file deletion symmetrically.**
+`updateRepackJobSuccess()` only reaches `ReadyForDeletion` — and so only lets
+`getNextSuccessfulArchiveRepackReportBatch()` delete the buffer file — once every copy of the
+`(REPACK_REQUEST_ID, ARCHIVE_FILE_ID)` group has succeeded.
+`moveFailedRepackJobBatchToFailedQueueTable()` mirrors that from the other direction: it moves a
+failed copy's whole group, surviving successes included, only once every copy
+(`REQUEST_JOB_COUNT` of them) has itself settled, success or failure. A copy still mid-transfer is
+never counted and never touched, so the caller's `deleteDiskFiles()` cannot run while a sibling
+still needs to read the buffer. The two checks are deliberately blind to each other's statuses: a
+transfer failure is invisible to the success-side count (so a waiting successful copy neither
+stalls nor promotes on its own), and it is the failure-side sweep that eventually settles such a
+mixed group. See [Who fails together](#who-fails-together-the-userrepack-split) for why repack needs
+this gate and the user workflow does not.
 
 ## The full retrieve lifecycle
 
@@ -301,7 +422,7 @@ flowchart TB
 
     REPACKOK --> TRANSFORM["RetrieveJobQueueRow::transformJobBatchToArchive()\n(maintd routine)"]
     TRANSFORM --> NEWARCHIVE["new AJS_ToTransferForRepack row(s)\nin ARCHIVE_PENDING_QUEUE - one per\ndestination copy - retrieve row gone"]
-    TOREPORTFAIL -. repack copy .-> REPACKFAIL2["RelationalDB::getNextFailedRetrieveRepackReportBatch()\n(same per-copy shape as archive's\nfailure side, see note 2 above)"]
+    TOREPORTFAIL -. repack copy .-> REPACKFAIL2["RelationalDB::getNextFailedRetrieveRepackReportBatch()\n(no group gate needed: a retrieve\nrow is one row per file)"]
     REPACKFAIL2 --> REPACKFAILQ2["REPACK_RETRIEVE_FAILED_QUEUE,\nrequest's failedFiles credited"]
 
     classDef pending fill:#f39c12,color:#fff,stroke:#333;
