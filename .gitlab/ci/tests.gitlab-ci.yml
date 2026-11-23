@@ -59,6 +59,11 @@ spec:
       if [[ "$[[ inputs.analysis ]]" == "thread" ]]; then
         export TSAN_OPTIONS="${TSAN_OPTIONS:+${TSAN_OPTIONS}:}second_deadlock_stack=1:suppressions=${CI_PROJECT_DIR}/tests/analysis/tsan.suppr"
       fi
+      # TEMPORARY: diagnose "LeakSanitizer has encountered a fatal error" (likely ptrace restrictions in the pod).
+      if [[ "$[[ inputs.analysis ]]" == *address* ]]; then
+        export ASAN_OPTIONS="${ASAN_OPTIONS:+${ASAN_OPTIONS}:}verbosity=1"
+        export LSAN_OPTIONS="${LSAN_OPTIONS:+${LSAN_OPTIONS}:}verbosity=1:log_threads=1"
+      fi
     - |
       set -o pipefail
       test_status=0
