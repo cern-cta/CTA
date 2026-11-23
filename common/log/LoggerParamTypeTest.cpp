@@ -152,4 +152,36 @@ TEST_F(LoggerParamTypeTest, TestParams_nullopt) {
   }
 }
 
+TEST_F(LoggerParamTypeTest, SetValueChangesTypeAndClearsOptional) {
+  Param param("value", std::string(256, 'x'));
+
+  param.setValue(std::optional<int>(-42));
+  ASSERT_EQ(std::get<int64_t>(param.getValueVariant().value()), -42);
+
+  param.setValue(std::optional<std::string>());
+  ASSERT_FALSE(param.getValueVariant().has_value());
+
+  param.setValue(std::string(256, 'y'));
+  ASSERT_EQ(std::get<std::string>(param.getValueVariant().value()), std::string(256, 'y'));
+
+  // A value obtained from the parameter itself must survive replacement.
+  param.setValue(std::get<std::string>(param.getValueVariant().value()));
+  ASSERT_EQ(std::get<std::string>(param.getValueVariant().value()), std::string(256, 'y'));
+
+  param.setValue(param.getValueVariant());
+  ASSERT_EQ(std::get<std::string>(param.getValueVariant().value()), std::string(256, 'y'));
+
+  param.setValue(std::nullopt);
+  ASSERT_FALSE(param.getValueVariant().has_value());
+}
+
+TEST_F(LoggerParamTypeTest, ConstructorCopiesStoredValue) {
+  const ParamValType value(std::in_place, std::in_place_type<std::string>, 256, 'x');
+  const Param param("value", value);
+  ASSERT_EQ(param.getValueVariant(), value);
+
+  const Param empty("empty", ParamValType {});
+  ASSERT_FALSE(empty.getValueVariant().has_value());
+}
+
 }  // namespace unitTests

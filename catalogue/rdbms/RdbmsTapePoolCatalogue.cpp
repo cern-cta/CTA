@@ -16,13 +16,13 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
 #include <list>
 #include <optional>
-#include <regex>
 #include <string>
 
 namespace cta::catalogue {

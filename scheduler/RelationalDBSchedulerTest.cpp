@@ -19,6 +19,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -40,7 +41,6 @@
 #include <exception>
 #include <gtest/gtest.h>
 #include <memory>
-#include <regex>
 #include <thread>
 #include <utility>
 

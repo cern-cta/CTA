@@ -6,10 +6,10 @@
 #include "DbToSQLiteStatementTransformer.hpp"
 
 #include "common/utils/Regex.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/utils.hpp"
 
 #include <iostream>
-#include <regex>
 
 namespace cta::catalogue {
 

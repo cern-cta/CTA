@@ -5,6 +5,7 @@
 
 #include "runtime/Application.hpp"
 
+#include "common/utils/StdRegex.hpp"
 #include "tests/support/Argv.hpp"
 #include "tests/support/TempDirectory.hpp"
 #include "tests/support/TempFile.hpp"

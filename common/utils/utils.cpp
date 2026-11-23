@@ -10,6 +10,7 @@
 #include "common/exception/NullPtrException.hpp"
 #include "common/exception/TimeOut.hpp"
 #include "common/utils/Regex.hpp"
+#include "common/utils/StdRegex.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -17,7 +18,6 @@
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <regex>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>

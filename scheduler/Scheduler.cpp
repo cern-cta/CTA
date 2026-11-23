@@ -18,6 +18,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
@@ -33,7 +34,6 @@
 #include <iostream>
 #include <opentelemetry/context/runtime_context.h>
 #include <random>
-#include <regex>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>

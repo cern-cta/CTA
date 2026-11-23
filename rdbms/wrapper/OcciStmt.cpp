@@ -9,6 +9,7 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/IntegrityConstraintError.hpp"
@@ -21,7 +22,6 @@
 #include <cstring>
 #include <iostream>
 #include <map>
-#include <regex>
 #include <sstream>
 #include <stdexcept>
 

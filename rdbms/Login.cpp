@@ -6,12 +6,12 @@
 #include "Login.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/utils.hpp"
 
 #include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <vector>

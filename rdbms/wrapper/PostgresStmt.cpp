@@ -9,6 +9,7 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/process/threading/RWLockRdLocker.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
@@ -16,7 +17,6 @@
 
 #include <algorithm>
 #include <exception>
-#include <regex>
 #include <sstream>
 #include <utility>
 

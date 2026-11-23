@@ -20,10 +20,11 @@ function(cta_enable_sanitizers)
   add_compile_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
   add_link_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
 
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # GCC 14 reports optional/variant and regex internals as possibly uninitialized with sanitizers.
-    # Keep diagnostics visible; only sanitizer builds relax -Werror for this warning.
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=maybe-uninitialized>)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+      AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14
+      AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15)
+    # Scope the libstdc++ regex workaround to its headers; retain -Werror for CTA code.
+    add_compile_definitions($<$<COMPILE_LANGUAGE:CXX>:CTA_GCC14_SANITIZER_REGEX_WORKAROUND>)
   endif()
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")

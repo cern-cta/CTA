@@ -7,6 +7,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/IntegrityConstraintError.hpp"
@@ -16,7 +17,6 @@
 #include <cstring>
 #include <iostream>
 #include <libpq-fe.h>
-#include <regex>
 #include <string>
 
 namespace cta::rdbms::wrapper {

@@ -8,13 +8,13 @@
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/Regex.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
 
 #include <iostream>
-#include <regex>
 #include <stdexcept>
 #include <string.h>
 #include <string>

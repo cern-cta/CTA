@@ -6,12 +6,12 @@
 #include "taped/TapedUtils.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "common/utils/StdRegex.hpp"
 #include "runtime/config/ConfigLoader.hpp"
 #include "taped/TapedConfig.hpp"
 
 #include <algorithm>
 #include <filesystem>
-#include <regex>
 
 namespace cta::taped::utils {
 
