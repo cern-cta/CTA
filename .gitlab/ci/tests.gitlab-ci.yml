@@ -49,13 +49,13 @@ spec:
     fi
 
 .cpp-test:
+  retry: !reference [.retry-package-install, retry]
   rules:
     # Temporarily allow ASan failures: the default runner lacks ptrace capabilities required by LeakSanitizer.
     - if: '"$[[ inputs.analysis ]]" == "address" || "$[[ inputs.analysis ]]" == "address,undefined"'
       when: on_success
       allow_failure: true
     - when: on_success
-  retry: !reference [.retry-package-install, retry]
   before_script:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
