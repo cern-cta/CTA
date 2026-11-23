@@ -16,7 +16,8 @@ if(CTA_PACKAGE_FORMAT STREQUAL "unknown")
     "(${PLATFORM}), but this platform is not supported yet")
 endif()
 
-find_package(Python3 3.15 REQUIRED COMPONENTS Interpreter)
+# Native build helpers support the distribution Python, including Python 3.9 on EL9.
+find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 include(cmake/LoadProjectJson.cmake)
 
 # -----------------------------------------------------------------------------

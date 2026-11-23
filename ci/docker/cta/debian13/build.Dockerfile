@@ -30,14 +30,6 @@ RUN printf 'deb [signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] https
     apt-get update && apt-get install -y --no-install-recommends -t trixie-backports debhelper && \
     rm -rf /var/lib/apt/lists/*
 
-# Put the pinned Python first on PATH without replacing /usr/bin/python3, which OS tools use.
-COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /usr/local/bin/uv
-ENV UV_PYTHON_INSTALL_DIR=/opt/cta/python
-ENV UV_PYTHON_BIN_DIR=/opt/cta/bin
-ENV PATH="/opt/cta/bin:${PATH}"
-COPY .python-version /opt/cta/.python-version
-RUN uv python install --default "$(cat /opt/cta/.python-version)"
-
 COPY project.json /opt/cta/project.json
 COPY ci/project-json/generate_build_requires.py /opt/cta/ci/project-json/generate_build_requires.py
 RUN apt-get update && apt-get satisfy -y --no-install-recommends \

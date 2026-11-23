@@ -526,6 +526,8 @@ type-check-python:
   script:
     - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check
     - uv run --no-sync pyright --pythonpath .venv/bin/python .
+    # Keep native build helpers compatible with EL9 independently of the workspace interpreter.
+    - uv run --no-sync pyright --pythonversion 3.9 ci/project-json ci/utils/cta_version.py tools/compile_man_md.py
     # Check docs with their own dependency environment.
     - UV_PROJECT_ENVIRONMENT=docs/.venv uv sync --locked --only-group docs
     - uv run --no-sync pyright --project docs/pyrightconfig.json --pythonpath docs/.venv/bin/python

@@ -47,13 +47,13 @@ dev = [
     { name = "yamllint", specifier = "==1.37.1" },
 ]
 docs = [
-    { name = "markdown", marker = "python_full_version >= '3.15'", specifier = "==3.9" },
-    { name = "mike", marker = "python_full_version >= '3.15'", git = "https://github.com/squidfunk/mike" },
-    { name = "mkdocs-autorefs", marker = "python_full_version >= '3.15'", specifier = "==1.4.2" },
-    { name = "mkdocstrings", marker = "python_full_version >= '3.15'", specifier = "==0.30.1" },
-    { name = "mkdocstrings-python", marker = "python_full_version >= '3.15'", specifier = "==1.18.2" },
-    { name = "pymdown-extensions", marker = "python_full_version >= '3.15'", specifier = "==11.0.2" },
-    { name = "zensical", marker = "python_full_version >= '3.15'", specifier = "==0.1.1" },
+    { name = "markdown", marker = "python_full_version >= '3.12'", specifier = "==3.9" },
+    { name = "mike", marker = "python_full_version >= '3.12'", git = "https://github.com/squidfunk/mike" },
+    { name = "mkdocs-autorefs", marker = "python_full_version >= '3.12'", specifier = "==1.4.2" },
+    { name = "mkdocstrings", marker = "python_full_version >= '3.12'", specifier = "==0.30.1" },
+    { name = "mkdocstrings-python", marker = "python_full_version >= '3.12'", specifier = "==1.18.2" },
+    { name = "pymdown-extensions", marker = "python_full_version >= '3.12'", specifier = "==11.0.2" },
+    { name = "zensical", marker = "python_full_version >= '3.12'", specifier = "==0.1.1" },
 ]
 lint = [{ name = "ruff", specifier = "==0.17.3" }]
 scripts = [
@@ -115,7 +115,7 @@ unit-tests = [
 ]
 
 [manifest.group-requires-python]
-docs = ">=3.15"
+docs = ">=3.12"
 
 [[package]]
 name = "attrs"

@@ -8,10 +8,11 @@ Follow [General Coding Conventions](general.md). These conventions apply to Pyth
 - Keep code compatible with its supported Python interpreter. The repository Ruff configuration targets Python 3.15, with per-file overrides for system-integrated helpers and scripts executed in externally maintained images.
 - Follow `[tool.pyright]` in the root `pyproject.toml` for type checking; CI runs Pyright. Add type annotations to function interfaces and meaningful data structures, and keep suppressions narrow and explained.
 
-Environment setup owns the exact Python version: build and CI images, CI setup and local development launchers use uv with the root `.python-version` pin.
-Build and CI images expose that interpreter through `PATH`.
+Python workspace and tooling environments use uv with the root `.python-version` pin.
+Native build images and `cta-dev.sh` use distribution Python; only `cta-dev.sh install` requires uv to prepare the development environment.
 Build tools and Python helpers consume the available compatible interpreter without installing Python or depending on uv; ordinary executable Python scripts use `#!/usr/bin/env python3`.
-CMake requires Python 3.15 or newer and uses its discovered `Python3_EXECUTABLE`, which can also be supplied explicitly.
+CMake requires Python 3.9 or newer and uses its discovered `Python3_EXECUTABLE`, which can also be supplied explicitly.
+Native build helpers (`ci/project-json/`, `ci/utils/cta_version.py`, and `tools/compile_man_md.py`) retain Python 3.9 compatibility, checked by Ruff targets and a separate Pyright invocation in CI.
 Package minimum versions and tool targets belong in `pyproject.toml`.
 
 `cta-versionlock` and `cta-udev` must use system Python at `/usr/bin/python3` and remain compatible with Python 3.9 on EL9.

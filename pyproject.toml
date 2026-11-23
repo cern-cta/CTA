@@ -19,7 +19,7 @@
     zensical-ui = "2026-11-11T00:00:00Z"
 
   [tool.uv.dependency-groups]
-    docs = { requires-python = ">=3.15" }
+    docs = { requires-python = ">=3.12" }
 
   # Zensical-compatible mike; uv.lock records the exact revision.
   [tool.uv.sources]
@@ -137,8 +137,12 @@
   # Keep these helpers compatible with the Python installed in their runtime environments.
   [tool.ruff.per-file-target-version]
     # Installed cta-udev and cta-versionlock use /usr/bin/python3 (Python 3.9 on EL9).
-    "tools/cta-udev/**/*.py"                  = "py39"
-    "tools/cta-release/**/*.py"               = "py39"
+    "tools/cta-udev/**/*.py"    = "py39"
+    "tools/cta-release/**/*.py" = "py39"
+    # Native builds and the host-side launcher use distribution Python.
+    "ci/project-json/*.py"                    = "py39"
+    "ci/utils/cta_version.py"                 = "py39"
+    "tools/compile_man_md.py"                 = "py39"
     "ci/sbom/*.py"                            = "py39"
     "ci/system_tests/tests/remote_scripts/**" = "py39"
 
