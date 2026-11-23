@@ -31,7 +31,7 @@ report-release:
   rules:
     - if: $CI_COMMIT_TAG
       when: always
-  image: $IMAGE_AUTOMATION
+  image: $IMAGE_PYTHON
   variables:
     GIT_SUBMODULE_STRATEGY: none
   script:
