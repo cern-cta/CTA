@@ -243,7 +243,6 @@
   typeCheckingMode = "strict"
   extraPaths = ["ci/release/src", "."]
   exclude = [
-    "docs",
     "**/__pycache__",
     "**/.venv",
     "**/venv",
