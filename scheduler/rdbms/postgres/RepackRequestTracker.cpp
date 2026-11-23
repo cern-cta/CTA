@@ -305,6 +305,8 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
                                                                     const std::vector<uint64_t>& reqIds,
                                                                     const std::vector<uint64_t>& failedFiles,
                                                                     const std::vector<uint64_t>& failedBytes,
+                                                                    const std::vector<uint64_t>& archivedFiles,
+                                                                    const std::vector<uint64_t>& archivedBytes,
                                                                     bool isRetrieve) {
   if (reqIds.empty()) {
     return 0;
@@ -313,7 +315,15 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
     throw cta::exception::Exception(
       "In RepackRequestTrackingRow::updateRepackRequestFailuresBatch(): Input vector size mismatch.");
   }
-  std::string sql = "WITH FAILURE_TABLE (REPACK_REQUEST_ID, FAILED_FILES, FAILED_BYTES) AS (VALUES ";
+  // Archived counts are optional: empty means this batch swept no already-successful sibling copy
+  // (and is always the case for isRetrieve). Anything else must line up with reqIds.
+  const bool hasArchived = !archivedFiles.empty() || !archivedBytes.empty();
+  if (hasArchived && (reqIds.size() != archivedFiles.size() || reqIds.size() != archivedBytes.size())) {
+    throw cta::exception::Exception(
+      "In RepackRequestTrackingRow::updateRepackRequestFailuresBatch(): Archived vector size mismatch.");
+  }
+  std::string sql =
+    "WITH FAILURE_TABLE (REPACK_REQUEST_ID, FAILED_FILES, FAILED_BYTES, ARCHIVED_FILES, ARCHIVED_BYTES) AS (VALUES ";
 
   for (size_t i = 0; i < reqIds.size(); ++i) {
     if (i > 0) {
@@ -328,6 +338,12 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
            + "::BIGINT,"
              ":FAILED_BYTES"
            + std::to_string(i)
+           + "::BIGINT,"
+             ":ARCHIVED_FILES"
+           + std::to_string(i)
+           + "::BIGINT,"
+             ":ARCHIVED_BYTES"
+           + std::to_string(i)
            + "::BIGINT"
              ")";
   }
@@ -337,7 +353,9 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
       SELECT
         REPACK_REQUEST_ID,
         SUM(FAILED_FILES) AS FAILED_FILES_INC,
-        SUM(FAILED_BYTES) AS FAILED_BYTES_INC
+        SUM(FAILED_BYTES) AS FAILED_BYTES_INC,
+        SUM(ARCHIVED_FILES) AS ARCHIVED_FILES_INC,
+        SUM(ARCHIVED_BYTES) AS ARCHIVED_BYTES_INC
       FROM FAILURE_TABLE
       GROUP BY REPACK_REQUEST_ID
     ),
@@ -352,8 +370,9 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
 
     "trk.TOTAL_FILES_TO_RETRIEVE",
 
-    // Successful archive count is unchanged by this method.
-    "trk.ARCHIVED_FILES",
+    // Retrieve never archives anything; the archive side may have swept an already-successful
+    // sibling copy along with the failed one, and the completeness test has to see both.
+    isRetrieve ? "trk.ARCHIVED_FILES" : "trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC",
 
     isRetrieve ? "trk.FAILED_TO_ARCHIVE_FILES" : "trk.FAILED_TO_ARCHIVE_FILES + agg.FAILED_FILES_INC",
 
@@ -374,6 +393,8 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
         trk.FAILED_TO_ARCHIVE_FILES AS NEW_FAILED_TO_ARCHIVE_FILES,
         trk.FAILED_TO_ARCHIVE_BYTES AS NEW_FAILED_TO_ARCHIVE_BYTES,
         trk.FAILED_TO_CREATE_ARCHIVE_REQ + agg.FAILED_FILES_INC AS NEW_FAILED_TO_CREATE_ARCHIVE_REQ,
+        trk.ARCHIVED_FILES AS NEW_ARCHIVED_FILES,
+        trk.ARCHIVED_BYTES AS NEW_ARCHIVED_BYTES,
     )SQL";
   } else {
     sql += R"SQL(
@@ -382,6 +403,8 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
         trk.FAILED_TO_ARCHIVE_FILES + agg.FAILED_FILES_INC AS NEW_FAILED_TO_ARCHIVE_FILES,
         trk.FAILED_TO_ARCHIVE_BYTES + agg.FAILED_BYTES_INC AS NEW_FAILED_TO_ARCHIVE_BYTES,
         trk.FAILED_TO_CREATE_ARCHIVE_REQ AS NEW_FAILED_TO_CREATE_ARCHIVE_REQ,
+        trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC AS NEW_ARCHIVED_FILES,
+        trk.ARCHIVED_BYTES + agg.ARCHIVED_BYTES_INC AS NEW_ARCHIVED_BYTES,
     )SQL";
   }
   sql += repackRequestIsCompleteSql(statusInputs) + " AS NEW_IS_COMPLETE,";
@@ -407,6 +430,8 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
        FAILED_TO_ARCHIVE_FILES = calc.NEW_FAILED_TO_ARCHIVE_FILES,
        FAILED_TO_ARCHIVE_BYTES = calc.NEW_FAILED_TO_ARCHIVE_BYTES,
        FAILED_TO_CREATE_ARCHIVE_REQ = calc.NEW_FAILED_TO_CREATE_ARCHIVE_REQ,
+       ARCHIVED_FILES = calc.NEW_ARCHIVED_FILES,
+       ARCHIVED_BYTES = calc.NEW_ARCHIVED_BYTES,
        STATUS = calc.NEW_STATUS,
        IS_COMPLETE = calc.NEW_IS_COMPLETE,
        REPACK_FINISHED_TIME =
@@ -432,6 +457,8 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
     stmt.bindUint64(":REQID" + idx, rId);
     stmt.bindUint64(":FAILED_FILES" + idx, ffl);
     stmt.bindUint64(":FAILED_BYTES" + idx, fb);
+    stmt.bindUint64(":ARCHIVED_FILES" + idx, hasArchived ? archivedFiles[i] : 0);
+    stmt.bindUint64(":ARCHIVED_BYTES" + idx, hasArchived ? archivedBytes[i] : 0);
   }
   stmt.bindString(":STATUS_RUNNING", to_string(cta::schedulerdb::RepackJobStatus::RRS_Running));
   stmt.bindString(":STATUS_STARTING", to_string(cta::schedulerdb::RepackJobStatus::RRS_Starting));

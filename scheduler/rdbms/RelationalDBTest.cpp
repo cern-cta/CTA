@@ -1582,6 +1582,113 @@ TEST_P(RelationalDBTest, repackArchiveFailedGroupIsScopedToItsOwnRepackRequest) 
   ASSERT_EQ(0u, db.getRepackInfo(vidB).failedFilesToArchive);
 }
 
+// A swept group is not uniformly a failure: when one copy of a multi-copy file fails permanently
+// while its sibling reached tape and the catalogue, the sweep takes both rows - and each must be
+// credited to the counter that matches its own outcome. Crediting the surviving copy as a failure
+// keeps the totals balanced and still ends the request RRS_Failed, but reports a copy that IS on
+// tape as lost, so `cta-admin repack ls` under-reports archived files.
+TEST_P(RelationalDBTest, repackArchiveFailedGroupCreditsEachCopyByItsOwnOutcome) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-REPACK-MIXED";
+  const std::string tapePoolFailed = "repackMixedPoolFailed";
+  const std::string tapePoolOk = "repackMixedPoolOk";
+  auto mountPolicy = makeMountPolicy(1000);
+  const uint64_t repackRequestId =
+    queueRepackAndGetId(db, lc, vid, common::dataStructures::RepackInfo::Type::MoveAndAddCopies, mountPolicy);
+
+  constexpr uint64_t archiveFileId = 996001;
+  constexpr uint64_t sizeInBytes = 8000;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // Two copies of one file, one per destination pool, so each can be driven independently.
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolFailed,
+                                  sizeInBytes,
+                                  /*totalRetries=*/0,
+                                  /*maxTotalRetries=*/1,
+                                  /*totalReportRetries=*/0,
+                                  /*maxReportRetries=*/1,
+                                  /*copyNb=*/1,
+                                  /*requestJobCount=*/2);
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolOk,
+                                  sizeInBytes,
+                                  0,
+                                  1,
+                                  0,
+                                  1,
+                                  /*copyNb=*/2,
+                                  /*requestJobCount=*/2);
+  }
+
+  // Copy 1: transfer fails terminally.
+  {
+    auto mount = createRepackArchiveMount(db, lc, tapePoolFailed, "V-REPACK-MIXED-DEST1");
+    auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
+    ASSERT_EQ(1u, jobs.size());
+    jobs.front()->prepareFailTransfer("simulated terminal transfer failure for copy 1");
+    std::vector<SchedulerDatabase::ArchiveJob*> batch = {jobs.front().get()};
+    mount->failTransferBatch(batch, lc);
+  }
+
+  // Copy 2: reaches tape. Driving a real repack transfer success all the way through
+  // reportJobsBatchTransferred() would need a full tape session, so take failReportBatch()'s repack
+  // branch instead - for repack that branch IS updateRepackJobSuccess(), i.e. "recover the lost
+  // bookkeeping write", which is exactly the success transition (see
+  // ArchiveMount::failReportBatch()). The group is not all-success, so this copy settles at
+  // AJS_ToReportToRepackForSuccess rather than being promoted to ReadyForDeletion.
+  {
+    auto mount = createRepackArchiveMount(db, lc, tapePoolOk, "V-REPACK-MIXED-DEST2");
+    auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
+    ASSERT_EQ(1u, jobs.size());
+    jobs.front()->prepareFailReport("simulated scheduler bookkeeping write failure for copy 2");
+    std::vector<SchedulerDatabase::ArchiveJob*> batch = {jobs.front().get()};
+    mount->failReportBatch(batch, lc);
+  }
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    ASSERT_EQ(1u,
+              countRepackArchiveActive(conn,
+                                       archiveFileId,
+                                       cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForFailure));
+    ASSERT_EQ(1u,
+              countRepackArchiveActive(conn,
+                                       archiveFileId,
+                                       cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
+  }
+
+  db.getNextFailedArchiveRepackReportBatch(lc);
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // Every copy has settled, so the whole group moves - the surviving copy's row included, which is
+    // what makes the partial outcome inspectable.
+    ASSERT_EQ(0u, countRowsForFile(conn, "REPACK_ARCHIVE_ACTIVE_QUEUE", archiveFileId));
+    ASSERT_EQ(2u, countRowsForFile(conn, "REPACK_ARCHIVE_FAILED_QUEUE", archiveFileId));
+  }
+
+  const auto repackInfo = db.getRepackInfo(vid);
+  // One copy lost, one copy on tape - and the counters say so.
+  ASSERT_EQ(1u, repackInfo.failedFilesToArchive);
+  ASSERT_EQ(sizeInBytes, repackInfo.failedBytesToArchive);
+  ASSERT_EQ(1u, repackInfo.archivedFiles);
+  ASSERT_EQ(sizeInBytes, repackInfo.archivedBytes);
+  // Totals still balance against totalFilesToArchive, so the request can still complete, and it
+  // still ends RRS_Failed because a failure was recorded at all - that, not the failure count, is
+  // what keeps the source tape from being reclaimed.
+  ASSERT_EQ(repackInfo.failedFilesToArchive + repackInfo.archivedFiles, repackInfo.totalFilesToArchive);
+}
+
 // Repack report failure through the batch path for a single-copy request: "report retries
 // exhausted" for repack means the bookkeeping WRITE failed, not that the job failed, so
 // failReportBatchExceedRetries() delegates to updateRepackJobSuccess() and the row must end up

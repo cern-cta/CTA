@@ -1077,7 +1077,11 @@ VALUES )SQL";
    * @param limit                Max number of newly-failed candidate copies to consider per call
    *                             (a complete multi-copy group may move more rows than this, once
    *                             its surviving successful siblings are included)
-   * @return rset                REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL for every moved row
+   * @return rset                REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL, STATUS for every moved
+   *                             row. STATUS tells the caller which bucket a row belongs to: a
+   *                             swept group contains the copy that actually failed AND any sibling
+   *                             that had already succeeded, and those must be credited to the
+   *                             request's failed and archived counters respectively.
    */
   static rdbms::Rset moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit);
   /**

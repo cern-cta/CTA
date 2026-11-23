@@ -916,7 +916,7 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
     )
     INSERT INTO REPACK_ARCHIVE_FAILED_QUEUE
         SELECT * FROM MOVED_ROWS
-        RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL
+        RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL, STATUS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":LIMIT", limit);

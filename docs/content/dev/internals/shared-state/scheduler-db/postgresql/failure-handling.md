@@ -218,15 +218,31 @@ operators rely on — a repack that lost a copy does not end `RRS_Complete`, so 
 reclaimed — therefore comes from `failedArchiveFiles > 0`, not from how many copies were counted as
 failed.
 
-!!! note "Known attribution gap"
+### How a mixed group is accounted for
 
-    When a group is swept after one copy failed, every row in it is credited as a failure, including
-    a sibling copy that genuinely reached tape. Totals still balance and the request still ends
-    `RRS_Failed`, so nothing unsafe follows, but `cta-admin repack ls` under-reports archived files
-    and over-reports failures by the number of surviving copies. Fixing it means returning `STATUS`
-    from `moveFailedRepackJobBatchToFailedQueueTable()` and bucketing the swept rows into the
-    archived and failed counters separately; the group gate itself would not change, since the
-    buffer deletion needs it either way.
+A swept group is not uniformly a failure, so it is not counted as one. Take a two-copy file whose
+first copy failed permanently while the second reached tape and the catalogue: both rows settle,
+the group is swept, and `moveFailedRepackJobBatchToFailedQueueTable()` returns each row's own
+`STATUS` alongside its `REPACK_REQUEST_ID` and `SIZE_IN_BYTES`.
+`getNextFailedArchiveRepackReportBatch()` buckets on it, and
+`updateRepackRequestFailuresBatch()` applies both counts in one `UPDATE` so the completeness and
+status recomputation sees the final numbers once:
+
+| | `archivedFiles` | `failedArchiveFiles` | sum vs `totalFilesToArchive` = 2 | final status |
+|---|---|---|---|---|
+| Credit every swept row as a failure | 0 | 2 | 2 ✓ | `RRS_Failed` ✓ |
+| **Bucket on `STATUS` (what happens)** | **1** | **1** | 2 ✓ | `RRS_Failed` ✓ |
+
+Both balance and both end `RRS_Failed` — the safety property does not depend on the choice — but
+only the second tells the truth about what reached tape, which is what `cta-admin repack ls`
+reports. Note that **both** buckets are still moved to `REPACK_ARCHIVE_FAILED_QUEUE`: the group as a
+whole did not achieve what the repack asked for, and keeping the surviving copy's row beside the
+failed one is what makes the partial outcome inspectable. Only the accounting distinguishes them.
+
+What this still cannot tell you is whether a partially-successful file is *safe* to reclaim the
+source tape for. The counters do not record **which** copy failed — the moved one, where the source
+tape still holds the only instance of that copy, or an added one, where the source has already been
+drained. That distinction needs per-copy state the tracking table does not carry.
 
 ## Invariants the group logic rests on
 
@@ -335,7 +351,7 @@ flowchart TB
     REPACKFAIL --> GRP{"every copy of the group\nsettled (success or failure)?"}
     GRP -- no --> WAITFAIL["ACTIVE_QUEUE (this copy only)\nAJS_ToReportToRepackForFailure\nwaits for its siblings"]
     WAITFAIL -. last sibling settles .-> GRP
-    GRP -- "yes, or single-copy" --> REPACKFAILQ["REPACK_ARCHIVE_FAILED_QUEUE\n(whole group, successes included),\nrequest's failedFiles credited,\nSOURCE file deleted - safe now"]
+    GRP -- "yes, or single-copy" --> REPACKFAILQ["REPACK_ARCHIVE_FAILED_QUEUE\n(whole group, successes included),\neach row credited to failedFiles or\narchivedFiles by its own STATUS,\nSOURCE file deleted - safe now"]
 
     classDef pending fill:#f39c12,color:#fff,stroke:#333;
     classDef active fill:#3498db,color:#fff,stroke:#333;

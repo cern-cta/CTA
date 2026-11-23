@@ -1695,10 +1695,14 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
     return ret;
   }
   try {
+    // Retrieve has no archived counts to credit: a retrieve failure means the file never reaches
+    // the archive stage at all, so the empty vectors below are the whole story.
     uint64_t nrows = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestFailuresBatch(txn,
                                                                                                        rrIDs,
                                                                                                        flcnts,
                                                                                                        flbytes,
+                                                                                                       {},
+                                                                                                       {},
                                                                                                        true);
     txn.setRowCountForTelemetry(nrows);
     txn.commit();
@@ -1723,28 +1727,60 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool, lc);
   std::unordered_map<uint64_t, uint64_t> summaryFlCountMap;
   std::unordered_map<uint64_t, uint64_t> summaryFlBytesMap;
+  std::unordered_map<uint64_t, uint64_t> summaryArCountMap;
+  std::unordered_map<uint64_t, uint64_t> summaryArBytesMap;
   std::vector<uint64_t> rrIDs;
   std::vector<uint64_t> flcnts;
   std::vector<uint64_t> flbytes;
+  std::vector<uint64_t> arcnts;
+  std::vector<uint64_t> arbytes;
   std::unordered_set<std::string> jobSrcUrls;
   try {
     auto batch_rset = schedulerdb::postgres::ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(
       txn,
       c_repackArchiveReportBatchSize);
     auto nrows = 0;
+    /* A swept group is not uniformly a failure. moveFailedRepackJobBatchToFailedQueueTable() only
+     * acts once every copy of the file has settled, and it deliberately takes the whole group -
+     * so a multi-copy file whose first copy failed while its second reached tape and the catalogue
+     * yields two rows here, one per outcome. Crediting both as failures keeps the request's totals
+     * balanced (the counters are per copy, and so is TOTAL_FILES_TO_ARCHIVE) and still ends it
+     * RRS_Failed, but it reports a copy that is on tape as lost, so `cta-admin repack ls`
+     * under-reports archived files. Bucket on the row's own STATUS instead and let
+     * updateRepackRequestFailuresBatch() apply both counts in one UPDATE, so the completeness and
+     * status recomputation sees the final numbers once.
+     *
+     * Both buckets still go to REPACK_ARCHIVE_FAILED_QUEUE: the group as a whole did not achieve
+     * what the repack asked for, and keeping the surviving copy's row beside the failed one is what
+     * makes the partial outcome inspectable. Only the accounting distinguishes them.
+     */
+    const std::string statusArchived = to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
     while (batch_rset.next()) {
       uint64_t reqId = batch_rset.columnUint64NoOpt("REPACK_REQUEST_ID");
-      // Increment count and total bytes
-      summaryFlCountMap[reqId] += 1;
-      summaryFlBytesMap[reqId] += batch_rset.columnUint64NoOpt("SIZE_IN_BYTES");
+      const uint64_t sizeInBytes = batch_rset.columnUint64NoOpt("SIZE_IN_BYTES");
+      if (batch_rset.columnStringNoOpt("STATUS") == statusArchived) {
+        summaryArCountMap[reqId] += 1;
+        summaryArBytesMap[reqId] += sizeInBytes;
+        // Touch the failure maps so this request still gets a row in the parallel vectors below
+        // even if every copy it contributed to this batch had succeeded.
+        summaryFlCountMap.try_emplace(reqId, 0);
+        summaryFlBytesMap.try_emplace(reqId, 0);
+      } else {
+        summaryFlCountMap[reqId] += 1;
+        summaryFlBytesMap[reqId] += sizeInBytes;
+      }
       jobSrcUrls.insert(batch_rset.columnStringNoOpt("SRC_URL"));
     }
     for (const auto& [reqId, count] : summaryFlCountMap) {
       rrIDs.emplace_back(reqId);
       flcnts.emplace_back(count);
-      // nrows affected = cummulative sum of count column values
-      nrows += flcnts.back();
       flbytes.emplace_back(summaryFlBytesMap[reqId]);  // safe lookup
+      const auto arCountIt = summaryArCountMap.find(reqId);
+      const auto arBytesIt = summaryArBytesMap.find(reqId);
+      arcnts.emplace_back(arCountIt == summaryArCountMap.end() ? 0 : arCountIt->second);
+      arbytes.emplace_back(arBytesIt == summaryArBytesMap.end() ? 0 : arBytesIt->second);
+      // nrows affected = every row this batch moved, whichever bucket it landed in
+      nrows += flcnts.back() + arcnts.back();
     }
     txn.setRowCountForTelemetry(nrows);
     txn.commit();
@@ -1767,6 +1803,8 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
                                                                                                        rrIDs,
                                                                                                        flcnts,
                                                                                                        flbytes,
+                                                                                                       arcnts,
+                                                                                                       arbytes,
                                                                                                        false);
     txn.setRowCountForTelemetry(nrows);
     txn.commit();

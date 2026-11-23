@@ -502,10 +502,33 @@ struct RepackRequestTrackingRow {
                                                    const uint64_t failedBytesToRetrieve,
                                                    const uint64_t failedToCreateArchiveReq);
 
+  /**
+   * Credit a batch of repack requests with per-request failure counts, and - archive side only -
+   * with archived counts in the same statement.
+   *
+   * archivedFiles/archivedBytes exist because a repack archive group is settled as a whole: when
+   * one copy of a multi-copy file fails permanently, moveFailedRepackJobBatchToFailedQueueTable()
+   * sweeps the entire group, which can include a sibling copy that had already reached tape and the
+   * catalogue. Crediting every swept row as a failure keeps the totals balanced but misreports what
+   * happened, so the caller buckets the rows by STATUS and passes both counts here. Both are applied
+   * in one UPDATE so the completeness and status recomputation sees the final numbers once.
+   *
+   * They are ignored when isRetrieve is true: a retrieve failure cannot archive anything, and the
+   * retrieve caller leaves them empty. Empty vectors mean "no archived rows in this batch".
+   *
+   * @param reqIds         One entry per repack request in this batch
+   * @param failedFiles    Per-request failed row count, same size as reqIds
+   * @param failedBytes    Per-request failed byte count, same size as reqIds
+   * @param archivedFiles  Per-request archived row count, empty or same size as reqIds
+   * @param archivedBytes  Per-request archived byte count, empty or same size as reqIds
+   * @param isRetrieve     Credit the retrieve-side counters instead of the archive-side ones
+   */
   static uint64_t updateRepackRequestFailuresBatch(Transaction& txn,
                                                    const std::vector<uint64_t>& reqIds,
                                                    const std::vector<uint64_t>& failedFiles,
                                                    const std::vector<uint64_t>& failedBytes,
+                                                   const std::vector<uint64_t>& archivedFiles,
+                                                   const std::vector<uint64_t>& archivedBytes,
                                                    bool isRetrieve);
 };
 
