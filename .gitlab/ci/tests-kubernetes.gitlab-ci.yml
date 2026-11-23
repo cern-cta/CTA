@@ -407,15 +407,6 @@ stress-test:
         --namespace ${NAMESPACE} \
         --collect-logs "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pods" \
         --force-delete-cluster-resources
-    - |
-      if [[ -n "$CI_COMMIT_TAG" ]]; then
-        case "$CI_JOB_STATUS" in
-          success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) completed successfully." ;;
-          failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed." ;;
-          *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
-        esac
-        python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
-      fi
   tags:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time

@@ -104,7 +104,7 @@ lint-python:
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_AUTOMATION
+    name: $IMAGE_PYTHON
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
@@ -438,7 +438,7 @@ format-python:
     - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
-  image: $IMAGE_AUTOMATION
+  image: $IMAGE_PYTHON
   variables:
     FORMAT_DIFF: artifacts/ruff.diff
   before_script:
@@ -571,7 +571,7 @@ validate-python-lock:
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - !reference [.python-workspace, rules]
-  image: $IMAGE_AUTOMATION
+  image: $IMAGE_PYTHON
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
   before_script:

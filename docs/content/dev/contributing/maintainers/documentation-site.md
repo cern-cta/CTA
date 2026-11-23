@@ -33,7 +33,9 @@ Mermaid colors are defined in `docs/content/stylesheets/extra.css`. Check diagra
 
 ## Publishing
 
-The `build-docs` job runs the documentation tests and a strict site build. Publication uses a Zensical-compatible `mike` fork to rebuild the site with versioned URLs. Its dependency is declared in `pyproject.toml` and pinned in `uv.lock`.
+`build-rust-docs` generates the Rust reference for `build-docs`, which runs the documentation tests and a strict site build.
+Publication uses a Zensical-compatible `mike` fork to rebuild the staged pages with versioned URLs, reusing the generated Rust reference and command manual.
+Its dependency is declared in `pyproject.toml` and pinned in `uv.lock`.
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.
 

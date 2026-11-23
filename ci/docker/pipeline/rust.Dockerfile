@@ -3,8 +3,6 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2
 
-ARG UV_VERSION=0.13.9
-
 ARG CARGO_DENY_VERSION="=0.20.2"
 ARG CARGO_MACHETE_VERSION="=0.9.2"
 ARG CARGO_NEXTEST_VERSION="=0.9.145"
@@ -16,10 +14,8 @@ ARG TAPLO_VERSION="=0.10.0"
 # hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
-    dnf install -y git curl jq python3 python3-pip bat gcc gcc-c++ make \
+    dnf install -y git curl jq python3 bat gcc gcc-c++ make \
         openssl-devel pkgconf-pkg-config protobuf-compiler && \
-    python3 -m pip install --only-binary :all: --no-cache-dir "uv==${UV_VERSION}" && \
-    dnf remove -y --setopt=clean_requirements_on_remove=False python3-pip && \
     dnf clean all --enablerepo=\*
 
 # Match repository components explicitly; coverage additionally needs llvm-tools-preview.

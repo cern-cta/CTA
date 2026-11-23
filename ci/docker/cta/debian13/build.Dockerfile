@@ -5,6 +5,7 @@
 # CI installs source-package build dependencies at runtime, which requires root.
 FROM debian:13@sha256:9c6e381421d0f48d1b8133e573f33c185ee16cbf505eda9c4a8a4791b25ea8a6
 
+# Build helpers must support the distribution Python; newer Python tooling belongs in the Python CI image.
 ARG CTA_DEPENDENCY_REPOSITORY=https://cta-public-repo.web.cern.ch/testing/cta-6/debian
 ARG CARGO_CYCLONEDX_VERSION="=0.5.9"
 ARG SCCACHE_VERSION="=0.18.0"

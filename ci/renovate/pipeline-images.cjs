@@ -29,7 +29,7 @@ module.exports = {
                    managerFilePatterns : [ '/^\\.gitlab-ci\\.yml$/' ],
                    matchStrings : [ 'PIPELINE_IMAGE_VERSION: "(?<currentValue>\\d{4}-\\d{2}-\\d{2}-\\d+)"' ],
                    depNameTemplate : 'cta-pipeline-images',
-                   packageNameTemplate : 'gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-automation',
+                   packageNameTemplate : 'gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-python',
                    datasourceTemplate : 'docker',
                    versioningTemplate : 'regex:^(?<major>\\d{4})-(?<minor>\\d{2})-(?<patch>\\d{2})-(?<build>\\d+)$',
                  } ],

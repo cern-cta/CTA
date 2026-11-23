@@ -13,5 +13,6 @@ RUN dnf install -y epel-release dnf-plugins-core && \
     dnf remove -y --setopt=clean_requirements_on_remove=False python3-pip && \
     dnf clean all --enablerepo=\*
 
-# Compatibility checks select 3.9; newer tooling can explicitly select 3.12.
+# Python packages and tooling select their interpreter independently of native build platforms.
+# Compatibility checks select 3.9; docs select 3.12. Keep OS tools on system Python.
 RUN uv python install 3.9 3.12
