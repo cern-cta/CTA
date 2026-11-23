@@ -7,9 +7,9 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/utils/StdRegex.hpp"
 
 #include <fstream>
+#include <regex>
 #include <sstream>
 #include <string>
 

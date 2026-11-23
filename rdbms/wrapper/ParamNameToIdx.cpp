@@ -6,8 +6,8 @@
 #include "rdbms/wrapper/ParamNameToIdx.hpp"
 
 #include "common/exception/Exception.hpp"
-#include "common/utils/StdRegex.hpp"
 
+#include <regex>
 #include <sstream>
 
 namespace cta::rdbms::wrapper {

@@ -6,13 +6,13 @@
 #include "taped/session/TapeSessionReporter.hpp"
 
 #include "common/log/StringLogger.hpp"
-#include "common/utils/StdRegex.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 
 #include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <map>
+#include <regex>
 #include <stdexcept>
 #include <string_view>
 #include <thread>

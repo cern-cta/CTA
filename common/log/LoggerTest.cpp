@@ -5,10 +5,10 @@
 
 #include "common/log/Param.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/utils/StdRegex.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <regex>
 #include <streambuf>
 
 namespace unitTests {
