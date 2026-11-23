@@ -37,13 +37,18 @@ def stage_content(preview: bool = False) -> None:
                 shutil.copy2(entry, target)
 
 
-def prepare(skip_rust: bool, preview: bool = False) -> None:
+def prepare(skip_rust: bool, preview: bool = False, rust_docs: Path | None = None) -> None:
     """Prepare pages, the command manual, and Rust HTML for Zensical to read from build/docs."""
     stage_content(preview)
     output = ROOT / "build/docs"
     content = output / "content"
     target = ROOT / "target"
-    rust_docs = target / "doc"
+    # CI supplies a required artifact; local previews may generate or omit the reference.
+    supplied_rust = rust_docs is not None
+    if rust_docs is None:
+        rust_docs = target / "doc"
+    if supplied_rust and not (rust_docs / "index.html").is_file():
+        raise FileNotFoundError(f"Rust documentation artifact is missing: {rust_docs / 'index.html'}")
     manual = output / "generated/cta-admin.1cta.md"
     manual.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(  # noqa: S603
@@ -51,6 +56,7 @@ def prepare(skip_rust: bool, preview: bool = False) -> None:
         cwd=ROOT / "tools",
         check=True,
     )
+    skip_rust = skip_rust or supplied_rust
     cargo = shutil.which("cargo")
     if not skip_rust and cargo is None:
         LOGGER.warning("Cargo is not installed; skipping Rust documentation generation.")
@@ -73,12 +79,16 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("build", "serve"))
-    parser.add_argument(
+    rust = parser.add_mutually_exclusive_group()
+    rust.add_argument(
         "--skip-rust", action="store_true", help="Skip Rust generation and reuse target/doc output if available"
+    )
+    rust.add_argument(
+        "--rust-docs", type=Path, help="Assemble an existing Rust documentation artifact (required to exist)"
     )
     args, extra = parser.parse_known_args()
     os.chdir(ROOT)
-    prepare(args.skip_rust, preview=args.command == "serve")
+    prepare(args.skip_rust, preview=args.command == "serve", rust_docs=args.rust_docs)
     subprocess.run([sys.executable, "-m", "zensical", args.command, *extra], check=True)  # noqa: S603
 
 

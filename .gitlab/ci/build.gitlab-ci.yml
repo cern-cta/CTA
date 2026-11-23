@@ -216,7 +216,7 @@ reset-sccache:
   cache:
     - *sccache
 
-build-docs:
+build-rust-docs:
   stage: build
   needs:
     - job: check-merge-train-duplicate
@@ -230,16 +230,38 @@ build-docs:
   image: $IMAGE_RUST
   variables:
     GIT_SUBMODULE_STRATEGY: "recursive"
+  script:
+    - cargo doc -q --no-deps --workspace --target-dir target
+    - test -f target/doc/index.html
+  artifacts:
+    paths:
+      - target/doc/
+    expire_in: 7 days
+
+build-docs:
+  stage: build
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: build-rust-docs
+      artifacts: true
+  rules:
+    - !reference [build-rust-docs, rules]
+  image: $IMAGE_AUTOMATION
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
   before_script:
     - !reference [.merge-train-guard, before_script]
     - source ci/docs/prepare-environment.sh
   script:
     - python -m unittest discover --start-directory docs/tests --pattern 'test_*.py'
-    - python docs/build.py build --clean
+    - python docs/build.py build --rust-docs target/doc --clean
   artifacts:
     paths:
-      # Include the site and inputs for mike's rebuild with the release-series URL.
-      - build/docs/
+      - build/docs/site/
+      # Publication reassembles these inputs with versioned URLs, without native toolchains.
+      - build/docs/content/
+      - build/docs/generated/
     expire_in: 7 days
 
 build-python:

@@ -101,6 +101,32 @@ Publication follows this policy for each selected variant, including manually tr
 Dev/RC tags can publish to `unstable` and `testing`, but cannot publish to `stable`.
 Publication does not wait for all tests; review their results before manual promotion, and promote to `stable` only after production validation.
 Check publication jobs and their status notes on the release issue.
+
+Each `report-release` matrix job depends only on the source job named by its `REPORT_JOB` value.
+It runs after that job finishes, including failures, without waiting for unrelated tests, deployments, or manual publications.
+Image publication instances are reported individually.
+The reporter reads the latest attempt from GitLab and updates that job's result in the pipeline's release-issue thread.
+Publishers and tests need no reporting code or status artifacts.
+Issue updates are serialized per pipeline to prevent concurrent reporters from creating duplicate threads.
+
+Skipped, omitted, and unstarted manual jobs produce no result note.
+Reporting is best-effort and does not change publication results.
+After retrying a source job, rerun its corresponding reporter if it has already completed.
+Canceling the whole pipeline can prevent reporting jobs from running; use the job logs in that case.
+
+To report another job, add its exact CI name and a description to the `report-release` matrix in `.gitlab/ci/report.gitlab-ci.yml`:
+
+```yaml
+- REPORT_JOB: ["build-docs"]
+  REPORT_DESCRIPTION: ["Documentation assembly"]
+```
+
+For a matrix producer, list its individual displayed names, such as `publish-images-private: [cta-taped]`, under `REPORT_JOB`.
+Each name creates a reporter with its own dependency, so one completed instance does not wait for the rest of the matrix.
+Update these names when changing producer matrix values; a test checks coverage of the image-publication matrices.
+The shared rules handle tag pipelines and absent source jobs without duplicating publication rules.
+`ci/release/report_job.py` formats and posts the selected job's result.
+
 Documentation publishes independently from protected final release tags; see [Documentation Site](documentation-site.md).
 
 For stable releases, create a GitLab [Release entry](https://gitlab.cern.ch/cta/CTA/-/releases) and an announcement on the [CTA Community forum](https://cta-community.web.cern.ch/), including the changelog and upgrade instructions.
