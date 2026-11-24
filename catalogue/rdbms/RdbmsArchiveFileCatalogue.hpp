@@ -135,11 +135,15 @@ protected:
   RdbmsCatalogue* m_rdbmsCatalogue;
 
 private:
+  /// The maximum age of cached storage class data (tape copy to pool mapping, number of archive routes, ...).
+  static const time_t STORAGE_CLASS_CACHE_MAX_AGE_SECS = 10;
+
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */
-  mutable TimeBasedCache<catalogue::StorageClass, common::dataStructures::TapeCopyToPoolMap> m_tapeCopyToPoolCache {10};
+  mutable TimeBasedCache<catalogue::StorageClass, common::dataStructures::TapeCopyToPoolMap> m_tapeCopyToPoolCache {
+    STORAGE_CLASS_CACHE_MAX_AGE_SECS};
 
   /**
    * Cached versions of the expected number of archive routes for specific
@@ -147,7 +151,8 @@ private:
    * method as opposed to the actual number entered so far using the
    * createArchiveRoute() method.
    */
-  mutable TimeBasedCache<catalogue::StorageClass, uint64_t> m_expectedNbArchiveRoutesCache {10};
+  mutable TimeBasedCache<catalogue::StorageClass, uint64_t> m_expectedNbArchiveRoutesCache {
+    STORAGE_CLASS_CACHE_MAX_AGE_SECS};
 
   /**
    * Returns a cached version of the mapping from tape copy to tape pool for the

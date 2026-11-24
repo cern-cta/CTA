@@ -218,16 +218,17 @@ def deleted_file(
 
 
 @pytest.fixture
-def two_copies(
+def two_copy_dir(
+    eos_mgm: EosMgmHost,
     cta_cli: CtaCliHost,
-    cta_storage_class: str,
     cta_default_tape_pool: str,
-) -> Iterator[None]:
-    """Give the files of the test storage class a second copy, on a tape lent to a temporary tape pool.
-
-    Everything is put back afterwards; the files archived meanwhile keep their two copies.
-    """
-    tape_pool = f"tp_restore_files_copy2_{uuid.uuid4().hex[:6]}"
+    test_dir: Path,
+) -> Iterator[Path]:
+    """Provide an EOS directory whose files are archived with two copies, the second on a temporary pool."""
+    suffix = uuid.uuid4().hex[:6]
+    storage_class = f"sc_restore_files_copy2_{suffix}"
+    tape_pool = f"tp_restore_files_copy2_{suffix}"
+    directory = test_dir / f"two_copies_{suffix}"
     tapes = [
         tape
         for tape in cta_cli.list_writable_tapes()
@@ -247,32 +248,37 @@ def two_copies(
         cta_cli.exec(f"cta-admin tape ch --vid {vid} --tapepool {tape_pool}")
         cleanup.callback(cta_cli.exec, f"cta-admin tape ch --vid {vid} --tapepool {cta_default_tape_pool}")
 
-        cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
-        cleanup.callback(cta_cli.exec, f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
-
         cta_cli.exec(
-            f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool {tape_pool} "
-            "--comment 'Temp route: restore of a file with two copies'"
+            f"cta-admin storageclass add --name {storage_class} --numberofcopies 2 --vo vo "
+            "--comment 'Temp storage class: restore of a file with two copies'"
         )
-        cleanup.callback(
-            cta_cli.exec,
-            f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT",
-        )
+        for copy_nb, copy_tape_pool in ((1, cta_default_tape_pool), (2, tape_pool)):
+            cta_cli.exec(
+                f"cta-admin archiveroute add --storageclass {storage_class} --copynb {copy_nb} "
+                f"--tapepool {copy_tape_pool} --comment 'Temp route: restore of a file with two copies'"
+            )
+            # The routes must go before the temporary tape pool can be removed
+            cleanup.callback(
+                cta_cli.exec,
+                f"cta-admin archiveroute rm --storageclass {storage_class} --copynb {copy_nb} "
+                "--archiveroutetype DEFAULT",
+            )
 
-        yield
+        eos_mgm.exec(f"eos mkdir -p {directory}")
+        eos_mgm.exec(f"eos attr set sys.archive.storage_class={storage_class} {directory}")
+
+        yield directory
 
 
 @pytest.fixture
 def deleted_copies(
-    two_copies: None,
+    two_copy_dir: Path,
     eos_client: EosClientHost,
     cta_cli: CtaCliHost,
     disk_instance_name: str,
-    test_dir: Path,
 ) -> list[DeletedFile]:
     """Archive a file with two copies, on two tapes, and delete it into the recycle bin."""
-    del two_copies  # Only needed for the storage class it sets up
-    return _archive_and_delete(eos_client, cta_cli, disk_instance_name, test_dir, copies=2)
+    return _archive_and_delete(eos_client, cta_cli, disk_instance_name, two_copy_dir, copies=2)
 
 
 def test_list_reports_the_deleted_file(
