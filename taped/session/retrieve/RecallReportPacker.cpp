@@ -215,6 +215,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) 
                           "In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.");
   }
 #ifdef CTA_PGSCHED
+  const auto fileId = m_failedRetrieveJob->archiveFile.archiveFileID;
   try {
     m_failedRetrieveJob->prepareFailTransfer(m_failureLog);
     reportPacker.m_failedRetrieveJobs.push_back(std::move(m_failedRetrieveJob));
@@ -223,8 +224,7 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) 
     }
   } catch (const cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
-      .add("fileId", m_failedRetrieveJob ? m_failedRetrieveJob->archiveFile.archiveFileID : 0);
+    params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue()).add("fileId", fileId);
     reportPacker.m_lc.log(cta::log::ERR, "In RecallReportPacker::ReportError::execute(): prepareFailTransfer threw.");
   }
 #else
