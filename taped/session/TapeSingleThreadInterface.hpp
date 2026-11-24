@@ -197,7 +197,7 @@ public:
                             const bool useEncryption,
                             const std::string& externalEncryptionKeyScript,
                             const uint32_t tapeLoadTimeout,
-                            uint32_t tapeUnloadTimeout)
+                            const uint32_t tapeUnloadTimeout)
       : m_drive(drive),
         m_mediaChanger(mc),
         m_tracker(tracker),

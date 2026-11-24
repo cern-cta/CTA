@@ -42,8 +42,8 @@ public:
               cta::mediachanger::MediaChangerFacade& mc,
               cta::TapeMount& tapeMount,
               const TransfersConfig& transfersConfig,
-              uint32_t tapeLoadTimeoutSecs,
-              uint32_t tapeUnloadTimeoutSecs,
+              const uint32_t tapeLoadTimeoutSecs,
+              const uint32_t tapeUnloadTimeoutSecs,
               cta::catalogue::Catalogue& catalogue);
 
   /// @brief Run one assignment through transfer, cleanup and final reporting.

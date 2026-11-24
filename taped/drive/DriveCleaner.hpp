@@ -38,7 +38,7 @@ public:
                cta::log::Logger& log,
                const cta::common::dataStructures::DriveInfo& driveInfo,
                const std::string& vid,
-               uint32_t tapeUnloadTimeout,
+               const uint32_t tapeUnloadTimeout,
                cta::catalogue::Catalogue& catalogue,
                TapeSessionTracker& tracker);
 

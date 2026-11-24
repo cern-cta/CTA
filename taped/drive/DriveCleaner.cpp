@@ -52,7 +52,7 @@ DriveCleaner::DriveCleaner(mediachanger::MediaChangerFacade& mc,
                            log::Logger& log,
                            const common::dataStructures::DriveInfo& driveInfo,
                            const std::string& vid,
-                           uint32_t tapeUnloadTimeout,
+                           const uint32_t tapeUnloadTimeout,
                            catalogue::Catalogue& catalogue,
                            TapeSessionTracker& tracker)
     : m_tracker(tracker),

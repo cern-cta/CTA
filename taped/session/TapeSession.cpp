@@ -117,8 +117,8 @@ TapeSession::TapeSession(log::Logger& log,
                          mediachanger::MediaChangerFacade& mc,
                          TapeMount& tapeMount,
                          const TransfersConfig& transfersConfig,
-                         uint32_t tapeLoadTimeoutSecs,
-                         uint32_t tapeUnloadTimeoutSecs,
+                         const uint32_t tapeLoadTimeoutSecs,
+                         const uint32_t tapeUnloadTimeoutSecs,
                          catalogue::Catalogue& catalogue)
     : m_tapeSessionTracker(std::make_shared<TapeSessionTracker>(
         [&tapeMount](session::TapeSessionState state) { tapeMount.reportTapeSessionState(state); },

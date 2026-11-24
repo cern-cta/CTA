@@ -23,7 +23,7 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
                          const VolumeInfo& volume,
                          drive::DriveInterface& drive,
                          catalogue::Catalogue& catalogue,
-                         uint32_t tapeUnloadTimeout,
+                         const uint32_t tapeUnloadTimeout,
                          std::optional<DriveCleaner::CleanupResult>& cleanupResult,
                          log::LogContext& lc,
                          TapeSessionTracker& tracker)

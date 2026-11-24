@@ -37,7 +37,7 @@ TapeReadSingleThread::TapeReadSingleThread(drive::DriveInterface& drive,
                                            const std::string& externalEncryptionKeyScript,
                                            const RetrieveMount& retrieveMount,
                                            const uint32_t tapeLoadTimeout,
-                                           uint32_t tapeUnloadTimeout,
+                                           const uint32_t tapeUnloadTimeout,
                                            catalogue::Catalogue& catalogue)
     : TapeSingleThreadInterface<TapeReadTask>(drive,
                                               mediaChanger,
