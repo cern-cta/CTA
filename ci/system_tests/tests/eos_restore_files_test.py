@@ -10,8 +10,8 @@ namespace keytab) and then restores the tape file copy in the CTA catalogue.
 
 import json
 import shlex
-import sys
 import time
+import tomllib
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -23,11 +23,6 @@ import pytest
 from system_tests.helpers.hosts import CtaAdminApiHost, CtaCliHost, EosClientHost, EosMgmHost
 from system_tests.helpers.hosts.disk.eos_constants import EOS_GRPC_PORT
 from system_tests.helpers.utils.timeout import Timeout
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 # The namespace keytab maps the gRPC key to this EOS user, which must be allowed to
 # create namespace entries. The MGM setup gives daemon (uid/gid 2) sudo membership.
