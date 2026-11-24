@@ -961,7 +961,7 @@ public:
     cta::mediachanger::RmcProxy proxy;
     cta::mediachanger::MediaChangerFacade changer(proxy, logger);
     std::optional<TapeSessionResult> result;
-    TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
+    TapeSession session(logger, system, info, changer, mount, config, 1, 1, getCatalogue());
     const auto& tracker = session.tracker();
     mount.observedTracker = &tracker;
     EXPECT_FALSE(tracker.state().has_value());
@@ -1316,7 +1316,7 @@ TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessfu
         // Keep this transfer test independent of external key scripts and catalogue encryption settings.
         config.encryption.reset();
         config.no_block_move_timeout_secs = 600;
-        TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
+        TapeSession session(logger, system, info, changer, mount, config, 1, 1, getCatalogue());
 
         const auto result = session.execute();
         EXPECT_FALSE(result.successful);
@@ -2170,7 +2170,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -2456,7 +2456,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumRecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
 
   // 8) Run the data transfer session
   const auto result = sess.execute();
@@ -2753,7 +2753,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongRecall) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2997,7 +2997,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3246,7 +3246,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallLinearAlgorithm) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3496,7 +3496,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3749,7 +3749,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallSLTFRAOAlgorithm) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3987,7 +3987,7 @@ TEST_P(TapeSessionTest, TapeSessionNoSuchDrive) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Drive access failed: Configured drive lookup failed"));
@@ -4177,7 +4177,7 @@ TEST_P(TapeSessionTest, TapeSessionFailtoMount) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -4373,7 +4373,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   sess.execute();
   const auto& tracker = sess.tracker();
   EXPECT_EQ(session::SessionType::Archive, tracker.type());
@@ -4601,7 +4601,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   const auto result = sess.execute();
   EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
   EXPECT_FALSE(result.successful);
@@ -4825,7 +4825,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   const auto result = sess.execute();
   EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
   EXPECT_FALSE(result.successful);
@@ -5051,7 +5051,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFilesizeInMiddleOfBatchMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   const auto result = sess.execute();
   EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
   EXPECT_FALSE(result.successful);
@@ -5272,7 +5272,7 @@ TEST_P(TapeSessionTest, TapeSessionMissingFilesMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -5496,7 +5496,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   ScopedTransferErrorCounter transferErrors;
   const auto result = sess.execute();
   EXPECT_EQ(0, transferErrors.errors());
@@ -5742,7 +5742,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullOnFlushMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   ScopedTransferErrorCounter transferErrors;
   const auto result = sess.execute();
   EXPECT_EQ(0, transferErrors.errors());

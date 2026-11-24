@@ -94,7 +94,7 @@ public:
                            const daemon::VolumeInfo& volInfo,
                            const uint32_t tapeLoadTimeout,
                            cta::log::LogContext& lc)
-      : TapeSingleThreadInterface<TapeReadTask>(drive, mc, tracker, volInfo, lc, false, "", tapeLoadTimeout) {}
+      : TapeSingleThreadInterface<TapeReadTask>(drive, mc, tracker, volInfo, lc, false, "", tapeLoadTimeout, 900) {}
 
   ~FakeSingleTapeReadThread() {
     const unsigned int size = m_tasks.size();

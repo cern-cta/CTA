@@ -28,7 +28,8 @@ If a tape session throws without returning an outcome, recovery runs under the e
 
 `DriveCleaner` can borrow an already-open drive.
 It reports cleanup results and progress; the enclosing drive session owns the final `Down` publication.
-Cleanup probes readiness without waiting for media to load and skips label inspection when media is not ready.
+Cleanup waits for temporary NOT READY conditions within the unloading budget before attempting label inspection.
+An expired deadline permits one readiness probe without retries; label inspection requires ready media.
 Robotic dismount establishes cartridge removal even when the tape driver reports no media; an unloaded cartridge may still occupy the library's drive slot.
 An empty slot alone is insufficient for reuse if configuration reset or establishing safe driver state failed.
 

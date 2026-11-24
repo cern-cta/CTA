@@ -34,6 +34,7 @@ TapeWriteSingleThread::TapeWriteSingleThread(drive::DriveInterface& drive,
                                              const std::string& externalEncryptionKeyScript,
                                              const ArchiveMount& archiveMount,
                                              const uint64_t tapeLoadTimeout,
+                                             uint32_t tapeUnloadTimeout,
                                              catalogue::Catalogue& catalogue)
     : TapeSingleThreadInterface<TapeWriteTask>(drive,
                                                mediaChanger,
@@ -42,7 +43,8 @@ TapeWriteSingleThread::TapeWriteSingleThread(drive::DriveInterface& drive,
                                                logContext,
                                                useEncryption,
                                                externalEncryptionKeyScript,
-                                               tapeLoadTimeout),
+                                               tapeLoadTimeout,
+                                               tapeUnloadTimeout),
       m_filesBeforeFlush(filesBeforeFlush),
       m_bytesBeforeFlush(bytesBeforeFlush),
       m_reportPacker(reportPacker),
@@ -308,7 +310,14 @@ void TapeWriteSingleThread::run() {
       params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());
       m_logContext.log(log::INFO, "Tape session started for write");
       m_tracker.reportState(session::TapeSessionState::Mounting);
-      mountedTape.emplace(m_mediaChanger, m_volInfo, m_drive, m_catalogue, cleanupResult, m_logContext, m_tracker);
+      mountedTape.emplace(m_mediaChanger,
+                          m_volInfo,
+                          m_drive,
+                          m_catalogue,
+                          m_tapeUnloadTimeout,
+                          cleanupResult,
+                          m_logContext,
+                          m_tracker);
       m_tracker.reportState(session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
       const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;

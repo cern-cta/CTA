@@ -92,24 +92,21 @@ TEST_F(DriveMediaTest, ReadyProbeRefreshesDriverBeforeMediaAccess) {
     return 0;
   });
   expectStatus(true);
-  EXPECT_TRUE(m_drive->prepareForMediaAccess());
+  EXPECT_TRUE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s));
   EXPECT_EQ(2, m_opens);
   EXPECT_EQ(1, m_closes);
 }
 
-TEST_F(DriveMediaTest, NonReadyMediaDoesNotPollOrReopen) {
+TEST_F(DriveMediaTest, UnloadedMediaDoesNotPollOrReopen) {
   for (const auto& [asc, ascq] : {
          std::pair {0x3a, 0x00},
          {0x3a, 0x04},
-         {0x04, 0x02},
-         {0x04, 0x01},
-         {0x04, 0x07},
-         {0x30, 0x03}
+         {0x04, 0x02}
   }) {
     for (bool descriptor : {false, true}) {
       EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
         .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, asc, ascq, descriptor); });
-      EXPECT_FALSE(m_drive->prepareForMediaAccess());
+      EXPECT_FALSE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s));
     }
   }
   EXPECT_EQ(1, m_opens);
@@ -120,14 +117,35 @@ TEST_F(DriveMediaTest, UnitAttentionIsRetriedBeforeObservingReadiness) {
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
     .WillOnce([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 6, 0x28, 0); })
     .WillOnce([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, 0x3a, 0); });
-  EXPECT_FALSE(m_drive->prepareForMediaAccess());
+  EXPECT_FALSE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s));
 }
 
-TEST_F(DriveMediaTest, RepeatedUnitAttentionIsBounded) {
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
-    .Times(3)
-    .WillRepeatedly([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 6, 0x29, 0); });
-  EXPECT_THROW(m_drive->prepareForMediaAccess(), DriveStateError);
+TEST_F(DriveMediaTest, ExpiredBudgetOnlyProbesWithoutRetryOrReopen) {
+  for (const auto key : {SCSI::senseKeys::unitAttention, SCSI::senseKeys::notReady}) {
+    EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
+      EXPECT_EQ(1, command->timeout);
+      return sense(command, key, key == SCSI::senseKeys::unitAttention ? 0x29 : 0x04, 1);
+    });
+    EXPECT_FALSE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() - 1s));
+  }
+  EXPECT_EQ(1, m_opens);
+}
+
+TEST_F(DriveMediaTest, TemporaryNotReadyPollsUntilMediaCanBeAccessed) {
+  for (const auto& [asc, ascq] : {
+         std::pair {0x04, 0x01},
+         {0x04, 0x04},
+         {0x04, 0x07},
+         {0x04, 0x13},
+         {0x00, 0x16},
+         {0x30, 0x03}
+  }) {
+    EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
+      .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, asc, ascq); })
+      .WillOnce(Return(0));
+    expectStatus(true);
+    EXPECT_TRUE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 5s));
+  }
 }
 
 TEST_F(DriveMediaTest, UnrecognizedNotReadyAndHardwareFailuresAreNotAbsence) {
@@ -138,7 +156,7 @@ TEST_F(DriveMediaTest, UnrecognizedNotReadyAndHardwareFailuresAreNotAbsence) {
     EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
       return sense(command, key, asc, 0);
     });
-    EXPECT_THROW(m_drive->prepareForMediaAccess(), exception::Exception);
+    EXPECT_THROW(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
   }
 }
 
@@ -165,7 +183,7 @@ TEST_F(DriveMediaTest, InvalidSenseIsNeverAbsence) {
       }
       return 0;
     });
-    EXPECT_THROW(m_drive->prepareForMediaAccess(), exception::Exception);
+    EXPECT_THROW(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
   }
 }
 
@@ -184,7 +202,7 @@ TEST_F(DriveMediaTest, TransportAndDeferredErrorsAreNotAbsence) {
       }
       return 0;
     });
-    EXPECT_THROW(m_drive->prepareForMediaAccess(), exception::Exception);
+    EXPECT_THROW(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
   }
 }
 

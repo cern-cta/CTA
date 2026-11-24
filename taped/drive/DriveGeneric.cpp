@@ -38,18 +38,17 @@ struct MediaSense {
   uint8_t ascq;
   std::string message;
 
-  bool isBecomingReady() const {
+  bool isRetryableNotReady() const {
     // Becoming ready, formatting, operation/security-association creation in progress, or cleaning.
     return key == SCSI::senseKeys::notReady
            && ((asc == 0x04 && (ascq == 0x01 || ascq == 0x04 || ascq == 0x07 || ascq == 0x13))
                || (asc == 0x00 && ascq == 0x16) || (asc == 0x30 && ascq == 0x03));
   }
 
-  bool isNonReadyMedia() const {
-    // These also include absent media, unthreaded media with accessible MAM, and a required LOAD command.
-    return isBecomingReady()
-           || (key == SCSI::senseKeys::notReady
-               && ((asc == 0x3a && (ascq == 0x00 || ascq == 0x04)) || (asc == 0x04 && ascq == 0x02)));
+  bool isNotLoaded() const {
+    // An explicit LOAD is required, or media is absent/unthreaded with accessible MAM.
+    return key == SCSI::senseKeys::notReady
+           && ((asc == 0x3a && (ascq == 0x00 || ascq == 0x04)) || (asc == 0x04 && ascq == 0x02));
   }
 };
 
@@ -2844,56 +2843,47 @@ void drive::DriveGeneric::refreshReadyDevice() {
   }
 }
 
-bool drive::DriveGeneric::prepareForMediaAccess() {
-  const auto deadline = MediaClock::now() + mediaProbeTimeout;
-  for (unsigned attempt = 0; attempt < maxUnitAttentionAttempts; ++attempt) {
-    const auto remaining = remainingCommandTime(deadline, mediaProbeTimeout);
-    if (remaining <= std::chrono::milliseconds::zero()) {
-      break;
-    }
-    const auto sense =
-      mediaCommand(m_sysWrapper, m_tapeFD, {}, remaining, "TEST UNIT READY for cleanup: " + m_SCSIInfo.nst_dev);
-    if (!sense) {
-      refreshReadyDevice();
-      return true;
-    }
-    if (sense->key == SCSI::senseKeys::unitAttention) {
-      continue;
-    }
-    if (sense->isNonReadyMedia()) {
-      return false;
-    }
-    throw DriveStateError(sense->message);
+bool drive::DriveGeneric::waitForMediaReady(MediaClock::time_point deadline) {
+  std::string lastResponse;
+  if (!waitTestUnitReady(deadline, lastResponse)) {
+    return false;
   }
-  throw DriveStateError("Could not establish media readiness after bounded unit-attention handling: "
-                        + m_SCSIInfo.nst_dev);
+  refreshReadyDevice();
+  return true;
 }
 
 void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond) {
-  waitTestUnitReady(timeoutSecond);
+  const auto deadline = MediaClock::now() + std::chrono::seconds(timeoutSecond);
+  std::string lastResponse;
+  if (!waitTestUnitReady(deadline, lastResponse)) {
+    if (MediaClock::now() >= deadline) {
+      throw exception::TimeOut("Drive readiness timed out (configured timeout " + std::to_string(timeoutSecond)
+                               + " seconds): " + lastResponse);
+    }
+    throw exception::Exception(lastResponse);
+  }
   refreshReadyDevice();
 }
 
-void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const {
-  const auto start = MediaClock::now();
-  const auto deadline = start + std::chrono::seconds(timeoutSecond);
-  std::string lastResponse;
-  // A zero budget permits one probe for existing diagnostic callers, but never a retry or sleep.
-  bool first = true;
-  while (first || MediaClock::now() < deadline) {
-    first = false;
+bool drive::DriveGeneric::waitTestUnitReady(MediaClock::time_point deadline, std::string& lastResponse) const {
+  // An expired budget still permits a fresh observation, but never another loading wait.
+  const bool probeOnly = MediaClock::now() >= deadline;
+  do {
     const auto remaining = remainingCommandTime(deadline, mediaProbeTimeout);
     const auto sense =
-      mediaCommand(m_sysWrapper, m_tapeFD, {}, remaining, "TEST UNIT READY while loading: " + m_SCSIInfo.nst_dev);
+      mediaCommand(m_sysWrapper, m_tapeFD, {}, remaining, "TEST UNIT READY for media access: " + m_SCSIInfo.nst_dev);
     if (!sense) {
-      if (timeoutSecond == 0 || MediaClock::now() <= deadline) {
-        return;
+      if (probeOnly || MediaClock::now() <= deadline) {
+        return true;
       }
-      lastResponse = "TEST UNIT READY completed after the loading deadline";
-      break;
+      lastResponse = "TEST UNIT READY completed after the readiness deadline";
+      return false;
     }
     lastResponse = sense->message;
-    if (sense->key != SCSI::senseKeys::unitAttention && !sense->isBecomingReady()) {
+    if (sense->isNotLoaded()) {
+      return false;
+    }
+    if (sense->key != SCSI::senseKeys::unitAttention && !sense->isRetryableNotReady()) {
       throw exception::Exception(lastResponse);
     }
     const auto sleepTime = std::min(deadline - MediaClock::now(),
@@ -2901,12 +2891,8 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const 
     if (sleepTime > MediaClock::duration::zero()) {
       std::this_thread::sleep_for(sleepTime);
     }
-  }
-  exception::TimeOut ex;
-  ex.getMessage() << "Drive readiness timed out after "
-                  << std::chrono::duration<double>(MediaClock::now() - start).count() << " seconds (configured timeout "
-                  << timeoutSecond << " seconds): " << lastResponse;
-  throw ex;
+  } while (MediaClock::now() < deadline);
+  return false;
 }
 
 void drive::DriveGeneric::ensureTapeUnloaded() {

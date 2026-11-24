@@ -118,6 +118,7 @@ TapeSession::TapeSession(log::Logger& log,
                          TapeMount& tapeMount,
                          const TransfersConfig& transfersConfig,
                          uint32_t tapeLoadTimeoutSecs,
+                         uint32_t tapeUnloadTimeoutSecs,
                          catalogue::Catalogue& catalogue)
     : m_tapeSessionTracker(std::make_shared<TapeSessionTracker>(
         [&tapeMount](session::TapeSessionState state) { tapeMount.reportTapeSessionState(state); },
@@ -127,6 +128,7 @@ TapeSession::TapeSession(log::Logger& log,
       m_sysWrapper(sysWrapper),
       m_transfersConfig(transfersConfig),
       m_tapeLoadTimeoutSecs(tapeLoadTimeoutSecs),
+      m_tapeUnloadTimeoutSecs(tapeUnloadTimeoutSecs),
       m_driveInfo(driveInfo),
       m_mediaChanger(mc),
       m_catalogue(catalogue) {}
@@ -254,6 +256,7 @@ void TapeSession::executeRead(log::LogContext& logContext,
     (m_transfersConfig.encryption_enabled ? m_transfersConfig.encryption->external_key_script : std::string {}),
     retrieveMount,
     m_tapeLoadTimeoutSecs,
+    m_tapeUnloadTimeoutSecs,
     m_catalogue);
 
   DiskWriteThreadPool diskWriteThreadPool(m_transfersConfig.disk_io_threads,
@@ -371,6 +374,7 @@ void TapeSession::executeWrite(log::LogContext& logContext,
     (m_transfersConfig.encryption_enabled ? m_transfersConfig.encryption->external_key_script : std::string {}),
     archiveMount,
     m_tapeLoadTimeoutSecs,
+    m_tapeUnloadTimeoutSecs,
     m_catalogue);
 
   DiskReadThreadPool diskReadThreadPool(m_transfersConfig.disk_io_threads,

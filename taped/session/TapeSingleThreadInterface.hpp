@@ -82,6 +82,8 @@ protected:
 
   /// Tape load timeout after which the mount is considered failed.
   uint32_t m_tapeLoadTimeout;
+  /// Maximum cleanup readiness wait, sharing the unloading health budget.
+  uint32_t m_tapeUnloadTimeout;
 
   /// @brief Wait for drive readiness within the configured load timeout.
   ///
@@ -194,7 +196,8 @@ public:
                             const cta::log::LogContext& lc,
                             const bool useEncryption,
                             const std::string& externalEncryptionKeyScript,
-                            const uint32_t tapeLoadTimeout)
+                            const uint32_t tapeLoadTimeout,
+                            uint32_t tapeUnloadTimeout)
       : m_drive(drive),
         m_mediaChanger(mc),
         m_tracker(tracker),
@@ -202,7 +205,8 @@ public:
         m_logContext(lc),
         m_volInfo(volInfo),
         m_encryptionControl(useEncryption, externalEncryptionKeyScript),
-        m_tapeLoadTimeout(tapeLoadTimeout) {}
+        m_tapeLoadTimeout(tapeLoadTimeout),
+        m_tapeUnloadTimeout(tapeUnloadTimeout) {}
 };  // class TapeSingleThreadInterface
 
 }  // namespace cta::tape::daemon

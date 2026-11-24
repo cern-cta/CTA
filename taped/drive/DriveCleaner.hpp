@@ -11,6 +11,8 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/scsi/Device.hpp"
 
+#include <chrono>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -31,10 +33,12 @@ public:
   /// @brief Create a cleaner; media changer, logger, catalogue and tracker must outlive it.
   ///
   /// Drive identity and VID are copied; an empty VID means the mounted tape is unknown.
+  /// tapeUnloadTimeout is the readiness polling budget in seconds; drive acquisition consumes this budget.
   DriveCleaner(cta::mediachanger::MediaChangerFacade& mc,
                cta::log::Logger& log,
                const cta::common::dataStructures::DriveInfo& driveInfo,
                const std::string& vid,
+               uint32_t tapeUnloadTimeout,
                cta::catalogue::Catalogue& catalogue,
                TapeSessionTracker& tracker);
 
@@ -72,7 +76,11 @@ private:
   cta::log::LogContext m_lc;
   const cta::common::dataStructures::DriveInfo m_driveInfo;
   const std::string m_vid;
+  const std::chrono::seconds m_tapeUnloadTimeout;
   cta::catalogue::Catalogue& m_catalogue;
+
+  /// Clean within the readiness budget established before drive acquisition.
+  CleanupResult cleanDrive(drive::DriveInterface& drive, std::chrono::steady_clock::time_point readinessDeadline);
 
   /// Attempt to disable a known tape when the result reports failed ejection.
   void finishCleanup(const CleanupResult& result);
@@ -80,7 +88,7 @@ private:
   /// @brief Reset configuration and eject the tape, retaining independent failures.
   ///
   /// Label reads are best effort; attempt robotic dismount despite reset or unload errors.
-  CleanupResult cleanDriveImpl(drive::DriveInterface& drive);
+  CleanupResult cleanDriveImpl(drive::DriveInterface& drive, std::chrono::steady_clock::time_point readinessDeadline);
 
   /// Read, count and log tape alerts, clearing them on hardware; log and suppress query failures.
   void logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept;

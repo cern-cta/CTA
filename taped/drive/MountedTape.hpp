@@ -8,6 +8,7 @@
 #include "DriveCleaner.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <cstdint>
 #include <optional>
 
 namespace cta::tape::daemon {
@@ -20,10 +21,12 @@ public:
   ///
   /// All borrowed objects, including cleanup result and tracker, must outlive the guard.
   /// Reset cleanup result before mounting; failed mount attempts trigger cleanup before rethrowing.
+  /// tapeUnloadTimeout bounds cleanup readiness polling in seconds.
   MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
               const VolumeInfo& volume,
               drive::DriveInterface& drive,
               catalogue::Catalogue& catalogue,
+              uint32_t tapeUnloadTimeout,
               std::optional<DriveCleaner::CleanupResult>& cleanupResult,
               log::LogContext& lc,
               TapeSessionTracker& tracker);

@@ -37,6 +37,7 @@ TapeReadSingleThread::TapeReadSingleThread(drive::DriveInterface& drive,
                                            const std::string& externalEncryptionKeyScript,
                                            const RetrieveMount& retrieveMount,
                                            const uint32_t tapeLoadTimeout,
+                                           uint32_t tapeUnloadTimeout,
                                            catalogue::Catalogue& catalogue)
     : TapeSingleThreadInterface<TapeReadTask>(drive,
                                               mediaChanger,
@@ -45,7 +46,8 @@ TapeReadSingleThread::TapeReadSingleThread(drive::DriveInterface& drive,
                                               logContext,
                                               useEncryption,
                                               externalEncryptionKeyScript,
-                                              tapeLoadTimeout),
+                                              tapeLoadTimeout,
+                                              tapeUnloadTimeout),
       m_maxFilesRequest(maxFilesRequest),
       m_reportPacker(reportPacker),
       m_useLbp(useLbp),
@@ -241,7 +243,14 @@ void TapeReadSingleThread::run() {
 
       currentErrorToCount = TapeSessionFailure::TapeLoad;
       m_tracker.reportState(session::TapeSessionState::Mounting);
-      mountedTape.emplace(m_mediaChanger, m_volInfo, m_drive, m_catalogue, cleanupResult, m_logContext, m_tracker);
+      mountedTape.emplace(m_mediaChanger,
+                          m_volInfo,
+                          m_drive,
+                          m_catalogue,
+                          m_tapeUnloadTimeout,
+                          cleanupResult,
+                          m_logContext,
+                          m_tracker);
       m_tracker.reportState(session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
       const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;

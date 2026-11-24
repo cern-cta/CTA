@@ -271,6 +271,7 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount, std::stop_t
                         tapeMount,
                         m_config.transfers,
                         m_config.mounts.tape_load_timeout_secs,
+                        m_config.mounts.tape_unload_timeout_secs,
                         m_schedulerContext.catalogue());
     // Store a shared ptr to the session tracker for the liveness probe.
     m_activeTracker.store(session.sharedTracker());
@@ -450,7 +451,13 @@ bool DriveSession::cleanDrive(const std::string& vid, TapeSessionTracker& tracke
   bool reusable = false;
   std::string error;
   try {
-    DriveCleaner cleaner(m_mediaChanger, m_lc.logger(), m_driveInfo, vid, m_schedulerContext.catalogue(), tracker);
+    DriveCleaner cleaner(m_mediaChanger,
+                         m_lc.logger(),
+                         m_driveInfo,
+                         vid,
+                         m_config.mounts.tape_unload_timeout_secs,
+                         m_schedulerContext.catalogue(),
+                         tracker);
     const auto result = cleaner.cleanDrive(m_sysWrapper);
     reusable = result.driveReusable();
     error = result.errorMessage;

@@ -35,7 +35,7 @@ public:
   /// @brief Create a session for a scheduler assignment; execute() starts the work.
   ///
   /// Logger, system wrapper, media changer, mount and catalogue must outlive the session.
-  /// Drive identity and transfer settings are copied; tapeLoadTimeoutSecs is the readiness timeout in seconds.
+  /// Drive identity and transfer settings are copied; loading and cleanup readiness budgets are in seconds.
   TapeSession(cta::log::Logger& log,
               System::virtualWrapper& sysWrapper,
               const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -43,6 +43,7 @@ public:
               cta::TapeMount& tapeMount,
               const TransfersConfig& transfersConfig,
               uint32_t tapeLoadTimeoutSecs,
+              uint32_t tapeUnloadTimeoutSecs,
               cta::catalogue::Catalogue& catalogue);
 
   /// @brief Run one assignment through transfer, cleanup and final reporting.
@@ -76,6 +77,7 @@ private:
   System::virtualWrapper& m_sysWrapper;
   const TransfersConfig m_transfersConfig;
   const uint32_t m_tapeLoadTimeoutSecs;
+  const uint32_t m_tapeUnloadTimeoutSecs;
   const cta::common::dataStructures::DriveInfo m_driveInfo;
 
   /// @brief Discover and open the drive, recording a down decision in state before propagating failures.

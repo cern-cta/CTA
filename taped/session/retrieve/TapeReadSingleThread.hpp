@@ -46,6 +46,7 @@ public:
                        const std::string& externalEncryptionKeyScript,
                        const cta::RetrieveMount& retrieveMount,
                        const uint32_t tapeLoadTimeout,
+                       uint32_t tapeUnloadTimeout,
                        cta::catalogue::Catalogue& catalogue);
 
   /**

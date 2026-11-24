@@ -52,6 +52,7 @@ DriveCleaner::DriveCleaner(mediachanger::MediaChangerFacade& mc,
                            log::Logger& log,
                            const common::dataStructures::DriveInfo& driveInfo,
                            const std::string& vid,
+                           uint32_t tapeUnloadTimeout,
                            catalogue::Catalogue& catalogue,
                            TapeSessionTracker& tracker)
     : m_tracker(tracker),
@@ -59,12 +60,14 @@ DriveCleaner::DriveCleaner(mediachanger::MediaChangerFacade& mc,
       m_lc(log),
       m_driveInfo(driveInfo),
       m_vid(vid),
+      m_tapeUnloadTimeout(tapeUnloadTimeout),
       m_catalogue(catalogue) {
   m_lc.push(log::Param("tapeVid", m_vid));
 }
 
 auto DriveCleaner::cleanDrive(System::virtualWrapper& sysWrapper) -> CleanupResult {
-  // Cleanup gets its own deadline before drive discovery or acquisition can block.
+  const auto readinessDeadline = std::chrono::steady_clock::now() + m_tapeUnloadTimeout;
+  // Include drive discovery and acquisition in the readiness budget.
   m_tracker.reportState(session::TapeSessionState::Unloading);
   std::unique_ptr<drive::DriveInterface> drive;
   std::optional<std::string> driveError;
@@ -79,7 +82,7 @@ auto DriveCleaner::cleanDrive(System::virtualWrapper& sysWrapper) -> CleanupResu
   }
 
   if (!driveError) {
-    auto result = cleanDrive(*drive);
+    auto result = cleanDrive(*drive, readinessDeadline);
     CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
     logAndClearTapeAlerts(*drive);
     if (result.driveReusable()) {
@@ -152,15 +155,21 @@ void DriveCleaner::disableTapeAfterFailedEject(const std::string& errorMsg) noex
 }
 
 auto DriveCleaner::cleanDrive(drive::DriveInterface& drive) -> CleanupResult {
-  // Include the readiness probe, configuration reset and rewind in the unloading budget.
+  return cleanDrive(drive, std::chrono::steady_clock::now() + m_tapeUnloadTimeout);
+}
+
+auto DriveCleaner::cleanDrive(drive::DriveInterface& drive, std::chrono::steady_clock::time_point readinessDeadline)
+  -> CleanupResult {
+  // Include readiness polling, configuration reset and rewind in the unloading budget.
   m_tracker.reportState(session::TapeSessionState::Unloading);
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
-  auto result = cleanDriveImpl(drive);
+  auto result = cleanDriveImpl(drive, readinessDeadline);
   finishCleanup(result);
   return result;
 }
 
-auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive) -> CleanupResult {
+auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive, std::chrono::steady_clock::time_point readinessDeadline)
+  -> CleanupResult {
   CleanupResult result;
   auto recordResetFailure = [&](const std::string& operation, TapeSessionFailure error) {
     m_tracker.recordFailure(error);
@@ -185,8 +194,9 @@ auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive) -> CleanupResult
 
   bool ready = false;
   try {
-    m_lc.log(log::DEBUG, "Cleaner checking media readiness without waiting for loading");
-    ready = drive.prepareForMediaAccess();
+    CleanupTiming timing(m_tracker, &TapeCleanupStats::readinessWaitTime);
+    m_lc.log(log::DEBUG, "Cleaner checking media readiness within the remaining budget");
+    ready = drive.waitForMediaReady(readinessDeadline);
   } catch (...) {
     recordDriveStateFailure();
     log::ScopedParamContainer params(m_lc);

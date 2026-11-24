@@ -49,6 +49,7 @@ public:
                         const std::string& externalEncryptionKeyScript,
                         const cta::ArchiveMount& archiveMount,
                         const uint64_t tapeLoadTimeout,
+                        uint32_t tapeUnloadTimeout,
                         cta::catalogue::Catalogue& catalogue);
 
   /// Attach the injector and start the tape writer.

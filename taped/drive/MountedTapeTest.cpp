@@ -10,6 +10,7 @@
 #include "mediachanger/RmcProxy.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <type_traits>
@@ -40,7 +41,7 @@ protected:
     if (body.find("Dummy mount for") != std::string_view::npos) {
       ++mounts;
     }
-    // Each cleanup observes readiness once, including when the drive is empty.
+    // Each cleanup checks readiness, including when the drive is empty.
     if (body.find("Cleaner checking media readiness") != std::string_view::npos) {
       ++cleanups;
       mountTimeBeforeCleanup = tracker->stats().setup.initialMountTime;
@@ -70,6 +71,31 @@ protected:
   }
 };
 
+// Observe the deadline at the drive boundary without sleeping or emulating kernel behavior.
+class ReadinessDrive : public drive::FakeDrive {
+public:
+  using FakeDrive::FakeDrive;
+  MOCK_METHOD(bool, waitForMediaReady, (std::chrono::steady_clock::time_point), (override));
+};
+
+TEST_F(MountedTapeTest, CleanupUsesUnloadTimeoutForReadiness) {
+  using Clock = std::chrono::steady_clock;
+  using namespace std::chrono_literals;
+  using testing::_;
+
+  testing::StrictMock<ReadinessDrive> hardware(5000, drive::FakeDrive::OnFlush);
+  hardware.info = driveInfo;
+  MountedTape tape(changer, volume, hardware, catalogue, 30, outcome, lc, tracker);
+  const auto beforeCleanup = Clock::now();
+  EXPECT_CALL(hardware, waitForMediaReady(_)).WillOnce([&](auto deadline) {
+    EXPECT_GE(deadline, beforeCleanup + 30s);
+    EXPECT_LE(deadline, Clock::now() + 30s);
+    return false;
+  });
+  EXPECT_TRUE(tape.cleanup().driveReusable());
+  EXPECT_EQ(0, tracker.stats().cleanup.labelReadTime);
+}
+
 TEST_F(MountedTapeTest, MountsBothAccessModesAndCleansOnScopeExit) {
   for (const auto mode : {common::dataStructures::MountType::Retrieve,
                           common::dataStructures::MountType::ArchiveForUser,
@@ -80,7 +106,7 @@ TEST_F(MountedTapeTest, MountsBothAccessModesAndCleansOnScopeExit) {
     const auto mountsBefore = logger.mounts;
     const auto cleanupsBefore = logger.cleanups;
     {
-      MountedTape tape(changer, volume, drive, catalogue, outcome, lc, tracker);
+      MountedTape tape(changer, volume, drive, catalogue, 30, outcome, lc, tracker);
       EXPECT_EQ(mountsBefore + 1, logger.mounts);
       EXPECT_EQ(cleanupsBefore, logger.cleanups);
       EXPECT_FALSE(outcome);
@@ -99,7 +125,7 @@ TEST_F(MountedTapeTest, MountsBothAccessModesAndCleansOnScopeExit) {
 
 TEST_F(MountedTapeTest, ExplicitCleanupIsNotRepeatedByDestructor) {
   {
-    MountedTape tape(changer, volume, drive, catalogue, outcome, lc, tracker);
+    MountedTape tape(changer, volume, drive, catalogue, 30, outcome, lc, tracker);
     EXPECT_TRUE(tape.cleanup().driveReusable());
     tape.cleanup();
   }
@@ -109,7 +135,7 @@ TEST_F(MountedTapeTest, ExplicitCleanupIsNotRepeatedByDestructor) {
 TEST_F(MountedTapeTest, FailedCleanupIsLoggedAndNeverRetried) {
   drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   {
-    MountedTape tape(changer, volume, drive, catalogue, outcome, lc, tracker);
+    MountedTape tape(changer, volume, drive, catalogue, 30, outcome, lc, tracker);
     EXPECT_FALSE(tape.cleanup().driveReusable());
 
     // A retry would now succeed; cleanup must preserve the original failure.
@@ -126,7 +152,7 @@ TEST_F(MountedTapeTest, FailedCleanupIsLoggedAndNeverRetried) {
 
 TEST_F(MountedTapeTest, MountFailureCleansOnceAndRetainsMountOnlyTiming) {
   drive.info.rawLibrarySlot = "smc0";
-  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, outcome, lc, tracker}), cta::exception::Exception);
+  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 30, outcome, lc, tracker}), cta::exception::Exception);
   EXPECT_EQ(1, logger.cleanups);
   ASSERT_TRUE(outcome);
   EXPECT_FALSE(outcome->driveReusable());
@@ -139,7 +165,7 @@ TEST_F(MountedTapeTest, MountFailureCleansOnceAndRetainsMountOnlyTiming) {
 TEST_F(MountedTapeTest, CleanupFailureDoesNotReplaceMountFailure) {
   drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   drive.info.rawLibrarySlot = "smc0";
-  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, outcome, lc, tracker}), cta::exception::Exception);
+  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 30, outcome, lc, tracker}), cta::exception::Exception);
   EXPECT_EQ(1, logger.cleanups);
   EXPECT_FALSE(outcome && outcome->driveReusable());
   ASSERT_TRUE(outcome);
@@ -149,7 +175,7 @@ TEST_F(MountedTapeTest, CleanupFailureDoesNotReplaceMountFailure) {
 TEST_F(MountedTapeTest, CleanupFailureDoesNotInterruptUnwinding) {
   drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   try {
-    MountedTape tape(changer, volume, drive, catalogue, outcome, lc, tracker);
+    MountedTape tape(changer, volume, drive, catalogue, 30, outcome, lc, tracker);
     throw std::logic_error("transfer failed");
   } catch (const std::logic_error& ex) {
     EXPECT_STREQ("transfer failed", ex.what());
@@ -167,7 +193,7 @@ TEST_F(MountedTapeTest, ReporterFailureDoesNotPreventPhysicalCleanup) {
     throw std::runtime_error("report failed");
   });
   logger.tracker = &reportingTracker;
-  { MountedTape tape(changer, volume, drive, catalogue, outcome, lc, reportingTracker); }
+  { MountedTape tape(changer, volume, drive, catalogue, 30, outcome, lc, reportingTracker); }
   EXPECT_GT(reports, 0);
   ASSERT_TRUE(outcome);
   EXPECT_TRUE(outcome->driveReusable());

@@ -15,6 +15,7 @@
 #include "taped/scsi/Structures.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#include <chrono>
 #include <list>
 #include <map>
 #include <string>
@@ -307,9 +308,10 @@ public:
   /// @param timeoutSecond Readiness timeout in seconds.
   virtual void waitUntilReady(const uint32_t timeoutSecond) = 0;
 
-  /// @brief Check fresh media readiness without waiting for loading, preparing the driver only when ready.
-  /// Return false for recognized non-ready media states; other failures propagate.
-  virtual bool prepareForMediaAccess() = 0;
+  /// @brief Poll temporary NOT READY responses until deadline, refreshing the driver when ready.
+  /// Return false if media is absent, unloaded or still not ready when polling ends; other failures propagate.
+  /// An expired deadline permits one probe but no retry. Driver refresh may exceed the polling deadline.
+  virtual bool waitForMediaReady(std::chrono::steady_clock::time_point deadline) = 0;
 
   /// Check whether the loaded cartridge prohibits writes.
   virtual bool isWriteProtected() = 0;

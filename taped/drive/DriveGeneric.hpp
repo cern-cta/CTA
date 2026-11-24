@@ -75,7 +75,7 @@ public:
   /// Throw cta::exception::NotImplementedException; combined status is not implemented for hardware drives.
   driveStatus getDriveStatus() override { throw cta::exception::NotImplementedException(); }
 
-  bool prepareForMediaAccess() override;
+  bool waitForMediaReady(std::chrono::steady_clock::time_point deadline) override;
 
   /// @brief Wait for SCSI readiness, then reopen the tape device and check its refreshed online status.
   /// @param timeoutSecond Timeout in seconds for the SCSI readiness retry loop.
@@ -234,8 +234,8 @@ protected:
   /// Reopen a ready device and verify that the Linux tape driver agrees.
   void refreshReadyDevice();
 
-  /// Retry transitional readiness responses within the loading budget.
-  void waitTestUnitReady(const uint32_t timeoutSecond) const;
+  /// Poll readiness within deadline, retaining the last response for loading diagnostics.
+  bool waitTestUnitReady(std::chrono::steady_clock::time_point deadline, std::string& lastResponse) const;
 
   void setLogicalBlockProtection(const unsigned char method,
                                  unsigned char methodLength,

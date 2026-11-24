@@ -312,8 +312,8 @@ void cta::tape::drive::FakeDrive::waitUntilReady(const uint32_t timeoutSecond) {
   }
 }
 
-bool cta::tape::drive::FakeDrive::prepareForMediaAccess() {
-  throwIfFailurePoint(FailurePoint::PrepareForMediaAccess);
+bool cta::tape::drive::FakeDrive::waitForMediaReady(std::chrono::steady_clock::time_point) {
+  throwIfFailurePoint(FailurePoint::WaitForMediaReady);
   return m_tapeInPlace && !m_failToMount;
 }
 
