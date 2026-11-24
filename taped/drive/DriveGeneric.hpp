@@ -165,8 +165,6 @@ public:
 
   void unloadTape(void) override;
 
-  void ensureTapeUnloaded() override;
-
   void flush(void) override;
 
   void writeSyncFileMarks(size_t count) override;

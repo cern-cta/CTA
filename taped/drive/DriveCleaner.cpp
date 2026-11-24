@@ -183,7 +183,7 @@ auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive, std::chrono::ste
     m_lc.log(log::WARNING, "Cleaner failed to reset drive configuration; continuing with tape eject");
   };
 
-  auto recordDriveStateFailure = [&] {
+  auto recordDriveStateFailure = [this, &result] {
     result.driveStateFailed = true;
     m_tracker.recordFailure(TapeSessionFailure::UnexpectedCleanup);
     if (!result.errorMessage.empty()) {
@@ -236,7 +236,7 @@ auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive, std::chrono::ste
 
   try {
     unloadTape(drive);
-  } catch (const drive::DriveStateError&) {
+  } catch (const drive::TapeDriverStateError&) {
     recordDriveStateFailure();
     log::ScopedParamContainer params(m_lc);
     params.add(semconv::log::exceptionMessage, result.errorMessage);
@@ -374,7 +374,7 @@ void DriveCleaner::unloadTape(drive::DriveInterface& drive) {
   m_lc.log(log::DEBUG, "Cleaner unloading tape");
   utils::Timer timer;
   try {
-    drive.ensureTapeUnloaded();
+    drive.unloadTape();
   } catch (...) {
     m_tracker.addTapeCleanupStats({.unloadTime = timer.secs()});
     m_tracker.recordFailure(TapeSessionFailure::TapeUnload);

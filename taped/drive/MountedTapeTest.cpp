@@ -5,6 +5,7 @@
 
 #include "MountedTape.hpp"
 
+#include "DriveGeneric.hpp"
 #include "FakeDrive.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "mediachanger/RmcProxy.hpp"
@@ -72,10 +73,16 @@ protected:
 };
 
 // Observe the deadline at the drive boundary without sleeping or emulating kernel behavior.
-class ReadinessDrive : public drive::FakeDrive {
+class ReadinessDrive : public drive::DriveLTO {
 public:
-  using FakeDrive::FakeDrive;
+  using DriveLTO::DriveLTO;
   MOCK_METHOD(bool, waitForMediaReady, (std::chrono::steady_clock::time_point), (override));
+
+  bool clearEncryptionKey() override { return false; }
+
+  void disableLogicalBlockProtection() override {}
+
+  void unloadTape() override {}
 };
 
 TEST_F(MountedTapeTest, CleanupUsesUnloadTimeoutForReadiness) {
@@ -83,7 +90,10 @@ TEST_F(MountedTapeTest, CleanupUsesUnloadTimeoutForReadiness) {
   using namespace std::chrono_literals;
   using testing::_;
 
-  testing::StrictMock<ReadinessDrive> hardware(5000, drive::FakeDrive::OnFlush);
+  testing::StrictMock<System::mockWrapper> wrapper;
+  EXPECT_CALL(wrapper, open(_, _)).WillOnce(testing::Return(7));
+  EXPECT_CALL(wrapper, close(7)).WillOnce(testing::Return(0));
+  testing::StrictMock<ReadinessDrive> hardware(SCSI::DeviceInfo {}, wrapper);
   hardware.info = driveInfo;
   MountedTape tape(changer, volume, hardware, catalogue, 30, outcome, lc, tracker);
   const auto beforeCleanup = Clock::now();

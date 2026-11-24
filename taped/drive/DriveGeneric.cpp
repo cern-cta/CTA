@@ -1041,14 +1041,6 @@ void drive::DriveGeneric::spaceFileMarksForward(size_t count) {
   }
 }
 
-void drive::DriveGeneric::unloadTape(void) {
-  struct mtop m_mtCmd = {};
-  m_mtCmd.mt_op = MTUNLOAD;
-  m_mtCmd.mt_count = 1;
-  cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-                                          "Failed ST ioctl (MTUNLOAD) in DriveGeneric::unloadTape");
-}
-
 void drive::DriveGeneric::flush(void) {
   struct mtop m_mtCmd = {};
   // Zero synchronous file marks flush buffered writes; MTNOP does not synchronize the tape driver.
@@ -2818,14 +2810,14 @@ void drive::DriveGeneric::reopenDevice() {
   // close() may have released the descriptor even on failure. Never close that numeric fd a second time.
   const int fd = std::exchange(m_tapeFD, -1);
   if (fd < 0) {
-    throw DriveStateError("Cannot reopen an invalid tape descriptor: " + m_SCSIInfo.nst_dev);
+    throw TapeDriverStateError("Cannot reopen an invalid tape descriptor: " + m_SCSIInfo.nst_dev);
   }
   try {
     exception::Errnum::throwOnMinusOne(m_sysWrapper.close(fd), "Could not close device: " + m_SCSIInfo.nst_dev);
     exception::Errnum::throwOnMinusOne(m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
                                        "Could not reopen device: " + m_SCSIInfo.nst_dev);
   } catch (...) {
-    throw DriveStateError(exception::currentExceptionMessage());
+    throw TapeDriverStateError(exception::currentExceptionMessage());
   }
 }
 
@@ -2836,10 +2828,10 @@ void drive::DriveGeneric::refreshReadyDevice() {
     exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &status),
                                        "Could not read refreshed drive status: " + m_SCSIInfo.nst_dev);
   } catch (...) {
-    throw DriveStateError(exception::currentExceptionMessage());
+    throw TapeDriverStateError(exception::currentExceptionMessage());
   }
   if (!GMT_ONLINE(status.mt_gstat)) {
-    throw DriveStateError("Tape driver is offline after successful TEST UNIT READY: " + m_SCSIInfo.nst_dev);
+    throw TapeDriverStateError("Tape driver is offline after successful TEST UNIT READY: " + m_SCSIInfo.nst_dev);
   }
 }
 
@@ -2895,19 +2887,23 @@ bool drive::DriveGeneric::waitTestUnitReady(MediaClock::time_point deadline, std
   return false;
 }
 
-void drive::DriveGeneric::ensureTapeUnloaded() {
+void drive::DriveGeneric::unloadTape(void) {
   try {
-    unloadTape();
+    struct mtop m_mtCmd = {};
+    m_mtCmd.mt_op = MTUNLOAD;
+    m_mtCmd.mt_count = 1;
+    cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
+                                            "Failed ST ioctl (MTUNLOAD) in DriveGeneric::unloadTape");
     return;
   } catch (const exception::Errnum& ex) {
     if (ex.errorNumber() != ENOMEDIUM && ex.errorNumber() != EIO) {
-      throw DriveStateError(ex.getMessageValue());
+      throw TapeDriverStateError(ex.getMessageValue());
     }
     // MTUNLOAD may reject cached non-ready state without sending a command.
     // MTIOCGET also passes through the driver's buffer handling; failure here must not be bypassed.
     struct mtget status {};
     if (m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &status) < 0 || GMT_ONLINE(status.mt_gstat)) {
-      throw DriveStateError("Cannot safely recover a failed driver unload: " + ex.getMessageValue());
+      throw TapeDriverStateError("Cannot safely recover a failed driver unload: " + ex.getMessageValue());
     }
   }
 
@@ -2942,7 +2938,7 @@ void drive::DriveGeneric::ensureTapeUnloaded() {
     recoveryError = recoveryError ? *recoveryError + "; " + error : error;
   }
   if (recoveryError) {
-    throw DriveStateError(*recoveryError);
+    throw TapeDriverStateError(*recoveryError);
   }
 }
 

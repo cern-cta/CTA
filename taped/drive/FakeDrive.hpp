@@ -213,8 +213,6 @@ public:
 
   bool waitForMediaReady(std::chrono::steady_clock::time_point deadline) final;
 
-  void ensureTapeUnloaded() final;
-
   /// Always return false; write protection is not simulated.
   bool isWriteProtected() final;
 

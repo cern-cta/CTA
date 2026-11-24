@@ -206,6 +206,9 @@ void cta::tape::drive::FakeDrive::spaceFileMarksForward(size_t count) {
 }
 
 void cta::tape::drive::FakeDrive::unloadTape(void) {
+  if (m_failurePoints.contains(FailurePoint::UnloadDriveState)) {
+    throw TapeDriverStateError("Injected unsafe unload driver state");
+  }
   throwIfFailurePoint(FailurePoint::UnloadTape);
   m_tapeInPlace = false;
 }
@@ -315,13 +318,6 @@ void cta::tape::drive::FakeDrive::waitUntilReady(const uint32_t timeoutSecond) {
 bool cta::tape::drive::FakeDrive::waitForMediaReady(std::chrono::steady_clock::time_point) {
   throwIfFailurePoint(FailurePoint::WaitForMediaReady);
   return m_tapeInPlace && !m_failToMount;
-}
-
-void cta::tape::drive::FakeDrive::ensureTapeUnloaded() {
-  if (m_failurePoints.contains(FailurePoint::UnloadDriveState)) {
-    throw DriveStateError("Injected unsafe unload driver state");
-  }
-  unloadTape();
 }
 
 bool cta::tape::drive::FakeDrive::isWriteProtected() {
