@@ -43,7 +43,6 @@ dev = [
     { name = "reuse", extras = ["charset-normalizer"], specifier = "==6.2.0" },
     { name = "ruff", specifier = "==0.17.3" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
-    { name = "typing-extensions", specifier = ">=4.4.0" },
     { name = "yamllint", specifier = "==1.37.1" },
 ]
 docs = [
@@ -62,7 +61,6 @@ scripts = [
     { name = "packaging", specifier = ">=24" },
     { name = "pyjwt" },
     { name = "pyyaml" },
-    { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 source-checks = [
     { name = "clang-format", specifier = "==20.1.8" },
@@ -98,7 +96,6 @@ type-check = [
     { name = "pytest-cov" },
     { name = "pyyaml" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
-    { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 unit-tests = [
     { name = "cattrs" },
@@ -111,7 +108,6 @@ unit-tests = [
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-cov" },
     { name = "pyyaml" },
-    { name = "typing-extensions", specifier = ">=4.4.0" },
 ]
 
 [manifest.group-requires-python]

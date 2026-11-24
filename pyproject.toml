@@ -52,14 +52,7 @@
     "grpcio-tools",
   ]
   # These scripts also run independently in existing pipeline environments.
-  scripts = [
-    "PyYAML",
-    "jsonschema",
-    "packaging>=24",
-    "typing-extensions>=4.4.0",
-    "pyjwt",
-    "cryptography",
-  ]
+  scripts = ["PyYAML", "jsonschema", "packaging>=24", "pyjwt", "cryptography"]
   type-check = [
     "pyright[nodejs]",
     { include-group = "unit-tests" },
