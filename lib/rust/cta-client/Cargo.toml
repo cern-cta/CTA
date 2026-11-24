@@ -41,10 +41,10 @@
 
 [dev-dependencies]
   # the `cta-admin --jsonl` fixtures shared with the conversion tests
-  cta-model      = { workspace = true, features = ["test-support"] }
+  cta-model = { workspace = true, features = ["test-support"] }
   # server traits for the mock frontends of the tests, JSON to parse the `cta-admin --jsonl` fixtures
-  cta-protobuf   = { workspace = true, features = ["server", "json"] }
-  serde_json     = { workspace = true }
-  tokio          = { workspace = true, features = ["macros", "rt", "net"] }
-  tokio-stream   = { workspace = true, features = ["net"] }
-  url            = { workspace = true }
+  cta-protobuf = { workspace = true, features = ["server", "json"] }
+  serde_json   = { workspace = true }
+  tokio        = { workspace = true, features = ["macros", "rt", "net"] }
+  tokio-stream = { workspace = true, features = ["net"] }
+  url          = { workspace = true }
