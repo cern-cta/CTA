@@ -15,7 +15,9 @@ use syn::{
 
 /// The arguments of `#[typed_admin_cmd(Command::SubCommand, response = Record, with(Key = value))]`
 pub(crate) struct CmdArgs {
+    /// The command
     pub(crate) cmd: Ident,
+    /// The subcommand, or `SubcmdNone` if the command has no subcommand
     pub(crate) sub_cmd: Ident,
     /// The options sent with a fixed value with every command
     pub(crate) fixed: Vec<FixedOption>,
@@ -39,12 +41,14 @@ impl Parse for CmdArgs {
             response: None,
         };
         if input.is_empty() {
+            // no more arguments, return early
             return Ok(args);
         }
         input.parse::<Token![,]>()?;
 
         let mut with = false;
         let arg_parser = syn::meta::parser(|meta| {
+            // `response = Record` or `with(Key = value, ...)`
             if meta.path.is_ident("response") {
                 if args.response.is_some() {
                     return Err(meta.error("`response` given twice"));
@@ -58,6 +62,8 @@ impl Parse for CmdArgs {
                 with = true;
                 let content;
                 parenthesized!(content in meta.input);
+
+                // parse the `Key = value` pairs in `with(...)`
                 args.fixed
                     .extend(Punctuated::<FixedOption, Token![,]>::parse_terminated(
                         &content,
@@ -81,6 +87,7 @@ fn command(path: &Path) -> syn::Result<(Ident, Ident)> {
             "expected `Command::SubCommand` (e.g. `Tape::Ls`) or `Command` (e.g. `Version`)",
         )
     };
+    // the path must not start with `::` and must not have any generic arguments
     if path.leading_colon.is_some()
         || path
             .segments
@@ -91,7 +98,9 @@ fn command(path: &Path) -> syn::Result<(Ident, Ident)> {
     }
     let mut segments = path.segments.iter().map(|segment| &segment.ident);
     match (segments.next(), segments.next(), segments.next()) {
+        // `Command` alone, no subcommand
         (Some(cmd), None, None) => Ok((cmd.clone(), Ident::new("SubcmdNone", cmd.span()))),
+        // `Command::SubCommand`
         (Some(cmd), Some(sub_cmd), None) => Ok((
             cmd.clone(),
             format_ident!("Subcmd{}", sub_cmd, span = sub_cmd.span()),
@@ -110,6 +119,8 @@ pub(crate) struct FixedOption {
 impl Parse for FixedOption {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let key: Ident = input.parse()?;
+
+        // optional type annotation: `Key: Type = value`
         let ty = if input.peek(Token![:]) {
             input.parse::<Token![:]>()?;
             Some(input.parse()?)
@@ -120,6 +131,7 @@ impl Parse for FixedOption {
         let value: Expr = input.parse()?;
         let ty = match ty {
             Some(ty) => ty,
+            // infer the type from the value, if possible
             None => literal_type(&value).ok_or_else(|| {
                 Error::new(
                     value.span(),

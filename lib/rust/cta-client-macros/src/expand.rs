@@ -32,8 +32,8 @@ impl Errors {
     }
 }
 
-/// Expands the attribute. An error of the struct itself fails the expansion; the errors of the options are reported
-/// with the expansion, which leaves the faulty options out, so that the struct is still usable.
+/// Expands the `#[typed_admin_cmd(...)]` attribute into the code of the command, taking as `input`
+/// the original struct with its fields
 pub(crate) fn expand(args: &CmdArgs, mut input: DeriveInput) -> syn::Result<TokenStream2> {
     if !input.generics.params.is_empty() {
         return Err(Error::new(
@@ -41,12 +41,20 @@ pub(crate) fn expand(args: &CmdArgs, mut input: DeriveInput) -> syn::Result<Toke
             "admin commands cannot be generic",
         ));
     }
+    // The struct must be a named struct
     let Data::Struct(data) = &mut input.data else {
         return Err(Error::new(
             input.ident.span(),
             "only structs can be admin commands",
         ));
     };
+
+    // it must be a struct with named fields, e.g.
+    //
+    // struct MyStruct {
+    //     field1: Type1,
+    //     field2: Type2,
+    // }
     let fields = match &mut data.fields {
         Fields::Named(fields) => fields.named.iter_mut().collect(),
         Fields::Unit => Vec::new(),
@@ -75,6 +83,7 @@ pub(crate) fn expand(args: &CmdArgs, mut input: DeriveInput) -> syn::Result<Toke
     let commands = quote!(#krate::admin::commands);
     let mut pushes = Vec::new();
 
+    // Go over the fields and their annotations, and generate the code that pushes them into the command
     for field in fields {
         let option = match field_option(field) {
             Ok(option) => option,
@@ -83,6 +92,7 @@ pub(crate) fn expand(args: &CmdArgs, mut input: DeriveInput) -> syn::Result<Toke
                 continue;
             }
         };
+        // check that the same key is not present twice in the same command
         check_duplicate(
             &option.key,
             option_list(&field.ty, option.only_if_true),
@@ -142,6 +152,8 @@ pub(crate) fn expand(args: &CmdArgs, mut input: DeriveInput) -> syn::Result<Toke
         },
     };
 
+    // The generated code is a `From` implementation that converts the struct into an `AdminCmd`,
+    // and a `TypedAdminCmd` implementation that provides the command and subcommand
     Ok(quote! {
         #input
 

@@ -13,12 +13,16 @@ pub(crate) fn expand(args: TokenStream2, mut input: ItemStruct) -> syn::Result<T
     if !args.is_empty() {
         return Err(Error::new(args.span(), "`#[admin_dao]` takes no arguments"));
     }
+
+    // Generics are not supported
     if !input.generics.params.is_empty() {
         return Err(Error::new(
             input.generics.span(),
             "data access objects cannot be generic",
         ));
     }
+
+    // The struct must be a unit struct, because `#[admin_dao]` adds its `client` field
     if !matches!(input.fields, Fields::Unit) {
         return Err(Error::new(
             input.fields.span(),
@@ -31,7 +35,8 @@ pub(crate) fn expand(args: TokenStream2, mut input: ItemStruct) -> syn::Result<T
     let name = &input.ident;
     let vis = &input.vis;
     let accessor = format_ident!("{}", snake_case(&name.to_string()), span = name.span());
-    // The accessor has the documentation of the struct
+
+    // Let's get the documentation of the struct, which we will move to the accessor method
     let docs: Vec<_> = input
         .attrs
         .iter()
@@ -39,12 +44,14 @@ pub(crate) fn expand(args: TokenStream2, mut input: ItemStruct) -> syn::Result<T
         .cloned()
         .collect();
 
+    // inject the `client` field and `Clone` derive into the struct, and remove the semicolon
     input.fields = Fields::Named(parse_quote!({ client: #krate::admin::AdminClient }));
     input.semi_token = None;
     input
         .attrs
         .push(parse_quote!(#[derive(::core::clone::Clone)]));
 
+    // Produce an impl block for `AdminClient` with the accessor method
     Ok(quote! {
         #input
 
