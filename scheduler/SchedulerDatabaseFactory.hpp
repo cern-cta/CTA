@@ -218,6 +218,10 @@ public:
   }
 
 #ifdef CTA_PGSCHED
+  void failArchiveJobBatchReport(std::vector<ArchiveJob*>& batch, log::LogContext& lc) override {
+    m_SchedDB->failArchiveJobBatchReport(batch, lc);
+  }
+
   void failRetrieveJobBatchReport(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch,
                                   log::LogContext& lc) override {
     m_SchedDB->failRetrieveJobBatchReport(batch, lc);

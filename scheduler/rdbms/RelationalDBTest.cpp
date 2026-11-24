@@ -714,24 +714,55 @@ TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDo
   }
 }
 
-// End-to-end: a MoveAndAddCopies repack's retrieve-to-archive transformation
-// (transformJobBatchToArchive(), via getNextSuccessfulRetrieveRepackReportBatch()) must produce
-// REQUEST_JOB_COUNT=2 on BOTH resulting archive rows (the moved copy via BASE_INSERT, the added
-// copy via ALTERNATE_INSERT) - not 1. REPACK_REARCHIVE_COPY_NBS is populated by
-// Scheduler::expandRepackRequest(): for MoveAndAddCopies, the first of its two "if" blocks
-// (type == MoveAndAddCopies || type == MoveOnly) inserts the MOVED copy's own copyNb into the
-// set, and the second (type == AddCopiesOnly || type == MoveAndAddCopies) inserts the new
-// ADDED copy's number into the SAME set - so for MoveAndAddCopies the column already lists
-// every copy, moved one included, and CARDINALITY(REPACK_REARCHIVE_COPY_NBS) is the right total
-// directly. This would be a real off-by-one (every row short by exactly the moved copy) if that
-// first block were AddCopiesOnly-only instead - it is worth a test precisely because
-// RetrieveRequest.cpp's own comment ("additional copies... requested copyNbs") reads as if it
-// were, which is what prompted checking this.
-//
-// Continues past the transform into a full multi-copy failure: one copy's transfer permanently
-// fails while the other succeeds, proving failReportBatchExceedRetries()/updateRepackJobSuccess()/
-// moveFailedRepackJobBatchToFailedQueueTable() correctly complete the group using the
-// REQUEST_JOB_COUNT the real transform pipeline produced - not a hand-picked test value.
+// Finds the ArchiveForRepack potential mount for tapePool (requires a matching row already
+// queued, e.g. via insertRepackArchivePendingJob()) and creates a real repack archive mount on
+// destVid, exactly as a tape server would - so the job objects returned by its getNextJobBatch()
+// have isRepack set the same way production does (ArchiveMount::setIsRepack() ->
+// ArchiveRdbJob::initialize()), not hand-constructed.
+std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> createRepackArchiveMount(cta::SchedulerDatabase& db,
+                                                                               cta::log::LogContext& lc,
+                                                                               const std::string& tapePool,
+                                                                               const std::string& destVid) {
+  using namespace cta;
+  auto mountInfo = db.getMountInfo(lc);
+  const SchedulerDatabase::PotentialMount* repackMount = nullptr;
+  for (const auto& pm : mountInfo->potentialMounts) {
+    if (pm.type == common::dataStructures::MountType::ArchiveForRepack && pm.tapePool == tapePool) {
+      repackMount = &pm;
+      break;
+    }
+  }
+  if (repackMount == nullptr) {
+    throw cta::exception::Exception(
+      "In createRepackArchiveMount(): no ArchiveForRepack potential mount found for tapePool " + tapePool);
+  }
+
+  catalogue::TapeForWriting tape;
+  tape.vid = destVid;
+  tape.tapePool = tapePool;
+  tape.vo = "vo";
+  tape.mediaType = "T10k";
+  tape.vendor = "Oracle";
+  tape.capacityInBytes = 1'000'000'000ULL;
+  tape.labelFormat = common::dataStructures::Label::Format::CTA;
+
+  return mountInfo->createArchiveMount(*repackMount, tape, "drive", "library", "host");
+}
+
+uint64_t getRepackRequestId(cta::RelationalDB& relationalDb, const std::string& vid) {
+  auto conn = relationalDb.getConn();
+  auto stmt = conn.createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE VID = :VID");
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+  if (!rset.next()) {
+    throw cta::exception::Exception("In getRepackRequestId(): no REPACK_REQUEST_TRACKING row for VID " + vid);
+  }
+  return rset.columnUint64("REPACK_REQUEST_ID");
+}
+
+// Both archive copies emitted by the MoveAndAddCopies transform must carry the full group size.
+// The failure sweep uses that count to collect the group after one copy fails and the other
+// settles through single-job report recovery.
 TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformProducesCorrectRequestJobCountForMultiCopy) {
   using namespace cta;
 
@@ -909,52 +940,6 @@ void insertRepackArchivePendingJob(cta::rdbms::Conn& conn,
   stmt.bindUint16(":TOTAL_REPORT_RETRIES", totalReportRetries);
   stmt.bindUint16(":MAX_REPORT_RETRIES", maxReportRetries);
   stmt.executeNonQuery();
-}
-
-// Finds the ArchiveForRepack potential mount for tapePool (requires a matching row already
-// queued, e.g. via insertRepackArchivePendingJob()) and creates a real repack archive mount on
-// destVid, exactly as a tape server would - so the job objects returned by its getNextJobBatch()
-// have isRepack set the same way production does (ArchiveMount::setIsRepack() ->
-// ArchiveRdbJob::initialize()), not hand-constructed.
-std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> createRepackArchiveMount(cta::SchedulerDatabase& db,
-                                                                               cta::log::LogContext& lc,
-                                                                               const std::string& tapePool,
-                                                                               const std::string& destVid) {
-  using namespace cta;
-  auto mountInfo = db.getMountInfo(lc);
-  const SchedulerDatabase::PotentialMount* repackMount = nullptr;
-  for (const auto& pm : mountInfo->potentialMounts) {
-    if (pm.type == common::dataStructures::MountType::ArchiveForRepack && pm.tapePool == tapePool) {
-      repackMount = &pm;
-      break;
-    }
-  }
-  if (repackMount == nullptr) {
-    throw cta::exception::Exception(
-      "In createRepackArchiveMount(): no ArchiveForRepack potential mount found for tapePool " + tapePool);
-  }
-
-  catalogue::TapeForWriting tape;
-  tape.vid = destVid;
-  tape.tapePool = tapePool;
-  tape.vo = "vo";
-  tape.mediaType = "T10k";
-  tape.vendor = "Oracle";
-  tape.capacityInBytes = 1'000'000'000ULL;
-  tape.labelFormat = common::dataStructures::Label::Format::CTA;
-
-  return mountInfo->createArchiveMount(*repackMount, tape, "drive", "library", "host");
-}
-
-uint64_t getRepackRequestId(cta::RelationalDB& relationalDb, const std::string& vid) {
-  auto conn = relationalDb.getConn();
-  auto stmt = conn.createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE VID = :VID");
-  stmt.bindString(":VID", vid);
-  auto rset = stmt.executeQuery();
-  if (!rset.next()) {
-    throw cta::exception::Exception("In getRepackRequestId(): no REPACK_REQUEST_TRACKING row for VID " + vid);
-  }
-  return rset.columnUint64("REPACK_REQUEST_ID");
 }
 
 // Covers: repack transfer fails with retries left - requeued, not reported as a failure yet.
@@ -2390,21 +2375,21 @@ void insertRepackRetrievePendingJob(cta::rdbms::Conn& conn,
 // Creates a real repack retrieve mount on vid, exactly as a tape server would, so the jobs it
 // returns carry isRepack the same way production does.
 std::unique_ptr<cta::SchedulerDatabase::RetrieveMount>
-createRepackRetrieveMount(cta::SchedulerDatabase& db, cta::log::LogContext& lc, const std::string& vid) {
+createRepackRetrieveMount(cta::RelationalDBTestWrapper& db, cta::log::LogContext& lc, const std::string& vid) {
   using namespace cta;
   auto mountInfo = db.getMountInfo(lc);
-  const SchedulerDatabase::PotentialMount* repackMount = nullptr;
-  for (const auto& pm : mountInfo->potentialMounts) {
-    if (pm.type == common::dataStructures::MountType::RetrieveForRepack && pm.vid == vid) {
-      repackMount = &pm;
-      break;
+  const auto repackVo = db.getRelationalDB().getDefaultRepackVo();
+  if (!repackVo) {
+    throw cta::exception::Exception("In createRepackRetrieveMount(): no default repack VO configured");
+  }
+  for (auto& pm : mountInfo->potentialMounts) {
+    if (pm.type == common::dataStructures::MountType::Retrieve && pm.vid == vid) {
+      // The scheduler normally supplies the VO before creating the mount.
+      pm.vo = repackVo->name;
+      return mountInfo->createRetrieveMount(pm, "drive", "library", "host");
     }
   }
-  if (repackMount == nullptr) {
-    throw cta::exception::Exception("In createRepackRetrieveMount(): no RetrieveForRepack potential mount for VID "
-                                    + vid);
-  }
-  return mountInfo->createRetrieveMount(*repackMount, "drive", "library", "host");
+  throw cta::exception::Exception("In createRepackRetrieveMount(): no Retrieve potential mount for VID " + vid);
 }
 
 // Repack retrieve, retries exhausted: the row must be flagged for repack failure reporting in
