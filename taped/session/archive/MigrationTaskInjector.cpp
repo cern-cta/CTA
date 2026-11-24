@@ -102,10 +102,10 @@ void MigrationTaskInjector::requestInjection(bool lastCall) {
 //------------------------------------------------------------------------------
 //synchronousInjection
 //------------------------------------------------------------------------------
-bool MigrationTaskInjector::synchronousInjection() {
+WorkFetchResult MigrationTaskInjector::synchronousInjection() {
   std::list<std::unique_ptr<cta::ArchiveJob>> jobs;
   if (m_stopToken.stop_requested()) {
-    return false;
+    return WorkFetchResult::StopRequested;
   }
   // Preserve the original exception for session failure handling.
   // First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
@@ -117,12 +117,11 @@ bool MigrationTaskInjector::synchronousInjection() {
   cta::log::ScopedParamContainer scoped(m_lc);
   scoped.add("byteSizeThreshold", m_maxBytes).add("maxFiles", m_maxFiles);
   if (jobs.empty()) {
-    m_lc.log(cta::log::WARNING, "No files to migrate: empty mount");
-    return false;
+    return WorkFetchResult::NoWork;
   } else {
     m_firstFseqToWrite = jobs.front()->tapeFile.fSeq;
     injectBulkMigrations(jobs);
-    return true;
+    return WorkFetchResult::WorkAvailable;
   }
 }
 

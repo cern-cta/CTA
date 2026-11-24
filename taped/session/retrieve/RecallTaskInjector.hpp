@@ -15,6 +15,7 @@
 #include "taped/rao/RAOManager.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
+#include "taped/session/WorkFetchResult.hpp"
 
 #include <future>
 #include <stdint.h>
@@ -102,8 +103,8 @@ public:
   void finish();
 
   /// Fetch retrieve jobs as needed to replenish the injector.
-  /// @return True if jobs are available, including retained jobs; false if empty or stopping.
-  bool synchronousFetch();
+  /// Retained jobs count as available work; jobs are requeued when stopping.
+  WorkFetchResult synchronousFetch();
 
   /**
    * Wait for the inner thread to finish

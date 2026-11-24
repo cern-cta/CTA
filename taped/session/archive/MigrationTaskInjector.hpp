@@ -10,6 +10,7 @@
 #include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
+#include "taped/session/WorkFetchResult.hpp"
 #include "taped/session/archive/DiskReadTask.hpp"
 #include "taped/session/archive/DiskReadThreadPool.hpp"
 #include "taped/session/archive/MigrationMemoryManager.hpp"
@@ -72,8 +73,8 @@ public:
   void requestInjection(bool lastCall);
 
   /// Fetch and inject the initial archive batch.
-  /// @return True if jobs were injected; false if no jobs were available or stop was already requested.
-  bool synchronousInjection();
+  /// Reports available work after injection, no work, or a stop requested before fetching.
+  WorkFetchResult synchronousInjection();
 
   /**
    * Send an end token in the request queue. There should be no subsequent

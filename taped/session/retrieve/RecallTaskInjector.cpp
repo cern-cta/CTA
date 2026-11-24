@@ -115,7 +115,6 @@ bool RecallTaskInjector::testDiskSpaceReservationWorking() {
     m_lc.log(cta::log::INFO, "Disk space reservation test passed, can mount tape");
     return true;
   } else {
-    m_lc.log(cta::log::INFO, "Disk space reservation test failed, will not mount tape");
     requeueRetainedJobs();
     return false;
   }
@@ -273,10 +272,10 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 //synchronousFetch
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::synchronousFetch() {
+WorkFetchResult RecallTaskInjector::synchronousFetch() {
   if (m_stopToken.stop_requested()) {
     requeueRetainedJobs();
-    return false;
+    return WorkFetchResult::StopRequested;
   }
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
@@ -287,13 +286,15 @@ bool RecallTaskInjector::synchronousFetch() {
                         m_raoManager.getMaxFilesSupported().value() :
                         m_maxBatchFiles;
   if (reqFiles <= m_files) {
-    return true;  //No need to pop from the queue, injector already  holds enough files, but we return there is still work to be done
+    // Retained jobs already satisfy the fetch limit.
+    return WorkFetchResult::WorkAvailable;
   }
   reqFiles -= m_files;
 
   uint64_t reqSize = 1024L * 1024 * 1024 * 1024 * 1024;
   if (reqSize <= m_bytes) {
-    return true;  //No need to pop from the queue, injector already holds enough bytes, but we return there is still work to be done
+    // Retained jobs already satisfy the fetch limit.
+    return WorkFetchResult::WorkAvailable;
   }
   reqSize -= m_bytes;
   // Preserve the original exception for session failure handling.
@@ -307,17 +308,16 @@ bool RecallTaskInjector::synchronousFetch() {
   // A scheduler fetch cannot be interrupted; return its jobs if stop arrived during the call.
   if (m_stopToken.stop_requested()) {
     requeueRetainedJobs();
-    return false;
+    return WorkFetchResult::StopRequested;
   }
 
   if (m_jobs.empty()) {
-    m_lc.log(cta::log::INFO, "No files left to recall on the queue or in the injector");
-    return false;
+    return WorkFetchResult::NoWork;
   }
   cta::log::ScopedParamContainer scoped(m_lc);
   scoped.add("requestedBytes", reqSize).add("requestedFiles", reqFiles).add("fetchedFiles", fetchedFiles);
   m_lc.log(cta::log::INFO, "Fetched files to recall");
-  return true;
+  return WorkFetchResult::WorkAvailable;
 }
 
 void RecallTaskInjector::requeueRetainedJobs() {

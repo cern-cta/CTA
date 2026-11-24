@@ -280,19 +280,25 @@ void TapeSession::executeRead(log::LogContext& logContext,
   if (m_transfersConfig.retrieve.rao_enabled) {
     configureRAO(logContext, recallTaskInjector, *m_transfersConfig.retrieve.rao);
   }
-  bool hasWork = false;
-  // Do an initial fetch to see if there is something to retrieve in the first place (might be an empty mount)
+  WorkFetchResult fetchResult;
+  // Fetch initial retrieve work before attempting to mount the tape.
   try {
-    hasWork = recallTaskInjector.synchronousFetch();
+    fetchResult = recallTaskInjector.synchronousFetch();
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
-  if (!hasWork) {
+  if (fetchResult == WorkFetchResult::StopRequested) {
+    m_tapeSessionTracker->updateTapeTransferStats({});
+    m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
+    logContext.log(log::INFO, "Skipping retrieve tape mount: shutdown requested");
+    return;
+  }
+  if (fetchResult == WorkFetchResult::NoWork) {
     m_tapeSessionTracker->updateTapeTransferStats({});
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToRecall);
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
-    logContext.log(log::WARNING, "Aborting recall mount startup: empty mount");
+    logContext.log(log::INFO, "Skipping retrieve tape mount: no files to retrieve");
     return;
   }
 
@@ -301,7 +307,7 @@ void TapeSession::executeRead(log::LogContext& logContext,
     m_tapeSessionTracker->updateTapeTransferStats({});
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
-    logContext.log(log::WARNING, "Aborting recall mount startup: empty mount");
+    logContext.log(log::WARNING, "Skipping retrieve tape mount: disk space reservation test failed");
     return;
   }
 
@@ -393,20 +399,25 @@ void TapeSession::executeWrite(log::LogContext& logContext,
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
   utils::Timer startupTimer;
-  bool hasWork = false;
-  // Do an initial inject to see if there is something to archive in the first place (might be an empty mount)
+  WorkFetchResult fetchResult;
+  // Inject initial archive work before attempting to mount the tape.
   try {
-    hasWork = migrationTaskInjector.synchronousInjection();
+    fetchResult = migrationTaskInjector.synchronousInjection();
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
-  if (!hasWork) {
-    // Nothing transferred
+  if (fetchResult == WorkFetchResult::StopRequested) {
+    m_tapeSessionTracker->updateTapeTransferStats({});
+    m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
+    logContext.log(log::INFO, "Skipping archive tape mount: shutdown requested");
+    return;
+  }
+  if (fetchResult == WorkFetchResult::NoWork) {
     m_tapeSessionTracker->updateTapeTransferStats({});
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToMigrate);
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
-    logContext.log(log::WARNING, "Aborting migration mount startup: empty mount");
+    logContext.log(log::INFO, "Skipping archive tape mount: no files to archive");
     return;
   }
 
