@@ -8,6 +8,7 @@
 #include "catalogue/TapeForWriting.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
