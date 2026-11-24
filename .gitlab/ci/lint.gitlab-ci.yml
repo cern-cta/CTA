@@ -112,12 +112,25 @@ lint-python:
     - !reference [.merge-train-guard, before_script]
     - uv sync --locked --only-group lint
   script:
-    - uv run --no-sync ruff check --output-format gitlab > ruff.json
+    - |
+      # Display short reports before returning Ruff's original exit status.
+      status=0
+      uv run --no-sync ruff check --output-format gitlab > ruff.json || status=$?
+      if [[ "$status" -eq 1 ]]; then
+        if [[ $(wc -l < ruff.json) -le 1000 ]]; then
+          bat --style=plain --color=always ruff.json
+        else
+          echo "Ruff report too large. Please check job artifacts"
+        fi
+      fi
+      exit "$status"
   artifacts:
     when: always
     expire_in: 7 days
     reports:
       codequality: ruff.json
+    paths:
+      - ruff.json
 
 # general code quality (using clippy)
 lint-rust:
