@@ -155,7 +155,7 @@ void NegotiationService::process(unsigned int threadId,
     if (!cq.Next(&pTag, &bOk)) {
       log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
-      lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
+      lc.log(cta::log::INFO, "In NegotiationService::process(): The completion queue has been shutdown.");
       break;
     }
     if (!pTag) {
