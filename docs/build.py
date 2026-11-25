@@ -52,7 +52,7 @@ def prepare(skip_rust: bool, preview: bool = False, rust_docs: Path | None = Non
     manual = output / "generated/cta-admin.1cta.md"
     manual.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(  # noqa: S603
-        [sys.executable, "compile_man_md.py", "cta-admin.1cta.md.in", str(manual)],
+        [sys.executable, str(ROOT / "ci/build/compile_man_md.py"), "cta-admin.1cta.md.in", str(manual)],
         cwd=ROOT / "tools",
         check=True,
     )

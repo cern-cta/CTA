@@ -291,9 +291,10 @@ if(NOT CTA_BUILD_MODE STREQUAL "compile")
     "/[.]"
     "${CMAKE_BINARY_DIR}/"
     # CI workflows are not needed to build packages. Keep ci/project-json and
-    # ci/docker/cta: configuration and cta-release consume files from them.
+    # ci/docker/cta and Python build helpers: package builds consume these files.
     # This is something to be refined in the future so that we can just ignore ci/ entirely.
-    "${CMAKE_SOURCE_DIR}/ci/build/"
+    "${CMAKE_SOURCE_DIR}/ci/build/[^/]*[.]sh$"
+    "${CMAKE_SOURCE_DIR}/ci/build/development/"
     "${CMAKE_SOURCE_DIR}/ci/checks/"
     "${CMAKE_SOURCE_DIR}/ci/danger/"
     "${CMAKE_SOURCE_DIR}/ci/docker/pipeline/"
@@ -302,8 +303,7 @@ if(NOT CTA_BUILD_MODE STREQUAL "compile")
     "${CMAKE_SOURCE_DIR}/ci/release/"
     "${CMAKE_SOURCE_DIR}/ci/sbom/"
     "${CMAKE_SOURCE_DIR}/ci/system_tests/"
-    "${CMAKE_SOURCE_DIR}/ci/utils/"
-    "/build/"
+    "${CMAKE_SOURCE_DIR}/build/"
     "/pod_logs/"
     "/test_logs/"
     "${CMAKE_SOURCE_DIR}/tmp/"

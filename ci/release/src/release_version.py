@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Keep tag spelling identical to Python and native package builds.
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
-from ci.utils.cta_version import BASE_RE, TAG_RE
+from ci.build.cta_version import BASE_RE, TAG_RE
 
 # TODO: Remove historical parsing once maintained release lines have neutral final tags for changelog lookup.
 HISTORICAL_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)(?:\.(\d+))?-(\d+)(?:\..+)?$")

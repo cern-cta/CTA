@@ -113,9 +113,10 @@ lint-python:
     - uv sync --locked --only-group lint
   script:
     - |
-      # Display short reports before returning Ruff's original exit status.
       status=0
+      # Ruff applies the default and per-file Python targets from pyproject.toml.
       uv run --no-sync ruff check --output-format gitlab > ruff.json || status=$?
+      # Display short reports before returning Ruff's original exit status.
       if [[ "$status" -eq 1 ]]; then
         if [[ $(wc -l < ruff.json) -le 1000 ]]; then
           bat --style=plain --color=always ruff.json
@@ -538,9 +539,8 @@ type-check-python:
     FORCE_COLOR: "3"
   script:
     - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check --group docs
+    # Compatibility targets are defined by executionEnvironments in pyproject.toml.
     - uv run --no-sync pyright --pythonpath .venv/bin/python .
-    # Keep native build helpers compatible with EL9 independently of the workspace interpreter.
-    - uv run --no-sync pyright --pythonversion 3.9 ci/project-json ci/utils/cta_version.py tools/compile_man_md.py
 
 validate-catalogue-schema-version:
   stage: lint

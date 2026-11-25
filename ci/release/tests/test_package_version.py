@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-VERSION_SCRIPT = Path(__file__).resolve().parents[3] / "ci/utils/cta_version.py"
+VERSION_SCRIPT = Path(__file__).resolve().parents[3] / "ci/build/cta_version.py"
 
 
 def version_cli(command: str, *arguments: str) -> str:

@@ -46,7 +46,7 @@
 
 [tool.hatch.version]
   source     = "code"
-  path       = "../../ci/utils/cta_version.py"
+  path       = "../../ci/build/cta_version.py"
   expression = "package_version()"
 
 [tool.hatch.build]

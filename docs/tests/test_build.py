@@ -26,7 +26,7 @@ class StagingTests(unittest.TestCase):
                 build.prepare(False, rust_docs=rust)
             # Only the Python manual generator runs in the assembly job.
             self.assertEqual(run.call_count, 1)
-            self.assertIn("compile_man_md.py", run.call_args.args[0])
+            self.assertIn(str(root / "ci/build/compile_man_md.py"), run.call_args.args[0])
             staged = root / "build/docs/content/api/rust"
             self.assertEqual((staged / "index.html").read_text(), "Rust index")
             self.assertEqual((staged / "static.files/main.js").read_text(), "Rust assets")

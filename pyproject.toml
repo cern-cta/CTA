@@ -133,10 +133,9 @@
     "tools/cta-udev/**/*.py"    = "py39"
     "tools/cta-release/**/*.py" = "py39"
     # Native builds and the host-side launcher use distribution Python.
-    "ci/project-json/*.py"                    = "py39"
-    "ci/utils/cta_version.py"                 = "py39"
-    "tools/compile_man_md.py"                 = "py39"
-    "ci/sbom/*.py"                            = "py39"
+    "ci/project-json/**/*.py"                 = "py39"
+    "ci/build/**/*.py"                        = "py39"
+    "ci/sbom/**/*.py"                         = "py39"
     "ci/system_tests/tests/remote_scripts/**" = "py39"
 
 
@@ -233,6 +232,18 @@
       ]
 
 [tool.pyright]
+  pythonVersion = "3.15"
+  # Match Ruff's compatibility boundaries; build and system helpers use distribution Python.
+  # Pyright selects the first matching directory, so keep the repository fallback last.
+  executionEnvironments = [
+    { root = "tools/cta-udev", pythonVersion = "3.9" },
+    { root = "tools/cta-release", pythonVersion = "3.9" },
+    { root = "ci/project-json", pythonVersion = "3.9" },
+    { root = "ci/build", pythonVersion = "3.9" },
+    { root = "ci/sbom", pythonVersion = "3.9" },
+    { root = "ci/system_tests/tests/remote_scripts", pythonVersion = "3.9" },
+    { root = "." },
+  ]
   typeCheckingMode = "strict"
   extraPaths = ["ci/release/src", "."]
   exclude = [

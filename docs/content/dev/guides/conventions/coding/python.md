@@ -12,7 +12,8 @@ Python workspace and tooling environments use uv with the root `.python-version`
 Native build images and `cta-dev.sh` use distribution Python; only `cta-dev.sh install` requires uv to prepare the development environment.
 Build tools and Python helpers consume the available compatible interpreter without installing Python or depending on uv; ordinary executable Python scripts use `#!/usr/bin/env python3`.
 CMake requires Python 3.9 or newer and uses its discovered `Python3_EXECUTABLE`, which can also be supplied explicitly.
-Native build helpers (`ci/project-json/`, `ci/utils/cta_version.py`, and `tools/compile_man_md.py`) retain Python 3.9 compatibility, checked by Ruff targets and a separate Pyright invocation in CI.
+Native build helpers in `ci/project-json/` and `ci/build/` retain Python 3.9 compatibility.
+Ruff per-file targets and Pyright execution environments define matching compatibility boundaries in the root `pyproject.toml`, shared by local and CI checks.
 Package minimum versions and tool targets belong in `pyproject.toml`.
 
 `cta-versionlock` and `cta-udev` must use system Python at `/usr/bin/python3` and remain compatible with Python 3.9 on EL9.
