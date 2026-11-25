@@ -376,9 +376,10 @@ public:
 // Supply one valid file synchronously, then fail the worker's next fetch.
 class AsyncFetchFailingArchiveDbMount : public FailingTransferArchiveDbMount {
 public:
-  explicit AsyncFetchFailingArchiveDbMount(unitTests::TempFile& source)
+  explicit AsyncFetchFailingArchiveDbMount(unitTests::TempFile& source, std::stop_source* drain = nullptr)
       : FailingTransferArchiveDbMount(TransferFailurePoint::None),
-        m_source(source) {}
+        m_source(source),
+        m_drain(drain) {}
 
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>
   getNextJobBatch(uint64_t, uint64_t, cta::log::LogContext&) override {
@@ -391,18 +392,24 @@ public:
     job->srcURL = "file://" + m_source.path();
     std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> jobs;
     jobs.emplace_back(std::move(job));
+    if (m_drain) {
+      m_drain->request_stop();
+    }
     return jobs;
   }
 
 private:
   unitTests::TempFile& m_source;
+  std::stop_source* m_drain;
 };
 
 class AsyncFetchFailingArchiveMount : public FailingTransferMount<cta::MockArchiveMount> {
 public:
-  AsyncFetchFailingArchiveMount(cta::catalogue::Catalogue& catalogue, unitTests::TempFile& source)
+  AsyncFetchFailingArchiveMount(cta::catalogue::Catalogue& catalogue,
+                                unitTests::TempFile& source,
+                                std::stop_source* drain = nullptr)
       : FailingTransferMount(catalogue, TransferFailurePoint::None) {
-    m_dbMount = std::make_unique<AsyncFetchFailingArchiveDbMount>(source);
+    m_dbMount = std::make_unique<AsyncFetchFailingArchiveDbMount>(source, drain);
   }
 
   void setTapeMounted(cta::log::LogContext&) const override { ++mountedAttempts; }
@@ -865,7 +872,10 @@ public:
   }
 
   template<typename Mount>
-  void checkExceptionCleanup(TransferFailurePoint point, bool cleanupFails = false, bool repack = false) {
+  void checkExceptionCleanup(TransferFailurePoint point,
+                             bool cleanupFails = false,
+                             bool repack = false,
+                             bool useRAO = false) {
     // Bound failures involving virtual hardware and in-memory queues. Neither
     // a robot nor a disk server is contacted by these scenarios.
     alarm(5);
@@ -942,7 +952,10 @@ public:
     config.archive.fetch_max_bytes = 1024;
     config.retrieve.fetch_max_files = 1;
     config.retrieve.fetch_max_bytes = 1024;
-    config.retrieve.rao.reset();
+    config.retrieve.rao_enabled = useRAO;
+    if (useRAO) {
+      config.retrieve.rao.emplace();
+    }
     config.encryption.reset();
     config.no_block_move_timeout_secs = 600;
     cta::mediachanger::RmcProxy proxy;
@@ -1016,6 +1029,10 @@ public:
       if (point == TransferFailurePoint::None) {
         EXPECT_EQ(1, tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::EmptyMount)]);
         EXPECT_NE(std::string::npos, logger.getLog().find("Info_emptyMount"));
+        const auto message = std::is_same_v<Mount, FailingTransferRetrieveMount> ?
+                               "Skipping retrieve tape mount: no files to retrieve" :
+                               "Skipping archive tape mount: no files to archive";
+        EXPECT_EQ(1, countLogMessages(logger.getLog(), message));
       } else {
         EXPECT_TRUE(tracker.hasFailures());
       }
@@ -1071,6 +1088,9 @@ public:
         EXPECT_EQ(1, mount.requeueAttempts);
       }
       if (point == TransferFailurePoint::ReservationDenied) {
+        EXPECT_EQ(
+          1,
+          countLogMessages(logger.getLog(), "Skipping retrieve tape mount: disk space reservation test failed"));
         EXPECT_FALSE(tracker.mountAttempted());
         EXPECT_FALSE(tracker.hasFailures());
         EXPECT_EQ(
@@ -1078,6 +1098,9 @@ public:
           tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::DiskSpaceReservationTestFailure)]);
       }
       if (workerStarts) {
+        if (useRAO) {
+          EXPECT_NE(std::string::npos, logger.getLog().find("Tape thread ended before RAO drive access"));
+        }
         EXPECT_EQ(1, mount.mountedAttempts);
         EXPECT_NE(std::string::npos, logger.getLog().find("injected mounted publication failure"));
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
@@ -1183,6 +1206,77 @@ TEST_P(TapeSessionTest, RetrieveEmptyMountCleansUp) {
     "");
 }
 
+// A stop before the initial fetch follows the empty-mount path without attempting a physical mount.
+template<typename Mount>
+void checkStopBeforeStartupIsEmptyMount(cta::catalogue::Catalogue& catalogue, std::string_view abortMessage) {
+  alarm(5);
+  cta::log::StringLogger logger("dummy", "stopBeforeStartupTest", cta::log::DEBUG);
+  Mount mount(catalogue, TransferFailurePoint::None);
+  cta::tape::System::mockWrapper system;
+  system.delegateToFake();
+  system.disableGMockCallsCounting();
+  system.fake.setupForVirtualDriveSLC6();
+  system.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive();
+  cta::common::dataStructures::DriveInfo info("T10D6116", "host", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
+  cta::mediachanger::RmcProxy proxy;
+  cta::mediachanger::MediaChangerFacade changer(proxy, logger);
+  TransfersConfig config;
+  config.buffer_count = 2;
+  config.buffer_size_bytes = 1024;
+  config.disk_io_threads = 1;
+  config.encryption.reset();
+  config.no_block_move_timeout_secs = 600;
+  TapeSession session(logger, system, info, changer, mount, config, 1, catalogue);
+  std::stop_source stop;
+  stop.request_stop();
+
+  const auto result = session.execute(stop.get_token());
+
+  EXPECT_TRUE(result.successful);
+  const auto outcome = session.tracker().outcomeSnapshot();
+  EXPECT_FALSE(outcome.hasFailures);
+  EXPECT_EQ(1, outcome.events[static_cast<size_t>(TapeSessionEvent::EmptyMount)]);
+  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToRecall)]);
+  EXPECT_EQ(0, outcome.events[static_cast<size_t>(TapeSessionEvent::NoFilesToMigrate)]);
+  EXPECT_FALSE(session.tracker().mountAttempted());
+  EXPECT_EQ(1, countLogMessages(logger.getLog(), std::string(abortMessage)));
+  EXPECT_NE(std::string::npos, logger.getLog().find("Info_emptyMount"));
+  const auto* testResult = ::testing::UnitTest::GetInstance()->current_test_info()->result();
+  for (int i = 0; i < testResult->total_part_count(); ++i) {
+    const auto& part = testResult->GetTestPartResult(i);
+    if (part.failed()) {
+      std::fprintf(stderr, "%s\n", part.summary());
+    }
+  }
+  alarm(0);
+}
+
+TEST_P(TapeSessionTest, ArchiveStopBeforeStartupIsEmptyMount) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkStopBeforeStartupIsEmptyMount<FailingTransferMount<cta::MockArchiveMount>>(
+        getCatalogue(),
+        "Skipping archive tape mount: shutdown requested");
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveStopBeforeStartupIsEmptyMount) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkStopBeforeStartupIsEmptyMount<FailingTransferRetrieveMount>(
+        getCatalogue(),
+        "Skipping retrieve tape mount: shutdown requested");
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
 // A later fetch failure must not hide behind successful transfers and cleanup.
 TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessful) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
@@ -1231,6 +1325,67 @@ TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessfu
         expectedFailures[static_cast<size_t>(TapeSessionFailure::TaskInjection)] = 1;
         EXPECT_EQ(expectedFailures, session.tracker().outcomeSnapshot().failures);
         EXPECT_EQ(2, mount.archiveFetchAttempts());
+        EXPECT_EQ(1, mount.reportedJobs);
+        EXPECT_EQ(1, mount.archiveJobDestructions());
+        EXPECT_EQ(1, mount.completionAttempts);
+        EXPECT_EQ(1, session.tracker().stats().tape.filesCount);
+        EXPECT_EQ(1, countLogMessages(logger.getLog(), "Cleaner dismounted tape"));
+      }
+      alarm(0);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+// A fetch already in progress is drained, flushed and reported before shutdown.
+TEST_P(TapeSessionTest, ArchiveDrainDuringFetchCompletesAcquiredJob) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      alarm(10);
+      {
+        cta::log::StringLogger logger("dummy", "asyncFetchFailureTest", cta::log::DEBUG);
+        unitTests::TempFile source;
+        source.randomFill(1000);
+        std::stop_source drain;
+        AsyncFetchFailingArchiveMount mount(getCatalogue(), source, &drain);
+
+        cta::tape::System::mockWrapper system;
+        system.delegateToFake();
+        system.disableGMockCallsCounting();
+        system.fake.setupForVirtualDriveSLC6();
+        auto* drive = new cta::tape::drive::FakeDrive();
+        system.fake.m_pathToDrive["/dev/nst0"] = drive;
+        cta::tape::tapeFile::LabelSession::label(drive, s_vid, false);
+        drive->rewind();
+        cta::common::dataStructures::DriveInfo info("T10D6116",
+                                                    "host",
+                                                    "TestLogicalLibrary",
+                                                    "/dev/tape_T10D6116",
+                                                    "dummy");
+        cta::mediachanger::RmcProxy proxy;
+        cta::mediachanger::MediaChangerFacade changer(proxy, logger);
+
+        TransfersConfig config;
+        config.buffer_count = 2;
+        config.buffer_size_bytes = 1024;
+        config.disk_io_threads = 1;
+        config.archive.fetch_max_files = 1;
+        config.archive.fetch_max_bytes = 1024;
+        config.archive.flush_max_files = 1;
+        config.archive.flush_max_bytes = 1024;
+        // Keep this transfer test independent of external key scripts and catalogue encryption settings.
+        config.encryption.reset();
+        config.no_block_move_timeout_secs = 600;
+        TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
+
+        const auto result = session.execute(drain.get_token());
+        EXPECT_TRUE(result.successful);
+        EXPECT_TRUE(result.driveReusable);
+        TapeSessionFailureCounts expectedFailures {};
+        EXPECT_EQ(expectedFailures, session.tracker().outcomeSnapshot().failures);
+        EXPECT_EQ(1, mount.archiveFetchAttempts());
         EXPECT_EQ(1, mount.reportedJobs);
         EXPECT_EQ(1, mount.archiveJobDestructions());
         EXPECT_EQ(1, mount.completionAttempts);
@@ -1664,6 +1819,18 @@ TEST_P(TapeSessionTest, RetrieveRequeueStandardFailureCleansUp) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::RequeueStandard);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+// Tape startup fails before granting RAO access; all workers must still join within the helper's deadline.
+TEST_P(TapeSessionTest, RetrieveRAOStartupFailureCleansUp) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::TapeMountedCta, false, false, true);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),

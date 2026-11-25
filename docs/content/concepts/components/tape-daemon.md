@@ -260,6 +260,12 @@ Shutdown relies on tape session completion to release an active cartridge mount;
 The division of responsibility is explained under [Cleanup guarantees](#cleanup-guarantees).
 For fatal failures and abrupt termination, see [Failure scenarios](#failure-scenarios).
 
+On SIGTERM or SIGINT, the daemon stops fetching new job batches.
+Already-acquired archive jobs, including those returned by an in-progress fetch, finish through the normal transfer, reporting and tape cleanup paths before exit.
+Retrieve tasks already injected into the session finish the same way; acquired retrieve jobs not yet injected, including those returned by an in-progress fetch, are requeued.
+Idle polling waits wake on a stop request.
+Blocking operations are not interrupted, so shutdown has no fixed deadline.
+
 ### Drive session lifetime
 
 A drive session establishes that the drive is empty and reusable before scheduling tape sessions.

@@ -25,7 +25,8 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
                                              uint64_t byteSizeThreshold,
                                              const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                                              TapeSessionTracker& tracker,
-                                             const cta::log::LogContext& lc)
+                                             const cta::log::LogContext& lc,
+                                             std::stop_token stopToken)
     : m_thread(*this),
       m_memManager(mm),
       m_tapeWriter(tapeWriter),
@@ -35,7 +36,8 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
       m_maxBytes(byteSizeThreshold),
       m_unmountPolicy(unmountPolicy),
       m_tracker(tracker),
-      m_lc(lc) {}
+      m_lc(lc),
+      m_stopToken(stopToken) {}
 
 //------------------------------------------------------------------------------
 //injectBulkMigrations
@@ -100,9 +102,11 @@ void MigrationTaskInjector::requestInjection(bool lastCall) {
 //------------------------------------------------------------------------------
 //synchronousInjection
 //------------------------------------------------------------------------------
-bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
+WorkFetchResult MigrationTaskInjector::synchronousInjection() {
   std::list<std::unique_ptr<cta::ArchiveJob>> jobs;
-  noFilesToMigrate = false;
+  if (m_stopToken.stop_requested()) {
+    return WorkFetchResult::StopRequested;
+  }
   // Preserve the original exception for session failure handling.
   // First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
   // (it is applied to ArchiveForUser and ArchiveForRepack batches)
@@ -113,13 +117,11 @@ bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
   cta::log::ScopedParamContainer scoped(m_lc);
   scoped.add("byteSizeThreshold", m_maxBytes).add("maxFiles", m_maxFiles);
   if (jobs.empty()) {
-    noFilesToMigrate = true;
-    m_lc.log(cta::log::WARNING, "No files to migrate: empty mount");
-    return false;
+    return WorkFetchResult::NoWork;
   } else {
     m_firstFseqToWrite = jobs.front()->tapeFile.fSeq;
     injectBulkMigrations(jobs);
-    return true;
+    return WorkFetchResult::WorkAvailable;
   }
 }
 
@@ -319,12 +321,23 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
 void MigrationTaskInjector::WorkerThread::run() {
   m_parent.m_lc.push(Param("thread", "MigrationTaskInjector"));
   m_parent.m_lc.log(cta::log::INFO, "Starting MigrationTaskInjector thread");
+  bool producersFinished = false;
   try {
+    // Wake up a blocked worker.
+    // requestInjection only wakes the worker and tells it to look for work. The stop token prevents actual fetching.
+    // The worker drains acquired jobs and signals end-of-data.
+    std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
     while (true) {
       if (m_parent.m_errorFlag) {
         throw cta::tape::daemon::ErrorFlag();
       }
       Request req = m_parent.m_queue.pop();
+      if (m_parent.m_stopToken.stop_requested()) {
+        producersFinished = req.end;
+        m_parent.m_lc.log(cta::log::INFO, "Drain requested: ending archive job fetching");
+        m_parent.signalEndDataMovement();
+        break;
+      }
       m_parent.m_lc.log(cta::log::DEBUG,
                         "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive mount");
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
@@ -405,7 +418,7 @@ void MigrationTaskInjector::WorkerThread::run() {
      * m_diskWriter might still want some more task (the threshold could be crossed),
      * so we discard everything that might still be in the queue
      */
-  bool stillReading = true;
+  bool stillReading = !producersFinished;
   while (stillReading) {
     Request req = m_parent.m_queue.pop();
     if (req.end) {

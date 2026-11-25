@@ -131,7 +131,7 @@ TapeSession::TapeSession(log::Logger& log,
       m_mediaChanger(mc),
       m_catalogue(catalogue) {}
 
-TapeSessionResult TapeSession::execute() {
+TapeSessionResult TapeSession::execute(std::stop_token stopToken) {
   telemetry::metrics::setMountType(common::dataStructures::MountType::NoMount);
   // Clear the active mount after session finalization and worker shutdown.
   const utils::ScopeExit mountScope(
@@ -165,12 +165,12 @@ TapeSessionResult TapeSession::execute() {
     switch (m_volInfo.mountType) {
       case common::dataStructures::MountType::Retrieve:
         scopedReporter.start();
-        executeRead(lc, dynamic_cast<RetrieveMount&>(m_tapeMount), state);
+        executeRead(lc, dynamic_cast<RetrieveMount&>(m_tapeMount), state, stopToken);
         break;
       case common::dataStructures::MountType::ArchiveForUser:
       case common::dataStructures::MountType::ArchiveForRepack:
         scopedReporter.start();
-        executeWrite(lc, dynamic_cast<ArchiveMount&>(m_tapeMount), state);
+        executeWrite(lc, dynamic_cast<ArchiveMount&>(m_tapeMount), state, stopToken);
         break;
       case common::dataStructures::MountType::Label:
         throw exception::NotImplementedException();
@@ -217,7 +217,10 @@ TapeSessionResult TapeSession::execute() {
   return state.result;
 }
 
-void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrieveMount, ExecutionState& state) {
+void TapeSession::executeRead(log::LogContext& logContext,
+                              RetrieveMount& retrieveMount,
+                              ExecutionState& state,
+                              std::stop_token stopToken) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
@@ -266,7 +269,8 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
                                         m_transfersConfig.retrieve.fetch_max_files,
                                         m_transfersConfig.retrieve.fetch_max_bytes,
                                         *m_tapeSessionTracker,
-                                        logContext);
+                                        logContext,
+                                        stopToken);
 
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
@@ -276,71 +280,71 @@ void TapeSession::executeRead(log::LogContext& logContext, RetrieveMount& retrie
   if (m_transfersConfig.retrieve.rao_enabled) {
     configureRAO(logContext, recallTaskInjector, *m_transfersConfig.retrieve.rao);
   }
-  bool noFilesToRecall = false;
-  bool jobsFetched = false;
-  bool diskSpaceReservationSucceeded = false;
-  // Do an initial fetch to see if there is something to retrieve in the first place (might be an empty mount)
+  WorkFetchResult fetchResult;
+  // Fetch initial retrieve work before attempting to mount the tape.
   try {
-    // TODO for separate MR: we don't need both a return value and reference arg here
-    jobsFetched = recallTaskInjector.synchronousFetch(noFilesToRecall);
+    fetchResult = recallTaskInjector.synchronousFetch();
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
-  if (jobsFetched) {
-    // Check disk space reservation before committing to a tape mount.
-    diskSpaceReservationSucceeded = recallTaskInjector.testDiskSpaceReservationWorking();
-  }
-  // Only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
-  if (jobsFetched && diskSpaceReservationSucceeded) {
-    // We got something to retrieve. Time to start the machinery
-    tapeReadThread.setWaitForInstructionsTime(startupTimer.secs());
-
-    // We still haven't obtained a physical mount at this point: that will happen when we start the tape thread.
-    // However, at this point we are sure we are at least attempting to physically mount a tape.
-    m_tapeSessionTracker->setMountAttempted(true);
-    // Do not unwind pipeline resources unless every worker has joined successfully.
-    runOrExitOnWorkerFailure(logContext, [&] {
-      tapeReadThread.startThreadsWithInjector(recallTaskInjector);
-      diskWriteThreadPool.startThreads();
-      reportPacker.startThreads();
-      recallTaskInjector.startThreads();
-      state.completionDelegated = true;
-      // This thread is now going to be idle until the system unwinds at the end of the session
-      // All client notifications are done by the report packer, including the end of session
-      recallTaskInjector.waitThreads();
-      diskWriteThreadPool.waitThreads();
-      tapeReadThread.waitThreads();
-      reportPacker.waitThread();
-    });
-    // Done with retrieval
-
-    // Use the tape thread's cleanup result to decide whether the drive can be reused.
-    state.result.driveReusable = tapeReadThread.isDriveReusable();
-    if (!state.result.driveReusable) {
-      state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
-      state.result.downDetail = tapeReadThread.cleanupError();
-    }
-    return;
-  } else {
-    if (!noFilesToRecall && !jobsFetched) {
-      m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::TaskInjection);
-    }
-    // Nothing transferred
+  if (fetchResult == WorkFetchResult::StopRequested) {
     m_tapeSessionTracker->updateTapeTransferStats({});
-    if (noFilesToRecall) {
-      m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToRecall);
-    }
-    // Couldn't reserve free disk space
-    if (jobsFetched && !diskSpaceReservationSucceeded) {
-      m_tapeSessionTracker->recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
-    }
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
-    logContext.log(log::WARNING, "Aborting recall mount startup: empty mount");
+    logContext.log(log::INFO, "Skipping retrieve tape mount: shutdown requested");
+    return;
+  }
+  if (fetchResult == WorkFetchResult::NoWork) {
+    m_tapeSessionTracker->updateTapeTransferStats({});
+    m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToRecall);
+    m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
+    logContext.log(log::INFO, "Skipping retrieve tape mount: no files to retrieve");
+    return;
+  }
+
+  // Check disk space reservation before committing to a tape mount.
+  if (!recallTaskInjector.testDiskSpaceReservationWorking()) {
+    m_tapeSessionTracker->updateTapeTransferStats({});
+    m_tapeSessionTracker->recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
+    m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
+    logContext.log(log::WARNING, "Skipping retrieve tape mount: disk space reservation test failed");
+    return;
+  }
+
+  // We got something to retrieve. Time to start the machinery
+  tapeReadThread.setWaitForInstructionsTime(startupTimer.secs());
+
+  // We still haven't obtained a physical mount at this point: that will happen when we start the tape thread.
+  // However, at this point we are sure we are at least attempting to physically mount a tape.
+  m_tapeSessionTracker->setMountAttempted(true);
+  // Do not unwind pipeline resources unless every worker has joined successfully.
+  runOrExitOnWorkerFailure(logContext, [&] {
+    tapeReadThread.startThreadsWithInjector(recallTaskInjector);
+    diskWriteThreadPool.startThreads();
+    reportPacker.startThreads();
+    recallTaskInjector.startThreads();
+    state.completionDelegated = true;
+    // This thread is now going to be idle until the system unwinds at the end of the session
+    // All client notifications are done by the report packer, including the end of session
+    recallTaskInjector.waitThreads();
+    diskWriteThreadPool.waitThreads();
+    tapeReadThread.waitThreads();
+    reportPacker.waitThread();
+  });
+  // Done with retrieval
+
+  // Use the tape thread's cleanup result to decide whether the drive can be reused.
+  state.result.driveReusable = tapeReadThread.isDriveReusable();
+  if (!state.result.driveReusable) {
+    state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
+    state.result.downDetail = tapeReadThread.cleanupError();
   }
 }
 
-void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiveMount, ExecutionState& state) {
+void TapeSession::executeWrite(log::LogContext& logContext,
+                               ArchiveMount& archiveMount,
+                               ExecutionState& state,
+                               std::stop_token stopToken) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
@@ -390,68 +394,67 @@ void TapeSession::executeWrite(log::LogContext& logContext, ArchiveMount& archiv
                                               m_transfersConfig.archive.fetch_max_bytes,
                                               archiveDismountPolicy,
                                               *m_tapeSessionTracker,
-                                              logContext);
+                                              logContext,
+                                              stopToken);
   // We are now ready to put everything in motion. First step is to check
   // we get any concrete job to be done from the client (via the task injector)
   utils::Timer startupTimer;
-  bool noFilesToMigrate = false;
-  bool jobsInjected = false;
-  // Do an initial inject to see if there is something to archive in the first place (might be an empty mount)
+  WorkFetchResult fetchResult;
+  // Inject initial archive work before attempting to mount the tape.
   try {
-    // TODO for separate MR: we don't need both a return value and reference arg here
-    jobsInjected = migrationTaskInjector.synchronousInjection(noFilesToMigrate);
+    fetchResult = migrationTaskInjector.synchronousInjection();
   } catch (...) {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::TaskInjection);
     throw;
   }
-  // Only mount the tape if we can confirm that we will do some work, otherwise do an empty mount
-  if (jobsInjected) {
-    logContext.log(log::DEBUG, "After if (taskInjector.synchronousInjection())");
-    const uint64_t firstFseqFromClient = migrationTaskInjector.firstFseqToWrite();
-
-    // The last fseq written on the tape is the first file's fseq minus one
-    tapeWriteThread.setlastFseq(firstFseqFromClient - 1);
-
-    // We got something to archive. Time to start the machinery
-
-    // We still haven't obtained a physical mount at this point: that will happen when we start the tape thread.
-    // However, at this point we are sure we are at least attempting to physically mount a tape.
-    m_tapeSessionTracker->setMountAttempted(true);
-    // Do not unwind pipeline resources unless every worker has joined successfully.
-    runOrExitOnWorkerFailure(logContext, [&] {
-      memoryManager.startThreads();
-      diskReadThreadPool.startThreads(migrationTaskInjector);
-      tapeWriteThread.setWaitForInstructionsTime(startupTimer.secs());
-      tapeWriteThread.startThreadsWithInjector(migrationTaskInjector);
-      reportPacker.startThreads();
-      migrationTaskInjector.startThreads();
-      state.completionDelegated = true;
-      // This thread is now going to be idle until the system unwinds at the end of the session
-      // All client notifications are done by the report packer, including the end of session
-      migrationTaskInjector.waitThreads();
-      tapeWriteThread.waitThreads();
-      diskReadThreadPool.waitThreads();
-      memoryManager.waitThreads();
-      reportPacker.waitThread();
-    });
-    // Done with archival
-
-    // Use the tape thread's cleanup result to decide whether the drive can be reused.
-    state.result.driveReusable = tapeWriteThread.isDriveReusable();
-    if (!state.result.driveReusable) {
-      state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
-      state.result.downDetail = tapeWriteThread.cleanupError();
-    }
+  if (fetchResult == WorkFetchResult::StopRequested) {
+    m_tapeSessionTracker->updateTapeTransferStats({});
+    m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
+    logContext.log(log::INFO, "Skipping archive tape mount: shutdown requested");
     return;
-  } else {
-    if (!noFilesToMigrate) {
-      m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::TaskInjection);
-    }
-    // Nothing transferred
+  }
+  if (fetchResult == WorkFetchResult::NoWork) {
     m_tapeSessionTracker->updateTapeTransferStats({});
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToMigrate);
     m_tapeSessionTracker->recordEvent(TapeSessionEvent::EmptyMount);
-    logContext.log(log::WARNING, "Aborting migration mount startup: empty mount");
+    logContext.log(log::INFO, "Skipping archive tape mount: no files to archive");
+    return;
+  }
+
+  const uint64_t firstFseqFromClient = migrationTaskInjector.firstFseqToWrite();
+
+  // The last fseq written on the tape is the first file's fseq minus one
+  tapeWriteThread.setlastFseq(firstFseqFromClient - 1);
+
+  // We got something to archive. Time to start the machinery
+
+  // We still haven't obtained a physical mount at this point: that will happen when we start the tape thread.
+  // However, at this point we are sure we are at least attempting to physically mount a tape.
+  m_tapeSessionTracker->setMountAttempted(true);
+  // Do not unwind pipeline resources unless every worker has joined successfully.
+  runOrExitOnWorkerFailure(logContext, [&] {
+    memoryManager.startThreads();
+    diskReadThreadPool.startThreads(migrationTaskInjector);
+    tapeWriteThread.setWaitForInstructionsTime(startupTimer.secs());
+    tapeWriteThread.startThreadsWithInjector(migrationTaskInjector);
+    reportPacker.startThreads();
+    migrationTaskInjector.startThreads();
+    state.completionDelegated = true;
+    // This thread is now going to be idle until the system unwinds at the end of the session
+    // All client notifications are done by the report packer, including the end of session
+    migrationTaskInjector.waitThreads();
+    tapeWriteThread.waitThreads();
+    diskReadThreadPool.waitThreads();
+    memoryManager.waitThreads();
+    reportPacker.waitThread();
+  });
+  // Done with archival
+
+  // Use the tape thread's cleanup result to decide whether the drive can be reused.
+  state.result.driveReusable = tapeWriteThread.isDriveReusable();
+  if (!state.result.driveReusable) {
+    state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
+    state.result.downDetail = tapeWriteThread.cleanupError();
   }
 }
 

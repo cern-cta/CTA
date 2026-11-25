@@ -11,6 +11,7 @@
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/ExceptionLogging.hpp"
 #include "common/semconv/Logging.hpp"
+#include "common/utils/InterruptibleSleep.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -25,7 +26,6 @@
 #include <chrono>
 #include <exception>
 #include <optional>
-#include <unistd.h>
 
 namespace cta::tape::daemon {
 using common::dataStructures::DriveReport;
@@ -166,8 +166,8 @@ void DriveSession::run(std::stop_token stopToken) {
         endReason = result.endReason;
         break;
       }
-      if (result.action == IterationAction::RetryAfterDelay && !stopToken.stop_requested()) {
-        ::sleep(m_config.mounts.idle_scheduling_interval_secs);
+      if (result.action == IterationAction::RetryAfterDelay) {
+        utils::interruptibleSleep(stopToken, std::chrono::seconds(m_config.mounts.idle_scheduling_interval_secs));
       }
     }
     {
@@ -237,7 +237,7 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   }
 
   // The tape is not yet mounted; this happens in the tape session.
-  const auto result = runTapeSession(*mountCandidate);
+  const auto result = runTapeSession(*mountCandidate, stopToken);
   // Destroy the mount before retiring the scheduler resources it borrows.
   mountCandidate.reset();
   // Retire abandoned jobs even when the drive session ends; catalogue access remains valid.
@@ -258,7 +258,7 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   return {result.successful ? IterationAction::Continue : IterationAction::RetryAfterDelay, {}};
 }
 
-TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
+TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount, std::stop_token stopToken) {
   const auto vid = tapeMount.getVid();
   log::ScopedParamContainer mountParams(m_lc);
   mountParams.add("tapeVid", vid);
@@ -277,7 +277,7 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
     // Ensure we clean this shared ptr reference again when the session finishes
     const utils::ScopeExit clearActiveTracker([this] { m_activeTracker.store(nullptr); });
     // Run the session
-    transferResult = session.execute();
+    transferResult = session.execute(stopToken);
   } catch (...) {
     log::logCurrentExceptionNoThrow(m_lc, "Tape session failed. Attempting drive cleaning.");
   }
