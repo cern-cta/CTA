@@ -89,15 +89,14 @@ protected:
       EXPECT_EQ(0, command->cmdp[i]);
     }
     EXPECT_EQ(SG_DXFER_NONE, command->dxfer_direction);
-    EXPECT_GT(command->timeout, 0);
-    EXPECT_LE(command->timeout, SCSI::defaultTimeout);
+    EXPECT_EQ(SCSI::defaultTimeout, command->timeout);
   }
 };
 
 TEST_F(DriveMediaTest, ReadyProbeRefreshesDriverBeforeMediaAccess) {
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
     EXPECT_EQ(SCSI::Commands::TEST_UNIT_READY, command->cmdp[0]);
-    EXPECT_LE(command->timeout, 30000);
+    EXPECT_EQ(60000, command->timeout);
     return 0;
   });
   expectStatus(true);
@@ -132,7 +131,7 @@ TEST_F(DriveMediaTest, UnitAttentionIsRetriedBeforeObservingReadiness) {
 TEST_F(DriveMediaTest, ExpiredBudgetOnlyProbesWithoutRetryOrReopen) {
   for (const auto key : {SCSI::senseKeys::unitAttention, SCSI::senseKeys::notReady}) {
     EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
-      EXPECT_EQ(1, command->timeout);
+      EXPECT_EQ(60000, command->timeout);
       return sense(command, key, key == SCSI::senseKeys::unitAttention ? 0x29 : 0x04, 1);
     });
     expectNotReady(std::chrono::steady_clock::now() - 1s, "Drive readiness timed out");
@@ -155,6 +154,41 @@ TEST_F(DriveMediaTest, TemporaryNotReadyPollsUntilMediaCanBeAccessed) {
     expectStatus(true);
     EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 5s));
   }
+}
+
+TEST_F(DriveMediaTest, PowerOnSelfTestPollsThroughLoadingUntilReady) {
+  for (bool descriptor : {false, true}) {
+    EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
+      .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, 0x3e, 0, descriptor); })
+      .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, 0x04, 1, descriptor); })
+      .WillOnce(Return(0));
+    expectStatus(true);
+    EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 5s));
+  }
+  EXPECT_EQ(3, m_opens);
+  EXPECT_EQ(2, m_closes);
+}
+
+TEST_F(DriveMediaTest, PowerOnSelfTestDoesNotRetryAfterDeadline) {
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
+    return sense(command, 2, 0x3e, 0);
+  });
+  expectNotReady(std::chrono::steady_clock::now() - 1s, "Drive readiness timed out");
+  EXPECT_EQ(1, m_opens);
+  EXPECT_EQ(0, m_closes);
+}
+
+TEST_F(DriveMediaTest, RecoveredUnloadNotificationsDoNotEstablishReadiness) {
+  for (const auto& [asc, ascq] : {
+         std::pair {0x00, 0x17},
+         {0x83, 0x83}
+  }) {
+    EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
+      return sense(command, 1, asc, ascq);
+    });
+    EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
+  }
+  EXPECT_EQ(1, m_opens);
 }
 
 TEST_F(DriveMediaTest, UnrecognizedNotReadyAndHardwareFailuresAreNotAbsence) {
@@ -227,7 +261,7 @@ TEST_F(DriveMediaTest, RefreshedOfflineStatusIsNotReportedAsElapsedTimeout) {
   }
 }
 
-TEST_F(DriveMediaTest, LoadingPollsTransitionalStatesAndCapsCommandTimeouts) {
+TEST_F(DriveMediaTest, LoadingRetriesKeepFullCommandTimeout) {
   std::vector<unsigned> timeouts;
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
     .WillOnce([&](int, unsigned long, sg_io_hdr_t* command) {
@@ -241,18 +275,15 @@ TEST_F(DriveMediaTest, LoadingPollsTransitionalStatesAndCapsCommandTimeouts) {
   expectStatus(true);
   EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s));
   ASSERT_EQ(2, timeouts.size());
-  EXPECT_LE(timeouts.front(), 1000);
-  EXPECT_LT(timeouts.back(), timeouts.front());
+  EXPECT_EQ(60000, timeouts.front());
+  EXPECT_EQ(timeouts.front(), timeouts.back());
 }
 
-TEST_F(DriveMediaTest, LoadingTimeoutUsesRemainingBudgetAndDoesNotReopen) {
-  unsigned previous = 1000;
+TEST_F(DriveMediaTest, LoadingDeadlineStopsRetriesWithoutShorteningCommandTimeout) {
   unsigned calls = 0;
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
     .WillRepeatedly([&](int, unsigned long, sg_io_hdr_t* command) {
-      EXPECT_GT(command->timeout, 0);
-      EXPECT_LE(command->timeout, previous);
-      previous = command->timeout;
+      EXPECT_EQ(60000, command->timeout);
       ++calls;
       return sense(command, 2, 4, 1);
     });
@@ -261,21 +292,48 @@ TEST_F(DriveMediaTest, LoadingTimeoutUsesRemainingBudgetAndDoesNotReopen) {
   EXPECT_EQ(1, m_opens);
 }
 
-TEST_F(DriveMediaTest, ZeroBudgetMakesOneBoundedProbeWithoutRetry) {
+TEST_F(DriveMediaTest, ZeroBudgetMakesOneFullTimeoutProbeWithoutRetry) {
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
-    EXPECT_EQ(1, command->timeout);
+    EXPECT_EQ(60000, command->timeout);
     return sense(command, 6, 0x29, 0);
   });
   expectNotReady(std::chrono::steady_clock::now(), "Drive readiness timed out");
 }
 
-TEST_F(DriveMediaTest, LateSuccessfulCommandDoesNotRestartLoadingBudget) {
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t*) {
-    std::this_thread::sleep_for(1100ms);
+TEST_F(DriveMediaTest, SuccessfulProbeAfterDeadlineRefreshesDriver) {
+  const auto deadline = std::chrono::steady_clock::now() + 20ms;
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
+    EXPECT_EQ(60000, command->timeout);
+    std::this_thread::sleep_until(deadline + 10ms);
     return 0;
   });
-  expectNotReady(std::chrono::steady_clock::now() + 1s, "Drive readiness timed out");
+  expectStatus(true);
+  EXPECT_NO_THROW(m_drive->waitUntilReady(deadline));
+  EXPECT_EQ(2, m_opens);
+  EXPECT_EQ(1, m_closes);
+}
+
+TEST_F(DriveMediaTest, UnreadyProbeAfterDeadlineDoesNotRetryOrRefreshDriver) {
+  const auto deadline = std::chrono::steady_clock::now() + 20ms;
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
+    EXPECT_EQ(60000, command->timeout);
+    std::this_thread::sleep_until(deadline + 10ms);
+    return sense(command, 2, 0x04, 1);
+  });
+  expectNotReady(deadline, "Drive readiness timed out");
   EXPECT_EQ(1, m_opens);
+  EXPECT_EQ(0, m_closes);
+}
+
+TEST_F(DriveMediaTest, ExpiredDeadlineStillAcceptsReadyMedia) {
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
+    EXPECT_EQ(60000, command->timeout);
+    return 0;
+  });
+  expectStatus(true);
+  EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() - 1s));
+  EXPECT_EQ(2, m_opens);
+  EXPECT_EQ(1, m_closes);
 }
 
 TEST_F(DriveMediaTest, SuccessfulDriverUnloadNeedsNoRecoveryCommands) {
@@ -308,12 +366,96 @@ TEST_F(DriveMediaTest, RepeatedEmptyUnloadIsAcceptedInBothSenseFormats) {
   }
 }
 
+TEST_F(DriveMediaTest, RecoveryUnloadAcceptsCurrentCleaningNotifications) {
+  for (const auto& [asc, ascq] : {
+         std::pair {0x00, 0x17},
+         {0x83, 0x83}
+  }) {
+    for (bool descriptor : {false, true}) {
+      expectDriverUnloadFailure();
+      expectStatus(false);
+      EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
+        .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
+          checkUnloadCommand(command);
+          return sense(command, 1, asc, ascq, descriptor);
+        });
+      EXPECT_NO_THROW(m_drive->unloadTape());
+    }
+  }
+  EXPECT_EQ(9, m_opens);
+  EXPECT_EQ(8, m_closes);
+}
+
+TEST_F(DriveMediaTest, RecoveryUnloadRejectsDeferredOrInvalidCleaningNotifications) {
+  for (bool descriptor : {false, true}) {
+    for (unsigned variant = 0; variant < 4; ++variant) {
+      expectDriverUnloadFailure();
+      expectStatus(false);
+      EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
+        .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
+          sense(command, 1, 0x00, 0x17, descriptor);
+          switch (variant) {
+            case 0:
+              command->sbp[0] = descriptor ? 0x73 : 0x71;
+              break;
+            case 1:
+              command->host_status = 1;
+              break;
+            case 2:
+              command->driver_status = SCSI::DriverStatus::TIMEOUT;
+              break;
+            case 3:
+              command->sb_len_wr = descriptor ? 7 : 13;
+              break;
+          }
+          return 0;
+        });
+      EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
+    }
+  }
+  EXPECT_EQ(17, m_opens);
+  EXPECT_EQ(16, m_closes);
+}
+
+TEST_F(DriveMediaTest, RecoveryUnloadRejectsUnrecognizedRecoveredErrors) {
+  expectDriverUnloadFailure();
+  expectStatus(false);
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
+    return sense(command, 1, 0x5d, 0);
+  });
+  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
+  EXPECT_EQ(3, m_opens);
+}
+
+TEST_F(DriveMediaTest, RecoveredUnloadNotificationDoesNotHideReopenFailure) {
+  expectDriverUnloadFailure();
+  expectStatus(false);
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
+    return sense(command, 1, 0x83, 0x83);
+  });
+  EXPECT_CALL(m_wrapper, open(_, _)).WillOnce(Return(7)).WillOnce([](const char*, int) {
+    errno = EIO;
+    return -1;
+  });
+  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
+  EXPECT_EQ(2, m_closes);
+  m_drive.reset();
+  EXPECT_EQ(2, m_closes);
+}
+
 TEST_F(DriveMediaTest, RecoveryUnloadRetriesUnitAttention) {
   expectDriverUnloadFailure();
   expectStatus(false);
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
-    .WillOnce([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 6, 0x28, 0); })
-    .WillOnce(Return(0));
+    .WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
+      checkUnloadCommand(command);
+      std::this_thread::sleep_for(10ms);
+      return sense(command, 6, 0x28, 0);
+    })
+    .WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
+      checkUnloadCommand(command);
+      return 0;
+    });
   EXPECT_NO_THROW(m_drive->unloadTape());
 }
 

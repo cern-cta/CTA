@@ -28,7 +28,9 @@ namespace cta::tape::drive {
 namespace {
 
 using MediaClock = std::chrono::steady_clock;
-constexpr auto mediaProbeTimeout = std::chrono::seconds(30);
+// Use a full command timeout even near the polling deadline; kernel timeouts can trigger SCSI error recovery.
+// IBM LTO specifies 60 seconds for unlisted commands, covering TUR; 3592 recommends 30 seconds.
+constexpr auto mediaProbeTimeout = std::chrono::seconds(60);
 constexpr unsigned maxUnitAttentionAttempts = 3;
 
 // Keep command sense details local: callers need readiness, not a model of cartridge position.
@@ -39,10 +41,15 @@ struct MediaSense {
   std::string message;
 
   bool isRetryableNotReady() const {
-    // Becoming ready, formatting, operation/security-association creation in progress, or cleaning.
+    // Becoming ready, formatting, operation/security-association creation, cleaning, or power-on self-test.
     return key == SCSI::senseKeys::notReady
            && ((asc == 0x04 && (ascq == 0x01 || ascq == 0x04 || ascq == 0x07 || ascq == 0x13))
-               || (asc == 0x00 && ascq == 0x16) || (asc == 0x30 && ascq == 0x03));
+               || (asc == 0x00 && ascq == 0x16) || (asc == 0x30 && ascq == 0x03) || (asc == 0x3e && ascq == 0x00));
+  }
+
+  bool isRecoveredUnloadNotification() const {
+    // IBM LTO and 3592 report cleaning requested/completed even when LOAD/UNLOAD succeeds.
+    return key == SCSI::senseKeys::recoveredError && ((asc == 0x00 && ascq == 0x17) || (asc == 0x83 && ascq == 0x83));
   }
 
   bool isNotLoaded() const {
@@ -77,7 +84,9 @@ std::optional<MediaSense> mediaCommand(System::virtualWrapper& wrapper,
       throw exception::Exception(context + ": malformed or truncated SCSI sense data");
     }
     const auto key = sense.getSenseKey();
-    if (sense.isCurrent() && (key == SCSI::senseKeys::notReady || key == SCSI::senseKeys::unitAttention)) {
+    if (sense.isCurrent()
+        && (key == SCSI::senseKeys::notReady || key == SCSI::senseKeys::unitAttention
+            || key == SCSI::senseKeys::recoveredError)) {
       return MediaSense {key,
                          sense.getASC(),
                          sense.getASCQ(),
@@ -86,11 +95,6 @@ std::optional<MediaSense> mediaCommand(System::virtualWrapper& wrapper,
   }
   SCSI::ExceptionLauncher(sgh, context);
   return std::nullopt;
-}
-
-std::chrono::milliseconds remainingCommandTime(MediaClock::time_point deadline,
-                                               std::chrono::milliseconds commandLimit) {
-  return std::min(commandLimit, std::chrono::ceil<std::chrono::milliseconds>(deadline - MediaClock::now()));
 }
 
 }  // namespace
@@ -2823,7 +2827,9 @@ void drive::DriveGeneric::reopenDevice() {
 
 void drive::DriveGeneric::refreshReadyDevice() {
   reopenDevice();
+
   struct mtget status {};
+
   try {
     exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &status),
                                        "Could not read refreshed drive status: " + m_SCSIInfo.nst_dev);
@@ -2838,18 +2844,15 @@ void drive::DriveGeneric::refreshReadyDevice() {
 void drive::DriveGeneric::waitUntilReady(MediaClock::time_point deadline) {
   std::string lastResponse;
   // An expired budget still permits a fresh observation, but never another loading wait.
-  const bool probeOnly = MediaClock::now() >= deadline;
   do {
-    const auto remaining = remainingCommandTime(deadline, mediaProbeTimeout);
-    const auto sense =
-      mediaCommand(m_sysWrapper, m_tapeFD, {}, remaining, "TEST UNIT READY for media access: " + m_SCSIInfo.nst_dev);
+    const auto sense = mediaCommand(m_sysWrapper,
+                                    m_tapeFD,
+                                    {},
+                                    mediaProbeTimeout,
+                                    "TEST UNIT READY for media access: " + m_SCSIInfo.nst_dev);
     if (!sense) {
-      if (probeOnly || MediaClock::now() <= deadline) {
-        refreshReadyDevice();
-        return;
-      }
-      lastResponse = "TEST UNIT READY completed after the readiness deadline";
-      break;
+      refreshReadyDevice();
+      return;
     }
     lastResponse = sense->message;
     if (sense->isNotLoaded()) {
@@ -2879,9 +2882,11 @@ void drive::DriveGeneric::unloadTape(void) {
     if (ex.errorNumber() != ENOMEDIUM && ex.errorNumber() != EIO) {
       throw TapeDriverStateError(ex.getMessageValue());
     }
+
     // MTUNLOAD may reject cached non-ready state without sending a command.
     // MTIOCGET also passes through the driver's buffer handling; failure here must not be bypassed.
     struct mtget status {};
+
     if (m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &status) < 0 || GMT_ONLINE(status.mt_gstat)) {
       throw TapeDriverStateError("Cannot safely recover a failed driver unload: " + ex.getMessageValue());
     }
@@ -2891,16 +2896,17 @@ void drive::DriveGeneric::unloadTape(void) {
   reopenDevice();
   std::optional<std::string> recoveryError;
   try {
-    const auto deadline = MediaClock::now() + std::chrono::milliseconds(SCSI::defaultTimeout);
+    const auto commandTimeout = std::chrono::milliseconds(SCSI::defaultTimeout);
+    const auto deadline = MediaClock::now() + commandTimeout;
     const std::array<uint8_t, 6> unload {SCSI::Commands::START_STOP, 0, 0, 0, 0, 0};
     for (unsigned attempt = 0;; ++attempt) {
-      const auto remaining = remainingCommandTime(deadline, std::chrono::milliseconds(SCSI::defaultTimeout));
-      if (remaining <= std::chrono::milliseconds::zero()) {
+      if (MediaClock::now() >= deadline) {
         throw exception::TimeOut("Recovery unload command budget exhausted: " + m_SCSIInfo.nst_dev);
       }
       const auto sense =
-        mediaCommand(m_sysWrapper, m_tapeFD, unload, remaining, "SCSI recovery unload: " + m_SCSIInfo.nst_dev);
-      if (!sense || (sense->key == SCSI::senseKeys::notReady && sense->asc == 0x3a && sense->ascq == 0)) {
+        mediaCommand(m_sysWrapper, m_tapeFD, unload, commandTimeout, "SCSI recovery unload: " + m_SCSIInfo.nst_dev);
+      if (!sense || sense->isRecoveredUnloadNotification()
+          || (sense->key == SCSI::senseKeys::notReady && sense->asc == 0x3a && sense->ascq == 0)) {
         break;
       }
       if (sense->key != SCSI::senseKeys::unitAttention || attempt + 1 >= maxUnitAttentionAttempts) {

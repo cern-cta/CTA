@@ -27,7 +27,7 @@ namespace cta::tape::drive {
 /// A device or command failure left the tape driver in an unknown or unusable state.
 CTA_GENERATE_EXCEPTION_CLASS(TapeDriverStateError);
 
-/// Media is absent, unloaded or did not become ready before the polling deadline.
+/// Media is absent, unloaded or still not ready when polling stops.
 CTA_GENERATE_EXCEPTION_CLASS(MediaNotReady);
 
 /// Host and tape byte counters returned by DriveInterface::getCompression().
@@ -305,9 +305,9 @@ public:
 
   /// @brief Wait until both the media and tape driver are ready for I/O.
   ///
-  /// The deadline limits polling; refreshing driver state may take longer.
+  /// The deadline limits retries; an in-flight check and driver refresh may finish after it.
   /// An expired deadline permits one readiness check without retries.
-  /// @throws MediaNotReady If media is absent, requires loading or does not become ready before the deadline.
+  /// @throws MediaNotReady If media is absent, requires loading or is still not ready when polling stops.
   /// Other device and command errors propagate.
   virtual void waitUntilReady(std::chrono::steady_clock::time_point deadline) = 0;
 
