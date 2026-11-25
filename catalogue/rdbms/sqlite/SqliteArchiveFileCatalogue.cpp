@@ -156,17 +156,11 @@ void SqliteArchiveFileCatalogue::getNextArchiveFileIds(rdbms::Conn& conn,
                                                        uint64_t count,
                                                        std::vector<uint64_t>& archiveFileIds) {
   for (uint64_t i = 0; i < count; ++i) {
-    conn.executeNonQuery(R"SQL(
-      INSERT INTO ARCHIVE_FILE_ID VALUES(NULL)
-    )SQL");
+    conn.executeNonQuery(R"SQL(INSERT INTO ARCHIVE_FILE_ID VALUES(NULL))SQL");
 
     uint64_t archiveFileId;
     {
-      const char* const sql = R"SQL(
-        SELECT LAST_INSERT_ROWID() AS ID
-      )SQL";
-
-      auto stmt = conn.createStmt(sql);
+      auto stmt = conn.createStmt(R"SQL(SELECT LAST_INSERT_ROWID() AS ID)SQL");
       auto rset = stmt.executeQuery();
 
       if (!rset.next()) {

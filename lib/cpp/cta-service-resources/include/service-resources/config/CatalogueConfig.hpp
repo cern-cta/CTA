@@ -19,13 +19,18 @@ namespace cta::service_resources {
 struct CatalogueClientConfig final {
   /// Number of connections to the catalogue database (default: 10)
   uint32_t number_of_connections = 10;
+  /// Number of archive file IDs fetched per batch.
+  uint64_t archive_file_id_batch_size = 1;
 
-  static constexpr std::size_t memberCount() { return 1; }
+  static constexpr std::size_t memberCount() { return 2; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (number_of_connections == 0) {
       result.addError("number_of_connections", "must be greater than zero");
+    }
+    if (archive_file_id_batch_size == 0) {
+      result.addError("archive_file_id_batch_size", "must be greater than zero");
     }
     return result;
   }

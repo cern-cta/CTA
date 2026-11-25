@@ -28,11 +28,15 @@ ArchiveFileCatalogueRetryWrapper::ArchiveFileCatalogueRetryWrapper(Catalogue& ca
 uint64_t
 ArchiveFileCatalogueRetryWrapper::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
                                                                const std::string& storageClassName,
-                                                               const common::dataStructures::RequesterIdentity& user) {
+                                                               const common::dataStructures::RequesterIdentity& user,
+                                                               const uint64_t archiveFileIdBatchSize) {
   return retryOnLostConnection(
     m_log,
-    [this, &diskInstanceName, &storageClassName, &user] {
-      return m_catalogue.ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, storageClassName, user);
+    [this, &diskInstanceName, &storageClassName, &user, &archiveFileIdBatchSize] {
+      return m_catalogue.ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                                     storageClassName,
+                                                                     user,
+                                                                     archiveFileIdBatchSize);
     },
     m_maxTriesToConnect);
 }

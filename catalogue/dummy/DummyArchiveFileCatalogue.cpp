@@ -9,15 +9,15 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
-#include "common/exception/Exception.hpp"
+#include "common/exception/Exception.hpp" RdbmsArchiveFileCatalogue.hpp
 #include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
-uint64_t
-DummyArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
-                                                        const std::string& storageClassName,
-                                                        const common::dataStructures::RequesterIdentity& user) {
+uint64_t DummyArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
+                                                                 const std::string& storageClassName,
+                                                                 const common::dataStructures::RequesterIdentity& user,
+                                                                 uint64_t) {
   throw exception::NotImplementedException();
 }
 

@@ -41,14 +41,12 @@ RdbmsArchiveFileCatalogue::RdbmsArchiveFileCatalogue(log::Logger& log,
                                                      RdbmsCatalogue* rdbmsCatalogue)
     : m_log(log),
       m_connPool(connPool),
-      m_rdbmsCatalogue(rdbmsCatalogue) {
-  m_archiveFileIdPool.reserve(m_archiveFileIdBatchSize);
-}
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-uint64_t
-RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
-                                                        const std::string& storageClassName,
-                                                        const common::dataStructures::RequesterIdentity& user) {
+uint64_t RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
+                                                                 const std::string& storageClassName,
+                                                                 const common::dataStructures::RequesterIdentity& user,
+                                                                 uint64_t archiveFileIdBatchSize) {
   try {
     const auto storageClass = catalogue::StorageClass(storageClassName);
     const auto copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass, false);
@@ -91,24 +89,43 @@ RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskI
 
     // Now that we have found both the archive routes and the mount policy it's
     // safe to consume an archive file identifier
-    std::lock_guard<std::mutex> lock(m_archiveFileIdPoolMutex);
+    std::unique_lock<std::mutex> lock(m_archiveFileIdPoolMutex);
+    m_archiveFileIdPoolCv.wait(lock, [this] { return !m_refillInProgress; });
 
-    if (m_archiveFileIdPool.empty()) {
+    if (m_nextArchiveFileIdIndex == m_archiveFileIdPool.size()) {
+      // Mark the refill in progress before unlocking so only one thread fetches a batch.
+      m_refillInProgress = true;
+
+      // Reuse the pool's allocated memory for the next batch of IDs.
+      std::vector<uint64_t> batch;
+      batch.swap(m_archiveFileIdPool);
+      m_nextArchiveFileIdIndex = 0;
+      lock.unlock();
+
       try {
+        batch.clear();
         auto conn = m_connPool->getConn();
-        getNextArchiveFileIds(conn, m_archiveFileIdBatchSize, m_archiveFileIdPool);
+        getNextArchiveFileIds(conn, archiveFileIdBatchSize, batch);
 
-        if (m_archiveFileIdPool.size() != m_archiveFileIdBatchSize) {
+        if (batch.size() != archiveFileIdBatchSize) {
           throw exception::Exception("Archive file ID allocation returned an unexpected number of IDs");
         }
       } catch (...) {
-        m_archiveFileIdPool.clear();
+        lock.lock();
+        m_refillInProgress = false;
+        m_archiveFileIdPoolCv.notify_all();
         throw;
       }
+
+      lock.lock();
+      m_archiveFileIdPool.swap(batch);
+      m_refillInProgress = false;
+      m_archiveFileIdPoolCv.notify_all();
     }
 
-    const uint64_t archiveFileId = m_archiveFileIdPool.back();
-    m_archiveFileIdPool.pop_back();
+    const uint64_t archiveFileId = m_archiveFileIdPool[m_nextArchiveFileIdIndex];
+
+    ++m_nextArchiveFileIdIndex;
     return archiveFileId;
   } catch (exception::UserErrorWithCacheInfo& ue) {
     log::LogContext lc(m_log);

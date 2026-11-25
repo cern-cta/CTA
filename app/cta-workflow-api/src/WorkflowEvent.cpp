@@ -108,6 +108,7 @@ WorkflowEvent::WorkflowEvent(const service_resources::ServiceResources& serviceR
 #endif
       m_lc(serviceResources.getLogContext()),
       m_verificationMountPolicy(config.requests.prepare.verification_mount_policy),
+      m_archiveFileIdBatchSize(config.catalogue.client.archive_file_id_batch_size),
       m_zeroLengthFilesDisallowed(config.requests.archive.zero_length_files_forbidden),
       m_zeroLengthFilesDisallowedExceptions {config.requests.archive.zero_length_vo_exceptions.begin(),
                                              config.requests.archive.zero_length_vo_exceptions.end()} {
@@ -229,7 +230,11 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   if (storageClassStr == "fail_on_closew_test") {
     archiveFileId = std::numeric_limits<uint64_t>::max();
   } else {
-    archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClassStr, requester, m_lc);
+    archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username,
+                                                             storageClassStr,
+                                                             requester,
+                                                             m_lc,
+                                                             m_archiveFileIdBatchSize);
   }
 
   // Create a log entry

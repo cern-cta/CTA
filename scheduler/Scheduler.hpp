@@ -125,7 +125,8 @@ public:
   uint64_t checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
                                         const std::string& storageClassName,
                                         const common::dataStructures::RequesterIdentity& user,
-                                        log::LogContext& lc) const;
+                                        log::LogContext& lc,
+                                        uint64_t archiveFileIdBatchSize = 1) const;
 
   /**
    * Queue the specified archive request.

@@ -21,12 +21,14 @@ PostgresqlCatalogueFactory::PostgresqlCatalogueFactory(log::Logger& log,
                                                        const rdbms::Login& login,
                                                        const uint64_t nbConns,
                                                        const uint64_t nbArchiveFileListingConns,
-                                                       const uint32_t maxTriesToConnect)
+                                                       const uint32_t maxTriesToConnect,
+                                                       const uint64_t archiveFileIdBatchSize)
     : m_log(log),
       m_login(login),
       m_nbConns(nbConns),
       m_nbArchiveFileListingConns(nbArchiveFileListingConns),
-      m_maxTriesToConnect(maxTriesToConnect) {
+      m_maxTriesToConnect(maxTriesToConnect),
+      m_archiveFileIdBatchSize(archiveFileIdBatchSize) {
   if (rdbms::Login::DBTYPE_POSTGRESQL != login.dbType) {
     throw exception::Exception("Incorrect database type: expected=DBTYPE_POSTGRESQL actual="
                                + rdbms::Login::dbTypeToString(login.dbType));

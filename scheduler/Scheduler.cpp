@@ -106,10 +106,13 @@ void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity& c
 uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName,
                                                  const std::string& storageClassName,
                                                  const common::dataStructures::RequesterIdentity& user,
-                                                 log::LogContext& lc) const {
+                                                 log::LogContext& lc,
+                                                 uint64_t archiveFileIdBatchSize) const {
   cta::utils::Timer t;
-  const uint64_t archiveFileId =
-    m_catalogue.ArchiveFile()->checkAndGetNextArchiveFileId(instanceName, storageClassName, user);
+  const uint64_t archiveFileId = m_catalogue.ArchiveFile()->checkAndGetNextArchiveFileId(instanceName,
+                                                                                         storageClassName,
+                                                                                         user,
+                                                                                         archiveFileIdBatchSize);
   const auto catalogueTime = t.secs();
   const auto schedulerDbTime = catalogueTime;
 

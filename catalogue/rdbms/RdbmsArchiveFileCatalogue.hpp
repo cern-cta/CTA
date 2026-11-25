@@ -11,6 +11,8 @@
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/log/Logger.hpp"
 
+#include <condition_variable>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -47,7 +49,8 @@ public:
 
   uint64_t checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
                                         const std::string& storageClassName,
-                                        const common::dataStructures::RequesterIdentity& user) override;
+                                        const common::dataStructures::RequesterIdentity& user,
+                                        uint64_t archiveFileIdBatchSize = 1) override;
 
   common::dataStructures::ArchiveFileQueueCriteria
   getArchiveFileQueueCriteria(const std::string& diskInstanceName,
@@ -135,12 +138,13 @@ protected:
   RdbmsCatalogue* m_rdbmsCatalogue;
 
 private:
-  // Reserved IDs that have not yet been assigned to requests.
+  // Current batch of archive file IDs.
   std::vector<uint64_t> m_archiveFileIdPool;
+  std::size_t m_nextArchiveFileIdIndex = 0;
   std::mutex m_archiveFileIdPoolMutex;
+  std::condition_variable m_archiveFileIdPoolCv;
+  bool m_refillInProgress = false;
 
-  // Number of archive file IDs fetched from the database when the pool is empty.
-  static constexpr uint64_t m_archiveFileIdBatchSize = 100;
   /**
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.

@@ -45,7 +45,8 @@ public:
                              const rdbms::Login& login,
                              const uint64_t nbConns,
                              const uint64_t nbArchiveFileListingConns,
-                             const uint32_t maxTriesToConnect);
+                             const uint32_t maxTriesToConnect,
+                             const uint64_t archiveFileIdBatchSize);
 
   /**
    * Returns a newly created CTA catalogue object.
@@ -82,6 +83,11 @@ private:
    * exceptions being thrown.
    */
   uint32_t m_maxTriesToConnect;
+
+  /**
+   * The number of archive file IDs fetched from the database when the pool gets empty.
+   */
+  uint64_t m_archiveFileIdBatchSize;
 
 };  // class PostgresqlCatalogueFactory
 

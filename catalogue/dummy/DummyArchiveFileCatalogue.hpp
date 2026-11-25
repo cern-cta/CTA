@@ -18,7 +18,8 @@ public:
 
   uint64_t checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
                                         const std::string& storageClassName,
-                                        const common::dataStructures::RequesterIdentity& user) override;
+                                        const common::dataStructures::RequesterIdentity& user,
+                                        uint64_t) override;
 
   common::dataStructures::ArchiveFileQueueCriteria
   getArchiveFileQueueCriteria(const std::string& diskInstanceName,

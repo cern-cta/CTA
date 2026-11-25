@@ -339,14 +339,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
   requesterIdentity.group = "group";
 
   std::set<uint64_t> archiveFileIds;
-  for (uint64_t i = 0; i < 10; i++) {
-    const uint64_t archiveFileId =
-      m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
-                                                               m_storageClassSingleCopy.name,
-                                                               requesterIdentity);
+  // Default batch size = 1
+  auto& archiveFileCatalogue = *m_catalogue->ArchiveFile();
+  const auto defaultId = archiveFileCatalogue.checkAndGetNextArchiveFileId(diskInstanceName,
+                                                                           m_storageClassSingleCopy.name,
+                                                                           requesterIdentity);
+  ASSERT_TRUE(archiveFileIds.insert(defaultId).second);
 
-    const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
-    ASSERT_TRUE(archiveFileIdIsNew);
+  // Request three IDs with a batch size of two to check it with a second refill.
+  for (int i = 0; i < 3; ++i) {
+    const auto id = archiveFileCatalogue.checkAndGetNextArchiveFileId(diskInstanceName,
+                                                                      m_storageClassSingleCopy.name,
+                                                                      requesterIdentity,
+                                                                      2);
+    ASSERT_TRUE(archiveFileIds.insert(id).second) << "Duplicate archive file ID: " << id;
   }
 }
 

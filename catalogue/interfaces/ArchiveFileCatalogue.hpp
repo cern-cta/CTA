@@ -51,12 +51,14 @@ public:
    * @param user The user for whom the file is to be archived.  This will be
    * used by the Catalogue to determine the mount policy to be used when
    * archiving the file.
+   * @param archiveFileIdBatchSize Number of archive file IDs to fetch when the pool gets empty.
    * @return The new archive file identifier.
    * @throw UserErrorWithCacheInfo if there was a user error.
    */
   virtual uint64_t checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
                                                 const std::string& storageClassName,
-                                                const common::dataStructures::RequesterIdentity& user) = 0;
+                                                const common::dataStructures::RequesterIdentity& user,
+                                                uint64_t archiveFileIdBatchSize = 1) = 0;
 
   /**
    * Returns the information required to queue an archive request.

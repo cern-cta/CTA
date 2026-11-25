@@ -89,6 +89,7 @@ private:
   log::LogContext m_lc;
   /// Verification mount policy
   std::string m_verificationMountPolicy;
+  const uint64_t m_archiveFileIdBatchSize;
 
   /// Do not allow 0-length files to be archived
   bool m_zeroLengthFilesDisallowed;

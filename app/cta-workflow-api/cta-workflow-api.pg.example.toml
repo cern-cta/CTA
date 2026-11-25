@@ -33,6 +33,11 @@ instance_name = "CI_local"
   # (integer, optional)
   number_of_connections = 10
 
+  # Number of archive file IDs fetched per batch. Must be greater than zero.
+  # Default: 1
+  # (integer, optional)
+  archive_file_id_batch_size = 1
+
 
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:

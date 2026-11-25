@@ -28,6 +28,7 @@ public:
    * @param maxTriesToConnext The maximum number of times a single method should
    * try to connect to the database in the event of LostDatabaseConnection
    * exceptions being thrown.
+   * @param archiveFileIdBatchSize The number of archive file IDs fetched from the database when the pool gets empty.
    */
   InMemoryCatalogueFactory(log::Logger& log,
                            const uint64_t nbConns,
