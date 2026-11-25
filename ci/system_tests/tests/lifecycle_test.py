@@ -201,9 +201,8 @@ def isolated_taped(
     settings = {
         "transfers": {"buffer_count": "8", "buffer_size_bytes": "1048576", "disk_io_threads": "2"},
         "transfers.archive": {"fetch_max_files": "2", "flush_max_files": "1"},
-        "transfers.retrieve": {"fetch_max_files": "2"},
         # RAO may raise the fetch limit to the drive's supported batch size.
-        "transfers.retrieve.rao": {"enabled": "false"},
+        "transfers.retrieve": {"fetch_max_files": "2", "rao_enabled": "false"},
         # Keep the remaining queue observable until the test explicitly requests Up again.
         "drive.lifecycle.startup": {"auto_up": "false"},
     }

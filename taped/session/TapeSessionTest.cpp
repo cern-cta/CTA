@@ -1224,8 +1224,7 @@ void checkStopBeforeStartupIsEmptyMount(cta::catalogue::Catalogue& catalogue, st
   config.buffer_count = 2;
   config.buffer_size_bytes = 1024;
   config.disk_io_threads = 1;
-  config.encryption.enabled = false;
-  config.encryption.external_key_script.clear();
+  config.encryption.reset();
   config.no_block_move_timeout_secs = 600;
   TapeSession session(logger, system, info, changer, mount, config, 1, catalogue);
   std::stop_source stop;
@@ -1376,9 +1375,8 @@ TEST_P(TapeSessionTest, ArchiveDrainDuringFetchCompletesAcquiredJob) {
         config.archive.fetch_max_bytes = 1024;
         config.archive.flush_max_files = 1;
         config.archive.flush_max_bytes = 1024;
-        config.encryption.enabled = false;
         // Keep this transfer test independent of external key scripts and catalogue encryption settings.
-        config.encryption.external_key_script.clear();
+        config.encryption.reset();
         config.no_block_move_timeout_secs = 600;
         TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
 
