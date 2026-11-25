@@ -81,7 +81,7 @@ jobs:
           PLATFORM=$(jq -r .dev.defaultPlatform project.json)
           echo "PLATFORM=${PLATFORM}" >> "$GITHUB_ENV"
           cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-          python3 ci/project-json/generate_versionlock.py --platform "${PLATFORM}" > /etc/yum/pluginconf.d/versionlock.list
+          ./ci/project-json/generate_versionlock.py --platform "${PLATFORM}" > /etc/yum/pluginconf.d/versionlock.list
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           # Map GitHub metadata to the shared source-version helper's CI inputs.
           export CI_PIPELINE_ID="$GITHUB_RUN_ID"

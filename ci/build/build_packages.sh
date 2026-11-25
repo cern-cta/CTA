@@ -358,7 +358,7 @@ install_rpm_build_dependencies() {
     || compgen -G "$srpm_dir/*.rpm" >/dev/null \
     || die "No source RPMs found in $srpm_dir."
 
-  python3 "$project_root/ci/project-json/generate_versionlock.py" --platform "$platform" >/etc/yum/pluginconf.d/versionlock.list
+  "$project_root/ci/project-json/generate_versionlock.py" --platform "$platform" >/etc/yum/pluginconf.d/versionlock.list
   cp -f "ci/docker/cta/${platform}/etc/yum.repos.d-public/"*.repo /etc/yum.repos.d/
   if [[ "$use_internal_repos" == true ]]; then
     cp -f "ci/docker/cta/${platform}/etc/yum.repos.d-internal/"*.repo /etc/yum.repos.d/
