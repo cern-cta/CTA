@@ -24,6 +24,7 @@
 #include "taped/test/TestArchiveJob.hpp"
 
 #include <assert.h>
+#include <chrono>
 #include <iostream>
 #include <list>
 #include <memory>
@@ -107,7 +108,7 @@ int main(int argc, char* argv[]) {
           /**
            * Checks if the drive ready to use the tape installed loaded into it.
            */
-          drive->waitUntilReady(5);
+          drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
         } catch (cta::exception::Exception& ne) {
           std::string temp = ne.getMessage().str();
           fail = 1;

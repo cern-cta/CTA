@@ -24,6 +24,7 @@
 #include "taped/drive/EncryptionControl.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
 
+#include <chrono>
 #include <opentelemetry/context/runtime_context.h>
 
 namespace cta::tape::daemon {
@@ -87,12 +88,13 @@ protected:
 
   /// @brief Wait for drive readiness within the configured load timeout.
   ///
-  /// Log and propagate drive errors and timeouts.
+  /// Fail loading with the readiness reason; log and propagate drive errors.
   void waitForDrive() {
     cta::utils::Timer tapeLoadTime;
     try {
       // Mounting is synchronous; this wait covers drive readiness after loading.
-      m_drive.waitUntilReady(m_tapeLoadTimeout);
+      const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(m_tapeLoadTimeout);
+      m_drive.waitUntilReady(deadline);
     } catch (const cta::exception::Exception& e) {
       cta::log::ScopedParamContainer spc(m_logContext);
       spc.add(cta::semconv::log::exceptionMessage, e.getMessageValue())

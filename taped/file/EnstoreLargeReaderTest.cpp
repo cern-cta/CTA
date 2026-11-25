@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
@@ -68,7 +69,7 @@ protected:
     }
 
     try {
-      m_drive->waitUntilReady(5);
+      m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
     } catch (cta::exception::Exception& ex) {
       FAIL() << "The drive is not ready to use. " << ex.getMessageValue();
     }
@@ -78,7 +79,7 @@ protected:
 
   std::string readTapeVid(const cta::common::dataStructures::Label::Format labelFormat) {
     m_drive->rewind();
-    m_drive->waitUntilReady(5);
+    m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
     return cta::tape::tapeFile::HeaderChecker::checkVolumeLabel(*m_drive, labelFormat);
   }
 

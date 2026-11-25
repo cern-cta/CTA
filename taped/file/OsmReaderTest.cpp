@@ -21,6 +21,7 @@
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#include <chrono>
 #include <gtest/gtest.h>
 #include <string>
 
@@ -92,7 +93,7 @@ protected:
       /**
         * Checks if the drive ready to use the tape loaded into it.
         */
-      m_drive->waitUntilReady(5);
+      m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
     } catch (cta::exception::Exception& ex) {
       FAIL() << "The drive is not ready to use. " << ex.getMessageValue();
     }

@@ -2835,29 +2835,8 @@ void drive::DriveGeneric::refreshReadyDevice() {
   }
 }
 
-bool drive::DriveGeneric::waitForMediaReady(MediaClock::time_point deadline) {
+void drive::DriveGeneric::waitUntilReady(MediaClock::time_point deadline) {
   std::string lastResponse;
-  if (!waitTestUnitReady(deadline, lastResponse)) {
-    return false;
-  }
-  refreshReadyDevice();
-  return true;
-}
-
-void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond) {
-  const auto deadline = MediaClock::now() + std::chrono::seconds(timeoutSecond);
-  std::string lastResponse;
-  if (!waitTestUnitReady(deadline, lastResponse)) {
-    if (MediaClock::now() >= deadline) {
-      throw exception::TimeOut("Drive readiness timed out (configured timeout " + std::to_string(timeoutSecond)
-                               + " seconds): " + lastResponse);
-    }
-    throw exception::Exception(lastResponse);
-  }
-  refreshReadyDevice();
-}
-
-bool drive::DriveGeneric::waitTestUnitReady(MediaClock::time_point deadline, std::string& lastResponse) const {
   // An expired budget still permits a fresh observation, but never another loading wait.
   const bool probeOnly = MediaClock::now() >= deadline;
   do {
@@ -2866,14 +2845,15 @@ bool drive::DriveGeneric::waitTestUnitReady(MediaClock::time_point deadline, std
       mediaCommand(m_sysWrapper, m_tapeFD, {}, remaining, "TEST UNIT READY for media access: " + m_SCSIInfo.nst_dev);
     if (!sense) {
       if (probeOnly || MediaClock::now() <= deadline) {
-        return true;
+        refreshReadyDevice();
+        return;
       }
       lastResponse = "TEST UNIT READY completed after the readiness deadline";
-      return false;
+      break;
     }
     lastResponse = sense->message;
     if (sense->isNotLoaded()) {
-      return false;
+      throw MediaNotReady(lastResponse);
     }
     if (sense->key != SCSI::senseKeys::unitAttention && !sense->isRetryableNotReady()) {
       throw exception::Exception(lastResponse);
@@ -2884,7 +2864,7 @@ bool drive::DriveGeneric::waitTestUnitReady(MediaClock::time_point deadline, std
       std::this_thread::sleep_for(sleepTime);
     }
   } while (MediaClock::now() < deadline);
-  return false;
+  throw MediaNotReady("Drive readiness timed out: " + lastResponse);
 }
 
 void drive::DriveGeneric::unloadTape(void) {

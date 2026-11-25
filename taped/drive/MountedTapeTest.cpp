@@ -76,7 +76,7 @@ protected:
 class ReadinessDrive : public drive::DriveLTO {
 public:
   using DriveLTO::DriveLTO;
-  MOCK_METHOD(bool, waitForMediaReady, (std::chrono::steady_clock::time_point), (override));
+  MOCK_METHOD(void, waitUntilReady, (std::chrono::steady_clock::time_point), (override));
 
   bool clearEncryptionKey() override { return false; }
 
@@ -90,20 +90,24 @@ TEST_F(MountedTapeTest, CleanupUsesUnloadTimeoutForReadiness) {
   using namespace std::chrono_literals;
   using testing::_;
 
-  testing::StrictMock<System::mockWrapper> wrapper;
-  EXPECT_CALL(wrapper, open(_, _)).WillOnce(testing::Return(7));
-  EXPECT_CALL(wrapper, close(7)).WillOnce(testing::Return(0));
-  testing::StrictMock<ReadinessDrive> hardware(SCSI::DeviceInfo {}, wrapper);
-  hardware.info = driveInfo;
-  MountedTape tape(changer, volume, hardware, catalogue, 30, outcome, lc, tracker);
-  const auto beforeCleanup = Clock::now();
-  EXPECT_CALL(hardware, waitForMediaReady(_)).WillOnce([&](auto deadline) {
-    EXPECT_GE(deadline, beforeCleanup + 30s);
-    EXPECT_LE(deadline, Clock::now() + 30s);
-    return false;
-  });
-  EXPECT_TRUE(tape.cleanup().driveReusable());
-  EXPECT_EQ(0, tracker.stats().cleanup.labelReadTime);
+  for (const std::string reason : {"Media is absent", "Drive readiness timed out"}) {
+    SCOPED_TRACE(reason);
+    testing::StrictMock<System::mockWrapper> wrapper;
+    EXPECT_CALL(wrapper, open(_, _)).WillOnce(testing::Return(7));
+    EXPECT_CALL(wrapper, close(7)).WillOnce(testing::Return(0));
+    testing::StrictMock<ReadinessDrive> hardware(SCSI::DeviceInfo {}, wrapper);
+    hardware.info = driveInfo;
+    MountedTape tape(changer, volume, hardware, catalogue, 30, outcome, lc, tracker);
+    const auto beforeCleanup = Clock::now();
+    EXPECT_CALL(hardware, waitUntilReady(_)).WillOnce([&](auto deadline) {
+      EXPECT_GE(deadline, beforeCleanup + 30s);
+      EXPECT_LE(deadline, Clock::now() + 30s);
+      throw drive::MediaNotReady(reason);
+    });
+    EXPECT_TRUE(tape.cleanup().driveReusable());
+    EXPECT_THAT(logger.messages, testing::HasSubstr(reason));
+    EXPECT_EQ(0, tracker.stats().cleanup.labelReadTime);
+  }
 }
 
 TEST_F(MountedTapeTest, MountsBothAccessModesAndCleansOnScopeExit) {

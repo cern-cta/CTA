@@ -46,7 +46,7 @@ public:
     DisableLogicalBlockProtection,
     UnloadTape,
     HasTapeInPlace,
-    WaitForMediaReady,
+    WaitUntilReady,
     UnloadDriveState,
     TapeAlertCodes,
     TapeAlerts
@@ -208,10 +208,7 @@ public:
   /// Ignore diagnostic context; a data record throws cta::exception::Exception.
   void readFileMark(const std::string& context) final;
 
-  /// Return immediately unless mount failure was configured; the timeout is ignored.
-  void waitUntilReady(const uint32_t timeoutSecond) final;
-
-  bool waitForMediaReady(std::chrono::steady_clock::time_point deadline) final;
+  void waitUntilReady(std::chrono::steady_clock::time_point deadline) final;
 
   /// Always return false; write protection is not simulated.
   bool isWriteProtected() final;

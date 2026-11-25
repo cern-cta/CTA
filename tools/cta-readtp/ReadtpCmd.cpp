@@ -30,6 +30,8 @@
 #include "tools/cta-readtp/TapeFseqRange.hpp"
 #include "tools/cta-readtp/TapeFseqRangeListSequence.hpp"
 
+#include <chrono>
+
 namespace cta::tape::readtp {
 
 //------------------------------------------------------------------------------
@@ -281,7 +283,8 @@ void ReadtpCmd::waitUntilTapeLoaded(cta::tape::drive::DriveInterface& drive, con
 
   try {
     m_log(cta::log::INFO, "Loading tape", params);
-    drive.waitUntilReady(timeoutSecond);
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(timeoutSecond);
+    drive.waitUntilReady(deadline);
     m_log(cta::log::INFO, "Loaded tape", params);
   } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;

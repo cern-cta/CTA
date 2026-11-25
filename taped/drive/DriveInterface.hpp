@@ -28,6 +28,9 @@ namespace cta::tape::drive {
 /// Physical ejection may still be attempted.
 CTA_GENERATE_EXCEPTION_CLASS(TapeDriverStateError);
 
+/// Media is absent/unloaded or did not become ready before the polling deadline.
+CTA_GENERATE_EXCEPTION_CLASS(MediaNotReady);
+
 /// Host and tape byte counters returned by DriveInterface::getCompression().
 class compressionStats {
 public:
@@ -302,14 +305,12 @@ public:
   /// @param context Diagnostic context to include in read errors.
   virtual void readFileMark(const std::string& context) = 0;
 
-  /// @brief Wait for media readiness, propagating failures and timeout errors.
-  /// @param timeoutSecond Readiness timeout in seconds.
-  virtual void waitUntilReady(const uint32_t timeoutSecond) = 0;
-
   /// @brief Poll temporary NOT READY responses until deadline, refreshing the driver when ready.
-  /// Return false if media is absent, unloaded or still not ready when polling ends; other failures propagate.
+  /// Return only after media and the tape driver are ready.
+  /// @throws MediaNotReady If media is absent/unloaded, requires LOAD, or the readiness wait expires.
+  /// Unexpected SCSI, transport and driver-refresh failures propagate as exceptions.
   /// An expired deadline permits one probe but no retry. Driver refresh may exceed the polling deadline.
-  virtual bool waitForMediaReady(std::chrono::steady_clock::time_point deadline) = 0;
+  virtual void waitUntilReady(std::chrono::steady_clock::time_point deadline) = 0;
 
   /// Check whether the loaded cartridge prohibits writes.
   virtual bool isWriteProtected() = 0;

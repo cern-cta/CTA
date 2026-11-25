@@ -22,6 +22,8 @@
 #include "taped/file/LabelSession.hpp"
 #include "taped/file/Structures.hpp"
 
+#include <chrono>
+
 namespace cta::tape::tapelabel {
 
 //------------------------------------------------------------------------------
@@ -477,7 +479,8 @@ void TapeLabelCmd::waitUntilTapeLoaded(cta::tape::drive::DriveInterface& drive, 
 
   try {
     m_log(cta::log::INFO, "Label session loading tape", params);
-    drive.waitUntilReady(timeoutSecond);
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(timeoutSecond);
+    drive.waitUntilReady(deadline);
     m_log(cta::log::INFO, "Label session loaded tape", params);
   } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;

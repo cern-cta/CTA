@@ -309,15 +309,14 @@ void cta::tape::drive::FakeDrive::readFileMark(const std::string& context) {
   m_currentPosition++;
 }
 
-void cta::tape::drive::FakeDrive::waitUntilReady(const uint32_t timeoutSecond) {
+void cta::tape::drive::FakeDrive::waitUntilReady(std::chrono::steady_clock::time_point) {
+  throwIfFailurePoint(FailurePoint::WaitUntilReady);
   if (m_failToMount) {
-    throw cta::exception::Exception("In FakeDrive::waitUntilReady: Failed to mount the tape");
+    throw MediaNotReady("Fake drive failed to load media");
   }
-}
-
-bool cta::tape::drive::FakeDrive::waitForMediaReady(std::chrono::steady_clock::time_point) {
-  throwIfFailurePoint(FailurePoint::WaitForMediaReady);
-  return m_tapeInPlace && !m_failToMount;
+  if (!m_tapeInPlace) {
+    throw MediaNotReady("Tape media is absent or unloaded");
+  }
 }
 
 bool cta::tape::drive::FakeDrive::isWriteProtected() {

@@ -196,7 +196,12 @@ auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive, std::chrono::ste
   try {
     CleanupTiming timing(m_tracker, &TapeCleanupStats::readinessWaitTime);
     m_lc.log(log::DEBUG, "Cleaner checking media readiness within the remaining budget");
-    ready = drive.waitForMediaReady(readinessDeadline);
+    drive.waitUntilReady(readinessDeadline);
+    ready = true;
+  } catch (const drive::MediaNotReady& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("readinessReason", ex.getMessageValue());
+    m_lc.log(log::DEBUG, "Cleaner media is not ready; skipping label inspection and continuing with tape eject");
   } catch (...) {
     recordDriveStateFailure();
     log::ScopedParamContainer params(m_lc);

@@ -44,6 +44,15 @@ protected:
     m_drive = std::make_unique<DriveLTO>(device, m_wrapper);
   }
 
+  void expectNotReady(std::chrono::steady_clock::time_point deadline, const std::string& reason) {
+    try {
+      m_drive->waitUntilReady(deadline);
+      FAIL() << "Expected MediaNotReady";
+    } catch (const MediaNotReady& ex) {
+      EXPECT_THAT(ex.getMessageValue(), testing::HasSubstr(reason));
+    }
+  }
+
   static int sense(sg_io_hdr_t* command, uint8_t key, uint8_t asc, uint8_t ascq, bool descriptor = false) {
     command->status = SCSI::Status::CHECK_CONDITION;
     command->driver_status = SCSI::DriverStatus::SENSE;
@@ -92,7 +101,7 @@ TEST_F(DriveMediaTest, ReadyProbeRefreshesDriverBeforeMediaAccess) {
     return 0;
   });
   expectStatus(true);
-  EXPECT_TRUE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s));
+  EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s));
   EXPECT_EQ(2, m_opens);
   EXPECT_EQ(1, m_closes);
 }
@@ -106,7 +115,7 @@ TEST_F(DriveMediaTest, UnloadedMediaDoesNotPollOrReopen) {
     for (bool descriptor : {false, true}) {
       EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
         .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, asc, ascq, descriptor); });
-      EXPECT_FALSE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s));
+      expectNotReady(std::chrono::steady_clock::now() + 1s, "TEST UNIT READY");
     }
   }
   EXPECT_EQ(1, m_opens);
@@ -117,7 +126,7 @@ TEST_F(DriveMediaTest, UnitAttentionIsRetriedBeforeObservingReadiness) {
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
     .WillOnce([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 6, 0x28, 0); })
     .WillOnce([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, 0x3a, 0); });
-  EXPECT_FALSE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s));
+  EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), MediaNotReady);
 }
 
 TEST_F(DriveMediaTest, ExpiredBudgetOnlyProbesWithoutRetryOrReopen) {
@@ -126,7 +135,7 @@ TEST_F(DriveMediaTest, ExpiredBudgetOnlyProbesWithoutRetryOrReopen) {
       EXPECT_EQ(1, command->timeout);
       return sense(command, key, key == SCSI::senseKeys::unitAttention ? 0x29 : 0x04, 1);
     });
-    EXPECT_FALSE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() - 1s));
+    expectNotReady(std::chrono::steady_clock::now() - 1s, "Drive readiness timed out");
   }
   EXPECT_EQ(1, m_opens);
 }
@@ -144,7 +153,7 @@ TEST_F(DriveMediaTest, TemporaryNotReadyPollsUntilMediaCanBeAccessed) {
       .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, asc, ascq); })
       .WillOnce(Return(0));
     expectStatus(true);
-    EXPECT_TRUE(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 5s));
+    EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 5s));
   }
 }
 
@@ -156,7 +165,7 @@ TEST_F(DriveMediaTest, UnrecognizedNotReadyAndHardwareFailuresAreNotAbsence) {
     EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
       return sense(command, key, asc, 0);
     });
-    EXPECT_THROW(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
+    EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
   }
 }
 
@@ -183,7 +192,7 @@ TEST_F(DriveMediaTest, InvalidSenseIsNeverAbsence) {
       }
       return 0;
     });
-    EXPECT_THROW(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
+    EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
   }
 }
 
@@ -202,7 +211,7 @@ TEST_F(DriveMediaTest, TransportAndDeferredErrorsAreNotAbsence) {
       }
       return 0;
     });
-    EXPECT_THROW(m_drive->waitForMediaReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
+    EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
   }
 }
 
@@ -210,7 +219,7 @@ TEST_F(DriveMediaTest, RefreshedOfflineStatusIsNotReportedAsElapsedTimeout) {
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce(Return(0));
   expectStatus(false);
   try {
-    m_drive->waitUntilReady(900);
+    m_drive->waitUntilReady(std::chrono::steady_clock::now() + 900s);
     FAIL() << "Expected driver-state error";
   } catch (const TapeDriverStateError& ex) {
     EXPECT_THAT(ex.getMessageValue(), testing::HasSubstr("offline after successful TEST UNIT READY"));
@@ -230,25 +239,10 @@ TEST_F(DriveMediaTest, LoadingPollsTransitionalStatesAndCapsCommandTimeouts) {
       return 0;
     });
   expectStatus(true);
-  m_drive->waitUntilReady(1);
+  EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s));
   ASSERT_EQ(2, timeouts.size());
   EXPECT_LE(timeouts.front(), 1000);
   EXPECT_LT(timeouts.back(), timeouts.front());
-}
-
-TEST_F(DriveMediaTest, LoadingDoesNotPollTerminalMediaStates) {
-  for (const auto& [asc, ascq] : {
-         std::pair {0x3a, 0   },
-         {0x04, 0x02},
-         {0x3a, 0x04},
-         {0x53, 0   }
-  }) {
-    EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
-      return sense(command, 2, asc, ascq);
-    });
-    EXPECT_THROW(m_drive->waitUntilReady(900), exception::Exception);
-  }
-  EXPECT_EQ(1, m_opens);
 }
 
 TEST_F(DriveMediaTest, LoadingTimeoutUsesRemainingBudgetAndDoesNotReopen) {
@@ -262,7 +256,7 @@ TEST_F(DriveMediaTest, LoadingTimeoutUsesRemainingBudgetAndDoesNotReopen) {
       ++calls;
       return sense(command, 2, 4, 1);
     });
-  EXPECT_THROW(m_drive->waitUntilReady(1), exception::TimeOut);
+  expectNotReady(std::chrono::steady_clock::now() + 1s, "Drive readiness timed out: TEST UNIT READY");
   EXPECT_GT(calls, 1);
   EXPECT_EQ(1, m_opens);
 }
@@ -272,7 +266,7 @@ TEST_F(DriveMediaTest, ZeroBudgetMakesOneBoundedProbeWithoutRetry) {
     EXPECT_EQ(1, command->timeout);
     return sense(command, 6, 0x29, 0);
   });
-  EXPECT_THROW(m_drive->waitUntilReady(0), exception::TimeOut);
+  expectNotReady(std::chrono::steady_clock::now(), "Drive readiness timed out");
 }
 
 TEST_F(DriveMediaTest, LateSuccessfulCommandDoesNotRestartLoadingBudget) {
@@ -280,7 +274,7 @@ TEST_F(DriveMediaTest, LateSuccessfulCommandDoesNotRestartLoadingBudget) {
     std::this_thread::sleep_for(1100ms);
     return 0;
   });
-  EXPECT_THROW(m_drive->waitUntilReady(1), exception::TimeOut);
+  expectNotReady(std::chrono::steady_clock::now() + 1s, "Drive readiness timed out");
   EXPECT_EQ(1, m_opens);
 }
 

@@ -666,7 +666,7 @@ TEST_P(DriveCleanerTest, NonReadyMediaDoesNotPreventResetsAndEject) {
 }
 
 TEST_P(DriveCleanerTest, FailedReadinessObservationStillEjectsButRejectsReuse) {
-  installDrive()->setFailurePoint(FailurePoint::WaitForMediaReady);
+  installDrive()->setFailurePoint(FailurePoint::WaitUntilReady);
   ASSERT_FALSE(runCleaner(m_vid));
   ASSERT_TRUE(m_cleanupResult.driveStateFailed);
   ASSERT_FALSE(m_cleanupResult.ejectFailed);

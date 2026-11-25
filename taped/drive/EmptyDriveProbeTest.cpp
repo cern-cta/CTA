@@ -29,11 +29,11 @@ public:
                                  FailurePoint::DisableLogicalBlockProtection,
                                  FailurePoint::Rewind,
                                  FailurePoint::UnloadTape,
+                                 FailurePoint::WaitUntilReady,
                                  FailurePoint::TapeAlertCodes,
                                  FailurePoint::TapeAlerts}) {
       setFailurePoint(operation);
     }
-    // The constructor also makes waitUntilReady fail if it is called.
   }
 
   ~ObservedDrive() override {
