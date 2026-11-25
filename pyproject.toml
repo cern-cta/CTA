@@ -49,7 +49,7 @@
     "pytest>=8",
     "pytest-cov",
     "cattrs",
-    "grpcio-tools",
+    "grpcio-tools==1.84.1",
   ]
   # These scripts also run independently in existing pipeline environments.
   scripts = ["PyYAML", "jsonschema", "packaging>=24", "pyjwt", "cryptography"]

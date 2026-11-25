@@ -3,7 +3,8 @@
 
 [build-system]
   # Hatch reads release tags or local development identifiers through the shared version helper.
-  requires      = ["hatchling>=1.27.0", "grpcio-tools>=1.60"]
+  # Keep the generator aligned with the runtime minimums below, including builds outside uv.
+  requires      = ["hatchling>=1.27.0", "grpcio-tools==1.84.1"]
   build-backend = "hatchling.build"
 
 [project]
@@ -21,7 +22,7 @@
   keywords = ["CTA", "tape", "CERN"]
 
   dynamic      = ["version"]
-  dependencies = ["grpcio-tools>=1.84.1", "protobuf"]
+  dependencies = ["grpcio>=1.84.1", "protobuf>=7.35.1,<8"]
 
   [project.urls]
     Source              = "https://gitlab.cern.ch/cta/CTA/"
@@ -29,7 +30,7 @@
     "CTA Documentation" = "https://cta.docs.cern.ch/"
 
 [dependency-groups]
-  dev = ["cattrs", "grpcio-tools>=1.84.1"]
+  dev = ["cattrs", "grpcio-tools==1.84.1"]
 
 [tool.hatch.version]
   source     = "code"

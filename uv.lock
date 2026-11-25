@@ -27,7 +27,7 @@ dev = [
     { name = "cryptography" },
     { name = "detect-secrets", specifier = "==1.5.0" },
     { name = "fastjsonschema", specifier = ">=2.21.2" },
-    { name = "grpcio-tools" },
+    { name = "grpcio-tools", specifier = "==1.84.1" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },
     { name = "kubernetes", specifier = ">=35.0.0,<36" },
@@ -83,7 +83,7 @@ type-check = [
     { name = "cattrs" },
     { name = "cryptography" },
     { name = "fastjsonschema", specifier = ">=2.21.2" },
-    { name = "grpcio-tools" },
+    { name = "grpcio-tools", specifier = "==1.84.1" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },
     { name = "kubernetes", specifier = ">=35.0.0,<36" },
@@ -100,7 +100,7 @@ type-check = [
 unit-tests = [
     { name = "cattrs" },
     { name = "cryptography" },
-    { name = "grpcio-tools" },
+    { name = "grpcio-tools", specifier = "==1.84.1" },
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },
     { name = "packaging", specifier = ">=24" },
@@ -434,7 +434,7 @@ requires-dist = [
     { name = "cta-sdk", editable = "lib/python/cta-sdk" },
     { name = "cta-sdk", marker = "extra == 'workflow'", editable = "lib/python/cta-sdk" },
     { name = "cta-tapeserver-sdk", marker = "extra == 'tapeserver'", editable = "lib/python/cta-tapeserver-sdk" },
-    { name = "grpcio-health-checking", specifier = ">=1.80.0" },
+    { name = "grpcio-health-checking", specifier = ">=1.84.1" },
     { name = "pyjwt", specifier = ">=2.14.0" },
     { name = "rich" },
 ]
@@ -454,7 +454,7 @@ requires-dist = [{ name = "rich" }]
 name = "cta-sdk"
 source = { editable = "lib/python/cta-sdk" }
 dependencies = [
-    { name = "grpcio-tools" },
+    { name = "grpcio" },
     { name = "protobuf" },
 ]
 
@@ -466,14 +466,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "grpcio-tools", specifier = ">=1.84.1" },
-    { name = "protobuf" },
+    { name = "grpcio", specifier = ">=1.84.1" },
+    { name = "protobuf", specifier = ">=7.35.1,<8" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "cattrs" },
-    { name = "grpcio-tools", specifier = ">=1.84.1" },
+    { name = "grpcio-tools", specifier = "==1.84.1" },
 ]
 
 [[package]]
