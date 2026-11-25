@@ -4179,12 +4179,19 @@ TEST_P(TapeSessionTest, TapeSessionFailtoMount) {
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, 900, catalogue);
   ASSERT_NO_THROW(sess.execute());
-  std::string temp = logger.getLog();
-  ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
 
   // 10) Check logs for drive statistics
   std::string logToCheck = logger.getLog();
   auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  ASSERT_TRUE(std::ranges::any_of(logLines,
+                                  [](std::string_view line) {
+                                    return cta::utils::containsAllSubStrings(
+                                      line,
+                                      {"Got timeout or error while waiting for drive to be ready.",
+                                       "Fake drive failed to load media"});
+                                  }))
+    << logToCheck;
 
   // Check if any of the lines contains all of these substrings
   ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
