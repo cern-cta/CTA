@@ -28,10 +28,9 @@ If a tape session throws without returning an outcome, recovery runs under the e
 
 `DriveCleaner` can borrow an already-open drive.
 It reports cleanup results and progress; the enclosing drive session owns the final `Down` publication.
-Cleanup waits for temporary NOT READY conditions within the unloading budget before attempting label inspection.
-An expired deadline permits one readiness probe without retries; label inspection requires ready media.
-The deadline controls retries, not individual SCSI command timeouts.
-An in-flight readiness check may succeed after the deadline; driver refresh may also take longer.
+Cleanup polls readiness within the unloading budget before inspecting the label.
+Even an expired budget permits one check; commands already started may finish later.
+Label inspection requires ready media.
 Robotic dismount establishes cartridge removal even when the tape driver reports no media; an unloaded cartridge may still occupy the library's drive slot.
 An empty slot alone is insufficient for reuse if configuration reset or establishing safe driver state failed.
 

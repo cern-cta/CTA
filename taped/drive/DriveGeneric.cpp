@@ -41,15 +41,25 @@ struct MediaSense {
   std::string message;
 
   bool isRetryableNotReady() const {
-    // Becoming ready, formatting, operation/security-association creation, cleaning, or power-on self-test.
     return key == SCSI::senseKeys::notReady
-           && ((asc == 0x04 && (ascq == 0x01 || ascq == 0x04 || ascq == 0x07 || ascq == 0x13))
-               || (asc == 0x00 && ascq == 0x16) || (asc == 0x30 && ascq == 0x03) || (asc == 0x3e && ascq == 0x00));
+           && ((asc == 0x04
+                && (ascq == 0x01     // Becoming ready.
+                    || ascq == 0x04  // Format in progress.
+                    || ascq == 0x07  // Operation in progress.
+                    || ascq == 0x13  // Security association creation in progress.
+                    ))
+               || (asc == 0x00 && ascq == 0x16)  // Operation in progress.
+               || (asc == 0x30 && ascq == 0x03)  // Cleaning cartridge installed.
+               || (asc == 0x3e && ascq == 0x00)  // Power-on self-test/self-configuration in progress.
+           );
   }
 
   bool isRecoveredUnloadNotification() const {
     // IBM LTO and 3592 report cleaning requested/completed even when LOAD/UNLOAD succeeds.
-    return key == SCSI::senseKeys::recoveredError && ((asc == 0x00 && ascq == 0x17) || (asc == 0x83 && ascq == 0x83));
+    return key == SCSI::senseKeys::recoveredError
+           && ((asc == 0x00 && ascq == 0x17)     // Drive requires cleaning.
+               || (asc == 0x83 && ascq == 0x83)  // Drive has been cleaned.
+           );
   }
 
   bool isNotLoaded() const {
@@ -84,6 +94,7 @@ std::optional<MediaSense> mediaCommand(System::virtualWrapper& wrapper,
       throw exception::Exception(context + ": malformed or truncated SCSI sense data");
     }
     const auto key = sense.getSenseKey();
+    // Deferred errors concern an earlier command and cannot establish this command's outcome.
     if (sense.isCurrent()
         && (key == SCSI::senseKeys::notReady || key == SCSI::senseKeys::unitAttention
             || key == SCSI::senseKeys::recoveredError)) {
@@ -2842,12 +2853,13 @@ void drive::DriveGeneric::refreshReadyDevice() {
 }
 
 void drive::DriveGeneric::waitUntilReady(MediaClock::time_point deadline) {
+  const std::array<uint8_t, 6> testUnitReady {SCSI::Commands::TEST_UNIT_READY, 0, 0, 0, 0, 0};
   std::string lastResponse;
   // An expired budget still permits a fresh observation, but never another loading wait.
   do {
     const auto sense = mediaCommand(m_sysWrapper,
                                     m_tapeFD,
-                                    {},
+                                    testUnitReady,
                                     mediaProbeTimeout,
                                     "TEST UNIT READY for media access: " + m_SCSIInfo.nst_dev);
     if (!sense) {
@@ -2897,10 +2909,12 @@ void drive::DriveGeneric::unloadTape(void) {
   std::optional<std::string> recoveryError;
   try {
     const auto commandTimeout = std::chrono::milliseconds(SCSI::defaultTimeout);
-    const auto deadline = MediaClock::now() + commandTimeout;
+    // Stop starting retries at the deadline; each command retains its full timeout.
+    const auto retryDeadline = MediaClock::now() + commandTimeout;
+    // LOAD/UNLOAD with LOAD=0 and IMMED=0: wait for unloading to complete.
     const std::array<uint8_t, 6> unload {SCSI::Commands::START_STOP, 0, 0, 0, 0, 0};
     for (unsigned attempt = 0;; ++attempt) {
-      if (MediaClock::now() >= deadline) {
+      if (MediaClock::now() >= retryDeadline) {
         throw exception::TimeOut("Recovery unload command budget exhausted: " + m_SCSIInfo.nst_dev);
       }
       const auto sense =

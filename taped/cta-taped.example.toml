@@ -132,14 +132,13 @@ enabled_experimental_features = ["telemetry"]
   mount_timeout_secs = 900
 
   # Maximum seconds spent loading before the health endpoint reports the session as unhealthy.
-  # Also limits loading readiness retries; an in-flight check and driver refresh may finish after this limit.
+  # Also limits readiness retries, but does not cancel commands already running.
   # Type: integer; default: 900.
   tape_load_timeout_secs = 900
 
   # Maximum time, in seconds, in Unloading before liveness becomes unhealthy. Must be positive.
   # Covers drive acquisition, readiness polling, configuration reset, rewind, label reading and unload.
-  # Also limits cleanup readiness retries; an in-flight check and driver refresh may finish after this limit.
-  # This health limit does not cancel blocking kernel operations.
+  # Also limits cleanup readiness retries, but does not cancel commands already running.
   # Type: integer; default: 900.
   tape_unload_timeout_secs = 900
 
