@@ -30,6 +30,12 @@ public:
 
   void transferFailed(const std::string& failureReason, log::LogContext& lc) override { failures++; }
 
+#ifdef CTA_PGSCHED
+  // Base ArchiveJob::prepareFailTransfer() dereferences m_dbJob, which this mock never sets:
+  // without this override, the pgsched failure-batching path (MigrationReportPacker) segfaults.
+  void prepareFailTransfer(const std::string& failureReason) override { failures++; }
+#endif
+
   virtual void reportJobSucceeded() { completes++; }
 
   virtual void validate() override {}

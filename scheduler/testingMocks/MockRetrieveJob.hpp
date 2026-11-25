@@ -33,6 +33,12 @@ public:
 
   void transferFailed(const std::string& failureReason, cta::log::LogContext&) override { failures++; };
 
+#ifdef CTA_PGSCHED
+  // Base RetrieveJob::prepareFailTransfer() dereferences m_dbJob, which this mock never sets:
+  // without this override, the pgsched failure-batching path (RecallReportPacker) segfaults.
+  void prepareFailTransfer(const std::string& failureReason) override { failures++; }
+#endif
+
   std::optional<std::string> diskSystemName() override { return m_diskSystemName; }
 
   void setDiskSystemName(std::string diskSystemName) {  //allow tests to optionally set a disk system name

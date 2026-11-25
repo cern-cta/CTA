@@ -34,13 +34,12 @@ public:
   explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
 
   /**
-  * Sets the status of the job as failed in the Scheduler DB
-  *
-  * @param failureReason  The reason of the failure as string
-  * @param lc             The log context
-  *
-  * @return void
-  */
+   * Not supported under pgsched: MigrationReportPacker/RecallReportPacker never call this -
+   * they accumulate failures via prepareFailTransfer() and flush them through
+   * ArchiveMount::failTransferBatch() instead. Kept only because SchedulerDatabase::ArchiveJob
+   * declares it unconditionally (the objectstore backend's implementation is the real one).
+   * Throws cta::exception::NotImplementedException.
+   */
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
   /**
@@ -59,13 +58,12 @@ public:
   void prepareFailReport(const std::string& failureReason) override;
 
   /**
-  * Sets the status of the report of the archive job to failed in Scheduler DB
-  *
-  * @param failureReason   The failure reason as string
-  * @param lc              The log context
-  *
-  * @return void
-  */
+   * Not supported under pgsched: MigrationReportPacker/RecallReportPacker never call this -
+   * they accumulate report failures via prepareFailReport() and flush them through
+   * ArchiveMount::failReportBatch() instead. Kept only because SchedulerDatabase::ArchiveJob
+   * declares it unconditionally (the objectstore backend's implementation is the real one).
+   * Throws cta::exception::NotImplementedException.
+   */
   void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
   /**
@@ -115,32 +113,6 @@ public:
   * Reset all data members to return the job object to the pool
   */
   void reset();
-
-  /**
-  * Handles the case when the job has exceeded its total retry limit.
-  * Marks the job for failure reporting and updates its status in the database.
-  *
-  * @param txn The transaction context for database operations.
-  * @param lc The logging context for structured logging.
-  * @param reason The textual explanation for the failure.
-  */
-  void handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
-                                log::LogContext& lc,
-                                [[maybe_unused]] const std::string& reason);
-
-  /**
-  * Requeues the job to a same/new (keepMountId) mount after a failure.
-  * Resets mount-related retry counters and updates the job in the DB.
-  *
-  * @param txn The transaction context for database operations.
-  * @param lc The logging context for structured logging.
-  * @param reason The textual explanation for the failure.
-  * @param keepMountId If false, the job will be requeues with NULL Mount ID, otherwise same Mount ID will be used
-  */
-  void requeueJobToMount(cta::schedulerdb::Transaction& txn,
-                         log::LogContext& lc,
-                         [[maybe_unused]] const std::string& reason,
-                         bool keepMountId);
 
   postgres::ArchiveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;

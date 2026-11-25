@@ -2169,9 +2169,15 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
         ASSERT_NE(0, retrieveJobList.size());
         // Validate we got the right file
         ASSERT_EQ(archiveFileId, retrieveJobList.front()->archiveFile.archiveFileID);
-        retrieveJobList.front()->transferFailed("Retrieve failed (mount " + std::to_string(mountPass) + ", attempt "
-                                                  + std::to_string(i) + ")",
-                                                lc);
+        // Simulate the transfer failing exactly as RecallReportPacker does: accumulate via
+        // prepareFailTransfer() (in-memory only), then flush through RetrieveMount::failTransferBatch().
+        retrieveJobList.front()->prepareFailTransfer("Retrieve failed (mount " + std::to_string(mountPass)
+                                                     + ", attempt " + std::to_string(i) + ")");
+        {
+          std::vector<std::unique_ptr<cta::RetrieveJob>> failBatch;
+          failBatch.push_back(std::move(retrieveJobList.front()));
+          retrieveMount->failTransferBatch(failBatch, lc);
+        }
       }
       if (mountPass == 1) {
         // Then the request should be gone
@@ -2421,9 +2427,15 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
         ASSERT_NE(0, retrieveJobList.size());
         // Validate we got the right file
         ASSERT_EQ(archiveFileId, retrieveJobList.front()->archiveFile.archiveFileID);
-        retrieveJobList.front()->transferFailed("Retrieve failed (mount " + std::to_string(mountPass) + ", attempt "
-                                                  + std::to_string(i) + ")",
-                                                lc);
+        // Simulate the transfer failing exactly as RecallReportPacker does: accumulate via
+        // prepareFailTransfer() (in-memory only), then flush through RetrieveMount::failTransferBatch().
+        retrieveJobList.front()->prepareFailTransfer("Retrieve failed (mount " + std::to_string(mountPass)
+                                                     + ", attempt " + std::to_string(i) + ")");
+        {
+          std::vector<std::unique_ptr<cta::RetrieveJob>> failBatch;
+          failBatch.push_back(std::move(retrieveJobList.front()));
+          retrieveMount->failTransferBatch(failBatch, lc);
+        }
       }
       if (mountPass == 1) {
         // Then the request should be gone
@@ -2439,19 +2451,33 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     // The failed queue should be empty
     auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10, lc);
     ASSERT_EQ(0, retrieveJobFailedList.size());
-    // The failure should be on the jobs to report queue
-    auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
-    ASSERT_EQ(1, retrieveJobToReportList.size());
-    // Fail the report
-    retrieveJobToReportList.front()->reportFailed("Report failed once", lc);
+    // The failure should be on the jobs to report queue. Fetched at the SchedulerDatabase level
+    // (rather than via scheduler.getNextRetrieveJobsToReportBatch(), which wraps each job in a
+    // cta::RetrieveJob whose underlying SchedulerDatabase::RetrieveJob is private) so the raw
+    // pointer can be fed into failRetrieveJobBatchReport() below.
+    auto& db = getSchedulerDB();
+    auto retrieveJobToReportList = db.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_EQ(1u, retrieveJobToReportList.size());
+    // Fail the report exactly as Scheduler::reportRetrieveJobsBatch() does under pgsched:
+    // accumulate via prepareFailReport() (in-memory only), then flush through
+    // RelationalDB::failRetrieveJobBatchReport().
+    retrieveJobToReportList.front()->prepareFailReport("Report failed once");
+    {
+      std::vector<cta::SchedulerDatabase::RetrieveJob*> failBatch {retrieveJobToReportList.front().get()};
+      db.failRetrieveJobBatchReport(failBatch, lc);
+    }
     // Job should still be on the report queue
-    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
-    ASSERT_EQ(1, retrieveJobToReportList.size());
+    retrieveJobToReportList = db.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_EQ(1u, retrieveJobToReportList.size());
     // Fail the report again
-    retrieveJobToReportList.front()->reportFailed("Report failed twice", lc);
+    retrieveJobToReportList.front()->prepareFailReport("Report failed twice");
+    {
+      std::vector<cta::SchedulerDatabase::RetrieveJob*> failBatch {retrieveJobToReportList.front().get()};
+      db.failRetrieveJobBatchReport(failBatch, lc);
+    }
     // Job should be gone from the report queue
-    retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
-    ASSERT_EQ(0, retrieveJobToReportList.size());
+    retrieveJobToReportList = db.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_EQ(0u, retrieveJobToReportList.size());
   }
 
   {
@@ -2460,6 +2486,336 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     ASSERT_EQ(1, retrieveJobFailedList.size());
   }
 }
+
+#ifdef CTA_PGSCHED
+// Exercises Scheduler::reportArchiveJobsBatch()'s pgsched failure-accumulation path, which no
+// other test reaches: archive_and_retrieve_report_failure (above) fails the report by calling
+// SchedulerDatabase::RetrieveJob::reportFailed() directly on the DB-level job, bypassing
+// Scheduler::report{Archive,Retrieve}JobsBatch() entirely, so it never populates/flushes that
+// function's local pgschedFailedReports accumulator or calls failArchiveJobBatchReport() /
+// failRetrieveJobBatchReport(). Here the failure is injected the way this file already does
+// elsewhere (see retrieve_non_existing_file / retry_archive_until_max_reached's "test://..."
+// URLs): a report URL matching neither the EOS nor the Null regex in
+// disk/DiskReporterFactory.cpp makes createDiskReporter() throw, landing both jobs in
+// pgschedFailedReports instead of the #else/objectstore per-job reportFailed() call.
+TEST_P(SchedulerTest, archive_report_failure_batch_pgsched) {
+  using namespace cta;
+
+  Scheduler& scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  // Queue two archive requests whose success-report URL is deliberately unparsable.
+  for (int i = 0; i < 2; ++i) {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID" + std::to_string(i);
+    request.fileSize = 100 * 1000 * 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL" + std::to_string(i);
+    request.storageClass = s_storageClassName;
+    request.archiveReportURL = "test://unparsable-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
+    const uint64_t archiveFileId =
+      scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   libraryComment);
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  {
+    // Emulate a tape server: mount, transfer both files, report them transferred to tape.
+    std::unique_ptr<cta::TapeMount> mount;
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(2, 300 * 1000 * 1000, lc);
+    ASSERT_EQ(2, archiveJobBatch.size());
+    std::queue<std::unique_ptr<cta::ArchiveJob>> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
+    uint64_t fSeq = 1;
+    for (auto& job : archiveJobBatch) {
+      job->tapeFile.blockId = fSeq;
+      job->tapeFile.fSeq = fSeq;
+      job->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+      job->tapeFile.fileSize = job->archiveFile.fileSize;
+      job->tapeFile.copyNb = 1;
+      job->validate();
+      sDBarchiveJobBatch.emplace(std::move(job));
+      ++fSeq;
+    }
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
+    ASSERT_EQ(0u, failedToReportArchiveJobs.size());
+    archiveMount->complete();
+  }
+
+  disk::DiskReporterFactory factory;
+
+  // First report attempt: both jobs' disk reporter fails to launch. reportArchiveJobsBatch()
+  // must not propagate the failure, and - since totalReportRetries=1 is under the default
+  // maxReportRetries=2 (schedulerdb::ArchiveRequest::REPORT_RETRIES) - both jobs must come back
+  // requeued for another report attempt, not yet in the failed queue. This is the "under budget"
+  // bucket of ArchiveJobQueueRow::failReportBatchRequeue().
+  {
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
+    ASSERT_EQ(2u, jobsToReport.size());
+    log::TimingList timings;
+    utils::Timer t;
+    EXPECT_NO_THROW(scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc));
+  }
+  ASSERT_EQ(2u, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
+  ASSERT_EQ(0u, scheduler.getArchiveJobsFailedSummary(lc).totalFiles);
+
+  // Second report attempt: totalReportRetries reaches 2 == maxReportRetries for both jobs within
+  // the SAME batched call - the "exceeded" bucket of
+  // ArchiveJobQueueRow::failReportBatchExceedRetries() - moving both to ARCHIVE_FAILED_QUEUE
+  // together, confirming the batch call (not per-job reportFailed()) handled them.
+  {
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
+    ASSERT_EQ(2u, jobsToReport.size());
+    log::TimingList timings;
+    utils::Timer t;
+    EXPECT_NO_THROW(scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc));
+  }
+  ASSERT_EQ(0u, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
+  ASSERT_EQ(2u, scheduler.getArchiveJobsFailedSummary(lc).totalFiles);
+}
+
+// Retrieve-side mirror of archive_report_failure_batch_pgsched above: exercises
+// Scheduler::reportRetrieveJobsBatch()'s pgsched failure-accumulation path
+// (prepareFailReport() + one batched failRetrieveJobBatchReport() call), which - like the
+// archive side - no other test reaches.
+TEST_P(SchedulerTest, retrieve_report_failure_batch_pgsched) {
+  using namespace cta;
+
+  Scheduler& scheduler = getScheduler();
+  auto& catalogue = getCatalogue();
+
+  setupDefaultCatalogue();
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  disk::DiskReporterFactory factory;
+
+  // Create the environment for the migration to happen (library + tape)
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   libraryComment);
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  // Archive two files (with a GOOD report URL) so they are actually on tape and retrievable.
+  std::vector<uint64_t> archiveFileIds;
+  for (int i = 0; i < 2; ++i) {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID" + std::to_string(i);
+    request.fileSize = 100 * 1000 * 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL" + std::to_string(i);
+    request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
+    const uint64_t archiveFileId =
+      scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+    archiveFileIds.push_back(archiveFileId);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  {
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
+    std::unique_ptr<cta::TapeMount> mount;
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(2, 300 * 1000 * 1000, lc);
+    ASSERT_EQ(2, archiveJobBatch.size());
+    std::queue<std::unique_ptr<cta::ArchiveJob>> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
+    uint64_t fSeq = 1;
+    for (auto& job : archiveJobBatch) {
+      job->tapeFile.blockId = fSeq;
+      job->tapeFile.fSeq = fSeq;
+      job->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+      job->tapeFile.fileSize = job->archiveFile.fileSize;
+      job->tapeFile.copyNb = 1;
+      job->validate();
+      sDBarchiveJobBatch.emplace(std::move(job));
+      ++fSeq;
+    }
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
+    ASSERT_EQ(0u, failedToReportArchiveJobs.size());
+    archiveMount->complete();
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(10, lc);
+    ASSERT_EQ(2u, jobsToReport.size());
+    log::TimingList archiveTimings;
+    utils::Timer archiveTimer;
+    scheduler.reportArchiveJobsBatch(jobsToReport, factory, archiveTimings, archiveTimer, lc);
+    ASSERT_EQ(0u, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
+  }
+
+  // Queue two retrieve requests for those files, with a deliberately unparsable success-report
+  // URL (same mechanism as the archive-side test above).
+  for (const auto archiveFileId : archiveFileIds) {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file";
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileId;
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL" + std::to_string(archiveFileId);
+    request.errorReportURL = "null:";
+    request.retrieveReportURL = "test://unparsable-report-url";
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+    scheduler.queueRetrieve("disk_instance", request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  {
+    // Emulate a tape server: mount, transfer both retrievals successfully.
+    std::unique_ptr<cta::TapeMount> mount;
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve, mount.get()->getMountType());
+    std::unique_ptr<cta::RetrieveMount> retrieveMount;
+    retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
+    ASSERT_NE(nullptr, retrieveMount.get());
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
+    auto jobBatch = retrieveMount->getNextJobBatch(2, 300 * 1000 * 1000, lc);
+    ASSERT_EQ(2u, jobBatch.size());
+    std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
+    for (auto& job : jobBatch) {
+      job->asyncSetSuccessful();
+      jobQueue.push(std::move(job));
+    }
+    retrieveMount->setJobBatchTransferred(jobQueue, lc);
+  }
+
+  // First report attempt: both jobs' disk reporter fails to launch - requeued, not yet failed
+  // ("under budget" bucket, totalReportRetries=1 < default maxReportRetries=2).
+  {
+    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_EQ(2u, jobsToReport.size());
+    log::TimingList timings;
+    utils::Timer t;
+    EXPECT_NO_THROW(scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc));
+  }
+  ASSERT_EQ(2u, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
+  ASSERT_EQ(0u, scheduler.getNextRetrieveJobsFailedBatch(10, lc).size());
+
+  // Second report attempt: totalReportRetries reaches 2 == maxReportRetries for both jobs within
+  // the SAME batched call - the "exceeded" bucket - moving both to the failed queue together.
+  {
+    auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
+    ASSERT_EQ(2u, jobsToReport.size());
+    log::TimingList timings;
+    utils::Timer t;
+    EXPECT_NO_THROW(scheduler.reportRetrieveJobsBatch(jobsToReport, factory, timings, t, lc));
+  }
+  ASSERT_EQ(0u, scheduler.getNextRetrieveJobsToReportBatch(10, lc).size());
+  ASSERT_EQ(2u, scheduler.getNextRetrieveJobsFailedBatch(10, lc).size());
+}
+#endif  // CTA_PGSCHED
 
 TEST_P(SchedulerTest, retry_archive_until_max_reached) {
   using namespace cta;
@@ -2549,7 +2905,14 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
       ASSERT_NE(0, archiveJobList.size());
       // Validate we got the right file
       ASSERT_EQ(archiveFileId, archiveJobList.front()->archiveFile.archiveFileID);
-      archiveJobList.front()->transferFailed("Archive failed", lc);
+      // Simulate the transfer failing exactly as MigrationReportPacker does: accumulate via
+      // prepareFailTransfer() (in-memory only), then flush through ArchiveMount::failTransferBatch().
+      archiveJobList.front()->prepareFailTransfer("Archive failed");
+      {
+        std::vector<std::unique_ptr<cta::ArchiveJob>> failBatch;
+        failBatch.push_back(std::move(archiveJobList.front()));
+        archiveMount->failTransferBatch(failBatch, lc);
+      }
     }
     // Then the request should be gone
     ASSERT_EQ(0, archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size());

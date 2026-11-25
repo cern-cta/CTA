@@ -5,13 +5,7 @@
 
 #include "scheduler/rdbms/ArchiveRdbJob.hpp"
 
-#include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
-// includes for debug timings only below
-#include "common/log/TimingList.hpp"
-#include "common/utils/Timer.hpp"
-#include "common/utils/utils.hpp"
 
 namespace cta::schedulerdb {
 
@@ -102,62 +96,6 @@ void ArchiveRdbJob::reset() {
   // No need to reset the connection pool (m_connPool) as it's shared and passed by reference
 }
 
-void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
-                                             log::LogContext& lc,
-                                             [[maybe_unused]] const std::string& reason) {
-  if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser
-      && m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
-    lc.log(log::WARNING,
-           std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status)
-             + std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure or "
-                           "AJS_ToReportToRepackForFailure."));
-  }
-
-  try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING,
-             "ArchiveRdbJob::handleExceedTotalRetries(): ArchiveJobQueueRow::updateFailedJobStatus() failed; job not "
-             "found (possibly deleted).");
-    }
-    reportType = ReportType::FailureReport;
-  } catch (const exception::Exception& ex) {
-    cta::log::ScopedParamContainer(lc)
-      .add(semconv::log::exceptionMessage, ex.getMessageValue())
-      .log(cta::log::WARNING, "Failed to update job status for reporting failure. Aborting transaction.");
-    txn.abort();
-  }
-}
-
-void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
-                                      log::LogContext& lc,
-                                      [[maybe_unused]] const std::string& reason,
-                                      bool keepMountId) {
-  std::string log_msg = "In ArchiveRdbJob::requeueJobToMount(): requeueFailedJob() to same mount";
-  if (!keepMountId) {
-    m_jobRow.retriesWithinMount = 0;
-    log_msg = "In ArchiveRdbJob::requeueJobToMount(): requeueFailedJob() to new mount";
-  }
-  try {
-    // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
-    uint64_t nrows = 0;
-    auto status = isRepack ? ArchiveJobStatus::AJS_ToTransferForRepack : ArchiveJobStatus::AJS_ToTransferForUser;
-    nrows = m_jobRow.requeueFailedJob(txn, status, keepMountId, isRepack);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING, log_msg + std::string(" failed. Job not found in DB."));
-    }
-    // since requeueing, we do not report and we do not
-    // set reportType to a particular value here
-  } catch (const exception::Exception& ex) {
-    cta::log::ScopedParamContainer(lc)
-      .add(semconv::log::exceptionMessage, ex.getMessageValue())
-      .log(log::ERR, log_msg + std::string(" failed. Aborting transaction."));
-    txn.abort();
-  }
-}
-
 void ArchiveRdbJob::prepareFailTransfer(const std::string& failureReason) {
   m_jobRow.updateJobRowFailureLog(failureReason);
   m_jobRow.updateRetryCounts(m_mountId);
@@ -170,106 +108,31 @@ void ArchiveRdbJob::prepareFailReport(const std::string& failureReason) {
   m_jobRow.updateJobRowFailureLog(failureReason, true);
 }
 
-void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
-  log::ScopedParamContainer(lc)
-    .add("jobID", jobID)
-    .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-    .add("mountId", m_mountId)
-    .add("tapePool", m_tapePool)
-    .add("failureReason", m_jobRow.failureLogs.value_or(""));
-  lc.log(log::WARNING, "In schedulerdb::ArchiveRdbJob::failTransfer(): received failed job to be reported.");
-  m_jobRow.updateJobRowFailureLog(failureReason);
-
-  // For multiple jobs existing more might need to be done to ensure the file on EOS
-  // is deleted only when both requests succeed !
-  //if (m_jobRow.reqJobCount > 1){
-  //query
-  //}
-
-  // I need to add handling of multiple JOBS OF THE SAME REQUEST in cases when
-  // not all jobs succeeded - do we report failure for all ? - I guess so,
-  // check how this case is handled in the objectstore
-
-  m_jobRow.updateRetryCounts(m_mountId);
-  // for now we do not pur failure log into the DB just log it
-  // not sure if this is necessary
-  //m_jobRow.failureLogs.emplace_back(failureReason);
-  //cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  // here we either decide if we report the failure to user or requeue the job
-  if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
-    handleExceedTotalRetries(txn, lc, failureReason);
-    return;
-  }
-
-  // Removed a dead "force a new mount if the SESSION itself crashed" check that matched
-  // failureReason against a TapeWriteSingleThread log message which is never actually produced
-  // (see git history for details). It could not have worked by construction either: a crash
-  // orphans jobs via TapeWriteSingleThread::requeueUnprocessedTasks() ->
-  // ArchiveMount::requeueJobBatch(), a separate path that never calls failTransfer() at all. The
-  // case this was trying to cover - a job left pinned to a mount that dies later - is already
-  // handled by the garbage collector (ArchiveInactiveMountPendingQueueRoutine), which resets
-  // MOUNT_ID once it detects the mount is gone. Matches ArchiveJobQueue.cpp's
-  // failTransferBatchRequeue(), which had the same (equally dead) check.
-  if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
-    requeueJobToMount(txn, lc, failureReason, false /* keepMountId */);
-  } else {
-    requeueJobToMount(txn, lc, failureReason, true /* keepMountId */);
-  }
+void ArchiveRdbJob::failTransfer([[maybe_unused]] const std::string& failureReason,
+                                 [[maybe_unused]] log::LogContext& lc) {
+  // Never reached under pgsched: MigrationReportPacker calls prepareFailTransfer() (above) to
+  // accumulate, then ArchiveMount::failTransferBatch() to flush via
+  // ArchiveJobQueueRow::failTransferBatchRequeue()/failTransferBatchExceedRetries(), which
+  // implement exactly the single-job logic this method used to contain - see git history for the
+  // pre-batching version and docs/content/dev/internals/shared-state/scheduler-db/postgresql/
+  // failure-handling.md for the current design. Only the objectstore backend's
+  // ArchiveJob::failTransfer() calls this interface method for real.
+  throw cta::exception::NotImplementedException(
+    "ArchiveRdbJob::failTransfer(): not supported under pgsched; use prepareFailTransfer() + "
+    "ArchiveMount::failTransferBatch() instead.");
 }
 
-void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext& lc) {
-  log::ScopedParamContainer(lc)
-    .add("jobID", jobID)
-    .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-    .add("mountId", m_mountId)
-    .add("tapePool", m_tapePool)
-    .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""));
-  lc.log(log::INFO, "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
-  m_jobRow.updateJobRowFailureLog(failureReason, true);
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  try {
-    cta::utils::Timer t;
-    uint64_t deletionCount = 0;
-    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      // USER: moves the row to FAILED_QUEUE and deletes it from ACTIVE.
-      // REPACK: recovers a lost updateRepackJobSuccess() write instead (see that function) -
-      // completing a multi-copy request's last copy here legitimately updates more than one row.
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion, isRepack);
-      deletionCount = nrows;
-      if (isRepack ? nrows < 1 : nrows != 1) {
-        lc.log(log::WARNING,
-               "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): reporting failed terminally, but "
-               "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
-      }
-      // requeue job to failure table !
-    } else {
-      // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
-      m_jobRow.isReporting = false;
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status, isRepack);
-      if (nrows != 1) {
-        lc.log(
-          log::WARNING,
-          "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
-          "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
-      }
-    }
-    txn.commit();
-    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      log::ScopedParamContainer(lc)
-        .add("rowDeletionTime", t.secs())
-        .add("rowDeletionCount", deletionCount)
-        .log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
-    }
-  } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer(lc)
-      .add(semconv::log::exceptionMessage, ex.getMessageValue())
-      .log(cta::log::WARNING,
-           "In schedulerdb::ArchiveRdbJob::failReport(): failed to update job status for failed "
-           "report case. Aborting the transaction.");
-    txn.abort();
-  }
-  return;
+void ArchiveRdbJob::failReport([[maybe_unused]] const std::string& failureReason,
+                               [[maybe_unused]] log::LogContext& lc) {
+  // Never reached under pgsched: MigrationReportPacker calls prepareFailReport() (above) to
+  // accumulate, then ArchiveMount::failReportBatch() to flush via
+  // ArchiveJobQueueRow::failReportBatchRequeue()/failReportBatchExceedRetries(), which implement
+  // exactly the single-job logic this method used to contain - see git history for the
+  // pre-batching version. Only the objectstore backend's ArchiveJob::failReport() calls this
+  // interface method for real.
+  throw cta::exception::NotImplementedException(
+    "ArchiveRdbJob::failReport(): not supported under pgsched; use prepareFailReport() + "
+    "ArchiveMount::failReportBatch() instead.");
 }
 
 void ArchiveRdbJob::bumpUpTapeFileCount(uint64_t newFileCount) {

@@ -26,9 +26,13 @@ Two related but distinct mechanisms are built this way, triggered from different
 [batching *report*-retry decisions](#batching-failed-report-retries) further down.
 
 Both are implemented for the postgres scheduler backend (pgsched) only. The objectstore backend
-always reports file by file; its `prepareFailTransfer()`/`failTransferBatch()` (and the report-side
-equivalents) are unimplemented stubs (`NotImplementedException`) for exactly this reason — see
-[Why the single-job path still exists](#why-the-single-job-path-still-exists) below.
+always reports file by file: `prepareFailTransfer()`/`prepareFailReport()` are declared only under
+`#ifdef CTA_PGSCHED` on the `SchedulerDatabase::ArchiveJob`/`RetrieveJob` interface, so they don't
+exist at all in an objectstore build; `failTransferBatch()`/`failReportBatch()` (declared
+unconditionally, since `ArchiveMount`/`RetrieveMount`'s batch wrappers call them regardless of
+backend) are implemented there as unimplemented stubs (`NotImplementedException`) instead — see
+[Why `failTransfer()`/`failReport()` still exist](#why-failtransferfailreport-still-exist-as-stubs)
+below.
 
 ```mermaid
 flowchart TB
@@ -78,16 +82,6 @@ exceeded `maxTotalRetries`, then issues **one** SQL statement per bucket:
 
 This is live for repack on both archive and retrieve, as well as for ordinary user jobs — the
 counters and retry/exceed logic are identical; only the destination queue/status differs.
-
-#### Append-once `FAILURE_LOG`
-
-Each row's `FAILURE_LOG`/`REPORT_FAILURE_LOG` column must never be duplicated across retries.
-`updateJobRowFailureLog()` appends onto a value that was *already loaded from the DB column* at
-row-construction time, so by the time the batched SQL runs, the in-memory string already contains
-old+new text. The SQL binds that string directly (`:FL`) rather than re-concatenating it with
-`||`/`COALESCE` against the DB column — the few places that still use `||` are bound from a fresh
-literal marker (e.g. `"UNPROCESSED_TASK_QUEUE_JOB_REQUEUED"`), not from the loaded log, and are
-correctly additive.
 
 #### Repack reporting is a separate mechanism entirely
 
@@ -147,9 +141,8 @@ over budget — or `NoReportRequired`, which is permanently true for every repac
 
 For repack, landing in the "exceeded report retries" bucket doesn't mean the *job* failed — it
 means the DB *write* of an already-successful transfer failed repeatedly. Recovery means replaying
-that write via `updateRepackJobSuccess()`, exactly like the single-job path
-(`ArchiveRdbJob::failReport()` → `updateJobStatusForFailedReport()`) already does, not moving the
-row to `ARCHIVE_FAILED_QUEUE`: only `updateRepackJobSuccess()` knows whether a multi-copy request's
+that write via `updateRepackJobSuccess()`, not moving the row to `ARCHIVE_FAILED_QUEUE`: only
+`updateRepackJobSuccess()` knows whether a multi-copy request's
 other copies have also succeeded, and bypassing it would risk
 `getNextSuccessfulArchiveRepackReportBatch()` deleting the source file before every copy exists.
 `ArchiveJobQueueRow::failReportBatchExceedRetries()` branches on `isRepack` for exactly this reason
@@ -481,18 +474,25 @@ dense failure burst within a single flush window. But if a future deployment nee
 storm is exactly the moment you don't want the system falling back to smaller, more numerous DB
 round trips than the success path was tuned for.
 
-## Why the single-job path still exists
+## Why `failTransfer()`/`failReport()` still exist (as stubs)
 
-`ArchiveRdbJob`/`RetrieveRdbJob`'s `failTransfer()` → `requeueFailedJob()`/`updateFailedJobStatus()`/
-`handleExceedTotalRetries()` is the pre-batching, one-job-at-a-time mechanism. Under `CTA_PGSCHED`, no
-production taped session calls it any more — `MigrationReportPacker`/`RecallReportPacker` only ever
-call it from their `#else` (objectstore) branch.
+`ArchiveRdbJob`/`RetrieveRdbJob::failTransfer()`/`failReport()` used to be the pre-batching,
+one-job-at-a-time mechanism (`requeueFailedJob()`/`updateFailedJobStatus()`, driven by two private
+helpers, `handleExceedTotalRetries()`/`requeueJobToMount()`). Under `CTA_PGSCHED`, no production
+code calls them any more — `MigrationReportPacker`/`RecallReportPacker` only ever call
+`transferFailed()`/`reportFailed()` (which delegate to these) from their `#else` (objectstore)
+branch, and that branch is compiled out under pgsched. The two private helpers have been deleted;
+`failTransfer()`/`failReport()` themselves are now `throw cta::exception::NotImplementedException(...)`
+stubs on the pgsched side.
 
-It cannot simply be deleted or made to throw, because it is part of the common
-`SchedulerDatabase::ArchiveJob`/`RetrieveJob` interface that both backends must implement, and
-`SchedulerDatabaseTest.cpp` exercises it directly (`popAndRequeueArchiveRequests`) against *both*
-backends via `INSTANTIATE_TEST_CASE_P`. That generic test cannot be switched to the batched
-`prepareFailTransfer()`/`failTransferBatch()` calls instead, because those two methods are
-deliberately unimplemented (`throw NotImplementedException`) on the objectstore side — batching is
-pgsched-only by design. So `failTransfer()` stays as the one call both backends genuinely support,
-even though the taped session's own report packers never reach it under pgsched today.
+They cannot be deleted outright, because they are part of the common
+`SchedulerDatabase::ArchiveJob`/`RetrieveJob` interface that both backends must implement
+unconditionally — unlike `prepareFailTransfer()`/`prepareFailReport()`, which are declared only
+under `#ifdef CTA_PGSCHED` and so don't exist on the objectstore side at all, `failTransfer()`/
+`failReport()` are declared unconditionally, and the objectstore backend's own implementation of
+them is the real, live one. `SchedulerDatabaseTest.cpp`'s `popAndRequeueArchiveRequests` exercises
+this interface method directly against *both* backends via `INSTANTIATE_TEST_CASE_P`; since the
+batched path doesn't exist on the objectstore side, that one call site is split with
+`#ifdef CTA_PGSCHED`: the pgsched branch calls `prepareFailTransfer()` +
+`ArchiveMount::failTransferBatch()` (exercising the real, live pgsched path), the `#else` branch
+keeps calling `failTransfer()` directly (the objectstore backend's real, live implementation).

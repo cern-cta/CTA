@@ -5,14 +5,9 @@
 
 #include "scheduler/rdbms/RetrieveRdbJob.hpp"
 
-#include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
-#include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
-// includes for debug timings only below
-#include "common/log/TimingList.hpp"
-#include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
+#include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
 
 namespace cta::schedulerdb {
 
@@ -134,66 +129,6 @@ void RetrieveRdbJob::reset() {
   reportType = ReportType::NoReportRequired;
 }
 
-void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
-                                              log::LogContext& lc,
-                                              [[maybe_unused]] const std::string& reason) {
-  if (m_jobRow.status != RetrieveJobStatus::RJS_ToTransfer) {
-    lc.log(log::WARNING,
-           std::string("RetrieveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status)
-             + std::string(". Assuming ToTransfer anyway and changing status to RJS_ToReportToUserForFailure."));
-  }
-
-  try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING,
-             "RetrieveRdbJob::handleExceedTotalRetries(): ArchiveJobQueueRow::updateFailedJobStatus() failed; job not "
-             "found (possibly deleted).");
-    }
-    reportType = ReportType::FailureReport;
-  } catch (const exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::WARNING, "Failed to update job status for reporting failure. Aborting transaction.");
-    txn.abort();
-  }
-}
-
-void RetrieveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
-                                       log::LogContext& lc,
-                                       [[maybe_unused]] const std::string& reason,
-                                       bool keepMountId) {
-  std::string log_msg = "In RetrieveRdbJob::requeueJobToMount(): requeueFailedJob() to same mount";
-  if (!keepMountId) {
-    log_msg = "In RetrieveRdbJob::requeueJobToMount(): requeueFailedJob() to new mount";
-    // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
-    // change VID if alternate exists trying to fetch the file from another tape !
-    m_jobRow.retriesWithinMount = 0;
-    auto [newVid, index] = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
-    std::vector<std::string> alternateCopyNbsVec = cta::utils::splitStringToVector(m_jobRow.alternateCopyNbs);
-    std::vector<std::string> alternateFSeqVec = cta::utils::splitStringToVector(m_jobRow.alternateFSeq);
-    std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
-    m_jobRow.copyNb = static_cast<uint8_t>(std::stoi(alternateCopyNbsVec[index]));
-    m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
-    m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
-    m_jobRow.vid = newVid;
-  }
-  try {
-    // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, keepMountId, isRepack);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::ERR, log_msg + std::string(" failed. Job not found in DB."));
-    }
-    // since requeueing, we do not report and we do not
-    // set reportType to a particular value here
-  } catch (const exception::Exception& ex) {
-    lc.log(log::ERR, log_msg + std::string(" failed. Aborting txn: " + ex.getMessageValue()));
-    txn.abort();
-  }
-}
-
 #ifdef CTA_PGSCHED
 void RetrieveRdbJob::prepareFailTransfer(const std::string& failureReason) {
   m_jobRow.updateJobRowFailureLog(failureReason);
@@ -222,94 +157,28 @@ void RetrieveRdbJob::prepareFailReport(const std::string& failureReason) {
 }
 #endif
 
-void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
-  log::ScopedParamContainer(lc)
-    .add("jobID", jobID)
-    .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-    .add("mountId", m_mountId)
-    .add("tapePool", m_tapePool)
-    .add("failureReason", m_jobRow.failureLogs.value_or(""));
-  lc.log(log::INFO, "In schedulerdb::RetrieveRdbJob::failTransfer(): received failed job to be reported.");
-  m_jobRow.updateJobRowFailureLog(failureReason);
-  m_jobRow.updateRetryCounts(m_mountId);
-
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  // here we either decide if we report the failure to user or requeue the job
-  if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
-    handleExceedTotalRetries(txn, lc, failureReason);
-    return;
-  }
-  // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
-  if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
-    requeueJobToMount(txn, lc, failureReason, false /* keepMountId */);
-  } else {
-    requeueJobToMount(txn, lc, failureReason, true /* keepMountId */);
-  }
+void RetrieveRdbJob::failTransfer([[maybe_unused]] const std::string& failureReason,
+                                  [[maybe_unused]] log::LogContext& lc) {
+  // Never reached under pgsched: RecallReportPacker calls prepareFailTransfer() (below) to
+  // accumulate - including the alternate-VID rotation this method used to duplicate - then
+  // RetrieveMount::failTransferBatch() to flush via
+  // RetrieveJobQueueRow::failTransferBatchRequeue()/failTransferBatchExceedRetries(). See git
+  // history for the pre-batching version and docs/content/dev/internals/shared-state/
+  // scheduler-db/postgresql/failure-handling.md for the current design. Only the objectstore
+  // backend's RetrieveJob::failTransfer() calls this interface method for real.
+  throw cta::exception::NotImplementedException(
+    "RetrieveRdbJob::failTransfer(): not supported under pgsched; use prepareFailTransfer() + "
+    "RetrieveMount::failTransferBatch() instead.");
 }
 
-void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContext& lc) {
-  lc.log(log::WARNING, "In schedulerdb::RetrieveRdbJob::failReport(): passes as half-dummy implementation !");
-  m_jobRow.updateJobRowFailureLog(failureReason, true);
-  log::ScopedParamContainer(lc)
-    .add("jobID", jobID)
-    .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-    .add("mountId", m_mountId)
-    .add("tapePool", m_tapePool)
-    .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
-    .log(log::INFO, "In schedulerdb::RetrieveRdbJob::failReport(): reporting failed.");
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  try {
-    cta::utils::Timer t;
-    uint64_t nrowsdeleted = 0;
-    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      // the job will be moved to FAILED_QUEUE table, and delted from the ACTIVE_QUEUE.
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::ReadyForDeletion);
-      nrowsdeleted = nrows;
-      if (nrows != 1) {
-        log::ScopedParamContainer(lc)
-          .add("jobID", jobID)
-          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-          .add("mountId", m_mountId)
-          .add("tapePool", m_tapePool)
-          .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
-          .log(
-            log::WARNING,
-            "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): reporting failed terminally, but "
-            "no job was found in the DB (possibly deleted by frontend cancelRetrieveJob() call in the meantime).");
-      }
-      // requeue job to failure table !
-    } else {
-      // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
-      m_jobRow.isReporting = false;
-      uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
-      if (nrows != 1) {
-        log::ScopedParamContainer(lc)
-          .add("jobID", jobID)
-          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-          .add("mountId", m_mountId)
-          .add("tapePool", m_tapePool)
-          .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
-          .log(
-            log::WARNING,
-            "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
-            "no job was found in the DB (possibly deleted by frontend cancelRetrieveJob() call in the meantime).");
-      }
-    }
-    txn.commit();
-    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      log::ScopedParamContainer(lc)
-        .add("rowDeletionCount", nrowsdeleted)
-        .add("rowDeletionTime", t.secs())
-        .log(log::INFO, "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): deleted jobs");
-    }
-  } catch (exception::Exception& ex) {
-    log::ScopedParamContainer(lc).add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::WARNING,
-           "In schedulerdb::RetrieveRdbJob::failReport(): failed to update job status for failed "
-           "report case. Aborting the transaction.");
-    txn.abort();
-  }
-  return;
+void RetrieveRdbJob::failReport([[maybe_unused]] const std::string& failureReason,
+                                [[maybe_unused]] log::LogContext& lc) {
+  // Never reached under pgsched: RecallReportPacker calls prepareFailReport() (below) to
+  // accumulate, then RelationalDB::failRetrieveJobBatchReport() to flush. See git history for
+  // the pre-batching version. Only the objectstore backend's RetrieveJob::failReport() calls
+  // this interface method for real.
+  throw cta::exception::NotImplementedException(
+    "RetrieveRdbJob::failReport(): not supported under pgsched; use prepareFailReport() instead.");
 }
 
 void RetrieveRdbJob::abort(const std::string& abortReason, log::LogContext& lc) {

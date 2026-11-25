@@ -35,8 +35,30 @@ MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount,
 //Destructor
 //------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker() {
+  // Every statement in this destructor is guarded by the catch-all below: a destructor must
+  // never let an exception escape (it would call std::terminate), so flushFailedJobs() below -
+  // itself already defensive - is exercised under the same blanket guarantee as the logging that
+  // follows it, rather than its own try/catch.
   cta::threading::MutexLocker ml(m_producterProtection);
   try {
+#ifdef CTA_PGSCHED
+    // Best-effort final flush: if the worker thread exited without going through
+    // ReportEndofSession::execute() (an uncaught exception, or the caller never calling
+    // waitThread() before destruction), any jobs already accumulated here would otherwise be
+    // discarded with their in-memory failure state (retry counters, failure log - see
+    // prepareFailTransfer()) lost. The garbage collector would still requeue the job itself, but
+    // that specific failed attempt - and the retry it should have counted against - would be
+    // forgotten. Give it one last chance to reach the DB before reporting it as lost below.
+    const size_t pendingFailedJobs = m_failedArchiveJobs.size();
+    if (pendingFailedJobs > 0) {
+      flushFailedJobs(m_lc);
+      cta::log::ScopedParamContainer(m_lc)
+        .add("failedJobsPendingOnDestruction", pendingFailedJobs)
+        .log(cta::log::WARNING,
+             "In MigrationReportPacker::~MigrationReportPacker(): worker thread left failed jobs "
+             "unflushed; attempted a final flush before destruction.");
+    }
+#endif
     cta::log::ScopedParamContainer params(m_lc);
     if (m_successfulArchiveJobs.size() > 0) {
       params.add("successfulJobsLostInQueue", m_successfulArchiveJobs.size());
@@ -44,11 +66,6 @@ MigrationReportPacker::~MigrationReportPacker() {
     if (m_skippedFiles.size() > 0) {
       params.add("skippedFilesLostInQueue", m_successfulArchiveJobs.size());
     }
-#ifdef CTA_PGSCHED
-    if (m_failedArchiveJobs.size() > 0) {
-      params.add("failedJobsLostInQueue", m_failedArchiveJobs.size());
-    }
-#endif
     if (m_successfulArchiveJobs.size() > 0 || m_skippedFiles.size() > 0) {
       m_lc.log(cta::log::WARNING, "In MigrationReportPacker::~MigrationReportPacker(), still pending jobs to report.");
     }

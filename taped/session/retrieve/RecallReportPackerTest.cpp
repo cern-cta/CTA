@@ -361,6 +361,118 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedFailures
   ASSERT_EQ(1, retrieveMount.completes);
 }
 
+// --- Real (unmocked) RetrieveMount batch-wrapper coverage ---
+//
+// All the pgsched tests above exercise RecallReportPacker's accumulation logic through
+// MockRetrieveMountWithBatch, which overrides cta::RetrieveMount::failTransferBatch() directly -
+// so the real unwrap-and-delegate body of that method (scheduler/RetrieveMount.cpp) never
+// actually runs under test. The test below constructs a real cta::RetrieveMount wrapping a
+// minimal fake SchedulerDatabase::RetrieveMount to close that gap.
+
+// Minimal SchedulerDatabase::RetrieveJob fake: records prepareFailTransfer() calls, nothing else.
+class FakeSchedDbRetrieveJob : public cta::SchedulerDatabase::RetrieveJob {
+public:
+  int prepareFailTransferCalls = 0;
+  std::string lastFailureReason;
+
+  void asyncSetSuccessful() override {}
+
+  void failTransfer(const std::string&, cta::log::LogContext&) override {
+    throw cta::exception::Exception("FakeSchedDbRetrieveJob::failTransfer() should not be called by this test");
+  }
+
+  void failReport(const std::string&, cta::log::LogContext&) override {
+    throw cta::exception::Exception("FakeSchedDbRetrieveJob::failReport() should not be called by this test");
+  }
+
+  void prepareFailTransfer(const std::string& failureReason) override {
+    prepareFailTransferCalls++;
+    lastFailureReason = failureReason;
+  }
+
+  void prepareFailReport(const std::string&) override {}
+
+  void abort(const std::string&, cta::log::LogContext&) override {}
+
+  void initialize(const cta::rdbms::Rset&, bool) override {}
+
+  bool releaseToPool() override { return false; }
+
+  void fail() override {}
+};
+
+// Minimal SchedulerDatabase::RetrieveMount fake: records exactly what failTransferBatch()
+// receives - call count and the raw pointers themselves, in order.
+class FakeSchedDbRetrieveMount : public cta::SchedulerDatabase::RetrieveMount {
+public:
+  std::vector<cta::SchedulerDatabase::RetrieveJob*> lastFailTransferBatch;
+  int failTransferBatchCalls = 0;
+
+  const MountInfo& getMountInfo() override { return mountInfo; }
+
+  std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>
+  getNextJobBatch(uint64_t, uint64_t, cta::log::LogContext&) override {
+    return {};
+  }
+
+  void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>&,
+                       cta::log::LogContext&) override {}
+
+  uint64_t requeueJobBatch(const std::list<std::string>&, cta::log::LogContext&) const override { return 0; }
+
+  void reportTapeSessionState(cta::common::dataStructures::TapeSessionState, time_t) override {}
+
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats&) override {}
+
+  void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>&, cta::log::LogContext&) override {}
+
+  void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>&,
+                              cta::log::LogContext&) override {}
+
+  void addDiskSystemToSkip(const DiskSystemToSkip&) override {}
+
+  void putQueueToSleep(const std::string&, const uint64_t, cta::log::LogContext&) override {}
+
+  void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>& batch, cta::log::LogContext&) override {
+    failTransferBatchCalls++;
+    lastFailTransferBatch = batch;
+  }
+};
+
+// Exposes cta::RetrieveMount's protected (catalogue, dbMount) constructor so the test can wrap a
+// FakeSchedDbRetrieveMount without overriding the method under test - unlike
+// MockRetrieveMount/MockRetrieveMountWithBatch, which both override failTransferBatch() directly.
+class RetrieveMountWithRealDbDelegate : public cta::RetrieveMount {
+public:
+  RetrieveMountWithRealDbDelegate(cta::catalogue::Catalogue& catalogue,
+                                  std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount)
+      : cta::RetrieveMount(catalogue, std::move(dbMount)) {}
+};
+
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RetrieveMountFailTransferBatchVectorOverloadDelegatesToDbMount) {
+  auto catalogue = cta::catalogue::DummyCatalogue();
+  auto dbMountUP = std::make_unique<FakeSchedDbRetrieveMount>();
+  auto* dbMount = dbMountUP.get();
+  RetrieveMountWithRealDbDelegate mount(catalogue, std::move(dbMountUP));
+
+  std::vector<std::unique_ptr<cta::RetrieveJob>> failedJobs;
+  std::vector<cta::SchedulerDatabase::RetrieveJob*> expectedDbJobPtrs;
+  for (int i = 0; i < 3; i++) {
+    auto dbJob = std::make_unique<FakeSchedDbRetrieveJob>();
+    expectedDbJobPtrs.push_back(dbJob.get());
+    failedJobs.push_back(std::make_unique<cta::RetrieveJob>(&mount, std::move(dbJob)));
+  }
+
+  cta::log::StringLogger log("dummy", "RetrieveMountFailTransferBatchVectorOverload", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  mount.failTransferBatch(failedJobs, lc);
+
+  // Real body: unwraps each cta::RetrieveJob to its underlying m_dbJob raw pointer and forwards
+  // the resulting vector, unchanged, to the DB mount - verified here end to end.
+  ASSERT_EQ(1, dbMount->failTransferBatchCalls);
+  ASSERT_EQ(expectedDbJobPtrs, dbMount->lastFailTransferBatch);
+}
+
 #endif  // CTA_PGSCHED
 
 }  // namespace unitTests

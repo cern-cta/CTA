@@ -851,18 +851,29 @@ TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformProducesCorrectRequestJ
   auto mountMoved = createRepackArchiveMount(db, lc, tapePoolMoved, "V-XFORM-MOVED-DST");
   auto jobsMoved = mountMoved->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsMoved.size());
-  jobsMoved.front()->failTransfer("simulated terminal transfer failure for moved copy", lc);
+  // Simulate the physical transfer failing exactly as MigrationReportPacker does: accumulate via
+  // prepareFailTransfer() (in-memory only), then flush through ArchiveMount::failTransferBatch().
+  jobsMoved.front()->prepareFailTransfer("simulated terminal transfer failure for moved copy");
+  {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {jobsMoved.front().get()};
+    mountMoved->failTransferBatch(failBatch, lc);
+  }
 
   // The added copy's transfer succeeds. Driving a real repack transfer success all the way
   // through reportJobsBatchTransferred() would need a full tape session (see this file's other
-  // repack tests); calling failReport() directly on a freshly-fetched job simulates the same
-  // outcome via its recovery path instead - for repack, reportType is always NoReportRequired at
-  // this point (see ArchiveMount::failReportBatch()'s own comment), so this always resolves
-  // through updateRepackJobSuccess(), i.e. a success, regardless of the reason string.
+  // repack tests); calling prepareFailReport()+failReportBatch() directly on a freshly-fetched
+  // job simulates the same outcome via its recovery path instead - for repack, reportType is
+  // always NoReportRequired at this point (see ArchiveMount::failReportBatch()'s own comment), so
+  // this always resolves through updateRepackJobSuccess(), i.e. a success, regardless of the
+  // reason string.
   auto mountAdded = createRepackArchiveMount(db, lc, tapePoolAdded, "V-XFORM-ADDED-DST");
   auto jobsAdded = mountAdded->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsAdded.size());
-  jobsAdded.front()->failReport("simulated scheduler bookkeeping write failure for added copy", lc);
+  jobsAdded.front()->prepareFailReport("simulated scheduler bookkeeping write failure for added copy");
+  {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {jobsAdded.front().get()};
+    mountAdded->failReportBatch(failBatch, lc);
+  }
 
   db.getNextFailedArchiveRepackReportBatch(lc);
 
@@ -987,9 +998,13 @@ TEST_P(RelationalDBTest, repackArchiveTransferFailureIsRequeuedBeforeExceedingRe
   auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobs.size());
 
-  // Simulate the physical transfer failing, exactly as MigrationReportPacker's
-  // FailedReportCatalogueUpdate/transfer-error handling calls failTransfer() on the job.
-  jobs.front()->failTransfer("simulated transfer failure", lc);
+  // Simulate the physical transfer failing exactly as MigrationReportPacker does: accumulate via
+  // prepareFailTransfer() (in-memory only), then flush through ArchiveMount::failTransferBatch().
+  jobs.front()->prepareFailTransfer("simulated transfer failure");
+  {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {jobs.front().get()};
+    mount->failTransferBatch(failBatch, lc);
+  }
 
   auto conn = db.getRelationalDB().getConn();
   {
@@ -1056,7 +1071,13 @@ TEST_P(RelationalDBTest, repackArchiveTransferFailureExceedsRetriesMovesToFailed
   auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobs.size());
 
-  jobs.front()->failTransfer("simulated terminal transfer failure", lc);
+  // Simulate the physical transfer failing exactly as MigrationReportPacker does: accumulate via
+  // prepareFailTransfer() (in-memory only), then flush through ArchiveMount::failTransferBatch().
+  jobs.front()->prepareFailTransfer("simulated terminal transfer failure");
+  {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {jobs.front().get()};
+    mount->failTransferBatch(failBatch, lc);
+  }
 
   {
     auto conn = db.getRelationalDB().getConn();
@@ -1755,9 +1776,14 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversAsSuccessA
   auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobs.size());
 
-  // Simulate the scheduler-DB bookkeeping write failing after a successful transfer by calling
-  // failReport() directly, exactly as MigrationReportPacker's FailedReportMoveToQueue catch does.
-  jobs.front()->failReport("simulated scheduler bookkeeping write failure", lc);
+  // Simulate the scheduler-DB bookkeeping write failing after a successful transfer exactly as
+  // MigrationReportPacker's FailedReportMoveToQueue catch does: accumulate via prepareFailReport()
+  // (in-memory only), then flush through ArchiveMount::failReportBatch().
+  jobs.front()->prepareFailReport("simulated scheduler bookkeeping write failure");
+  {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {jobs.front().get()};
+    mount->failReportBatch(failBatch, lc);
+  }
 
   {
     // Recovered, not failed out: still in ACTIVE, ReadyForDeletion.
@@ -1859,7 +1885,11 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
   auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-MULTICOPY-DESTA");
   auto jobsA = mountA->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsA.size());
-  jobsA.front()->failReport("simulated scheduler bookkeeping write failure for copy 1", lc);
+  jobsA.front()->prepareFailReport("simulated scheduler bookkeeping write failure for copy 1");
+  {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {jobsA.front().get()};
+    mountA->failReportBatch(failBatch, lc);
+  }
 
   {
     // Copy 1: recovered to the intermediate "waiting for siblings" status, NOT ReadyForDeletion,
@@ -1895,7 +1925,11 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
   auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-MULTICOPY-DESTB");
   auto jobsB = mountB->getNextJobBatch(1, 1'000'000, lc);
   ASSERT_EQ(1u, jobsB.size());
-  jobsB.front()->failReport("simulated scheduler bookkeeping write failure for copy 2", lc);
+  jobsB.front()->prepareFailReport("simulated scheduler bookkeeping write failure for copy 2");
+  {
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {jobsB.front().get()};
+    mountB->failReportBatch(failBatch, lc);
+  }
 
   {
     // Both copies are now ReadyForDeletion together.
@@ -2370,6 +2404,64 @@ void insertRepackRetrievePendingJob(cta::rdbms::Conn& conn,
   stmt.bindUint32(":MAX_TOTAL_RETRIES", maxTotalRetries);
   stmt.bindUint32(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
   stmt.bindString(":REARCHIVE_TAPE_POOLS", tapePool + "," + tapePool);
+  stmt.executeNonQuery();
+}
+
+// Inserts a plain (non-repack) user retrieve job ready to be dispatched to a mount, with TWO real
+// alternate copies rather than the single self-referencing entry queueRetrieveJob() produces.
+// Lets a test drive RetrieveRdbJob::prepareFailTransfer()'s alternate-VID rotation branch
+// (within-mount retries exhausted but not terminal) against a genuine second copy, rather than
+// the no-op "rotate to itself" that every other test in this file exercises.
+void insertRetrievePendingJobWithAlternates(cta::rdbms::Conn& conn,
+                                            uint64_t archiveFileId,
+                                            const std::string& vid,
+                                            const std::string& tapePool,
+                                            const std::string& alternateVids,
+                                            const std::string& alternateCopyNbs,
+                                            const std::string& alternateFSeqs,
+                                            const std::string& alternateBlockIds,
+                                            uint8_t copyNb,
+                                            uint64_t fSeq,
+                                            uint64_t blockId,
+                                            uint32_t maxTotalRetries,
+                                            uint32_t maxRetriesWithinMount) {
+  auto stmt = conn.createStmt(R"SQL(
+    INSERT INTO RETRIEVE_PENDING_QUEUE (
+      RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, ARCHIVE_FILE_ID,
+      SIZE_IN_BYTES, CREATION_TIME, START_TIME, STORAGE_CLASS, VID, TAPE_POOL, MOUNT_POLICY,
+      PRIORITY, MIN_RETRIEVE_REQUEST_AGE, COPY_NB, FSEQ, BLOCK_ID,
+      ALTERNATE_VIDS, ALTERNATE_COPY_NBS, ALTERNATE_FSEQS, ALTERNATE_BLOCK_IDS,
+      RETRIEVE_REPORT_URL, RETRIEVE_ERROR_REPORT_URL, REQUESTER_NAME, REQUESTER_GROUP, DST_URL,
+      RETRIES_WITHIN_MOUNT, TOTAL_RETRIES, LAST_MOUNT_WITH_FAILURE,
+      MAX_TOTAL_RETRIES, MAX_RETRIES_WITHIN_MOUNT, TOTAL_REPORT_RETRIES, MAX_REPORT_RETRIES,
+      DRIVE, HOST, LOGICAL_LIBRARY
+    ) VALUES (
+      :ARCHIVE_FILE_ID, 1, :STATUS, :ARCHIVE_FILE_ID,
+      1000, 500, :START_TIME, :STORAGE_CLASS, :VID, :TAPE_POOL, 'mountPolicy',
+      1, 0, :COPY_NB, :FSEQ, :BLOCK_ID,
+      :ALT_VIDS, :ALT_COPY_NBS, :ALT_FSEQS, :ALT_BLOCK_IDS,
+      'test://retrieve-report-url', 'test://retrieve-error-report-url', 'user', 'group',
+      'root://disk/alt-rotation',
+      0, 0, 0,
+      :MAX_TOTAL_RETRIES, :MAX_RETRIES_WITHIN_MOUNT, 0, 2,
+      'drive', 'host', 'loglib'
+    )
+  )SQL");
+  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+  stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToTransfer));
+  stmt.bindUint64(":START_TIME", static_cast<uint64_t>(cta::utils::getCurrentEpochTime()));
+  stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+  stmt.bindString(":VID", vid);
+  stmt.bindString(":TAPE_POOL", tapePool);
+  stmt.bindUint8(":COPY_NB", copyNb);
+  stmt.bindUint64(":FSEQ", fSeq);
+  stmt.bindUint64(":BLOCK_ID", blockId);
+  stmt.bindString(":ALT_VIDS", alternateVids);
+  stmt.bindString(":ALT_COPY_NBS", alternateCopyNbs);
+  stmt.bindString(":ALT_FSEQS", alternateFSeqs);
+  stmt.bindString(":ALT_BLOCK_IDS", alternateBlockIds);
+  stmt.bindUint32(":MAX_TOTAL_RETRIES", maxTotalRetries);
+  stmt.bindUint32(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
   stmt.executeNonQuery();
 }
 
@@ -3087,6 +3179,87 @@ TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue_withinMountExhausted) 
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+// RetrieveRdbJob::prepareFailTransfer()'s alternate-VID rotation (scheduler/rdbms/RetrieveRdbJob.cpp)
+// parses ALTERNATE_VIDS/ALTERNATE_COPY_NBS/ALTERNATE_FSEQS/ALTERNATE_BLOCK_IDS as parallel
+// comma-separated lists and indexes into them with whatever position selectNextString() picks.
+// retrieveFailTransferBatchRequeue_withinMountExhausted above only ever has a single,
+// self-referencing alternate (index 0 = itself, a no-op), so an off-by-one or a mismatched
+// ordering between the four parallel lists would go uncaught. This test gives the job a genuine
+// second copy so the rotation actually has to land on a different entry.
+TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue_rotatesToSecondAlternate) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  constexpr uint64_t archiveFileId = 336;
+  const std::string vid1 = "V-ALT-ROT-1";
+  const std::string vid2 = "V-ALT-ROT-2";
+  const std::string tapePool = "altRotationPool";
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // Current copy is copy 1 on vid1 (fSeq=10, blockId=100); the real second alternate is copy 2
+    // on vid2 (fSeq=20, blockId=200). selectNextString() finds vid1 at index 0 in ALTERNATE_VIDS
+    // and returns the entry at index 1 - vid2 - so a correct rotation must pick up copy 2's
+    // fields, not copy 1's again.
+    insertRetrievePendingJobWithAlternates(conn,
+                                           archiveFileId,
+                                           vid1,
+                                           tapePool,
+                                           vid1 + "," + vid2,
+                                           "1,2",
+                                           "10,20",
+                                           "100,200",
+                                           /*copyNb=*/1,
+                                           /*fSeq=*/10,
+                                           /*blockId=*/100,
+                                           /*maxTotalRetries=*/2,
+                                           /*maxRetriesWithinMount=*/1);
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  auto mount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(1u, jobs.size());
+
+  // maxRetriesWithinMount=1: updateRetryCounts() sets retriesWithinMount to 1 on this first
+  // failure (lastMountWithFailure starts at 0, differs from the real mount id), which already
+  // meets the threshold - so prepareFailTransfer() takes the rotation branch immediately.
+  jobs.front()->prepareFailTransfer("within-mount exhausted, rotate to second alternate");
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {jobs.front().get()};
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // The requeued row must carry the SECOND alternate's fields (vid2/copy 2/fSeq 20/blockId 200),
+    // not the first (which an off-by-one, or a rotation that silently no-ops, would instead leave
+    // in place), and RETRIES_WITHIN_MOUNT must be reset to 0 for the new mount.
+    auto stmt = conn.createStmt("SELECT VID, COPY_NB, FSEQ, BLOCK_ID, RETRIES_WITHIN_MOUNT, MOUNT_ID"
+                                " FROM RETRIEVE_PENDING_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(vid2, rset.columnString("VID"));
+    ASSERT_EQ(2u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(20u, rset.columnUint64("FSEQ"));
+    ASSERT_EQ(200u, rset.columnUint64("BLOCK_ID"));
+    ASSERT_EQ(0u, rset.columnUint64("RETRIES_WITHIN_MOUNT"));
+    ASSERT_FALSE(rset.columnOptionalUint64("MOUNT_ID").has_value());
+    ASSERT_FALSE(rset.next());
   }
   {
     auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE");

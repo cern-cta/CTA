@@ -682,7 +682,16 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   ASSERT_EQ(10, ajb.size());
   //failing the jobs should requeue them
   for (auto& aj : ajb) {
+#ifdef CTA_PGSCHED
+    // Under pgsched, failTransfer() is a throwing stub (production code never calls it - see
+    // ArchiveRdbJob::failTransfer()); the live equivalent is prepareFailTransfer() +
+    // ArchiveMount::failTransferBatch(), exactly as MigrationReportPacker uses.
+    aj->prepareFailTransfer("test");
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {aj.get()};
+    am->failTransferBatch(failBatch, lc);
+#else
     aj->failTransfer("test", lc);
+#endif
   }
   //Jobs in queue should have been requeued with original creationlog time
   auto pendingArchiveJobs = db.getArchiveJobs();

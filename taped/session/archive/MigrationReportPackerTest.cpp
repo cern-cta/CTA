@@ -19,6 +19,7 @@
 #include "scheduler/testingMocks/MockArchiveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <algorithm>
 #include <catalogue/Catalogue.hpp>
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -917,6 +918,174 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedCa
   ASSERT_EQ(1, tam.flushCount);
   ASSERT_EQ(1, tam.failureCount);
   ASSERT_EQ(1, tam.completes);
+}
+
+// --- Real (unmocked) ArchiveMount batch-wrapper coverage ---
+//
+// All the pgsched tests above exercise MigrationReportPacker's accumulation logic through mocks
+// (MockArchiveMountWithBatch) that override cta::ArchiveMount::failTransferBatch()/
+// failReportBatch() directly - which means the real unwrap-and-delegate bodies of those methods
+// (scheduler/ArchiveMount.cpp) never actually run under test. The tests below construct a real
+// cta::ArchiveMount wrapping a minimal fake SchedulerDatabase::ArchiveMount to close that gap.
+
+// Minimal SchedulerDatabase::ArchiveJob fake: records prepareFailTransfer()/prepareFailReport()
+// calls (count and the failure reason passed), nothing else.
+class FakeSchedDbArchiveJob : public cta::SchedulerDatabase::ArchiveJob {
+public:
+  int prepareFailTransferCalls = 0;
+  int prepareFailReportCalls = 0;
+  std::string lastFailureReason;
+
+  void failTransfer(const std::string&, cta::log::LogContext&) override {
+    throw cta::exception::Exception("FakeSchedDbArchiveJob::failTransfer() should not be called by these tests");
+  }
+
+  void failReport(const std::string&, cta::log::LogContext&) override {
+    throw cta::exception::Exception("FakeSchedDbArchiveJob::failReport() should not be called by these tests");
+  }
+
+  void prepareFailTransfer(const std::string& failureReason) override {
+    prepareFailTransferCalls++;
+    lastFailureReason = failureReason;
+  }
+
+  void prepareFailReport(const std::string& failureReason) override {
+    prepareFailReportCalls++;
+    lastFailureReason = failureReason;
+  }
+
+  void bumpUpTapeFileCount(uint64_t) override {}
+
+  void initialize(const cta::rdbms::Rset&, bool) override {}
+
+  bool releaseToPool() override { return false; }
+};
+
+// Minimal SchedulerDatabase::ArchiveMount fake: records exactly what failTransferBatch()/
+// failReportBatch() receive - call count and the raw pointers themselves, in order.
+class FakeSchedDbArchiveMount : public cta::SchedulerDatabase::ArchiveMount {
+public:
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> lastFailTransferBatch;
+  int failTransferBatchCalls = 0;
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> lastFailReportBatch;
+  int failReportBatchCalls = 0;
+
+  const MountInfo& getMountInfo() override { return mountInfo; }
+
+  std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>
+  getNextJobBatch(uint64_t, uint64_t, cta::log::LogContext&) override {
+    return {};
+  }
+
+  void reportTapeSessionState(cta::common::dataStructures::TapeSessionState, time_t) override {}
+
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats&) override {}
+
+  void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>&,
+                              cta::log::LogContext&) override {}
+
+  uint64_t requeueJobBatch(const std::list<std::string>&, cta::log::LogContext&) const override { return 0; }
+
+  void failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, cta::log::LogContext&) override {
+    failTransferBatchCalls++;
+    lastFailTransferBatch = batch;
+  }
+
+  void failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, cta::log::LogContext&) override {
+    failReportBatchCalls++;
+    lastFailReportBatch = batch;
+  }
+};
+
+// Exposes cta::ArchiveMount's protected (catalogue, dbMount) constructor so the test can wrap a
+// FakeSchedDbArchiveMount without overriding any of the methods under test - unlike
+// MockArchiveMount/MockArchiveMountWithBatch, which both override failTransferBatch() directly.
+class ArchiveMountWithRealDbDelegate : public cta::ArchiveMount {
+public:
+  ArchiveMountWithRealDbDelegate(cta::catalogue::Catalogue& catalogue,
+                                 std::unique_ptr<cta::SchedulerDatabase::ArchiveMount> dbMount)
+      : cta::ArchiveMount(catalogue, std::move(dbMount)) {}
+};
+
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, ArchiveMountFailTransferBatchVectorOverloadDelegatesToDbMount) {
+  auto dbMountUP = std::make_unique<FakeSchedDbArchiveMount>();
+  auto* dbMount = dbMountUP.get();
+  ArchiveMountWithRealDbDelegate mount(*m_catalogue, std::move(dbMountUP));
+
+  std::vector<std::unique_ptr<cta::ArchiveJob>> failedJobs;
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> expectedDbJobPtrs;
+  for (int i = 0; i < 3; i++) {
+    auto dbJob = std::make_unique<FakeSchedDbArchiveJob>();
+    expectedDbJobPtrs.push_back(dbJob.get());
+    failedJobs.push_back(std::make_unique<cta::ArchiveJob>(&mount, *m_catalogue, std::move(dbJob)));
+  }
+
+  cta::log::StringLogger log("dummy", "ArchiveMountFailTransferBatchVectorOverload", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  mount.failTransferBatch(failedJobs, lc);
+
+  // Real body: unwraps each cta::ArchiveJob to its underlying m_dbJob raw pointer and forwards
+  // the resulting vector, unchanged, to the DB mount - verified here end to end.
+  ASSERT_EQ(1, dbMount->failTransferBatchCalls);
+  ASSERT_EQ(expectedDbJobPtrs, dbMount->lastFailTransferBatch);
+}
+
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, ArchiveMountFailTransferBatchQueueOverloadPreparesAndDelegates) {
+  auto dbMountUP = std::make_unique<FakeSchedDbArchiveMount>();
+  auto* dbMount = dbMountUP.get();
+  ArchiveMountWithRealDbDelegate mount(*m_catalogue, std::move(dbMountUP));
+
+  std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobs;
+  std::vector<FakeSchedDbArchiveJob*> rawFakes;
+  for (int i = 0; i < 3; i++) {
+    auto dbJob = std::make_unique<FakeSchedDbArchiveJob>();
+    rawFakes.push_back(dbJob.get());
+    dbJobs.push(std::move(dbJob));
+  }
+
+  cta::log::StringLogger log("dummy", "ArchiveMountFailTransferBatchQueueOverload", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  const std::string reason = "simulated catalogue update failure";
+  mount.failTransferBatch(dbJobs, reason, lc);
+
+  // Real body: calls prepareFailTransfer(reason) on every queued job, then forwards all of them
+  // as raw pointers to the DB mount in one call.
+  ASSERT_EQ(1, dbMount->failTransferBatchCalls);
+  ASSERT_EQ(3u, dbMount->lastFailTransferBatch.size());
+  for (auto* fake : rawFakes) {
+    EXPECT_EQ(1, fake->prepareFailTransferCalls);
+    EXPECT_EQ(reason, fake->lastFailureReason);
+    EXPECT_NE(std::find(dbMount->lastFailTransferBatch.begin(), dbMount->lastFailTransferBatch.end(), fake),
+              dbMount->lastFailTransferBatch.end());
+  }
+}
+
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, ArchiveMountFailReportBatchQueueOverloadPreparesAndDelegates) {
+  auto dbMountUP = std::make_unique<FakeSchedDbArchiveMount>();
+  auto* dbMount = dbMountUP.get();
+  ArchiveMountWithRealDbDelegate mount(*m_catalogue, std::move(dbMountUP));
+
+  std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobs;
+  std::vector<FakeSchedDbArchiveJob*> rawFakes;
+  for (int i = 0; i < 2; i++) {
+    auto dbJob = std::make_unique<FakeSchedDbArchiveJob>();
+    rawFakes.push_back(dbJob.get());
+    dbJobs.push(std::move(dbJob));
+  }
+
+  cta::log::StringLogger log("dummy", "ArchiveMountFailReportBatchQueueOverload", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  const std::string reason = "simulated move-to-queue failure";
+  mount.failReportBatch(dbJobs, reason, lc);
+
+  // Real body: calls prepareFailReport(reason) on every queued job, then forwards all of them
+  // as raw pointers to the DB mount in one call.
+  ASSERT_EQ(1, dbMount->failReportBatchCalls);
+  ASSERT_EQ(2u, dbMount->lastFailReportBatch.size());
+  for (auto* fake : rawFakes) {
+    EXPECT_EQ(1, fake->prepareFailReportCalls);
+    EXPECT_EQ(reason, fake->lastFailureReason);
+  }
 }
 
 #endif  // CTA_PGSCHED

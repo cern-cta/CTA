@@ -247,12 +247,6 @@ public:
 
     bool releaseToPool() override { throw exception::NotImplementedException(); };
 
-#ifdef CTA_PGSCHED
-    void prepareFailTransfer(const std::string&) override { throw cta::exception::NotImplementedException(); }
-
-    void prepareFailReport(const std::string&) override { throw cta::exception::NotImplementedException(); }
-#endif
-
   private:
     void asyncSucceedTransfer();
     /** Returns true if the jobs was the last one and the request should be queued for report. */
@@ -354,11 +348,6 @@ public:
     void asyncSetSuccessful() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
-#ifdef CTA_PGSCHED
-    void prepareFailTransfer(const std::string&) override { throw cta::exception::NotImplementedException(); }
-
-    void prepareFailReport(const std::string&) override { throw cta::exception::NotImplementedException(); }
-#endif
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) override {};
 
@@ -463,12 +452,6 @@ public:
                                   utils::Timer& t,
                                   log::LogContext& lc) override;
 
-#ifdef CTA_PGSCHED
-  void failArchiveJobBatchReport(std::vector<SchedulerDatabase::ArchiveJob*>& batch, log::LogContext& lc) override {
-    throw cta::exception::NotImplementedException();
-  }
-#endif
-
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
   void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override;
@@ -571,12 +554,6 @@ public:
                                          log::TimingList& timingList,
                                          utils::Timer& t,
                                          log::LogContext& lc) override;
-
-#ifdef CTA_PGSCHED
-  void failRetrieveJobBatchReport(std::vector<SchedulerDatabase::RetrieveJob*>& batch, log::LogContext& lc) override {
-    throw cta::exception::NotImplementedException();
-  }
-#endif
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext& logContext) override;
