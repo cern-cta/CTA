@@ -10,7 +10,8 @@ Zensical builds the site with the Python interpreter selected by `.python-versio
 | --- | --- |
 | `zensical.toml` | Site configuration, navigation, Markdown extensions, and theme |
 | `pyproject.toml`, `uv.lock` | Dependencies and lockfile for the `docs` group |
-| `docs/build.py` | Generate the command manual and Rust reference, then invoke Zensical |
+| `docs/build.py` | Generate the command manual, catalogue diagram, and Rust reference, then invoke Zensical |
+| `docs/catalogue_diagram.py` | Load the common catalogue SQL into SQLite and render its metadata with Graphviz |
 | `docs/zensical_content.py` | Prepare manuals, examples, and diagrams for display |
 | `docs/content/stylesheets/extra.css`, `docs/overrides/` | CTA branding |
 | `docs/content/api/python/` | Python API reference module pages |
@@ -23,6 +24,13 @@ Use `docs/build.py` to build the site. It generates the command manual and Rust 
 The finished site is written to `build/docs/site/`.
 See [Preview locally](../documentation.md#preview-locally) for setup and skipping Rust generation.
 
+The catalogue diagram is regenerated from `catalogue/cta-catalogue-schema/common_catalogue_schema.sql` on every build, using the submodule commit pinned by the checkout.
+SQLite introspection preserves the logical column types and foreign-key references without parsing SQL in Python.
+Graphviz writes the SVG to `build/docs/content/generated/catalogue-schema.svg`; generated diagrams are not checked in.
+Layout uses the bundled Atkinson Hyperlegible Next font through an isolated Fontconfig configuration.
+The SVG embeds that same font and its licence so standalone images do not depend on fonts installed on the reader's machine.
+Missing SQL, invalid SQL, or a missing Graphviz executable fails the build.
+
 ### Theme
 
 Theme customizations live in `docs/content/stylesheets/extra.css` and `docs/overrides/`. Self-hosted fonts and their licenses are under `docs/content/assets/fonts/`. Keep template overrides small so upstream theme updates remain easy to adopt.
@@ -34,7 +42,7 @@ Mermaid colors are defined in `docs/content/stylesheets/extra.css`. Check diagra
 ## Publishing
 
 `build-rust-docs` generates the Rust reference for `build-docs`, which runs the documentation tests and a strict site build.
-Publication uses a Zensical-compatible `mike` fork to rebuild the staged pages with versioned URLs, reusing the generated Rust reference and command manual.
+Publication uses a Zensical-compatible `mike` fork to rebuild the staged pages with versioned URLs, reusing the generated Rust reference, command manual, and catalogue diagram.
 Its dependency is declared in `pyproject.toml` and pinned in `uv.lock`.
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Development and release-candidate tags do not publish documentation.

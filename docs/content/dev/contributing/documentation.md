@@ -13,7 +13,9 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 ## Preview locally
 
 uv installs the Python interpreter selected by `.python-version`.
+Install Graphviz and Fontconfig (`graphviz` and `fontconfig`).
 To generate Rust API documentation, install the Rust toolchain specified by `rust-toolchain.toml`.
+Initialize the catalogue schema submodule with `git submodule update --init catalogue/cta-catalogue-schema`; the build uses its SQL to generate the catalogue diagram.
 The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
 
 Install `uv`, then from the repository root:
@@ -25,7 +27,7 @@ docs/serve.sh
 Open <http://127.0.0.1:8000/>. The script installs the locked docs dependencies into `docs/.venv`.
 Pass `--skip-rust` to skip Rust generation and reuse existing output if available. Without Cargo, Rust generation is skipped automatically with a warning.
 
-Edits to existing pages reload automatically. Restart the preview after changing the build scripts or the inputs used to generate the command manual and Rust reference. Also restart it when adding a file or directory directly under `docs/content/` or `docs/content/api/`.
+Edits to existing pages reload automatically. Restart the preview after changing the build scripts or the inputs used to generate the command manual, catalogue diagram, and Rust reference. Also restart it when adding a file or directory directly under `docs/content/` or `docs/content/api/`.
 
 ## Organize the content
 

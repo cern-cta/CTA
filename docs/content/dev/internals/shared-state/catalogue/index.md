@@ -34,7 +34,9 @@ Development and validation come before release coordination. The migration guide
 
 The diagram shows the catalogue tables and their relationships. The sections below describe selected tables.
 
-![CTA Catalogue schema](db-schema.svg)
+![CTA Catalogue schema](../../../../generated/catalogue-schema.svg)
+
+The diagram is generated from the common SQL schema in the pinned catalogue submodule when the documentation is built.
 
 ### Mount Rule Tables
 
