@@ -183,7 +183,7 @@ auto DriveCleaner::cleanDriveImpl(drive::DriveInterface& drive, std::chrono::ste
     m_lc.log(log::WARNING, "Cleaner failed to reset drive configuration; continuing with tape eject");
   };
 
-  auto recordDriveStateFailure = [this, &result] {
+  auto recordDriveStateFailure = [&] {
     result.driveStateFailed = true;
     m_tracker.recordFailure(TapeSessionFailure::UnexpectedCleanup);
     if (!result.errorMessage.empty()) {

@@ -35,7 +35,7 @@ public:
   /// @brief Create a session for a scheduler assignment; execute() starts the work.
   ///
   /// Logger, system wrapper, media changer, mount and catalogue must outlive the session.
-  /// Drive identity and transfer settings are copied; loading and cleanup readiness budgets are in seconds.
+  /// Drive identity and transfer settings are copied; readiness polling timeouts are in seconds.
   TapeSession(cta::log::Logger& log,
               System::virtualWrapper& sysWrapper,
               const cta::common::dataStructures::DriveInfo& driveInfo,

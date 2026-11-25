@@ -24,11 +24,10 @@
 /// Tape-drive abstractions, status types and device factory.
 namespace cta::tape::drive {
 
-/// Failed to establish or restore tape-driver state, including device access and recovery-command failures.
-/// Physical ejection may still be attempted.
+/// A device or command failure left the tape driver in an unknown or unusable state.
 CTA_GENERATE_EXCEPTION_CLASS(TapeDriverStateError);
 
-/// Media is absent/unloaded or did not become ready before the polling deadline.
+/// Media is absent, unloaded or did not become ready before the polling deadline.
 CTA_GENERATE_EXCEPTION_CLASS(MediaNotReady);
 
 /// Host and tape byte counters returned by DriveInterface::getCompression().
@@ -271,8 +270,7 @@ public:
   virtual void spaceFileMarksForward(size_t count) = 0;
 
   /// @brief Unload the cartridge so the media changer can remove it; accept absent or already unloaded media.
-  /// Use the normal driver path, with a guarded SCSI fallback for non-ready media.
-  /// @throws TapeDriverStateError If driver or transport state prevents safe reuse, even after robotic removal.
+  /// @throws TapeDriverStateError If a device or command failure leaves the tape driver in an unknown or unusable state.
   virtual void unloadTape(void) = 0;
 
   /// Wait until buffered writes have been committed to tape.
@@ -305,11 +303,12 @@ public:
   /// @param context Diagnostic context to include in read errors.
   virtual void readFileMark(const std::string& context) = 0;
 
-  /// @brief Poll temporary NOT READY responses until deadline, refreshing the driver when ready.
-  /// Return only after media and the tape driver are ready.
-  /// @throws MediaNotReady If media is absent/unloaded, requires LOAD, or the readiness wait expires.
-  /// Unexpected SCSI, transport and driver-refresh failures propagate as exceptions.
-  /// An expired deadline permits one probe but no retry. Driver refresh may exceed the polling deadline.
+  /// @brief Wait until both the media and tape driver are ready for I/O.
+  ///
+  /// The deadline limits polling; refreshing driver state may take longer.
+  /// An expired deadline permits one readiness check without retries.
+  /// @throws MediaNotReady If media is absent, requires loading or does not become ready before the deadline.
+  /// Other device and command errors propagate.
   virtual void waitUntilReady(std::chrono::steady_clock::time_point deadline) = 0;
 
   /// Check whether the loaded cartridge prohibits writes.

@@ -33,7 +33,7 @@ public:
   /// @brief Create a cleaner; media changer, logger, catalogue and tracker must outlive it.
   ///
   /// Drive identity and VID are copied; an empty VID means the mounted tape is unknown.
-  /// tapeUnloadTimeout is the readiness polling budget in seconds; drive acquisition consumes this budget.
+  /// tapeUnloadTimeout limits readiness polling in seconds, including time spent opening the drive.
   DriveCleaner(cta::mediachanger::MediaChangerFacade& mc,
                cta::log::Logger& log,
                const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -42,12 +42,12 @@ public:
                cta::catalogue::Catalogue& catalogue,
                TapeSessionTracker& tracker);
 
-  /// @brief Record drive-open, configuration-reset and tape-ejection failures.
+  /// @brief Record cleanup failures that prevent drive reuse.
   ///
   /// An already-empty drive has no eject failure; configuration-reset failures still prevent reuse.
   struct CleanupResult {
     bool driveOpenFailed = false;
-    bool driveStateFailed = false;  ///< Fresh observation or driver recovery could not establish safe reuse.
+    bool driveStateFailed = false;  ///< Checking readiness or unloading left the drive state unknown or unusable.
     bool configurationResetFailed = false;
     bool ejectFailed = false;
     bool unexpectedFailure = false;  ///< Cleanup threw before returning a result.
@@ -64,7 +64,7 @@ public:
   /// If opening fails, attempt robotic dismount but return a non-reusable result.
   CleanupResult cleanDrive(System::virtualWrapper& sysWrapper);
 
-  /// @brief Clean a borrowed drive and return independent configuration-reset and eject failures.
+  /// @brief Clean a borrowed drive and report failures that prevent reuse.
   ///
   /// Attempt to disable a known tape after failed ejection.
   /// Publish progress synchronously through the tracker; callback failures are counted without stopping cleanup.
@@ -79,7 +79,7 @@ private:
   const std::chrono::seconds m_tapeUnloadTimeout;
   cta::catalogue::Catalogue& m_catalogue;
 
-  /// Clean within the readiness budget established before drive acquisition.
+  /// Clean the drive using the supplied deadline for readiness polling.
   CleanupResult cleanDrive(drive::DriveInterface& drive, std::chrono::steady_clock::time_point readinessDeadline);
 
   /// Attempt to disable a known tape when the result reports failed ejection.

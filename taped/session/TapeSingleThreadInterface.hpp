@@ -83,12 +83,12 @@ protected:
 
   /// Tape load timeout after which the mount is considered failed.
   uint32_t m_tapeLoadTimeout;
-  /// Maximum cleanup readiness wait, sharing the unloading health budget.
+  /// Timeout for media readiness polling during cleanup, in seconds.
   uint32_t m_tapeUnloadTimeout;
 
   /// @brief Wait for drive readiness within the configured load timeout.
   ///
-  /// Fail loading with the readiness reason; log and propagate drive errors.
+  /// Log and propagate readiness failures.
   void waitForDrive() {
     cta::utils::Timer tapeLoadTime;
     try {
