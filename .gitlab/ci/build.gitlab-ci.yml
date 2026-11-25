@@ -253,7 +253,6 @@ build-docs:
     GIT_SUBMODULE_PATHS: catalogue/cta-catalogue-schema
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - dnf install -y graphviz fontconfig
     - source ci/docs/prepare-environment.sh
   script:
     - python -m unittest discover --start-directory docs/tests --pattern 'test_*.py'

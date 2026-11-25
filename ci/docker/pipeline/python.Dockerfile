@@ -4,9 +4,10 @@
 FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2
 
 # OS packages intentionally receive repository fixes on image rebuild.
+# PyGraphviz wheels bundle Graphviz but still link to these X11 libraries; no display server is needed.
 # hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core && \
-    dnf install -y git curl jq python3 bat && \
+    dnf install -y git curl jq python3 bat libXrender libXext libX11 && \
     dnf clean all --enablerepo=\*
 
 # Put the pinned Python first on PATH without replacing /usr/bin/python3, which OS tools use.

@@ -6,6 +6,7 @@
 # ruff: noqa: PT009, PT027
 
 import base64
+import os
 import sqlite3
 import tempfile
 import unittest
@@ -43,7 +44,11 @@ class CatalogueDiagramTests(unittest.TestCase):
         self.assertEqual(dot.count(" -> "), 3)
 
     def test_preview_generates_svg_without_writing_to_source(self):
-        with tempfile.TemporaryDirectory() as temporary, patch.object(build, "ROOT", Path(temporary)):
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch.object(build, "ROOT", Path(temporary)),
+            patch.dict(os.environ, {"PATH": ""}),
+        ):
             root = Path(temporary)
             (root / "docs/content/api").mkdir(parents=True)
             schema = root / "schema.sql"
