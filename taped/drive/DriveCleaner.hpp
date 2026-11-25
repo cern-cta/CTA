@@ -82,33 +82,30 @@ private:
   /// Clean the drive using the supplied deadline for readiness polling.
   CleanupResult cleanDrive(drive::DriveInterface& drive, std::chrono::steady_clock::time_point readinessDeadline);
 
-  /// Attempt to disable a known tape when the result reports failed ejection.
-  void finishCleanup(const CleanupResult& result);
+  /// Check media readiness, recording unexpected device or command failures.
+  bool checkReadiness(drive::DriveInterface& drive,
+                      std::chrono::steady_clock::time_point readinessDeadline,
+                      CleanupResult& result);
 
-  /// @brief Reset configuration and eject the tape, retaining independent failures.
-  ///
-  /// Label reads are best effort; attempt robotic dismount despite reset or unload errors.
-  CleanupResult cleanDriveImpl(drive::DriveInterface& drive, std::chrono::steady_clock::time_point readinessDeadline);
+  /// Attempt both encryption and logical block protection resets, recording failures independently.
+  void resetConfiguration(drive::DriveInterface& drive, CleanupResult& result);
+
+  /// Select the cartridge VID and attempt dismount, retrying without the VID on failure.
+  void dismountCartridge(const std::optional<std::string>& volumeLabel, CleanupResult& result);
 
   /// Read, count and log tape alerts, clearing them on hardware; log and suppress query failures.
   void logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept;
 
-  /// @brief Read the label using the catalogue format for the known VID.
+  /// @brief Rewind and read the label using the catalogue format for the known VID.
   ///
-  /// Return std::nullopt if the VID is unknown; blank tapes and label or catalogue errors throw.
+  /// Return std::nullopt if the VID is unknown or inspection fails; log and suppress inspection errors.
   std::optional<std::string> readVolumeLabel(drive::DriveInterface& drive);
 
   /// Discover and open the configured drive; return ownership or propagate an error.
   std::unique_ptr<drive::DriveInterface> createDrive(System::virtualWrapper& sysWrapper);
 
-  /// Time and log the rewind operation; drive failures propagate.
-  void rewindDrive(drive::DriveInterface& drive);
-
-  /// Throw if the tape is blank, including when it has no volume label.
-  void checkTapeContainsData(drive::DriveInterface& drive);
-
-  /// Time and log unloading, counting drive failures before propagating them.
-  void unloadTape(drive::DriveInterface& drive);
+  /// Attempt unloading, counting failures and recording errors that prevent drive reuse.
+  void unloadTape(drive::DriveInterface& drive, CleanupResult& result);
 
   /// @brief Time robotic dismount, counting failures before propagating them.
   ///
