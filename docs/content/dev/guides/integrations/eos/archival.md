@@ -217,6 +217,19 @@ where:
   **archive_failed.default** workflow will be executed instead.
 * `mgm.ruid=<ruid>`, `mgm.rgid=<rgid>`: execute the event as user/group `<ruid>:<rgid>`.
 
+##### Error report URLs
+
+EOS ends the error report URLs for archive and retrieve requests with an empty `mgm.errmsg=` parameter.
+When CTA reports a failure, it appends the failure reason to this parameter, base64-encoded.
+The MGM decodes the reason and stores it in `sys.archive.error` or `sys.retrieve.error`; if the parameter is empty, EOS records a generic message instead.
+The parameters and their handling are defined by EOS.
+
+CTA appends the failure reason to any error report URL that ends with `=` and sends other URLs, and any URL when the reason is empty, unchanged.
+Before encoding, CTA redacts the user information, query string and fragment of each URL in the reason, as they may carry credentials, replaces newlines and other control characters with spaces, and keeps at most the last 1024 characters.
+
+A report URL that is empty or starts with `null:` disables reporting: CTA considers the report delivered without contacting the disk system.
+Unit tests use such URLs to run the reporting steps without a disk system.
+
 This protobuf is sent by the FST to the CTA Frontend using the `Service.Send()` method, exactly as the MGM did for the **CREATE** event.
 
 Finally, when the FST receives a response from the CTA Frontend, it sends a **CLOSEW** Event to the MGM as well, to process

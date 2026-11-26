@@ -13,6 +13,7 @@
 #include "taped/session/pipeline/TransferTaskTracker.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
 
+#include <format>
 #include <optional>
 
 namespace cta::tape::daemon {
@@ -52,6 +53,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
   std::optional<TapeSessionFailure> currentErrorToCount;
   std::optional<RecordedFailure> failure;
   bool isVerifyOnly(false);
+
+  // Keep track of whether we have received the end-of-file marker from the tape side.
+  bool eofMarkerReceived = false;
+
   try {
     currentErrorToCount.reset();
     // Placeholder for the disk file. We will open it only
@@ -61,9 +66,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
     int blockId = 0;
     unsigned long checksum = Payload::zeroAdler32();
     while (true) {
-      if (MemBlock* const mb = m_fifo.pop()) {
+      if (MemBlock* const mb = m_fifo.pop(); mb != nullptr) {
         m_stats.waitDataTime += localTime.secs(cta::utils::Timer::resetCounter);
-        AutoReleaseBlock<RecallMemoryManager> releaser(mb, m_memManager);
+        AutoReleaseBlock releaser(mb, m_memManager);
+
         if (mb->isVerifyOnly()) {
           // For verifyOnly, there is no disk file to write. Ignore the memory block and continue.
           isVerifyOnly = true;
@@ -79,20 +85,32 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
         if (mb->isFailed() && mb->m_fileid == m_retrieveJob->retrieveRequest.archiveFileID) {
           failure = mb->recordedFailure();
         }
-        //will throw (thus exiting the loop) if something is wrong
+
+        // this will throw (thus exiting the loop) if there is a mismatch between the expected file ID and block ID
+        // and the actual values in the memory block, or if the block has been marked as failed.
         checkErrors(mb, blockId, lc);
         m_stats.checkingErrorTime += localTime.secs(cta::utils::Timer::resetCounter);
-        // If we got that far on the first pass, it's now good enough to open
-        // the disk file for writing...
+
         if (!writeFile.get()) {
+          // If we get here, this means we're at the first block of the file.
+          // Since the latter hasn't been opened yet, we'll do it now.
+          // Note that we don't open it before so that we don't create empty files on disk.
+
           lc.log(cta::log::DEBUG, "About to open disk file for writing");
           // Synchronise the counter with the open time counter.
           currentErrorToCount = TapeSessionFailure::DiskOpenForWrite;
+
+          // Initialize the transfer time counter to measure the time spent transferring the file to disk
           transferTime = localTime;
+
           writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->retrieveRequest.dstURL));
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(cta::log::INFO, "Opened disk file for writing");
+
+          // Record the time spent opening the file.
           m_stats.openingTime += localTime.secs(cta::utils::Timer::resetCounter);
+
+          // Notify the session tracker that the disk file has been opened
           tracker.notifyDiskFileOpened(threadID, m_retrieveJob->retrieveRequest.archiveFileID, writeFile->URL());
         }
 
@@ -104,6 +122,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
         }
         m_stats.readWriteTime += localTime.secs(cta::utils::Timer::resetCounter);
 
+        // update the (cumulative) checksum of the data block
         checksum = mb->m_payload.adler32(checksum);
         m_stats.checksumingTime += localTime.secs(cta::utils::Timer::resetCounter);
         currentErrorToCount.reset();
@@ -111,13 +130,22 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
         blockId++;
         //end if block non nullptr
       } else if (isVerifyOnly) {
-        // No file to close, we are done
+        // We're only verifying the file's checksum, so we don't expect any more data blocks.
+        // The tape side has pushed a nullptr to indicate that the file is complete.
+        eofMarkerReceived = true;
         break;
       } else {
+        // The tape side has pushed a nullptr and we're not in verify-only mode. This means
+        // that we reached the last block of the file. We can now close the disk file.
+        eofMarkerReceived = true;
         //close has to be explicit, because it may throw.
         //A close is done  in WriteFile's destructor, but it may lead to some
         //silent data loss
         currentErrorToCount = TapeSessionFailure::DiskCloseAfterWrite;
+
+        // send the close event to the disk system, which may throw an exception if the file
+        // is rejected (e.g. if the disk system checks the file size, or a checksum, and finds
+        // it does not match the expected value)
         writeFile->close();
         m_stats.closingTime += localTime.secs(cta::utils::Timer::resetCounter);
         m_stats.filesCount++;
@@ -126,11 +154,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
     }  //end of while(1)
     m_retrieveJob->transferredSize = m_stats.dataVolume;
     m_retrieveJob->transferredChecksumType = "ADLER32";
-    {
-      std::stringstream cs;
-      cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t) checksum;
-      m_retrieveJob->transferredChecksumValue = cs.str();
-    }
+    m_retrieveJob->transferredChecksumValue = std::format("{:08x}", static_cast<uint32_t>(checksum));
     reporter.reportCompletedJob(std::move(m_retrieveJob), lc);
     m_stats.waitReportingTime += localTime.secs(cta::utils::Timer::resetCounter);
     tracker.addDiskTransferStats({.waitReportingTime = m_stats.waitReportingTime});
@@ -171,9 +195,13 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
         {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException }
     });
 
-    //there might still be some blocks into m_fifo
-    // We need to empty it
-    releaseAllBlock();
+    // Return the memory blocks to the pool only if we have not received the end-of-file marker
+    // from the tape side. Otherwise, the memory blocks will have already been released. We
+    // should not attempt to release them again, or `releaseAllMemoryBlocks()` will be stuck
+    // waiting for a EOF marker that will never arrive.
+    if (!eofMarkerReceived) {
+      releaseAllMemoryBlocks();
+    }
 
     // Propagate the error to the session tracker.
     if (currentErrorToCount) {
@@ -220,12 +248,12 @@ DiskWriteTask::~DiskWriteTask() {
 }
 
 //------------------------------------------------------------------------------
-// DiskWriteTask::releaseAllBlock
+// DiskWriteTask::releaseAllMemoryBlocks
 //------------------------------------------------------------------------------
-void DiskWriteTask::releaseAllBlock() {
-  while (1) {
-    if (MemBlock* mb = m_fifo.pop()) {
-      AutoReleaseBlock<RecallMemoryManager> release(mb, m_memManager);
+void DiskWriteTask::releaseAllMemoryBlocks() {
+  while (true) {
+    if (MemBlock* mb = m_fifo.pop(); mb != nullptr) {
+      AutoReleaseBlock release(mb, m_memManager);
     } else {
       break;
     }
@@ -237,6 +265,8 @@ void DiskWriteTask::releaseAllBlock() {
 //------------------------------------------------------------------------------
 void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogContext& lc) const {
   using namespace cta::log;
+  // Check that the block is consistent with the expected file ID and block ID and that it has not been marked as
+  // failed. If any of these conditions are not met, log the error and throw an exception.
   if (m_retrieveJob->retrieveRequest.archiveFileID != mb->m_fileid || blockId != mb->m_fileBlock || mb->isFailed()) {
     [[maybe_unused]] LogContext::ScopedParam sp[] = {
       LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),

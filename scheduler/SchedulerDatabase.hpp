@@ -636,7 +636,11 @@ public:
     friend class RetrieveMount;
 
   public:
+    /// Error report URL, sent to the disk system with a failure report.
     std::string errorReportURL;
+    /// Latest transfer failure, sent to the disk system with a failure report.
+    std::string errorMessageLog;
+
     uint64_t jobID = 0;  // for schedulerdb model
     enum class ReportType : uint8_t {
       NoReportRequired,

@@ -52,7 +52,10 @@ struct ContainerTraits<RetrieveQueue, C> {
     uint64_t bytes;
     common::dataStructures::ArchiveFile archiveFile;
     common::dataStructures::RetrieveRequest rr;
+    /// Error report URL, sent to the disk system with a failure report.
     std::string errorReportURL;
+    /// Error messages in retrieve requests, used in failure reports only
+    std::string errorMessageLog;
     SchedulerDatabase::RetrieveJob::ReportType reportType;
     RetrieveRequest::RepackInfo repackInfo;
     std::optional<std::string> activity;
@@ -450,6 +453,7 @@ auto ContainerTraits<RetrieveQueue, C>::switchElementsOwnership(PoppedElementsBa
           break;
         case serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure:
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::FailureReport;
+          e.errorMessageLog = u.get()->getErrorMessageLog();
           break;
         default:
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired;
@@ -592,6 +596,7 @@ auto ContainerTraits<RetrieveQueue, C>::getPoppingElementsCandidates(Container& 
                                              cjfq.size,
                                              common::dataStructures::ArchiveFile(),
                                              common::dataStructures::RetrieveRequest(),
+                                             "",
                                              "",
                                              SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired,
                                              RetrieveRequest::RepackInfo(),

@@ -38,6 +38,9 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   retrieveRequest.dstURL = std::move(m_jobRow.dstURL);
   retrieveRequest.retrieveReportURL = std::move(m_jobRow.retrieveReportURL);
   retrieveRequest.errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
+
+  errorMessageLog = m_jobRow.failureLogs.value_or("");
+
   retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
   retrieveRequest.creationLog.time = m_jobRow.creationTime;  // EntryLog
   retrieveRequest.isVerifyOnly =
@@ -107,6 +110,7 @@ void RetrieveRdbJob::reset() {
   archiveFile.tapeFiles.clear();  // Clearing vector to reset it
 
   errorReportURL.clear();
+  errorMessageLog.clear();
   selectedCopyNb = 0;
   isRepack = false;
 

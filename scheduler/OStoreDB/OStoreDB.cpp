@@ -3404,6 +3404,7 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
       rj->retrieveRequest = j.rr;
       rj->selectedCopyNb = j.copyNb;
       rj->errorReportURL = j.errorReportURL;
+      rj->errorMessageLog = j.errorMessageLog;
       rj->reportType = j.reportType;
       rj->m_repackInfo = j.repackInfo;
       rj->m_jobOwned = true;

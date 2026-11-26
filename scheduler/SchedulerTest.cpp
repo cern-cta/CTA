@@ -21,6 +21,7 @@
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/utils/Base64.hpp"
 #include "common/utils/Timer.hpp"
 #include "objectstore/Algorithms.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
@@ -2218,7 +2219,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     request.creationLog = creationLog;
     request.diskFileInfo = diskFileInfo;
     request.dstURL = "dstURL";
-    request.errorReportURL = "null:";
+    // Ends like an EOS error report URL, which receives the failure reason, but is still reported to the null reporter
+    request.errorReportURL = "null:?mgm.errmsg=";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
     scheduler.queueRetrieve("disk_instance", request, lc);
@@ -2277,7 +2279,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
         // Validate we got the right file
         ASSERT_EQ(archiveFileId, retrieveJobList.front()->archiveFile.archiveFileID);
         retrieveJobList.front()->transferFailed("Retrieve failed (mount " + std::to_string(mountPass) + ", attempt "
-                                                  + std::to_string(i) + ")",
+                                                  + std::to_string(i) + ") on root://diskserver//file?cap.msg=secret",
                                                 lc);
       }
       // Then the request should be gone
@@ -2315,6 +2317,15 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     // The failure should be on the jobs to report queue
     auto retrieveJobToReportList = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
     ASSERT_EQ(1, retrieveJobToReportList.size());
+    // The report carries the latest failure, without the capability in the URL query string
+    const std::string reportURL = retrieveJobToReportList.front()->exceptionThrowingReportURL();
+    const std::string urlPrefix = "null:?mgm.errmsg=";
+    ASSERT_TRUE(reportURL.starts_with(urlPrefix)) << reportURL;
+    const std::string reportedFailure = cta::utils::base64decode(reportURL.substr(urlPrefix.size()));
+    EXPECT_NE(std::string::npos,
+              reportedFailure.find("Retrieve failed (mount 1, attempt 2) on root://diskserver//file"))
+      << reportedFailure;
+    EXPECT_EQ(std::string::npos, reportedFailure.find("cap.msg")) << reportedFailure;
     // Fail the report
     retrieveJobToReportList.front()->reportFailed("Report failed once", lc);
     // Job should still be on the report queue

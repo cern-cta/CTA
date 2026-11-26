@@ -103,6 +103,7 @@ set (COMMON_LIB_SRC_FILES
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
   utils/strerror_r_wrapper.cpp
+  utils/Urls.cpp
   utils/utils.cpp
   utils/StringConversions.cpp
   utils/ErrorUtils.cpp)
@@ -154,6 +155,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   process/threading/ThreadingTests.cpp
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
+  utils/UrlsTest.cpp
   utils/InterruptibleSleepTest.cpp
   utils/ScopeExitTest.cpp
   utils/UtilsTest.cpp

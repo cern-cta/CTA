@@ -3106,9 +3106,18 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
 
   std::list<JobAndReporter> pendingReports;
   std::list<ArchiveJob*> reportedJobs;
-  for (auto& j : archiveJobsBatch) {
+  for (const auto& j : archiveJobsBatch) {
     pendingReports.push_back(JobAndReporter());
     auto& current = pendingReports.back();
+
+    // failures with an empty error should be logged
+    if (j->m_dbJob->reportType == SchedulerDatabase::ArchiveJob::ReportType::FailureReport
+        && j->m_dbJob->latestError.empty()) {
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", j->archiveFile.archiveFileID);
+      lc.log(log::WARNING, "In Scheduler::reportArchiveJobsBatch(): reporting a failure without a failure reason.");
+    }
+
     // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
     try {
       current.reporter.reset(reporterFactory.createDiskReporter(j->exceptionThrowingReportURL()));
@@ -3261,6 +3270,13 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
   for (auto& j : retrieveJobsBatch) {
     pendingReports.push_back(JobAndReporter());
     auto& current = pendingReports.back();
+    // The failure is still reported without a reason, but a job failed without one points to a bug where it failed.
+    if (j->m_dbJob->reportType == SchedulerDatabase::RetrieveJob::ReportType::FailureReport
+        && j->m_dbJob->errorMessageLog.empty()) {
+      log::ScopedParamContainer params(lc);
+      params.add("fileId", j->archiveFile.archiveFileID);
+      lc.log(log::WARNING, "In Scheduler::reportRetrieveJobsBatch(): reporting a failure without a failure reason.");
+    }
     // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
     try {
       current.reporter.reset(reporterFactory.createDiskReporter(j->exceptionThrowingReportURL()));

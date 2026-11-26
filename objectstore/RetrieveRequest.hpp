@@ -301,6 +301,9 @@ public:
     const std::optional<std::string>& getActivity();
     const std::optional<std::string>& getDiskSystemName();
 
+    /// Latest failure log entry of the updated job, or an empty string.
+    const std::string& getErrorMessageLog() const { return m_errorMessageLog; }
+
   private:
     std::function<std::string(const std::string&)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
@@ -310,6 +313,7 @@ public:
     serializers::RetrieveJobStatus m_jobStatus;
     std::optional<std::string> m_activity;
     std::optional<std::string> m_diskSystemName;
+    std::string m_errorMessageLog;
   };
 
   // An owner updater factory. The owner MUST be previousOwner for the update to be executed.

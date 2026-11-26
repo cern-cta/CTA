@@ -30,6 +30,7 @@ from system_tests.helpers.hosts import (
 )
 from system_tests.helpers.test_config import TestConfig as SystemTestConfig
 from system_tests.helpers.test_env import TestEnv
+from system_tests.helpers.utils.timeout import Timeout
 
 # =========================================================================
 #  Helpers
@@ -1675,6 +1676,72 @@ class TestRuntimeDeployment:
 
         print(f"SUCCESS: Verification passed. {i} lines checked.")
         print(f"Coverage complete: All {len(expected_events)} defined event types were tested.")
+
+
+def test_retrieve_fails_when_disk_checksum_mismatches_tape(
+    eos_client: EosClientHost,
+    eos_mgm: EosMgmHost,
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    test_dir: Path,
+) -> None:
+    # EOS rejects the recalled replica on close because its namespace checksum no longer matches the tape copy.
+    # The retrieve must then fail and free the drive
+    failure_timeout_secs = 300
+    cta_cli.set_all_drives_up()
+    file_path = eos_client.generate_and_archive_file(
+        disk_instance_name, test_dir / "retrieve_checksum_mismatch", append_uid=True
+    )
+
+    # Corrupt the checksum directly in QuarkDB, using the MGM's own QDB connection settings
+    file_metadata = dict(
+        field.split("=", 1)
+        for field in eos_mgm.exec_with_output(f"eos file info '{file_path}' -m").split()
+        if "=" in field
+    )
+    eos_mgm.exec(
+        "eos-ns-inspect change-fid --no-dry-run "
+        '--members "$(awk \'$1 == "mgmofs.qdbcluster" {print $2}\' /etc/xrd.cf.mgm)" '
+        '--password-file "$(awk \'$1 == "mgmofs.qdbpassword_file" {print $2}\' /etc/xrd.cf.mgm)" '
+        f"--fid {file_metadata['fid']} --new-checksum 00000000"
+    )
+    eos_mgm.exec("eos ns cache drop -f && eos ns cache drop -d")
+    corrupted_checksum = eos_mgm.exec_with_output(f"eos file info '{file_path}' -m")
+    assert "xs=00000000" in corrupted_checksum.split(), f"EOS checksum was not changed: {corrupted_checksum}"
+
+    eos_client.retrieve_file(disk_instance_name, file_path, wait=False)
+
+    # A non-empty sys.retrieve.error shows that CTA reported the failed retrieve back to EOS
+    retrieve_error = ""
+    with Timeout(failure_timeout_secs) as t:
+        while not t.expired:
+            attributes = eos_mgm.exec_with_output(f"eos attr ls '{file_path}'")
+            match = re.search(r'^sys\.retrieve\.error="(.+)"$', attributes, re.MULTILINE)
+            if match:
+                retrieve_error = match.group(1)
+                break
+            time.sleep(5)
+    drives = json.loads(cta_cli.exec_with_output("cta-admin --json drive ls"))
+    drive_states = {drive["driveName"]: drive["driveStatus"] for drive in drives}
+    assert retrieve_error, (
+        f"Retrieve of {file_path} was not reported as failed within {failure_timeout_secs}s; drives: {drive_states}"
+    )
+    print(f"Retrieve failed as expected: {retrieve_error}")
+    # CTA forwards the disk system's rejection, so users can see why the retrieve failed
+    assert "checksum" in retrieve_error, f"sys.retrieve.error does not explain the failure: {retrieve_error}"
+
+    # wait that the drive switches from DRAINING_TO_DISK
+    with Timeout(30) as t:
+        while not t.expired:
+            if "DRAINING_TO_DISK" not in drive_states.values():
+                break
+            else:
+                print(drive_states.values())
+            time.sleep(5)
+
+    assert eos_client.is_file_on_tape_only(disk_instance_name, file_path)
+
+    eos_client.delete_file(disk_instance_name, file_path)
 
 
 def test_allow_expected_errors(error_expectations: ErrorExpectations) -> None:

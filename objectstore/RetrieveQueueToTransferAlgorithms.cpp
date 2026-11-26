@@ -69,6 +69,7 @@ auto ContainerTraits<RetrieveQueue, RetrieveQueueToTransfer>::getPoppingElements
                                              common::dataStructures::ArchiveFile(),
                                              common::dataStructures::RetrieveRequest(),
                                              "",
+                                             "",
                                              SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired,
                                              RetrieveRequest::RepackInfo(),
                                              cjfq.activity,

@@ -9,6 +9,7 @@ add_subdirectory(rdbms/schema)
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
+  DiskReport.cpp
   LabelMount.cpp
   PositioningMethod.cpp
   RepackRequest.cpp
@@ -86,6 +87,7 @@ endif()
 
 if(NOT CTA_USE_PGSCHED)
   add_library (ctaschedulerunittests SHARED
+    DiskReportTest.cpp
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     SchedulerTest.cpp
@@ -93,6 +95,7 @@ if(NOT CTA_USE_PGSCHED)
     OStoreDB/OStoreDBInitTest.cpp)
 else()
   add_library (ctaschedulerunittests SHARED
+    DiskReportTest.cpp
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     RelationalDBSchedulerTest.cpp

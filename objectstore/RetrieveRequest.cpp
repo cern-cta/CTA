@@ -1057,6 +1057,9 @@ std::string RetrieveRequest::asyncUpdateJobOwnerCallback(const std::string& strI
       af.deserialize(payload.archivefile());
       ret.m_archiveFile = af;
       ret.m_jobStatus = j.status();
+      if (j.failurelogs_size()) {
+        ret.m_errorMessageLog = j.failurelogs(j.failurelogs_size() - 1);
+      }
       if (payload.has_activity()) {
         ret.m_activity = payload.activity();
       }

@@ -84,9 +84,10 @@ private:
 
   /**
    * In case of error, it will spin on the blocks until we reach the end
-   * in order to push them back into the memory manager
+   * in order to push them back into the memory manager.
+   * Blocks until the end-of-file marker arrives.
    */
-  void releaseAllBlock();
+  void releaseAllMemoryBlocks();
 
   /**
    * The fifo containing the memory blocks holding data to be written to disk

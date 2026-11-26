@@ -16,6 +16,8 @@
 #include "taped/session/archive/MigrationMemoryManager.hpp"
 #include "taped/session/pipeline/MemBlock.hpp"
 
+#include <chrono>
+#include <future>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -147,6 +149,23 @@ struct MockRecallReportPacker : public RecallReportPacker {
   bool m_diskThreadComplete = false;
 };
 
+/// Disk file that accepts every write but fails on close, as when EOS rejects a replica with the wrong checksum.
+class CloseFailingWriteFile : public WriteFile {
+public:
+  CloseFailingWriteFile() { m_URL = "root://test/close-failing"; }
+
+  void write(const void* data, const size_t size) override {}
+
+  void close() override { throw cta::exception::Exception("Close rejected by the disk system"); }
+};
+
+class CloseFailingFileFactory : public DiskFileFactory {
+public:
+  CloseFailingFileFactory() : DiskFileFactory(0) {}
+
+  WriteFile* createWriteFile(const std::string& path) override { return new CloseFailingWriteFile(); }
+};
+
 }  // namespace
 
 TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
@@ -221,6 +240,43 @@ TEST(cta_tape_daemon, UpstreamFailureIsNotCountedAgain) {
   EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeReadData)]);
   EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::DiskRead)]);
   EXPECT_EQ(0, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::UnclassifiedFile)]);
+}
+
+TEST(cta_tape_daemon, DiskWriteTaskCloseFailureIsReported) {
+  cta::log::StringLogger log("dummy", "closeFailure", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
+  cta::catalogue::DummyCatalogue catalogue;
+  TestingRetrieveMount mount(catalogue, std::move(dbrm));
+  TapeSessionTracker tracker;
+  MockRecallReportPacker report(&mount, lc, tracker);
+  RecallMemoryManager memory(2, 100, lc);
+  CloseFailingFileFactory factory;
+  cta::MockRetrieveMount jobMount(catalogue);
+  auto job = std::make_unique<TestingRetrieveJob>(jobMount);
+  job->retrieveRequest.archiveFileID = 1;
+  job->selectedCopyNb = 1;
+  cta::common::dataStructures::TapeFile tapeFile;
+  tapeFile.copyNb = 1;
+  job->archiveFile.tapeFiles.push_back(tapeFile);
+  DiskWriteTask task(job.release(), memory);
+  auto* block = memory.getFreeBlock();
+  block->m_fileid = 1;
+  block->m_fileBlock = 0;
+  task.pushDataBlock(block);
+  task.pushDataBlock(nullptr);
+
+  // The close fails after the end-of-file marker has been consumed; the task must not wait for another one.
+  auto result = std::async(std::launch::async, [&] { return task.execute(report, lc, factory, tracker, 0); });
+  if (result.wait_for(std::chrono::seconds(10)) != std::future_status::ready) {
+    task.pushDataBlock(nullptr);  // Unblock the task so the test can fail instead of hanging.
+    result.wait();
+    FAIL() << "DiskWriteTask::execute() did not return after the disk file failed to close";
+  }
+  EXPECT_FALSE(result.get());
+  EXPECT_EQ(1, report.failedJobs);
+  EXPECT_EQ(0, report.completeJobs);
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::DiskCloseAfterWrite)]);
 }
 
 }  // namespace unitTests

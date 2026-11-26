@@ -40,8 +40,10 @@ class DiskFileFactory {
 
 public:
   explicit DiskFileFactory(uint16_t xrootTimeout);
+  virtual ~DiskFileFactory() = default;
   ReadFile* createReadFile(const std::string& path);
-  WriteFile* createWriteFile(const std::string& path);
+  /// Virtual so that tests can substitute disk files that fail on demand.
+  virtual WriteFile* createWriteFile(const std::string& path);
 
 private:
   Regex m_NoURLLocalFile {"^(localhost:|)(/.*)$"};
