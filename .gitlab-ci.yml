@@ -181,8 +181,7 @@ variables:
   IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
   IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
   # Remaining images are shared across all platforms and do not have a platform suffix
-  # Switch to cta-ci-python when adopting the next published pipeline image version.
-  IMAGE_PYTHON: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-automation:${PIPELINE_IMAGE_VERSION}"
+  IMAGE_PYTHON: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-python:${PIPELINE_IMAGE_VERSION}"
   IMAGE_SOURCE_CHECKS: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-source-checks:${PIPELINE_IMAGE_VERSION}"
   IMAGE_RUST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-rust:${PIPELINE_IMAGE_VERSION}"
   IMAGE_LINTIAN: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lintian:${PIPELINE_IMAGE_VERSION}"
