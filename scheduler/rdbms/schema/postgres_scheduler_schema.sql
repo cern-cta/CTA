@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+-- This CREATE TYPE only takes effect for a schema created from scratch. Adding a value here does
+-- NOT add it to an already-existing schema's type - see
+-- manual_migration_add_wait_replicas_failure_to_disk_status.sql in this same directory, which must
+-- be run against every existing scheduler schema before deploying binaries that write
+-- AJS_WaitReplicasBeforeReportingFailureToDisk.
 CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'AJS_ToTransferForUser',
   'AJS_WaitReplicasBeforeReportingSuccessToDisk',

@@ -176,11 +176,16 @@ public:
   /**
    * Batch-fail reporting for the unwrapped DB-level jobs returned in
    * failedToReportArchiveJobs when reportJobsBatchTransferred() throws
-   * FailedReportMoveToQueue.  The tape write and catalogue update succeeded for these
-   * jobs, but the scheduler-DB state update failed.  prepareFailReport() is called here
-   * on each job before delegating to the DB-level failReportBatch(), which either moves
-   * the job to ARCHIVE_FAILED_QUEUE (retries exhausted) or resets IS_REPORTING (retry).
-   * The queue is drained; ownership is released after the call.
+   * FailedReportMoveToQueue (only once retryWithBackoff() has already exhausted its own
+   * attempts at the write - see that call site). The tape write and catalogue update
+   * succeeded for these jobs, but the scheduler-DB state update failed. prepareFailReport()
+   * is called here on each job before delegating to the DB-level failReportBatch(), which
+   * always routes to the exceeded-retries bucket for this entry point (the in-memory job's
+   * reportType is always NoReportRequired here - see failure-handling.md's Note 1): the row
+   * is left at its pre-existing AJS_ToTransferFor{User,Repack} status, not reset to
+   * IS_REPORTING=false for the EOS-report pickup loop to find - it is picked up later by the
+   * dead-mount GC sweep instead, requeued, and goes through the whole transfer lifecycle
+   * again. The queue is drained; ownership is released after the call.
    */
   void failReportBatch(std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
                        const std::string& failureReason,

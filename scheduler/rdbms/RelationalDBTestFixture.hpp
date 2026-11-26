@@ -61,6 +61,14 @@ void queueMultiCopyArchiveJob(cta::SchedulerDatabase& db,
                               const std::string& suffix,
                               time_t creationTime);
 
+// Queues a 3-copy user archive request, all three copies routed to the same tape pool.
+void queueTripleCopyArchiveJob(cta::SchedulerDatabase& db,
+                               cta::log::LogContext& lc,
+                               uint64_t fileId,
+                               const std::string& tapePool,
+                               const std::string& suffix,
+                               time_t creationTime);
+
 /**
  * This structure is used to parameterize RelationalDB database tests.
  */

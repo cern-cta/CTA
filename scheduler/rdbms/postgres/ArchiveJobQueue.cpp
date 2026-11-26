@@ -69,6 +69,44 @@ void lockRepackGroupRows(Transaction& txn, const std::set<std::pair<uint64_t, ui
     // Draining is the point - see function comment. Nothing to do with each row.
   }
 }
+
+// Row-locks (FOR UPDATE) every row of each given ARCHIVE_REQUEST_ID user multi-copy group,
+// regardless of that row's own status, in ONE round trip, in sorted order - the archive-side
+// mirror of lockRepackGroupRows() above, for the same reason: two concurrent
+// updateMultiCopyJobSuccess() calls completing different copies of the same request must not
+// both read "sibling not settled yet" and both leave the group parked. Locking first forces the
+// second call to wait for the first to commit, then read its fresh, post-commit state - see that
+// function's own comment for the full reasoning, which applies here unchanged.
+void lockArchiveRequestGroupRows(Transaction& txn, const std::set<uint64_t>& requestIds) {
+  if (requestIds.empty()) {
+    return;
+  }
+  std::string ids;
+  size_t i = 0;
+  for (const auto& requestId : requestIds) {
+    if (i > 0) {
+      ids += ",";
+    }
+    ids += ":R" + std::to_string(i);
+    ++i;
+  }
+  std::string sql = "SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE "
+                    "WHERE ARCHIVE_REQUEST_ID IN ("
+                    + ids
+                    + ") "
+                      "ORDER BY ARCHIVE_REQUEST_ID, JOB_ID FOR UPDATE";
+  auto stmt = txn.getConn().createStmt(sql);
+  i = 0;
+  for (const auto& requestId : requestIds) {
+    stmt.bindUint64(":R" + std::to_string(i), requestId);
+    ++i;
+  }
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbLock);
+  auto rset = stmt.executeQuery();
+  while (rset.next()) {
+    // Draining is the point - see lockRepackGroupRows()'s comment. Nothing to do with each row.
+  }
+}
 }  // namespace
 
 rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
@@ -233,6 +271,29 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
     }
     jobids_sqlpart += piece;
   }
+
+  // Find which ARCHIVE_REQUEST_IDs this call touches, then lock every row of each - in sorted
+  // order, before reading any completion state - exactly as updateRepackJobSuccess() does for
+  // repack (see lockArchiveRequestGroupRows()'s comment and that function's own, for the full
+  // reasoning). Without this, two mounts finishing the last two copies of a 2-copy request
+  // concurrently can each read the other as "not settled yet" before either commits, and both
+  // park their own copy instead of either promoting the group - stranding it indefinitely.
+  std::set<uint64_t> requestIds;
+  {
+    std::string sql =
+      "SELECT DISTINCT ARCHIVE_REQUEST_ID FROM ARCHIVE_ACTIVE_QUEUE WHERE JOB_ID IN (" + jobids_sqlpart + ")";
+    auto stmt = txn.getConn().createStmt(sql);
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectArchiveMulticopy);
+    auto rset = stmt.executeQuery();
+    while (rset.next()) {
+      requestIds.insert(rset.columnUint64NoOpt("ARCHIVE_REQUEST_ID"));
+    }
+  }
+  if (requestIds.empty()) {
+    return 0;
+  }
+  lockArchiveRequestGroupRows(txn, requestIds);
+
   /* A target row just transferred successfully. Whether it (and the rest of its multi-copy
    * request) is now ready to report to disk depends on every copy of the request having
    * individually settled - success (parked at AJS_WaitReplicasBeforeReportingSuccessToDisk,
@@ -248,17 +309,23 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
    * complete_failed_groups pattern (STATUS IN success, failure), which already gets this right for
    * repack.
    *
-   * When the group is complete, the CASE below promotes every still-open row (not just the
-   * target(s) - any copy already parked at one of the two wait statuses from an earlier call also
-   * matches aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID below) to FAILED if any_failed, else to
-   * ready-for-reporting - request-wide outcomes settle together either way, exactly once, in
-   * whichever call turns out to be the group's last. Because of that, flagReportingJobsByStatus()
-   * never needs to re-derive completeness itself: by the time any row reaches a terminal status,
-   * the whole group was already set to a terminal status together, in this one statement - reporting
-   * is free to just pick up rows whose STATUS says so, with no race against settlement.
-   * aj2.STATUS <> FAILED excludes a row that already independently reached
-   * AJS_ToReportToUserForFailure: it is already correctly terminal and does not need re-touching,
-   * only counting (which it gets via the UNION ALL above, not via this final UPDATE's WHERE).
+   * The final UPDATE's WHERE is deliberately asymmetric between the complete and incomplete
+   * cases. When the group is NOT yet complete, only the literal target row(s) (aj2.JOB_ID =
+   * tsm.JOB_ID) are touched, parking them at the wait-for-success status - a sibling already
+   * parked at either wait status (or already terminally failed) must be left untouched here, or
+   * this UPDATE would silently overwrite a sibling's recorded failure with "waiting for success"
+   * and erase it. Only once the group IS complete (rg.ARCHIVE_REQUEST_ID IS NOT NULL) does the
+   * WHERE widen to every row sharing the ARCHIVE_REQUEST_ID, because that is the one moment every
+   * sibling's row - including one already parked from an earlier call - needs to move to the
+   * group's final verdict together, in this one statement. Request-wide outcomes settle exactly
+   * once, in whichever call turns out to be the group's last. Because of that,
+   * flagReportingJobsByStatus() never needs to re-derive completeness itself: by the time any row
+   * reaches a terminal status, the whole group was already set to a terminal status together in
+   * this one statement - reporting is free to just pick up rows whose STATUS says so, with no race
+   * against settlement. aj2.STATUS <> FAILED additionally excludes a row that already
+   * independently reached AJS_ToReportToUserForFailure: it is already correctly terminal and does
+   * not need re-touching, only counting (which it gets via the UNION ALL above, not via this final
+   * UPDATE's WHERE).
    */
   std::string sql = R"SQL(
       WITH target_success_multicopy AS (
@@ -288,7 +355,7 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
           FROM ARCHIVE_ACTIVE_QUEUE aj
           JOIN target_success_multicopy t USING (ARCHIVE_REQUEST_ID)
           WHERE aj.JOB_ID <> t.JOB_ID
-            AND aj.STATUS = ANY(ARRAY[:STATUS_COND_REPLICAS, :STATUS_COND_REPLICAS_FAILURE, :STATUS_FAILED]
+            AND aj.STATUS = ANY(ARRAY[:STATUS_COND_REPLICAS, :STATUS_COND_REPLICAS_FAILURE2, :STATUS_FAILED2]
                                 ::ARCHIVE_JOB_STATUS[])
         ) AS combined
         GROUP BY combined.ARCHIVE_REQUEST_ID
@@ -301,7 +368,7 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
       UPDATE ARCHIVE_ACTIVE_QUEUE aj2
       SET STATUS = CASE
           WHEN rg.ARCHIVE_REQUEST_ID IS NOT NULL AND rg.any_failed
-            THEN :STATUS_FAILED::ARCHIVE_JOB_STATUS
+            THEN :STATUS_FAILED3::ARCHIVE_JOB_STATUS
           WHEN rg.ARCHIVE_REQUEST_ID IS NOT NULL
             THEN :STATUS_READY_FOR_REPORTING::ARCHIVE_JOB_STATUS
           ELSE :STATUS_WAIT_FOR_ALL_BEFORE_REPORT::ARCHIVE_JOB_STATUS
@@ -311,16 +378,27 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
           LEFT JOIN ready_groups rg
               ON rg.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
       WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
-        AND aj2.STATUS <> :STATUS_FAILED::ARCHIVE_JOB_STATUS;
+        AND (aj2.JOB_ID = tsm.JOB_ID OR rg.ARCHIVE_REQUEST_ID IS NOT NULL)
+        AND aj2.STATUS <> :STATUS_FAILED4::ARCHIVE_JOB_STATUS;
   )SQL";
+  // Four distinct placeholder names bind the same AJS_ToReportToUserForFailure value
+  // (:STATUS_FAILED/2/3/4), and two bind AJS_WaitReplicasBeforeReportingFailureToDisk
+  // (:STATUS_COND_REPLICAS_FAILURE/2) - the statement parser (ParamNameToIdx) rejects a repeated
+  // :name as a duplicate, so every textual occurrence of the same value needs its own name here,
+  // not just a stylistic preference.
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
   stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
   stmt.bindString(":STATUS_COND_REPLICAS_FAILURE",
                   to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingFailureToDisk));
+  stmt.bindString(":STATUS_COND_REPLICAS_FAILURE2",
+                  to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingFailureToDisk));
   stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT",
                   to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
   stmt.bindString(":STATUS_FAILED", to_string(ArchiveJobStatus::AJS_ToReportToUserForFailure));
+  stmt.bindString(":STATUS_FAILED2", to_string(ArchiveJobStatus::AJS_ToReportToUserForFailure));
+  stmt.bindString(":STATUS_FAILED3", to_string(ArchiveJobStatus::AJS_ToReportToUserForFailure));
+  stmt.bindString(":STATUS_FAILED4", to_string(ArchiveJobStatus::AJS_ToReportToUserForFailure));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchiveMulticopy);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -1193,7 +1271,7 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   SET
     STATUS = CASE
         WHEN d.req_job_count = 1 THEN :STATUS_TERMINAL_FAILURE::ARCHIVE_JOB_STATUS
-        WHEN sp.present_count >= d.req_job_count THEN :STATUS_TERMINAL_FAILURE::ARCHIVE_JOB_STATUS
+        WHEN sp.present_count >= d.req_job_count THEN :STATUS_TERMINAL_FAILURE2::ARCHIVE_JOB_STATUS
         ELSE :STATUS_WAIT_FAILURE::ARCHIVE_JOB_STATUS
     END,
     TOTAL_RETRIES = d.total_retries,
@@ -1208,11 +1286,15 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   )SQL";
   }
 
+  // Two distinct placeholder names bind the same newStatus value (:STATUS_TERMINAL_FAILURE/2) -
+  // the statement parser (ParamNameToIdx) rejects a repeated :name as a duplicate, so each
+  // textual occurrence needs its own name, not just a stylistic preference.
   auto stmt = txn.getConn().createStmt(sql);
   if (isRepack) {
     stmt.bindString(":STATUS", to_string(newStatus));
   } else {
     stmt.bindString(":STATUS_TERMINAL_FAILURE", to_string(newStatus));
+    stmt.bindString(":STATUS_TERMINAL_FAILURE2", to_string(newStatus));
     stmt.bindString(":STATUS_WAIT_FAILURE", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingFailureToDisk));
   }
 
@@ -1270,6 +1352,27 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
     // whether a multi-copy request's other copies have also succeeded - moving straight to
     // ARCHIVE_FAILED_QUEUE here (as the non-repack path below does) would let
     // getNextSuccessfulArchiveRepackReportBatch() delete the source file before every copy exists.
+    //
+    // The group lock below MUST run before the retry-metadata UPDATE that follows it, not after.
+    // This recovery path's own UPDATE takes a row lock on exactly its own batch's JOB_IDs,
+    // unsorted relative to the rest of the group; updateRepackJobSuccess(), called right after,
+    // takes its group lock (lockRepackGroupRows()) in sorted order. A concurrent, ordinary
+    // updateRepackJobSuccess() call completing a DIFFERENT copy of the SAME group always starts
+    // with that same sorted group lock. If this recovery call locked its own row first, it could
+    // hold a higher-sorted JOB_ID while the concurrent call holds a lower one and waits for this
+    // one's group lock to reach it - a lock-order cycle, and Postgres resolves cycles by aborting
+    // one side (error 40P01). Taking the group lock here first makes recovery follow the exact
+    // same lock-acquisition order as every other caller, so no cycle can form. Locking rows this
+    // statement will touch again moments later via updateRepackJobSuccess() is harmless - a
+    // transaction re-locking a row it already holds is a no-op.
+    std::set<std::pair<uint64_t, uint64_t>> groupKeys;
+    for (const auto* row : jobs) {
+      if (row->reqJobCount > 1) {
+        groupKeys.emplace(row->repackRequestId, row->archiveFileID);
+      }
+    }
+    lockRepackGroupRows(txn, groupKeys);
+
     std::string sql = R"SQL(
     WITH per_job(job_id, total_report_retries, report_failure_log,
                  archive_request_id, req_job_count) AS (

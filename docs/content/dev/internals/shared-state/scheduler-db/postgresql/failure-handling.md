@@ -232,6 +232,13 @@ of them are present in `ARCHIVE_ACTIVE_QUEUE`; otherwise it parks them at
 success-side wait, `AJS_WaitReplicasBeforeReportingSuccessToDisk`, for the mirror-image reason: a
 copy that has not even started might still succeed, so the group's fate genuinely is not decided yet.
 
+`AJS_WaitReplicasBeforeReportingFailureToDisk` is a new value in the `ARCHIVE_JOB_STATUS` enum.
+The pgsched scheduler schema has no migration tooling - schema creation only ever produces a fresh
+schema - so an existing deployment's database needs
+`scheduler/rdbms/schema/manual_migration_add_wait_replicas_failure_to_disk_status.sql` run against
+it before binaries built from this change are deployed; otherwise the first attempt to write that
+value fails with "invalid input value for enum ARCHIVE_JOB_STATUS".
+
 Whichever side turns out to be the *last* copy of the group to settle — a late success reaching
 `updateMultiCopyJobSuccess()`, or a late failure reaching `failTransferBatchExceedRetries()` again —
 resolves the whole group to its final verdict in that one statement: `updateMultiCopyJobSuccess()`

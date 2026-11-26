@@ -433,4 +433,87 @@ TEST_P(RelationalDBTest, archiveMultiCopyBothCopiesSucceedTogether) {
   ASSERT_EQ(2u, reportBatch.size());
 }
 
+// A 3-copy request where one copy (A) has already failed and parked (its third sibling, C, is
+// still undispatched so the group cannot be complete yet), and a second copy (B) now succeeds.
+// The group is still incomplete (only A and B are settled; C is not), so updateMultiCopyJobSuccess()
+// must only park B - it must not touch A's row. Touching every row sharing the ARCHIVE_REQUEST_ID
+// in that case would overwrite A's recorded failure with the success-wait status, erasing it.
+TEST_P(RelationalDBTest, archiveMultiCopyIncompleteGroupSuccessDoesNotEraseAParkedSiblingFailure) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueTripleCopyArchiveJob(db, lc, 994007, "tapePoolSettleG", "SETTLE-G", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-G";
+  tape.tapePool = "tapePoolSettleG";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+
+  // Dispatch only 2 of the 3 copies - the third (C) stays undispatched in ARCHIVE_PENDING_QUEUE.
+  auto jobsAB = mount->getNextJobBatch(2, 1'000'000, lc);
+  ASSERT_EQ(2u, jobsAB.size());
+
+  // Copy A fails. present_count (2, A and B) < REQUEST_JOB_COUNT (3), so A parks rather than
+  // going straight to the terminal failure status.
+  jobsAB.front()->prepareFailTransfer("copy A fails, copy C still undispatched");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchA = {jobsAB.front().get()};
+  mount->failTransferBatch(batchA, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingFailureToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+
+  // Copy B now succeeds. The group is still incomplete (C has not even been dispatched), so B
+  // must park alone.
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> jobsB;
+  jobsB.push_back(std::move(jobsAB.back()));
+  mount->setJobBatchTransferred(jobsB, lc);
+
+  // A's parked failure must survive untouched - this is the regression check.
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingFailureToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  // B parks at the success-wait status, not promoted (C still hasn't settled).
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingSuccessToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  // Nothing has been prematurely promoted to a terminal status.
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'"
+                                " OR STATUS = 'AJS_ToReportToUserForSuccess'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
 }  // namespace unitTests

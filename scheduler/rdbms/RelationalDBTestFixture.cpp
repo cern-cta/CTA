@@ -122,4 +122,34 @@ void queueMultiCopyArchiveJob(cta::SchedulerDatabase& db,
   db.queueArchive("eosInstance", ar, afqc, lc);
 }
 
+void queueTripleCopyArchiveJob(cta::SchedulerDatabase& db,
+                               cta::log::LogContext& lc,
+                               uint64_t fileId,
+                               const std::string& tapePool,
+                               const std::string& suffix,
+                               time_t creationTime) {
+  cta::common::dataStructures::ArchiveRequest ar;
+  cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+
+  afqc.copyToPoolMap.insert({1, tapePool});
+  afqc.copyToPoolMap.insert({2, tapePool});
+  afqc.copyToPoolMap.insert({3, tapePool});
+  afqc.fileId = fileId;
+  afqc.mountPolicy = makeMountPolicy(creationTime);
+
+  ar.archiveReportURL = "test://archive-report-url";
+  ar.archiveErrorReportURL = "test://error-report-url";
+  ar.creationLog = {"user", "host", creationTime};
+  ar.diskFileID = "diskFile-" + suffix;
+  ar.diskFileInfo.path = "/path/" + suffix;
+  ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+  ar.diskFileInfo.gid = DISK_FILE_GID;
+  ar.fileSize = 1000 + fileId;
+  ar.requester = {"user", "group"};
+  ar.srcURL = "root:/path/" + suffix;
+  ar.storageClass = "storageClass";
+
+  db.queueArchive("eosInstance", ar, afqc, lc);
+}
+
 }  // namespace unitTests
