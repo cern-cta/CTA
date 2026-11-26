@@ -76,7 +76,6 @@
     "mkdocs-autorefs==1.4.2",
     "markdown==3.9",
     "pymdown-extensions==11.0.2",
-    "pygraphviz>=2.0,<3",
   ]
 
 [tool.pytest.ini_options]

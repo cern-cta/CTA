@@ -46,7 +46,6 @@ class CatalogueDiagramTests(unittest.TestCase):
         with (
             tempfile.TemporaryDirectory() as temporary,
             patch.object(build, "ROOT", Path(temporary)),
-            patch.dict(os.environ, {"PATH": ""}),
         ):
             root = Path(temporary)
             (root / "docs/content/api").mkdir(parents=True)
@@ -59,6 +58,13 @@ class CatalogueDiagramTests(unittest.TestCase):
             self.assertTrue(document.getroot().tag.endswith("svg"))
             self.assertIn("UINT64TYPE", " ".join(document.getroot().itertext()))
             self.assertFalse((root / "docs/content/generated").exists())
+
+    def test_missing_graphviz_is_actionable(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(os.environ, {"PATH": ""}):
+            schema = Path(temporary) / "schema.sql"
+            schema.write_text(SCHEMA)
+            with self.assertRaisesRegex(FileNotFoundError, "Install Graphviz"):
+                catalogue_diagram.generate(schema, Path(temporary) / "out.svg")
 
     def test_missing_schema_is_actionable(self):
         with (

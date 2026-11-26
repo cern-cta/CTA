@@ -4,12 +4,12 @@
 """Render the catalogue's common SQL schema using SQLite metadata and Graphviz."""
 
 import json
+import shutil
 import sqlite3
+import subprocess
 from contextlib import closing
 from html import escape
 from pathlib import Path
-
-import pygraphviz
 
 
 def schema_dot(connection: sqlite3.Connection) -> str:
@@ -64,7 +64,7 @@ def schema_dot(connection: sqlite3.Connection) -> str:
 
 
 def generate(schema: Path, destination: Path) -> None:
-    """Generate an SVG from the pinned schema using the Graphviz bundled in the Python wheel."""
+    """Generate an SVG from the pinned schema using the system Graphviz executable."""
     if not schema.is_file():
         raise FileNotFoundError(
             f"Catalogue schema missing: {schema}. Run git submodule update --init catalogue/cta-catalogue-schema"
@@ -75,6 +75,13 @@ def generate(schema: Path, destination: Path) -> None:
         except sqlite3.Error as error:
             raise ValueError(f"Cannot load catalogue schema {schema}: {error}") from error
         source = schema_dot(connection)
+    dot = shutil.which("dot")
+    if dot is None:
+        raise FileNotFoundError(
+            "Graphviz executable 'dot' not found on PATH. Install Graphviz with dnf install graphviz (EL), "
+            "apt install graphviz (Debian/Ubuntu), or brew install graphviz (macOS)."
+        )
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with pygraphviz.AGraph(string=source) as graph, destination.open("wb") as output:
-        graph.draw(output, format="svg", prog="dot")
+    subprocess.run(  # noqa: S603 - Graphviz executable with generated DOT input; no shell.
+        [dot, "-Tsvg", "-o", str(destination)], input=source, text=True, encoding="utf-8", check=True
+    )

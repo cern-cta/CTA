@@ -25,7 +25,7 @@ The finished site is written to `build/docs/site/`.
 See [Preview locally](../documentation.md#preview-locally) for setup and skipping Rust generation.
 
 The catalogue diagram is regenerated from `catalogue/cta-catalogue-schema/common_catalogue_schema.sql` on every build, using the submodule commit pinned by the checkout.
-PyGraphviz renders SQLite's table and foreign-key metadata to `build/docs/content/generated/catalogue-schema.svg`; generated diagrams are not checked in.
+The system Graphviz executable renders SQLite's table and foreign-key metadata to `build/docs/content/generated/catalogue-schema.svg`; generated diagrams are not checked in.
 
 ### Theme
 

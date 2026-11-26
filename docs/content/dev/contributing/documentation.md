@@ -13,6 +13,8 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 ## Preview locally
 
 uv installs the Python interpreter selected by `.python-version`.
+Install Graphviz for the catalogue diagram: `dnf install graphviz` on EL, `apt install graphviz` on Debian/Ubuntu, or `brew install graphviz` on macOS.
+Its `dot` executable must be on `PATH`; the CI image includes it.
 To generate Rust API documentation, install the Rust toolchain specified by `rust-toolchain.toml`.
 Initialize the catalogue schema submodule with `git submodule update --init catalogue/cta-catalogue-schema`; the build uses its SQL to generate the catalogue diagram.
 The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
@@ -24,9 +26,7 @@ docs/serve.sh
 ```
 
 Open <http://127.0.0.1:8000/>. The script uses uv to sync the locked developer dependencies into the repository-root `.venv` and start the preview.
-The default `uv sync` includes documentation dependencies, including the PyGraphviz wheel with its bundled Graphviz renderer.
-On minimal Linux installations, that wheel needs the X11 runtime libraries: `libXrender libXext libX11` on EL, or `libxrender1 libxext6 libx11-6` on Debian/Ubuntu.
-The CI image includes these libraries; no running display server is required.
+The default `uv sync` includes the Python documentation dependencies.
 Pass `--skip-rust` to skip Rust generation and reuse existing output if available. Without Cargo, Rust generation is skipped automatically with a warning.
 
 Edits to existing pages reload automatically. Restart the preview after changing the build scripts or the inputs used to generate the command manual, catalogue diagram, and Rust reference. Also restart it when adding a file or directory directly under `docs/content/` or `docs/content/api/`.
