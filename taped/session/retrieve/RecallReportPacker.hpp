@@ -227,6 +227,12 @@ private:
 
 #ifdef CTA_PGSCHED
   static constexpr size_t c_failedJobsBatchMax = 600;
+
+  // Accumulator: jobs with in-memory state already updated by prepareFailTransfer(). Only ever
+  // touched by the worker thread (no lock needed) - see WorkerThread::run() for the exit-path
+  // flush that keeps it from being silently dropped if the main loop ends abnormally, and
+  // ~RecallReportPacker() for the documented waitThread()-before-destruction precondition that
+  // makes it safe to read without locking by the time the destructor runs.
   std::vector<std::unique_ptr<cta::RetrieveJob>> m_failedRetrieveJobs;
   void flushFailedJobs(cta::log::LogContext& lc);
 #endif

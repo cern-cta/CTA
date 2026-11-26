@@ -1602,8 +1602,13 @@ uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   ),
   MOVED_ROWS AS (
     DELETE FROM )SQL";
+  // Guarded on STATUS still being the active-transfer status this row was fetched in - see the
+  // matching comment on ArchiveJobQueueRow::failTransferBatchRequeue(). Retrieve's own
+  // failTransferBatchExceedRetries() currently only ever matches by JOB_ID (no sibling-wide key),
+  // so this guard is defensive rather than closing an exploitable path today, but it keeps the two
+  // functions' safety properties symmetric.
   sql2 += repack_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE a
-    WHERE a.JOB_ID IN (SELECT d.job_id FROM per_job d)
+    WHERE a.JOB_ID IN (SELECT d.job_id FROM per_job d) AND a.STATUS = :ACTIVE_STATUS::RETRIEVE_JOB_STATUS
     RETURNING a.*
   ),
   updated_last_fetch AS (
@@ -1661,6 +1666,10 @@ uint64_t RetrieveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
 
   auto stmt2 = txn.getConn().createStmt(sql2);
   stmt2.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToTransfer));
+  // Same value as :STATUS (the active-transfer status is unchanged by this requeue, only the
+  // table moves) - bound separately per this file's convention of one placeholder name per
+  // textual occurrence rather than reusing a name across multiple spots in one statement.
+  stmt2.bindString(":ACTIVE_STATUS", to_string(RetrieveJobStatus::RJS_ToTransfer));
   stmt2.bindString(":QUEUE_TYPE", queue_type);
   for (size_t i = 0; i < jobs.size(); ++i) {
     const auto* row = jobs[i];

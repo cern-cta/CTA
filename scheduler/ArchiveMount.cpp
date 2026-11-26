@@ -9,6 +9,7 @@
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/utils/RetryWithBackoff.hpp"
 #include "telemetry/metrics/SchedulerMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
@@ -370,7 +371,26 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     // We can now pass the validatedSuccessfulArchiveJobs list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
     uint64_t njobs = validatedSuccessfulDBArchiveJobs.size();
+#ifdef CTA_PGSCHED
+    // The catalogue write just above already succeeded, so these files are safely on tape and
+    // catalogued; only this scheduler-DB bookkeeping write is what can still fail. A bounded,
+    // backed-off retry here handles a transient DB blip without escalating to
+    // FailedReportMoveToQueue, whose fallback path (ArchiveMount::failReportBatch()) leaves the
+    // job unreachable by the EOS reporter until garbage collection re-sweeps it - see
+    // docs/content/dev/internals/shared-state/scheduler-db/postgresql/failure-handling.md. This
+    // blocks this mount's single worker thread for up to ~11s in the worst case (1s + 10s), which
+    // is an accepted cost for a path that only runs when the scheduler DB is already in trouble.
+    // Scoped to pgsched only: the objectstore backend's own setJobBatchTransferred() has not been
+    // reviewed for safe retry (e.g. whether a partial failure could double-apply on a retry) and
+    // is out of scope here.
+    cta::utils::retryWithBackoff(
+      [&] { m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext); },
+      {std::chrono::seconds(1), std::chrono::seconds(10)},
+      logContext,
+      "ArchiveMount::reportJobsBatchTransferred(): setJobBatchTransferred retry");
+#else
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
+#endif
     auto tteltime = t.msecs();
     cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
       tteltime,

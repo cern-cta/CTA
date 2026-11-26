@@ -35,28 +35,30 @@ MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount,
 //Destructor
 //------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker() {
-  // Every statement in this destructor is guarded by the catch-all below: a destructor must
-  // never let an exception escape (it would call std::terminate), so flushFailedJobs() below -
-  // itself already defensive - is exercised under the same blanket guarantee as the logging that
-  // follows it, rather than its own try/catch.
-  cta::threading::MutexLocker ml(m_producterProtection);
+  // Precondition: the caller must have called waitThread() before letting this object be
+  // destroyed. This destructor does not join the worker thread itself and must not try to -
+  // the worker may still be blocked in m_fifo.pop() waiting for a report that will never come
+  // (e.g. if the caller is destroying this object without ever having sent an end-of-session
+  // report), and joining unconditionally here could hang forever. Under the documented
+  // precondition, the worker thread has already fully exited - via WorkerThread::run()'s own
+  // exit path, which now does its own best-effort final flush of m_failedArchiveJobs before
+  // returning (see run()) - so by the time this destructor runs there is no concurrent writer
+  // left and no locking is needed to read m_failedArchiveJobs below. Every statement in this
+  // destructor is guarded by the catch-all below regardless: a destructor must never let an
+  // exception escape (it would call std::terminate). The lock acquisition itself is inside the
+  // try for the same reason - cta::threading::Mutex::lock() can throw on a pthread error.
   try {
+    cta::threading::MutexLocker ml(m_producterProtection);
 #ifdef CTA_PGSCHED
-    // Best-effort final flush: if the worker thread exited without going through
-    // ReportEndofSession::execute() (an uncaught exception, or the caller never calling
-    // waitThread() before destruction), any jobs already accumulated here would otherwise be
-    // discarded with their in-memory failure state (retry counters, failure log - see
-    // prepareFailTransfer()) lost. The garbage collector would still requeue the job itself, but
-    // that specific failed attempt - and the retry it should have counted against - would be
-    // forgotten. Give it one last chance to reach the DB before reporting it as lost below.
-    const size_t pendingFailedJobs = m_failedArchiveJobs.size();
-    if (pendingFailedJobs > 0) {
-      flushFailedJobs(m_lc);
+    // Jobs still sitting here at this point mean WorkerThread::run()'s own exit-path flush
+    // (see run()) never ran either - e.g. the precondition above was violated, or
+    // flushFailedJobs() itself threw something not caught by its own try/catch. Purely
+    // informational: this destructor makes no further attempt to flush, since doing so safely
+    // would require exactly the join this destructor must not perform.
+    if (!m_failedArchiveJobs.empty()) {
       cta::log::ScopedParamContainer(m_lc)
-        .add("failedJobsPendingOnDestruction", pendingFailedJobs)
-        .log(cta::log::WARNING,
-             "In MigrationReportPacker::~MigrationReportPacker(): worker thread left failed jobs "
-             "unflushed; attempted a final flush before destruction.");
+        .add("failedJobsLostInQueue", m_failedArchiveJobs.size())
+        .log(cta::log::WARNING, "In MigrationReportPacker::~MigrationReportPacker(): failed jobs lost in queue.");
     }
 #endif
     cta::log::ScopedParamContainer params(m_lc);
@@ -442,6 +444,9 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
 //------------------------------------------------------------------------------
 #ifdef CTA_PGSCHED
 void MigrationReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
+  // Always runs on the worker thread (called from Report::execute() implementations and from
+  // WorkerThread::run()'s own exit path) - no locking needed, same single-writer argument as the
+  // rest of this class's worker-owned state.
   if (m_failedArchiveJobs.empty()) {
     return;
   }
@@ -606,6 +611,24 @@ void MigrationReportPacker::WorkerThread::run() {
            "results.");
     m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
   }
+#ifdef CTA_PGSCHED
+  // Exit-path flush: covers both how this function can reach this point. The normal path
+  // (ReportEndofSession::execute() sets m_continue=false) already flushed, so this is a no-op
+  // then. The abnormal path - any exception from rep->execute(), caught by one of the three
+  // blocks above - breaks out of the while loop without ever running ReportEndofSession, so
+  // whatever had already accumulated in m_failedArchiveJobs since the last flush would otherwise
+  // be silently dropped (discovered only as a WARNING log in the destructor, with no DB write at
+  // all) even though the caller correctly calls waitThread() before destruction. Flushing here -
+  // still on the worker thread, still with m_archiveMount valid - needs no cross-thread
+  // synchronization, unlike trying to do this from the destructor.
+  try {
+    m_parent.flushFailedJobs(lc);
+  } catch (...) {
+    lc.log(cta::log::ERR,
+           "In MigrationReportPacker::WorkerThread::run(): exit-path flushFailedJobs() threw; failed "
+           "jobs will be rescued by GC.");
+  }
+#endif
   // Drain the FIFO if necessary. We know that m_continue will be
   // set by ReportEndofSession
   // TODO devise a more generic mechanism
