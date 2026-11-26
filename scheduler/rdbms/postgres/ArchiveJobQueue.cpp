@@ -868,6 +868,17 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
   } else {
     return 0;
   }
+  // Guarded on STATUS still being the active-transfer status this row was dispatched in - same
+  // reasoning as failTransferBatchRequeue()'s guard (see that function's comment). The callers
+  // here (TapeWriteSingleThread::requeueUnprocessedTasks() after a session-level abort,
+  // MigrationReportPacker::ReportLastBatchError::execute()) build jobIDs from in-memory job
+  // objects that may be stale by the time this runs: a multi-copy sibling could have exceeded its
+  // own retries in the meantime and have already collaterally settled this exact row via
+  // failTransferBatchExceedRetries()'s ARCHIVE_REQUEST_ID-wide UPDATE. Without this guard, this
+  // DELETE would still match the row by JOB_ID alone and silently resurrect an already-failed (or
+  // parked) copy back to AJS_ToTransferFor{User,Repack} in ARCHIVE_PENDING_QUEUE, undoing the
+  // sibling's settlement.
+  sql += " AND STATUS = :ACTIVE_STATUS::ARCHIVE_JOB_STATUS";
   sql += R"SQL(
         RETURNING *
     )
@@ -966,6 +977,10 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(newStatus));
+  // Same value as :STATUS (the row must already be at the status it's about to be rewritten to -
+  // see the guard comment above) - bound separately per this file's convention of one placeholder
+  // name per textual occurrence rather than reusing a name across multiple spots in one statement.
+  stmt.bindString(":ACTIVE_STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveBackToPending);
   stmt.executeNonQuery();

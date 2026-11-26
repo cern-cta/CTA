@@ -137,6 +137,32 @@ Both funnel into the same `ArchiveJobQueueRow`/`RetrieveJobQueueRow`::`failRepor
 under budget requeues (`IS_REPORTING = FALSE`, retry counters bumped, status otherwise unchanged);
 over budget — or `NoReportRequired`, which is permanently true for every repack job — is terminal.
 
+#### Retrying the write before falling back: `retryWithBackoff()`
+
+Point 1 above has a sharp edge: by the time a mount-level bookkeeping failure reaches
+`failReportBatch()`, the retry budget it would spend there is already dead on arrival (see Note 1,
+further down) — a *single* transient failure of `setJobBatchTransferred()`/
+`setRepackJobBatchTransferred()` would otherwise send an already-transferred, already-catalogued
+user job straight to `ARCHIVE_FAILED_QUEUE`, and a repack job straight into recovery, with no
+actual retry ever attempted at this layer.
+
+`cta::utils::retryWithBackoff()` (`common/utils/RetryWithBackoff.hpp`) closes this by retrying the
+write itself, before it ever reaches that dead-on-arrival fallback: a small, generic helper that
+calls a function, and on a `cta::exception::Exception`, sleeps for a configured delay and tries
+again, up to a fixed list of delays, logging a `WARNING` per retry and an `ERR` once every attempt
+is exhausted (at which point it rethrows, and the call reaches `failReportBatch()` exactly as
+before). It is wired into two call sites, each the same shape - "the real work already succeeded;
+only the DB write recording that fact failed":
+
+- `ArchiveMount::reportJobsBatchTransferred()`'s `setJobBatchTransferred()`/
+  `setRepackJobBatchTransferred()` call (delays `{1s, 10s}`).
+- `RetrieveMount::setJobBatchTransferred()`'s scheduler-DB write (same delays).
+
+It is deliberately scoped to call sites like these - background/recovery work already running on
+a worker thread, where blocking for a few extra seconds costs nothing a caller is waiting on - and
+must never wrap a frontend-synchronous RPC path, where a caller is already blocked on a response
+and a long retry only delays an eventual failure instead of helping it.
+
 #### Repack's "terminal" failure here isn't a failure
 
 For repack, landing in the "exceeded report retries" bucket doesn't mean the *job* failed — it
@@ -182,6 +208,18 @@ It is safe to force-settle a sibling copy that a drive is still writing, because
 user workflow reads "all copies are terminal" as permission to delete anything**. The source file
 belongs to the user's disk system; CTA only reports the failure to it. There is no point letting a
 doomed transfer finish, only a wasted one.
+
+That same `ARCHIVE_REQUEST_ID`-wide reach cuts both ways: any *other* code path that touches a
+copy's row by `JOB_ID` alone, without checking it is still at the status it expects, can just as
+easily undo this settlement instead of causing it. `ArchiveJobQueueRow::requeueJobBatch()` - used
+by `TapeWriteSingleThread::requeueUnprocessedTasks()` after a session-level abort and by
+`MigrationReportPacker::ReportLastBatchError::execute()` - is exactly that kind of path: it moves a
+job believed to be still-unprocessed back to `ARCHIVE_PENDING_QUEUE` from an in-memory list that
+can be stale by the time it runs. Without a `STATUS` guard on its `DELETE`, a sibling's
+`failTransferBatchExceedRetries()` sweep landing first would get silently reversed - the row
+resurrected back to `AJS_ToTransferForUser` as if the group had never failed. Guarded the same way
+as `failTransferBatchRequeue()`'s own `STATUS` predicate, it now only moves a row still genuinely
+at the active-transfer status.
 
 A sibling that has not been *dispatched* yet is a different problem: it has no row in
 `ARCHIVE_ACTIVE_QUEUE` at all, so there is nothing for the failing copy's `UPDATE` to reach. Sending
@@ -399,10 +437,12 @@ that happens only in the DB write that just failed, not on the in-memory object.
 and the bucket condition (`NoReportRequired || retries exceeded`) is therefore always true: the
 `requeue` bucket for THIS entry point is unreachable in practice. For repack that is harmless —
 `failReportBatchExceedRetries()`'s repack branch is just `updateRepackJobSuccess()`, safe to call
-on every attempt. **For user jobs it means a single transient failure of
+on every attempt. **For user jobs it would mean a single transient failure of
 `setJobBatchTransferred()` sends the job straight to `ARCHIVE_FAILED_QUEUE`**, never actually
-spending any of `maxReportRetries` at this layer — worth a second look independently of the
-batching work this page otherwise covers, since it looks unintentional rather than designed. The
+spending any of `maxReportRetries` at this layer — this is exactly the gap
+[`retryWithBackoff()`](#retrying-the-write-before-falling-back-retrywithbackoff) closes, by
+retrying the write itself before a transient failure ever reaches this
+unreachable-requeue-bucket problem. The
 *other* report-failure entry point, `RelationalDB::failArchiveJobBatchReport()`, does not have this
 problem: it is fed by a fresh `getNextArchiveJobsToReportBatch()` fetch, whose `initialize()` call
 sees the real `AJS_ToReportToUserFor{Success,Failure}` status, so `reportType` is genuinely

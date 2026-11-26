@@ -306,4 +306,134 @@ TEST_P(RelationalDBTest, archiveMultiCopySuccessParksThenFailingSiblingSweepsBot
   }
 }
 
+// Regression test for a bug found while auditing this fix: ArchiveJobQueueRow::requeueJobBatch()
+// - used by TapeWriteSingleThread::requeueUnprocessedTasks() after a session-level abort, and by
+// MigrationReportPacker::ReportLastBatchError::execute() - deleted rows by plain JOB_ID with no
+// STATUS guard. If a sibling's failTransferBatchExceedRetries() collaterally settles a copy's row
+// (the ARCHIVE_REQUEST_ID-wide UPDATE, see "Why user requests fail as a group" in
+// failure-handling.md) concurrently with - or just before - a crash-recovery requeue for that same
+// copy, the unguarded DELETE still matched it by JOB_ID alone and silently resurrected an
+// already-failed copy back to ARCHIVE_PENDING_QUEUE, undoing the sibling's settlement.
+TEST_P(RelationalDBTest, archiveMultiCopyCrashRequeueCannotResurrectACollaterallyFailedSibling) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueMultiCopyArchiveJob(db, lc, 994005, "tapePoolSettleE", "SETTLE-E", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-E";
+  tape.tapePool = "tapePoolSettleE";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+
+  // Both copies dispatched together - both visible in ARCHIVE_ACTIVE_QUEUE.
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+  const uint64_t jobIdA = jobs.front()->jobID;
+
+  // Copy B exceeds its retries. Both copies are present, so the group settles immediately to the
+  // terminal failure status together (no pending sibling here - this is the "both already
+  // dispatched" case, same as archiveFailTransferBatchExceedRetries_multiCopy).
+  jobs.back()->prepareFailTransfer("copy B fails, both copies already dispatched");
+  std::vector<SchedulerDatabase::ArchiveJob*> batch = {jobs.back().get()};
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+
+  // Simulate a session-level abort on copy A's drive discovering, too late, that copy A was never
+  // actually attempted - exactly what TapeWriteSingleThread::requeueUnprocessedTasks() does. Its
+  // job-ID list was built before copy B's failure swept copy A's row too, so it still names
+  // copy A's JOB_ID.
+  std::list<std::string> staleJobIds = {std::to_string(jobIdA)};
+  uint64_t nrows = mount->requeueJobBatch(staleJobIds, lc);
+
+  // The guard must reject the stale requeue: 0 rows affected, copy A's row still exactly where
+  // the group settlement left it.
+  ASSERT_EQ(0u, nrows);
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+// Happy path, not exercised by any existing test: both copies of a user multi-copy request
+// transfer successfully. Both must resolve straight to the terminal success status together and
+// be reportable in one pass - no copy should be left parked at
+// AJS_WaitReplicasBeforeReportingSuccessToDisk once its sibling has also settled.
+TEST_P(RelationalDBTest, archiveMultiCopyBothCopiesSucceedTogether) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueMultiCopyArchiveJob(db, lc, 994006, "tapePoolSettleF", "SETTLE-F", 1000);
+  db.waitSubthreadsComplete();
+
+  auto mountInfo = db.getMountInfo(lc);
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-F";
+  tape.tapePool = "tapePoolSettleF";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // Both copies succeed in the same batch.
+  mount->setJobBatchTransferred(jobs, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForSuccess'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingSuccessToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+
+  auto reportBatch = db.getNextArchiveJobsToReportBatch(10, lc);
+  ASSERT_EQ(2u, reportBatch.size());
+}
+
 }  // namespace unitTests
