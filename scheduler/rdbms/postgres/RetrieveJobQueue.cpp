@@ -1036,24 +1036,6 @@ RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& 
   return {requeued, reported};
 }
 
-uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
-  // DISABLE DELETION FOR DEBUGGING
-  std::string sql = R"SQL(
-    WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
-          WHERE JOB_ID = :JOB_ID
-        RETURNING *
-    ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS
-  )SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveFailedRetrieve);
-  stmt.executeNonQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  txn.setRowCountForTelemetry(nrows);
-  return nrows;
-}
-
 uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
                                                              const std::vector<std::string>& jobIDs,
                                                              bool isRepack) {
@@ -1122,35 +1104,6 @@ rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Tran
   auto rset = stmt.executeQuery();
   return rset;
 }
-
-uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus) {
-  // otherwise update the statistics and requeue the job
-  std::string sql = R"SQL(
-      UPDATE RETRIEVE_ACTIVE_QUEUE SET
-        STATUS = :STATUS,
-        TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
-        IS_REPORTING =:IS_REPORTING,
-        REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
-      WHERE JOB_ID = :JOB_ID
-    )SQL";
-
-  auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(newStatus));
-  stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
-  stmt.bindBool(":IS_REPORTING", isReporting);
-  stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
-  stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
-  txn.setRowCountForTelemetry(1);
-  stmt.executeNonQuery();
-  // if this was the final reporting failure,
-  // move the row to failed jobs and delete the entry from the queue
-  if (newStatus == RetrieveJobStatus::ReadyForDeletion) {
-    return RetrieveJobQueueRow::moveJobToFailedQueueTable(txn);
-  }
-  return stmt.getNbAffectedRows();
-};
 
 rdbms::Rset RetrieveJobQueueRow::getRetrieveJobs(Transaction& txn, uint64_t filesRequested, bool fetchFailed) {
   std::string sql = "SELECT * FROM RETRIEVE_";
@@ -1513,12 +1466,11 @@ uint64_t RetrieveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   }
 
   // Step 1: write the terminal status and the counters, reset IS_REPORTING in the ACTIVE queue.
-  // STATUS = ReadyForDeletion is what the single-job updateJobStatusForFailedReport() writes before
-  // its own moveJobToFailedQueueTable() call, so a terminally-failed report lands in
-  // RETRIEVE_FAILED_QUEUE with the same status whichever path handled it - that column is what
-  // `cta-admin failedrequest ls` shows. Safe to set in step 1 here, unlike the archive user path in
-  // ArchiveJobQueue.cpp's failReportBatchExceedRetries(): the move below is a separate statement, so
-  // the row is modified once per statement and PostgreSQL does not discard the DELETE.
+  // STATUS = ReadyForDeletion lands in RETRIEVE_FAILED_QUEUE with that status - the column
+  // `cta-admin failedrequest ls` shows. Safe to set in step 1 here, unlike the archive user path
+  // in ArchiveJobQueue.cpp's failReportBatchExceedRetries(): the move below is a separate
+  // statement, so the row is modified once per statement and PostgreSQL does not discard the
+  // DELETE.
   std::string sql = R"SQL(
   WITH per_job(job_id, total_report_retries, report_failure_log) AS (
     VALUES )SQL";

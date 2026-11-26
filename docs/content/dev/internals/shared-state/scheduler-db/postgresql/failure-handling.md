@@ -202,8 +202,7 @@ repack, is keyed on `JOB_ID` alone on both the transfer and the report side.
 For a user archive request the copies exist to satisfy a redundancy goal. Once one copy is
 permanently lost the request cannot meet that goal, so there is nothing to gain by letting the
 others run: `failTransferBatchExceedRetries()` and `failReportBatchExceedRetries()` both expand to
-every copy of the `ARCHIVE_REQUEST_ID` when `REQUEST_JOB_COUNT > 1`, matching the single-job
-`updateFailedJobStatus()` and `moveJobToFailedQueueTable()`.
+every copy of the `ARCHIVE_REQUEST_ID` when `REQUEST_JOB_COUNT > 1`.
 
 It is safe to force-settle a sibling copy that a drive is still writing, because **nothing in the
 user workflow reads "all copies are terminal" as permission to delete anything**. The source file

@@ -807,26 +807,7 @@ public:
   static rdbms::Rset transformJobBatchToArchive(Transaction& txn, const size_t limit);
 
   /**
-  * Update job status when job report failed
-  *
-  * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to select on
-  * @return                     Number of updated rows
-  */
-  uint64_t updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus);
-
-  /**
-  * Move the job row to the ARCHIVE FAILED JOB TABLE
-  *
-  * @param txn                  Transaction to use for this query
-  * @return nrows               The number of rows moved.
-  */
-  uint64_t moveJobToFailedQueueTable(Transaction& txn);
-
-  /**
   * Move the job rows to the ARCHIVE FAILED JOB TABLE (static alternate for multiple jobs)
-  * (unused at the moment but shall be used for
-  * batched failed reports to disk)
   *
   * @param txn                  Transaction to use for this query
   * @param jobIDs               The jobIDs to be moved
@@ -902,8 +883,7 @@ public:
 
   // failReportBatchExceedRetries: batch UPDATE for jobs that have exhausted report retries or have
   // NoReportRequired - writes STATUS=ReadyForDeletion plus the counters, then batch-moves them to
-  // RETRIEVE_FAILED_QUEUE, so a terminally-failed report ends up with the same status whether it
-  // was handled here or by the single-job updateJobStatusForFailedReport().
+  // RETRIEVE_FAILED_QUEUE.
   // No isRepack parameter - see failReportBatchRequeue() above.
   static uint64_t failReportBatchExceedRetries(Transaction& txn, const std::vector<RetrieveJobQueueRow*>& jobs);
 #endif

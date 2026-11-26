@@ -759,37 +759,6 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
   return nrows;
 }
 
-uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
-  std::string sql = R"SQL(
-    WITH MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_ACTIVE_QUEUE
-  )SQL";
-  if (reqJobCount > 1) {
-    sql += R"SQL(
-        WHERE ARCHIVE_REQUEST_ID = :ARCHIVE_REQUEST_ID
-    )SQL";
-  } else {
-    sql += R"SQL(
-        WHERE JOB_ID = :JOB_ID
-    )SQL";
-  }
-  sql += R"SQL(
-        RETURNING *
-    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
-  )SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  if (reqJobCount > 1) {
-    stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
-  } else {
-    stmt.bindUint64(":JOB_ID", jobId);
-  }
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRepackArchiveToFailed);
-  stmt.executeNonQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  txn.setRowCountForTelemetry(nrows);
-  return nrows;
-}
-
 rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
   /* A multi-copy request's failed copy cannot simply be moved on its own: a sibling copy may
    * still be mid-transfer and needs the shared source file (deleted by the caller once this
@@ -875,58 +844,6 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
   auto rset = stmt.executeQuery();
   return rset;
 }
-
-uint64_t
-ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack) {
-  // otherwise update the statistics and requeue the job
-  std::string repack_prefix = isRepack ? "REPACK_" : "";
-  std::string sql = R"SQL(
-      UPDATE )SQL";
-  sql += repack_prefix + "ARCHIVE_ACTIVE_QUEUE SET ";
-  // For repack, STATUS is left for updateRepackJobSuccess() below to set correctly - see comment.
-  if (!isRepack) {
-    sql += "STATUS = :STATUS, ";
-  }
-  sql += R"SQL(TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
-        IS_REPORTING =:IS_REPORTING,
-        REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
-      WHERE JOB_ID = :JOB_ID
-    )SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  if (!isRepack) {
-    stmt.bindString(":STATUS", to_string(newStatus));
-  }
-  stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
-  stmt.bindBool(":IS_REPORTING", isReporting);
-  stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
-  stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
-  txn.setRowCountForTelemetry(1);
-  stmt.executeNonQuery();
-  /* USER job: on the terminal failure (newStatus=ReadyForDeletion), move the row to
-   * ARCHIVE_FAILED_QUEUE via moveJobToFailedQueueTable(), multi-copy requests included. Checks
-   * newStatus, not status (stale in-memory value) - status missed the real transition and left
-   * rows stuck in ARCHIVE_ACTIVE_QUEUE forever once retries were exhausted.
-   *
-   * REPACK job: repack transfer failures never reach this function (failTransferBatchExceedRetries()
-   * handles those). The only way here is updateRepackJobSuccess() itself failing to persist an
-   * already-successful transfer, so newStatus=ReadyForDeletion means "recover that lost write",
-   * not "report a failure". STATUS is left for updateRepackJobSuccess() to set, since only it
-   * knows whether a multi-copy request's other copies have also succeeded - forcing
-   * ReadyForDeletion here directly would let getNextSuccessfulArchiveRepackReportBatch() delete
-   * the source file before every copy exists. A second failure on this recovery attempt (fresh
-   * connection, same write) is caught by failReport()'s own try/catch and falls back to
-   * dead-mount GC: one wasted re-transfer, not lost data, not a retry loop.
-   */
-  if (isRepack && newStatus == ArchiveJobStatus::ReadyForDeletion) {
-    return ArchiveJobQueueRow::updateRepackJobSuccess(txn, {std::to_string(jobId)});
-  }
-  if (newStatus == ArchiveJobStatus::ReadyForDeletion && !isRepack) {
-    return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
-  }
-  return stmt.getNbAffectedRows();
-};
 
 rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
                                                           std::list<ArchiveJobStatus> statusList,
@@ -1325,8 +1242,8 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
     return 0;
   }
 
-  // USER multi-copy requests move all copies atomically, by ARCHIVE_REQUEST_ID, matching the
-  // single-job failReport() -> moveJobToFailedQueueTable() pair. Repack keys on JOB_ID alone: its
+  // USER multi-copy requests move all copies atomically, by ARCHIVE_REQUEST_ID. Repack keys on
+  // JOB_ID alone: its
   // multi-copy grouping is by (REPACK_REQUEST_ID, ARCHIVE_FILE_ID) and is handled entirely inside
   // updateRepackJobSuccess() below. Note that repack rows do NOT always have req_job_count = 1 -
   // transformJobBatchToArchive() sets it to the number of copies the file is being re-archived to -
@@ -1391,10 +1308,9 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   }
 
   // USER: a genuine terminal failure. Statement 1 writes the terminal status and the report
-  // counters, expanding to every sibling copy by ARCHIVE_REQUEST_ID for a multi-copy request so the
-  // whole request settles atomically - the same semantics as the single-job
-  // updateJobStatusForFailedReport() -> moveJobToFailedQueueTable() pair. Statement 2 moves exactly
-  // the rows statement 1 touched into ARCHIVE_FAILED_QUEUE.
+  // counters, expanding to every sibling copy by ARCHIVE_REQUEST_ID for a multi-copy request so
+  // the whole request settles atomically. Statement 2 moves exactly the rows statement 1 touched
+  // into ARCHIVE_FAILED_QUEUE.
   //
   // These MUST stay two statements. Folding them into one chained CTE
   // (UPDATE ... RETURNING -> INSERT -> DELETE) silently does not work: every sub-statement of a

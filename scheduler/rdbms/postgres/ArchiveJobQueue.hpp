@@ -777,8 +777,8 @@ VALUES )SQL";
     // MATERIALIZED forces this CTE to be evaluated exactly once: nextval() is volatile, and without
     // it the planner could inline the CTE into the outer INSERT, calling nextval() once per output
     // row instead of once per distinct request_group_id. That would give each copy of a multi-copy
-    // archive request a different ARCHIVE_REQUEST_ID, silently breaking updateMultiCopyJobSuccess
-    // and moveJobToFailedQueueTable, which both key on it.
+    // archive request a different ARCHIVE_REQUEST_ID, silently breaking updateMultiCopyJobSuccess()
+    // and failTransferBatchExceedRetries(), which both key on it.
     sql += R"SQL(
     ),
       request_ids AS MATERIALIZED (
@@ -1011,30 +1011,6 @@ VALUES )SQL";
    */
   static uint64_t
   requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus, const std::list<std::string>& jobIDs, bool isRepack);
-
-  /**
-   * Update job status when job report failed
-   *
-   * @param txn                  Transaction to use for this query
-   * @param newStatus            Archive Job Status to select on
-   * @param isRepack             Whether this job belongs to a repack request - selects
-   *                             REPACK_ARCHIVE_ACTIVE_QUEUE and, on the terminal case, routes
-   *                             through updateRepackJobSuccess() instead of the move-to-failed-
-   *                             queue step (see .cpp for why)
-   * @return                     Number of updated rows
-   */
-  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack);
-
-  /**
-   * Move the job row to the ARCHIVE FAILED JOB TABLE
-   *
-   * Only ever called for user jobs (see updateJobStatusForFailedReport()'s !isRepack guard) -
-   * always targets plain ARCHIVE_ACTIVE_QUEUE/ARCHIVE_FAILED_QUEUE, no REPACK_ variant needed.
-   *
-   * @param txn                  Transaction to use for this query
-   * @return nrows               The number of rows moved.
-   */
-  uint64_t moveJobToFailedQueueTable(Transaction& txn);
 
   /**
    * Moves up to `limit` permanently-failed repack copies (STATUS=AJS_ToReportToRepackForFailure)

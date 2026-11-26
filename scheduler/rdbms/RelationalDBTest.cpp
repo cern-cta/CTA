@@ -1530,10 +1530,10 @@ TEST_P(RelationalDBTest, repackArchiveFailReportBatchSingleCopyRecoversAsSuccess
 }
 
 // Covers: repack transfer and catalogue update both succeed, but the write recording that in
-// the scheduler DB fails - failReport() is only reachable once the catalogue write already
-// committed (ArchiveMount::reportJobsBatchTransferred()'s catalogue_updated gate). This is the
-// bug fixed in updateJobStatusForFailedReport(): it must recover the lost write (row ends up
-// ReadyForDeletion) rather than no-op against the wrong table or mislabel a success as a failure.
+// the scheduler DB fails - failReportBatch() is only reachable once the catalogue write already
+// committed (ArchiveMount::reportJobsBatchTransferred()'s catalogue_updated gate). For repack,
+// failReportBatchExceedRetries() recovers the lost write via updateRepackJobSuccess() (row ends
+// up ReadyForDeletion) rather than mislabelling a success as a failure.
 TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversAsSuccessAndAccounts) {
   using namespace cta;
 
@@ -3432,8 +3432,7 @@ TEST_P(RelationalDBTest, archiveFailReportBatchMixed) {
 
 // When a single copy of a multi-copy archive request exceeds its report retry budget,
 // failReportBatchExceedRetries must atomically move ALL copies of the same archive
-// request to ARCHIVE_FAILED_QUEUE (same semantics as the individual failReport path
-// which calls moveJobToFailedQueueTable using ARCHIVE_REQUEST_ID for req_job_count > 1).
+// request to ARCHIVE_FAILED_QUEUE.
 TEST_P(RelationalDBTest, archiveFailReportBatchExceedRetries_multiCopy) {
   using namespace cta;
 
@@ -3653,9 +3652,8 @@ TEST_P(RelationalDBTest, retrieveFailReportBatchExceedRetries) {
     ASSERT_EQ(0u, rset.columnUint64("CNT"));
   }
   // Job must appear in RETRIEVE_FAILED_QUEUE with TOTAL_REPORT_RETRIES=1, and with STATUS already
-  // moved to ReadyForDeletion - the single-job updateJobStatusForFailedReport() writes that status
-  // before its own move, and STATUS is the column `cta-admin failedrequest ls` reports, so both
-  // paths have to agree on it.
+  // moved to ReadyForDeletion - failReportBatchExceedRetries() writes that status before moving
+  // the row, and STATUS is the column `cta-admin failedrequest ls` reports.
   {
     auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT, MAX(TOTAL_REPORT_RETRIES) AS MAX_RR FROM "
                                 "RETRIEVE_FAILED_QUEUE WHERE STATUS = 'ReadyForDeletion'");
