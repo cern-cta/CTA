@@ -11,7 +11,7 @@
   authors = [{ name = "CERN", email = "tape-operations@cern.ch" }]
   description = "Main CLI to interact with CTA"
   readme = "README.md"
-  requires-python = ">=3.9"
+  requires-python = ">=3.15"
   license = "GPL-3.0-or-later"
   license-files = ["LICENSE"]
   classifiers = [
@@ -22,14 +22,13 @@
 
   dynamic = ["version"]
   dependencies = [
-    "typing-extensions>=4.4.0",
     "cta-common",
     "cta-sdk",
     "click",
     "rich",
     "pyjwt>=2.14.0",
     "cryptography>=47.0.0",
-    "grpcio-health-checking>=1.80.0",
+    "grpcio-health-checking>=1.84.1",
   ]
 
   [project.urls]
@@ -47,7 +46,7 @@
 
 [tool.hatch.version]
   source     = "code"
-  path       = "../../ci/utils/cta_version.py"
+  path       = "../../ci/build/cta_version.py"
   expression = "package_version()"
 
 [tool.hatch.build]

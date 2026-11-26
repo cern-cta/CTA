@@ -3,8 +3,6 @@
 
 """Tests for the immutable dataclasses exposed by the repository protocols."""
 
-from typing import Optional
-
 import pytest
 from cta.tapeserver.sdk.repositories.protocols.drive import (
     Drive,
@@ -41,7 +39,7 @@ def test_drive_equality_keyed_on_serial_number() -> None:
 
 
 @pytest.mark.parametrize("serial", [None, ""])
-def test_drive_rejects_empty_serial(serial: Optional[str]) -> None:
+def test_drive_rejects_empty_serial(serial: str | None) -> None:
     with pytest.raises(ValueError, match="must be a non-empty string"):
         Drive(serial_number=serial)  # type: ignore[arg-type]
 
@@ -53,7 +51,7 @@ def test_named_drive_holds_logical_name() -> None:
 
 
 @pytest.mark.parametrize("name", [None, ""])
-def test_named_drive_rejects_empty_name(name: Optional[str]) -> None:
+def test_named_drive_rejects_empty_name(name: str | None) -> None:
     with pytest.raises(ValueError, match="must be a non-empty string"):
         NamedDrive(serial_number="SN", name=name)  # type: ignore[arg-type]
 
@@ -81,7 +79,7 @@ def test_library_equality_keyed_on_serial_number() -> None:
 
 
 @pytest.mark.parametrize("serial", [None, ""])
-def test_library_rejects_empty_serial(serial: Optional[str]) -> None:
+def test_library_rejects_empty_serial(serial: str | None) -> None:
     with pytest.raises(ValueError, match="must be a non-empty string"):
         Library(serial_number=serial)  # type: ignore[arg-type]
 
@@ -93,6 +91,6 @@ def test_named_library_holds_name() -> None:
 
 
 @pytest.mark.parametrize(("serial", "name"), [(None, "T0"), ("", "T0"), ("SN", None), ("SN", "")])
-def test_named_library_rejects_empty_fields(serial: Optional[str], name: Optional[str]) -> None:
+def test_named_library_rejects_empty_fields(serial: str | None, name: str | None) -> None:
     with pytest.raises(ValueError, match="must be a non-empty string"):
         NamedLibrary(serial_number=serial, name=name)  # type: ignore[arg-type]

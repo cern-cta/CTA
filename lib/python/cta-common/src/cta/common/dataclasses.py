@@ -18,7 +18,7 @@ Protocols:
 from collections.abc import Iterator
 from dataclasses import Field, fields, is_dataclass
 from functools import lru_cache
-from typing import Any, ClassVar, Optional, Protocol, TypeVar, cast, get_args, get_origin, get_type_hints
+from typing import Any, ClassVar, Protocol, cast, get_args, get_origin, get_type_hints
 
 from cta.common.typing import normalize_types
 
@@ -33,9 +33,6 @@ class DataclassProtocol(Protocol):
     """
 
     __dataclass_fields__: ClassVar[dict[str, Field[Any]]]
-
-
-D = TypeVar("D", bound=DataclassProtocol)
 
 
 def _iter_dataclass_properties(obj_type: type) -> Iterator[tuple[str, property]]:
@@ -55,7 +52,7 @@ def copy_dataclass(obj: DataclassProtocol) -> dict[str, Any]:
     return {f.name: getattr(obj, f.name) for f in fields(obj)}
 
 
-def load_data(dataclass_instance: D, data: dict[str, Any]) -> D:
+def load_data[D: DataclassProtocol](dataclass_instance: D, data: dict[str, Any]) -> D:
     """
     Recursively loads data from a dictionary into a dataclass instance.
 
@@ -97,7 +94,7 @@ def load_data(dataclass_instance: D, data: dict[str, Any]) -> D:
 
 def flatten_dataclass_instance(
     obj: DataclassProtocol,
-    max_depth: Optional[int] = None,
+    max_depth: int | None = None,
     *,
     extra_flatten_fields: tuple[str, ...] = (),
     include_properties: bool = False,
@@ -197,7 +194,7 @@ def flatten_dataclass_instance(
 @lru_cache
 def flatten_dataclass_class(
     obj_type: type,
-    max_depth: Optional[int] = None,
+    max_depth: int | None = None,
     *,
     extra_flatten_fields: tuple[str, ...] = (),
     include_properties: bool = False,

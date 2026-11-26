@@ -65,7 +65,7 @@ foreach(PNAME ${RESULTS})
 endforeach()
 
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/ci/project-json/generate_versionlock.py --platform ${PLATFORM}
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 "${Python3_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/ci/project-json/generate_versionlock.py --platform ${PLATFORM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT_VARIABLE VERSIONLOCK
   OUTPUT_STRIP_TRAILING_WHITESPACE

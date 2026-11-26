@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -29,7 +29,7 @@ def ref_obj() -> FailedRequest:
         tape_file=TapeFile(
             archive_id=4299888572,
             storage_class_name="",
-            creation_time=datetime(2025, 6, 11, 14, 46, 11, tzinfo=timezone.utc),
+            creation_time=datetime(2025, 6, 11, 14, 46, 11, tzinfo=UTC),
             size=1024000,
             checksum=Checksum("UNKNOWN", "UNKNOWN"),
             disk_file=DiskFile(

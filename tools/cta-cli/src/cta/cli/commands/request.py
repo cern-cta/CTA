@@ -7,7 +7,7 @@ This module provides commands to view queued archive and retrieve request inform
 with optional grouping by tape pool, logical library, or virtual organisation.
 """
 
-from typing import Literal, Optional, get_args
+from typing import Literal, get_args
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -19,7 +19,7 @@ from cta.sdk.models import MountType
 
 GroupByAlias = Literal["ll", "tp", "vo"]
 GROUP_BY_CHOICES = get_args(GroupBy) + get_args(GroupByAlias)
-GROUP_BY_ALIAS_MAP = dict(zip(get_args(GroupByAlias), get_args(GroupBy)))
+GROUP_BY_ALIAS_MAP = dict(zip(get_args(GroupByAlias), get_args(GroupBy), strict=False))
 
 
 def normalize_group_by(ctx: click.Context, param: click.Parameter, value: str) -> str:
@@ -40,7 +40,7 @@ def request():
     callback=enum_choice(MountType),
 )
 @click.pass_obj
-def list_command(obj: AppContext, type: Optional[MountType]):
+def list_command(obj: AppContext, type: MountType | None):
     """List CTA requests by type."""
     queues = obj.cta_client.user_request.list(request_type=type)
     print_dataclasses(queues, display_config=obj.config.display)

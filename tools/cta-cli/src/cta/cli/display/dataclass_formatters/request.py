@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import override
+
 from cta.cli.display.encoders import encode_table_header
 from cta.cli.display.formatters import DataClassBaseFormatter, TableHeaders
 from cta.sdk.models import UserRequestSummary
-from typing_extensions import override
 
 
 class UserRequestSummaryFormatter(DataClassBaseFormatter[UserRequestSummary], dataclass_type=UserRequestSummary):

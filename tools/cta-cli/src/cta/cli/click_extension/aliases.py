@@ -8,10 +8,10 @@ functionality with support for command and group aliases, allowing users to
 invoke commands using shorter alternative names.
 """
 
-from typing import Any, Callable, Optional, Protocol, Union, cast
+from collections.abc import Callable
+from typing import Any, Protocol, cast, override
 
 import click
-from typing_extensions import override
 
 
 class _HasAliases(Protocol):
@@ -31,7 +31,7 @@ class ClickAliasedGroup(click.Group):
         aliases: List of aliases for the group itself.
     """
 
-    def __init__(self, *args: Any, aliases: Optional[list[str]] = None, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, aliases: list[str] | None = None, **kwargs: Any) -> None:
         """Initialize the ClickAliasedGroup.
 
         Args:
@@ -45,7 +45,7 @@ class ClickAliasedGroup(click.Group):
         self.aliases = aliases or []
 
     @override
-    def add_command(self, cmd: click.Command, name: Optional[str] = None, aliases: Optional[list[str]] = None) -> None:
+    def add_command(self, cmd: click.Command, name: str | None = None, aliases: list[str] | None = None) -> None:
         """Add a command to the group with optional aliases.
 
         Args:
@@ -73,7 +73,7 @@ class ClickAliasedGroup(click.Group):
 
     def command(  # type: ignore[override]
         self, *args: Any, **kwargs: Any
-    ) -> Union[Callable[[Callable[..., Any]], click.Command], click.Command]:
+    ) -> Callable[[Callable[..., Any]], click.Command] | click.Command:
         """Register a command with optional aliases.
 
         Args:
@@ -103,7 +103,7 @@ class ClickAliasedGroup(click.Group):
 
     def group(  # type: ignore[override]
         self, *args: Any, **kwargs: Any
-    ) -> Union[Callable[[Callable[..., Any]], click.Group], click.Group]:
+    ) -> Callable[[Callable[..., Any]], click.Group] | click.Group:
         """Register a group with optional aliases.
 
         Args:
@@ -148,7 +148,7 @@ class ClickAliasedGroup(click.Group):
         return cmd_name
 
     @override
-    def get_command(self, ctx: click.Context, cmd_name: str) -> Optional[click.Command]:
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         """Get a command by name, resolving aliases.
 
         Args:

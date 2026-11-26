@@ -12,7 +12,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Container
 from logging import getLogger
-from typing import Optional
+from typing import override
 
 from cta.tapeserver.sdk.exceptions import ResourceNotFoundError
 from cta.tapeserver.sdk.repositories.protocols.library import (
@@ -22,13 +22,12 @@ from cta.tapeserver.sdk.repositories.protocols.library import (
     NamedLibraryRepository,
 )
 from pyudev import Context, Device
-from typing_extensions import override
 
 LOGGER = getLogger("cta.tapeserver.sdk")
 
 
 class _LocalAbstractLibraryRepository(ABC):
-    def __init__(self, context: Optional[Context] = None):
+    def __init__(self, context: Context | None = None):
         self._context = Context() if context is None else context
 
     def _list_media_changer_sg_devices(self) -> set[Device]:
@@ -114,7 +113,7 @@ class LocalNamedLibraryRepository(_LocalAbstractLibraryRepository, NamedLibraryR
     medium changer. Changers without `CTA_NAME` are skipped.
     """
 
-    def __init__(self, context: Optional[Context] = None, library_name_key: str = "CTA_NAME"):
+    def __init__(self, context: Context | None = None, library_name_key: str = "CTA_NAME"):
         super().__init__(context)
         self._library_name_key = library_name_key
 

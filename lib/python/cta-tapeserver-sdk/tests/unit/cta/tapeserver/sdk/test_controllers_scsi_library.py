@@ -13,7 +13,7 @@ patched on the controller instance with simple stubs.
 import json
 import subprocess
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,7 +28,7 @@ from cta.tapeserver.sdk.repositories.protocols.drive import DriveLibraryLocation
 
 
 def _make_sg_device(
-    device_factory: Callable[..., MagicMock], *, serial: Optional[str] = "LIBSN", cta_name: str = "T0-LIB0"
+    device_factory: Callable[..., MagicMock], *, serial: str | None = "LIBSN", cta_name: str = "T0-LIB0"
 ):
     return device_factory(
         sys_name="sg0",
@@ -55,7 +55,7 @@ def _stub_drive_repo() -> MagicMock:
     return repo
 
 
-def _build_managed_controller(device_factory: Callable[..., MagicMock], *, drive_repo: "MagicMock | None" = None):
+def _build_managed_controller(device_factory: Callable[..., MagicMock], *, drive_repo: MagicMock | None = None):
     """Build a ScsiManagedLibraryController with internal repos stubbed."""
     sg = _make_sg_device(device_factory)
     with patch(

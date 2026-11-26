@@ -4,7 +4,7 @@ Use the `release` tool to prepare the changelog and release issue, tag the revie
 
 ## Set up the release tool
 
-Start from a clean checkout of the target branch (`main` by default), with Python 3, Git, and `origin` pointing to CERN GitLab.
+Start from a clean checkout of the target branch (`main` by default), with uv, Git, and `origin` pointing to CERN GitLab.
 Run commands from the repository root:
 
 ```bash

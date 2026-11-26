@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import AdminUserDao
 from cta.sdk.models import AdminUser
-from typing_extensions import override
 
 
 class AdminUserDaoMock(AdminUserDao):
@@ -37,6 +36,6 @@ class AdminUserDaoMock(AdminUserDao):
         yield from self._handler.iter(self.resource_type)
 
     @override
-    def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
+    def update(self, name: str, /, *, comment: str | None = None) -> None:
         with self._handler.update(self.resource_type, name) as user:
             user.metadata = self._handler.refresh_metadata(user.metadata, comment=comment)

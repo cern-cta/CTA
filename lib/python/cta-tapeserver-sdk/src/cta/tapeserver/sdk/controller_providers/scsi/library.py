@@ -22,7 +22,7 @@ exposed:
 
 import logging
 import re
-from typing import Optional
+from typing import override
 
 from cta.tapeserver.sdk.controller_providers.protocols.library import (
     LibraryControllerProvider,
@@ -32,7 +32,6 @@ from cta.tapeserver.sdk.controllers.scsi.library import ScsiLibraryController, S
 from cta.tapeserver.sdk.exceptions import ResourceNotFoundError
 from cta.tapeserver.sdk.repositories.local.drive import LocalLocatedNamedDriveRepository
 from pyudev import Context, Device
-from typing_extensions import override
 
 LOGGER = logging.getLogger("cta.tapeserver.sdk")
 
@@ -71,7 +70,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
 
     def __init__(
         self,
-        context: Optional[Context] = None,
+        context: Context | None = None,
         library_name_key: str = "CTA_NAME",
     ):
         LOGGER.debug("Initializing ScsiLibraryControllerProvider")
@@ -90,7 +89,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
     def find_library_controller(
         self,
         serial_number: str,
-    ) -> Optional[ScsiLibraryController]:
+    ) -> ScsiLibraryController | None:
         LOGGER.debug("Searching for library controller with serial=%s", serial_number)
         return next(
             (
@@ -115,7 +114,7 @@ class ScsiLibraryControllerProvider(LibraryControllerProvider):
     def find_library_controller_by_name(
         self,
         name: str,
-    ) -> Optional[ScsiLibraryController]:
+    ) -> ScsiLibraryController | None:
         LOGGER.debug("Searching for library controller with name=%s", name)
         return next(
             (
@@ -175,7 +174,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
 
     def __init__(
         self,
-        context: Optional[Context] = None,
+        context: Context | None = None,
         library_name_key: str = "CTA_NAME",
         drive_name_key: str = "CTA_NAME",
         drive_library_address_key: str = "CTA_LIBRARY_ADDRESS",
@@ -200,7 +199,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
     def find_library_controller(
         self,
         serial_number: str,
-    ) -> Optional[ScsiManagedLibraryController]:
+    ) -> ScsiManagedLibraryController | None:
         LOGGER.debug("Searching for library controller with serial=%s", serial_number)
         return next(
             (
@@ -225,7 +224,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
     def find_library_controller_by_name(
         self,
         name: str,
-    ) -> Optional[ScsiManagedLibraryController]:
+    ) -> ScsiManagedLibraryController | None:
         LOGGER.debug("Searching for library controller with name=%s", name)
         return next(
             (
@@ -264,7 +263,7 @@ class ScsiManagedLibraryControllerProvider(ScsiLibraryControllerProvider, Manage
     def find_library_controller_from_drive_name(
         self,
         drive_name: str,
-    ) -> Optional[ScsiManagedLibraryController]:
+    ) -> ScsiManagedLibraryController | None:
         """Return the managed library controller matching `drive_name`, or `None`."""
         LOGGER.debug("Searching for library controller from drive name=%s", drive_name)
         try:

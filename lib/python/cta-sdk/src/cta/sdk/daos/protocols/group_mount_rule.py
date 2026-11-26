@@ -9,7 +9,7 @@ to all members of a user group for consistent tape access behavior.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import GroupMountRule
 
@@ -82,8 +82,8 @@ class GroupMountRuleDao(Protocol):
         disk_instance_name: str,
         /,
         *,
-        mount_policy_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        mount_policy_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing group mount rule.
 

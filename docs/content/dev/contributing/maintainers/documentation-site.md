@@ -4,7 +4,7 @@ This page covers site configuration and publication. For page edits, local previ
 
 ## Site configuration
 
-Zensical builds the site with Python 3.12. Paths below are relative to the repository root.
+Zensical builds the site with the Python interpreter selected by `.python-version`. Paths below are relative to the repository root.
 
 | Location | Purpose |
 | --- | --- |

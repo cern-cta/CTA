@@ -8,7 +8,6 @@ adding optional serial number and connection state attributes.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from cta.common import copy_dataclass
 from cta.sdk.models import PhysicalLibrary
@@ -24,12 +23,12 @@ class EnrichedPhysicalLibrary(PhysicalLibrary):
             Serial number of the physical library, if available.
     """
 
-    local_serial_number: Optional[str]
+    local_serial_number: str | None
 
     @classmethod
     def merge(
-        cls, cta_physical_library: PhysicalLibrary, local_library: Optional[NamedLibrary] = None
-    ) -> "EnrichedPhysicalLibrary":
+        cls, cta_physical_library: PhysicalLibrary, local_library: NamedLibrary | None = None
+    ) -> EnrichedPhysicalLibrary:
         """Create an enriched physical library from a base physical library model.
 
         Args:

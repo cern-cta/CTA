@@ -49,7 +49,7 @@ enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
 # Neutral source version; native packaging adds its revision separately.
-cta_version=$(python3 "${project_root}/ci/utils/cta_version.py")
+cta_version=$(python3 "${project_root}/ci/build/cta_version.py")
 cta_image_tag=""
 
 # Build
@@ -690,7 +690,7 @@ parse_options() {
     cta_image_tag_is_valid "$cta_image_tag" || \
       unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
   else
-    cta_image_tag=$(python3 "${project_root}/ci/utils/cta_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+    cta_image_tag=$(python3 "${project_root}/ci/build/cta_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
   fi
 
   # An explicit image tag refers to an image built elsewhere, most commonly by the CI. Without
@@ -1127,7 +1127,7 @@ build_cta() {
 
   # Resolve native package metadata before invoking the container build.
   local package_version
-  package_version=$(python3 "${project_root}/ci/utils/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+  package_version=$(python3 "${project_root}/ci/build/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 
   print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.

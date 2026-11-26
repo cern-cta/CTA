@@ -3,10 +3,9 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Annotated, Final
+from typing import Annotated, Final, override
 
 from cta.sdk.units import Byte
-from typing_extensions import override
 
 
 @dataclass(frozen=True)

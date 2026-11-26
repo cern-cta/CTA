@@ -12,7 +12,7 @@ import errno
 import subprocess
 from collections.abc import Callable, Iterable
 from types import TracebackType
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -42,7 +42,7 @@ def _build_st_device(
     device_factory: Callable[..., MagicMock],
     *,
     sys_name: str = "nst0",
-    serial: Optional[str] = "DRSN",
+    serial: str | None = "DRSN",
     cta_name: str = "T0-LIB0-DRV0",
 ):
     parent = MagicMock(name="ScsiTarget")
@@ -360,9 +360,7 @@ def test_write_files_yields_then_raises_eot_on_enospc(
         def __enter__(self):
             return self
 
-        def __exit__(
-            self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
-        ):
+        def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None):
             return False
 
         def writelines(self, blocks: Iterable[bytes]) -> None:
@@ -424,9 +422,7 @@ def test_read_files_yields_per_file_then_raises_eod(
         def __enter__(self):
             return self
 
-        def __exit__(
-            self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
-        ):
+        def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None):
             return False
 
         def read(self, _block_size: int):
@@ -481,9 +477,7 @@ def test_get_vol1_returns_decoded_label(
         def __enter__(self):
             return self
 
-        def __exit__(
-            self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
-        ):
+        def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None):
             return False
 
         def read(self, n: int):

@@ -34,6 +34,8 @@ repositories (e.g. `LocalNamedLibraryRepository`,
 `LocalLocatedNamedDriveRepository`): devices that lack them are
 considered unmanaged and silently skipped.
 
+The helper uses system Python at `/usr/bin/python3`; no virtual environment is required.
+
 ## Files
 
 The RPM installs the following files:

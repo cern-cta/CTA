@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -25,7 +25,7 @@ def ref_obj() -> RecycleBinTapeFile:
     return RecycleBinTapeFile(
         archive_id=4302486079,
         storage_class_name="ftstest_IBM1L9",
-        creation_time=datetime(2022, 10, 28, 15, 39, 46, tzinfo=timezone.utc),
+        creation_time=datetime(2022, 10, 28, 15, 39, 46, tzinfo=UTC),
         size=1024000,
         checksum=Checksum("ADLER32", "1184ddbc"),
         disk_file=DiskFile(
@@ -38,7 +38,7 @@ def ref_obj() -> RecycleBinTapeFile:
         vid="L85033",
         fseq=1000032,
         block_id=13000383,
-        deletion_time=datetime(2023, 3, 26, 20, 56, 42, tzinfo=timezone.utc),
+        deletion_time=datetime(2023, 3, 26, 20, 56, 42, tzinfo=UTC),
         deletion_reason="File deleted by fts3ops from the eosctaatlaspps instance",
         virtual_organisation_name="IT",
     )
@@ -90,8 +90,8 @@ class TestRecycleBinTapeFileDaoCtaAdmin:
         return_objs = list(
             self.manager.list(
                 vid="L85033",
-                min_deletion_time=datetime(2000, 1, 1, tzinfo=timezone.utc),
-                max_deletion_time=datetime(2025, 1, 1, tzinfo=timezone.utc),
+                min_deletion_time=datetime(2000, 1, 1, tzinfo=UTC),
+                max_deletion_time=datetime(2025, 1, 1, tzinfo=UTC),
                 virtual_organisation_name="IT",
             )
         )

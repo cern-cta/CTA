@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -29,10 +29,10 @@ def ref_obj() -> LogicalLibrary:
         metadata=Metadata(
             creation_user_name="CASTOR",
             creation_host_name="CASTOR",
-            creation_time=datetime(2021, 8, 27, 9, 52, 11, tzinfo=timezone.utc),
+            creation_time=datetime(2021, 8, 27, 9, 52, 11, tzinfo=UTC),
             update_user_name="idlarbi",
             update_host_name="ctapreproductionfrontend11",
-            update_time=datetime(2025, 7, 11, 8, 57, 43, tzinfo=timezone.utc),
+            update_time=datetime(2025, 7, 11, 8, 57, 43, tzinfo=UTC),
             comment="IBMLIB1 (IBM TS4500 tape library in B513) - LTO-9 tape drives",
         ),
     )

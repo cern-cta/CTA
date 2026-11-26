@@ -12,7 +12,8 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 
 ## Preview locally
 
-Install Python 3.12 and, to generate Rust API documentation, the Rust toolchain specified by `rust-toolchain.toml`.
+uv installs the Python interpreter selected by `.python-version`.
+To generate Rust API documentation, install the Rust toolchain specified by `rust-toolchain.toml`.
 The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
 
 Install `uv`, then from the repository root:

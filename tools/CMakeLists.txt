@@ -58,11 +58,11 @@ endif()
 set(CTA_ADMIN_MANPAGE_MARKDOWN "${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1cta.md")
 add_custom_command(
   OUTPUT "${CTA_ADMIN_MANPAGE_MARKDOWN}"
-  COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/compile_man_md.py"
+  COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/ci/build/compile_man_md.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/cta-admin.1cta.md.in"
     "${CTA_ADMIN_MANPAGE_MARKDOWN}"
   DEPENDS
-    compile_man_md.py
+    "${PROJECT_SOURCE_DIR}/ci/build/compile_man_md.py"
     cta-admin.1cta.md.in
     CtaAdminCmdParser.hpp
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

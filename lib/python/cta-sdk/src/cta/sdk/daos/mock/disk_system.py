@@ -3,13 +3,12 @@
 
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Optional, Union
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler, as_timedelta
 from cta.sdk.daos.protocols import DiskSystemDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import DiskInstanceSpace, DiskSystem
-from typing_extensions import override
 
 
 class DiskSystemDaoMock(DiskSystemDao):
@@ -28,7 +27,7 @@ class DiskSystemDaoMock(DiskSystemDao):
         disk_instance_space_name: str,
         file_regex: str,
         desired_min_free_space: int = 1_000_000_000_000,
-        sleep_time: Union[int, timedelta] = 3600,
+        sleep_time: int | timedelta = 3600,
         comment: str = "From python cta-sdk",
     ) -> None:
         try:
@@ -64,10 +63,10 @@ class DiskSystemDaoMock(DiskSystemDao):
         name: str,
         /,
         *,
-        file_regex: Optional[str] = None,
-        desired_min_free_space: Optional[int] = None,
-        sleep_time: Union[int, timedelta, None] = None,
-        comment: Optional[str] = None,
+        file_regex: str | None = None,
+        desired_min_free_space: int | None = None,
+        sleep_time: int | timedelta | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as disk_system:
             if file_regex is not None:

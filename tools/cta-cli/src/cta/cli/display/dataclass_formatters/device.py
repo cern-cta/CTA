@@ -1,11 +1,12 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import override
+
 from cta.cli.display.formatters import DataClassBaseFormatter
 from cta.common.dataclasses import flatten_dataclass_class
 from cta.tapeserver.sdk.repositories.protocols.drive import LocatedNamedDrive
 from cta.tapeserver.sdk.repositories.protocols.library import NamedLibrary
-from typing_extensions import override
 
 
 class LocatedNamedDriveFormatter(DataClassBaseFormatter[LocatedNamedDrive], dataclass_type=LocatedNamedDrive):

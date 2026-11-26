@@ -12,9 +12,7 @@ if t.TYPE_CHECKING:
     from cta.sdk.client.grpc.models import WorkflowConfig, WorkflowFileInfo
 
 
-def get_disk_buffer_mode_url(
-    key: str, workflow_cfg: "WorkflowConfig", file_info: "WorkflowFileInfo"
-) -> t.Optional[str]:
+def get_disk_buffer_mode_url(key: str, workflow_cfg: WorkflowConfig, file_info: WorkflowFileInfo) -> str | None:
     """Resolve a named disk-buffer URL from the workflow configuration."""
     if workflow_cfg.disk_buffer_mode is None:
         return None

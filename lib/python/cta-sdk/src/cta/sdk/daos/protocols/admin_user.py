@@ -9,7 +9,7 @@ update and delete `AdminUser` objects.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import AdminUser
 
@@ -63,7 +63,7 @@ class AdminUserDao(Protocol):
         """
         ...
 
-    def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
+    def update(self, name: str, /, *, comment: str | None = None) -> None:
         """Update an existing admin user.
 
         Args:

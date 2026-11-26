@@ -112,12 +112,26 @@ lint-python:
     - !reference [.merge-train-guard, before_script]
     - uv sync --locked --only-group lint
   script:
-    - uv run --no-sync ruff check --output-format gitlab > ruff.json
+    - |
+      status=0
+      # Ruff applies the default and per-file Python targets from pyproject.toml.
+      uv run --no-sync ruff check --output-format gitlab > ruff.json || status=$?
+      # Display short reports before returning Ruff's original exit status.
+      if [[ "$status" -eq 1 ]]; then
+        if [[ $(wc -l < ruff.json) -le 1000 ]]; then
+          bat --style=plain --color=always ruff.json
+        else
+          echo "Ruff report too large. Please check job artifacts"
+        fi
+      fi
+      exit "$status"
   artifacts:
     when: always
     expire_in: 7 days
     reports:
       codequality: ruff.json
+    paths:
+      - ruff.json
 
 # general code quality (using clippy)
 lint-rust:
@@ -289,12 +303,14 @@ lint-licenses:
       when: always
     - when: always
   image:
-    name: $IMAGE_LICENSE_CHECK
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: [""]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.source-checks, before_script]
   script:
-    - reuse lint
+    - uv run --no-sync reuse lint
 
 lint-secrets:
   stage: lint
@@ -522,11 +538,9 @@ type-check-python:
   variables:
     FORCE_COLOR: "3"
   script:
-    - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check
+    - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check --group docs
+    # Compatibility targets are defined by executionEnvironments in pyproject.toml.
     - uv run --no-sync pyright --pythonpath .venv/bin/python .
-    # Some of the project is already on 3.12; run that separately
-    - UV_PROJECT_ENVIRONMENT=docs/.venv uv sync --locked --only-group docs --python 3.12
-    - uv run --no-sync pyright --project docs/pyrightconfig.json --pythonpath docs/.venv/bin/python
 
 validate-catalogue-schema-version:
   stage: lint

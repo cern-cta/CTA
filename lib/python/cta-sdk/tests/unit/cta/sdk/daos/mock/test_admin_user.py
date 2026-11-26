@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from cta.sdk.daos.mock import AdminUserDaoMock
@@ -25,10 +25,10 @@ def ref_obj() -> AdminUser:
         metadata=Metadata(
             creation_user_name="cta_ci",
             creation_host_name="ci-host",
-            creation_time=datetime(2024, 1, 1, 9, 0, 0, tzinfo=timezone.utc),
+            creation_time=datetime(2024, 1, 1, 9, 0, 0, tzinfo=UTC),
             update_user_name="cta_ci",
             update_host_name="ci-host",
-            update_time=datetime(2024, 6, 1, 12, 0, 0, tzinfo=timezone.utc),
+            update_time=datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC),
             comment="Admin CI",
         ),
     )

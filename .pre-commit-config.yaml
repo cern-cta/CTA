@@ -2,14 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 repos:
-  # REUSE has a pip package as well which we should move to (it makes it easier to keep CI and pre-commit in sync)
-  # However, that requires Python 3.10+ so that's for later...
-  - repo: https://github.com/fsfe/reuse-tool
-    rev: 634a1823f9a9a234f79510e8fade22aea5306f85  # frozen: v5.1.0  # pragma: allowlist secret
-    hooks:
-      - id: reuse-lint-file
   - repo: local
     hooks:
+      - id: reuse-lint-file
+        name: REUSE lint-file
+        entry: uv run --locked --only-group source-checks reuse lint-file
+        language: system
       - id: detect-secrets
         name: Detect secrets
         entry: uv run --locked --only-group source-checks detect-secrets-hook
@@ -39,6 +37,11 @@ repos:
         entry: uv run --locked --only-group source-checks yamllint
         language: system
         types: [file, yaml]
+      - id: taplo
+        name: taplo fmt
+        entry: taplo fmt
+        language: system
+        types: [toml]
       - id: gitlab-ci
         name: GitLab CI check
         entry: >-

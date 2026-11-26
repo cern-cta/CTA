@@ -12,17 +12,17 @@ from pathlib import Path
 class WorkflowFileInfo:
     """File metadata used to build workflow requests."""
 
-    archive_file_id: t.Optional[str] = None
-    id: t.Optional[int] = None
-    path: t.Optional[str] = None
-    uid: t.Optional[str] = None
-    gid: t.Optional[str] = None
-    size: t.Optional[int] = None
-    checksum: t.Optional[str] = None
-    xattr: t.Optional[dict[str, str]] = None
+    archive_file_id: str | None = None
+    id: int | None = None
+    path: str | None = None
+    uid: str | None = None
+    gid: str | None = None
+    size: int | None = None
+    checksum: str | None = None
+    xattr: dict[str, str] | None = None
 
     @property
-    def fxid(self) -> t.Optional[str]:
+    def fxid(self) -> str | None:
         if self.id is None:
             return None
 
@@ -45,12 +45,12 @@ class WorkflowConfig:
         server_name_override: Optional TLS server name override for hostname mismatch testing.
     """
 
-    disk_buffer_mode: t.Optional[t.Literal["eos-test"]] = None
-    frontend_endpoint: t.Optional[str] = "localhost:10956"
+    disk_buffer_mode: t.Literal["eos-test"] | None = None
+    frontend_endpoint: str | None = "localhost:10956"
     disk_endpoint: str = "localhost:10955"
     disk_instance: str = "ctaeos"
-    jwt_token_file: t.Optional[Path] = None
+    jwt_token_file: Path | None = None
     timeout: int = 30
     verify_cert: bool = True
-    ca_cert_file: t.Optional[Path] = None
-    server_name_override: t.Optional[str] = None
+    ca_cert_file: Path | None = None
+    server_name_override: str | None = None

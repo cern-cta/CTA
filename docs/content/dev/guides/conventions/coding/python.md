@@ -4,12 +4,20 @@ Follow [General Coding Conventions](general.md). These conventions apply to Pyth
 
 ## Tooling and compatibility
 
-- Use Ruff for formatting and linting, following `[tool.ruff]` in `pyproject.toml`. Run the configured [Pre-commit Hooks](../../tools-and-environment/pre-commit.md) rather than duplicating formatting rules manually.
-- Keep code compatible with its supported Python interpreter. Ruff and Pyright default to Python 3.9. The docs tooling uses Python 3.12, selected by Ruff’s `per-file-target-version` and `docs/pyrightconfig.json`. For a directory with a newer runtime, inherit the shared Pyright rules in a separate configuration and check it with its own dependency environment in CI. Validate its runtime and tests with the supported interpreter.
-- Follow `[tool.pyright]` in `pyproject.toml` for type checking; CI runs Pyright. Add type annotations to function interfaces and meaningful data structures, and keep suppressions narrow and explained.
+- Use Ruff for formatting and linting, following `[tool.ruff]` in the root `pyproject.toml`. Run the configured [Pre-commit Hooks](../../tools-and-environment/pre-commit.md) rather than duplicating formatting rules manually.
+- Keep code compatible with its supported Python interpreter. The repository Ruff configuration targets Python 3.15, with per-file overrides for system-integrated helpers and scripts executed in externally maintained images.
+- Follow `[tool.pyright]` in the root `pyproject.toml` for type checking; CI runs Pyright. Add type annotations to function interfaces and meaningful data structures, and keep suppressions narrow and explained.
 
-The root `.python-version` selects Python 3.9 for local uv commands and general CI checks.
-Package compatibility requirements and tool targets belong in `pyproject.toml`; commands for tooling that needs a newer interpreter select it explicitly with `--python`.
+Python workspace and tooling environments use uv with the root `.python-version` pin.
+Native build images and `cta-dev.sh` use distribution Python; only `cta-dev.sh install` requires uv to prepare the development environment.
+Build tools and Python helpers consume the available compatible interpreter without installing Python or depending on uv; ordinary executable Python scripts use `#!/usr/bin/env python3`.
+CMake requires Python 3.9 or newer and uses its discovered `Python3_EXECUTABLE`, which can also be supplied explicitly.
+Native build helpers in `ci/project-json/` and `ci/build/` retain Python 3.9 compatibility.
+Ruff per-file targets and Pyright execution environments define matching compatibility boundaries in the root `pyproject.toml`, shared by local and CI checks.
+Package minimum versions and tool targets belong in `pyproject.toml`.
+
+`cta-versionlock` and `cta-udev` must use system Python at `/usr/bin/python3` and remain compatible with Python 3.9 on EL9.
+EOS remote scripts and the external SBOM helper retain their image-provided interpreter.
 
 ## Code structure and behaviour
 

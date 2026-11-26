@@ -38,3 +38,4 @@ RUN cargo install cargo-cyclonedx@${CARGO_CYCLONEDX_VERSION}
 # Keep the tool installs separate so changing sccache preserves the cargo-cyclonedx layer.
 # hadolint ignore=DL3059
 RUN cargo install sccache@${SCCACHE_VERSION} --locked --no-default-features
+

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from pathlib import Path
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -27,12 +26,12 @@ def recycle_bin_tape_file():
 @click.pass_obj
 def list_command(
     obj: AppContext,
-    vid: Optional[str],
-    fids_file: Optional[str],
-    disk_instance: Optional[str],
-    min_deletion_time: Optional[int],
-    max_deletion_time: Optional[int],
-    virtual_organisation: Optional[str],
+    vid: str | None,
+    fids_file: str | None,
+    disk_instance: str | None,
+    min_deletion_time: int | None,
+    max_deletion_time: int | None,
+    virtual_organisation: str | None,
 ):
     """List CTA files in the recycle bin."""
     if not any([vid, virtual_organisation, disk_instance]):
@@ -55,7 +54,7 @@ def list_command(
 @click.option("--disk-instance", type=str)
 @click.option("--vid", "-v", required=True)
 @click.pass_obj
-def get(obj: AppContext, archive_id: Optional[int], vid: str, disk_id: Optional[str], disk_instance: Optional[str]):
+def get(obj: AppContext, archive_id: int | None, vid: str, disk_id: str | None, disk_instance: str | None):
     """Get CTA file in the recycle bin."""
     if archive_id:
         print_dataclasses(
@@ -74,7 +73,7 @@ def get(obj: AppContext, archive_id: Optional[int], vid: str, disk_id: Optional[
 @click.option("--disk-id", type=str)
 @click.option("--disk-instance", type=str)
 @click.pass_obj
-def get_all_copies(obj: AppContext, archive_id: Optional[int], disk_id: Optional[str], disk_instance: Optional[str]):
+def get_all_copies(obj: AppContext, archive_id: int | None, disk_id: str | None, disk_instance: str | None):
     """Get all copies of a CTA file in the recycle bin."""
     if archive_id:
         copies = obj.cta_client.recycle_bin_tape_file.get_all_copies(archive_id)

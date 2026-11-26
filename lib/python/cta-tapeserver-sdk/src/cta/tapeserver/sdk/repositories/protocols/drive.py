@@ -22,9 +22,7 @@ Concrete udev-backed implementations:
 """
 
 from dataclasses import dataclass
-from typing import Optional, Protocol
-
-from typing_extensions import override
+from typing import Protocol, override
 
 
 @dataclass(frozen=True)
@@ -183,7 +181,7 @@ class NamedDriveRepository(Protocol):
 class LocatedDriveRepository(Protocol):
     """Drive repository whose entries are bound to a parent library."""
 
-    def list_drives(self, lib_serial_number: Optional[str] = None) -> set[LocatedDrive]:
+    def list_drives(self, lib_serial_number: str | None = None) -> set[LocatedDrive]:
         """Return the set of located drives, optionally scoped to one library.
 
         Args:
@@ -192,7 +190,7 @@ class LocatedDriveRepository(Protocol):
         """
         ...
 
-    def get_drive(self, serial_number: str, lib_serial_number: Optional[str] = None) -> LocatedDrive:
+    def get_drive(self, serial_number: str, lib_serial_number: str | None = None) -> LocatedDrive:
         """Return the located drive with the given SCSI serial number.
 
         Args:
@@ -216,11 +214,11 @@ class LocatedDriveRepository(Protocol):
 class LocatedNamedDriveRepository(Protocol):
     """Drive repository combining logical-name and library-location addressing."""
 
-    def list_drives(self, lib_serial_number: Optional[str] = None) -> set[LocatedNamedDrive]:
+    def list_drives(self, lib_serial_number: str | None = None) -> set[LocatedNamedDrive]:
         """Return the set of named+located drives, optionally scoped to one library."""
         ...
 
-    def get_drive(self, serial_number: str, lib_serial_number: Optional[str] = None) -> LocatedNamedDrive:
+    def get_drive(self, serial_number: str, lib_serial_number: str | None = None) -> LocatedNamedDrive:
         """Return the named+located drive with the given SCSI serial number.
 
         Raises:
@@ -228,7 +226,7 @@ class LocatedNamedDriveRepository(Protocol):
         """
         ...
 
-    def get_drive_by_name(self, name: str, lib_serial_number: Optional[str] = None) -> LocatedNamedDrive:
+    def get_drive_by_name(self, name: str, lib_serial_number: str | None = None) -> LocatedNamedDrive:
         """Return the named+located drive with the given logical name.
 
         Raises:

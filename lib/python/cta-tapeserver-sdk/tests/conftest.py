@@ -11,7 +11,7 @@ exercise the SDK without root privileges or real tape hardware.
 
 import subprocess
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -21,9 +21,9 @@ def make_device(
     *,
     sys_name: str = "nst0",
     subsystem: str = "scsi_tape",
-    device_node: Optional[str] = "/dev/nst0",
-    properties: Optional[dict[str, Any]] = None,
-    parent: Optional[Any] = None,
+    device_node: str | None = "/dev/nst0",
+    properties: dict[str, Any] | None = None,
+    parent: Any | None = None,
 ) -> MagicMock:
     """Build a MagicMock that mimics the parts of pyudev.Device the SDK uses."""
     device = MagicMock(name=f"Device({sys_name})")

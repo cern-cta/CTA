@@ -10,7 +10,6 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Optional, Union
 
 import jwt
 from cryptography.hazmat.primitives import serialization
@@ -23,7 +22,7 @@ def sanitize_filename(s: str) -> str:
 
 def generate_jwk_from_public_key(
     public_key_path: Path,
-) -> dict[str, Union[str, list[str]]]:
+) -> dict[str, str | list[str]]:
     public_key = serialization.load_pem_public_key(
         public_key_path.read_bytes(),
     )
@@ -66,7 +65,7 @@ def generate_jwt(
     issuer: str,
     audience: str,
     gen: int,
-    jti: Optional[str] = None,
+    jti: str | None = None,
 ) -> str:
     """Generate a JWT with all claims required by the CTA frontend."""
     now = int(time.time())

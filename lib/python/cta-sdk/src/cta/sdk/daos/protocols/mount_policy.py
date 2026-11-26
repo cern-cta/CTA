@@ -10,7 +10,7 @@ determine when tapes should be mounted for archive and retrieve operations.
 
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Optional, Protocol, Union
+from typing import Protocol
 
 from cta.sdk.models import MountPolicy
 
@@ -58,9 +58,9 @@ class MountPolicyDao(Protocol):
         /,
         *,
         archive_priority: int = 250,
-        min_archive_age: Union[timedelta, int] = 14_400,
+        min_archive_age: timedelta | int = 14_400,
         retrieve_priority: int = 150,
-        min_retrieve_age: Union[timedelta, int] = 14_400,
+        min_retrieve_age: timedelta | int = 14_400,
         comment: str = "From python cta-sdk",
     ) -> None:
         """Create a new mount policy.
@@ -86,11 +86,11 @@ class MountPolicyDao(Protocol):
         name: str,
         /,
         *,
-        archive_priority: Optional[int] = None,
-        min_archive_age: Union[timedelta, int, None] = None,
-        retrieve_priority: Optional[int] = None,
-        min_retrieve_age: Union[timedelta, int, None] = None,
-        comment: Optional[str] = None,
+        archive_priority: int | None = None,
+        min_archive_age: timedelta | int | None = None,
+        retrieve_priority: int | None = None,
+        min_retrieve_age: timedelta | int | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing mount policy.
 

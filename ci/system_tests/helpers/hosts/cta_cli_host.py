@@ -4,7 +4,7 @@
 import json
 import time
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 from system_tests.helpers.utils.timeout import Timeout
@@ -189,11 +189,11 @@ class CtaCliHost(RemoteHost):
         except json.JSONDecodeError:
             return False
 
-    def retrieve_queue_empty(self, vid: Optional[str] = None) -> bool:
+    def retrieve_queue_empty(self, vid: str | None = None) -> bool:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
         return not any(queue["mountType"] == "RETRIEVE" and (vid is None or queue["vid"] == vid) for queue in queues)
 
-    def retrieve_queue_file_count(self, vid: Optional[str] = None) -> int:
+    def retrieve_queue_file_count(self, vid: str | None = None) -> int:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
         return sum(
             int(queue["queuedFiles"])
@@ -259,7 +259,7 @@ class CtaCliHost(RemoteHost):
                 )
         print("Repack request expanded")
 
-    def wait_for_queue_to_empty(self, vid: Optional[str] = None, wait_timeout_secs: int = 30) -> None:
+    def wait_for_queue_to_empty(self, vid: str | None = None, wait_timeout_secs: int = 30) -> None:
         queue_description = f" of {vid}" if vid is not None else ""
         print(f"Waiting for retrieve queue{queue_description} to be empty...")
         with Timeout(wait_timeout_secs) as t:

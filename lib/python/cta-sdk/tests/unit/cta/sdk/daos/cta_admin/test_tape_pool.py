@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -31,10 +31,10 @@ def ref_obj() -> TapePool:
         metadata=Metadata(
             creation_user_name="jleduc",
             creation_host_name="eosctafst0017.cern.ch",
-            creation_time=datetime(2020, 6, 29, 20, 58, 6, tzinfo=timezone.utc),
+            creation_time=datetime(2020, 6, 29, 20, 58, 6, tzinfo=UTC),
             update_user_name="vlado",
             update_host_name="ctapreproductionfrontend11",
-            update_time=datetime(2025, 5, 7, 10, 3, 11, tzinfo=timezone.utc),
+            update_time=datetime(2025, 5, 7, 10, 3, 11, tzinfo=UTC),
             comment="tape pool for atlaspps",
         ),
     )

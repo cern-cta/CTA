@@ -11,7 +11,7 @@ from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 @pytest.fixture
 def mock_wrapper(
     request: pytest.FixtureRequest, raw_data: str
-) -> Generator[tuple[CtaAdminWrapper, tuple[MagicMock, MagicMock]], None, None]:
+) -> Generator[tuple[CtaAdminWrapper, tuple[MagicMock, MagicMock]]]:
     """
     Configure overrides for the CLI wrapper.
 

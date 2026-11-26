@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -60,13 +59,13 @@ def create(
 def update(
     obj: AppContext,
     name: str,
-    gui_url: Optional[str],
-    webcam_url: Optional[str],
-    location: Optional[str],
-    nb_physical_cartridge_slots: Optional[int],
-    nb_available_cartridge_slots: Optional[int],
-    nb_physical_drive_slots: Optional[int],
-    comment: Optional[str],
+    gui_url: str | None,
+    webcam_url: str | None,
+    location: str | None,
+    nb_physical_cartridge_slots: int | None,
+    nb_available_cartridge_slots: int | None,
+    nb_physical_drive_slots: int | None,
+    comment: str | None,
 ):
     """Update CTA physical library."""
     obj.cta_client.physical_library.update(
@@ -112,7 +111,7 @@ def enable(obj: AppContext, name: str):
 )
 @tapeserver_option("-l", "--local", is_flag=True, help="Show local information")
 @click.pass_obj
-def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool] = None):
+def list_command(obj: AppContext, disabled: bool | None, local: bool | None = None):
     """List physical libraries registered in CTA."""
     state = None if disabled is None else (PhysicalLibraryState.DISABLED if disabled else PhysicalLibraryState.ENABLED)
 
@@ -153,7 +152,7 @@ def list_command(obj: AppContext, disabled: Optional[bool], local: Optional[bool
 @click.argument("name")
 @tapeserver_option("-l", "--local", is_flag=True, help="Don't fail if library not present in CTA")
 @click.pass_obj
-def get(obj: AppContext, name: str, local: Optional[bool] = None):
+def get(obj: AppContext, name: str, local: bool | None = None):
     """Get physical library registered in CTA."""
     if EXTRA_TPSRV:
         from cta.cli.models.physical_library import EnrichedPhysicalLibrary

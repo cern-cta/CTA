@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -32,7 +31,7 @@ def create(obj: AppContext, name: str, physical_library: str, comment: str):
 @click.option("--physical-library", "--pl")
 @click.option("--comment", "-c")
 @click.pass_obj
-def update(obj: AppContext, name: str, physical_library: Optional[str], comment: Optional[str]):
+def update(obj: AppContext, name: str, physical_library: str | None, comment: str | None):
     """Update CTA logical library."""
     obj.cta_client.logical_library.update(name, comment=comment, physical_library_name=physical_library)
     print(f"LogicalLibrary({name}) UPDATED")
@@ -67,7 +66,7 @@ def enable(obj: AppContext, name: str):
     help="Filter logical libraries by state",
 )
 @click.pass_obj
-def list_command(obj: AppContext, disabled: Optional[bool]):
+def list_command(obj: AppContext, disabled: bool | None):
     """List logical libraries registered in CTA."""
     state = None if disabled is None else (LogicalLibraryState.DISABLED if disabled else LogicalLibraryState.ENABLED)
     print_dataclasses(obj.cta_client.logical_library.list(state=state), display_config=obj.config.display)

@@ -15,6 +15,9 @@ Both pipeline types can also be started manually. On feature branches, the image
 Renovate reads the dependency references selected by `renovate.json` and queries upstream container registries and GitHub/Git tags or releases for newer versions and updated digests. It applies the configured versioning rules and opens or refreshes MRs; automatic merging is disabled.
 Upstream updates have a 14-day [release-age cooldown](https://docs.renovatebot.com/key-concepts/minimum-release-age/), matching Python and Cargo. `registry.cern.ch` and `gitlab-registry.cern.ch` are exempt. Updates without an upstream release timestamp are held. This currently affects Quay and GHCR, whose pins may need manual updating.
 
+Python patch updates group `.python-version` with the auth job's Python image.
+To adopt another Python minor version, update the allowed-version range in `renovate.json` and validate compatibility.
+
 Renovate uses `CI_API_TOKEN`, which needs GitLab API and repository write access for the bot account. It uses `GITHUB_API_TOKEN` for GitHub dependency lookups.
 
 ### Add or update an image dependency

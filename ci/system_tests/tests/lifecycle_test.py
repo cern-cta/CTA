@@ -4,13 +4,13 @@
 import json
 import re
 import shlex
-import sys
 import time
+import tomllib
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import ExitStack
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -18,11 +18,6 @@ from _pytest.fixtures import SubRequest
 from system_tests.helpers.connections.k8s_connection import K8sConnection
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, EosClientHost
 from system_tests.helpers.restart_expectations import RestartExpectations
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 # The main goal of these tests are to ensure that CTA behaves correctly to different signals:
 # - SIGHUP should refresh the log descriptor
@@ -37,8 +32,8 @@ def _restart_daemon_with_sigterm(
     restart_expectations: RestartExpectations,
     *,
     timeout_secs: int = 120,
-    file_transferred_log_message: Optional[str] = None,
-    start_transfers: Optional[Callable[[], None]] = None,
+    file_transferred_log_message: str | None = None,
+    start_transfers: Callable[[], None] | None = None,
 ) -> list[dict[str, Any]]:
     """Send SIGTERM, verify one clean container restart, and return the new log records.
 
@@ -71,7 +66,7 @@ def _restart_daemon_with_sigterm(
     log_file = shlex.quote(str(daemon.log_file_path))
     previous_records = daemon.exec_with_output(f"cat {log_file}").splitlines()
 
-    signal_trigger_pid: Optional[str] = None
+    signal_trigger_pid: str | None = None
     try:
         with restart_expectations.expect_container_restarts(daemon):
             if file_transferred_log_message is None:

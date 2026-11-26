@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import dataclass
-from typing import Final
-
-from typing_extensions import override
+from typing import Final, override
 
 from .metadata import Metadata
 

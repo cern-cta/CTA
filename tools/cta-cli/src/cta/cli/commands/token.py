@@ -10,7 +10,7 @@ import uuid
 from dataclasses import InitVar, asdict, dataclass, field
 from pathlib import Path
 from tempfile import gettempdir
-from typing import Literal, Optional
+from typing import Literal
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -39,8 +39,8 @@ class JWTClaim:
     gen: int
     lifetime_sec: InitVar[int]
     exp: int = field(init=False)
-    jti: Optional[str] = None
-    aud: Optional[str] = None
+    jti: str | None = None
+    aud: str | None = None
     typ: Literal["Bearer"] = "Bearer"
 
     def __post_init__(self, lifetime_sec: int) -> None:
@@ -128,11 +128,11 @@ def generate(
     generation: int,
     pub: Path,
     key: Path,
-    password: Optional[bytes],
+    password: bytes | None,
     issuer: str,
-    audience: Optional[str],
+    audience: str | None,
     lifetime: int,
-    jti: Optional[str],
+    jti: str | None,
     output_dir: Path,
 ):
     """Generate a new JWT token.

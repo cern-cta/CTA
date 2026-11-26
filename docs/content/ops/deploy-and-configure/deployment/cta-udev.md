@@ -127,9 +127,10 @@ The RPM lays down:
 
 ### Prerequisites
 
-- `python3`
-- [`pyudev`](https://pyudev.readthedocs.io/) (`python3-pyudev` on RHEL-likes)
+- The distribution's `python3` package, providing `/usr/bin/python3`.
 - `systemd-udev`
+
+The helper uses system Python at `/usr/bin/python3`; no virtual environment or additional Python packages are required.
 
 ### Generate the inventory files
 

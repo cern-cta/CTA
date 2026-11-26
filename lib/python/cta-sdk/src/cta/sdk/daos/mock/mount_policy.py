@@ -4,13 +4,12 @@
 from collections.abc import Iterator
 from datetime import timedelta
 from itertools import chain
-from typing import Optional, Union
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler, as_timedelta
 from cta.sdk.daos.protocols import MountPolicyDao
 from cta.sdk.exceptions import BackendError
 from cta.sdk.models import ActivityMountRule, GroupMountRule, MountPolicy, UserMountRule
-from typing_extensions import override
 
 
 class MountPolicyDaoMock(MountPolicyDao):
@@ -26,9 +25,9 @@ class MountPolicyDaoMock(MountPolicyDao):
         /,
         *,
         archive_priority: int = 250,
-        min_archive_age: Union[timedelta, int] = 14_400,
+        min_archive_age: timedelta | int = 14_400,
         retrieve_priority: int = 150,
-        min_retrieve_age: Union[timedelta, int] = 14_400,
+        min_retrieve_age: timedelta | int = 14_400,
         comment: str = "From python cta-sdk",
     ) -> None:
         mount_policy = MountPolicy(
@@ -71,11 +70,11 @@ class MountPolicyDaoMock(MountPolicyDao):
         name: str,
         /,
         *,
-        archive_priority: Optional[int] = None,
-        min_archive_age: Union[timedelta, int, None] = None,
-        retrieve_priority: Optional[int] = None,
-        min_retrieve_age: Union[timedelta, int, None] = None,
-        comment: Optional[str] = None,
+        archive_priority: int | None = None,
+        min_archive_age: timedelta | int | None = None,
+        retrieve_priority: int | None = None,
+        min_retrieve_age: timedelta | int | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as mount_policy:
             if archive_priority is not None:

@@ -3,8 +3,7 @@
 
 import shlex
 from pathlib import Path
-
-from typing_extensions import override
+from typing import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 

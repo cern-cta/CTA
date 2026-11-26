@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import ArchiveRouteDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, ArchiveRouteType, Metadata
-from typing_extensions import override
 
 
 class ArchiveRouteDaoCtaAdmin(ArchiveRouteDao):
@@ -30,10 +29,10 @@ class ArchiveRouteDaoCtaAdmin(ArchiveRouteDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -104,8 +103,8 @@ class ArchiveRouteDaoCtaAdmin(ArchiveRouteDao):
         type: ArchiveRouteType,
         /,
         *,
-        tape_pool_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        tape_pool_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if tape_pool_name is None else {"tapepool": tape_pool_name}

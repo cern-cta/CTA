@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -33,7 +33,7 @@ def ref_obj() -> RepackRequest:
         failed_file_count=7,
         disk_buffer_url="root://eosctarepack//eos/ctarepack/tmp",
         duration=timedelta(seconds=2959),
-        finished_time=datetime(2025, 10, 18, 13, 35, 27, tzinfo=timezone.utc),
+        finished_time=datetime(2025, 10, 18, 13, 35, 27, tzinfo=UTC),
         destination_infos=[],
         last_expanded_fseq=57,
         start_info=RepackStartInfo(
@@ -41,7 +41,7 @@ def ref_obj() -> RepackRequest:
             byte_count=15180950480,
             creation_user_name="vlado",
             creation_host_name="ctapreproductionfrontend11",
-            creation_time=datetime(2025, 10, 18, 12, 46, 8, tzinfo=timezone.utc),
+            creation_time=datetime(2025, 10, 18, 12, 46, 8, tzinfo=UTC),
             is_all_files_selected_at_start=True,
         ),
         retrieve_statistics=RepackStatistics(

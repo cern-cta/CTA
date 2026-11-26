@@ -10,10 +10,7 @@
   exclude-newer = "14 days"
   # Build-time requirements are not covered by uv.lock. Pin the protobuf generator to the locked runtime
   # version so that the generated gRPC stubs never require a newer grpcio than the one installed.
-  build-constraint-dependencies = [
-    "grpcio-tools==1.80.0; python_full_version < '3.10'",
-    "grpcio-tools==1.84.1; python_full_version >= '3.10'",
-  ]
+  build-constraint-dependencies = ["grpcio-tools==1.84.1"]
 
   # Explicit exceptions for the requested Zensical release and matching UI package.
   # Remove after November 24, 2026, once all selected artifacts have cleared the 14-day cooldown.
@@ -37,8 +34,9 @@
     { include-group = "type-check" },
     "pre-commit>=4.3.0",
   ]
-  lint = ["ruff==0.14.9"]
+  lint = ["ruff==0.17.3"]
   source-checks = [
+    "reuse[charset-normalizer]==6.2.0",
     "clang-format==20.1.8",
     "cppcheck-codequality",
     "detect-secrets==1.5.0",
@@ -51,17 +49,10 @@
     "pytest>=8",
     "pytest-cov",
     "cattrs",
-    "grpcio-tools",
+    "grpcio-tools==1.84.1",
   ]
   # These scripts also run independently in existing pipeline environments.
-  scripts = [
-    "PyYAML",
-    "jsonschema",
-    "packaging>=24",
-    "typing-extensions>=4.4.0",
-    "pyjwt",
-    "cryptography",
-  ]
+  scripts = ["PyYAML", "jsonschema", "packaging>=24", "pyjwt", "cryptography"]
   type-check = [
     "pyright[nodejs]",
     { include-group = "unit-tests" },
@@ -75,7 +66,6 @@
     "fastjsonschema>=2.21.2",
     "tomli>=2.0.1; python_version < '3.11'",
     "packaging>=24.0",
-    "typing-extensions>=4.4.0",
   ]
   docs = [
     "zensical==0.1.1",
@@ -124,8 +114,11 @@
   ]
 
 [tool.ruff]
-  line-length = 120
-  target-version = "py39"
+  line-length    = 120
+  target-version = "py315"
+  # Exclude Markdown until Ruff's handling of partial Python examples has been reviewed.
+  # TODO: Check findings and formatting changes in docs before enabling Markdown discovery.
+  include = ["*.py", "*.pyi", "*.ipynb", "**/pyproject.toml"]
   extend-exclude = [
     "tmp",
     "**/protobuf_generated",
@@ -134,8 +127,17 @@
     "common/jwt-cpp",
   ]
 
+  # Keep these helpers compatible with the Python installed in their runtime environments.
   [tool.ruff.per-file-target-version]
-    "docs/**/*.py" = "py312"
+    # Installed cta-udev and cta-versionlock use /usr/bin/python3 (Python 3.9 on EL9).
+    "tools/cta-udev/**/*.py"    = "py39"
+    "tools/cta-release/**/*.py" = "py39"
+    # Native builds and the host-side launcher use distribution Python.
+    "ci/project-json/**/*.py"                 = "py39"
+    "ci/build/**/*.py"                        = "py39"
+    "ci/sbom/**/*.py"                         = "py39"
+    "ci/system_tests/tests/remote_scripts/**" = "py39"
+
 
   [tool.ruff.lint]
     select = [
@@ -230,11 +232,21 @@
       ]
 
 [tool.pyright]
-  pythonVersion = "3.9"
+  pythonVersion = "3.15"
+  # Match Ruff's compatibility boundaries; build and system helpers use distribution Python.
+  # Pyright selects the first matching directory, so keep the repository fallback last.
+  executionEnvironments = [
+    { root = "tools/cta-udev", pythonVersion = "3.9" },
+    { root = "tools/cta-release", pythonVersion = "3.9" },
+    { root = "ci/project-json", pythonVersion = "3.9" },
+    { root = "ci/build", pythonVersion = "3.9" },
+    { root = "ci/sbom", pythonVersion = "3.9" },
+    { root = "ci/system_tests/tests/remote_scripts", pythonVersion = "3.9" },
+    { root = "." },
+  ]
   typeCheckingMode = "strict"
   extraPaths = ["ci/release/src", "."]
   exclude = [
-    "docs",
     "**/__pycache__",
     "**/.venv",
     "**/venv",

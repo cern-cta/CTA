@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -26,10 +26,10 @@ def ref_obj() -> AdminUser:
         metadata=Metadata(
             creation_user_name="rbachman",
             creation_host_name="cta-frontend01",
-            creation_time=datetime(2022, 7, 4, 8, 14, 22, tzinfo=timezone.utc),
+            creation_time=datetime(2022, 7, 4, 8, 14, 22, tzinfo=UTC),
             update_user_name="rbachman",
             update_host_name="cta-frontend01",
-            update_time=datetime(2022, 7, 4, 8, 14, 22, tzinfo=timezone.utc),
+            update_time=datetime(2022, 7, 4, 8, 14, 22, tzinfo=UTC),
             comment="Joao Afonso",
         ),
     )

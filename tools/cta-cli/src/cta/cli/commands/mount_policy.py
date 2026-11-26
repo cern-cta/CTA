@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from datetime import timedelta
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -57,11 +56,11 @@ def create(
 def update(
     obj: AppContext,
     name: str,
-    archive_priority: Optional[int],
-    min_archive_request_age: Optional[timedelta],
-    retrieve_priority: Optional[int],
-    min_retrieve_request_age: Optional[timedelta],
-    comment: Optional[str],
+    archive_priority: int | None,
+    min_archive_request_age: timedelta | None,
+    retrieve_priority: int | None,
+    min_retrieve_request_age: timedelta | None,
+    comment: str | None,
 ):
     """Update CTA mount policy."""
     obj.cta_client.mount_policy.update(

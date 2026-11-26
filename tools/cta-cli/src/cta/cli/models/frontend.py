@@ -5,14 +5,14 @@
 
 from dataclasses import dataclass
 from ipaddress import IPv4Address, IPv6Address
-from typing import Annotated, Literal, Optional, Union
+from typing import Annotated, Literal
 
 from cta.common.prometheus import Labels
 from cta.sdk.units import FreeText
 
-IPAddress = Union[IPv4Address, IPv6Address]
+IPAddress = IPv4Address | IPv6Address
 Family = Literal["ipv4", "ipv6"]
-FamilyScope = Union[Family, Literal["all"]]
+FamilyScope = Family | Literal["all"]
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,7 @@ class Service:
     port: int
 
     @classmethod
-    def parse(cls, spec: str, default_port: Optional[int]) -> "Service":
+    def parse(cls, spec: str, default_port: int | None) -> Service:
         """Parse "name:port", or "name" with default_port."""
         name, sep, port = spec.rpartition(":")
         if sep and port.isdigit():

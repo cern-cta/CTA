@@ -7,7 +7,7 @@ import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from system_tests.helpers.hosts.remote_host import RemoteHost
 from system_tests.helpers.utils.timeout import Timeout
@@ -18,8 +18,8 @@ PrepareRequest = tuple[str, Path]
 @dataclass(frozen=True)
 class PrepareRequests:
     requests: list[PrepareRequest]
-    remote_manifest: Optional[Path] = None
-    request_count: Optional[int] = None
+    remote_manifest: Path | None = None
+    request_count: int | None = None
 
     def __iter__(self) -> Iterator[PrepareRequest]:
         return iter(self.requests)
@@ -45,12 +45,12 @@ class DiskClientHost(RemoteHost):
         self,
         url: str,
         *,
-        token: Optional[str] = None,
+        token: str | None = None,
         certificate_options: str = "--insecure",
-        data: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
-        method: Optional[str] = None,
-        upload_file: Optional[Path] = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        method: str | None = None,
+        upload_file: Path | None = None,
     ) -> str:
         command = f'curl --fail-with-body --silent --show-error -L {certificate_options} -H "Accept: application/json"'
         if token is not None:
@@ -77,7 +77,7 @@ class DiskClientHost(RemoteHost):
         wait_timeout_secs: int = 90,
     ) -> dict[str, Any]:
         last_file_info: dict[str, Any] = {}
-        last_reported_locality: Optional[str] = None
+        last_reported_locality: str | None = None
         print(f"Waiting for {path} to reach archive locality {expected_locality}...")
         with Timeout(wait_timeout_secs) as timeout:
             while not timeout.expired:
@@ -116,8 +116,8 @@ class DiskClientHost(RemoteHost):
         *,
         token: str,
         certificate_options: str,
-        expected_state: Optional[str] = None,
-        expected_on_disk: Optional[bool] = None,
+        expected_state: str | None = None,
+        expected_on_disk: bool | None = None,
         wait_timeout_secs: int = 90,
     ) -> dict[str, Any]:
         if expected_state is None and expected_on_disk is None:
@@ -266,7 +266,7 @@ class DiskClientHost(RemoteHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
-        activity: Optional[str] = None,
+        activity: str | None = None,
     ) -> str:
         requests = self.retrieve_files(
             disk_instance_name,
@@ -286,7 +286,7 @@ class DiskClientHost(RemoteHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
-        activity: Optional[str] = None,
+        activity: str | None = None,
         parallelism: int = 1,
     ) -> PrepareRequests: ...
 
@@ -298,7 +298,7 @@ class DiskClientHost(RemoteHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
-        activity: Optional[str] = None,
+        activity: str | None = None,
         parallelism: int = 1,
     ) -> PrepareRequests: ...
 
@@ -315,7 +315,7 @@ class DiskClientHost(RemoteHost):
     def abort_files(
         self,
         disk_instance_name: str,
-        requests: Union[list[PrepareRequest], PrepareRequests],
+        requests: list[PrepareRequest] | PrepareRequests,
         *,
         user: str = "poweruser1",
         parallelism: int = 1,

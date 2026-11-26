@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from itertools import chain
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import TapeDao
@@ -21,7 +21,6 @@ from cta.sdk.models import (
     TapeStatistics,
     VerificationStatus,
 )
-from typing_extensions import override
 
 
 class TapeDaoMock(TapeDao):
@@ -41,7 +40,7 @@ class TapeDaoMock(TapeDao):
         logical_library_name: str,
         tape_pool_name: str,
         full: bool = False,
-        purchase_order: Optional[str] = None,
+        purchase_order: str | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         try:
@@ -85,7 +84,7 @@ class TapeDaoMock(TapeDao):
                 last_write_drive_name=None,
                 last_read_time=None,
                 last_read_drive_name=None,
-                update_state_time=datetime.now(tz=timezone.utc),
+                update_state_time=datetime.now(tz=UTC),
                 update_state_info="",
                 write_mount_count=0,
                 read_mount_count=0,
@@ -117,16 +116,16 @@ class TapeDaoMock(TapeDao):
         self,
         /,
         *,
-        media_type_name: Optional[str] = None,
-        vendor: Optional[str] = None,
-        logical_library_name: Optional[str] = None,
-        tape_pool_name: Optional[str] = None,
-        virtual_organisation_name: Optional[str] = None,
-        full: Optional[bool] = None,
-        fxid_file: Optional[str] = None,
-        state: Optional[TapeState] = None,
-        purchase_order: Optional[str] = None,
-        physical_library_name: Optional[str] = None,
+        media_type_name: str | None = None,
+        vendor: str | None = None,
+        logical_library_name: str | None = None,
+        tape_pool_name: str | None = None,
+        virtual_organisation_name: str | None = None,
+        full: bool | None = None,
+        fxid_file: str | None = None,
+        state: TapeState | None = None,
+        purchase_order: str | None = None,
+        physical_library_name: str | None = None,
         missing_file_copies: bool = False,
     ) -> Iterator[Tape]:
         if fxid_file is not None or missing_file_copies:
@@ -167,16 +166,16 @@ class TapeDaoMock(TapeDao):
         vid: str,
         /,
         *,
-        media_type_name: Optional[str] = None,
-        vendor: Optional[str] = None,
-        logical_library_name: Optional[str] = None,
-        tape_pool_name: Optional[str] = None,
-        verification_status: Optional[VerificationStatus] = None,
-        full: Optional[bool] = None,
-        purchase_order: Optional[str] = None,
-        dirty: Optional[bool] = None,
-        encryption_key_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        media_type_name: str | None = None,
+        vendor: str | None = None,
+        logical_library_name: str | None = None,
+        tape_pool_name: str | None = None,
+        verification_status: VerificationStatus | None = None,
+        full: bool | None = None,
+        purchase_order: str | None = None,
+        dirty: bool | None = None,
+        encryption_key_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, vid) as tape:
             if media_type_name is not None:
@@ -236,5 +235,5 @@ class TapeDaoMock(TapeDao):
             tape.state = state
             tape.state_reason = reason
             tape.metadata = self._handler.refresh_metadata(tape.metadata)
-            tape.metadata.update_state_time = datetime.now(tz=timezone.utc)
+            tape.metadata.update_state_time = datetime.now(tz=UTC)
             tape.metadata.update_state_info = reason

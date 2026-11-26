@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import DiskInstanceDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import DiskInstance, Metadata
-from typing_extensions import override
 
 
 class DiskInstanceDaoCtaAdmin(DiskInstanceDao):
@@ -27,10 +26,10 @@ class DiskInstanceDaoCtaAdmin(DiskInstanceDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -57,7 +56,7 @@ class DiskInstanceDaoCtaAdmin(DiskInstanceDao):
         self._wrapper.create(self.resource_type, {"name": name}, data={"comment": comment})
 
     @override
-    def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
+    def update(self, name: str, /, *, comment: str | None = None) -> None:
         data = {}
         data |= {} if comment is None else {"comment": comment}
 

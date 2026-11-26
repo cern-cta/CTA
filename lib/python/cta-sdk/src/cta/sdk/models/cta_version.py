@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -15,7 +14,7 @@ class CtaCliVersion:
     """
 
     version: str
-    xrootd_ssi_protobuf_version: Optional[str]
+    xrootd_ssi_protobuf_version: str | None
 
 
 @dataclass(frozen=True)
@@ -28,7 +27,7 @@ class CtaServerVersion:
     """
 
     version: str
-    xrootd_ssi_protobuf_version: Optional[str]
+    xrootd_ssi_protobuf_version: str | None
 
 
 @dataclass(frozen=True)
