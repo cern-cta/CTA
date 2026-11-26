@@ -593,58 +593,6 @@ rdbms::Rset ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(Transactio
   return rset;
 }
 
-uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
-  ArchiveJobStatus newStatus;
-  std::string repack_prefix = "";
-  if (isRepack) {
-    repack_prefix = "REPACK_";
-    newStatus = ArchiveJobStatus::AJS_ToReportToRepackForFailure;
-  } else {
-    newStatus = ArchiveJobStatus::AJS_ToReportToUserForFailure;
-  }
-  std::string sql = R"SQL(
-      UPDATE )SQL";
-  sql += repack_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE SET
-        STATUS = :STATUS,
-        TOTAL_RETRIES = :TOTAL_RETRIES,
-        RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
-        LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
-        FAILURE_LOG = :FAILURE_LOG,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
-  )SQL";
-  // Plain assignment, not FAILURE_LOG || :FAILURE_LOG: :FAILURE_LOG is bound from
-  // failureLogs.value_or(""), which updateJobRowFailureLog() already appended the new entry onto
-  // the value loaded from this same column - appending again in SQL would duplicate the old text.
-  // Multi-copy user requests: fail all copies together, since the request can no longer meet
-  // its redundancy goal. updateMultiCopyJobSuccess guards against a still-writing sibling copy
-  // overwriting this terminal status.
-  if (reqJobCount > 1 && !isRepack) {
-    sql += R"SQL(
-        WHERE ARCHIVE_REQUEST_ID = :ARCHIVE_REQUEST_ID
-    )SQL";
-  } else {
-    sql += R"SQL(
-        WHERE JOB_ID = :JOB_ID
-    )SQL";
-  }
-  auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(newStatus));
-  stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
-  stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
-  stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
-  stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
-  if (reqJobCount > 1 && !isRepack) {
-    stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
-  } else {
-    stmt.bindUint64(":JOB_ID", jobId);
-  }
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
-  stmt.executeNonQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  txn.setRowCountForTelemetry(nrows);
-  return nrows;
-};
-
 void ArchiveJobQueueRow::updateJobRowFailureLog(const std::string& reason, bool is_report_log) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + reason;
 
@@ -666,182 +614,6 @@ void ArchiveJobQueueRow::updateRetryCounts(uint64_t mountId) {
     lastMountWithFailure = mountId;
   }
   totalRetries += 1;
-};
-
-// requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
-// The SQL below selects :FAILURE_LOG AS FAILURE_LOG with a plain reference, no SQL-side
-// concatenation: :FAILURE_LOG is bound from failureLogs.value_or(""), which already contains
-// the row's old FAILURE_LOG text plus the new entry (updateJobRowFailureLog() appends onto a
-// field loaded from this same column) - concatenating again here would duplicate the old text.
-uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
-                                              ArchiveJobStatus newStatus,
-                                              bool keepMountId,
-                                              bool isRepack,
-                                              std::optional<std::list<std::string>> jobIDs) {
-  std::string repack_prefix = isRepack ? "REPACK_" : "";
-  std::string sql = R"SQL(
-    WITH MOVED_ROWS AS (
-        DELETE FROM
-  )SQL";
-  sql += repack_prefix + "ARCHIVE_ACTIVE_QUEUE ";
-  bool userowjid = true;
-  if (jobIDs.has_value() && !jobIDs.value().empty()) {
-    userowjid = false;
-    std::string sqlpart;
-    for (const auto& jid : jobIDs.value()) {
-      sqlpart += jid + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
-  } else {
-    sql += R"SQL(
-        WHERE JOB_ID = :JOB_ID
-    )SQL";
-  }
-  sql += R"SQL(
-        RETURNING *
-    )
-  )SQL";
-  if (keepMountId) {
-    // To optimise this query, one may consider creating separate call
-    // similar to updateMountQueueLastFetch and remove UPDATED_MOUNT_QUEUE_LAST_FETCH
-    sql += R"SQL(
-      , UPDATED_MOUNT_QUEUE_LAST_FETCH AS (
-       INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
-         SELECT DISTINCT
-           M.MOUNT_ID,
-           EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT,
-           :QUEUE_TYPE
-         FROM MOVED_ROWS M
-       ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
-         DO UPDATE SET
-           LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
-           QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
-             WHERE MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME
-               < EXCLUDED.LAST_UPDATE_TIME - 5
-    ) )SQL";
-  }
-  sql += R"SQL(
-    INSERT INTO
-    )SQL";
-  sql += repack_prefix + "ARCHIVE_PENDING_QUEUE ( ";
-  if (isRepack) {
-    sql += "REPACK_REQUEST_ID,";
-  }
-  sql += R"SQL(
-    JOB_ID,
-    ARCHIVE_REQUEST_ID,
-    REQUEST_JOB_COUNT,
-    TAPE_POOL,
-    MOUNT_POLICY,
-    PRIORITY,
-    MIN_ARCHIVE_REQUEST_AGE,
-    ARCHIVE_FILE_ID,
-    SIZE_IN_BYTES,
-    COPY_NB,
-    START_TIME,
-    CHECKSUMBLOB,
-    CREATION_TIME,
-    DISK_INSTANCE,
-    DISK_FILE_ID,
-    DISK_FILE_OWNER_UID,
-    DISK_FILE_GID,
-    DISK_FILE_PATH,
-    ARCHIVE_REPORT_URL,
-    ARCHIVE_ERROR_REPORT_URL,
-    REQUESTER_NAME,
-    REQUESTER_GROUP,
-    SRC_URL,
-    STORAGE_CLASS,
-    MAX_RETRIES_WITHIN_MOUNT,
-    MAX_TOTAL_RETRIES,
-    TOTAL_REPORT_RETRIES,
-    MAX_REPORT_RETRIES,
-    VID,
-    DRIVE,
-    HOST,
-    MOUNT_TYPE,
-    LOGICAL_LIBRARY,
-    STATUS,
-    TOTAL_RETRIES,
-    RETRIES_WITHIN_MOUNT,
-    LAST_MOUNT_WITH_FAILURE,
-    FAILURE_LOG,
-    MOUNT_ID)
-        SELECT
-)SQL";
-  if (isRepack) {
-    sql += "M.REPACK_REQUEST_ID,";
-  }
-  sql += R"SQL(
-            M.JOB_ID,
-            M.ARCHIVE_REQUEST_ID,
-            M.REQUEST_JOB_COUNT,
-            M.TAPE_POOL,
-            M.MOUNT_POLICY,
-            M.PRIORITY,
-            M.MIN_ARCHIVE_REQUEST_AGE,
-            M.ARCHIVE_FILE_ID,
-            M.SIZE_IN_BYTES,
-            M.COPY_NB,
-            M.START_TIME,
-            M.CHECKSUMBLOB,
-            M.CREATION_TIME,
-            M.DISK_INSTANCE,
-            M.DISK_FILE_ID,
-            M.DISK_FILE_OWNER_UID,
-            M.DISK_FILE_GID,
-            M.DISK_FILE_PATH,
-            M.ARCHIVE_REPORT_URL,
-            M.ARCHIVE_ERROR_REPORT_URL,
-            M.REQUESTER_NAME,
-            M.REQUESTER_GROUP,
-            M.SRC_URL,
-            M.STORAGE_CLASS,
-            M.MAX_RETRIES_WITHIN_MOUNT,
-            M.MAX_TOTAL_RETRIES,
-            M.TOTAL_REPORT_RETRIES,
-            M.MAX_REPORT_RETRIES,
-            M.VID AS VID,
-            M.DRIVE AS DRIVE,
-            M.HOST AS HOST,
-            M.MOUNT_TYPE AS MOUNT_TYPE,
-            M.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
-            :STATUS AS STATUS,
-            :TOTAL_RETRIES AS TOTAL_RETRIES,
-            :RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
-            :LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
-            :FAILURE_LOG AS FAILURE_LOG,
-  )SQL";
-  if (!keepMountId) {
-    sql += " NULL AS MOUNT_ID";
-  } else {
-    sql += " M.MOUNT_ID AS MOUNT_ID";
-  }
-  // Continue the query
-  sql += R"SQL(
-          FROM MOVED_ROWS M;
-  )SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  if (keepMountId) {
-    std::string queueType = isRepack ? "REPACK_ARCHIVE_PENDING" : "ARCHIVE_PENDING";
-    stmt.bindString(":QUEUE_TYPE", queueType);
-  }
-  stmt.bindString(":STATUS", to_string(newStatus));
-  stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
-  stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
-  stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
-  stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
-  if (userowjid) {
-    stmt.bindUint64(":JOB_ID", jobId);
-  }
-  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveBackToPending);
-  stmt.executeNonQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  txn.setRowCountForTelemetry(nrows);
-  return nrows;
 };
 
 uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
@@ -1137,7 +909,7 @@ ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobS
    * newStatus, not status (stale in-memory value) - status missed the real transition and left
    * rows stuck in ARCHIVE_ACTIVE_QUEUE forever once retries were exhausted.
    *
-   * REPACK job: repack transfer failures never reach this function (updateFailedJobStatus()
+   * REPACK job: repack transfer failures never reach this function (failTransferBatchExceedRetries()
    * handles those). The only way here is updateRepackJobSuccess() itself failing to persist an
    * already-successful transfer, so newStatus=ReadyForDeletion means "recover that lost write",
    * not "report a failure". STATUS is left for updateRepackJobSuccess() to set, since only it
@@ -1378,27 +1150,20 @@ uint64_t ArchiveJobQueueRow::failTransferBatchRequeue(Transaction& txn,
   for (size_t i = 0; i < jobs.size(); ++i) {
     const auto* row = jobs[i];
     const std::string s = std::to_string(i);
-    // keepMountId: stay on same mount if within-mount retry budget not exhausted. Removed a dead
-    // "force a new mount if the SESSION itself crashed" check that matched failureLogs against a
-    // TapeWriteSingleThread log message which is never actually produced (see git history for
-    // details) - it could not have worked by construction either: a crash orphans jobs via
-    // TapeWriteSingleThread::requeueUnprocessedTasks() -> ArchiveMount::requeueJobBatch(), a
-    // separate path that never reaches this query. The case it was trying to cover - a job left
-    // pinned to a mount that dies later - is already handled by the garbage collector
+    // keepMountId: stay on same mount if within-mount retry budget not exhausted. A job left
+    // pinned to a mount that then dies is handled by the garbage collector
     // (ArchiveInactiveMountPendingQueueRoutine), which resets MOUNT_ID once it detects the mount
-    // is gone. Matches ArchiveRdbJob.cpp's failTransfer() single-job equivalent, which had the
-    // same (equally dead) check. Retrieve's equivalent never had this check at all.
+    // is gone - not a concern for this query.
     const bool keepMountId = row->retriesWithinMount < row->maxRetriesWithinMount;
-    // Rotating to a new mount resets the within-mount counter, exactly as the single-job
-    // ArchiveRdbJob::requeueJobToMount() does before calling requeueFailedJob(). Writing the
-    // exhausted value through instead would deny the job its within-mount budget if the same
-    // still-running mount re-popped the row (MOUNT_ID is NULL, so it can): updateRetryCounts()
-    // only resets the counter when it sees a DIFFERENT mount id, so on the same mount it would
-    // increment from the ceiling and immediately rotate again, every time. Reset at bind time
-    // rather than on the row: keepMountId above is derived FROM row->retriesWithinMount, so zeroing
-    // the member first would make every job look like it still had budget. Retrieve reaches the same
-    // result the other way round - RetrieveRdbJob::prepareFailTransfer() zeroes the member and the
-    // retrieve SQL then reads retries_within_mount > 0 as its own keep-mount signal.
+    // Rotating to a new mount resets the within-mount counter. Writing the exhausted value
+    // through instead would deny the job its within-mount budget if the same still-running mount
+    // re-popped the row (MOUNT_ID is NULL, so it can): updateRetryCounts() only resets the
+    // counter when it sees a DIFFERENT mount id, so on the same mount it would increment from the
+    // ceiling and immediately rotate again, every time. Reset at bind time rather than on the
+    // row: keepMountId above is derived FROM row->retriesWithinMount, so zeroing the member first
+    // would make every job look like it still had budget. Retrieve reaches the same result the
+    // other way round - RetrieveRdbJob::prepareFailTransfer() zeroes the member and the retrieve
+    // SQL then reads retries_within_mount > 0 as its own keep-mount signal.
     const uint32_t retriesWithinMount = keepMountId ? row->retriesWithinMount : 0;
     stmt.bindUint64(":JID" + s, row->jobId);
     stmt.bindUint32(":TR" + s, row->totalRetries);
@@ -1429,12 +1194,11 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   const ArchiveJobStatus newStatus =
     isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForFailure : ArchiveJobStatus::AJS_ToReportToUserForFailure;
 
-  // USER multi-copy requests still fail together, by ARCHIVE_REQUEST_ID - matching the single-job
-  // updateFailedJobStatus(), which keys on (reqJobCount > 1 && !isRepack) - and a sibling that is
-  // still being written is still force-settled here immediately rather than left to run to
-  // completion: nothing in the user workflow reads "all copies are terminal" as permission to
-  // delete anything, so there is no correctness reason to let a doomed transfer finish, only a
-  // wasted one.
+  // USER multi-copy requests fail together, by ARCHIVE_REQUEST_ID, and a sibling that is still
+  // being written is force-settled here immediately rather than left to run to completion:
+  // nothing in the user workflow reads "all copies are terminal" as permission to delete
+  // anything, so there is no correctness reason to let a doomed transfer finish, only a wasted
+  // one.
   //
   // Settling every visible sibling is not the same as settling the WHOLE group.
   // sibling_presence counts how many rows for this ARCHIVE_REQUEST_ID currently exist in
@@ -1581,10 +1345,10 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
 
   if (isRepack) {
     // REPACK: "exceeded report retries" here means the DB WRITE failed repeatedly, not that the
-    // job failed - repack transfer failures never reach this function (updateFailedJobStatus()
-    // handles those). The only way here is updateRepackJobSuccess() itself failing to persist an
-    // already-successful transfer, so this means "recover that lost write", not "report a
-    // failure" - mirrors ArchiveRdbJob::failReport()'s single-job handling of the same case.
+    // job failed - repack transfer failures never reach this function
+    // (failTransferBatchExceedRetries() handles those). The only way here is
+    // updateRepackJobSuccess() itself failing to persist an already-successful transfer, so this
+    // means "recover that lost write", not "report a failure".
     // STATUS is intentionally NOT set by the UPDATE below: only updateRepackJobSuccess() knows
     // whether a multi-copy request's other copies have also succeeded - moving straight to
     // ARCHIVE_FAILED_QUEUE here (as the non-repack path below does) would let

@@ -112,11 +112,10 @@ void ArchiveRdbJob::failTransfer([[maybe_unused]] const std::string& failureReas
                                  [[maybe_unused]] log::LogContext& lc) {
   // Never reached under pgsched: MigrationReportPacker calls prepareFailTransfer() (above) to
   // accumulate, then ArchiveMount::failTransferBatch() to flush via
-  // ArchiveJobQueueRow::failTransferBatchRequeue()/failTransferBatchExceedRetries(), which
-  // implement exactly the single-job logic this method used to contain - see git history for the
-  // pre-batching version and docs/content/dev/internals/shared-state/scheduler-db/postgresql/
-  // failure-handling.md for the current design. Only the objectstore backend's
-  // ArchiveJob::failTransfer() calls this interface method for real.
+  // ArchiveJobQueueRow::failTransferBatchRequeue()/failTransferBatchExceedRetries() - see
+  // docs/content/dev/internals/shared-state/scheduler-db/postgresql/failure-handling.md for the
+  // batched design. Only the objectstore backend's ArchiveJob::failTransfer() calls this
+  // interface method for real.
   throw cta::exception::NotImplementedException(
     "ArchiveRdbJob::failTransfer(): not supported under pgsched; use prepareFailTransfer() + "
     "ArchiveMount::failTransferBatch() instead.");
@@ -126,10 +125,8 @@ void ArchiveRdbJob::failReport([[maybe_unused]] const std::string& failureReason
                                [[maybe_unused]] log::LogContext& lc) {
   // Never reached under pgsched: MigrationReportPacker calls prepareFailReport() (above) to
   // accumulate, then ArchiveMount::failReportBatch() to flush via
-  // ArchiveJobQueueRow::failReportBatchRequeue()/failReportBatchExceedRetries(), which implement
-  // exactly the single-job logic this method used to contain - see git history for the
-  // pre-batching version. Only the objectstore backend's ArchiveJob::failReport() calls this
-  // interface method for real.
+  // ArchiveJobQueueRow::failReportBatchRequeue()/failReportBatchExceedRetries(). Only the
+  // objectstore backend's ArchiveJob::failReport() calls this interface method for real.
   throw cta::exception::NotImplementedException(
     "ArchiveRdbJob::failReport(): not supported under pgsched; use prepareFailReport() + "
     "ArchiveMount::failReportBatch() instead.");

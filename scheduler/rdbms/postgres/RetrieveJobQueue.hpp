@@ -754,32 +754,6 @@ public:
   updateJobStatus(Transaction& txn, RetrieveJobStatus newStatus, const std::vector<std::string>& jobIDs, bool isRepack);
 
   /**
-  * Update failed job status
-  *
-  * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to select on
-  * @return                     Number of updated rows
-  */
-  uint64_t updateFailedJobStatus(Transaction& txn, bool isRepack);
-
-  /**
-  * Move a failed job from RETRIEVE_ACTIVE_QUEUE
-  * to RETRIEVE_PENDING_QUEUE so that it can be picked up
-  * by a different drive process again.
-  * This method updates also the retry statistics
-  *
-  * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to select on
-  * @param keepMountId          true or false
-  * @return                     Number of updated rows
-  */
-  uint64_t requeueFailedJob(Transaction& txn,
-                            RetrieveJobStatus newStatus,
-                            bool keepMountId,
-                            bool isRepack,
-                            std::optional<std::list<std::string>> jobIDs = std::nullopt);
-
-  /**
   * @brief Remove all pending retrieve jobs for the given VID from RETRIEVE_PENDING_QUEUE.
   * Jobs that have an alternate copy (ALTERNATE_VIDS) are re-queued to RETRIEVE_PENDING_QUEUE
   * with the next available copy's VID/FSEQ/BLOCK_ID/COPY_NB (same rotation as requeueJobToMount).

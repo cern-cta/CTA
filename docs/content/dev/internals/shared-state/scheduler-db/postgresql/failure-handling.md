@@ -641,10 +641,11 @@ branch, and that branch is compiled out under pgsched. `failTransfer()`/`failRep
 are `throw cta::exception::NotImplementedException(...)` stubs on the pgsched side.
 
 On the objectstore backend, by contrast, these are the real, live, one-job-at-a-time mechanism:
-`requeueFailedJob()`/`updateFailedJobStatus()` are objectstore's own per-job equivalent of
-pgsched's batched `failTransferBatch()`/`failReportBatch()`, since objectstore has no batching
-layer at all - every failed job is its own scheduler-DB round trip there (see the top of this
-page).
+`OStoreDB::ArchiveJob`/`RetrieveJob::failTransfer()`/`failReport()` lock and update the
+`objectstore::ArchiveRequest`/`RetrieveRequest` object directly (see
+[Why objectstore never needed any of this](#why-objectstore-never-needed-any-of-this) above),
+since objectstore has no batching layer at all - every failed job is its own scheduler-DB round
+trip there (see the top of this page).
 
 They cannot be deleted outright, because they are part of the common
 `SchedulerDatabase::ArchiveJob`/`RetrieveJob` interface that both backends must implement

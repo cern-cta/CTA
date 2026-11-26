@@ -998,32 +998,6 @@ VALUES )SQL";
   static uint64_t updateMultiCopyJobSuccess(Transaction& txn, const std::vector<std::string>& jobIDs);
 
   /**
-   * Update failed job status
-   *
-   * @param txn                  Transaction to use for this query
-   * @param newStatus            Archive Job Status to select on
-   * @return                     Number of updated rows
-   */
-  uint64_t updateFailedJobStatus(Transaction& txn, bool isRepack);
-
-  /**
-   * Move a failed job from ARCHIVE_ACTIVE_QUEUE
-   * to ARCHIVE_PENDING_QUEUE so that it can be picked up
-   * by a different drive process again.
-   * This method updates also the retry statistics
-   *
-   * @param txn                  Transaction to use for this query
-   * @param newStatus            Archive Job Status to select on
-   * @param keepMountId          true or false
-   * @return                     Number of updated rows
-   */
-  uint64_t requeueFailedJob(Transaction& txn,
-                            ArchiveJobStatus newStatus,
-                            bool keepMountId,
-                            bool isRepack,
-                            std::optional<std::list<std::string>> jobIDs = std::nullopt);
-
-  /**
    * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
    * a batch of jobs so that they can be requeued to drive queues later
    * This methos is static and does not udate any retry statistics

@@ -160,12 +160,11 @@ void RetrieveRdbJob::prepareFailReport(const std::string& failureReason) {
 void RetrieveRdbJob::failTransfer([[maybe_unused]] const std::string& failureReason,
                                   [[maybe_unused]] log::LogContext& lc) {
   // Never reached under pgsched: RecallReportPacker calls prepareFailTransfer() (below) to
-  // accumulate - including the alternate-VID rotation this method used to duplicate - then
-  // RetrieveMount::failTransferBatch() to flush via
-  // RetrieveJobQueueRow::failTransferBatchRequeue()/failTransferBatchExceedRetries(). See git
-  // history for the pre-batching version and docs/content/dev/internals/shared-state/
-  // scheduler-db/postgresql/failure-handling.md for the current design. Only the objectstore
-  // backend's RetrieveJob::failTransfer() calls this interface method for real.
+  // accumulate (including the alternate-VID rotation), then RetrieveMount::failTransferBatch()
+  // to flush via RetrieveJobQueueRow::failTransferBatchRequeue()/failTransferBatchExceedRetries()
+  // - see docs/content/dev/internals/shared-state/scheduler-db/postgresql/failure-handling.md
+  // for the batched design. Only the objectstore backend's RetrieveJob::failTransfer() calls
+  // this interface method for real.
   throw cta::exception::NotImplementedException(
     "RetrieveRdbJob::failTransfer(): not supported under pgsched; use prepareFailTransfer() + "
     "RetrieveMount::failTransferBatch() instead.");
@@ -174,9 +173,8 @@ void RetrieveRdbJob::failTransfer([[maybe_unused]] const std::string& failureRea
 void RetrieveRdbJob::failReport([[maybe_unused]] const std::string& failureReason,
                                 [[maybe_unused]] log::LogContext& lc) {
   // Never reached under pgsched: RecallReportPacker calls prepareFailReport() (below) to
-  // accumulate, then RelationalDB::failRetrieveJobBatchReport() to flush. See git history for
-  // the pre-batching version. Only the objectstore backend's RetrieveJob::failReport() calls
-  // this interface method for real.
+  // accumulate, then RelationalDB::failRetrieveJobBatchReport() to flush. Only the objectstore
+  // backend's RetrieveJob::failReport() calls this interface method for real.
   throw cta::exception::NotImplementedException(
     "RetrieveRdbJob::failReport(): not supported under pgsched; use prepareFailReport() instead.");
 }
