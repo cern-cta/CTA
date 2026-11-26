@@ -14,12 +14,13 @@ The mechanism underneath all of them is batching, covered first.
 
 ## Batching failed-job reports
 
-Reporting a failure back to the scheduler DB is on the same hot path as reporting a success, but it
-used to pay for it file by file: each failed read, write, or report cost its own scheduler-DB round
-trip, serializing DB connection usage exactly when a drive, library, or disk endpoint is already in
-trouble (many files failing in quick succession). Batching merges many jobs' failure reports into
-one SQL statement, the same idea as [opportunistic batching](opportunistic-batching.md) applied to
-the report path instead of the queueing path.
+Reporting a failure back to the scheduler DB is on the same hot path as reporting a success. Paying
+for it file by file - one scheduler-DB round trip per failed read, write, or report - serializes DB
+connection usage exactly when a drive, library, or disk endpoint is already in trouble (many files
+failing in quick succession); the objectstore backend pays that cost (see below). Batching merges
+many jobs' failure reports into one SQL statement instead, the same idea as
+[opportunistic batching](opportunistic-batching.md) applied to the report path instead of the
+queueing path.
 
 Two related but distinct mechanisms are built this way, triggered from different places: batching
 *transfer*-retry decisions below, and
@@ -241,6 +242,81 @@ the group if any of them is. Because a row only ever reaches
 together this way, `flagReportingJobsByStatus()` (called from `getNextArchiveJobsToReportBatch()`)
 needs no completeness check of its own — it just picks up rows whose `STATUS` already says so, as a
 step that runs strictly after settlement rather than racing to re-derive it.
+
+Whichever function resolves the group reaches *every* row sharing the `ARCHIVE_REQUEST_ID`, not
+just its own target - so the function that happens to run second always also resolves whatever the
+first one parked, regardless of which side each one is on. A copy parked at
+`AJS_WaitReplicasBeforeReportingFailureToDisk` can be pulled out of that park by a *sibling's*
+later success reaching `updateMultiCopyJobSuccess()` just as easily as by another failure; a copy
+parked at `AJS_WaitReplicasBeforeReportingSuccessToDisk` can be swept to failure by a sibling's
+`failTransferBatchExceedRetries()` just as easily as promoted to success by another success. The
+two worked examples below trace this for the case that motivated the wait status in the first
+place - a copy failing while its sibling has not even been dispatched yet:
+
+```mermaid
+sequenceDiagram
+    participant A as Copy A (dispatched, drive 1)
+    participant Q as ARCHIVE_ACTIVE_QUEUE
+    participant P as ARCHIVE_PENDING_QUEUE
+    participant B as Copy B (not yet dispatched)
+
+    Note over Q,P: REQUEST_JOB_COUNT = 2. A has a row in Q; B is still in P, undispatched.
+    A->>Q: exceeds retries - failTransferBatchExceedRetries()
+    Q->>Q: present copies in Q for this ARCHIVE_REQUEST_ID = 1, < REQUEST_JOB_COUNT (2)
+    Q->>Q: A parked at AJS_WaitReplicasBeforeReportingFailureToDisk (not reportable yet)
+    Note over B: B is later dispatched out of P, transfers, and ALSO exceeds its retries
+    B->>Q: exceeds retries - failTransferBatchExceedRetries() again
+    Q->>Q: present copies now = 2, >= REQUEST_JOB_COUNT (2) - group complete
+    Q->>Q: BOTH A and B -> AJS_ToReportToUserForFailure, in this one statement
+    Note over Q: getNextArchiveJobsToReportBatch() can now report both together
+```
+
+```mermaid
+sequenceDiagram
+    participant A as Copy A (dispatched, drive 1)
+    participant Q as ARCHIVE_ACTIVE_QUEUE
+    participant P as ARCHIVE_PENDING_QUEUE
+    participant B as Copy B (not yet dispatched)
+
+    Note over Q,P: Same start: A failed and parked; B still undispatched.
+    A->>Q: exceeds retries - failTransferBatchExceedRetries()
+    Q->>Q: A parked at AJS_WaitReplicasBeforeReportingFailureToDisk
+    Note over B: B is later dispatched and this time its transfer SUCCEEDS
+    B->>Q: transfer succeeds - updateMultiCopyJobSuccess()
+    Q->>Q: sibling_settlement sees A at the wait-failure status - counted as settled, any_failed = true
+    Q->>Q: BOTH A and B -> AJS_ToReportToUserForFailure (NOT ForSuccess), in this one statement
+    Note over Q: B's own transfer succeeding cannot resurrect a request that already lost a copy
+```
+
+The second diagram is the hard case: `updateMultiCopyJobSuccess()`'s sibling-settlement count must
+recognise A's parked row as settled, not just a sibling already at the terminal failure status -
+otherwise B's success would see no settled sibling at all and park forever at
+`AJS_WaitReplicasBeforeReportingSuccessToDisk` - a status nothing else in the codebase reads.
+
+#### Why objectstore never needed any of this
+
+The objectstore backend keeps every copy of one archive request as fields inside a single
+serialized `ArchiveRequest` object, locked and read as one unit
+(`objectstore::ArchiveRequest::addTransferFailure()`, which calls `determineNextStep()` once
+retries are exhausted, and `asyncUpdateTransferSuccessful()` on the success side). There is no
+equivalent of a copy being
+invisible because it has not been dispatched yet: every copy's current status is always a field on
+the one object a thread already has locked, dispatched or not, so a completeness check there is a
+loop over an in-memory list, never a query that can miss a row sitting in a different table.
+
+Reporting is still done once per request, not once per copy, but the policy achieving that is
+simpler for the same structural reason: a `reportdecided` flag on the object. The *first* copy to
+fail sets it and is immediately enqueued to report the request as a failure to EOS - no waiting for
+other copies, because one permanent loss already decides the outcome, the same redundancy
+reasoning as the user side of this page. Every other copy's own completion, whether it arrives
+before or after that point, just sets its own job to `AJS_Complete` with no further step
+(`asyncUpdateTransferSuccessful()`'s `otherJobsToTransfer || m_payload.reportdecided()` branch) - a
+second failure is filed without a second report, and a later success cannot undo the one already
+sent. A success report happens only via whichever copy turns out to be the *last* one with no
+failure yet recorded - the asymmetry (failure reports on the first loss, success waits for the
+last copy) is the same policy this page describes for pgsched, just needing no wait *status* at
+all, because there is nothing for one to park against: the object already holds every copy's state
+together.
 
 ### Why repack copies must fail alone
 
@@ -558,14 +634,17 @@ round trips than the success path was tuned for.
 
 ## Why `failTransfer()`/`failReport()` still exist (as stubs)
 
-`ArchiveRdbJob`/`RetrieveRdbJob::failTransfer()`/`failReport()` used to be the pre-batching,
-one-job-at-a-time mechanism (`requeueFailedJob()`/`updateFailedJobStatus()`, driven by two private
-helpers, `handleExceedTotalRetries()`/`requeueJobToMount()`). Under `CTA_PGSCHED`, no production
-code calls them any more — `MigrationReportPacker`/`RecallReportPacker` only ever call
+Under `CTA_PGSCHED`, no production code calls `ArchiveRdbJob`/`RetrieveRdbJob::failTransfer()`/
+`failReport()` — `MigrationReportPacker`/`RecallReportPacker` only ever call
 `transferFailed()`/`reportFailed()` (which delegate to these) from their `#else` (objectstore)
-branch, and that branch is compiled out under pgsched. The two private helpers have been deleted;
-`failTransfer()`/`failReport()` themselves are now `throw cta::exception::NotImplementedException(...)`
-stubs on the pgsched side.
+branch, and that branch is compiled out under pgsched. `failTransfer()`/`failReport()` themselves
+are `throw cta::exception::NotImplementedException(...)` stubs on the pgsched side.
+
+On the objectstore backend, by contrast, these are the real, live, one-job-at-a-time mechanism:
+`requeueFailedJob()`/`updateFailedJobStatus()` are objectstore's own per-job equivalent of
+pgsched's batched `failTransferBatch()`/`failReportBatch()`, since objectstore has no batching
+layer at all - every failed job is its own scheduler-DB round trip there (see the top of this
+page).
 
 They cannot be deleted outright, because they are part of the common
 `SchedulerDatabase::ArchiveJob`/`RetrieveJob` interface that both backends must implement

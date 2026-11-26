@@ -240,11 +240,9 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
    * already fully terminal at AJS_ToReportToUserForFailure if failTransferBatchExceedRetries()
    * found every copy already present - see that function, which is this one's mirror image on the
    * failure side). sibling_settlement counts all three as "settled" (any_failed records whether any
-   * of them is a failure outcome) - this is the fix for the case the original version of this
-   * function got wrong: it only counted AJS_WaitReplicasBeforeReportingSuccessToDisk siblings, so
-   * once any copy had already permanently failed, a later-completing sibling could never see its
-   * count reach REQUEST_JOB_COUNT and was parked forever (that status is read nowhere else in this
-   * codebase - nothing would ever revisit it).
+   * of them is a failure outcome): a sibling parked at either wait status, or already terminally
+   * failed, all count toward REQUEST_JOB_COUNT here, so a copy that permanently failed earlier is
+   * never lost from the count just because its row is no longer mid-transfer.
    *
    * This mirrors moveFailedRepackJobBatchToFailedQueueTable()'s settled_siblings/
    * complete_failed_groups pattern (STATUS IN success, failure), which already gets this right for
@@ -1163,25 +1161,22 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
                                                           uint64_t limit) {
   /* Every row whose own STATUS is one of statusList (ToReportToUserForSuccess/ForFailure) and not
    * already claimed for reporting is picked up here, multi-copy or not, with no completeness check
-   * of its own. That used to not be safe: a multi-copy copy that failed while a sibling was still
-   * pending or in flight would reach AJS_ToReportToUserForFailure on its own, and this query would
-   * then report and delete it (updateJobStatus() deletes on AJS_Failed, see
-   * setArchiveJobBatchReported()) before the sibling had a chance to be accounted for.
-   *
-   * What makes a plain filter correct now is that settlement happens entirely on the write side,
-   * once, atomically, per group: failTransferBatchExceedRetries() parks a failing copy at
+   * of its own. This plain filter depends entirely on a guarantee the write side provides:
+   * failTransferBatchExceedRetries() parks a failing copy at
    * AJS_WaitReplicasBeforeReportingFailureToDisk (instead of going straight to
    * AJS_ToReportToUserForFailure) whenever a sibling has not been dispatched into
    * ARCHIVE_ACTIVE_QUEUE yet, and updateMultiCopyJobSuccess() does the mirror check on the success
    * side - see both functions. Either one, whichever turns out to be the last copy of the group to
    * settle, promotes every row sharing the ARCHIVE_REQUEST_ID to its final terminal status in the
    * same statement. So a row only ever reaches AJS_ToReportToUserForSuccess/ForFailure once the
-   * whole group already has - this query does not need to re-derive that, and re-deriving it here
-   * would only add a second place that completeness could be computed differently from the write
-   * side, racing with it instead of simply running after it.
+   * whole group already has - a copy that reached a terminal status while a sibling was still
+   * undispatched would otherwise be reported and deleted here before that sibling had a chance to
+   * be accounted for. This query must not re-derive completeness itself: doing so would add a
+   * second place that completeness could be computed differently from the write side, racing with
+   * it instead of simply running after it.
    *
-   * Single-copy rows (REQUEST_JOB_COUNT = 1) never pass through either wait status and are released
-   * exactly as before, immediately.
+   * Single-copy rows (REQUEST_JOB_COUNT = 1) never pass through either wait status and are
+   * released immediately.
    */
   std::string sql = R"SQL(
       WITH candidates AS (
@@ -1441,16 +1436,16 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   // delete anything, so there is no correctness reason to let a doomed transfer finish, only a
   // wasted one.
   //
-  // What changed from the original version of this function: settling every visible sibling is not
-  // the same as settling the WHOLE group. sibling_presence counts how many rows for this
-  // ARCHIVE_REQUEST_ID currently exist in ARCHIVE_ACTIVE_QUEUE at all, independently of their own
-  // STATUS - a row that has not been dispatched out of ARCHIVE_PENDING_QUEUE yet is invisible to
-  // this query and this UPDATE alike, and forcing the visible copies straight to the terminal
-  // AJS_ToReportToUserForFailure would let flagReportingJobsByStatus() - which now trusts STATUS
-  // alone, see that function - report and delete them before the pending copy ever gets a chance to
-  // run. So only when present_count already reaches REQUEST_JOB_COUNT (no copy is still pending
-  // elsewhere) do the visible rows go straight to the terminal failure status, exactly as before;
-  // otherwise they park at AJS_WaitReplicasBeforeReportingFailureToDisk instead - the mirror image of
+  // Settling every visible sibling is not the same as settling the WHOLE group.
+  // sibling_presence counts how many rows for this ARCHIVE_REQUEST_ID currently exist in
+  // ARCHIVE_ACTIVE_QUEUE at all, independently of their own STATUS - a row that has not been
+  // dispatched out of ARCHIVE_PENDING_QUEUE yet is invisible to this query and this UPDATE alike,
+  // and forcing the visible copies straight to the terminal AJS_ToReportToUserForFailure would let
+  // flagReportingJobsByStatus() - which trusts STATUS alone, see that function - report and delete
+  // them before the pending copy ever gets a chance to run. So only when present_count already
+  // reaches REQUEST_JOB_COUNT (no copy is still pending elsewhere) do the visible rows go straight
+  // to the terminal failure status; otherwise they park at
+  // AJS_WaitReplicasBeforeReportingFailureToDisk instead - the mirror image of
   // the wait updateMultiCopyJobSuccess() already does on the success side, for the mirror-image
   // reason: a copy that hasn't started yet might still succeed, so the group's fate genuinely is not
   // decided yet. Whichever copy - success or failure - turns out to be the LAST to settle resolves

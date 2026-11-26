@@ -340,7 +340,8 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerPgschedFailures
   }
 
   // RECALL_REPORT_PACKER_FLUSH_SIZE (2000) successful jobs trigger fullCheckAndFinishAsyncExecute(),
-  // which now also calls flushFailedJobs() — the piggyback added in this branch.
+  // which also calls flushFailedJobs() so a failed-job batch below c_failedJobsBatchMax still goes
+  // out on the same periodic/count-driven flush event as the successful batch.
   // MockRetrieveJob::asyncSetSuccessful() does not throw, so all 2000 reach m_successfulRetrieveJobs.
   for (unsigned int i = 0; i < 2000; i++) {
     std::unique_ptr<cta::RetrieveJob> job(new MockRetrieveJobWithPrepare(retrieveMount));

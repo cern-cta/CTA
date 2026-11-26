@@ -156,10 +156,9 @@ TEST_P(RelationalDBTest, archiveMultiCopyGroupResolvesToFailureOncePendingSiblin
   ASSERT_EQ(2u, reportBatch.size());
 }
 
-// This is the scenario the second review round's "pending-sibling gap" fix (FIX A/FIX B) exists
-// for: the copy that was still pending when its sibling failed goes on to transfer successfully.
-// The group must still end up failed - a late success cannot resurrect a request that already
-// lost a copy.
+// The copy that was still pending when its sibling failed goes on to transfer successfully. The
+// group must still end up failed - a late success cannot resurrect a request that already lost a
+// copy.
 TEST_P(RelationalDBTest, archiveMultiCopyGroupResolvesToFailureWhenPendingSiblingLaterSucceeds) {
   using namespace cta;
 
@@ -283,8 +282,8 @@ TEST_P(RelationalDBTest, archiveMultiCopySuccessParksThenFailingSiblingSweepsBot
 
   // Copy B now exceeds its retries. failTransferBatchExceedRetries() matches by
   // ARCHIVE_REQUEST_ID with no STATUS filter, so it reaches copy A's parked row too, even though
-  // copy A's own transfer already succeeded - interrupting a still-"writing" sibling is still
-  // immediate and unconditional, exactly as before this fix.
+  // copy A's own transfer already succeeded - interrupting a still-"writing" sibling is
+  // immediate and unconditional.
   jobs.front()->prepareFailTransfer("copy B fails after copy A already succeeded and parked");
   std::vector<SchedulerDatabase::ArchiveJob*> batchB = {jobs.front().get()};
   mount->failTransferBatch(batchB, lc);
@@ -306,14 +305,12 @@ TEST_P(RelationalDBTest, archiveMultiCopySuccessParksThenFailingSiblingSweepsBot
   }
 }
 
-// Regression test for a bug found while auditing this fix: ArchiveJobQueueRow::requeueJobBatch()
-// - used by TapeWriteSingleThread::requeueUnprocessedTasks() after a session-level abort, and by
-// MigrationReportPacker::ReportLastBatchError::execute() - deleted rows by plain JOB_ID with no
-// STATUS guard. If a sibling's failTransferBatchExceedRetries() collaterally settles a copy's row
-// (the ARCHIVE_REQUEST_ID-wide UPDATE, see "Why user requests fail as a group" in
-// failure-handling.md) concurrently with - or just before - a crash-recovery requeue for that same
-// copy, the unguarded DELETE still matched it by JOB_ID alone and silently resurrected an
-// already-failed copy back to ARCHIVE_PENDING_QUEUE, undoing the sibling's settlement.
+// ArchiveJobQueueRow::requeueJobBatch() - used by TapeWriteSingleThread::
+// requeueUnprocessedTasks() after a session-level abort, and by MigrationReportPacker::
+// ReportLastBatchError::execute() - must not resurrect a row a sibling has already collaterally
+// settled via failTransferBatchExceedRetries()'s ARCHIVE_REQUEST_ID-wide UPDATE (see "Why user
+// requests fail as a group" in failure-handling.md). Its STATUS guard rejects a requeue for a row
+// that is no longer at the active-transfer status the caller's stale in-memory job list assumed.
 TEST_P(RelationalDBTest, archiveMultiCopyCrashRequeueCannotResurrectACollaterallyFailedSibling) {
   using namespace cta;
 
