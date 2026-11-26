@@ -120,16 +120,16 @@ enabled_experimental_features = ["telemetry"]
   config_file = "/etc/cta/cta-catalogue.conf"
 
 
-[catalogue.client]
-  # Number of connections in the catalogue connection pool. Must be greater than zero.
-  # Default: 10
-  # (integer, optional)
-  number_of_connections = 10
+  [catalogue.client]
+    # Number of connections in the catalogue connection pool. Must be greater than zero.
+    # Default: 10
+    # (integer, optional)
+    number_of_connections = 10
 
-  # Number of archive file IDs fetched per batch. Must be greater than zero.
-  # Default: 1
-  # (integer, optional)
-  archive_file_id_batch_size = 1
+    # Number of archive file IDs fetched per batch. Must be greater than zero.
+    # Default: 1
+    # (integer, optional)
+    archive_file_id_batch_size = 1
 
 
 [scheduler]
