@@ -4,7 +4,7 @@ Pre-commit runs local checks before a commit. For installation, see [Enable pre-
 
 ## Configured checks
 
-The repository's `.pre-commit-config.yaml` defines the hooks, versions, and file selection.
+The repository's `.pre-commit-config.yaml` defines the hooks and file selection. Python tools use `uv` with the same `pyproject.toml` dependencies and `uv.lock` versions as CI; keep `uv` on `PATH`.
 
 | Hook | Purpose |
 | --- | --- |
@@ -12,6 +12,7 @@ The repository's `.pre-commit-config.yaml` defines the hooks, versions, and file
 | `clang-format` | Format selected C/C++ and JSON files. |
 | `ruff-check`, `ruff-format` | Check and format Python; the check hook also applies automatic fixes. |
 | `yamllint` | Check YAML formatting and syntax. |
+| `taplo` | Format TOML files using `.taplo.toml`. |
 | `reuse-lint-file` | Check file copyright and licence metadata; see [Copyright](../conventions/coding/copyright.md). |
 | `gitlab-ci` | Check merge-train guards, key ordering, and stage organization in CI configuration. |
 
@@ -45,8 +46,6 @@ Formatters can modify files, including during an all-files run. Review their cha
 | Hook environment fails to initialize | Read the installation error for missing dependencies or download failures. If the cached environment is broken, run `pre-commit clean`, then retry. |
 | Automatic fixes conflict with unstaged changes | Separate or stage the intended edits before retrying; inspect the working tree first. |
 
-Pinned hook environments are installed automatically when needed. `pre-commit autoupdate` changes the repository configuration; use it for a deliberate hook-version update, not routine troubleshooting. See the [command reference](https://pre-commit.com/#command-line-interface).
-
 ## Secret-detection findings
 
 Inspect each reported location. For a real credential, remove it and use the appropriate configuration or secret mechanism. If it was exposed in a commit or shared elsewhere, arrange revocation or rotation with its owner.
@@ -54,9 +53,9 @@ Inspect each reported location. For a real credential, remove it and use the app
 After carefully reviewing the findings and confirming that any values to be retained are false positives or safe test fixtures, regenerate the baseline from the repository root:
 
 ```bash
-detect-secrets scan --baseline .secrets.baseline
+uv run --locked detect-secrets scan --baseline .secrets.baseline
 ```
 
-Use the `detect-secrets` version pinned in `.pre-commit-config.yaml`. This updates the baseline file without manually editing its entries; the scan itself does not establish that a finding is safe. Review the resulting diff, rerun the hook, and include the baseline change in the MR with an explanation of the accepted findings.
+This updates the baseline file without manually editing its entries; the scan itself does not establish that a finding is safe. Review the resulting diff, rerun the hook, and include the baseline change in the MR with an explanation of the accepted findings.
 
 The [detect-secrets guide](https://github.com/Yelp/detect-secrets#usage) describes baseline updates and auditing.

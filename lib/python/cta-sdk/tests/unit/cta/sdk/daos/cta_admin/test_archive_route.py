@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -29,10 +29,10 @@ def ref_obj() -> ArchiveRoute:
         metadata=Metadata(
             creation_user_name="jleduc",
             creation_host_name="eosctafst0017.cern.ch",
-            creation_time=datetime(2020, 6, 29, 20, 59, 41, tzinfo=timezone.utc),
+            creation_time=datetime(2020, 6, 29, 20, 59, 41, tzinfo=UTC),
             update_user_name="jleduc",
             update_host_name="eosctafst0017.cern.ch",
-            update_time=datetime(2020, 6, 29, 20, 59, 41, tzinfo=timezone.utc),
+            update_time=datetime(2020, 6, 29, 20, 59, 41, tzinfo=UTC),
             comment="atlaspps storage class on physical tapes",
         ),
     )

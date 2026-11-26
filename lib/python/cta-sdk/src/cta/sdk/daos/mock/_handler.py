@@ -6,7 +6,7 @@ import re
 from collections.abc import Generator
 from contextlib import contextmanager
 from dataclasses import Field, fields, replace
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from getpass import getuser
 from logging import getLogger
@@ -17,10 +17,8 @@ from typing import (
     Any,
     ClassVar,
     Final,
-    Optional,
     Protocol,
     TypeVar,
-    Union,
     get_args,
     get_origin,
 )
@@ -50,7 +48,7 @@ FLAG = object()
 INVALID_WINDOWS_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1F]')
 
 
-def as_timedelta(value: Union[int, timedelta]) -> timedelta:
+def as_timedelta(value: int | timedelta) -> timedelta:
     """Normalise a duration given either as seconds or as a timedelta."""
     return value if isinstance(value, timedelta) else timedelta(seconds=value)
 
@@ -109,7 +107,7 @@ class CtaMockHandler:
 
         return self.converter.loads(resource_file.read_text(), resource_type)
 
-    def iter(self, resource_type: type[D]) -> Generator[D, None, None]:
+    def iter(self, resource_type: type[D]) -> Generator[D]:
         resource_dir = self.root_dir / self.class_to_dir_name(resource_type)
         resource_dir.mkdir(parents=False, exist_ok=True)
         yield from (
@@ -123,7 +121,7 @@ class CtaMockHandler:
         self,
         resource_type: type[D],
         *primary_keys: Any,
-    ) -> Generator[D, None, None]:
+    ) -> Generator[D]:
         obj = self.get(resource_type, *primary_keys)
         yield obj
 
@@ -147,7 +145,7 @@ class CtaMockHandler:
         return {
             "creation_user_name": getuser(),
             "creation_host_name": gethostname(),
-            "creation_time": datetime.now(tz=timezone.utc),
+            "creation_time": datetime.now(tz=UTC),
         }
 
     @staticmethod
@@ -155,7 +153,7 @@ class CtaMockHandler:
         return {
             "update_user_name": getuser(),
             "update_host_name": gethostname(),
-            "update_time": datetime.now(tz=timezone.utc),
+            "update_time": datetime.now(tz=UTC),
         }
 
     @staticmethod
@@ -165,7 +163,7 @@ class CtaMockHandler:
         )
 
     @staticmethod
-    def refresh_metadata(metadata: M, /, *, comment: Optional[str] = None) -> M:
+    def refresh_metadata(metadata: M, /, *, comment: str | None = None) -> M:
         """Return `metadata` with the update fields regenerated, creation fields untouched.
 
         Uses `replace` so that subclasses (e.g. `TapeMetadata`) keep their own type and extra fields.

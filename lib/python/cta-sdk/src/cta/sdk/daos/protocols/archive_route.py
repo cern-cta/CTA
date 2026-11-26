@@ -10,7 +10,7 @@ for multiple routes to the same storage class.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import ArchiveRoute, ArchiveRouteType
 
@@ -88,8 +88,8 @@ class ArchiveRouteDao(Protocol):
         type: ArchiveRouteType,
         /,
         *,
-        tape_pool_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        tape_pool_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing archive route.
 

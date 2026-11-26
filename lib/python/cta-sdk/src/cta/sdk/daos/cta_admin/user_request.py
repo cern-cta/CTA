@@ -3,13 +3,12 @@
 
 import json
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import UserRequestDao
 from cta.sdk.models import MountType, UserRequest
-from typing_extensions import override
 
 
 class UserRequestDaoCtaAdmin(UserRequestDao):
@@ -38,7 +37,7 @@ class UserRequestDaoCtaAdmin(UserRequestDao):
             transferred_byte_count=int(raw_data["curBytes"]),
             is_sleeping_for_space=raw_data["sleepingForSpace"],
             sleep_start_time=(
-                datetime.fromtimestamp(int(raw_data["sleepStartTime"]), tz=timezone.utc)
+                datetime.fromtimestamp(int(raw_data["sleepStartTime"]), tz=UTC)
                 if raw_data["sleepStartTime"] not in ("", "0")
                 else None
             ),
@@ -49,7 +48,7 @@ class UserRequestDaoCtaAdmin(UserRequestDao):
         )
 
     @override
-    def list(self, *, request_type: Optional[MountType] = None) -> Iterator[UserRequest]:
+    def list(self, *, request_type: MountType | None = None) -> Iterator[UserRequest]:
         yield from (
             self.raw_data_to_resource(json.loads(line))
             for line in self._wrapper.run_streaming_command([*self._wrapper.base_command, "showqueues"])

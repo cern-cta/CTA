@@ -1,0 +1,225 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description":
+    "Update container bases, external CI images, GitHub Actions, Python interpreters and uv workspaces, Danger gems and grpc-health-probe. Native packages, Rust, general Helm dependencies and submodules remain deferred.",
+  "enabledManagers": [
+    "dockerfile",
+    "github-actions",
+    "custom.regex",
+    "pyenv",
+    "pep621"
+  ],
+  "automerge": false,
+  "minimumReleaseAge": "14 days",
+  "minimumReleaseAgeBehaviour": "timestamp-required",
+  "internalChecksFilter": "strict",
+  "prConcurrentLimit": 3,
+  "semanticCommits": "disabled",
+  "commitMessagePrefix": "[ci]",
+  "commitMessageAction": "Update",
+  "commitMessageLowerCase": "never",
+  "prHeader": "### Description",
+  "prFooter": "### Checklist\n\n- [x] Merge Request title is clear, concise, and suitable as a changelog entry.",
+  "ignorePaths": [
+    "build/**",
+    "build_rpm/**",
+    "build_srpm/**",
+    "target/**",
+    "ci/build/development/**",
+    "catalogue/cta-catalogue-schema/**",
+    "common/jwt-cpp/**",
+    "lib/protobuf/external/**"
+  ],
+  "dockerfile": {
+    "managerFilePatterns": [
+      "/^ci/docker/.*\\.Dockerfile$/"
+    ]
+  },
+  "github-actions": {
+    "managerFilePatterns": [
+      "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Keep direct Danger image gems pinned and updated together.",
+      "managerFilePatterns": [
+        "/^ci/docker/pipeline/danger\\.Dockerfile$/"
+      ],
+      "matchStrings": [
+        "(?<depName>danger|danger-gitlab|faraday-retry):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "rubygems",
+      "versioningTemplate": "ruby"
+    },
+    {
+      "customType": "regex",
+      "description":
+        "Resolve proxied external images upstream while preserving the CERN proxy prefix. CTA pipeline image releases are updated separately after successful builds.",
+      "managerFilePatterns": [
+        "/^\\.gitlab-ci\\.yml$/"
+      ],
+      "matchStrings": [
+        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
+        "IMAGE_(?:TRIVY|SBOMQS): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\" +# (?<currentValue>v?[0-9.]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Update the release URL and verified binary checksum together in all production Dockerfiles.",
+      "managerFilePatterns": [
+        "/^ci/docker/cta/(?:el9|el10|debian13)/prod\\.Dockerfile$/"
+      ],
+      "matchStrings": [
+        "https://github\\.com/grpc-ecosystem/grpc-health-probe/releases/download/(?<currentValue>v[0-9.]+)/grpc_health_probe-linux-amd64\\s+\\\\\\s+-o /grpc-health-probe && \\\\\\s+echo \"(?<currentDigest>[a-f0-9]{64})  /grpc-health-probe\""
+      ],
+      "depNameTemplate": "grpc-ecosystem/grpc-health-probe",
+      "datasourceTemplate": "github-release-attachments",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the auth job on the same Python patch release as the workspace.",
+      "managerFilePatterns": [
+        "/^ci/orchestration/helm/auth/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "image: registry\\.cern\\.ch/docker\\.io/(?<depName>python):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+-slim)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Keep the isolated protobuf build constraint aligned with workspace gRPC updates.",
+      "managerFilePatterns": [
+        "/^pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "\"(?<depName>grpcio-tools)==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
+      ],
+      "datasourceTemplate": "pypi"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": [
+        "rubygems"
+      ],
+      "matchPackageNames": [
+        "danger",
+        "danger-gitlab",
+        "faraday-retry"
+      ],
+      "groupName": "Danger gems"
+    },
+    {
+      "description": "CERN registry images do not need an additional cooldown.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "registry.cern.ch/**",
+        "gitlab-registry.cern.ch/**"
+      ],
+      "minimumReleaseAge": null
+    },
+    {
+      "description":
+        "Only container references are in scope for the Dockerfile manager; package installation locks are deferred.",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchDatasources": [
+        "!docker"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "package_context is a local named build context, not a registry image.",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "package_context"
+      ],
+      "enabled": false
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": true
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action"
+      ],
+      "pinDigests": true
+    },
+    {
+      "description": "Hosted runner OS updates are outside the initial pinning scope.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "github-runner"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Keep the health probe release and checksum aligned across EL9, EL10 and Debian 13.",
+      "matchPackageNames": [
+        "grpc-ecosystem/grpc-health-probe"
+      ],
+      "groupName": "grpc-health-probe"
+    },
+    {
+      "description":
+        "Review Python minor upgrades explicitly; patch updates keep the workspace and auth image together.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "python"
+      ],
+      "groupName": "Python runtime",
+      "allowedVersions": "<3.16",
+      "pinDigests": false
+    },
+    {
+      "description": "Minimum Python support is a project compatibility decision.",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "requires-python"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Keep protobuf generation and runtime dependencies in one update.",
+      "matchManagers": [
+        "pep621",
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "grpcio",
+        "grpcio-tools",
+        "grpcio-health-checking",
+        "protobuf"
+      ],
+      "groupName": "Python gRPC",
+      "rangeStrategy": "bump"
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  }
+}

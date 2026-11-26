@@ -9,14 +9,26 @@
   "workspaceFolder": "/shared/CTA",
   // Dependency installation below uses dnf, which needs root.
   "remoteUser": "root",
+  // The workspace .venv is shared with the host, whose interpreter (e.g. EL9 /usr/bin/python3.9) does not exist here.
+  // Keep a separate, container-local uv environment instead.
+  "containerEnv": {
+    "UV_PROJECT_ENVIRONMENT": "/root/.venv-el10"
+  },
+  "remoteEnv": {
+    "PATH": "/root/.local/bin:${containerEnv:PATH}"
+  },
   // CTA build dependencies are installed from the source package, built in a scratch directory inside the container.
   // Node.js is needed by SonarLint.
   // Generated headers (protobuf, gRPC, catalogue schema) are built up front so that IntelliSense can resolve them.
-  "postCreateCommand": "dnf install -y nodejs && ./ci/build/build_packages.sh deps --build-dir /tmp/cta-deps --create-build-dir --build-generator Ninja --scheduler-type objectstore --cta-version 6~dev1-1 --cmake-build-type RelWithDebInfo && cmake --preset cta-container && cmake --build --preset cta-generated-headers",
+  // uv then creates the Python environment (interpreter version from .python-version, downloaded by uv if needed).
+  "postCreateCommand": "dnf install -y nodejs && ./ci/build/build_packages.sh deps --build-dir /tmp/cta-deps --create-build-dir --build-generator Ninja --scheduler-type objectstore --cta-version 6~dev1-1 --cmake-build-type RelWithDebInfo && cmake --preset cta-container && cmake --build --preset cta-generated-headers && curl -LsSf https://astral.sh/uv/0.11.5/install.sh | sh && /root/.local/bin/uv sync --group dev --group type-check --group system-tests",
   // Extensions (CMake Tools, rust-analyzer) need the dependencies above, so do not start them before they are installed.
   "waitFor": "postCreateCommand",
   "customizations": {
     "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/root/.venv-el10/bin/python"
+      },
       "extensions": [
         // CMake/C++
         "ms-vscode.cmake-tools",

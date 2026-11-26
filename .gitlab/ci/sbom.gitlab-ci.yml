@@ -23,6 +23,8 @@ enrich-sboms-cern-info:
         matrix:
           - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   image: $IMAGE_SBOM_HELPER
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
   before_script:
     - !reference [.merge-train-guard, before_script]
   script:
@@ -73,6 +75,7 @@ score-sboms:
           - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   image: $IMAGE_SBOMQS
   variables:
+    GIT_SUBMODULE_STRATEGY: "none"
     # Gate on the NTIA minimum elements instead of fields such as signatures and
     # package artifact hashes that are not produced by a rootfs inventory.
     SBOM_MINIMUM_SCORE: "9.0"

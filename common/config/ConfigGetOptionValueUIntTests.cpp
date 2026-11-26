@@ -4,7 +4,7 @@
  */
 
 #include "Config.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <gtest/gtest.h>
 #include <sstream>

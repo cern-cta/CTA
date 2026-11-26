@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -29,7 +28,7 @@ def create(obj: AppContext, name: str, comment: str):
 @click.argument("name")
 @click.option("--comment", "-c")
 @click.pass_obj
-def update(obj: AppContext, name: str, comment: Optional[str]):
+def update(obj: AppContext, name: str, comment: str | None):
     """Change CTA admin user."""
     obj.cta_client.admin_user.update(name, comment=comment)
     print(f"AdminUser({name}) UPDATED")

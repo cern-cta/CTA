@@ -2,7 +2,7 @@
 
 Run one `cta-taped` process per tape drive, with a TOML configuration file for each process.
 The packaged service reads `/etc/cta/cta-taped.toml`.
-Use the [annotated example](#example-configuration) to configure the service and the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for individual options and defaults.
+Use the [annotated example](#example-configuration) to configure the service and the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for command-line options.
 This page covers operational decisions and interactions between settings.
 
 ## Prepare the deployment
@@ -85,7 +85,7 @@ Use the `[transfers.encryption]` section of the [annotated example](#example-con
 
    See [Service Runtime](service-runtime.md#strict-config-checking) for strict-checking requirements.
    Configuration checking exits without starting the daemon; it does not verify database connectivity or hardware operation.
-3. Restart the affected service to apply changes. `SIGUSR1` reopens the log file; it does not reload configuration.
+3. Restart the affected service to apply changes. `SIGHUP` reopens the log file; it does not reload configuration.
 4. Check the drive's desired state, reported state, and down reason with `cta-admin dr ls`.
 5. If the startup policy leaves the drive Down, request Up when ready:
 
@@ -97,11 +97,18 @@ Use the `[transfers.encryption]` section of the [annotated example](#example-con
 
 An orderly restart waits for the active tape session to finish.
 Allow enough service-stop time for transfers and cleanup; see [Requests to stop](../../../concepts/components/tape-daemon.md#requests-to-stop).
+The packaged systemd unit uses `TimeoutStopSec=12h` to allow long transfers and cleanup while bounding the wait for shutdown.
+After 12 hours, systemd forcibly terminates the daemon even if it is still making progress.
+Locally maintained units, including per-drive templates, need the same setting to allow this draining period.
 To roll back configuration, restore the previous file, validate it, and restart the affected service.
 
 ## Example configuration
 
-???+ example "cta-taped.example.toml"
+The annotated examples are the complete settings reference.
+Choose the variant matching the compiled scheduler backend and replace deployment-specific values.
+The installed package provides the matching variant as `/usr/share/doc/cta-taped/examples/cta-taped.example.toml`.
+
+??? example "Objectstore scheduler"
 
     ```toml
     --8<--
@@ -109,6 +116,14 @@ To roll back configuration, restore the previous file, validate it, and restart 
     --8<--
     ```
 
+??? example "PostgreSQL scheduler"
+
+    ```toml
+    --8<--
+    taped/cta-taped.pg.example.toml
+    --8<--
+    ```
+
 ## Command reference
 
-See the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for the complete option reference.
+See the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for the complete command-line option reference.

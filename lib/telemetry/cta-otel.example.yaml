@@ -66,7 +66,7 @@ meter_provider:
             # The value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS.
             # See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options for details.
             # If omitted or null, no headers are added.
-            # When using basic authorization, set this value to "Basic <base64(username:password)>" where <base64(username:password)> should be replaced accordingly.
+            # When using basic authorisation, set this value to "Basic <base64(username:password)>" where <base64(username:password)> should be replaced accordingly.
             # It is also possible to pass in an environment variable here if preferred. E.g. "${OTEL_EXPORTER_AUTH_HEADER}"
             headers_list: "Authorization=Basic <base64(username:password)>"
             # Configure compression.
@@ -83,11 +83,11 @@ meter_provider:
             encoding: protobuf
             # Configure temporality preference.
             # Values include: cumulative, delta, low_memory.
-            # For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
+            # For behaviour of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
             # If omitted or null, cumulative is used.
             temporality_preference: cumulative
             # Configure default histogram aggregation.
             # Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram.
-            # For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
+            # For behaviour of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
             # If omitted or null, explicit_bucket_histogram is used.
             default_histogram_aggregation: explicit_bucket_histogram

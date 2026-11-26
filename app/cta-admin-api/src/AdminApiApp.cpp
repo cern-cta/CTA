@@ -43,9 +43,11 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
     log);
 
   // JWT authentication: the JWKS cache is refreshed in the background by the manager itself
-  auto jwtAuthManager = grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log);
+  auto jwtAuthManager = config.auth.isMethodEnabled(cta::grpc_server::AuthMethod::JWT) ?
+                          grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log) :
+                          nullptr;
 
-  const bool kerberosEnabled = config.auth.kerberos.has_value() && config.auth.kerberos->enabled;
+  const bool kerberosEnabled = config.auth.isMethodEnabled(cta::grpc_server::AuthMethod::KERBEROS);
 
   // Kerberos Token Store - used if Kerberos is enabled
   rpc::kerberos::TokenStore krbTokenStore;

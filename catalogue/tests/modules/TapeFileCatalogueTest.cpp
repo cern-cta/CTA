@@ -155,7 +155,8 @@ TEST_P(cta_catalogue_TapeFileTest, moveFilesToRecycleLog) {
     ASSERT_EQ(PUBLIC_DISK_USER, deletedArchiveFile.diskFileUid);
     ASSERT_EQ(PUBLIC_DISK_GROUP, deletedArchiveFile.diskFileGid);
     ASSERT_EQ(archiveFileSize, deletedArchiveFile.sizeInBytes);
-    ASSERT_EQ(cta::checksum::ChecksumBlob(checksum::ADLER32, "1357"), deletedArchiveFile.checksumBlob);
+    ASSERT_TRUE(
+      cta::checksum::ChecksumBlob(checksum::ADLER32, "1357").hasSameChecksums(deletedArchiveFile.checksumBlob));
     ASSERT_EQ(m_storageClassSingleCopy.name, deletedArchiveFile.storageClassName);
     ASSERT_EQ(diskFileId.str(), deletedArchiveFile.diskFileIdWhenDeleted);
     ASSERT_EQ(cta::catalogue::InsertFileRecycleLog::getDeletionReasonLog(m_admin.username, diskInstance),
@@ -886,7 +887,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -901,7 +902,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -931,7 +932,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -947,7 +948,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
 
     const auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
@@ -955,7 +956,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
   }
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
@@ -1010,7 +1011,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
@@ -1019,7 +1020,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
   }
 
   m_catalogue->Tape()->modifyTapeState(m_admin,
@@ -1047,7 +1048,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
   }
 
   m_catalogue->Tape()->modifyTapeState(m_admin,
@@ -1181,7 +1182,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -1195,7 +1196,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -1225,7 +1226,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -1240,7 +1241,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
@@ -1248,7 +1249,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
   }
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
@@ -1422,7 +1423,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -1437,7 +1438,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -1468,7 +1469,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -1484,7 +1485,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
 
     const auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
@@ -1492,7 +1493,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
   }
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
@@ -1547,7 +1548,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
@@ -1556,7 +1557,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 
@@ -1585,7 +1586,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
 
     const auto copyNbToTapeFile2Itor = queueCriteria.archiveFile.tapeFiles.find(2);
@@ -1594,7 +1595,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
     ASSERT_EQ(file2Written.copyNb, tapeFile2.copyNb);
   }
 }
@@ -1722,7 +1723,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_retur
     ASSERT_EQ(file2Written.vid, tapeFile1.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file2Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -1858,7 +1859,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_Activ
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
@@ -1872,7 +1873,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_Activ
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
@@ -1902,7 +1903,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_Activ
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
     ASSERT_EQ(file2Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file2Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(archiveFile.checksumBlob));
     ASSERT_EQ(file2Written.storageClassName, archiveFile.storageClass);
 
     ASSERT_EQ(file2Written.diskInstance, archiveFile.diskInstance);
@@ -1917,7 +1918,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_Activ
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_TRUE(file1Written.checksumBlob.hasSameChecksums(tapeFile1.checksumBlob));
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
@@ -1925,7 +1926,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_Activ
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
-    ASSERT_EQ(file2Written.checksumBlob, tapeFile2.checksumBlob);
+    ASSERT_TRUE(file2Written.checksumBlob.hasSameChecksums(tapeFile2.checksumBlob));
   }
 
   auto mountPolicyToAdd1 = CatalogueTestUtils::getMountPolicy1();

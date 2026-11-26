@@ -16,11 +16,11 @@
 namespace cta::tape::rao {
 
 bool RAOManager::useRAO() const {
-  return m_raoParams.useRAO();
+  return m_useRAO;
 }
 
 void RAOManager::disableRAO() {
-  m_raoParams.disableRAO();
+  m_useRAO = false;
 }
 
 void RAOManager::setEnterpriseRAOUdsLimits(const SCSI::Structures::RAO::udsLimits& raoLimits) {
@@ -79,7 +79,7 @@ void RAOManager::logWarningAfterRAOOperationFailed(const std::string& warningMsg
   spc.add(cta::semconv::log::exceptionMessage, exceptionMsg)
     .add("raoAlgorithmName", m_raoParams.getRAOAlgorithmName())
     .add("raoAlgorithmOptions", m_raoParams.getRAOAlgorithmOptions().getOptionsString())
-    .add("useRAO", m_raoParams.useRAO())
+    .add("useRAO", m_useRAO)
     .add("vid", m_raoParams.getMountedVid());
   lc.log(cta::log::WARNING, warningMsg);
 }

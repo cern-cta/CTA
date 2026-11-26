@@ -6,7 +6,10 @@ Developers with an established environment should use their installed `cta-dev` 
 
 ## Requirements
 
-Use a Linux machine with working Podman, Git, Bash, `curl`, `jq`, and Python 3. Docker is not supported by the build scripts. Compilation and build dependencies run inside a container.
+Use a Linux machine with working Podman, Git, Bash, `curl`, `jq`, and Python 3.9 or newer. Docker is not supported by the build scripts. Compilation and build dependencies run inside a container.
+The build images use their distribution Python.
+Direct CMake and source-package builds require Python 3.9 or newer on `PATH`, or an explicit `-DPython3_EXECUTABLE=/path/to/python`.
+See [Python tooling and compatibility](../conventions/coding/python.md#tooling-and-compatibility).
 
 Kubernetes and virtual tape hardware are only needed when running a development instance, not for these build stages.
 
@@ -89,13 +92,16 @@ Add feature options such as `-DCTA_WITH_ORACLE=OFF` to either configuration comm
 
 ## Build container images (optional)
 
-Build service images from the RPMs, using the same version and build variant:
+Build service images from the packages, using the same version and build variant:
 
 ```bash
 ./ci/cta-dev.sh images --cta-version 6-local-test
 ```
 
-This creates local Podman images for `cta-taped`, `cta-maintd`, `cta-rmcd`, `cta-frontend`, and `cta-tools`, under `localhost/cta/ctageneric/`, tagged `6-local-test` in this example:
+For another platform, pass the same `--platform` option to both `build` and `images`, for example `--platform el10` or `--platform debian13`.
+See [Build options](cta-dev.md#build-options) for supported configurations and package locations.
+
+This creates local Podman images for `cta-taped`, `cta-maintd`, `cta-rmcd`, `cta-admin-api`, `cta-workflow-api`, and `cta-tools`, under `localhost/cta/ctageneric/`, tagged `6-local-test` in this example:
 
 ```bash
 podman images --filter reference='localhost/cta/ctageneric/*:6-local-test'

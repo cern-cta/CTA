@@ -19,6 +19,10 @@ frontend-admin:
     logger:
       # Reduce per-request logging overhead during sustained load.
       logLevel: "WARNING"
+    schedulerdb:
+      # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
+      tapeCacheMaxAgeSecs: 1
+      retrieveQueueCacheMaxAgeSecs: 1
 
 frontend-wfe:
   conf:
@@ -28,13 +32,25 @@ frontend-wfe:
     logger:
       # Reduce per-request logging overhead during sustained load.
       logLevel: "WARNING"
+    schedulerdb:
+      # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
+      tapeCacheMaxAgeSecs: 1
+      retrieveQueueCacheMaxAgeSecs: 1
 
 taped:
   logging:
     # Avoid verbose tape-operation logs dominating the small-file workload.
     level: "WARNING"
+  scheduler:
+    # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
+    tapeCacheMaxAgeSecs: 1
+    retrieveQueueCacheMaxAgeSecs: 1
 
 maintd:
   logging:
     # Reduce routine logging overhead while retaining warnings and errors.
     level: "WARNING"
+  scheduler:
+    # Re-enable the scheduler caches, which the chart defaults disable for faster functional tests.
+    tapeCacheMaxAgeSecs: 600
+    retrieveQueueCacheMaxAgeSecs: 10

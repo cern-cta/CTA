@@ -45,7 +45,7 @@ public:
   explicit PongThread(QueueType& q) : queue(q) {}
 };
 
-TEST(cta_threading, BlockingQ_properly_working_on_helgrind) {
+TEST(cta_threading, BlockingQ_concurrent_push_and_pop) {
   QueueType sharedQueue;
 
   PingThread ping(sharedQueue);

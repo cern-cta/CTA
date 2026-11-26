@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import MediaTypeDao
 from cta.sdk.exceptions import BackendError
 from cta.sdk.models import MediaType, Tape
-from typing_extensions import override
 
 
 class MediaTypeDaoMock(MediaTypeDao):
@@ -64,10 +63,10 @@ class MediaTypeDaoMock(MediaTypeDao):
         name: str,
         /,
         *,
-        cartridge_type: Optional[str] = None,
-        primary_density_code: Optional[int] = None,
-        secondary_density_code: Optional[int] = None,
-        comment: Optional[str] = None,
+        cartridge_type: str | None = None,
+        primary_density_code: int | None = None,
+        secondary_density_code: int | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as media_type:
             if cartridge_type is not None:

@@ -4,13 +4,21 @@ Procedures for maintaining CI infrastructure. For pipeline usage, logs, and test
 
 ## Weekly pipeline-image updates
 
-The maintainer responsible for CI should take ownership of the weekly pipeline-image refresh and review and merge its update MR each week.
+Use two weekly schedules on the default branch:
 
-CI uses immutable, versioned images selected by `PIPELINE_IMAGE_VERSION` in `.gitlab-ci.yml`. Package updates are picked up when the refresh builds a new image set, so they cannot change the pinned images used by existing CI pipelines. A breaking package update should surface in the image-refresh build or the update MR’s pipeline before the new version is adopted.
+- `UPDATE_DEPENDENCIES`: Renovate proposes upstream dependency updates configured in `renovate.json`.
+- `UPDATE_PIPELINE_IMAGES`: build the complete image set from the selected revision, then run Renovate to propose that release in `PIPELINE_IMAGE_VERSION`.
 
-Check that the `UPDATE_PIPELINE_IMAGES` pipeline has built the full image set, then review the generated version-update MR and its CI results and merge it through the normal GitLab workflow. If a build fails, investigate whether an upstream package update broke the image or CTA build and address the cause before merging.
+Review and merge the generated MRs through the normal GitLab workflow. Definition updates merged after an image refresh are picked up by the next refresh.
+Both pipeline types can also be started manually. On feature branches, the image refresh's `update-pipeline-image-version` job is manual and targets that branch.
 
-To start a refresh manually, run a pipeline with `pipeline-type` set to `UPDATE_PIPELINE_IMAGES`. On the default branch, `update-pipeline-image-version` opens the MR automatically after the image builds; on other branches, start that job manually.
+Renovate reads the dependency references selected by `renovate.json` and queries upstream container registries and GitHub/Git tags or releases for newer versions and updated digests. It applies the configured versioning rules and opens or refreshes MRs; automatic merging is disabled.
+Upstream updates have a 14-day [release-age cooldown](https://docs.renovatebot.com/key-concepts/minimum-release-age/), matching Python and Cargo. `registry.cern.ch` and `gitlab-registry.cern.ch` are exempt. Updates without an upstream release timestamp are held. This currently affects Quay and GHCR, whose pins may need manual updating.
+
+Python patch updates group `.python-version` with the auth job's Python image.
+To adopt another Python minor version, update the allowed-version range in `renovate.json` and validate compatibility.
+
+Renovate uses `CI_API_TOKEN`, which needs GitLab API and repository write access for the bot account. It uses `GITHUB_API_TOKEN` for GitHub dependency lookups.
 
 ### Add or update an image dependency
 

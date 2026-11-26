@@ -72,13 +72,12 @@ concept HasRunFunctionWithOpts = requires(TApp& app, const TConfig& cfg, const T
 
 template<class TConfig>
 concept HasHealthServerConfig = requires(const TConfig& cfg) {
-  requires std::same_as<std::remove_cvref_t<decltype(cfg.health_server)>, HealthServerConfig>;
+  requires std::same_as<std::remove_cvref_t<decltype(cfg.health_server)>, std::optional<HealthServerConfig>>;
 };
 
 template<class TConfig>
 concept HasTelemetryConfig = requires(const TConfig& cfg) {
-  requires std::same_as<std::remove_cvref_t<decltype(cfg.telemetry)>, TelemetryConfig>;
-  requires std::same_as<std::remove_cvref_t<decltype(cfg.experimental.telemetry_enabled)>, bool>;
+  requires std::same_as<std::remove_cvref_t<decltype(cfg.telemetry)>, std::optional<TelemetryConfig>>;
 };
 
 template<class TConfig>
@@ -240,9 +239,9 @@ public:
       // If we were to read the original file instead of the copy, the original file may have changed in the time it took to copy the file and read it.
       // We make sure that the file names match the full path in the TOML config file to ensure they are deterministic and can easily be correlated by operators.
       if constexpr (HasTelemetryConfig<TConfig>) {
-        if (config.experimental.telemetry_enabled && !config.telemetry.config_file.empty()) {
-          config.telemetry.config_file =
-            utils::copyFile(config.telemetry.config_file, cliOptions.runtimeDir + "/telemetry.config_file", true);
+        if (config.featureEnabled(TConfig::Feature::Telemetry)) {
+          config.telemetry->config_file =
+            utils::copyFile(config.telemetry->config_file, cliOptions.runtimeDir + "/telemetry.config_file", true);
         }
       }
       if constexpr (HasSchedulerConfig<TConfig>) {
@@ -293,10 +292,8 @@ private:
       m_signalReactorBuilder.addSignalFunction(SIGINT, [this]() { m_app->stop(); });
       // Block SIGPIPE before spawning workers so broken writes return errors instead of terminating the process.
       m_signalReactorBuilder.addSignalFunction(SIGPIPE, []() {});
-      // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
-      // Eventually SIGUSR1 will be deprecated
+      // SIGHUP reopens the log file descriptor without reloading configuration.
       m_signalReactorBuilder.addSignalFunction(SIGHUP, [&log]() { log.refresh(); });
-      m_signalReactorBuilder.addSignalFunction(SIGUSR1, [&log]() { log.refresh(); });
       // Direct construction from the builder's result supports the non-movable reactor.
       signalReactor.reset(new SignalReactor(m_signalReactorBuilder.build(log)));
 
@@ -382,23 +379,20 @@ private:
   }
 
   std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions, log::Logger& log) {
-    if (config.health_server.enabled) {
+    if (config.featureEnabled(TConfig::Feature::HealthServer)) {
       std::string host;
       uint16_t port;
-      if (config.health_server.use_unix_domain_socket) {
+      if (config.health_server->transport == HealthTransport::UNIX) {
         if (cliOptions.runtimeDir.empty()) {
           throw exception::UserError(
-            "health_server.use_unix_domain_socket was enabled, but the program was not started with --runtime-dir.");
+            "health_server.transport is unix, but the program was not started with --runtime-dir.");
         }
         host = cliOptions.runtimeDir + "/health.sock";
         // This value is also overwritten in the health server itself when UDS is used. This is simply here to be explicit.
         port = 80;
       } else {
-        if (!config.health_server.host.has_value() || !config.health_server.port.has_value()) {
-          throw exception::UserError("Both host and port must be provided when setting up a health server over TCP.");
-        }
-        host = config.health_server.host.value();
-        port = config.health_server.port.value();
+        host = config.health_server->tcp->host;
+        port = config.health_server->tcp->port;
       }
 
       auto healthServer = std::make_unique<HealthServer>(
@@ -414,12 +408,8 @@ private:
   }
 
   void initTelemetry(const TConfig& config, log::Logger& log) {
-    if (!config.experimental.telemetry_enabled || config.telemetry.config_file.empty()) {
+    if (!config.featureEnabled(TConfig::Feature::Telemetry)) {
       return;
-    }
-    if (config.telemetry.on_init_failure != "fatal" && config.telemetry.on_init_failure != "warn") {
-      throw exception::UserError("Unsupported value for telemetry.on_init_failure: '" + config.telemetry.on_init_failure
-                                 + "'. Must be one of [fatal, warn].");
     }
     log::LogContext lc(log);
 
@@ -458,9 +448,9 @@ private:
         ctaResourceAttributes[key] = value;
       }
 
-      cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
+      cta::telemetry::initOpenTelemetry(config.telemetry->config_file, ctaResourceAttributes, lc);
     } catch (exception::Exception& ex) {
-      if (config.telemetry.on_init_failure == "fatal") {
+      if (config.telemetry->on_init_failure == "fatal") {
         throw;
       }
       cta::log::ScopedParamContainer params(lc);

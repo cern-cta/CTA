@@ -13,49 +13,92 @@ cta-admin-api --- CTA admin gRPC API server
 
 **cta-admin-api** [OPTIONS]
 
-**cta-admin-api** --help
-**cta-admin-api** --version
+**cta-admin-api** \--help
+
+**cta-admin-api** \--version
 
 # DESCRIPTION
 
 **cta-admin-api** serves the administration commands of the CTA frontend (reachable through the `cta-admin` client) over gRPC.
 
-The configuration is read from a TOML file (by default `/etc/cta/cta-admin-api.toml`). The configuration is
-validated at start-up; use `--config-check` to validate it without starting the server. Unknown keys are only reported
-with `--config-strict`.
-
-Authentication uses JSON Web Tokens (`[auth.jwt]`) and/or Kerberos (`[auth.kerberos]`). At least one of them must be
-enabled.
-
 # OPTIONS
 
-**-c**, **--config** PATH
-: Path to the configuration file. Defaults to `/etc/cta/cta-admin-api.toml`.
+**-c**, **\--config** *PATH*
 
-**--config-strict**
-: Treat unknown keys, missing keys and type mismatches in the configuration file as errors.
+:   Read the main TOML configuration from *PATH*.
+    Defaults to `/etc/cta/cta-admin-api.toml`.
 
-**--config-check**
-: Validate the configuration, then exit.
+**\--config-strict**
 
-**--runtime-dir** PATH
-: Directory for state metadata such as the consumed configuration and version information.
+:   Reject unknown keys and require every applicable setting explicitly, including settings with defaults.
+    Genuinely optional values and sections for disabled features may be absent.
 
-**-l**, **--log-file** PATH
-: Write logs to PATH instead of stdout/stderr.
+**\--config-check**
 
-**-v**, **--version**
-: Print version information and exit.
+:   Validate the configuration and exit without starting the service.
+    Respects **\--config-strict**; cannot be combined with **\--runtime-dir**.
 
-**-h**, **--help**
-: Print the help message and exit.
+**\--runtime-dir** *PATH*
+
+:   Store consumed configuration and version metadata in *PATH*.
+    The directory must already exist and be readable and writable by the service.
+    Cannot be combined with **\--config-check**.
+
+**-l**, **\--log-file** *PATH*
+
+:   Write logs to *PATH* instead of stdout/stderr.
+
+**-v**, **\--version**
+
+:   Print version information and exit.
+
+**-h**, **\--help**
+
+:   Display command usage information and exit.
+
+# SIGNALS
+
+SIGTERM and SIGINT request service shutdown.
+SIGHUP reopens the log file; it does not reload configuration.
+
+# CONFIGURATION
+
+Configuration is read at startup from `/etc/cta/cta-admin-api.toml`, or the file selected by **\--config**.
+Restart the service to apply changes.
+Use **\--config-check**, with **\--config-strict** when required, to validate a file before starting the service.
+
+The annotated example `/usr/share/doc/cta-admin-api/examples/cta-admin-api.example.toml` is the complete settings reference, including defaults, required values and feature selection.
+
+See the CERN Tape Archive documentation for configuration examples, operational guidance and shared runtime rules.
+
+Select JWT, Kerberos, or both using `auth.enabled_methods`, and supply the corresponding authentication sections.
 
 # FILES
 
 `/etc/cta/cta-admin-api.toml`
-: Default configuration file, also used by the `cta-admin-api` systemd service. See the `cta-admin-api.example.toml`
-  documentation file for all options.
+
+:   Default service configuration file.
+
+`/usr/share/doc/cta-admin-api/examples/cta-admin-api.example.toml`
+
+:   Annotated configuration example and complete settings reference.
+
+`/etc/cta/cta-catalogue.conf`
+
+:   Default catalogue connection file, selected by `catalogue.config_file`.
+
+`/etc/cta/cta-scheduler.conf`
+
+:   Default scheduler connection file, selected by `scheduler.config_file`.
+
+`/etc/cta/cta-otel.yaml`
+
+:   Telemetry configuration path used by the example when telemetry is enabled.
+    Selected by `telemetry.config_file`.
 
 # SEE ALSO
 
 **cta-workflow-api**(1)
+
+CERN Tape Archive documentation
+[https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)

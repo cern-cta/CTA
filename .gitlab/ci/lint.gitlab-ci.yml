@@ -1,11 +1,10 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-spec:
-  inputs:
-    platform:
-      type: string
----
+.source-checks:
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - uv sync --locked --only-group source-checks
 
 lint-cpp:
   stage: lint
@@ -13,6 +12,8 @@ lint-cpp:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -22,16 +23,19 @@ lint-cpp:
         - "**/*.hpp"
         - ".gitlab-ci.yml"  # For changes in the image
         - ".gitlab/ci/lint.gitlab-ci.yml"
+        - ".python-version"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.source-checks, before_script]
   script:
     - |
       cppcheck \
@@ -42,7 +46,7 @@ lint-cpp:
         --check-level=exhaustive \
         --suppressions-list=.cppcheck-suppressions.txt \
         . 2> cppcheck_out.xml
-    - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
+    - uv run --no-sync cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
     - |
       if cat cppcheck_out.xml | grep -q "<error\s"; then
         echo "cppcheck detected errors. cppcheck-codequality output:"
@@ -61,6 +65,8 @@ lint-bash:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -73,7 +79,7 @@ lint-bash:
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
@@ -92,24 +98,40 @@ lint-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_PYTHON
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
   before_script:
-    - !reference [.python-version, before_script]
+    - !reference [.merge-train-guard, before_script]
     - uv sync --locked --only-group lint
   script:
-    - uv run --no-sync ruff check --output-format gitlab > ruff.json
+    - |
+      status=0
+      # Ruff applies the default and per-file Python targets from pyproject.toml.
+      uv run --no-sync ruff check --output-format gitlab > ruff.json || status=$?
+      # Display short reports before returning Ruff's original exit status.
+      if [[ "$status" -eq 1 ]]; then
+        if [[ $(wc -l < ruff.json) -le 1000 ]]; then
+          bat --style=plain --color=always ruff.json
+        else
+          echo "Ruff report too large. Please check job artifacts"
+        fi
+      fi
+      exit "$status"
   artifacts:
     when: always
     expire_in: 7 days
     reports:
       codequality: ruff.json
+    paths:
+      - ruff.json
 
 # general code quality (using clippy)
 lint-rust:
@@ -118,6 +140,8 @@ lint-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -130,7 +154,7 @@ lint-rust:
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_RUST
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "recursive" # we need the proto defs
@@ -174,6 +198,8 @@ deny-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: never
     - if: $CI_COMMIT_TAG
@@ -191,7 +217,7 @@ deny-rust:
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_RUST
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
@@ -205,6 +231,8 @@ machete-rust:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -218,7 +246,7 @@ machete-rust:
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_RUST
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
@@ -233,6 +261,8 @@ lint-yaml:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -242,21 +272,24 @@ lint-yaml:
         - "ci/checks/test_check_gitlab_ci_before_script_guard.py"
         - ".gitlab-ci.yml"
         - ".gitlab/ci/lint.gitlab-ci.yml"
+        - ".python-version"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
     - when: manual
       allow_failure: true
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.source-checks, before_script]
   script:
-    - python3 ci/checks/check_gitlab_ci_before_script_guard.py .gitlab-ci.yml .gitlab/ci/
-    - python3 ci/checks/check_gitlab_ci_key_order.py .gitlab/
-    - python3 ci/checks/check_gitlab_ci_single_stage.py .gitlab/ci/
-    - yamllint .
+    - uv run --no-sync python3 ci/checks/check_gitlab_ci_before_script_guard.py .gitlab-ci.yml .gitlab/ci/
+    - uv run --no-sync python3 ci/checks/check_gitlab_ci_key_order.py .gitlab/
+    - uv run --no-sync python3 ci/checks/check_gitlab_ci_single_stage.py .gitlab/ci/
+    - uv run --no-sync yamllint .
 
 lint-licenses:
   stage: lint
@@ -264,16 +297,20 @@ lint-licenses:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - when: always
   image:
-    name: $IMAGE_LICENSE_CHECK
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: [""]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.source-checks, before_script]
   script:
-    - reuse lint
+    - uv run --no-sync reuse lint
 
 lint-secrets:
   stage: lint
@@ -281,16 +318,20 @@ lint-secrets:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - when: always
   image:
-    name: $IMAGE_LINT
+    name: $IMAGE_SOURCE_CHECKS
     entrypoint: [""]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
+  before_script:
+    - !reference [.source-checks, before_script]
   script:
-    - detect-secrets scan --baseline .secrets.baseline
+    - uv run --no-sync detect-secrets scan --baseline .secrets.baseline
 
 lint-dockerfile:
   stage: lint
@@ -298,10 +339,12 @@ lint-dockerfile:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
-        - "ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile"
+        - "ci/docker/**/*Dockerfile"
         - ".gitlab-ci.yml"
         - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
@@ -315,7 +358,7 @@ lint-dockerfile:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
   script:
-    - hadolint --failure-threshold warning ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
+    - find ci/docker -type f -name '*Dockerfile' -exec hadolint --failure-threshold warning {} +
 
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
@@ -326,10 +369,12 @@ lint-dockerfile:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - when: always
-  image: $IMAGE_LINT
+  image: $IMAGE_SOURCE_CHECKS
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for these job
     FORMAT_DIFF: ""
@@ -364,16 +409,24 @@ format-cpp:
   extends:
     - .format-report
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
         - "**/*.c"
         - "**/*.h"
+        - "**/*.cc"
         - "**/*.cpp"
+        - "**/*.cxx"
+        - "**/*.hh"
         - "**/*.hpp"
         - "**/*.json"
+        - ".clang-format"
+        - ".clang-format-ignore"
         - ".gitlab-ci.yml"  # For changes in the image
         - ".gitlab/ci/lint.gitlab-ci.yml"
+        - ".python-version"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -382,24 +435,30 @@ format-cpp:
   variables:
     FORMAT_DIFF: artifacts/clang-format.diff
   before_script:
-    - !reference [.merge-train-guard, before_script]
+    - !reference [.source-checks, before_script]
     - mkdir -p artifacts
-    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
-    - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
-    - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
-    - git-clang-format $TARGET_BRANCH HEAD --diff > $FORMAT_DIFF || true
+    - echo "Running clang-format on all C/C++ and JSON files"
+    - |
+      find . -type d \( -name .git -o -name .venv \) -prune -o -type f \( \
+        -name '*.c' -o -name '*.h' -o -name '*.cc' -o -name '*.cpp' -o \
+        -name '*.cxx' -o -name '*.hpp' -o -name '*.hh' -o -name '*.json' \
+      \) -exec uv run --no-sync clang-format -i {} +
+    - git diff --no-ext-diff > "$FORMAT_DIFF"
 
 format-python:
   extends:
     - .format-report
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
+  image: $IMAGE_PYTHON
   variables:
     FORMAT_DIFF: artifacts/ruff.diff
   before_script:
-    - !reference [.python-version, before_script]
+    - !reference [.merge-train-guard, before_script]
     - uv sync --locked --only-group lint
     - mkdir -p artifacts
     - echo "Running ruff on all Python files"
@@ -409,10 +468,41 @@ format-python:
       uv run --no-sync ruff format . --check --diff > "$FORMAT_DIFF" || status=$?
       if [[ "$status" -gt 1 ]]; then exit "$status"; fi
 
+format-toml:
+  extends:
+    - .format-report
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: always
+    - changes:
+        - "**/*.toml"
+        - ".gitlab-ci.yml"
+        - ".gitlab/ci/lint.gitlab-ci.yml"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
+  image: $IMAGE_RUST
+  variables:
+    FORMAT_DIFF: artifacts/taplo.diff
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    # Temporary until Taplo is included in the published Rust image.
+    - cargo install taplo-cli --version 0.10.0 --locked
+    - mkdir -p artifacts
+    - echo "Running Taplo on all TOML files"
+    - taplo fmt
+    - git diff --no-ext-diff > "$FORMAT_DIFF"
+
 format-rust:
   extends:
     - .format-report
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
@@ -424,6 +514,7 @@ format-rust:
       when: always
     - when: manual
       allow_failure: true
+  image: $IMAGE_RUST
   variables:
     FORMAT_DIFF: artifacts/cargo-fmt.diff
   before_script:
@@ -439,12 +530,65 @@ type-check-python:
     - job: check-merge-train-duplicate
       optional: true
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - !reference [.python-workspace, rules]
     - when: manual
       allow_failure: true
   variables:
     FORCE_COLOR: "3"
   script:
-    # Type checking needs the helpers' imports, but not the system-test runner plugin.
-    - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check
+    - uv sync --locked --all-packages --all-extras --no-default-groups --group type-check --group docs
+    # Compatibility targets are defined by executionEnvironments in pyproject.toml.
     - uv run --no-sync pyright --pythonpath .venv/bin/python .
+
+validate-catalogue-schema-version:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    # Tags and the default branch require the catalogue schema submodule commit to be tagged.
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
+    # Other pipelines validate the schema versions without requiring a submodule tag.
+    - when: on_success
+      variables:
+        CATALOGUE_SCHEMA_CHECK_PARAMS: ""
+  script:
+    - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS}
+
+validate-project-json:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: modify-project-json
+      optional: true
+  rules:
+    - when: on_success
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  script:
+    - uv run --locked --only-group scripts python ci/project-json/validate_project_json.py
+
+validate-python-lock:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
+    - !reference [.python-workspace, rules]
+  image: $IMAGE_PYTHON
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+  script:
+    - uv lock --check --verbose

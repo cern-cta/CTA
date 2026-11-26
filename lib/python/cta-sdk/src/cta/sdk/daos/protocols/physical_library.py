@@ -9,7 +9,7 @@ physical storage slots for cartridges and drive slots for tape drives.
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import PhysicalLibrary, PhysicalLibraryState
 
@@ -33,7 +33,7 @@ class PhysicalLibraryDao(Protocol):
         """
         ...
 
-    def list(self, *, state: Optional[PhysicalLibraryState] = None) -> Iterator[PhysicalLibrary]:
+    def list(self, *, state: PhysicalLibraryState | None = None) -> Iterator[PhysicalLibrary]:
         """List physical libraries, optionally filtered by disabled status.
 
         Args:
@@ -65,11 +65,11 @@ class PhysicalLibraryDao(Protocol):
         model: str,
         physical_cartridge_slots: int,
         physical_drive_slots: int,
-        gui_url: Optional[str] = None,
-        webcam_url: Optional[str] = None,
-        type: Optional[str] = None,
-        location: Optional[str] = None,
-        available_cartridge_slots: Optional[int] = None,
+        gui_url: str | None = None,
+        webcam_url: str | None = None,
+        type: str | None = None,
+        location: str | None = None,
+        available_cartridge_slots: int | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         """Create a new physical library.
@@ -98,13 +98,13 @@ class PhysicalLibraryDao(Protocol):
         name: str,
         /,
         *,
-        gui_url: Optional[str] = None,
-        webcam_url: Optional[str] = None,
-        location: Optional[str] = None,
-        physical_cartridge_slots: Optional[int] = None,
-        available_cartridge_slots: Optional[int] = None,
-        physical_drive_slots: Optional[int] = None,
-        comment: Optional[str] = None,
+        gui_url: str | None = None,
+        webcam_url: str | None = None,
+        location: str | None = None,
+        physical_cartridge_slots: int | None = None,
+        available_cartridge_slots: int | None = None,
+        physical_drive_slots: int | None = None,
+        comment: str | None = None,
     ) -> None:
         """Update an existing physical library.
 

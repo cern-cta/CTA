@@ -1,0 +1,17 @@
+.phony: all
+
+all: cta-unit-tests-bare cta-unit-tests-valgrind cta-unit-tests-valgrind-multiprocess
+
+cta-unit-tests-bare:
+	MALLOC_CHECK_=3 @CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests 2>&1 | ts "bt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	MALLOC_CHECK_=3 @CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests-multiprocess 2>&1 | ts "btmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+
+cta-unit-tests-valgrind: cta-unit-tests-valgrind-multiprocess
+	valgrind -q @VALGRIND_OPTS_STR@                                               \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/valgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+
+cta-unit-tests-valgrind-multiprocess:
+	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
+	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/valgrind.suppr           \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests-multiprocess 2>&1 | ts "vgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})

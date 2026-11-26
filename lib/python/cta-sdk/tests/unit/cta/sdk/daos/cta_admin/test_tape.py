@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -41,7 +41,7 @@ def ref_obj() -> Tape:
         state=TapeState.ACTIVE,
         state_reason="",
         verification_status=VerificationStatus(
-            date=datetime(2022, 9, 4, 10, 00, 45, tzinfo=timezone.utc),
+            date=datetime(2022, 9, 4, 10, 00, 45, tzinfo=UTC),
             status="finished",
             file_submitted_count=2624,
             file_verified_count=0,
@@ -58,19 +58,19 @@ def ref_obj() -> Tape:
         metadata=TapeMetadata(
             creation_user_name="vlado",
             creation_host_name="cta-frontend01",
-            creation_time=datetime(2022, 4, 14, 7, 52, 20, tzinfo=timezone.utc),
+            creation_time=datetime(2022, 4, 14, 7, 52, 20, tzinfo=UTC),
             update_user_name="vlado",
             update_host_name="ctapreproductionfrontend11",
-            update_time=datetime(2025, 10, 20, 9, 48, 25, tzinfo=timezone.utc),
+            update_time=datetime(2025, 10, 20, 9, 48, 25, tzinfo=UTC),
             comment="",
             label_drive_name="IBMLIB3-TS1160-F14C1R2",
-            label_time=datetime(2025, 10, 20, 9, 48, 24, tzinfo=timezone.utc),
+            label_time=datetime(2025, 10, 20, 9, 48, 24, tzinfo=UTC),
             last_write_drive_name="IBMLIB3-TS1160-F14C1R2",
-            last_write_time=datetime(2025, 2, 12, 8, 45, 49, tzinfo=timezone.utc),
+            last_write_time=datetime(2025, 2, 12, 8, 45, 49, tzinfo=UTC),
             last_read_drive_name="IBMLIB4-TS1160-F08C2R2",
-            last_read_time=datetime(2025, 3, 19, 17, 3, 34, tzinfo=timezone.utc),
+            last_read_time=datetime(2025, 3, 19, 17, 3, 34, tzinfo=UTC),
             update_state_info="vlado@cta-frontend01",
-            update_state_time=datetime(2022, 4, 14, 7, 52, 20, tzinfo=timezone.utc),
+            update_state_time=datetime(2022, 4, 14, 7, 52, 20, tzinfo=UTC),
             write_mount_count=99,
             read_mount_count=0,
         ),
@@ -138,7 +138,7 @@ class TestTapeDaoCtaAdmin:
             logical_library_name="test_ll",
             tape_pool_name="test_tp",
             verification_status=VerificationStatus(
-                datetime(2025, 1, 1, tzinfo=timezone.utc),
+                datetime(2025, 1, 1, tzinfo=UTC),
                 status="finished",
                 file_submitted_count=10,
                 file_verified_count=0,

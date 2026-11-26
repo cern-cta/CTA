@@ -3,7 +3,7 @@
 
 from collections.abc import Iterator
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import FLAG, CtaAdminWrapper
 from cta.sdk.daos.protocols import DriveDao
@@ -16,7 +16,6 @@ from cta.sdk.models import (
     TapeSession,
     TapeSessionState,
 )
-from typing_extensions import override
 
 
 class DriveDaoCtaAdmin(DriveDao):
@@ -87,7 +86,7 @@ class DriveDaoCtaAdmin(DriveDao):
         self._wrapper.delete(self.resource_type, name, {"force": FLAG} if force else {})
 
     @override
-    def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
+    def update(self, name: str, /, *, comment: str | None = None) -> None:
         data = {}
         data |= {} if comment is None else {"comment": comment}
         self._wrapper.update(self.resource_type, name, data)
@@ -99,7 +98,7 @@ class DriveDaoCtaAdmin(DriveDao):
         self._wrapper.put_down(self.resource_type, name, data)
 
     @override
-    def up(self, name: str, /, *, reason: Optional[str] = None) -> None:
+    def up(self, name: str, /, *, reason: str | None = None) -> None:
         data = {}
         data |= {} if reason is None else {"reason": reason}
         self._wrapper.put_up(self.resource_type, name, data)

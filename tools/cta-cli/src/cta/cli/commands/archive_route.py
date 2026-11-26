@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -50,8 +49,8 @@ def update(
     storage_class_name: str,
     number: int,
     type: ArchiveRouteType,
-    tape_pool: Optional[str],
-    comment: Optional[str],
+    tape_pool: str | None,
+    comment: str | None,
 ):
     """Update a CTA archive route."""
     obj.cta_client.archive_route.update(storage_class_name, number, type, tape_pool_name=tape_pool, comment=comment)

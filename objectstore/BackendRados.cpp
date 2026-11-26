@@ -18,7 +18,6 @@
 #include <random>
 #include <sys/syscall.h>
 #include <unistd.h>
-#include <valgrind/helgrind.h>
 
 namespace cta::objectstore {
 
@@ -680,7 +679,6 @@ BackendRados::AsyncCreator::AsyncCreator(BackendRados& be, const std::string& na
       throw Backend::CouldNotCreate(errnum.getMessageValue());
     }
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&m_job);
     m_job.set_exception(std::current_exception());
   }
 }
@@ -716,10 +714,8 @@ void BackendRados::AsyncCreator::createExclusiveCallback(librados::completion_t 
       }
     }
     // Done!
-    ANNOTATE_HAPPENS_BEFORE(&ac.m_job);
     ac.m_job.set_value();
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&ac.m_job);
     ac.m_job.set_exception(std::current_exception());
   }
 }
@@ -786,15 +782,12 @@ void BackendRados::AsyncCreator::statCallback(librados::completion_t completion,
       }
     }
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&ac.m_job);
     ac.m_job.set_exception(std::current_exception());
   }
 }
 
 void BackendRados::AsyncCreator::wait() {
   m_jobFuture.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
 Backend::AsyncUpdater* BackendRados::asyncUpdate(const std::string& name,
@@ -842,12 +835,10 @@ BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be,
           throw cta::exception::NoSuchObject(errnum.getMessageValue());
         }
       } catch (...) {
-        ANNOTATE_HAPPENS_BEFORE(&m_job);
         m_job.set_exception(std::current_exception());
       }
     })));
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&m_job);
     m_job.set_exception(std::current_exception());
   }
 }
@@ -866,7 +857,6 @@ void BackendRados::AsyncUpdater::deleteEmptyCallback(librados::completion_t comp
     throw cta::exception::NoSuchObject(
       std::string("In BackendRados::AsyncUpdater::deleteEmptyCallback(): no such object: ") + au.m_name);
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -885,7 +875,6 @@ void BackendRados::AsyncUpdater::fetchCallback(librados::completion_t completion
     // We can now launch the update operation (post to thread pool).
     au.m_backend.m_jobQueue.push(&au.m_updateJob);
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -933,7 +922,6 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
           + au.m_name + ex.what());
       }
       // Done!
-      ANNOTATE_HAPPENS_BEFORE(&au.m_job);
       au.m_job.set_value();
     } else {
       try {
@@ -965,7 +953,6 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
       }
     }
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -997,7 +984,6 @@ void BackendRados::AsyncUpdater::commitCallback(librados::completion_t completio
       throw Backend::CouldNotUnlock(errnum.getMessageValue());
     }
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -1013,18 +999,14 @@ void BackendRados::AsyncUpdater::unlockCallback(librados::completion_t completio
       throw Backend::CouldNotUnlock(errnum.getMessageValue());
     }
     // Done!
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_value();
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
 
 void BackendRados::AsyncUpdater::wait() {
   m_jobFuture.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
 Backend::AsyncDeleter* BackendRados::asyncDelete(const std::string& name) {
@@ -1062,12 +1044,10 @@ BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& na
           throw Backend::CouldNotDelete(errnum.getMessageValue());
         }
       } catch (...) {
-        ANNOTATE_HAPPENS_BEFORE(&m_job);
         m_job.set_exception(std::current_exception());
       }
     })));
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&m_job);
     m_job.set_exception(std::current_exception());
   }
 }
@@ -1083,10 +1063,8 @@ void BackendRados::AsyncDeleter::deleteCallback(librados::completion_t completio
       throw Backend::CouldNotDelete(errnum.getMessageValue());
     }
     // Done!
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_value();
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -1097,8 +1075,6 @@ Backend::AsyncLockfreeFetcher* BackendRados::asyncLockfreeFetch(const std::strin
 
 void BackendRados::AsyncDeleter::wait() {
   m_jobFuture.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
 BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendRados& be, const std::string& name)
@@ -1135,7 +1111,6 @@ void BackendRados::AsyncLockfreeFetcher::AioReadPoster::execute() {
       throw cta::exception::NoSuchObject(errnum.getMessageValue());
     }
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
@@ -1169,18 +1144,14 @@ void BackendRados::AsyncLockfreeFetcher::fetchCallback(librados::completion_t co
         std::string("In In BackendRados::AsyncUpdater::fetchCallback::update_lambda(): failed to read buffer: ")
         + au.m_name + ": " + ex.what());
     }
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_value(value);
   } catch (...) {
-    ANNOTATE_HAPPENS_BEFORE(&au.m_job);
     au.m_job.set_exception(std::current_exception());
   }
 }
 
 std::string BackendRados::AsyncLockfreeFetcher::wait() {
   auto ret = m_jobFuture.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
   return ret;
 }
 

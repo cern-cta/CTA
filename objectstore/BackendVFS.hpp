@@ -163,7 +163,7 @@ public:
     std::string m_value;
     /** The exception we might receive */
     std::exception_ptr m_exception = nullptr;
-    /** A mutex to make helgrind happy */
+    /** Serializes access to the fetched value and exception. */
     cta::threading::Mutex m_mutex;
     /** The thread that will both do the job and allow synchronization with the caller. */
     void run() override;

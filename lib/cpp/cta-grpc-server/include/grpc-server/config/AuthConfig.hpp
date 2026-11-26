@@ -5,14 +5,12 @@
 
 #pragma once
 
-#include "grpc-server/config/AuthMethod.hpp"
 #include "runtime/config/ValidationResult.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -20,11 +18,8 @@ namespace cta::grpc_server {
 
 using AliasMap = std::map<std::string, std::vector<std::string>, std::less<>>;
 
-/**
- * @brief A JWT auth config block
- */
+/// Signing-key retrieval, token claims and revocation checks for JWT authentication.
 struct JwtAuthConfig final {
-  bool enabled = false;                   //!< Whether JWT auth is enabled (default: disabled)
   std::string jwks_uri;                   //!< The URI of the JWKS endpoint (REQUIRED if enabled)
   uint32_t cache_refresh_interval = 600;  //!< TTL (s) of the JWKS cache, after which the JWKS will be re-fetched
   uint32_t pub_key_timeout = 0;           //!< TTL (s) of a cached public key (0 = never expires)
@@ -42,15 +37,12 @@ struct JwtAuthConfig final {
    */
   cta::runtime::ValidationResult validate() const;
 
-  static constexpr std::size_t memberCount() { return 9; }
+  static constexpr std::size_t memberCount() { return 8; }
 };
 
-/**
- * @brief An mTLS auth config block
- */
+/// Mapping from disk-instance identities to accepted client-certificate hostnames.
 struct MtlsAuthConfig final {
-  bool enabled = false;  //!< Whether mTLS auth is enabled (default: disabled)
-  AliasMap aliases;      //!< Mapping of identity -> (host)name aliases (SAN)
+  AliasMap aliases;  //!< Mapping of identity -> (host)name aliases (SAN)
 
   /**
    * @brief Validate the mTLS configuration for consistency
@@ -58,14 +50,11 @@ struct MtlsAuthConfig final {
    */
   cta::runtime::ValidationResult validate() const;
 
-  static constexpr std::size_t memberCount() { return 2; }
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
-/**
- * @brief A Kerberos auth config block
- */
+/// Keytab and service principal used to authenticate Kerberos tickets.
 struct KerberosAuthConfig final {
-  bool enabled = false;           //!< Whether Kerberos auth is enabled (default: disabled)
   std::string keytab_path;        //!< Path to keytab file (REQUIRED if enabled)
   std::string service_principal;  //!< Kerberos service principal which will be accepted (REQUIRED if enabled)
 
@@ -74,42 +63,6 @@ struct KerberosAuthConfig final {
    * @return The validation result (will contain the errors if present)
    */
   cta::runtime::ValidationResult validate() const;
-
-  static constexpr std::size_t memberCount() { return 3; }
-};
-
-/// @brief Authentication config of the admin API
-struct AdminAuthConfig final {
-  /// JWT auth config (optional)
-  std::optional<JwtAuthConfig> jwt;
-  /// Kerberos auth config (optional)
-  std::optional<KerberosAuthConfig> kerberos;
-
-  /// @brief Validate the authentication configuration for consistency
-  /// @throws cta::exception::UserError if neither JWT nor Kerberos is enabled
-  /// @return The validation result (will contain the errors if present)
-  cta::runtime::ValidationResult validate() const;
-
-  /// @brief Get all enabled authentication methods
-  std::set<AuthMethod, std::less<>> getEnabledMethods() const;
-
-  static constexpr std::size_t memberCount() { return 2; }
-};
-
-/// @brief Authentication config of the WFE API
-struct WfeAuthConfig final {
-  /// JWT auth config (optional)
-  std::optional<JwtAuthConfig> jwt;
-  /// mTLS auth config (optional)
-  std::optional<MtlsAuthConfig> mtls;
-
-  /// @brief Validate the authentication configuration for consistency
-  /// @throws cta::exception::UserError unless exactly one of JWT or mTLS is enabled
-  /// @return The validation result (will contain the errors if present)
-  cta::runtime::ValidationResult validate() const;
-
-  /// @brief Get all enabled authentication methods
-  std::set<AuthMethod, std::less<>> getEnabledMethods() const;
 
   static constexpr std::size_t memberCount() { return 2; }
 };

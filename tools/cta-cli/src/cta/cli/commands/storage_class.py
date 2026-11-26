@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -38,9 +37,9 @@ def create(obj: AppContext, name: str, number_of_copies: int, virtual_organisati
 def update(
     obj: AppContext,
     name: str,
-    number_of_copies: Optional[int],
-    virtual_organisation: Optional[str],
-    comment: Optional[str],
+    number_of_copies: int | None,
+    virtual_organisation: str | None,
+    comment: str | None,
 ):
     """Update CTA storage class."""
     obj.cta_client.storage_class.update(

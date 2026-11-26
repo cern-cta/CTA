@@ -13,7 +13,7 @@
 #include "common/utils/Regex.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 #include <dirent.h>
 #include <fcntl.h>
@@ -31,7 +31,6 @@
 #include <iostream>
 #endif
 #include <iostream>
-#include <valgrind/helgrind.h>
 
 namespace cta::objectstore {
 
@@ -228,8 +227,6 @@ void BackendVFS::ScopedLock::release() {
     std::cout << "Warning: fd=-1!" << std::endl;
   }
 #endif
-  // Annotate that the flock provides synchronization
-  ANNOTATE_HAPPENS_BEFORE(&m_fd);
   ::flock(m_fd, LOCK_UN);
   ::close(m_fd);
   m_fdSet = false;
@@ -288,8 +285,6 @@ BackendVFS::ScopedLock* BackendVFS::lockHelper(const std::string& name, int type
         throw exception::TimeoutException("In BackendVFS::lockHelper(): timeout while locking");
       }
     }
-    // Annotate that the flock provides synchronization
-    ANNOTATE_HAPPENS_AFTER(&ret->m_fd);
   } else {
     if (::flock(ret->m_fd, type)) {
       const std::string errnoStr = utils::errnoToString(errno);
@@ -297,8 +292,6 @@ BackendVFS::ScopedLock* BackendVFS::lockHelper(const std::string& name, int type
       ex.getMessage() << "In BackendVFS::lockHelper(): Failed to flock file " << path << ": " << errnoStr;
       throw ex;
     }
-    // Annotate that the flock provides synchronization
-    ANNOTATE_HAPPENS_AFTER(&ret->m_fd);
   }
 
 #ifdef LOW_LEVEL_TRACING
@@ -379,8 +372,6 @@ Backend::AsyncCreator* BackendVFS::asyncCreate(const std::string& name, const st
 
 void BackendVFS::AsyncCreator::wait() {
   m_job.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
 BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS& be,
@@ -394,17 +385,14 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS& be,
         try {  // locking already throws proper exceptions for no such file.
           sl.reset(m_backend.lockExclusive(m_name));
         } catch (cta::exception::NoSuchObject&) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw;
         } catch (cta::exception::Exception& ex) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw Backend::CouldNotLock(ex.getMessageValue());
         }
         std::string preUpdateData;
         try {
           preUpdateData = m_backend.read(m_name);
         } catch (cta::exception::Exception& ex) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw Backend::CouldNotFetch(ex.getMessageValue());
         }
 
@@ -423,24 +411,20 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS& be,
           try {
             m_backend.remove(m_name);
           } catch (cta::exception::Exception& ex) {
-            ANNOTATE_HAPPENS_BEFORE(&m_job);
             throw Backend::CouldNotCommit(ex.getMessageValue());
           }
         } else {
           try {
             m_backend.atomicOverwrite(m_name, postUpdateData);
           } catch (cta::exception::Exception& ex) {
-            ANNOTATE_HAPPENS_BEFORE(&m_job);
             throw Backend::CouldNotCommit(ex.getMessageValue());
           }
         }
         try {
           sl->release();
         } catch (cta::exception::Exception& ex) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw Backend::CouldNotUnlock(ex.getMessageValue());
         }
-        ANNOTATE_HAPPENS_BEFORE(&m_job);
       })) {}
 
 Backend::AsyncUpdater* BackendVFS::asyncUpdate(const std::string& name,
@@ -451,8 +435,6 @@ Backend::AsyncUpdater* BackendVFS::asyncUpdate(const std::string& name,
 
 void BackendVFS::AsyncUpdater::wait() {
   m_job.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
 BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS& be, const std::string& name)
@@ -463,25 +445,20 @@ BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS& be, const std::string& name)
         try {  // locking already throws proper exceptions for no such file.
           sl.reset(m_backend.lockExclusive(m_name));
         } catch (cta::exception::NoSuchObject&) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw;
         } catch (cta::exception::Exception& ex) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw Backend::CouldNotLock(ex.getMessageValue());
         }
         try {
           m_backend.remove(m_name);
         } catch (cta::exception::Exception& ex) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw Backend::CouldNotDelete(ex.getMessageValue());
         }
         try {
           sl->release();
         } catch (cta::exception::Exception& ex) {
-          ANNOTATE_HAPPENS_BEFORE(&m_job);
           throw Backend::CouldNotUnlock(ex.getMessageValue());
         }
-        ANNOTATE_HAPPENS_BEFORE(&m_job);
       })) {}
 
 Backend::AsyncDeleter* BackendVFS::asyncDelete(const std::string& name) {
@@ -491,8 +468,6 @@ Backend::AsyncDeleter* BackendVFS::asyncDelete(const std::string& name) {
 
 void BackendVFS::AsyncDeleter::wait() {
   m_job.get();
-  ANNOTATE_HAPPENS_AFTER(&m_job);
-  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
 BackendVFS::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendVFS& be, const std::string& name)

@@ -5,7 +5,7 @@ Configure credentials for each [CTA interface](../../../concepts/components/auth
 ## JWT Authentication
 
 
-Both the Workflow Frontend and Admin Frontend support JWT (JSON Web Token) authentication, using JWKS (JSON Web Key Set) for public key validation.
+Both the Workflow Frontend API and Admin Frontend API support JWT (JSON Web Token) authentication, using JWKS (JSON Web Key Set) for public key validation.
 The client should attach the JWT token to the gRPC call credentials. In general, client authentication is expected to work as follows:
 
 1. **Obtain JWT Token**: Get a valid JWT token from your identity provider
@@ -58,7 +58,7 @@ For admin commands, the decoded payload might look like this:
 ```
 
 The frontend validates the following claims:
-- `kid`: The JWT must have a header claim that matches the key in the `grpc.jwks.uri` that signed the token
+- `kid`: The JWT must have a header claim that matches the key in the `auth.jwt.jwks_uri` that signed the token
 - `exp`: Must be after the current time in UTC
 - `sub`: Must match one of the entries in the list of authorized admin users (`cta-admin admin ls`) for admin commands, or must match the instance name of the disk instance who sent the workflow event
 - `alg`: Is expected to be RS256
@@ -93,9 +93,9 @@ disk-instance = ["disk.example.ch", "disk.example"]
 This allows a single logical disk instance (`disk-instance`) to be represented by certificates with different CNs.
 
 
-## Kerberos (Admin Frontend) {#kerberos-admin-api}
+## Kerberos (Admin Frontend API) {#kerberos-admin-api}
 
-Configure the frontend service principal and keytab, and obtain a ticket for the configured realm using `kinit`. Configure the admin client as described in [Admin Frontend client configuration](admin-frontend.md#client-side-configuration).
+Configure the frontend service principal and keytab, and obtain a ticket for the configured realm using `kinit`. Configure the admin client as described in [Admin Frontend API client configuration](admin-frontend.md#client-side-configuration).
 
 ## Disk transfers
 

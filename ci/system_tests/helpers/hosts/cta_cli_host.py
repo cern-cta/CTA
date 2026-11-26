@@ -4,7 +4,7 @@
 import json
 import time
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 from system_tests.helpers.utils.timeout import Timeout
@@ -139,8 +139,12 @@ class CtaCliHost(RemoteHost):
         if wait:
             self.wait_for_tape_state(vid, state)
 
-    def transition_tape_state(self, vid: str, state: str, *, cache_delay_secs: float = 1) -> None:
-        """Change state through REPACKING when either endpoint is REPACKING_DISABLED."""
+    def transition_tape_state(self, vid: str, state: str, *, cache_delay_secs: float = 0) -> None:
+        """Change state through REPACKING when either endpoint is REPACKING_DISABLED.
+
+        Pass the deployment's tape cache max age as cache_delay_secs when caching is enabled, so later requests do not
+        use a cached tape state.
+        """
         tape_list = json.loads(self.exec_with_output(f"cta-admin --json tape ls --vid '{vid}'"))
         if len(tape_list) != 1:
             raise RuntimeError(f"Expected exactly one tape for VID {vid}, found {len(tape_list)}")
@@ -185,11 +189,11 @@ class CtaCliHost(RemoteHost):
         except json.JSONDecodeError:
             return False
 
-    def retrieve_queue_empty(self, vid: Optional[str] = None) -> bool:
+    def retrieve_queue_empty(self, vid: str | None = None) -> bool:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
         return not any(queue["mountType"] == "RETRIEVE" and (vid is None or queue["vid"] == vid) for queue in queues)
 
-    def retrieve_queue_file_count(self, vid: Optional[str] = None) -> int:
+    def retrieve_queue_file_count(self, vid: str | None = None) -> int:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
         return sum(
             int(queue["queuedFiles"])
@@ -255,7 +259,7 @@ class CtaCliHost(RemoteHost):
                 )
         print("Repack request expanded")
 
-    def wait_for_queue_to_empty(self, vid: Optional[str] = None, wait_timeout_secs: int = 30) -> None:
+    def wait_for_queue_to_empty(self, vid: str | None = None, wait_timeout_secs: int = 30) -> None:
         queue_description = f" of {vid}" if vid is not None else ""
         print(f"Waiting for retrieve queue{queue_description} to be empty...")
         with Timeout(wait_timeout_secs) as t:

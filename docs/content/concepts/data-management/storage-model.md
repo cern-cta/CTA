@@ -46,6 +46,15 @@ Tape pools describe placement. [Logical libraries](../tape/libraries.md#logical-
 
 A **mount policy** specifies separate archive/retrieve priorities and minimum request ages. It influences when work becomes eligible and is selected, rather than where copies are written.
 
-**Requester rules** map users or groups within a disk instance to mount policies. Retrieval can also match requester activities. These rules operate alongside batching thresholds, VO limits and resource availability; no policy guarantees an immediate mount or fixed completion time.
+**Mount rules** map users or groups within a disk instance to mount policies; retrieval can also match requester activities. Only the rules of the request's disk instance are considered, and the first kind of rule that matches decides:
+
+| Request | Rules tried, in order |
+| --- | --- |
+| Archive | requester, then group |
+| Retrieve | activity, then requester, then group |
+
+If several activity rules match a retrieve, the one whose policy has the highest retrieve priority wins. A request that matches no rule is refused.
+
+These rules operate alongside batching thresholds, VO limits and resource availability; no policy guarantees an immediate mount or fixed completion time.
 
 See [Scheduling](scheduling.md) for behavior and [Storage Policies](../../ops/run-and-maintain/administration/storage-policies.md) for administration.

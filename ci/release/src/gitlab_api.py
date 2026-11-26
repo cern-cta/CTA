@@ -71,7 +71,7 @@ class GitLabAPI:
             raw = error.read().decode(errors="replace")
             try:
                 detail = json.loads(raw).get("message", raw)
-            except (json.JSONDecodeError, AttributeError):
+            except json.JSONDecodeError, AttributeError:
                 detail = raw
             raise GitLabAPIError(
                 f"{method} {endpoint} failed ({error.code}): {detail}",

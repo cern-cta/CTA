@@ -13,17 +13,18 @@
 #include "common/log/ExceptionLogging.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/semconv/Logging.hpp"
+#include "common/utils/InterruptibleSleep.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "taped/session/DriveSession.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <exception>
 #include <memory>
 #include <optional>
 #include <string>
-#include <unistd.h>
 
 namespace cta::tape::daemon {
 
@@ -199,7 +200,8 @@ void TapeDaemon::waitForLogicalLibrary() {
     }
 
     // Database failures propagate; only an absent library is retried here.
-    ::sleep(m_config.mounts.logical_library_poll_interval_secs);
+    utils::interruptibleSleep(m_stopSource.get_token(),
+                              std::chrono::seconds(m_config.mounts.logical_library_poll_interval_secs));
   }
 }
 
@@ -227,7 +229,8 @@ void TapeDaemon::waitUntilDriveIsRequestedUp() {
     driveStateCatalogue.reportDriveState(m_driveInfo,
                                          {.state = common::dataStructures::ReportedDriveState::Down},
                                          m_lc);
-    ::sleep(m_config.mounts.drive_state_poll_interval_secs);
+    utils::interruptibleSleep(m_stopSource.get_token(),
+                              std::chrono::seconds(m_config.mounts.drive_state_poll_interval_secs));
   }
 }
 

@@ -7,7 +7,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "grpc-server/auth/jwt/JwtAuthManager.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <array>
 #include <chrono>

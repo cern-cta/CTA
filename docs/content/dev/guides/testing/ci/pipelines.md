@@ -23,17 +23,23 @@ Ordinary feature-branch pushes do not create push pipelines. Use the branch’s 
 | `DEFAULT` | Validate the selected revision with the configured builds and tests. |
 | `REGR_AGAINST_CTA_BRANCH` | Test a dependency combination, either building CTA from the selected revision or using an existing CTA image. |
 | `REGR_AGAINST_CTA_VERSION` | Compatibility alias for `REGR_AGAINST_CTA_BRANCH`; use the latter for new runs. |
+| `UPDATE_DEPENDENCIES` | Propose upstream dependency updates using Renovate. |
 | `UPDATE_PIPELINE_IMAGES` | Rebuild the images used to execute CI jobs and propose updated image tags. See [CI Maintenance](../../../contributing/maintainers/ci-maintenance.md#weekly-pipeline-image-updates). |
 
 For a regression pipeline, the main inputs are:
 
 - `custom-cta-image-tag`: use an existing CTA image instead of building the selected Git revision. Leave empty to build that revision.
 - `custom-eos-image-tag`: select the EOS image to test.
-- `custom-xrootd-version`: select the XRootD package version for builds.
 
-Use the input descriptions in the pipeline form for supported formats and defaults. Select compatible scheduler and Oracle settings for the chosen images. A dependency build option does not change packages already installed in an existing CTA image. The selected Git revision still determines the pipeline configuration and test code.
+Debian 13 automatically selects the PostgreSQL scheduler and catalogue.
+Debian Kubernetes system tests are currently skipped, including in regression pipelines, pending a redesign of catalogue-tool access.
+Automatic EOS selection uses an EL9 image independently of the CTA platform; an explicit EOS image tag is used unchanged.
+
+Use the input descriptions in the pipeline form for supported formats and defaults. Select compatible scheduler and Oracle settings for the chosen images. The selected Git revision still determines the pipeline configuration and test code.
 
 [Scheduled pipelines](https://gitlab.cern.ch/cta/CTA/-/pipeline_schedules) provide additional periodic coverage; investigate their failures even when the MR pipeline passed. Schedule administration and pinned CI-image updates are covered in [CI Maintenance](../../../contributing/maintainers/ci-maintenance.md).
+
+Scheduled system tests enable local telemetry; stress tests use their separate configuration.
 
 ## Read pipeline results
 
@@ -59,9 +65,9 @@ Follow downstream pipeline links when additional configurations are tested there
 | Job | When it matters |
 | --- | --- |
 | `danger-review` | Read the MR feedback and address contribution-metadata and documentation findings. See [Contributing through CERN GitLab](../../../contributing/gitlab.md). |
-| `test-catalogue-schema-update` | Review migration results when changing catalogue schemas or migrations. See [Testing Migrations](../../../internals/components/catalogue/testing.md). |
+| `test-catalogue-schema-update` | Review migration results when changing catalogue schemas or migrations. See [Testing Migrations](../../../internals/shared-state/catalogue/testing.md). |
 | `stress-test` | Assess sustained workload behaviour and performance using [Stress Tests](../stress-tests.md). |
-| `build-cta-no-sccache` / `reset-sccache` | If you suspect a compilation-cache problem, compare the no-sccache build where available. The manual `reset-sccache` job clears the MR branch's cache; retry the affected build afterwards. |
+| `reset-sccache` | If you suspect a compilation-cache problem, this manual job clears the MR branch's cache; retry the affected build afterwards. |
 
 For publication jobs and release validation, follow [Release Procedure](../../../contributing/maintainers/releases.md). When modifying jobs, keep their rationale beside the YAML and follow [GitLab CI Conventions](../../conventions/gitlab.md).
 

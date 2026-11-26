@@ -12,21 +12,20 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 
 ## Preview locally
 
-Install the Rust toolchain specified by `rust-toolchain.toml` as well as Python 3.9 or later.
-The build generates the Rust and Python API references automatically.
+uv installs the Python interpreter selected by `.python-version`.
+To generate Rust API documentation, install the Rust toolchain specified by `rust-toolchain.toml`.
 The first build needs network access for Rust dependencies and the Python documentation cross-reference inventory.
 
-From the repository root:
+Install `uv`, then from the repository root:
 
 ```bash
-cd docs
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-mkdocs serve
+docs/serve.sh
 ```
 
-Open <http://127.0.0.1:8000/>. For later sessions, enter `docs/`, activate the same environment, and run `mkdocs serve`.
+Open <http://127.0.0.1:8000/>. The script installs the locked docs dependencies into `docs/.venv`.
+Pass `--skip-rust` to skip Rust generation and reuse existing output if available. Without Cargo, Rust generation is skipped automatically with a warning.
+
+Edits to existing pages reload automatically. Restart the preview after changing the build scripts or the inputs used to generate the command manual and Rust reference. Also restart it when adding a file or directory directly under `docs/content/` or `docs/content/api/`.
 
 ## Organize the content
 
@@ -40,7 +39,7 @@ Choose the section by its audience:
 
 Keep source-level implementation details, such as class-by-class descriptions, function walkthroughs, and algorithm internals, beside the code rather than in the documentation site. General architecture belongs here when it explains component responsibilities, interfaces, or how the system fits together.
 
-Use `docs/mkdocs.yml` and its scope comments to place pages in the navigation. Use lowercase hyphenated filenames, `index.md` for section landing pages, and relative links between pages. Use descriptive component names for guides and executable names for command references. An explicit front-matter `title` can clarify a short or ambiguous navigation label.
+Use the repository-root `zensical.toml` to place pages in the navigation. Use lowercase hyphenated filenames, `index.md` for section landing pages, and relative links between pages. Use descriptive component names for guides and executable names for command references. An explicit front-matter `title` can clarify a short or ambiguous navigation label.
 
 Keep diagram files beside their pages. For Mermaid diagrams, use the default theme colors where possible; these adapt to light and dark mode. See [Diagram colors](maintainers/documentation-site.md#diagram-colors) when custom styling is needed. Moving a page changes its URL: update navigation, incoming and outgoing links, and asset paths together.
 
@@ -68,15 +67,23 @@ A `README.md` is an entry point for someone browsing the repository. Keep it sho
 
 Maintain one source for each explanation. When moving a guide into `docs/`, replace the README content with a link. Manuals and configuration examples included by the site can remain beside their tools; include them rather than maintaining a second copy.
 
+## Service command manuals
+
+Service `*.1cta.md` manuals describe invocation, all supported CLI options, and relevant lifecycle behaviour, environment and files.
+Keep settings in the annotated TOML examples and operational guidance in the configuration guides; reference the installed example path for offline use.
+
+Check options against the parser and help output, and render both the installed manual and its website page when changing formatting.
+Escape the first hyphen of long options outside code spans (`\--config`) so Pandoc preserves two hyphens.
+
 ## Check before submitting
 
-Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From `docs/`, with the Python environment activated, run:
+Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From the repository root, run:
 
 ```bash
-mkdocs build --strict
+docs/.venv/bin/python docs/build.py build
 ```
 
-The strict build must pass before submission. Use the normal [contribution workflow](index.md) for review.
+The strict Zensical build writes to `build/docs/site/` and must pass before submission. Use the normal [contribution workflow](index.md) for review.
 
 ## When changes appear online
 

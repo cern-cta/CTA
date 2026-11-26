@@ -15,15 +15,14 @@ import logging
 import os
 import re
 import subprocess
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Callable, Optional
+from typing import override
 from zlib import adler32
 
 from cta.tapeserver.sdk.controllers.protocols.drive import DriveController, MountedDriveController
 from cta.tapeserver.sdk.exceptions import DriveOperationError, DriveStateError, EODError, EOTError
 from pyudev import Context, Device
-from typing_extensions import override
 
 LOGGER = logging.getLogger("cta.tapeserver.sdk")
 
@@ -50,7 +49,7 @@ class ScsiDriveController(DriveController):
         ValueError: If `nst_device` is not an `nstN` `scsi_tape` device.
     """
 
-    def __init__(self, nst_device: Device, context: Optional[Context] = None):
+    def __init__(self, nst_device: Device, context: Context | None = None):
         LOGGER.debug("Initializing ScsiDriveController for device %s", nst_device)
         if nst_device.subsystem != "scsi_tape" or not re.match(r"^nst[0-9]+$", nst_device.sys_name):
             raise ValueError(f"Device {nst_device} is not a valid tape drive nst device")
@@ -329,7 +328,7 @@ class ScsiMountedDriveController(ScsiDriveController, MountedDriveController):
         nst_device: Device,
         vid: str,
         unmount_callback: Callable[[], None],
-        context: Optional[Context] = None,
+        context: Context | None = None,
     ) -> None:
         super().__init__(nst_device, context)
         LOGGER.debug("Initializing ScsiMountedDriveController for device %s with vid=%s", nst_device, vid)
@@ -344,16 +343,16 @@ class ScsiMountedDriveController(ScsiDriveController, MountedDriveController):
         return self._mounted_vid
 
     @override
-    def __enter__(self) -> "ScsiMountedDriveController":
+    def __enter__(self) -> ScsiMountedDriveController:
         return self
 
     @override
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[object],
-    ) -> Optional[bool]:
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: object | None,
+    ) -> bool | None:
         """Unmount the tape on context exit (idempotent with manual unmount)."""
         self.unmount()
 
@@ -388,9 +387,9 @@ class ScsiMountedDriveController(ScsiDriveController, MountedDriveController):
     def write_files(
         self,
         file_size: int,
-        n: Optional[int],
+        n: int | None,
         block_size: int = 256 * 1024,
-    ) -> Generator[tuple[int, int], None, None]:
+    ) -> Generator[tuple[int, int]]:
         """
         See the base implementation.
 
@@ -442,7 +441,7 @@ class ScsiMountedDriveController(ScsiDriveController, MountedDriveController):
         self,
         n: int,
         block_size: int = 256 * 1024,
-    ) -> Generator[tuple[int, int], None, None]:
+    ) -> Generator[tuple[int, int]]:
         """
         See the base implementation.
 
@@ -581,7 +580,7 @@ class ScsiMountedDriveController(ScsiDriveController, MountedDriveController):
     @classmethod
     def from_drive_controller(
         cls, drive_controller: ScsiDriveController, vid: str, unmount_callback: Callable[[], None]
-    ) -> "ScsiMountedDriveController":
+    ) -> ScsiMountedDriveController:
         """Build a mounted controller from an existing drive controller.
 
         Reuses the underlying `nst_device` and pyudev `Context` of the

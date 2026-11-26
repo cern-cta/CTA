@@ -17,7 +17,7 @@ Run from the repository root:
 
 ```bash
 git submodule update --init lib/protobuf/external/xrootd-ssi-protobuf-interface
-uv sync --locked --all-packages --all-extras --all-groups --python 3.12
+uv sync --locked --all-packages --all-extras --group dev
 uv run --no-sync cta --help
 ```
 

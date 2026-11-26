@@ -7,8 +7,6 @@ spec:
       type: string
     custom-eos-image-tag:
       type: string
-    custom-xrootd-version:
-      type: string
     platform:
       type: string
     enable-internal-repos:
@@ -238,7 +236,7 @@ spec:
       variables:
         # Branch pipelines do not have a merge-request source branch.
         BRANCH_NAME: $CI_COMMIT_BRANCH
-  image: $IMAGE_LINT
+  image: $IMAGE_PYTHON
   variables:
     GIT_STRATEGY: "none"  # Don't need anything from the repo for this job
     TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches

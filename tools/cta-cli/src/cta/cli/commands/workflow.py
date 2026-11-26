@@ -31,11 +31,11 @@ def proto_to_dict(message: t.Any) -> dict[str, t.Any]:
         value = getattr(message, key)
 
         if field.type == field.TYPE_MESSAGE:
-            if field.label == field.LABEL_REPEATED:
+            if field.is_repeated:
                 result[key] = [proto_to_dict(item) for item in value]
             else:
                 result[key] = proto_to_dict(value)
-        elif field.label == field.LABEL_REPEATED:
+        elif field.is_repeated:
             result[key] = list(value)
         else:
             result[key] = str(value)
@@ -81,7 +81,7 @@ class WorkflowFileInfo(WorkflowFileInfoBase):
             return "file"
 
     @classmethod
-    def from_file(cls, f: t.IO[str]) -> "WorkflowFileInfo":
+    def from_file(cls, f: t.IO[str]) -> WorkflowFileInfo:
         import json
 
         data = json.load(f)
@@ -94,7 +94,7 @@ class WorkflowFileInfo(WorkflowFileInfoBase):
 REQUIRED_FIELDS = {field.name for field in fields(WorkflowFileInfo) if unwrap_optional_type(field.type) is None}
 
 
-def file_info_options(required: t.Union[set[str], frozenset[str]] = frozenset()):
+def file_info_options(required: set[str] | frozenset[str] = frozenset()):
     def _file_info_options(f: t.Callable[..., t.Any]):
         """Add --file-info and the individual file options.
 
@@ -177,15 +177,15 @@ def workflow(
     obj: AppContext,
     user: str,
     group: str,
-    disk_buffer_mode: t.Optional[t.Literal["eos-test"]],
-    jwt_file: t.Optional[Path],
-    frontend_endpoint: t.Optional[str],
-    disk_endpoint: t.Optional[str],
-    disk_instance: t.Optional[str],
-    timeout: t.Optional[int],
-    verify_cert: t.Optional[bool],
-    ca_cert_file: t.Optional[Path],
-    server_name_override: t.Optional[str],
+    disk_buffer_mode: t.Literal["eos-test"] | None,
+    jwt_file: Path | None,
+    frontend_endpoint: str | None,
+    disk_endpoint: str | None,
+    disk_instance: str | None,
+    timeout: int | None,
+    verify_cert: bool | None,
+    ca_cert_file: Path | None,
+    server_name_override: str | None,
     show_request: bool,
 ):
     """Manage CTA workflow RPC operations."""
@@ -213,7 +213,7 @@ def workflow(
 
 
 @contextmanager
-def _workflow_client(obj: AppContext) -> t.Generator[tuple[WorkflowRpcClient, dict[str, t.Any]], None, None]:
+def _workflow_client(obj: AppContext) -> t.Generator[tuple[WorkflowRpcClient, dict[str, t.Any]]]:
     """Context manager to handle the workflow client and its options. Does error handling."""
     from cta.sdk.client.grpc.protobuf_generated import cta_frontend_pb2
 
@@ -279,7 +279,7 @@ def archive(
     obj: AppContext,
     file_info: WorkflowFileInfo,
     storage_class: str,
-    service_url: t.Optional[str],
+    service_url: str | None,
 ):
     if not storage_class:
         raise click.UsageError("Storage class must be provided with --storage-class")
@@ -302,9 +302,7 @@ def archive(
 @click.option("--service-url", help="Optional service URL for the prepare operation.")
 @file_info_options(required={"archive_file_id", "id", "path"})
 @click.pass_obj
-def prepare(
-    obj: AppContext, file_info: WorkflowFileInfo, service_url: t.Optional[str], verify_only: bool, vid: t.Optional[str]
-):
+def prepare(obj: AppContext, file_info: WorkflowFileInfo, service_url: str | None, verify_only: bool, vid: str | None):
     with _workflow_client(obj) as (client, options):
         client.send_prepare_event(
             file_info,

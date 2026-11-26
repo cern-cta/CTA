@@ -10,7 +10,6 @@ output formats: raw (string representation), JSON, and table display.
 from collections.abc import Iterable
 from dataclasses import is_dataclass
 from itertools import chain, islice
-from typing import Optional, Union
 
 from cta.cli.config import DisplayConfig
 from rich import print, print_json
@@ -23,7 +22,7 @@ from .formatters import DataClassFormatterProvider, DataClassProtocol
 load_all_formatters()
 
 
-def raw_print(objects: Union[DataClassProtocol, Iterable[DataClassProtocol]]) -> None:
+def raw_print(objects: DataClassProtocol | Iterable[DataClassProtocol]) -> None:
     """Print dataclass objects in raw string format.
 
     Args:
@@ -47,8 +46,8 @@ def raw_print(objects: Union[DataClassProtocol, Iterable[DataClassProtocol]]) ->
 
 
 def print_as_json(
-    objects: Union[DataClassProtocol, Iterable[DataClassProtocol]],
-    display_config: Optional[DisplayConfig] = None,
+    objects: DataClassProtocol | Iterable[DataClassProtocol],
+    display_config: DisplayConfig | None = None,
 ) -> None:
     """Print dataclass objects in JSON format.
 
@@ -82,9 +81,9 @@ def print_as_json(
 
 
 def print_as_table(
-    objects: Union[DataClassProtocol, Iterable[DataClassProtocol]],
-    title: Optional[str] = None,
-    display_config: Optional[DisplayConfig] = None,
+    objects: DataClassProtocol | Iterable[DataClassProtocol],
+    title: str | None = None,
+    display_config: DisplayConfig | None = None,
 ) -> None:
     """Print dataclass objects in table format.
 
@@ -143,7 +142,7 @@ def print_as_table(
             title=title,
         )
 
-        for header, params in zip(table_headers, table_columns_parameters):
+        for header, params in zip(table_headers, table_columns_parameters, strict=False):
             table.add_column(header, **params)
 
         for obj in chunk:
@@ -157,9 +156,9 @@ def print_as_table(
 
 
 def print_dataclasses(
-    objects: Union[DataClassProtocol, Iterable[DataClassProtocol]],
-    display_config: Optional[DisplayConfig] = None,
-    title: Optional[str] = None,
+    objects: DataClassProtocol | Iterable[DataClassProtocol],
+    display_config: DisplayConfig | None = None,
+    title: str | None = None,
 ):
     """Print dataclass objects in the specified format.
 

@@ -13,11 +13,8 @@ from dataclasses import Field, asdict, fields, is_dataclass
 from typing import (
     Any,
     ClassVar,
-    Generic,
-    Optional,
     Protocol,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -42,8 +39,8 @@ D = TypeVar("D", bound=DataClassProtocol)
 
 
 def dataclass_to_rich_table(
-    obj: DataClassProtocol, title: Optional[str] = None, max_depth: int = 5, _current_depth: int = 0
-) -> Union[Table, Text]:
+    obj: DataClassProtocol, title: str | None = None, max_depth: int = 5, _current_depth: int = 0
+) -> Table | Text:
     """Convert a dataclass object to a Rich table for display.
 
     Creates a formatted table showing all fields and values of a dataclass,
@@ -111,7 +108,7 @@ TableHeaders = list[Text]
 TableColumnsParameters = list[dict[str, Any]]
 
 
-class DataClassBaseFormatter(Generic[D]):
+class DataClassBaseFormatter[D: DataClassProtocol]:
     """Base formatter class for converting dataclass objects to various formats.
 
     This class provides default formatting implementations and a registration
@@ -226,10 +223,10 @@ class DataClassBaseFormatter(Generic[D]):
         """
         return [
             encode_table_header(col_name, *col_types)
-            for col_name, col_types in zip(self._raw_columns_names(), self._raw_columns_types())
+            for col_name, col_types in zip(self._raw_columns_names(), self._raw_columns_types(), strict=False)
         ]
 
-    def table_columns_parameters(self, chunk: Optional[list[D]] = None) -> TableColumnsParameters:
+    def table_columns_parameters(self, chunk: list[D] | None = None) -> TableColumnsParameters:
         """Get Rich-formatted column definitions for table display.
 
         Returns:
@@ -239,7 +236,9 @@ class DataClassBaseFormatter(Generic[D]):
         columns_parameters: list[dict[str, Any]] = []
         default_parameters = {"overflow": "fold", "justify": "right"}
 
-        for column_index, (header, col_types) in enumerate(zip(self.table_headers(), self._raw_columns_types())):
+        for column_index, (header, col_types) in enumerate(
+            zip(self.table_headers(), self._raw_columns_types(), strict=False)
+        ):
             override_parameters: dict[str, Any] = {}
             override_parameters |= {"justify": "left"} if any(ct is FreeText for ct in col_types) else {}
             override_parameters |= (
@@ -262,7 +261,7 @@ class DataClassBaseFormatter(Generic[D]):
         """
         return [
             encode_table_field(value, *col_types)
-            for value, col_types in zip(self._raw_table_entry(obj), self._raw_columns_types())
+            for value, col_types in zip(self._raw_table_entry(obj), self._raw_columns_types(), strict=False)
         ]
 
 

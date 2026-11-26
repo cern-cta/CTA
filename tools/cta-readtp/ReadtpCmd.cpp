@@ -117,8 +117,9 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
 
   // Configure encryption
-  const std::string externalEncryptionKeyScript = tapedConfig.transfers.encryption.external_key_script;
-  const bool useEncryption = tapedConfig.transfers.encryption.enabled;
+  const std::string externalEncryptionKeyScript =
+    (tapedConfig.transfers.encryption_enabled ? tapedConfig.transfers.encryption->external_key_script : std::string {});
+  const bool useEncryption = tapedConfig.transfers.encryption_enabled;
   m_encryptionControl =
     std::make_unique<cta::tape::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
 
@@ -467,7 +468,7 @@ void ReadtpCmd::readTapeFile(cta::tape::drive::DriveInterface& drive,
   payload->write(wf);
   auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);
 
-  archiveFile.checksumBlob.validate(cb);  //exception thrown if checksums differ
+  archiveFile.checksumBlob.validateOn(cta::checksum::ChecksumType::ADLER32, cb);  //exception thrown if checksums differ
 
   params.emplace_back("checksumType", "ADLER32");
   std::stringstream sstream;

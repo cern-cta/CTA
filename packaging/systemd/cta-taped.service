@@ -26,14 +26,15 @@ LogsDirectoryMode=0755
 #   --config=/etc/cta/cta-taped-%i.toml
 #   --log-file=/var/log/cta/cta-taped-%i.log
 #
-# Configuration changes require a service restart. SIGUSR1 only refreshes the log file descriptor.
+# Configuration changes require a service restart. SIGHUP only refreshes the log file descriptor.
 ExecStart=/usr/bin/cta-taped --config=/etc/cta/cta-taped.toml --config-strict --runtime-dir=/run/cta/taped --log-file=/var/log/cta/cta-taped.log
 
 LimitCORE=infinity
 OOMScoreAdjust=-10
 Restart=on-failure
 RestartSec=5
-TimeoutStopSec=600
+# Acquired jobs and tape cleanup may take hours to drain after SIGTERM.
+TimeoutStopSec=2h
 
 AmbientCapabilities=CAP_SYS_RAWIO
 CapabilityBoundingSet=CAP_SYS_RAWIO

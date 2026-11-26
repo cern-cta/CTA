@@ -14,7 +14,6 @@ set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_OPTIONS -O2)
 
 set (COMMON_LIB_SRC_FILES
   CmdLineTool.cpp
-  CmdLineParams.cpp
   checksum/ChecksumBlob.cpp
   checksum/CRC.cpp
   config/Config.cpp
@@ -73,7 +72,6 @@ set (COMMON_LIB_SRC_FILES
   exception/Backtrace.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  exception/InvalidConfigEntry.cpp
   exception/NoPortInRange.cpp
   json/object/JSONCObject.cpp
   log/ExceptionLogging.cpp
@@ -87,9 +85,6 @@ set (COMMON_LIB_SRC_FILES
   log/StdoutLogger.cpp
   log/StringLogger.cpp
   log/TimingList.cpp
-  priorities/DriveQuota.cpp
-  priorities/MountCriteria.cpp
-  priorities/UserGroup.cpp
   process/ProcessCap.cpp
   process/threading/CondVar.cpp
   process/threading/Mutex.cpp
@@ -159,6 +154,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   process/threading/ThreadingTests.cpp
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
+  utils/InterruptibleSleepTest.cpp
   utils/ScopeExitTest.cpp
   utils/UtilsTest.cpp
   json/test/JSONCTestObject.cpp
@@ -173,6 +169,3 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 if(CTA_BUILD_TEST_PACKAGES)
   install(TARGETS ctacommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-
-add_executable(mutexLtrace process/threading/MutexLtrace.cpp)
-target_link_libraries(mutexLtrace ctacommon)

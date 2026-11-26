@@ -15,9 +15,11 @@
 #include "taped/rao/RAOManager.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
+#include "taped/session/WorkFetchResult.hpp"
 
 #include <future>
 #include <stdint.h>
+#include <stop_token>
 
 namespace cta::tape {
 
@@ -66,7 +68,8 @@ public:
                      uint64_t maxFilesPerRequest,
                      uint64_t maxBytesPerRequest,
                      TapeSessionTracker& tracker,
-                     const cta::log::LogContext& lc)
+                     const cta::log::LogContext& lc,
+                     std::stop_token stopToken = {})
       : m_thread(*this),
         m_memManager(mm),
         m_tapeReader(tapeReader),
@@ -77,7 +80,8 @@ public:
         m_maxBatchFiles(maxFilesPerRequest),
         m_maxBatchBytes(maxBytesPerRequest),
         m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()),
-        m_tracker(tracker) {}
+        m_tracker(tracker),
+        m_stopToken(stopToken) {}
 
   virtual ~RecallTaskInjector() = default;
 
@@ -98,15 +102,9 @@ public:
    */
   void finish();
 
-  /**
-     * Pop jobs from the queue to reach a threshold of files held by the injector
-     * This threshold is either m_maxBatchBytes/m_maxBatchFiles or the values supported by the
-     * RAO implementation
-     *
-     * @param noFilesToRecall will be true if no files were popped from the queue during the call
-     * @return true if there are jobs left to be done on the injector, false otherwise
-     */
-  bool synchronousFetch(bool& noFilesToRecall);
+  /// Fetch retrieve jobs as needed to replenish the injector.
+  /// Retained jobs count as available work; jobs are requeued when stopping.
+  WorkFetchResult synchronousFetch();
 
   /**
    * Wait for the inner thread to finish
@@ -129,9 +127,11 @@ public:
    */
   void initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
 
-  void waitForPromise() const;
+  /// Wait until tape loading and encryption setup permit RAO queries; return false if startup fails.
+  bool waitForDriveReadyForRAO();
 
-  void setPromise();
+  /// Publish the startup outcome exactly once from the tape thread.
+  void setDriveReadyForRAO(bool ready);
 
   /**
    * This method will tell the TapeReadSingleThread that the
@@ -153,6 +153,9 @@ public:
   bool testDiskSpaceReservationWorking();
 
 private:
+  /// Return uninjected jobs to the scheduler.
+  void requeueRetainedJobs();
+
   /**
    * It will signal to the disk read thread  pool, tape write single thread
    * and to the mem manager they have to stop their threads(s)
@@ -214,7 +217,8 @@ private:
 
   private:
     RecallTaskInjector& m_parent;
-    void popRecalls();
+    /// Return whether the producer finish notification was consumed.
+    bool popRecalls();
   } m_thread;
 
   ///The memory manager for accessing memory blocks.
@@ -261,17 +265,9 @@ private:
    */
   cta::tape::rao::RAOManager m_raoManager;
 
-  /** Number of jobs to be fetched before the tape is mounted.
-   *  The desired number is m_raoLimits.maxSupported
-   */
-  unsigned int m_fetched = 0;
-
-  /**
-   * The promise for reordering the read tasks according to RAO by the
-   * RecallTaskInjector. The tasks to be run are placed in the m_tasks queue
-   */
-  std::promise<void> m_raoPromise;
-  std::future<void> m_raoFuture;
+  // The tape thread publishes true when RAO may access the drive, or false on startup failure.
+  std::promise<bool> m_driveReadyForRAOPromise;
+  std::future<bool> m_driveReadyForRAOFuture;
 
   std::promise<void> m_firstTasksInjectedPromise;
   std::future<void> m_firstTasksInjectedFuture;
@@ -287,6 +283,9 @@ private:
   /** Reference to the session tracker, allowing reporting of errors to it.
    */
   TapeSessionTracker& m_tracker;
+
+  /// Stop fetching, return retained jobs, and allow injected tasks to drain.
+  std::stop_token m_stopToken;
 };
 
 }  // namespace daemon

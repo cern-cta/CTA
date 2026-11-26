@@ -7,8 +7,8 @@
 
 #include "ParseResult.hpp"
 #include "Reflection.hpp"
-#include "common/config/Config.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/utils/StringConversions.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -19,6 +19,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace cta::runtime::parsing {
 
@@ -71,9 +72,9 @@ template<class T>
 concept TomlValueConvertible =
   requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
 
-/// Types parsed from a TOML string through a cta::common::FromString specialization (typically enums)
+/// Types parsed from a TOML string through a cta::utils::FromString specialization (typically enums)
 template<class T>
-concept FromStringParsable = cta::common::HasFromString<std::remove_cvref_t<T>>;
+concept FromStringParsable = cta::utils::HasFromString<std::remove_cvref_t<T>>;
 
 /// Empty configs, such as NoClientConfig, have special handling
 template<class T>
@@ -128,10 +129,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   if (!node) {
-    if (strict) {
-      return ParseResult::error("Expected field '" + std::string(fieldName) + "' is missing.");
-    }
-    // In non-strict mode, a missing optional is fine
+    out.reset();
     return ParseResult::success();
   }
   using InnerType = typename std::remove_cvref_t<T>::value_type;
@@ -223,7 +221,7 @@ ParseResult parseNode(T& out,
   return ParseResult::success();
 }
 
-/// Parse a TOML string into a type providing a cta::common::FromString specialization.
+/// Parse a TOML string into a type providing a cta::utils::FromString specialization.
 template<FromStringParsable T>
 ParseResult parseNode(T& out,
                       std::string_view fieldName,
@@ -233,7 +231,7 @@ ParseResult parseNode(T& out,
   if (!str) {
     return ParseResult::error("Field '" + std::string(fieldName) + "' must be a string.");
   }
-  auto val = cta::common::FromString<std::remove_cvref_t<T>>::tryFrom(str->get());
+  auto val = cta::utils::FromString<std::remove_cvref_t<T>>::tryFrom(str->get());
   if (!val) {
     return ParseResult::error("Field '" + std::string(fieldName) + "' has an unsupported value '" + str->get() + "'.");
   }
@@ -257,7 +255,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
 
   std::vector<ParseResult> errs;
 
-  auto assignField = [&tbl, &errs, &knownFields, strict](std::string_view tableFieldName, auto& field) {
+  auto assignField = [&out, &tbl, &errs, &knownFields, strict](std::string_view tableFieldName, auto& field) {
     if constexpr (EmptyConfig<std::remove_cvref_t<decltype(field)>>) {
       // Empty configs have no members and the parser should fail when
       // presented with a value for one, in strict mode. Hence, let's
@@ -267,7 +265,12 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
       const auto node = tbl[tableFieldName];
 
       if (!node) {
-        if (strict) {
+        if constexpr (StdOptional<decltype(field)>) {
+          // Strict loading preserves absence so validation can require selected sections.
+          if (strict) {
+            field.reset();
+          }
+        } else if (strict) {
           errs.push_back(ParseResult::error("Expected field '" + std::string(tableFieldName) + "' is missing."));
         }
         return;
@@ -281,7 +284,6 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
     }
   };
 
-  // Do a pass over the fields of T and try to assign its members
   reflection::forEachMember(out, assignField);
 
   if (strict) {

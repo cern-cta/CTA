@@ -9,11 +9,12 @@
 import shutil
 import subprocess
 import sys
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
 
-VERSION_SCRIPT = Path(__file__).resolve().parents[3] / "ci/utils/cta_version.py"
+VERSION_SCRIPT = Path(__file__).resolve().parents[3] / "ci/build/cta_version.py"
 
 
 def version_cli(command: str, *arguments: str) -> str:
@@ -79,7 +80,7 @@ def test_native_package_ordering(manager: str, platform: str) -> None:
         version_cli("native", version, platform, "pgsched", "false")
         for version in ["6.1.0.dev1", "6.1.0.dev2", "6.1.0.rc1", "6.1.0.rc2", "6.1.0", "6.1.1"]
     ]
-    for older, newer in zip(versions, versions[1:]):
+    for older, newer in pairwise(versions):
         if manager == "rpm":
             # Prerelease status belongs to Version; Release stays at packaging revision 1.
             expression = '%{lua:print(rpm.vercmp("' + older.split("-", 1)[0] + '", "' + newer.split("-", 1)[0] + '"))}'

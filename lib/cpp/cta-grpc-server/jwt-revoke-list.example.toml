@@ -22,6 +22,6 @@
 
 # You can easily add other revoked tokens by adding more [[revoked_tokens]] blocks
 [[revoked_tokens]]
-  jti = "yyyy-yyyy-yyyy-yyyy-yyyy"
-  reason = "User requested revocation"
+  jti        = "yyyy-yyyy-yyyy-yyyy-yyyy"
+  reason     = "User requested revocation"
   revoked_at = 2026-07-02T15:45:00Z

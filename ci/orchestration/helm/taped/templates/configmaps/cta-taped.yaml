@@ -4,6 +4,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $encryptionEnabled := .Values.transfers.encryption.enabled -}}
+{{- $raoEnabled := .Values.transfers.retrieve.rao.enabled -}}
 {{ range .Values.drives }}
 {{- $driveNameSlug := include "common.slugify" .name }}
 # Generate unique config map for each tape drive
@@ -15,6 +17,8 @@ metadata:
     {{- include "common.labels.standard" $ | nindent 4 }}
 data:
   cta-taped.toml: |-
+    enabled_features = ["health_server"]
+    enabled_experimental_features = ["telemetry"]
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
@@ -41,17 +45,15 @@ data:
       on_init_failure = "fatal"
 
     [health_server]
-      enabled = true
+      transport = "tcp"
+    [health_server.tcp]
       host = "0.0.0.0"
       port = 8080
-      use_unix_domain_socket = false
 
     [xrootd]
       security_protocol = "sss"
       sss_keytab_path = "/etc/cta/cta-taped.sss.keytab.grp"
 
-    [experimental]
-      telemetry_enabled = true
 
     [drive]
       name = {{ .name | quote }}
@@ -89,6 +91,7 @@ data:
       request_attempts = {{ $.Values.rmcd.requestAttempts }}
 
     [transfers]
+      encryption_enabled = {{ $encryptionEnabled }}
       buffer_count = {{ $.Values.transfers.bufferCount }}
       buffer_size_bytes = {{ $.Values.transfers.bufferSizeBytes }}
       disk_io_threads = {{ $.Values.transfers.diskIoThreads }}
@@ -108,18 +111,21 @@ data:
       recovery_threshold_percent = {{ $.Values.transfers.archive.underfill.recoveryThresholdPercent }}
 
     [transfers.retrieve]
+      rao_enabled = {{ $raoEnabled }}
       fetch_max_bytes = {{ int64 $.Values.transfers.retrieve.fetchMaxBytes }}
       fetch_max_files = {{ $.Values.transfers.retrieve.fetchMaxFiles }}
       drain_to_disk_timeout_secs = {{ $.Values.transfers.retrieve.drainToDiskTimeoutSecs }}
       external_free_disk_space_script = {{ $.Values.transfers.retrieve.externalFreeDiskSpaceScript | quote }}
 
+    {{- if $raoEnabled }}
     [transfers.retrieve.rao]
-      enabled = {{ $.Values.transfers.retrieve.rao.enabled }}
       lto_algorithm = {{ $.Values.transfers.retrieve.rao.ltoAlgorithm | quote }}
+    {{- end }}
 
+    {{- if $encryptionEnabled }}
     [transfers.encryption]
-      enabled = {{ $.Values.transfers.encryption.enabled }}
       external_key_script = {{ $.Values.transfers.encryption.externalKeyScript | quote }}
+    {{- end }}
 
 ---
 {{- end }}

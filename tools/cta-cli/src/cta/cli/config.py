@@ -8,7 +8,7 @@ display settings, backend selection, and logging configuration.
 """
 
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Literal
 
 from cta.common.config import NOT_SET
 from cta.common.logging import LoggingConfiguration
@@ -42,8 +42,8 @@ class AdminBackendConfig:
 
     exec_path: str = "/usr/bin/cta-admin"
     timeout: int = 60
-    sss_keytab_file: Optional[str] = None
-    cta_conf_file: Optional[str] = None
+    sss_keytab_file: str | None = None
+    cta_conf_file: str | None = None
 
 
 @dataclass
@@ -129,7 +129,7 @@ class AppConfig:
     tape_server: TapeServerConfig = field(default_factory=TapeServerConfig)
     workflow: WorkflowConfig = field(default_factory=WorkflowConfig)
 
-    def validate(self) -> "AppConfig":
+    def validate(self) -> AppConfig:
         """Validate the configuration.
 
         Performs any necessary validation of configuration values.

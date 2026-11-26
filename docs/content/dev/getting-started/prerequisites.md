@@ -79,7 +79,7 @@ git config core.editor "vim"
 
 ## Enable pre-commit
 
-Install `pre-commit` in a dedicated Python environment on the machine where you commit changes:
+`cta-dev install` installs the pre-commit Git hook automatically. For a standalone setup on the machine where you commit changes:
 
 ```sh
 python3 -m venv ~/.local/share/cta-pre-commit

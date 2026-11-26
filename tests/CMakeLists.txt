@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-set (CTA_UNIT_TEST_SOURCES unit_tests.cpp)
+set (CTA_UNIT_TEST_SOURCES runners/UnitTestsMain.cpp)
 if(CTA_USE_PGSCHED)
   set (CTA_UNIT_TEST_SOURCES ${CTA_UNIT_TEST_SOURCES}
     ${PROJECT_SOURCE_DIR}/scheduler/rdbms/TemporaryPostgresInstance.cpp)
@@ -51,9 +51,8 @@ endif()
 target_link_libraries(cta-unit-tests ${CTA_UNIT_TEST_LIBS} ${PROTOBUF3_LIBRARIES})
 
 add_executable(cta-unit-tests-rdbms
-  GlobalCatalogueFactoryForUnitTests.cpp
-  RdbmsUnitTestsCmdLineArgs.cpp
-  rdbmsUnitTests.cpp)
+  runners/rdbms/RdbmsTestContext.cpp
+  runners/rdbms/RdbmsUnitTestsMain.cpp)
 
 target_link_libraries(cta-unit-tests-rdbms
   ctadropschemacmd
@@ -68,7 +67,7 @@ target_link_libraries(cta-unit-tests-rdbms
 
 add_executable(cta-unit-tests-multiprocess
   ${CTA_UNIT_TEST_SOURCES}
-  SubprocessTests.cpp)
+  ${PROJECT_SOURCE_DIR}/common/process/threading/SubProcessTests.cpp)
 
 target_link_libraries(cta-unit-tests-multiprocess
   ctacommon
@@ -84,7 +83,7 @@ if(CTA_USE_PGSCHED)
 endif()
 
 add_library(cta-unit-test-helper
-  TempFile.cpp TempDirectory.cpp)
+  support/TempFile.cpp support/TempDirectory.cpp)
 target_link_libraries(ctaruntimeunittests PRIVATE cta-unit-test-helper)
 target_link_libraries(ctacommonunittests cta-unit-test-helper)
 target_link_libraries(cta-grpc-server-unit-tests cta-unit-test-helper)
@@ -111,44 +110,35 @@ set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --erro
 set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr)
 string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
 
-set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=10000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
-set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr)
-string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
-
-configure_file(cta-unit-tests-valgrind.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh)
-configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)
-configure_file(parallelTestsMakefile.local.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile.local @ONLY)
+configure_file(analysis/cta-unit-tests-valgrind.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh)
+configure_file(analysis/parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)
+configure_file(analysis/parallelTestsMakefile.local.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile.local @ONLY)
 
 if(CTA_WITH_ORACLE)
-  configure_file(cta-unit-tests-rdbms-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh @ONLY)
+  configure_file(analysis/cta-unit-tests-rdbms-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh @ONLY)
 endif ()
 
 if(CTA_BUILD_TEST_PACKAGES)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
-  install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
+  install(FILES analysis/valgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
 endif()
 
 if(CTA_WITH_ORACLE AND CTA_BUILD_TEST_PACKAGES)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
-  install(FILES cta-unit-tests-rdbms-oracle.suppr DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
+  install(FILES analysis/cta-unit-tests-rdbms-oracle.suppr DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
 endif()
 
 # Test runner and dynamic-analysis targets.
-configure_file(valgrind.suppr valgrind.suppr COPYONLY)
-configure_file(helgrind.suppr helgrind.suppr COPYONLY)
-
+configure_file(analysis/valgrind.suppr valgrind.suppr COPYONLY)
 
 add_custom_target(cta-unit-tests-full
   $<TARGET_FILE:cta-unit-tests>
   COMMAND $<TARGET_FILE:cta-unit-tests-multiprocess>
   COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests>
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests>
-  COMMAND $<TARGET_FILE:cta-unit-tests-multiprocess>
   COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes $<TARGET_FILE:cta-unit-tests-multiprocess>
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests-multiprocess>
 
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
-  COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
+  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr
+  COMMENT "Running unit tests with memory leak detection" VERBATIM)
 
 add_custom_target(cta-unit-tests-valgrind
   echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests>
@@ -159,15 +149,6 @@ add_custom_target(cta-unit-tests-valgrind
   DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr
   COMMENT "Running unit tests with memory leak detection" VERBATIM)
 
-add_custom_target(cta-unit-tests-helgrind
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests>
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests>
-  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests-multiprocess>
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} $<TARGET_FILE:cta-unit-tests-multiprocess>
-
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection" VERBATIM)
-
 add_custom_target(cta-unit-tests-short
   $<TARGET_FILE:cta-unit-tests>
   COMMAND $<TARGET_FILE:cta-unit-tests-multiprocess>
@@ -175,45 +156,3 @@ add_custom_target(cta-unit-tests-short
 
   DEPENDS cta-unit-tests cta-unit-tests-multiprocess cta-rust-tests
   COMMENT "Running C++ and Rust unit tests" VERBATIM)
-
-add_custom_target(cta-unit-tests-helgrind-base
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
-  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests-multiprocess>
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests-multiprocess>
-
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (except slow sections)" VERBATIM)
-
-add_custom_target(cta-unit-tests-helgrind-scheduler
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
-
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (Mock scheduler section)" VERBATIM)
-
-add_custom_target(cta-unit-tests-helgrind-object-store-db
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreTestVFS*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreTestVFS*
-
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (Object store DB section)" VERBATIM)
-
-add_custom_target(cta-unit-tests-helgrind-data-transfer
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/TapeSessionTest*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/TapeSessionTest*
-
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (Data transfer section)" VERBATIM)
-
-add_custom_target(cta-unit-tests-helgrind-in-memory-catalogue
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=InMemory/*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=InMemory/*
-
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (In memory catalogue section)" VERBATIM)
-
-add_custom_target(cta-unit-tests-helgrind-parallel
-  echo
-
-  DEPENDS cta-unit-tests-helgrind-base cta-unit-tests-helgrind-scheduler cta-unit-tests-helgrind-object-store-db cta-unit-tests-helgrind-data-transfer cta-unit-tests-helgrind-in-memory-catalogue)

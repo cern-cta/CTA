@@ -22,3 +22,8 @@ Apply these shared conventions alongside the relevant language guidance:
 - Avoid global mutable state. Justified process-wide services MUST have clear ownership, initialization, and thread-safety expectations.
 - Catch exceptions when the code can recover, translate them at an interface boundary, or add useful context. Otherwise, allow them to propagate. Avoid logging the same failure at every layer.
 - Prefer clear implementations before optimizing. Base performance changes on measurements and preserve the relevant correctness guarantees.
+
+## Configuration contracts
+
+Follow [Optional fields and feature activation](../../../internals/service-runtime.md#optional-fields-and-feature-activation) when adding or changing runtime configuration.
+Document each field's requiredness and absence semantics, and check its consumers for implicit defaults.

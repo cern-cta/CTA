@@ -11,9 +11,7 @@ import uuid
 from collections.abc import Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional, Union
-
-from typing_extensions import override
+from typing import Any, override
 
 from system_tests.helpers.connections.remote_connection import ExecResult, RemoteConnection
 from system_tests.helpers.utils.timeout import Timeout
@@ -202,7 +200,7 @@ class EosClientHost(DiskClientHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
-        activity: Optional[str] = None,
+        activity: str | None = None,
     ) -> str:
         return super().retrieve_file(
             disk_instance_name,
@@ -222,7 +220,7 @@ class EosClientHost(DiskClientHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
-        activity: Optional[str] = None,
+        activity: str | None = None,
         parallelism: int = 1,
     ) -> PrepareRequests:
         """Submit one retrieve request per path, using workers in the EOS client pod."""
@@ -303,7 +301,7 @@ class EosClientHost(DiskClientHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
-        activity: Optional[str] = None,
+        activity: str | None = None,
         parallelism: int = 1,
     ) -> PrepareRequests:
         """Retrieve every file below a directory, checking completion with bulk namespace queries."""
@@ -333,9 +331,9 @@ class EosClientHost(DiskClientHost):
         path_stream_command: str,
         *,
         user: str,
-        activity: Optional[str],
+        activity: str | None,
         parallelism: int,
-        remote_manifest: Optional[Path] = None,
+        remote_manifest: Path | None = None,
     ) -> PrepareRequests:
         if parallelism < 1:
             raise ValueError("parallelism must be at least 1")
@@ -381,7 +379,7 @@ class EosClientHost(DiskClientHost):
     def abort_files(
         self,
         disk_instance_name: str,
-        requests: Union[list[PrepareRequest], PrepareRequests],
+        requests: list[PrepareRequest] | PrepareRequests,
         *,
         user: str = "poweruser1",
         parallelism: int = 1,
@@ -627,7 +625,7 @@ class EosClientHost(DiskClientHost):
         self, disk_instance_name: str, directory: Path, wait_timeout_secs: int = 20
     ) -> None:
         print(f"Waiting for eviction of files in {directory}...")
-        previous_remaining: Optional[int] = None
+        previous_remaining: int | None = None
         started = time.monotonic()
         last_report = started - 10
         with Timeout(wait_timeout_secs) as timeout:

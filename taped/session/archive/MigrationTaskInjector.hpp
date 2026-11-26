@@ -10,11 +10,14 @@
 #include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
+#include "taped/session/WorkFetchResult.hpp"
 #include "taped/session/archive/DiskReadTask.hpp"
 #include "taped/session/archive/DiskReadThreadPool.hpp"
 #include "taped/session/archive/MigrationMemoryManager.hpp"
 #include "taped/session/archive/TapeWriteSingleThread.hpp"
 #include "taped/session/archive/TapeWriteTask.hpp"
+
+#include <stop_token>
 
 namespace cta::tape::daemon {
 
@@ -47,7 +50,8 @@ public:
                         uint64_t byteSizeThreshold,
                         const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                         TapeSessionTracker& tracker,
-                        const cta::log::LogContext& lc);
+                        const cta::log::LogContext& lc,
+                        std::stop_token stopToken = {});
 
   /**
    * Wait for the inner thread to finish
@@ -68,14 +72,9 @@ public:
    */
   void requestInjection(bool lastCall);
 
-  /**
-   * Contact the client to make sure there are really something to do
-   * Something = migration at most  maxFiles or at least maxBytes
-   *
-   * @param noFilesToMigrate[out] will be true if it triggered an empty mount because of no files to migrate
-   * @return true if there are jobs to be done, false otherwise
-   */
-  bool synchronousInjection(bool& noFilesToMigrate);
+  /// Fetch and inject the initial archive batch.
+  /// Reports available work after injection, no work, or a stop requested before fetching.
+  WorkFetchResult synchronousInjection();
 
   /**
    * Send an end token in the request queue. There should be no subsequent
@@ -251,6 +250,9 @@ private:
 
   /// First injected file's sequence, used by TapeSession to initialize the tape writer.
   uint64_t m_firstFseqToWrite = 0;
+
+  /// Stop scheduler fetching while allowing acquired jobs to drain.
+  std::stop_token m_stopToken;
 };
 
 }  // namespace cta::tape::daemon

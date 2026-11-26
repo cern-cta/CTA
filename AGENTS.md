@@ -8,7 +8,8 @@ Ask when unresolved ambiguity materially affects scope or correctness.
 ## Finding the relevant code
 
 Use [Development](docs/content/dev/index.md) for workflows and architecture.
-Build defaults, language versions and platform configuration live in `project.json`; compiler options live in the root `CMakeLists.txt`.
+Build defaults, the C++ language version and platform configuration live in `project.json`; compiler options live in the root `CMakeLists.txt`.
+The default Python interpreter is selected by `.python-version`; Python dependencies and compatibility settings live in `pyproject.toml`.
 
 The intended layout places reusable libraries under `lib/<language>/`, command-line tools under `tools/`, and service applications under `app/`.
 This layout is still being adopted: substantial code remains in top-level directories such as `common/`, `catalogue/`, `scheduler/` and `taped/`.
@@ -99,15 +100,16 @@ Use appropriate schema checks or deployment/system tests when the change require
 - **Catalogue schema:** `catalogue/cta-catalogue-schema/` is a submodule; changes are exceptional and normally undertaken only at a developer's explicit instruction.
   Implement general features against the existing schema rather than assuming it can be changed.
   If a schema change would significantly improve the solution or simplify the implementation, explain the benefit to the developer before proceeding with that change.
-  Schema changes require coordinated Liquibase migration work and deployment testing; follow [Schema Development](docs/content/dev/internals/components/catalogue/schema-development.md).
+  Schema changes require coordinated Liquibase migration work and deployment testing; follow [Schema Development](docs/content/dev/internals/shared-state/catalogue/schema-development.md).
 - **C++ naming:** use the `m_` prefix for class data members.
 - **Layering:** the common library must not depend on higher layers such as frontend, scheduler or tape-daemon code, regardless of directory layout.
   Move shared types into the common library when needed.
 - **Configuration:** TOML loading uses reflection through `lib/runtime/include/runtime/config/ConfigLoader.hpp`.
   Config fields use snake_case matching the TOML keys; keep `memberCount()` equal to the number of data members.
+  Follow [Optional fields and feature activation](docs/content/dev/internals/service-runtime.md#optional-fields-and-feature-activation) when designing or changing configuration fields, defaults, feature gates and their consumers.
 - **Errors:** user/configuration errors throw `cta::exception::UserError` with actionable context such as the file path and offending value.
   Shared exceptions belong in `common/exception/`; module-specific exceptions belong beside the code that throws them.
-- **Test helpers:** prefer `tests/TempFile.hpp` and `tests/Argv.hpp`, in namespace `unitTests`, over hand-rolled equivalents.
+- **Test helpers:** prefer `tests/support/TempFile.hpp` and `tests/support/Argv.hpp`, in namespace `unitTests`, over hand-rolled equivalents.
 - **Helm configuration:** when a value appears repeatedly in a template, bind it to a template variable once, as with `$jwtRevokeListPath` in `frontend-wfe`.
 
 ### Code comments and documentation
@@ -140,7 +142,11 @@ Do not use `git diff --check` as evidence that functionality works.
 Follow [Documentation Changes](docs/content/dev/contributing/documentation.md) and read nearby pages before editing.
 
 - Match the surrounding prose and established terminology.
+- A code change does not automatically require a documentation change. Update docs only when the reader’s workflow or understanding needs to change. Prefer removing obsolete text over adding explanatory notes.
 - Maintain one authoritative explanation; link rather than duplicate it.
+- Write documentation and code comments for someone encountering the final design without the conversation history.
+  Freely consolidate explanations introduced or substantially changed on the current branch as the design evolves, rather than appending answers to review questions.
+  For pre-existing documentation, prefer targeted corrections needed by the task; broader rewrites require a concrete clarity or correctness problem relevant to the change.
 - Keep steady-state operation in deployment/configuration guides and version-specific migration in upgrade guides.
 - Keep CI Helm guidance in development/CI documentation, not operator deployment instructions.
 - Edit the original manual or example when a documentation page includes it.

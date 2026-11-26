@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import LogicalLibraryDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import LogicalLibrary, LogicalLibraryState, PhysicalLibrary, Tape
-from typing_extensions import override
 
 
 class LogicalLibraryDaoMock(LogicalLibraryDao):
@@ -57,7 +56,7 @@ class LogicalLibraryDaoMock(LogicalLibraryDao):
         self._handler.delete(self.resource_type, name)
 
     @override
-    def list(self, *, state: Optional[LogicalLibraryState] = None) -> Iterator[LogicalLibrary]:
+    def list(self, *, state: LogicalLibraryState | None = None) -> Iterator[LogicalLibrary]:
         yield from (
             logical_library
             for logical_library in self._handler.iter(self.resource_type)
@@ -70,8 +69,8 @@ class LogicalLibraryDaoMock(LogicalLibraryDao):
         name: str,
         /,
         *,
-        physical_library_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        physical_library_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as logical_library:
             if physical_library_name is not None:

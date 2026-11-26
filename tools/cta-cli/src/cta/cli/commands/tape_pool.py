@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -43,11 +42,11 @@ def create(obj: AppContext, name: str, virtual_organisation: str, partial_tape_n
 def update(
     obj: AppContext,
     name: str,
-    virtual_organisation: Optional[str],
-    partial_tape_number: Optional[int],
-    encryption_key: Optional[str],
-    supply: Optional[str],
-    comment: Optional[str],
+    virtual_organisation: str | None,
+    partial_tape_number: int | None,
+    encryption_key: str | None,
+    supply: str | None,
+    comment: str | None,
 ):
     """Update CTA tape pool."""
     supply_pools = supply.split(",") if supply else None
@@ -67,7 +66,7 @@ def update(
 @click.option("--virtual-organisation", "--vo")
 @click.option("--encrypted/--not-encrypted", "-e/--ne", default=None)
 @click.pass_obj
-def list_command(obj: AppContext, virtual_organisation: Optional[str], encrypted: Optional[bool]):
+def list_command(obj: AppContext, virtual_organisation: str | None, encrypted: bool | None):
     """List CTA tape pools."""
     print_dataclasses(
         obj.cta_client.tape_pool.list(virtual_organisation_name=virtual_organisation, encrypted=encrypted),

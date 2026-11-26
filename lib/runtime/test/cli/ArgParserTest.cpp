@@ -7,7 +7,7 @@
 
 #include "common/exception/UserError.hpp"
 #include "runtime/cli/CommonCliOptions.hpp"
-#include "tests/Argv.hpp"
+#include "tests/support/Argv.hpp"
 #include "version.hpp"
 
 #include <chrono>
@@ -174,7 +174,7 @@ Options:
   -c, --config PATH
       Path to the main configuration file. Defaults to /etc/cta/cta-test.toml if not provided.
   --config-strict
-      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+      Reject unknown keys, missing required keys, and type mismatches in the config file.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
   --runtime-dir PATH
@@ -202,7 +202,7 @@ Options:
   -c, --config PATH
       Path to the main configuration file. Defaults to /etc/cta/cta-test.toml if not provided.
   --config-strict
-      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+      Reject unknown keys, missing required keys, and type mismatches in the config file.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
   --runtime-dir PATH
@@ -231,7 +231,7 @@ Options:
   -c, --config PATH
       Path to the main configuration file. Defaults to /etc/cta/cta-test.toml if not provided.
   --config-strict
-      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+      Reject unknown keys, missing required keys, and type mismatches in the config file.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
   --runtime-dir PATH
@@ -263,7 +263,7 @@ Options:
   -c, --config PATH
       Path to the main configuration file. Defaults to /etc/cta/cta-test.toml if not provided.
   --config-strict
-      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+      Reject unknown keys, missing required keys, and type mismatches in the config file.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
   --runtime-dir PATH

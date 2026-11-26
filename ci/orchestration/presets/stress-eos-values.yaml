@@ -116,9 +116,9 @@ server:
     extraVolumes: *extra-volumes
 
   qdb:
-    probes:
+    readinessProbe:
       # Keep readiness checks infrequent during throughput measurements.
-      readinessPeriodSeconds: 10
+      periodSeconds: 10
 
     persistence:
       enabled: true

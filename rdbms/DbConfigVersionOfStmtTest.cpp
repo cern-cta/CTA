@@ -4,7 +4,7 @@
  */
 
 #include "rdbms/StmtTest.hpp"
-#include "tests/RdbmsUnitTestsCmdLineArgs.hpp"
+#include "tests/runners/rdbms/RdbmsTestContext.hpp"
 
 namespace {
 

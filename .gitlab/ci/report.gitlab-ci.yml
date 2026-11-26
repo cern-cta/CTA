@@ -20,3 +20,55 @@ danger-review:
     - git branch -f danger_head "$DANGER_HEAD_SHA"
   script:
     - danger --verbose --dangerfile=ci/danger/Dangerfile --fail-on-errors=true
+
+report-release:
+  allow_failure: true
+  stage: report
+  needs:
+    - job: $[[ matrix.REPORT_JOB ]]
+      artifacts: false
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+  image: $IMAGE_PYTHON
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  script:
+    - python3 -m ci.release.report_job --job "$REPORT_JOB" --description "$REPORT_DESCRIPTION"
+  # Serialize issue updates, not the producers or the rest of the pipeline.
+  resource_group: release-report-$CI_PIPELINE_ID
+  parallel:
+    matrix:
+      - REPORT_JOB: ["internal-release-cta"]
+        REPORT_DESCRIPTION: ["Internal RPM publication"]
+      - REPORT_JOB: ["public-release-cta-unstable"]
+        REPORT_DESCRIPTION: ["Unstable RPM publication and verification"]
+      - REPORT_JOB: ["public-release-cta-testing"]
+        REPORT_DESCRIPTION: ["Testing RPM publication and verification"]
+      - REPORT_JOB: ["public-release-cta-stable"]
+        REPORT_DESCRIPTION: ["Stable RPM publication and verification"]
+      - REPORT_JOB:
+          - "publish-images-private: [cta-taped]"
+          - "publish-images-private: [cta-rmcd]"
+          - "publish-images-private: [cta-maintd]"
+          - "publish-images-private: [cta-admin-api]"
+          - "publish-images-private: [cta-workflow-api]"
+          - "publish-images-private: [cta-tools]"
+          - "publish-images-private: [cta-debug]"
+        REPORT_DESCRIPTION: ["Private image publication"]
+      - REPORT_JOB:
+          - "publish-images-public: [cta-taped]"
+          - "publish-images-public: [cta-rmcd]"
+          - "publish-images-public: [cta-maintd]"
+          - "publish-images-public: [cta-admin-api]"
+          - "publish-images-public: [cta-workflow-api]"
+          - "publish-images-public: [cta-tools]"
+          - "publish-images-public: [cta-debug]"
+        REPORT_DESCRIPTION: ["Public image publication"]
+      - REPORT_JOB: ["publish-python-private"]
+        REPORT_DESCRIPTION: ["Private Python package publication"]
+      - REPORT_JOB: ["publish-python-public"]
+        REPORT_DESCRIPTION: ["Public Python package publication"]
+      - REPORT_JOB: ["stress-test"]
+        REPORT_DESCRIPTION: ["Stress tests"]

@@ -40,25 +40,28 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
 #ifdef CTA_PGSCHED
   // Opportunistic batching of archive/retrieve queueing, in front of the Scheduler
   const auto& batching = config.opportunistic_batching;
-  const bool batchingEnabled = config.experimental.opportunistic_batching_enabled;
+  const bool batchingEnabled = config.featureEnabled(WorkflowApiConfig::Feature::Batching);
+  // TODO: this is a bit ugly; ideally the whole layer is optional
   FrontendBatchingLayer batchingLayer(serviceResources.getScheduler(),
                                       batchingEnabled,
-                                      batching.window_ms,
-                                      batching.max_batch_size);
+                                      batchingEnabled ? batching->window_ms : 0,
+                                      batchingEnabled ? batching->max_batch_size : 1);
   {
     cta::log::ScopedParamContainer params(lc);
     params.add("enabled", batchingEnabled)
-      .add("windowMs", batching.window_ms)
-      .add("maxBatchSize", batching.max_batch_size);
+      .add("windowMs", batchingEnabled ? batching->window_ms : 0)
+      .add("maxBatchSize", batchingEnabled ? batching->max_batch_size : 1);
     lc.log(cta::log::INFO, "Opportunistic batching configured");
   }
 #endif
 
   // JWT authentication: the JWKS cache is refreshed in the background by the manager itself
-  auto jwtAuthManager = grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log);
+  auto jwtAuthManager = config.auth.isMethodEnabled(cta::grpc_server::AuthMethod::JWT) ?
+                          grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log) :
+                          nullptr;
 
   // mTLS: the clients present a certificate which is checked against the configured aliases
-  const bool useMtls = config.auth.mtls.has_value() && config.auth.mtls->enabled;
+  const bool useMtls = config.auth.isMethodEnabled(cta::grpc_server::AuthMethod::MTLS);
   if (useMtls) {
     lc.log(cta::log::INFO, "Using mutual TLS to authenticate WFE client requests");
   }

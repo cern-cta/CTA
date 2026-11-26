@@ -71,7 +71,7 @@ def run_readtp(
         # Do not leave partial output behind when cta-readtp fails
         cta_taped.exec(f"rm -rf {output_dir}")
         raise
-    return ReadtpOutput(output_dir, dict(zip(expected_fseqs, destinations)))
+    return ReadtpOutput(output_dir, dict(zip(expected_fseqs, destinations, strict=False)))
 
 
 def assert_readtp_output(cta_taped: CtaTapedHost, tape_files: ReadtpTapeFiles, output: ReadtpOutput) -> None:
@@ -116,7 +116,8 @@ def describe_readtp_tape_files(
     assert fseqs == list(range(fseqs[0], fseqs[0] + len(fseqs))), "Expected consecutively archived tape files"
 
     contents = {
-        int(tape_file["fSeq"]): archived_file.content for tape_file, archived_file in zip(tape_files, archived_files)
+        int(tape_file["fSeq"]): archived_file.content
+        for tape_file, archived_file in zip(tape_files, archived_files, strict=False)
     }
     return ReadtpTapeFiles(vids.pop(), fseqs, contents)
 
@@ -168,7 +169,7 @@ def readtp_tape_files(
         # Pack them nicely so that we can use this later to compare the results
         contents = {
             int(tape_file["fSeq"]): archived_file.content
-            for tape_file, archived_file in zip(tape_files, archived_files)
+            for tape_file, archived_file in zip(tape_files, archived_files, strict=False)
         }
         yield ReadtpTapeFiles(vids.pop(), fseqs, contents)
     finally:

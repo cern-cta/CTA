@@ -32,7 +32,8 @@ readonly available_tests=(
   teardown
   $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done)
 )
-readonly venv_dir="${project_root}/ci/system_tests/.venv"
+# Honour UV_PROJECT_ENVIRONMENT so the devcontainer keeps its own interpreter instead of the host-shared .venv.
+readonly venv_dir="${UV_PROJECT_ENVIRONMENT:-${project_root}/.venv}"
 readonly program_name="cta-dev"
 readonly debug_profile_file="${project_root}/ci/orchestration/manifests/cta-debug-profile.yaml"
 
@@ -48,7 +49,7 @@ enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
 # Neutral source version; native packaging adds its revision separately.
-cta_version=$(python3 "${project_root}/ci/utils/cta_version.py")
+cta_version=$(python3 "${project_root}/ci/build/cta_version.py")
 cta_image_tag=""
 
 # Build
@@ -664,10 +665,10 @@ parse_options() {
     enable_internal_repos=false
     internal_repos_forced_public=true
 
-    # Debian runtime images are not available yet; fail before starting a package build.
+    # Debian deployments are not supported yet; fail before replacing the managed deployment.
     case "$command" in
-      images|up|debug|all)
-        unsupported_argument "Debian 13 currently supports package builds only; use 'cta-dev build --platform debian13'."
+      up|debug|all)
+        unsupported_argument "Debian 13 supports package and image builds only; use 'cta-dev build' or 'cta-dev images'."
         ;;
     esac
   fi
@@ -689,7 +690,7 @@ parse_options() {
     cta_image_tag_is_valid "$cta_image_tag" || \
       unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
   else
-    cta_image_tag=$(python3 "${project_root}/ci/utils/cta_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+    cta_image_tag=$(python3 "${project_root}/ci/build/cta_version.py" image "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
   fi
 
   # An explicit image tag refers to an image built elsewhere, most commonly by the CI. Without
@@ -818,7 +819,13 @@ create_build_configuration() {
   local -r xrootd_ssi_version="$1"
   local -r num_jobs="$2"
 
+  local project_fingerprint
+  # Dependency pins are inputs even when the command-line options are unchanged.
+  project_fingerprint=$(sha256sum "${project_root}/project.json" | cut -d ' ' -f 1) \
+    || die "Failed to fingerprint project.json."
+
   jq -cn \
+    --arg projectFingerprint "$project_fingerprint" \
     --arg platform "$platform" \
     --arg schedulerType "$scheduler_type" \
     --argjson oracleSupport "$oracle_support" \
@@ -834,7 +841,7 @@ create_build_configuration() {
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
-    '{platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
+    '{projectFingerprint: $projectFingerprint, platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
       enableSccache: $enableSccache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
       sanitizers: $sanitizers, runUnitTests: ($skipUnitTests | not),
@@ -883,7 +890,6 @@ build_cta() {
   local -r num_jobs=$(nproc --ignore=2)
   local -r build_command=(podman build)
   local -r build_dockerfile="ci/docker/cta/${platform}/build.Dockerfile"
-  local -r source_package_directory=$(package_directory source)
   local dockerfile_fingerprint
   # Record the Dockerfile contents, including uncommitted edits.
   dockerfile_fingerprint=$(sha256sum "$build_dockerfile" | cut -d ' ' -f 1) \
@@ -975,16 +981,16 @@ build_cta() {
         sanitizers) log_warn "Sanitizer mode changed: ${old_value} -> ${new_value}" ;;
         ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
         xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
+        projectFingerprint) log_warn "Project metadata changed; refreshing source packages and dependencies." ;;
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
           log_warn "Repository mode changed: internal repositories ${old_value} -> ${new_value}"
-          reinstall_source_packages=true
           ;;
       esac
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
        "enableSccache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "sanitizers",
-       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
+       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos", "projectFingerprint"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' <<<"$previous_configuration_json")
@@ -994,8 +1000,6 @@ build_cta() {
       automatic_clean_build_dirs=true
     fi
   else
-    rebuild_source_packages=true
-    reinstall_source_packages=true
     if [[ $build_output_exists == true ]]; then
       if [[ -f "$build_state_file" ]]; then
         log_warn "Build state change detected."
@@ -1009,11 +1013,10 @@ build_cta() {
   if [[ $automatic_clean_build_dirs == true ]]; then
     log_warn "Automatically cleaning build/${platform}/."
     clean_build_dirs=true
-    rebuild_source_packages=true
-    reinstall_source_packages=true
   fi
 
-  if [[ $clean_build_dirs == true ]]; then
+  # Regenerate source packages and refresh dependencies together when build inputs or output change.
+  if [[ $state_matches_configuration == false || $clean_build_dirs == true ]]; then
     rebuild_source_packages=true
     reinstall_source_packages=true
   fi
@@ -1092,11 +1095,14 @@ build_cta() {
   fi
 
   if [[ $package_command == binary && $install_source_packages == true ]]; then
+    local source_package_directory
+    source_package_directory=$(package_directory source)
     build_package_flags+=(
       --install-source-packages
       --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
     )
   fi
+
   # Let the package builder clean both build output and generated packaging state inside the container.
   [[ $clean_build_dirs == true ]] && build_package_flags+=(--clean-build-dir)
   [[ $enable_debug_image == false ]] && build_package_flags+=(--skip-test-packages)
@@ -1121,7 +1127,7 @@ build_cta() {
 
   # Resolve native package metadata before invoking the container build.
   local package_version
-  package_version=$(python3 "${project_root}/ci/utils/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+  package_version=$(python3 "${project_root}/ci/build/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 
   print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.
@@ -1306,7 +1312,7 @@ deploy_cta() {
 # Select and run a system test in the installed Python environment.
 test_cta() {
   [[ -x "$venv_dir/bin/python" && -x "$venv_dir/bin/pytest" ]] || \
-    die "CTA system-test environment is missing. Run '$(basename "$0") install' first."
+    die "CTA development environment is missing. Run '$(basename "$0") install' first."
   print_header "RUNNING TESTS"
 
   source "$venv_dir/bin/activate" || (log_error "Failed to activate the Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
@@ -1423,12 +1429,12 @@ all_cta() {
   print_stage_summary
 }
 
-# Install the command, Bash completion, test environment, and optional merge driver.
+# Install the command, Bash completion, development environment, and Git hooks.
 install_cta_dev() {
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
   local -r script_path="$(realpath "$0")"
-  local -r requirements_path="${project_root}/ci/system_tests/requirements.txt"
+  command -v uv >/dev/null 2>&1 || die "uv is required to install the development environment. Install uv and retry."
   local -r completion_src="${project_root}/ci/${program_name}.bash-completion"
   local -r completion_dir="$HOME/.local/share/bash-completion/completions"
   local -r completion_dst="${completion_dir}/${program_name}"
@@ -1437,7 +1443,8 @@ install_cta_dev() {
   echo "  - Install the $program_name command symlink to $link_path"
   echo "  - Install Bash completion to $completion_dst"
   echo "  - Create a Python virtual environment in $venv_dir"
-  echo "  - Install dependencies from $requirements_path"
+  echo "  - Install the Python workspace with development dependencies"
+  echo "  - Install the pre-commit Git hook"
   read -r -p "Continue? [y/N] " confirm
   [[ "$confirm" =~ ^[Yy]$ ]] || return 1
 
@@ -1448,22 +1455,16 @@ install_cta_dev() {
   mkdir -p "$completion_dir"
   install -m 644 "$completion_src" "$completion_dst"
 
-  if command -v uv >/dev/null 2>&1; then
-    uv venv "$venv_dir"
-    uv pip install --python "$venv_dir/bin/python" -r "$requirements_path"
-  else
-    python3 -m venv "$venv_dir"
-    "$venv_dir/bin/pip" install -r "$requirements_path"
-  fi
+  log_task "Preparing the Python development environment..."
+  UV_PROJECT_ENVIRONMENT="$venv_dir" uv sync --project "$project_root" \
+    --locked --all-packages --all-extras --group dev
 
-  # Setup git merge driver for .secrets.baseline
-  if command -v detect-secrets >/dev/null 2>&1; then
-    log_task "Setting up git merge driver for .secrets.baseline"
-    git config merge.detect-secrets.name "Merge driver for detect-secrets baseline"
-    git config merge.detect-secrets.driver "$project_root/scripts/git-merge-detect-secrets %O %A %B"
-  else
-    log_warn "detect-secrets not found in PATH. Skipping merge driver setup for .secrets.baseline"
-  fi
+  log_task "Installing the pre-commit Git hook..."
+  UV_PROJECT_ENVIRONMENT="$venv_dir" uv run --directory "$project_root" --no-sync pre-commit install
+
+  log_task "Setting up git merge driver for .secrets.baseline"
+  git -C "$project_root" config merge.detect-secrets.name "Merge driver for detect-secrets baseline"
+  git -C "$project_root" config merge.detect-secrets.driver "$project_root/scripts/git-merge-detect-secrets %O %A %B"
 
   log_success "Installed ${program_name}."
   if [[ ! -r /usr/share/bash-completion/bash_completion \

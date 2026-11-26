@@ -6,7 +6,7 @@
 #include "runtime/config/ConfigLoader.hpp"
 
 #include "runtime/config/CommonConfig.hpp"
-#include "tests/TempFile.hpp"
+#include "tests/support/TempFile.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -832,7 +832,7 @@ default_value = "hi"
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
-TEST(ConfigLoader, StrictThrowsOnMissingOptionals) {
+TEST(ConfigLoader, StrictAllowsMissingOptionals) {
   TempFile f(R"toml(
 mandatory = 7
 # maybe missing
@@ -840,7 +840,7 @@ default_value = "hi"
 )toml",
              ".toml");
 
-  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_FALSE(cta::runtime::loadFromToml<MyConfig>(f.path(), true).maybe.has_value());
 }
 
 TEST(ConfigLoader, StrictThrowsOnMissingDefaults) {

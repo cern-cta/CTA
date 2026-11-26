@@ -1,15 +1,14 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import TapeFileDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import TapeFile
-from typing_extensions import override
 
 
 def file_identity(*args: Any) -> tuple[Callable[[TapeFile], bool], dict[str, Any]]:

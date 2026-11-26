@@ -23,6 +23,8 @@
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
+#include "common/exception/ChecksumTypeMismatch.hpp"
+#include "common/exception/ChecksumValueMismatch.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
@@ -866,18 +868,30 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
            "request does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
-  if (deleteRequest.checksumBlob.has_value() && deleteRequest.checksumBlob.value() != archiveFile.checksumBlob) {
-    std::ostringstream msg;
-    msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
-        << " to the recycle-bin because the checksum of "
-           "the request does not match that of the archived file: archiveFileId="
-        << archiveFile.archiveFileID << " requestChecksum=" << deleteRequest.checksumBlob.value().serialize()
-        << " archiveFileChecksum=" << archiveFile.checksumBlob.serialize();
-    log::LogContext lc(m_log);
-    lc.log(log::ALERT,
-           "Failed to move archive file to the recycle-bin because the checksum of the request "
-           "does not match that of the archived file.");
-    throw cta::exception::Exception(msg.str());
+  if (deleteRequest.checksumBlob.has_value()) {
+    const auto& requestChecksum = deleteRequest.checksumBlob.value();
+
+    const auto throwChecksumMismatch = [&]() {
+      std::ostringstream msg;
+      msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
+          << " to the recycle-bin because the checksum of "
+             "the request does not match that of the archived file: archiveFileId="
+          << archiveFile.archiveFileID << " requestChecksum=" << requestChecksum.serialize()
+          << " archiveFileChecksum=" << archiveFile.checksumBlob.serialize();
+      log::LogContext lc(m_log);
+      lc.log(log::ALERT,
+             "Failed to move archive file to the recycle-bin because the checksum of the request "
+             "does not match that of the archived file.");
+      throw cta::exception::Exception(msg.str());
+    };
+
+    try {
+      requestChecksum.validate(archiveFile.checksumBlob);
+    } catch (const cta::exception::ChecksumTypeMismatch&) {
+      throwChecksumMismatch();
+    } catch (const cta::exception::ChecksumValueMismatch&) {
+      throwChecksumMismatch();
+    }
   }
   if (deleteRequest.diskFilePath.empty()) {
     std::ostringstream msg;

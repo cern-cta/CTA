@@ -10,7 +10,7 @@ Archival creates the tape copies required by a file's storage class. The file mu
 
 The steps below describe non-empty files. Permitted [zero-length submissions](data-integrity.md#zero-length-files) return success at `CLOSEW` without queueing a tape write, creating a tape copy or producing the usual transfer-completion report. Configuration can instead reject empty files.
 
-1. **Register the file (`CREATE`).** The disk system contacts the [Workflow Frontend](../components/workflow-frontend.md) to validate the storage class and archive routes and obtain an archive file ID. Registration does not transfer data to tape.
+1. **Register the file (`CREATE`).** The disk system contacts the [Workflow Frontend API](../components/workflow-frontend.md) to validate the storage class and archive routes and obtain an archive file ID. Registration does not transfer data to tape.
 2. **Submit the archive request (`CLOSEW`).** Once writing to disk finishes, the disk system supplies the information needed to archive the file, including its identity, size, checksum, and disk location.
 3. **Queue the required copies.** The storage class specifies the number of copies, and archive routes select a destination tape pool for each. Copies are queued for pools, not individual tapes; see [Storage Model](storage-model.md).
 4. **Write and record each copy.** When [scheduling](scheduling.md) allocates a suitable tape and drive, the tape daemon reads the file from disk and writes it to tape. Successful copies are recorded in the catalogue with their tape locations.
@@ -43,7 +43,7 @@ sequenceDiagram
     participant Client
     participant MGM as EOS MGM
     participant FST as EOS FST
-    participant API as CTA Workflow Frontend
+    participant API as CTA Workflow Frontend API
     participant TD as CTA Tape Daemon
     participant MD as CTA Maintenance Daemon
 
@@ -71,7 +71,7 @@ sequenceDiagram
     Note over MGM: Disk replica may be evicted according to retention policy
 ```
 
-### EOS events not handled by the Workflow Frontend {#eos-events-not-handled-by-the-workflow-api}
+### EOS events not handled by the Workflow Frontend API {#eos-events-not-handled-by-the-workflow-api}
 
 EOS generates `OPENW` when an existing file is opened for writing. CTA does not handle this event: archived file contents are immutable, and modifying the disk file would not update its tape copies. EOS must prevent such modifications for tape-backed files; see [EOS Configuration](../../ops/deploy-and-configure/integrations/eos.md#configuration) for the immutability ACL settings.
 

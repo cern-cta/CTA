@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import click
 from cta.cli.click_extension.aliases import ClickAliasedGroup
@@ -50,12 +49,12 @@ def create(
 def update(
     obj: AppContext,
     name: str,
-    disk_instance: Optional[str],
-    read_max_drives: Optional[int],
-    write_max_drives: Optional[int],
-    max_file_size: Optional[int],
-    type: Optional[str],
-    comment: Optional[str],
+    disk_instance: str | None,
+    read_max_drives: int | None,
+    write_max_drives: int | None,
+    max_file_size: int | None,
+    type: str | None,
+    comment: str | None,
 ):
     """Update CTA virtual organization."""
     obj.cta_client.virtual_organisation.update(

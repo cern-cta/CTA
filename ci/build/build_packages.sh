@@ -358,7 +358,7 @@ install_rpm_build_dependencies() {
     || compgen -G "$srpm_dir/*.rpm" >/dev/null \
     || die "No source RPMs found in $srpm_dir."
 
-  ./ci/project-json/generate_versionlock.py --platform "$platform" >/etc/yum/pluginconf.d/versionlock.list
+  "$project_root/ci/project-json/generate_versionlock.py" --platform "$platform" >/etc/yum/pluginconf.d/versionlock.list
   cp -f "ci/docker/cta/${platform}/etc/yum.repos.d-public/"*.repo /etc/yum.repos.d/
   if [[ "$use_internal_repos" == true ]]; then
     cp -f "ci/docker/cta/${platform}/etc/yum.repos.d-internal/"*.repo /etc/yum.repos.d/
@@ -379,10 +379,11 @@ install_build_dependencies() {
   case "$package_format" in
     rpm) install_rpm_build_dependencies "$package_dir" ;;
     deb)
-      local sources=("$package_dir/"*.dsc)
-      [[ -f "${sources[0]}" ]] || die "No Debian source packages found in $package_dir."
+      # Older versions can remain in the output directory with incompatible dependency pins.
+      local source_package="$package_dir/cta_${cta_version}.dsc"
+      [[ -f "$source_package" ]] || die "Debian source package $source_package does not exist."
       apt-get update
-      apt-get build-dep -y --no-install-recommends "${sources[@]}"
+      apt-get build-dep -y --no-install-recommends "$source_package"
       ;;
     *) die "No dependency installer is implemented for package format $package_format." ;;
   esac

@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import unittest
 from pathlib import Path
+from typing import override
 from unittest.mock import MagicMock
 
 import pytest
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
-from typing_extensions import override
 
 
 class ReleaseContextTest(unittest.TestCase):

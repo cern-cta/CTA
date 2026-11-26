@@ -59,26 +59,18 @@ void RecallTaskInjector::startThreads() {
 //------------------------------------------------------------------------------
 void RecallTaskInjector::initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue) {
   m_raoManager = cta::tape::rao::RAOManager(dataConfig, &m_drive, catalogue);
-  m_raoFuture = m_raoPromise.get_future();
+  m_driveReadyForRAOFuture = m_driveReadyForRAOPromise.get_future();
 }
 
 //------------------------------------------------------------------------------
-//waitForPromise
+//waitForDriveReadyForRAO
 //------------------------------------------------------------------------------
-void RecallTaskInjector::waitForPromise() const {
-  m_raoFuture.wait();
+bool RecallTaskInjector::waitForDriveReadyForRAO() {
+  return m_driveReadyForRAOFuture.get();
 }
 
-//------------------------------------------------------------------------------
-//setPromise
-//------------------------------------------------------------------------------
-void RecallTaskInjector::setPromise() {
-  try {
-    m_raoPromise.set_value();
-  } catch (const std::exception& exc) {
-    throw cta::exception::Exception(std::string("In RecallTaskInjector::setPromise() got std::exception: ")
-                                    + exc.what());
-  }
+void RecallTaskInjector::setDriveReadyForRAO(bool ready) {
+  m_driveReadyForRAOPromise.set_value(ready);
 }
 
 /**
@@ -123,8 +115,7 @@ bool RecallTaskInjector::testDiskSpaceReservationWorking() {
     m_lc.log(cta::log::INFO, "Disk space reservation test passed, can mount tape");
     return true;
   } else {
-    m_lc.log(cta::log::INFO, "Disk space reservation test failed, will not mount tape");
-    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+    requeueRetainedJobs();
     return false;
   }
 }
@@ -167,9 +158,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     for (auto& jobptr : nextJobBatch) {
       m_jobs.emplace_back(jobptr.release());
     }
-    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
-    m_files = 0;
-    m_bytes = 0;
+    requeueRetainedJobs();
     m_lc.log(cta::log::WARNING,
              "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed, "
              "requeued all pending jobs");
@@ -213,10 +202,19 @@ void RecallTaskInjector::injectBulkRecalls() {
   std::vector<uint64_t> raoOrder;
 
   bool useRAO = m_raoManager.useRAO();
-  if (useRAO) {
+  // Don't query if we are stopping anyway
+  if (useRAO && !m_stopToken.stop_requested()) {
     m_lc.log(cta::log::INFO, "Performing RAO reordering");
 
     raoOrder = m_raoManager.queryRAO(m_jobs, m_lc);
+  }
+
+  if (m_stopToken.stop_requested()) {
+    requeueRetainedJobs();
+    // No first task may have been injected: release the tape worker waiting for it.
+    signalEndDataMovement();
+    setFirstTasksInjectedPromise();
+    return;
   }
 
   std::ostringstream recallOrderLog;
@@ -274,8 +272,11 @@ void RecallTaskInjector::injectBulkRecalls() {
 //------------------------------------------------------------------------------
 //synchronousFetch
 //------------------------------------------------------------------------------
-bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
-  noFilesToRecall = false;
+WorkFetchResult RecallTaskInjector::synchronousFetch() {
+  if (m_stopToken.stop_requested()) {
+    requeueRetainedJobs();
+    return WorkFetchResult::StopRequested;
+  }
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
    * oracle::occi::Number which is limited to ~56 bits precision
@@ -285,13 +286,15 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
                         m_raoManager.getMaxFilesSupported().value() :
                         m_maxBatchFiles;
   if (reqFiles <= m_files) {
-    return true;  //No need to pop from the queue, injector already  holds enough files, but we return there is still work to be done
+    // Retained jobs already satisfy the fetch limit.
+    return WorkFetchResult::WorkAvailable;
   }
   reqFiles -= m_files;
 
   uint64_t reqSize = 1024L * 1024 * 1024 * 1024 * 1024;
   if (reqSize <= m_bytes) {
-    return true;  //No need to pop from the queue, injector already holds enough bytes, but we return there is still work to be done
+    // Retained jobs already satisfy the fetch limit.
+    return WorkFetchResult::WorkAvailable;
   }
   reqSize -= m_bytes;
   // Preserve the original exception for session failure handling.
@@ -301,17 +304,29 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
     m_bytes += j->archiveFile.fileSize;
     m_jobs.emplace_back(j.release());
   }
-  m_fetched = jobsList.size();
-  noFilesToRecall = !jobsList.size();
+  const auto fetchedFiles = jobsList.size();
+  // A scheduler fetch cannot be interrupted; return its jobs if stop arrived during the call.
+  if (m_stopToken.stop_requested()) {
+    requeueRetainedJobs();
+    return WorkFetchResult::StopRequested;
+  }
 
   if (m_jobs.empty()) {
-    m_lc.log(cta::log::INFO, "No files left to recall on the queue or in the injector");
-    return false;
+    return WorkFetchResult::NoWork;
   }
   cta::log::ScopedParamContainer scoped(m_lc);
-  scoped.add("requestedBytes", reqSize).add("requestedFiles", reqFiles).add("fetchedFiles", m_fetched);
+  scoped.add("requestedBytes", reqSize).add("requestedFiles", reqFiles).add("fetchedFiles", fetchedFiles);
   m_lc.log(cta::log::INFO, "Fetched files to recall");
-  return true;
+  return WorkFetchResult::WorkAvailable;
+}
+
+void RecallTaskInjector::requeueRetainedJobs() {
+  if (!m_jobs.empty()) {
+    m_lc.log(cta::log::INFO, "Requeuing uninjected retrieve jobs");
+    m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+    m_files = 0;
+    m_bytes = 0;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -340,22 +355,24 @@ void RecallTaskInjector::deleteAllTasks() {
 //------------------------------------------------------------------------------
 //WorkerThread::popRecalls
 //------------------------------------------------------------------------------
-void RecallTaskInjector::WorkerThread::popRecalls() {
+bool RecallTaskInjector::WorkerThread::popRecalls() {
   while (1) {
     Request req = m_parent.m_queue.pop();
     if (req.end) {
+      if (m_parent.m_stopToken.stop_requested()) {
+        m_parent.requeueRetainedJobs();
+      }
       m_parent.m_lc.log(cta::log::INFO,
                         "Received an end notification from tape thread: triggering the end of session.");
       m_parent.signalEndDataMovement();
-      return;
+      return true;
     }
     m_parent.m_lc.log(cta::log::DEBUG, "RecallJobInjector:run: about to call client interface");
     LogContext::ScopedParam sp01(m_parent.m_lc,
                                  Param("transactionId", m_parent.m_retrieveMount.getMountTransactionId()));
 
     if (!m_parent.m_diskSpaceReservationFailed) {
-      bool noFilesToRecall;
-      m_parent.synchronousFetch(noFilesToRecall);
+      m_parent.synchronousFetch();
       m_parent.injectBulkRecalls();
       if (m_parent.m_diskSpaceReservationFailed) {
         m_parent.signalEndDataMovement();
@@ -363,10 +380,10 @@ void RecallTaskInjector::WorkerThread::popRecalls() {
     }
 
     if (m_parent.m_jobs.empty()) {
-      if (req.lastCall) {
-        m_parent.m_lc.log(cta::log::INFO, "No more file to recall: triggering the end of session.");
+      if (req.lastCall || m_parent.m_stopToken.stop_requested()) {
+        m_parent.m_lc.log(cta::log::INFO, "Ending recall task injection");
         m_parent.signalEndDataMovement();
-        return;
+        return false;
       } else {
         m_parent.m_lc.log(cta::log::DEBUG,
                           "In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.");
@@ -399,13 +416,21 @@ void RecallTaskInjector::WorkerThread::run() {
     m_parent.setFirstTasksInjectedPromise();
   };
 
+  bool producersFinished = false;
   try {
-    if (m_parent.m_raoManager.useRAO()) {
-      /* RecallTaskInjector is waiting to have access to the drive in order
-     * to perform the RAO query;
-     * This waitForPromise() call means that the drive is mounted
-     */
-      m_parent.waitForPromise();
+    // Wake up a blocked worker.
+    // requestInjection only wakes the worker and tells it to look for work. The stop token prevents actual fetching.
+    // The worker requeues retained jobs and lets injected tasks drain.
+    std::stop_callback wakeOnStop(m_parent.m_stopToken, [&] { m_parent.requestInjection(false); });
+    if (m_parent.m_raoManager.useRAO() && !m_parent.m_stopToken.stop_requested()) {
+      // Startup failure releases the workers without attempting RAO on an unavailable drive.
+      if (!m_parent.waitForDriveReadyForRAO()) {
+        m_parent.requeueRetainedJobs();
+        m_parent.m_lc.log(cta::log::INFO, "Tape thread ended before RAO drive access");
+        m_parent.signalEndDataMovement();
+        m_parent.setFirstTasksInjectedPromise();
+        return;
+      }
       try {
         m_parent.m_raoManager.setEnterpriseRAOUdsLimits(m_parent.m_drive.getLimitUDS());
         LogContext::ScopedParam sp(m_parent.m_lc,
@@ -420,11 +445,9 @@ void RecallTaskInjector::WorkerThread::run() {
         m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
       }
       std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
-      if (maxFilesSupportedByRAO && m_parent.m_fetched < maxFilesSupportedByRAO.value()) {
+      if (maxFilesSupportedByRAO && m_parent.m_files < maxFilesSupportedByRAO.value()) {
         /* Fetching until we reach maxSupported for the tape drive RAO */
-        //unused boolean here but need to be kept to respect the synchronousFetch signature
-        bool noFilesToRecall;
-        m_parent.synchronousFetch(noFilesToRecall);
+        m_parent.synchronousFetch();
       }
     }
 
@@ -433,7 +456,7 @@ void RecallTaskInjector::WorkerThread::run() {
       m_parent.signalEndDataMovement();
       m_parent.setFirstTasksInjectedPromise();
     } else {
-      popRecalls();
+      producersFinished = popRecalls();
     }
   } catch (const cta::exception::Exception& ex) {
     handleFailure(ex.getMessageValue(), &ex);
@@ -447,7 +470,8 @@ void RecallTaskInjector::WorkerThread::run() {
    * m_diskWriter might still want some more task (the threshold could be crossed),
    * so we discard everything that might still be in the queue
    */
-  if (m_parent.m_queue.size() > 0) {
+  // A drain wakeup may follow the finish notification; do not wait for a second finish.
+  if (!producersFinished && m_parent.m_queue.size() > 0) {
     bool stillReading = true;
     while (stillReading) {
       Request req = m_parent.m_queue.pop();

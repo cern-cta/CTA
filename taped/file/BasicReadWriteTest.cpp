@@ -21,7 +21,7 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
-#include "tests/TestingArchiveJob.hpp"
+#include "taped/test/TestArchiveJob.hpp"
 
 #include <assert.h>
 #include <iostream>
@@ -51,7 +51,7 @@ public:
                          cta::PositioningMethod::ByBlock) {}
 };
 
-using BasicArchiveJob = unitTests::TestingArchiveJob;
+using BasicArchiveJob = unitTests::TestArchiveJob;
 
 std::vector<std::string> split(std::string& to_split, const std::string& delimiter) {
   std::vector<std::string> toBeReturned;

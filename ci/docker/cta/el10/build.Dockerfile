@@ -4,11 +4,14 @@
 # Dockerfile used for building CTA rpms
 
 # CI installs source-package build dependencies at runtime, which requires root.
-FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest
+FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da9e81c9118bf247a2a02722c04e8ecb4c95a360d4be030463b3c2
 
+# Build helpers must support the distribution Python; newer Python tooling belongs in the Python CI image.
 ARG CARGO_CYCLONEDX_VERSION="=0.5.9"
 ARG SCCACHE_VERSION="=0.18.0"
 
+# OS packages intentionally receive repository fixes on image rebuild.
+# hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core git python3-dnf-plugin-versionlock && \
     dnf config-manager --set-enabled crb && \
     dnf install -y gcc gcc-c++ cmake rpm-build make ninja-build \
@@ -26,5 +29,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # Add cargo-cyclonedx, so that we can generate SBOMs
 RUN cargo install cargo-cyclonedx@${CARGO_CYCLONEDX_VERSION}
 
-# For speeding up Cargo builds
+# Keep the tool installs separate so changing sccache preserves the cargo-cyclonedx layer.
+# hadolint ignore=DL3059
 RUN cargo install sccache@${SCCACHE_VERSION} --locked --no-default-features
+

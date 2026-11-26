@@ -6,11 +6,11 @@ The **disk system** owns the client-facing namespace, manages disk replicas and 
 
 The **disk buffer** is the storage area holding files awaiting archival or retrieved from tape. It is provided by the disk system; the terms are not interchangeable.
 
-During archival, files are copied into the disk buffer, triggering an archival request to be sent to the [Workflow Frontend](workflow-frontend.md).
+During archival, files are copied into the disk buffer, triggering an archival request to be sent to the [Workflow Frontend API](workflow-frontend.md).
 Eventually (minutes to hours later), this request will be processed by a tape daemon, which reads the file from
 the disk buffer and writes it to tape. Once successful archival has been reported back to the disk system, it can evict the disk replica according to its retention policy while preserving the namespace entry.
 
-To read a file back from tape, a retrieve request is sent to the Workflow Frontend. When the request is processed by a tape
+To read a file back from tape, a retrieve request is sent to the Workflow Frontend API. When the request is processed by a tape
 daemon, the file is read from tape and written into a new file replica on the disk buffer (using the same metadata entry
 created during archival).
 
@@ -25,7 +25,7 @@ Requests can carry reporting URLs for completion and failure notifications. The 
 | Archival | Whether the required tape copies were created, before deciding that its source replica can be evicted. |
 | Retrieval | Whether the destination replica is ready or the request failed. Success may be detected through the disk write or an explicit report, depending on the integration. |
 
-The reporting protocol and how a notification updates the namespace are integration-specific. These callbacks are distinct from the workflow events that the disk system sends to the Workflow Frontend.
+The reporting protocol and how a notification updates the namespace are integration-specific. These callbacks are distinct from the workflow events that the disk system sends to the Workflow Frontend API.
 
 ## Integration requirements
 

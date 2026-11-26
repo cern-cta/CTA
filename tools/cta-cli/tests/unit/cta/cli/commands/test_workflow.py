@@ -1,12 +1,12 @@
 # SPDX-FileCopyrightText: 2023-2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Any, Optional
+from typing import Any, override
 from unittest.mock import MagicMock
 
 import pytest
 from click.testing import CliRunner
-from cta.cli.commands.workflow import WorkflowFileInfo, WorkflowServerError
+from cta.cli.commands.workflow import WorkflowFileInfo, WorkflowServerError, proto_to_dict
 from cta.cli.config import AppConfig
 from cta.cli.context import AppContext
 from cta.cli.main import run as cli_run
@@ -17,7 +17,21 @@ from cta.sdk.client.grpc.protobuf_api import file_info_to_pb_options
 from cta.sdk.client.grpc.protobuf_generated import cta_common_pb2, cta_eos_pb2, cta_frontend_pb2
 from cta.sdk.client.grpc.workflow import WorkflowRpcClient
 from cta.sdk.client.protocol import CtaClient
-from typing_extensions import override
+from google.protobuf.descriptor_pb2 import DescriptorProto, FileDescriptorProto
+
+
+def test_proto_to_dict_repeated_fields() -> None:
+    # Exercise both repeated scalar and nested message descriptors with the installed protobuf runtime.
+    message = FileDescriptorProto(
+        name="test.proto", dependency=["base.proto"], message_type=[DescriptorProto(name="Item")]
+    )
+
+    result = proto_to_dict(message)
+
+    assert result["name"] == "test.proto"
+    assert result["dependency"] == ["base.proto"]
+    assert result["message_type"][0]["name"] == "Item"
+    assert result["message_type"][0]["field"] == []
 
 
 class _FakeResponse:
@@ -37,7 +51,7 @@ def mock_send_wf_event(monkeypatch: pytest.MonkeyPatch):
         instance: cta_common_pb2.Service,
         transport: cta_eos_pb2.Transport,
         file_metadata: cta_eos_pb2.Metadata,
-        workflow_options: Optional[dict[str, Any]] = None,
+        workflow_options: dict[str, Any] | None = None,
     ):
         captured["event_type"] = event_type
         captured["transport"] = transport
@@ -250,8 +264,8 @@ def test_timeout_configuration(monkeypatch: pytest.MonkeyPatch):
         def with_call(
             self,
             request: cta_frontend_pb2.Request,
-            metadata: Optional[list[tuple[str, str]]] = None,
-            timeout: Optional[float] = None,
+            metadata: list[tuple[str, str]] | None = None,
+            timeout: float | None = None,
         ):
             captured_call_args["timeout"] = timeout
             return (_FakeResponse(), None)
@@ -384,7 +398,7 @@ def test_exit_code_server_error(monkeypatch: pytest.MonkeyPatch):
     """Verify workflow server errors map to exit code 1."""
     import cta.cli.main as main_mod
 
-    def fake_main(args: Optional[list[str]] = None, standalone_mode: bool = False):
+    def fake_main(args: list[str] | None = None, standalone_mode: bool = False):
         raise WorkflowServerError("server rejected request")
 
     monkeypatch.setattr(main_mod.cta, "main", fake_main)
@@ -399,7 +413,7 @@ def test_exit_code_rpc_failure(monkeypatch: pytest.MonkeyPatch):
     """Verify workflow RPC failures map to exit code 2."""
     import cta.cli.main as main_mod
 
-    def fake_main(args: Optional[list[str]] = None, standalone_mode: bool = False):
+    def fake_main(args: list[str] | None = None, standalone_mode: bool = False):
         raise WorkflowRpcError("rpc failure")
 
     monkeypatch.setattr(main_mod.cta, "main", fake_main)

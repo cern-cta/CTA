@@ -15,6 +15,8 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
   cta-admin-api.toml: |-
+    enabled_features = []
+    enabled_experimental_features = ["telemetry"]
     instance_name = {{ .Release.Namespace | quote }}
 
     [catalogue]
@@ -36,7 +38,6 @@ data:
     # Only used by the objectstore scheduler backend
     [scheduler.client]
       number_of_threads = {{ .Values.conf.schedulerdb.numberOfThreads | int }}
-      thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
       {{- end }}
 
 
@@ -56,13 +57,15 @@ data:
       max_file_size_gb = {{ .Values.conf.frontend.archiveFileMaxSizeGb | int }}
 
 
+    [defaults.repack]
+      max_files_to_select = 0
+
     [logging]
       level = {{ .Values.conf.logger.logLevel | quote }}
       format = {{ .Values.conf.logger.logFormat | quote }}
+      attributes = {}
 
 
-    [experimental]
-      telemetry_enabled = true
 
 
     [telemetry]
@@ -82,10 +85,17 @@ data:
       {{- end }}
 
 
+    [auth]
+      enabled_methods = {{ .Values.conf.auth.methods | toJson }}
+
     {{- if has "jwt" .Values.conf.auth.methods }}
     [auth.jwt]
-      enabled = true
+
       jwks_uri = "file:///etc/cta/jwks.json"
+      cache_refresh_interval = 600
+      pub_key_timeout = 0
+      jwks_total_timeout = 60
+      min_generation = 0
       expected_issuer = {{ .Values.conf.auth.config.jwt.expectedIssuer | quote }}
       expected_audience = {{ .Values.conf.auth.config.jwt.expectedAudience | quote }}
       revoke_list_path = {{ $jwtRevokeListPath | quote }}
@@ -93,7 +103,7 @@ data:
 
     {{- if has "kerberos" .Values.conf.auth.methods }}
       [auth.kerberos]
-        enabled = true
+
         keytab_path = {{ .Values.conf.auth.config.kerberos.keytab | quote }}
         service_principal = {{ .Values.conf.auth.config.kerberos.servicePrincipal | quote }}
     {{- end }}

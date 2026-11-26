@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterable, Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import TapePoolDao
 from cta.sdk.models import Metadata, TapePool, TapePoolStatistics
-from typing_extensions import override
 
 
 class TapePoolDaoCtaAdmin(TapePoolDao):
@@ -36,10 +35,10 @@ class TapePoolDaoCtaAdmin(TapePoolDao):
             metadata=Metadata(
                 raw_data["created"]["username"],
                 raw_data["created"]["host"],
-                datetime.fromtimestamp(int(raw_data["created"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["created"]["time"]), tz=UTC),
                 raw_data["modified"]["username"],
                 raw_data["modified"]["host"],
-                datetime.fromtimestamp(int(raw_data["modified"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["modified"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -53,8 +52,8 @@ class TapePoolDaoCtaAdmin(TapePoolDao):
         self,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        encrypted: Optional[bool] = None,
+        virtual_organisation_name: str | None = None,
+        encrypted: bool | None = None,
     ) -> Iterator[TapePool]:
         filters = {}
         filters |= {} if virtual_organisation_name is None else {"virtualorganisation": virtual_organisation_name}
@@ -76,8 +75,8 @@ class TapePoolDaoCtaAdmin(TapePoolDao):
         *,
         virtual_organisation_name: str,
         min_writable_tape_count: int = 1,
-        encryption_key_name: Optional[str] = None,
-        supply_tape_pool_names: Optional[Iterable[str]] = None,
+        encryption_key_name: str | None = None,
+        supply_tape_pool_names: Iterable[str] | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         data = {
@@ -101,10 +100,10 @@ class TapePoolDaoCtaAdmin(TapePoolDao):
         name: str,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        min_writable_tape_count: Optional[int] = None,
-        supply_tape_pool_names: Optional[Iterable[str]] = None,
-        comment: Optional[str] = None,
+        virtual_organisation_name: str | None = None,
+        min_writable_tape_count: int | None = None,
+        supply_tape_pool_names: Iterable[str] | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if virtual_organisation_name is None else {"virtualorganisation": virtual_organisation_name}

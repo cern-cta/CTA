@@ -60,28 +60,24 @@ These health endpoints can be enabled and configured as follows:
 ???+ "health.example.toml"
 
     ```toml
-    # Configuration for a health server. The health server, if enabled, will expose the following endpoints:
-    # - host:port/health/ready
-    # - host:port/health/live
-    # This allows for configuring readiness and liveness probes if so desired.
+    enabled_features = ["health_server"]
+    enabled_experimental_features = []
+
     [health_server]
-      # Whether to enable the health server or not.
-      # If omitted, false is used.
-      enabled = false
-      # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
-      # Set to 0.0.0.0 to accept connections from anywhere.
-      # When use_unix_domain_socket is enabled, this host value will be unused.
-      # If omitted, 127.0.0.1 is used.
-      host = "127.0.0.1"
-      # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
-      # When use_unix_domain_socket is enabled, this port value will be unused.
-      # If omitted, 8080 is used.
-      port = 8080
-      # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
-      # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
-      # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
-      # If omitted, false is used.
-      use_unix_domain_socket = false
+    transport = "tcp"
+
+    [health_server.tcp]
+    host = "127.0.0.1"
+    port = 8080
     ```
+
+Include `"health_server"` alongside any other enabled features in the root list.
+Use `host = "0.0.0.0"` to accept connections on all IPv4 interfaces.
+Each service sharing a host needs its own TCP port.
+
+For a Unix socket, select `transport = "unix"`, omit `[health_server.tcp]` and start the service with `--runtime-dir <runtime-dir>`.
+The socket is created at `<runtime-dir>/health.sock`.
+To disable the health server, remove it from `enabled_features` and omit `[health_server]` and its child sections.
+
 
 It is recommended to enable the health server on services that support it so that they can be monitored and (if your deployment strategy allows) restarted when necessary.

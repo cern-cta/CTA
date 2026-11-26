@@ -5,7 +5,7 @@
 # - Alma9-minimal vs alma. The minimal image is significantly smaller. The main difference is that it comes with microdnf instead of dnf
 # - We install and remove cta-release in the same layer to minimise image size. Putting it in the base image would increase the image size substantially
 # - note sharing=locked and id for concurrency (dnf caching is not thread safe)
-# - AlmaLinux 9 and repository package versions intentionally float to receive upstream fixes on rebuild
+# - Base-image digests are updated by Renovate; repository packages receive fixes on rebuild
 # - dnf clean is unnecessary because the package caches are BuildKit cache mounts and are not committed to the image
 # - package_context is an external BuildKit build context supplied by the build command
 # - Containers log to stdout by default. The CI deployment overrides this command to exercise file logging and mirrors that file to stdout
@@ -13,27 +13,27 @@
 # =========================================================================
 # CERN CA CERTIFICATES
 # =========================================================================
-# hadolint ignore=DL3007
-FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest AS cern-ca
+FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest@sha256:e92a563cb0755d351faaa535916fcb0d96b41aed90d86deb038b5ee757c6fd00 AS cern-ca
 
 # =========================================================================
 # GRPC HEALTH PROBE
 # =========================================================================
-# hadolint ignore=DL3007
-FROM docker.io/almalinux/9-minimal:latest AS grpc-health-probe
+FROM docker.io/almalinux/9-minimal:latest@sha256:497a580e80d199884cb9fce025384206385790585c5e83477bfc0b9670b6aa88 AS grpc-health-probe
 
 # Download once for frontend readiness checks and tools-image diagnostics.
 RUN curl -fL --proto "=https" --proto-redir "=https" \
     https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.59/grpc_health_probe-linux-amd64 \
     -o /grpc-health-probe && \
+    echo "b74ea9e3fe0e4fb19008a77422b6475e29141b30833a6f82c18941bf6eb6a136  /grpc-health-probe" > /tmp/grpc-health-probe.sha256 && \
+    sha256sum -c /tmp/grpc-health-probe.sha256 && \
+    rm /tmp/grpc-health-probe.sha256 && \
     chmod 0755 /grpc-health-probe
 
 # =========================================================================
 # 1. REPO BUILDER
 # Used to feed the RPMs to the other stages
 # =========================================================================
-# hadolint ignore=DL3007
-FROM docker.io/almalinux/9-minimal:latest AS repo-builder
+FROM docker.io/almalinux/9-minimal:latest@sha256:497a580e80d199884cb9fce025384206385790585c5e83477bfc0b9670b6aa88 AS repo-builder
 
 # hadolint ignore=DL3040,DL3041
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
@@ -52,8 +52,7 @@ RUN /bin/bash -o pipefail -c \
 # =========================================================================
 #  2. BASE IMAGE
 # =========================================================================
-# hadolint ignore=DL3007
-FROM docker.io/almalinux/9-minimal:latest AS base
+FROM docker.io/almalinux/9-minimal:latest@sha256:497a580e80d199884cb9fce025384206385790585c5e83477bfc0b9670b6aa88 AS base
 
 ARG SUPPRESS_BUILD_SERVICE_STDOUT=false
 
@@ -122,7 +121,7 @@ RUN setcap \
     cap_sys_rawio=+ep /usr/bin/cta-tape-label
 
 USER cta
-CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict"]
+CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-rmcd
@@ -138,7 +137,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st"
 
 USER cta
-CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
+CMD ["/usr/bin/cta-rmcd", "--config=/etc/cta/cta-rmcd.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-maintd
@@ -154,7 +153,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-maintd"
 
 USER cta
-CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta"]
+CMD ["/usr/bin/cta-maintd", "--config=/etc/cta/cta-maintd.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-admin-api
@@ -172,7 +171,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-admin-api cta-catalogue-utils krb5-workstation"
 
 USER cta
-CMD ["/usr/bin/cta-admin-api"]
+CMD ["/usr/bin/cta-admin-api", "--config=/etc/cta/cta-admin-api.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-workflow-api
@@ -190,7 +189,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-workflow-api"
 
 USER cta
-CMD ["/usr/bin/cta-workflow-api"]
+CMD ["/usr/bin/cta-workflow-api", "--config=/etc/cta/cta-workflow-api.toml", "--config-strict", "--runtime-dir=/run/cta"]
 
 # =========================================================================
 #  TOOLS cta-tools

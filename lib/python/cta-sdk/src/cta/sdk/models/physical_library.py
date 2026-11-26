@@ -3,9 +3,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Final, Optional
-
-from typing_extensions import override
+from typing import Final, override
 
 from .metadata import Metadata
 
@@ -46,7 +44,7 @@ class PhysicalLibrary:
     available_cartridge_slots: int
     physical_drive_slots: int
     state: PhysicalLibraryState
-    state_reason: Optional[str]
+    state_reason: str | None
     metadata: Metadata
 
     @override

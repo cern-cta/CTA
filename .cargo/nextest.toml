@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [profile.ci.junit]
-path = "junit.xml"
+  path = "junit.xml"

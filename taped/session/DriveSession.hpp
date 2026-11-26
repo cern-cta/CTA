@@ -94,7 +94,7 @@ private:
   ///
   /// Request Down if the drive cannot be reused.
   /// If worker termination cannot be established, the process exits without recovery or unwinding.
-  TapeSessionResult runTapeSession(TapeMount& tapeMount);
+  TapeSessionResult runTapeSession(TapeMount& tapeMount, std::stop_token stopToken);
 
   class ScopedDriveOperationTracker;
 

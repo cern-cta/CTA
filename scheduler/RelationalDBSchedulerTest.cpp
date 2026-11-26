@@ -29,9 +29,9 @@
 #include "scheduler/TapeMount.hpp"
 #include "taped/session/archive/MigrationReportPacker.hpp"
 #include "taped/session/retrieve/RecallReportPacker.hpp"
-#include "tests/TempDirectory.hpp"
-#include "tests/TempFile.hpp"
-#include "tests/TestsCompileTimeSwitches.hpp"
+#include "tests/support/TempDirectory.hpp"
+#include "tests/support/TempFile.hpp"
+#include "tests/support/TestsCompileTimeSwitches.hpp"
 
 #include <algorithm>
 #include <atomic>

@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import LogicalLibraryDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import LogicalLibrary, LogicalLibraryState, Metadata
-from typing_extensions import override
 
 
 class LogicalLibraryDaoCtaAdmin(LogicalLibraryDao):
@@ -30,10 +29,10 @@ class LogicalLibraryDaoCtaAdmin(LogicalLibraryDao):
             metadata=Metadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
             ),
         )
@@ -48,7 +47,7 @@ class LogicalLibraryDaoCtaAdmin(LogicalLibraryDao):
         return self.raw_data_to_resource(raw_ll)
 
     @override
-    def list(self, *, state: Optional[LogicalLibraryState] = None) -> Iterator[LogicalLibrary]:
+    def list(self, *, state: LogicalLibraryState | None = None) -> Iterator[LogicalLibrary]:
         filters = {}
         filters |= {} if state is None else {"disabled": str(state == LogicalLibraryState.DISABLED).lower()}
         yield from (
@@ -87,8 +86,8 @@ class LogicalLibraryDaoCtaAdmin(LogicalLibraryDao):
         name: str,
         /,
         *,
-        physical_library_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        physical_library_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if physical_library_name is None else {"physicallibrary": physical_library_name}

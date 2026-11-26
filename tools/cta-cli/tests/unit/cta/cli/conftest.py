@@ -10,7 +10,7 @@ than the backend, which owns its own test-suite.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 import click
@@ -220,7 +220,7 @@ def invoke(runner: CliRunner, app_context: AppContext):
     """
 
     def _invoke(
-        command: click.Command, args: Optional[list[str]] = None, obj: Optional[AppContext] = None, **kwargs: Any
+        command: click.Command, args: list[str] | None = None, obj: AppContext | None = None, **kwargs: Any
     ) -> Result:
         return runner.invoke(command, args or [], obj=obj if obj is not None else app_context, **kwargs)
 

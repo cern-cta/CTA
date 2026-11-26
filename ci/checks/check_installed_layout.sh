@@ -14,6 +14,7 @@ package_format=${1:-}
 # Add tools here to check their binaries and manuals.
 tools=(
   cta-admin
+  cta-eosdf.sh
   cta-catalogue-schema-create
   cta-readtp
   cta-tape-label

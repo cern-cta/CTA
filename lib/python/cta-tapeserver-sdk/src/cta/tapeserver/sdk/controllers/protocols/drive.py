@@ -22,7 +22,7 @@ and
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 
 class DriveController(Protocol):
@@ -173,18 +173,18 @@ class MountedDriveController(DriveController, Protocol):
         """
         ...
 
-    def __enter__(self) -> "MountedDriveController": ...
+    def __enter__(self) -> MountedDriveController: ...
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[object],
-    ) -> Optional[bool]: ...
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: object | None,
+    ) -> bool | None: ...
 
     def write_files(
         self,
         file_size: int,
-        n: Optional[int],
+        n: int | None,
         block_size: int = 256 * 1024,
     ) -> Iterator[tuple[int, int]]:
         """Write files of pseudo-random data to the tape.

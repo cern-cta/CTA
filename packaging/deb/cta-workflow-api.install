@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+etc/logrotate.d/cta-workflow-api
 usr/bin/cta-workflow-api
 usr/lib/systemd/system/cta-workflow-api.service
-etc/logrotate.d/cta-workflow-api
 usr/share/man/man1/cta-workflow-api.1
 usr/share/doc/cta-workflow-api/examples/cta-workflow-api.example.toml
 usr/share/doc/cta-workflow-api/examples/jwt-revoke-list.example.toml

@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pytest
 
@@ -45,7 +45,7 @@ def catalogue_to_version(project_json: dict[str, Any]) -> str:
 
 
 @pytest.fixture(scope="module")
-def catalogue_updater(namespace: Optional[str]) -> RemoteHost:
+def catalogue_updater(namespace: str | None) -> RemoteHost:
     assert namespace is not None
     return RemoteHost(K8sConnection(namespace, "app.kubernetes.io/name=liquibase-update", "liquibase-update", 0))
 
@@ -74,7 +74,7 @@ def test_init_catalogue_updater(
     catalogue_from_version: str,
     catalogue_to_version: str,
     catalogue_schema_update_params: CatalogueSchemaUpdateParams,
-    namespace: Optional[str],
+    namespace: str | None,
 ) -> None:
     # Just to note, this entire method is hacky and should be rewritten at some point. Suggestions welcome...
     # A few of the problems with it:
@@ -150,6 +150,6 @@ def test_liquibase_rollback(
     cta_admin_api.verify_schema()
 
 
-def test_cleanup_catalogue_updater(env: TestEnv, namespace: Optional[str]) -> None:
+def test_cleanup_catalogue_updater(env: TestEnv, namespace: str | None) -> None:
     env.exec_local(f"helm uninstall catalogue-updater --namespace {namespace}")
     env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")

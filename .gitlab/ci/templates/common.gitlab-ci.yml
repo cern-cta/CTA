@@ -1,13 +1,36 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-.python-version:
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    # Use the bootstrap interpreter only to read the configured workspace version.
-    - UV_PYTHON=$(python3 -c 'import json; print(json.load(open("project.json"))["dev"]["pythonVersion"])')
-    - export UV_PYTHON
-    - uv --version
+.retry-infrastructure:
+  retry: &retry-infrastructure
+    max: 1
+    when:
+      - runner_system_failure
+      - runner_configuration_error
+      - runner_external_dependency_failure
+      - runner_interrupted
+      - api_failure
+
+# Package downloads fail as script_failure, just like build and test errors.
+# Opt in only where one full job retry is an acceptable tradeoff.
+.retry-script-failure:
+  retry:
+    <<: *retry-infrastructure
+    # Arrays are replaced, so this broader policy must repeat the infrastructure reasons.
+    when:
+      - runner_system_failure
+      - runner_configuration_error
+      - runner_external_dependency_failure
+      - runner_interrupted
+      - api_failure
+      - script_failure
+
+# Package-install commands use "|| exit 75" to request one GitLab job retry.
+# Test commands keep their ordinary exit status and are not retried.
+.retry-package-install:
+  retry:
+    <<: *retry-infrastructure
+    exit_codes: 75
 
 .python-workspace:
   rules:
@@ -16,30 +39,29 @@
     - changes:
         - "**/*.py"
         - "**/pyproject.toml"
-        - "project.json"
-        - "ci/project-json/schema.json"
-        - "pyproject.toml"
-        - "uv.lock"
-        - "**/ruff.toml"
-        - "**/.ruff.toml"
-        - "lib/python/**/*"
-        - "tools/cta-cli/**/*"
-        - "tools/cta-udev/**/*"
-        - "lib/protobuf/external/xrootd-ssi-protobuf-interface"
-        - ".gitmodules"
-        - "LICENSES/GPL-3.0-or-later.txt"
+        - "**/pyrightconfig.json"
         - "**/requirements.txt"
-        - "ci/docs/**/*"
-        - "ci/docker/pipeline/**/*"
-        - ".pre-commit-config.yaml"
+        - "**/{ruff,.ruff}.toml"
         - ".gitlab-ci.yml"
         - ".gitlab/ci/**/*.gitlab-ci.yml"
+        - ".gitmodules"
+        - ".pre-commit-config.yaml"
+        - ".python-version"
+        - "LICENSES/GPL-3.0-or-later.txt"
+        - "ci/docker/pipeline/**/*"
+        - "ci/docs/**/*"
+        - "ci/project-json/schema.json"
+        - "lib/protobuf/external/xrootd-ssi-protobuf-interface"
+        - "lib/python/**/*"
+        - "project.json"
+        - "tools/{cta-cli,cta-udev}/**/*"
+        - "uv.lock"
       when: on_success
   image:
-    name: $IMAGE_DEFAULT
+    name: $IMAGE_PYTHON
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
   before_script:
-    - !reference [.python-version, before_script]
+    - !reference [.merge-train-guard, before_script]
     - git submodule update --init lib/protobuf/external/xrootd-ssi-protobuf-interface

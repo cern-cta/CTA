@@ -12,4 +12,4 @@ Use these procedures when coordinating releases or maintaining project infrastru
 | Maintain CI images, schedules, runners, and credentials | [CI Maintenance](ci-maintenance.md) |
 | Manage access, repository settings, templates, bots, and mirroring | [Repository Administration](repository-administration.md) |
 
-For ordinary changes, use [Contributing](../index.md), [Testing CTA](../../guides/testing/index.md), and [Schema Development](../../internals/components/catalogue/schema-development.md). Maintainers review the resulting validation evidence before release.
+For ordinary changes, use [Contributing](../index.md), [Testing CTA](../../guides/testing/index.md), and [Schema Development](../../internals/shared-state/catalogue/schema-development.md). Maintainers review the resulting validation evidence before release.

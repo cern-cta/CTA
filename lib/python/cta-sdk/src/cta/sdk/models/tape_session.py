@@ -4,10 +4,9 @@
 from dataclasses import dataclass, field
 from datetime import timedelta
 from enum import Enum, auto
-from typing import Annotated, Final
+from typing import Annotated, Final, override
 
 from cta.sdk.units import Byte, BytePerSecond
-from typing_extensions import override
 
 from .mount_type import MountType
 
@@ -25,7 +24,7 @@ class TapeSessionState(Enum):
         DRAINING_TO_DISK:
     """
 
-    # Enum supplies the member name, not self, to this Python 3.9 hook.
+    # Enum supplies the member name, not self, to this hook.
     def _generate_next_value_(name: str, start, count, last_values):  # type: ignore[override]  # noqa: N805
         return name.lower().replace("_", "-")
 

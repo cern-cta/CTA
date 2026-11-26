@@ -29,16 +29,18 @@ class RAOManager {
 public:
   friend RAOAlgorithmFactoryFactory;
 
+  /// Construct a disabled manager until RAO is configured.
   RAOManager() = default;
 
   /**
-   * Constructor of a RAO manager
+   * Construct an enabled RAO manager
    * @param config the configuration of the RAO to manage
    * @param drive the DriveInterface of the drive that is mounting.
    * @param catalogue the pointer to the CTA catalogue
    */
   RAOManager(const RAOParams& config, drive::DriveInterface* drive, cta::catalogue::Catalogue* catalogue)
-      : m_raoParams(config),
+      : m_useRAO(true),
+        m_raoParams(config),
         m_drive(drive),
         m_catalogue(catalogue) {}
 
@@ -83,6 +85,7 @@ public:
   std::vector<uint64_t> queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, cta::log::LogContext& lc);
 
 private:
+  bool m_useRAO = false;
   //! RAO Configuration Data
   RAOParams m_raoParams;
   //! Enterprise Drive-specific RAO parameters

@@ -146,14 +146,16 @@ Once metrics publishing is enabled and the OpenTelemetry Collector is receiving 
 Set the following options in each service's TOML configuration file:
 
 ```toml
+enabled_features = []
+enabled_experimental_features = ["telemetry"]
+
 [telemetry]
   config_file = "/etc/cta/cta-otel.yaml"
-
-[experimental]
-  telemetry_enabled = true
+  on_init_failure = "warn"
 ```
 
-Both the experimental flag and a nonempty `telemetry.config_file` are required.
+Include `"telemetry"` alongside any other enabled features in the root list and supply a nonempty `telemetry.config_file`.
+To disable telemetry, remove it from the list and omit the entire `[telemetry]` section.
 Initialization failures log a warning by default; set `telemetry.on_init_failure = "fatal"` to abort startup instead.
 
 Keep `resource.attributes_list` below: the SDK no longer implicitly reads `OTEL_RESOURCE_ATTRIBUTES` or supplies a default `service.name` for declarative configuration.

@@ -2,19 +2,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Union
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.mock.tape_file import file_identity, read_fids_file
 from cta.sdk.daos.protocols import RecycleBinTapeFileDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import RecycleBinTapeFile
-from typing_extensions import override
 
 
-def _as_datetime(value: Union[datetime, int]) -> datetime:
-    return value if isinstance(value, datetime) else datetime.fromtimestamp(value, tz=timezone.utc)
+def _as_datetime(value: datetime | int) -> datetime:
+    return value if isinstance(value, datetime) else datetime.fromtimestamp(value, tz=UTC)
 
 
 class RecycleBinTapeFileDaoMock(RecycleBinTapeFileDao):

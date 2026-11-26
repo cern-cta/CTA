@@ -3,13 +3,12 @@
 
 from collections.abc import Iterable, Iterator
 from itertools import chain
-from typing import Optional
+from typing import override
 
 from cta.sdk.daos.mock._handler import CtaMockHandler
 from cta.sdk.daos.protocols import TapePoolDao
 from cta.sdk.exceptions import BackendError, ResourceNotFoundError
 from cta.sdk.models import ArchiveRoute, Tape, TapePool, TapePoolStatistics, VirtualOrganisation
-from typing_extensions import override
 
 
 class TapePoolDaoMock(TapePoolDao):
@@ -26,8 +25,8 @@ class TapePoolDaoMock(TapePoolDao):
         *,
         virtual_organisation_name: str,
         min_writable_tape_count: int = 1,
-        encryption_key_name: Optional[str] = None,
-        supply_tape_pool_names: Optional[Iterable[str]] = None,
+        encryption_key_name: str | None = None,
+        supply_tape_pool_names: Iterable[str] | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         try:
@@ -79,8 +78,8 @@ class TapePoolDaoMock(TapePoolDao):
         self,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        encrypted: Optional[bool] = None,
+        virtual_organisation_name: str | None = None,
+        encrypted: bool | None = None,
     ) -> Iterator[TapePool]:
         yield from (
             tape_pool
@@ -95,10 +94,10 @@ class TapePoolDaoMock(TapePoolDao):
         name: str,
         /,
         *,
-        virtual_organisation_name: Optional[str] = None,
-        min_writable_tape_count: Optional[int] = None,
-        supply_tape_pool_names: Optional[Iterable[str]] = None,
-        comment: Optional[str] = None,
+        virtual_organisation_name: str | None = None,
+        min_writable_tape_count: int | None = None,
+        supply_tape_pool_names: Iterable[str] | None = None,
+        comment: str | None = None,
     ) -> None:
         with self._handler.update(self.resource_type, name) as tape_pool:
             if virtual_organisation_name is not None:

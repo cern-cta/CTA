@@ -26,9 +26,9 @@ VersionSource = tuple[dict[str, Any], Callable[..., str]]
 def version_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> VersionSource:
     for name in ("CI_COMMIT_TAG", "CI_PIPELINE_ID", "CTA_VERSION_BASE"):
         monkeypatch.delenv(name, raising=False)
-    helper = tmp_path / "ci/utils/cta_version.py"
+    helper = tmp_path / "ci/build/cta_version.py"
     helper.parent.mkdir(parents=True)
-    shutil.copyfile(ROOT / "ci/utils/cta_version.py", helper)
+    shutil.copyfile(ROOT / "ci/build/cta_version.py", helper)
     (tmp_path / "project.json").write_text('{"majorVersion": 6}')
 
     def git(*args: str) -> str:
@@ -79,14 +79,14 @@ def test_release_checkout_validation(
 def test_prepared_version(monkeypatch: pytest.MonkeyPatch, prepared: str, expected: str) -> None:
     monkeypatch.delenv("CI_COMMIT_TAG", raising=False)
     monkeypatch.setenv("CTA_VERSION_BASE", prepared)
-    version = runpy.run_path(str(ROOT / "ci/utils/cta_version.py"))
+    version = runpy.run_path(str(ROOT / "ci/build/cta_version.py"))
     assert version["package_version"]() == expected
 
 
 @pytest.mark.parametrize("invalid", ["", "v6.1.0", "6.1.0.pgall", "6.dev123.gabcdef12.dirty", "not-a-version"])
 def test_invalid_prepared_version(invalid: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("CTA_VERSION_BASE", invalid)
-    version = runpy.run_path(str(ROOT / "ci/utils/cta_version.py"))
+    version = runpy.run_path(str(ROOT / "ci/build/cta_version.py"))
     with pytest.raises(ValueError, match="Invalid CTA source version"):
         version["package_version"]()
 
@@ -100,7 +100,7 @@ def test_invalid_prepared_version(invalid: str, monkeypatch: pytest.MonkeyPatch)
     ],
 )
 def test_release_metadata_mismatch(monkeypatch: pytest.MonkeyPatch, tag: str, prepared: str | None, error: str) -> None:
-    version = runpy.run_path(str(ROOT / "ci/utils/cta_version.py"))
+    version = runpy.run_path(str(ROOT / "ci/build/cta_version.py"))
     # Git integration is covered above; isolate the metadata comparison here.
     monkeypatch.setitem(version["source_version"].__globals__, "major_version", lambda: 6)
 
@@ -122,9 +122,9 @@ def test_package_version_hook(tmp_path: Path, package: str, monkeypatch: pytest.
     package_root = tmp_path / package
     package_root.mkdir(parents=True)
     shutil.copyfile(ROOT / package / "pyproject.toml", package_root / "pyproject.toml")
-    helper = tmp_path / "ci/utils/cta_version.py"
+    helper = tmp_path / "ci/build/cta_version.py"
     helper.parent.mkdir(parents=True)
-    shutil.copyfile(ROOT / "ci/utils/cta_version.py", helper)
+    shutil.copyfile(ROOT / "ci/build/cta_version.py", helper)
     monkeypatch.delenv("CI_COMMIT_TAG", raising=False)
     monkeypatch.setenv("CTA_VERSION_BASE", "6.1.0.rc2")
     assert WheelBuilder(str(package_root)).metadata.version == "6.1.0rc2"

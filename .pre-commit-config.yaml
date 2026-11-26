@@ -1,42 +1,54 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Latest versions can be found in the respective repos if an update is desired
 repos:
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v20.1.8
-    hooks:
-      - id: clang-format
-        files: \.(c|h|cc|cpp|cxx|hpp|hh|json)$
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.9
-    hooks:
-      - id: ruff-check
-        args: [--fix]
-      - id: ruff-format
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
-    hooks:
-      - id: yamllint
-  - repo: https://github.com/fsfe/reuse-tool
-    rev: v5.1.0
-    hooks:
-      - id: reuse-lint-file
   - repo: local
     hooks:
+      - id: reuse-lint-file
+        name: REUSE lint-file
+        entry: uv run --locked --only-group source-checks reuse lint-file
+        language: system
+      - id: detect-secrets
+        name: Detect secrets
+        entry: uv run --locked --only-group source-checks detect-secrets-hook
+        language: system
+        args: ['--baseline', '.secrets.baseline']
+      - id: clang-format
+        name: clang-format
+        entry: uv run --locked --only-group source-checks clang-format -i
+        language: system
+        args: ['-style=file']
+        files: \.(c|h|cc|cpp|cxx|hpp|hh|json)$
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --locked --only-group lint ruff check --force-exclude
+        language: system
+        args: [--fix]
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --locked --only-group lint ruff format --force-exclude
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+      - id: yamllint
+        name: yamllint
+        entry: uv run --locked --only-group source-checks yamllint
+        language: system
+        types: [file, yaml]
+      - id: taplo
+        name: taplo fmt
+        entry: taplo fmt
+        language: system
+        types: [toml]
       - id: gitlab-ci
         name: GitLab CI check
         entry: >-
-          bash -c 'python3 ci/checks/check_gitlab_ci_before_script_guard.py .gitlab-ci.yml .gitlab/ci/
+          uv run --locked --only-group source-checks bash -c 'python3 ci/checks/check_gitlab_ci_before_script_guard.py .gitlab-ci.yml .gitlab/ci/
           && python3 ci/checks/check_gitlab_ci_key_order.py .gitlab/
           && python3 ci/checks/check_gitlab_ci_single_stage.py .gitlab/ci/'
-        language: python
-        additional_dependencies: [PyYAML==6.0.2]
+        language: system
         files: '(^|/).*gitlab-ci\.yml$'
         pass_filenames: false
       - id: cargo-fmt

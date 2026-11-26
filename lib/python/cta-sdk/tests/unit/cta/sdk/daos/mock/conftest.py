@@ -14,7 +14,7 @@ every test so that mutating operations stay isolated.
 """
 
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -24,8 +24,8 @@ DATA_DIR = Path(__file__).parent / "data"
 
 # Fixed timestamps used when the data snapshot was generated (see the module docstring); tests
 # import these to build reference objects and to assert that creation metadata is preserved.
-SEED_CREATION_TIME = datetime(2024, 1, 1, 9, 0, 0, tzinfo=timezone.utc)
-SEED_UPDATE_TIME = datetime(2024, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
+SEED_CREATION_TIME = datetime(2024, 1, 1, 9, 0, 0, tzinfo=UTC)
+SEED_UPDATE_TIME = datetime(2024, 6, 1, 12, 0, 0, tzinfo=UTC)
 
 
 @pytest.fixture

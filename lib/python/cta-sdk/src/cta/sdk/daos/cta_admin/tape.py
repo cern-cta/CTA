@@ -3,13 +3,12 @@
 
 import json
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import FLAG, CtaAdminWrapper
 from cta.sdk.daos.protocols import TapeDao
 from cta.sdk.models import Tape, TapeMetadata, TapeState, TapeStatistics, VerificationStatus
-from typing_extensions import override
 
 
 class TapeDaoCtaAdmin(TapeDao):
@@ -26,7 +25,7 @@ class TapeDaoCtaAdmin(TapeDao):
         if r := raw_data["verificationStatus"]:
             vs_raw_dict = json.loads(r)
             verification_status = VerificationStatus(
-                date=datetime.fromtimestamp(vs_raw_dict["date"], tz=timezone.utc),
+                date=datetime.fromtimestamp(vs_raw_dict["date"], tz=UTC),
                 status=vs_raw_dict["status"],
                 file_submitted_count=vs_raw_dict["files_submitted"],
                 file_verified_count=vs_raw_dict["files_verified"],
@@ -59,30 +58,30 @@ class TapeDaoCtaAdmin(TapeDao):
             metadata=TapeMetadata(
                 raw_data["creationLog"]["username"],
                 raw_data["creationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["creationLog"]["time"]), tz=UTC),
                 raw_data["lastModificationLog"]["username"],
                 raw_data["lastModificationLog"]["host"],
-                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=timezone.utc),
+                datetime.fromtimestamp(int(raw_data["lastModificationLog"]["time"]), tz=UTC),
                 raw_data["comment"],
                 label_drive_name=raw_data.get("labelLog", {}).get("drive"),
                 label_time=(
-                    datetime.fromtimestamp(int(time), tz=timezone.utc)
+                    datetime.fromtimestamp(int(time), tz=UTC)
                     if (time := raw_data.get("labelLog", {}).get("time"))
                     else None
                 ),
                 last_write_drive_name=raw_data.get("lastWrittenLog", {}).get("drive"),
                 last_write_time=(
-                    datetime.fromtimestamp(int(time), tz=timezone.utc)
+                    datetime.fromtimestamp(int(time), tz=UTC)
                     if (time := raw_data.get("lastWrittenLog", {}).get("time"))
                     else None
                 ),
                 last_read_drive_name=raw_data.get("lastReadLog", {}).get("drive"),
                 last_read_time=(
-                    datetime.fromtimestamp(int(time), tz=timezone.utc)
+                    datetime.fromtimestamp(int(time), tz=UTC)
                     if (time := raw_data.get("lastReadLog", {}).get("time"))
                     else None
                 ),
-                update_state_time=datetime.fromtimestamp(int(raw_data["stateUpdateTime"]), tz=timezone.utc),
+                update_state_time=datetime.fromtimestamp(int(raw_data["stateUpdateTime"]), tz=UTC),
                 update_state_info=raw_data["stateModifiedBy"],
                 write_mount_count=int(raw_data["writeMountCount"]),
                 read_mount_count=int(raw_data["readMountCount"]),
@@ -98,16 +97,16 @@ class TapeDaoCtaAdmin(TapeDao):
         self,
         /,
         *,
-        media_type_name: Optional[str] = None,
-        vendor: Optional[str] = None,
-        logical_library_name: Optional[str] = None,
-        tape_pool_name: Optional[str] = None,
-        virtual_organisation_name: Optional[str] = None,
-        full: Optional[bool] = None,
-        fxid_file: Optional[str] = None,
-        state: Optional[TapeState] = None,
-        purchase_order: Optional[str] = None,
-        physical_library_name: Optional[str] = None,
+        media_type_name: str | None = None,
+        vendor: str | None = None,
+        logical_library_name: str | None = None,
+        tape_pool_name: str | None = None,
+        virtual_organisation_name: str | None = None,
+        full: bool | None = None,
+        fxid_file: str | None = None,
+        state: TapeState | None = None,
+        purchase_order: str | None = None,
+        physical_library_name: str | None = None,
         missing_file_copies: bool = False,
     ) -> Iterator[Tape]:
         filters = {}
@@ -148,7 +147,7 @@ class TapeDaoCtaAdmin(TapeDao):
         logical_library_name: str,
         tape_pool_name: str,
         full: bool = False,
-        purchase_order: Optional[str] = None,
+        purchase_order: str | None = None,
         comment: str = "From python cta-sdk",
     ) -> None:
         data = {
@@ -174,16 +173,16 @@ class TapeDaoCtaAdmin(TapeDao):
         vid: str,
         /,
         *,
-        media_type_name: Optional[str] = None,
-        vendor: Optional[str] = None,
-        logical_library_name: Optional[str] = None,
-        tape_pool_name: Optional[str] = None,
-        verification_status: Optional[VerificationStatus] = None,
-        full: Optional[bool] = None,
-        purchase_order: Optional[str] = None,
-        dirty: Optional[bool] = None,
-        encryption_key_name: Optional[str] = None,
-        comment: Optional[str] = None,
+        media_type_name: str | None = None,
+        vendor: str | None = None,
+        logical_library_name: str | None = None,
+        tape_pool_name: str | None = None,
+        verification_status: VerificationStatus | None = None,
+        full: bool | None = None,
+        purchase_order: str | None = None,
+        dirty: bool | None = None,
+        encryption_key_name: str | None = None,
+        comment: str | None = None,
     ) -> None:
         data = {}
         data |= {} if media_type_name is None else {"mediatype": media_type_name}

@@ -1,0 +1,25 @@
+.phony: all
+
+all: cta-unit-tests-bare cta-unit-tests-valgrind cta-unit-tests-valgrind-osm-tape cta-unit-tests-valgrind-multiprocess
+
+cta-unit-tests-bare:
+	MALLOC_CHECK_=3 /usr/bin/cta-unit-tests | ts "bt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	MALLOC_CHECK_=3 /usr/bin/cta-unit-tests-multiprocess | ts "btmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+
+cta-unit-tests-valgrind: cta-unit-tests-valgrind-multiprocess cta-unit-tests-bare
+	valgrind -q @VALGRIND_OPTS_STR@                                               \
+	--suppressions=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/cta/tests/valgrind.suppr \
+	/usr/bin/cta-unit-tests                                                        \
+	--gtest_filter="-OSMTapeFileTest.*:EnstoreTapeFileTest.*" 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+
+cta-unit-tests-valgrind-osm-tape: cta-unit-tests-valgrind-multiprocess cta-unit-tests-bare
+	valgrind -q @VALGRIND_OPTS_STR@                                               \
+	--show-mismatched-frees=no                                                    \
+	--suppressions=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/cta/tests/valgrind.suppr \
+  /usr/bin/cta-unit-tests                                                        \
+	--gtest_filter="OSMTapeFileTest.*:EnstoreTapeFileTest.*" 2>&1 | ts "vgot: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+
+cta-unit-tests-valgrind-multiprocess: cta-unit-tests-bare
+	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
+	--suppressions=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/cta/tests/valgrind.suppr \
+	/usr/bin/cta-unit-tests-multiprocess 2>&1 | ts "vgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})

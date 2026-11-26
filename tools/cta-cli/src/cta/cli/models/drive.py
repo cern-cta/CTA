@@ -8,7 +8,6 @@ adding optional serial number and connection state attributes.
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from cta.common import copy_dataclass
 from cta.common.prometheus import Labels
@@ -27,11 +26,11 @@ class EnrichedDrive(Drive):
             Whether the drive is currently connected.
     """
 
-    local_serial_number: Optional[str]
-    location: Optional[DriveLibraryLocation]
+    local_serial_number: str | None
+    location: DriveLibraryLocation | None
 
     @classmethod
-    def merge(cls, cta_drive: Drive, local_drive: Optional[LocatedNamedDrive] = None) -> "EnrichedDrive":
+    def merge(cls, cta_drive: Drive, local_drive: LocatedNamedDrive | None = None) -> EnrichedDrive:
         """Create an enriched drive from a base drive model.
 
         Args:
@@ -71,8 +70,8 @@ class DriveSensors:
 
     name: str
     serial_number: str
-    temperature_celsius: Optional[int]
-    humidity_percent: Optional[int]
+    temperature_celsius: int | None
+    humidity_percent: int | None
 
     def labels(self) -> Labels:
         return {"drive": self.name, "serial_number": self.serial_number}

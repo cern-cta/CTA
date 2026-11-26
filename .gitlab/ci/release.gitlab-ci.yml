@@ -19,7 +19,7 @@ internal-release-cta:
   rules:
     - if: $CI_COMMIT_TAG
       when: on_success
-  image: $IMAGE_RELEASE
+  image: $IMAGE_REPOSITORY_PUBLISH
   before_script:
     - !reference [.merge-train-guard, before_script]
   script:
@@ -31,14 +31,6 @@ internal-release-cta:
         --local-source-dir build/$[[ inputs.platform ]]/RPM/RPMS/x86_64 \
         --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64 \
         --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
-  after_script:
-    - |
-      case "$CI_JOB_STATUS" in
-        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published the RPMs to the internal CTA repository." ;;
-        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish the RPMs to the internal CTA repository." ;;
-        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
-      esac
-      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
   resource_group: cta-rpm-publication
 
 .public-release-cta:
@@ -51,7 +43,7 @@ internal-release-cta:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
-  image: $IMAGE_RELEASE
+  image: $IMAGE_REPOSITORY_PUBLISH
   before_script:
     - !reference [.merge-train-guard, before_script]
     - |
@@ -72,14 +64,6 @@ internal-release-cta:
         --cta-version "${CTA_PACKAGE_VERSION:?Missing CTA_PACKAGE_VERSION}"
     - REPO_URL="https://cta-public-repo.web.cern.ch/${REPOSITORY_PATH}"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CTA_PACKAGE_VERSION}"
-  after_script:
-    - |
-      case "$CI_JOB_STATUS" in
-        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published and verified the RPMs in the ${RELEASE_CHANNEL} repository." ;;
-        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish or verify the RPMs in the ${RELEASE_CHANNEL} repository." ;;
-        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
-      esac
-      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
   resource_group: cta-rpm-publication
 
 public-release-cta-unstable:
@@ -145,6 +129,7 @@ public-release-cta-stable:
       artifacts: true
     - job: internal-release-cta
     - job: build-cta-images
+      artifacts: false
       parallel:
         matrix:
           - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
@@ -195,14 +180,6 @@ public-release-cta-stable:
     - buildah push --authfile "$DEST_REGISTRY_AUTH_FILE" "$DST_IMAGE"
   after_script:
     - rm -f "$SOURCE_REGISTRY_AUTH_FILE" "$DEST_REGISTRY_AUTH_FILE"
-    - |
-      if [[ -z "${CI_COMMIT_TAG:-}" ]]; then exit 0; fi
-      case "$CI_JOB_STATUS" in
-        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published ${TARGET_NAME} to ${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}." ;;
-        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish ${TARGET_NAME} to ${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}." ;;
-        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
-      esac
-      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
 
 publish-images-private:
   extends: .publish-image
@@ -212,6 +189,7 @@ publish-images-private:
     - job: internal-release-cta
       optional: true # Present on tags; branch publication does not publish RPMs.
     - job: build-cta-images
+      artifacts: false
       parallel:
         matrix:
           - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
@@ -243,6 +221,7 @@ publish-images-public:
     - job: public-release-cta-stable
       artifacts: true
     - job: build-cta-images
+      artifacts: false
       parallel:
         matrix:
           - TARGET_NAME: ["$[[ matrix.TARGET_NAME ]]"]
@@ -296,7 +275,7 @@ publish-images-public:
     - if: $CI_COMMIT_TAG
       when: on_success
   image:
-    name: $IMAGE_DEFAULT
+    name: $IMAGE_PYTHON
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: none
@@ -324,15 +303,6 @@ publish-images-public:
         --publish-url "$PYPI_PUBLISH_URL" \
         --check-url "${PYPI_PUBLISH_URL}/simple" \
         build/python/*
-  after_script:
-    - |
-      if [[ -z "${CI_COMMIT_TAG:-}" ]]; then exit 0; fi
-      case "$CI_JOB_STATUS" in
-        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published the Python packages to ${PYPI_REGISTRY_NAME}." ;;
-        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish the Python packages to ${PYPI_REGISTRY_NAME}." ;;
-        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
-      esac
-      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
 
 publish-python-private:
   extends: .publish-python
@@ -349,7 +319,6 @@ publish-python-private:
     - when: manual
       allow_failure: true
   variables:
-    PYPI_REGISTRY_NAME: "the private operations PyPI registry"
     PYPI_PUBLISH_URL: $PYPI_RELEASE_REGISTRY_URL
     UV_PUBLISH_USERNAME: $PYPI_RELEASE_LOGIN_USERNAME
     UV_PUBLISH_PASSWORD: $PYPI_RELEASE_LOGIN_PASSWORD
@@ -369,7 +338,6 @@ publish-python-public:
     - if: $CI_COMMIT_TAG
       when: on_success
   variables:
-    PYPI_REGISTRY_NAME: "the public PyPI registry"
     PYPI_PUBLISH_URL: $PYPI_PUBLIC_REGISTRY_URL
     UV_PUBLISH_USERNAME: $PYPI_PUBLIC_LOGIN_USERNAME
     UV_PUBLISH_PASSWORD: $PYPI_PUBLIC_LOGIN_PASSWORD
@@ -380,83 +348,3 @@ publish-python-public:
         exit 1
       fi
     - !reference [.publish-python, before_script]
-
-# Publish validated documentation independently of RPM and image publication.
-publish-docs:
-  interruptible: false
-  stage: release
-  needs:
-    - job: build-docs
-  rules:
-    - if: '$PIPELINE_TYPE != "DEFAULT" || $CI_PIPELINE_SOURCE == "parent_pipeline"'
-      when: never
-    - if: '$CI_COMMIT_TAG =~ /^v[1-9][0-9]*\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ && $CI_COMMIT_REF_PROTECTED == "true"'
-  image: $IMAGE_DEFAULT
-  variables:
-    GIT_SUBMODULE_STRATEGY: none
-    GIT_TERMINAL_PROMPT: "0"
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - source ci/docs/prepare-environment.sh
-  script:
-    - test -n "$CI_JOB_TOKEN"
-    - git config user.name "$GITLAB_USER_NAME"
-    - git config user.email "$GITLAB_USER_EMAIL"
-    - git remote set-url origin "$CI_REPOSITORY_URL"
-    - python ci/docs/publish.py --tag "$CI_COMMIT_TAG"
-  resource_group: cta-docs-publication
-  artifacts:
-    paths:
-      - build/docs/public/
-    expire_in: 7 days
-  pages:
-    publish: build/docs/public
-    expire_in: never
-
-# =========================================================================
-#  Deploy Review App
-# =========================================================================
-
-# set up a review app for the merge request. it will be
-# automatically stopped when the MR is closed or merged
-deploy-mr-review-app:
-  stage: release
-  needs:
-    - job: check-merge-train-duplicate
-      optional: true
-    - job: build-docs
-  rules:
-    # only run on merge requests
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    # don't run on merge trains
-    - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
-      when: never
-  variables:
-    DOCS_SITE_NAME: "cta.docs.cern.ch"
-  script:
-    - echo "Pages accessible through https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
-  pages:
-    path_prefix: "review-mr-$CI_MERGE_REQUEST_IID"
-    expire_in: 1 week
-    publish: build/docs/site
-  environment:
-    name: "review/$CI_MERGE_REQUEST_IID"
-    url: "https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
-    on_stop: stop-mr-review-app
-    auto_stop_in: 1 week
-
-stop-mr-review-app:
-  stage: release
-  # Cleanup must remain runnable after artifacts from earlier jobs expire.
-  dependencies: []
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: manual
-      allow_failure: true
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - echo "Stopping review app"
-  environment:
-    name: "review/$CI_MERGE_REQUEST_IID"
-    action: stop

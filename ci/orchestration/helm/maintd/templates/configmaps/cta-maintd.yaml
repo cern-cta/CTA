@@ -15,6 +15,8 @@ metadata:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
   cta-maintd.toml: |-
+    enabled_features = ["health_server"]
+    enabled_experimental_features = ["telemetry"]
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
@@ -41,10 +43,10 @@ data:
       on_init_failure = "fatal"
 
     [health_server]
-      enabled = true
+      transport = "tcp"
+    [health_server.tcp]
       host = "0.0.0.0"
       port = 8080
-      use_unix_domain_socket = false
 
     [xrootd]
       # Overrides XrdSecPROTOCOL
@@ -57,16 +59,13 @@ data:
       max_cycle_duration_secs = 900
 
 
-      {{- /* We should set the options for ALL routines here, but we only enable the "current" routine */ -}}
-      {{- range $name, $conf := $allRoutines }}
-      {{ include "common.toSnakeCase" $name }}.enabled = {{ ternary "true" "false" (eq $name $routineName) }}
-      {{- range $k, $v := (omit $conf "replicas" "sleepIntervalSecs") }}
-      {{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} = {{ include "common.stringOrNumber" $v }}
+      enabled_routines = [{{ include "common.toSnakeCase" $routineName | quote }}]
+      {{- if ne $routineName "garbageCollect" }}
+      [routines.{{ include "common.toSnakeCase" $routineName }}]
+      {{- range $k, $v := (omit $routineConf "replicas" "sleepIntervalSecs") }}
+      {{ include "common.toSnakeCase" $k }} = {{ include "common.stringOrNumber" $v }}
       {{- end }}
-      {{ end }}
-
-    [experimental]
-      telemetry_enabled = true
+      {{- end }}
 
 ---
 {{- end }}

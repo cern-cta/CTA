@@ -16,7 +16,7 @@ and a
 import json
 import logging
 import subprocess
-from typing import Any, Optional, Union
+from typing import Any, override
 
 from cta.tapeserver.sdk.controller_providers.scsi.drive import ScsiDriveControllerProvider
 from cta.tapeserver.sdk.controllers.protocols.library import (
@@ -32,7 +32,6 @@ from cta.tapeserver.sdk.repositories.local.drive import LocalLocatedNamedDriveRe
 from cta.tapeserver.sdk.repositories.local.library import LocalNamedLibraryRepository
 from cta.tapeserver.sdk.repositories.protocols.drive import LocatedNamedDrive
 from pyudev import Context, Device
-from typing_extensions import override
 
 LOGGER = logging.getLogger("cta.tapeserver.sdk")
 
@@ -83,7 +82,7 @@ class ScsiLibraryController(LibraryController):
     def __init__(
         self,
         sg_device: Device,
-        context: Optional[Context] = None,
+        context: Context | None = None,
     ):
         LOGGER.debug("Initializing ScsiLibraryController for device %s", sg_device)
         if sg_device.subsystem != "scsi_generic" or sg_device.properties.get("SCSI_TYPE") != "medium changer":
@@ -175,7 +174,7 @@ class ScsiLibraryController(LibraryController):
         except subprocess.SubprocessError as e:
             raise LibraryOperationError(f"UnMount of drive {ordinal} failed") from e
 
-    def _get_drive_vid(self, ordinal: DriveOrdinal) -> Optional[str]:
+    def _get_drive_vid(self, ordinal: DriveOrdinal) -> str | None:
         """Return the VID of the tape currently inside the drive, or `None`.
 
         Args:
@@ -471,7 +470,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
     def __init__(
         self,
         sg_device: Device,
-        context: Optional[Context] = None,
+        context: Context | None = None,
     ):
         super().__init__(sg_device, context)
         LOGGER.debug("Initializing ScsiManagedLibraryController for device %s", sg_device)
@@ -508,9 +507,9 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
     @override
     def label_tape(
         self,
-        drive_key: Union[DriveOrdinal, DriveName],
+        drive_key: DriveOrdinal | DriveName,
         vid: str,
-        old_vid: Optional[str] = None,
+        old_vid: str | None = None,
         force: bool = False,
     ) -> None:
         """
@@ -543,7 +542,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
             raise TapeLabelError(f"Failed to label tape {vid}") from e
 
     @override
-    def drive_is_free(self, drive_key: Union[DriveOrdinal, DriveName]) -> bool:
+    def drive_is_free(self, drive_key: DriveOrdinal | DriveName) -> bool:
         """
         See the base implementation.
 
@@ -554,7 +553,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         return super().drive_is_free(self._get_drive_metadata(drive_key).location.ordinal)
 
     @override
-    def mount(self, drive_key: Union[DriveOrdinal, DriveName], vid: str) -> ScsiMountedDriveController:
+    def mount(self, drive_key: DriveOrdinal | DriveName, vid: str) -> ScsiMountedDriveController:
         """
         See the base implementation.
 
@@ -600,7 +599,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
         )
 
     @override
-    def unmount(self, drive_key: Union[DriveOrdinal, DriveName]) -> None:
+    def unmount(self, drive_key: DriveOrdinal | DriveName) -> None:
         """
         See the base implementation.
 
@@ -625,7 +624,7 @@ class ScsiManagedLibraryController(ScsiLibraryController, ManagedLibraryControll
     def _from_library_controller(
         cls,
         lib_ctrl: ScsiLibraryController,
-    ) -> "ScsiManagedLibraryController":
+    ) -> ScsiManagedLibraryController:
         """
         Upgrade a [ScsiLibraryController][cta.tapeserver.sdk.controllers.scsi.library.ScsiLibraryController] to managed.
 

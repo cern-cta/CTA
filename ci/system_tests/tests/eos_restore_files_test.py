@@ -11,6 +11,7 @@ namespace keytab) and then restores the tape file copy in the CTA catalogue.
 import json
 import shlex
 import time
+import tomllib
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -19,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from system_tests.helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
+from system_tests.helpers.hosts import CtaAdminApiHost, CtaCliHost, EosClientHost, EosMgmHost
 from system_tests.helpers.hosts.disk.eos_constants import EOS_GRPC_PORT
 from system_tests.helpers.utils.timeout import Timeout
 
@@ -92,6 +93,7 @@ def _cta_cli_option(cta_cli: CtaCliHost, key: str) -> str:
 
 @pytest.fixture(scope="module")
 def restore_files_tool(
+    cta_admin_api: CtaAdminApiHost,
     cta_cli: CtaCliHost,
     eos_mgm: EosMgmHost,
     disk_instance_name: str,
@@ -102,6 +104,10 @@ def restore_files_tool(
     is only reachable with a mapped gRPC key from an authorized gateway. Both are set
     up here and removed again afterwards.
     """
+    config = tomllib.loads(cta_admin_api.exec_with_output("cat /etc/cta/cta-admin-api.toml"))
+    if "jwt" not in config["auth"]["enabled_methods"]:
+        pytest.skip("cta-eos-restore-files requires JWT authentication enabled on the admin frontend")
+
     cta_frontend_endpoint = _cta_cli_option(cta_cli, "cta.endpoint")
     ca_cert_bundle = _cta_cli_option(cta_cli, "grpc.tls.chain_cert_path")
     jwt_token_file = _cta_cli_option(cta_cli, "grpc.jwt_token_path")

@@ -12,8 +12,8 @@ The identity and credentials depend on the interface. A credential accepted on o
 
 | Interface | Identity | Authentication methods |
 | --- | --- | --- |
-| [Workflow Frontend](workflow-frontend.md) | The registered disk instance submitting workflow events. | JSON Web Token (**JWT**) or mutual TLS (**mTLS**); each Workflow Frontend enables exactly one. |
-| [Admin Frontend](admin-frontend.md) | The operator making administrative requests. | JWT and/or Kerberos; the identity must also be an authorized catalogue admin user. |
+| [Workflow Frontend API](workflow-frontend.md) | The registered disk instance submitting workflow events. | JSON Web Token (**JWT**) or mutual TLS (**mTLS**); each Workflow Frontend API enables exactly one. |
+| [Admin Frontend API](admin-frontend.md) | The operator making administrative requests. | JWT and/or Kerberos; the identity must also be an authorized catalogue admin user. |
 
 For workflow JWTs, the subject identifies the disk instance. With mTLS, the frontend maps the client's certificate identity to a disk instance. See [Authentication Configuration](../../ops/deploy-and-configure/configuration/authentication.md) for identity mapping and credential setup.
 
@@ -25,6 +25,6 @@ The mechanism depends on the integration; see [EOS Configuration](../../ops/depl
 
 #### EOS
 
-The tape daemon reads and writes EOS replicas through XRootD using **Simple Shared Secret (SSS)** authentication. These credentials are separate from those EOS uses to submit workflow requests to the [Workflow Frontend](#service-apis).
+The tape daemon reads and writes EOS replicas through XRootD using **Simple Shared Secret (SSS)** authentication. These credentials are separate from those EOS uses to submit workflow requests to the [Workflow Frontend API](#service-apis).
 
 See [EOS Configuration](../../ops/deploy-and-configure/integrations/eos.md#configuration) for credential setup.

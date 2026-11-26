@@ -63,7 +63,7 @@ TEST_F(cta_common_dataStructures_ArchiveFileTest, copy_constructor) {
   ASSERT_EQ(archiveFile1.archiveFileID, archiveFile2.archiveFileID);
   ASSERT_EQ(archiveFile1.diskFileId, archiveFile2.diskFileId);
   ASSERT_EQ(archiveFile1.fileSize, archiveFile2.fileSize);
-  ASSERT_EQ(archiveFile1.checksumBlob, archiveFile2.checksumBlob);
+  ASSERT_TRUE(archiveFile1.checksumBlob.hasSameChecksums(archiveFile2.checksumBlob));
   ASSERT_EQ(archiveFile1.storageClass, archiveFile2.storageClass);
 
   ASSERT_EQ(archiveFile1.diskInstance, archiveFile2.diskInstance);

@@ -2,14 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from collections.abc import Iterator
-from datetime import datetime, timezone
-from typing import Any, Union
+from datetime import UTC, datetime
+from typing import Any, override
 
 from cta.sdk.daos.cta_admin._wrapper import CtaAdminWrapper
 from cta.sdk.daos.protocols import TapeFileDao
 from cta.sdk.exceptions import ResourceNotFoundError
 from cta.sdk.models import Checksum, DiskFile, TapeFile
-from typing_extensions import override
 
 
 class TapeFileDaoCtaAdmin(TapeFileDao):
@@ -25,7 +24,7 @@ class TapeFileDaoCtaAdmin(TapeFileDao):
         return TapeFile(
             int(raw_data["af"]["archiveId"]),
             storage_class_name=raw_data["af"]["storageClass"],
-            creation_time=datetime.fromtimestamp(int(raw_data["af"]["creationTime"]), tz=timezone.utc),
+            creation_time=datetime.fromtimestamp(int(raw_data["af"]["creationTime"]), tz=UTC),
             size=int(raw_data["af"]["size"]),
             checksum=Checksum(
                 algo_name=raw_data["af"]["checksum"][0]["type"], value=raw_data["af"]["checksum"][0]["value"]
@@ -43,7 +42,7 @@ class TapeFileDaoCtaAdmin(TapeFileDao):
         )
 
     @override
-    def get_all_copies(self, *args: Union[int, str]) -> tuple[TapeFile, ...]:
+    def get_all_copies(self, *args: int | str) -> tuple[TapeFile, ...]:
         resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1]}
         tape_files = tuple(
             self.raw_data_to_resource(raw_item) for raw_item in self._wrapper.list(self.resource_type, resource_id)
@@ -53,7 +52,7 @@ class TapeFileDaoCtaAdmin(TapeFileDao):
         return tape_files
 
     @override
-    def get(self, *args: Union[int, str], vid: str) -> TapeFile:
+    def get(self, *args: int | str, vid: str) -> TapeFile:
         resource_id = (
             {"id": args[0], "vid": vid} if len(args) == 1 else {"diskfileid": args[0], "instance": args[1], "vid": vid}
         )
@@ -73,7 +72,7 @@ class TapeFileDaoCtaAdmin(TapeFileDao):
         )
 
     @override
-    def delete(self, *args: Union[int, str], vid: str, reason: str) -> None:
+    def delete(self, *args: int | str, vid: str, reason: str) -> None:
         resource_id = {"id": args[0]} if len(args) == 1 else {"diskfileid": args[0], "intance": args[1]}
         resource_id |= {"vid": vid, "reason": reason}
         self._wrapper.delete("tapefile", resource_id)

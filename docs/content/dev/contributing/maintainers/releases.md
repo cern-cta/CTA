@@ -4,7 +4,7 @@ Use the `release` tool to prepare the changelog and release issue, tag the revie
 
 ## Set up the release tool
 
-Start from a clean checkout of the target branch (`main` by default), with Python 3, Git, and `origin` pointing to CERN GitLab.
+Start from a clean checkout of the target branch (`main` by default), with uv, Git, and `origin` pointing to CERN GitLab.
 Run commands from the repository root:
 
 ```bash
@@ -101,6 +101,15 @@ Publication follows this policy for each selected variant, including manually tr
 Dev/RC tags can publish to `unstable` and `testing`, but cannot publish to `stable`.
 Publication does not wait for all tests; review their results before manual promotion, and promote to `stable` only after production validation.
 Check publication jobs and their status notes on the release issue.
+
+`report-release` posts each job's result when it finishes, including individual image-publication jobs.
+Reporting failures do not fail publication.
+After retrying a job, rerun its reporter if it has already completed.
+Canceling the whole pipeline can prevent reporting; check the job logs in that case.
+
+To report another job, add its exact displayed name and a description to the `report-release` matrix in `.gitlab/ci/report.gitlab-ci.yml`.
+For matrix jobs, include the values in the name, for example `publish-images-private: [cta-taped]`.
+
 Documentation publishes independently from protected final release tags; see [Documentation Site](documentation-site.md).
 
 For stable releases, create a GitLab [Release entry](https://gitlab.cern.ch/cta/CTA/-/releases) and an announcement on the [CTA Community forum](https://cta-community.web.cern.ch/), including the changelog and upgrade instructions.

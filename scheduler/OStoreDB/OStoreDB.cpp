@@ -122,9 +122,10 @@ void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std:
   log::ScopedParamContainer params(lc);
   if (osThreadPoolSize.has_value()) {
     params.add("osThreadPoolSize", osThreadPoolSize.value());
-    OStoreDB::setThreadNumber(
-      osThreadPoolSize.value(),
-      osThreadStackSize.has_value() ? std::optional<size_t>(osThreadStackSize.value() * 1024 * 1024) : std::nullopt);
+    OStoreDB::setThreadNumber(osThreadPoolSize.value(),
+                              osThreadStackSize.has_value() ?
+                                std::optional<size_t>(static_cast<size_t>(osThreadStackSize.value()) * 1024 * 1024) :
+                                std::nullopt);
     lc.log(log::INFO, "In OStoreDB::initConfig(): Objectstore thread pool initialised.");
   } else if (osThreadStackSize.has_value()) {
     params.add("osThreadStackSize_MB", osThreadStackSize.value());
@@ -703,9 +704,9 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
                                    log::LogContext& logContext) {
   assertAgentAddressSet();
   cta::utils::Timer timer;
-  auto mutexForHelgrind = std::make_unique<cta::threading::Mutex>();
-  cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
-  auto* mutexForHelgrindAddr = mutexForHelgrind.release();
+  auto taskMutex = std::make_unique<cta::threading::Mutex>();
+  cta::threading::MutexLocker taskLock(*taskMutex);
+  auto* taskMutexAddr = taskMutex.release();
   // Construct the archive request object in memory
   auto aReq =
     std::make_unique<cta::objectstore::ArchiveRequest>(m_agentReference->nextId("ArchiveRequest"), m_objectStore);
@@ -765,9 +766,9 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
     .add("insertionTime", insertionTime);
   delayIfNecessary(logContext);
   auto* aReqPtr = aReq.release();
-  auto* et = new EnqueueingTask([aReqPtr, mutexForHelgrindAddr, this] {
-    std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
-    cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
+  auto* et = new EnqueueingTask([aReqPtr, taskMutexAddr, this] {
+    std::unique_ptr<cta::threading::Mutex> taskMutex(taskMutexAddr);
+    cta::threading::MutexLocker taskLock(*taskMutex);
     std::unique_ptr<cta::objectstore::ArchiveRequest> aReq(aReqPtr);
     // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
     auto scopedCounterDecrement = [this](void*) {
@@ -857,7 +858,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
              + arLockRelease + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
   });
-  mlForHelgrind.unlock();
+  taskLock.unlock();
   m_enqueueingTasksQueue.push(et);
   double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   params.add("taskPostingTime", taskPostingTime)
@@ -1238,8 +1239,8 @@ OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                         const std::optional<std::string>& diskSystemName,
                         log::LogContext& logContext) {
   assertAgentAddressSet();
-  auto mutexForHelgrind = std::make_unique<cta::threading::Mutex>();
-  cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
+  auto taskMutex = std::make_unique<cta::threading::Mutex>();
+  cta::threading::MutexLocker taskLock(*taskMutex);
   cta::utils::Timer timer;
   // Get the best vid from the cache
   std::set<std::string, std::less<>> candidateVids;
@@ -1321,11 +1322,11 @@ jobFound: {
     .add("insertionTime", insertionTime);
   delayIfNecessary(logContext);
   auto rReqPtr = rReq.release();
-  auto* mutexForHelgrindAddr = mutexForHelgrind.release();
-  auto* et = new EnqueueingTask([rReqPtr, job, ret, mutexForHelgrindAddr, this] {
-    std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
+  auto* taskMutexAddr = taskMutex.release();
+  auto* et = new EnqueueingTask([rReqPtr, job, ret, taskMutexAddr, this] {
+    std::unique_ptr<cta::threading::Mutex> taskMutex(taskMutexAddr);
     std::unique_ptr<objectstore::RetrieveRequest> rReq(rReqPtr);
-    cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
+    cta::threading::MutexLocker taskLock(*taskMutex);
     // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
     auto scopedCounterDecrement = [this](void*) {
       m_taskQueueSize--;
@@ -1374,7 +1375,7 @@ jobFound: {
       .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
   });
-  mlForHelgrind.unlock();
+  taskLock.unlock();
   m_enqueueingTasksQueue.push(et);
   double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   params.add("taskPostingTime", taskPostingTime)

@@ -9,7 +9,7 @@ drive status (up/down).
 """
 
 from collections.abc import Iterator
-from typing import Optional, Protocol
+from typing import Protocol
 
 from cta.sdk.models import Drive
 
@@ -59,7 +59,7 @@ class DriveDao(Protocol):
         """
         ...
 
-    def update(self, name: str, /, *, comment: Optional[str] = None) -> None:
+    def update(self, name: str, /, *, comment: str | None = None) -> None:
         """Update a tape drive's metadata.
 
         Args:
@@ -85,7 +85,7 @@ class DriveDao(Protocol):
         """
         ...
 
-    def up(self, name: str, /, *, reason: Optional[str] = None) -> None:
+    def up(self, name: str, /, *, reason: str | None = None) -> None:
         """Set a tape drive to the up state.
 
         Args:
