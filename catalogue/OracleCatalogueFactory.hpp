@@ -41,8 +41,7 @@ public:
                          const rdbms::Login& login,
                          const uint64_t nbConns,
                          const uint64_t nbArchiveFileListingConns,
-                         const uint32_t maxTriesToConnect,
-                         const uint64_t archiveFileIdBatchSize);
+                         const uint32_t maxTriesToConnect);
 
   /**
    * Returns a newly created CTA catalogue object.
