@@ -152,17 +152,24 @@ write itself, before it ever reaches that dead-on-arrival fallback: a small, gen
 calls a function, and on a `cta::exception::Exception`, sleeps for a configured delay and tries
 again, up to a fixed list of delays, logging a `WARNING` per retry and an `ERR` once every attempt
 is exhausted (at which point it rethrows, and the call reaches `failReportBatch()` exactly as
-before). It is wired into two call sites, each the same shape - "the real work already succeeded;
-only the DB write recording that fact failed":
+before). It is wired into one call site:
+`ArchiveMount::reportJobsBatchTransferred()`'s `setJobBatchTransferred()`/
+`setRepackJobBatchTransferred()` call (delays `{1s, 10s}`) - "the real work already succeeded;
+only the DB write recording that fact failed."
 
-- `ArchiveMount::reportJobsBatchTransferred()`'s `setJobBatchTransferred()`/
-  `setRepackJobBatchTransferred()` call (delays `{1s, 10s}`).
-- `RetrieveMount::setJobBatchTransferred()`'s scheduler-DB write (same delays).
+It is deliberately scoped to call sites like this one - background/recovery work already running
+on a worker thread, where blocking for a few extra seconds costs nothing a caller is waiting on -
+and must never wrap a frontend-synchronous RPC path, where a caller is already blocked on a
+response and a long retry only delays an eventual failure instead of helping it.
 
-It is deliberately scoped to call sites like these - background/recovery work already running on
-a worker thread, where blocking for a few extra seconds costs nothing a caller is waiting on - and
-must never wrap a frontend-synchronous RPC path, where a caller is already blocked on a response
-and a long retry only delays an eventual failure instead of helping it.
+`RetrieveMount::setJobBatchTransferred()` looks like the same shape at first glance but is not
+wrapped: it calls `catalogue->DriveState()->releaseDiskSpace()`, a non-idempotent
+`RESERVED_BYTES -= bytes` decrement, before any of the scheduler-DB writes, and those writes
+themselves run as up to three separate `updateRetrieveJobStatusWrapper()` calls, each its own
+transaction, each swallowing its own exceptions rather than propagating them. Retrying this whole
+function on a caught exception could double-decrement the drive's reserved space, or re-run a
+sub-call whose own transaction already committed - retrying needs this function restructured to be
+idempotent first, not just wrapped.
 
 #### Repack's "terminal" failure here isn't a failure
 
@@ -450,9 +457,8 @@ flowchart TB
     CAT -- yes --> DBW{"setJobBatchTransferred() /\nsetRepackJobBatchTransferred()\nDB write OK?"}
 
     DBW -- "no: FailedReportMoveToQueue" --> FRB["ArchiveMount::failReportBatch()\nbucket: isRepack x\n(NoReportRequired OR retries exceeded)"]
-    FRB -- "requeue\n(see note 1 below)" --> FRR1["failReportBatchRequeue()"]
-    FRR1 --> RETRYWRITE["ACTIVE_QUEUE, IS_REPORTING=false\nstatus unchanged - retry the write"]
-    RETRYWRITE -. next flush .-> DBW
+    FRB -. "requeue branch exists in code,\nnever reached here - see note 1" .-> FRR1["failReportBatchRequeue()\n(dead on arrival for this entry point)"]
+    FRR1 -. "IS_REPORTING=false would retry a\nreport - but STATUS here is still\nAJS_ToTransferFor*, never a report\nstatus, so nothing ever re-reads it" .-> RETRYWRITE["(unreachable - see note 1)"]
     FRB -- "exceeded - USER\n(in practice: always, see note 1)" --> FRE1U["failReportBatchExceedRetries(false)"]
     FRE1U --> FAILEDQ1["ARCHIVE_FAILED_QUEUE\nfile IS on tape + catalogued -\nonly the DB bookkeeping is missing"]
     FRB -- "exceeded - REPACK\n(always: NoReportRequired)" --> URS2["updateRepackJobSuccess()\n(recover the write - not a failure)"]
