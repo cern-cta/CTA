@@ -221,12 +221,7 @@ protected:
   /// Select whether the Linux tape driver uses fast end-of-data positioning.
   virtual void setSTFastMTEOM(bool fastMTEOM);
 
-  /// @brief Reopen the tape device to refresh Linux driver state.
-  /// @throws TapeDriverStateError If the device descriptor is invalid or closing or reopening fails.
-  void reopenDevice();
-
-  /// @brief Reopen the tape device and verify that the Linux driver reports it online.
-  /// @throws TapeDriverStateError If reopening or reading driver status fails, or the driver reports it offline.
+  /// Reopen the tape device and verify that the Linux driver reports it online; propagate failures.
   void refreshReadyDevice();
 
   void setLogicalBlockProtection(const unsigned char method,

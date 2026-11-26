@@ -104,6 +104,11 @@ TEST_F(MountedTapeTest, CleanupUsesUnloadTimeoutForReadiness) {
       EXPECT_LE(deadline, Clock::now() + 30s);
       throw drive::MediaNotReady(reason);
     });
+    EXPECT_CALL(wrapper, ioctl(7, MTIOCGET, testing::An<mtget*>())).WillOnce([](int, unsigned long, mtget* status) {
+      *status = {};
+      status->mt_gstat = GMT_DR_OPEN(0xffffffff);
+      return 0;
+    });
     EXPECT_TRUE(tape.cleanup().driveReusable());
     EXPECT_THAT(logger.messages, testing::HasSubstr(reason));
     EXPECT_EQ(0, tracker.stats().cleanup.labelReadTime);
@@ -164,13 +169,13 @@ TEST_F(MountedTapeTest, FailedCleanupIsLoggedAndNeverRetried) {
   EXPECT_NE(std::string::npos, logger.messages.find("Mounted tape cleanup failed"));
 }
 
-TEST_F(MountedTapeTest, MountFailureCleansOnceAndRetainsMountOnlyTiming) {
+TEST_F(MountedTapeTest, MountFailureWithEmptyDriveCleansOnceAndRetainsMountOnlyTiming) {
   drive.info.rawLibrarySlot = "smc0";
   EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 30, outcome, lc, tracker}), cta::exception::Exception);
   EXPECT_EQ(1, logger.cleanups);
   ASSERT_TRUE(outcome);
-  EXPECT_FALSE(outcome->driveReusable());
-  EXPECT_TRUE(outcome->ejectFailed);
+  EXPECT_TRUE(outcome->driveReusable());
+  EXPECT_FALSE(outcome->ejectFailed);
   ASSERT_TRUE(logger.mountTimeBeforeCleanup);
   EXPECT_GT(*logger.mountTimeBeforeCleanup, 0);
   EXPECT_EQ(*logger.mountTimeBeforeCleanup, tracker.stats().setup.initialMountTime);

@@ -206,9 +206,6 @@ void cta::tape::drive::FakeDrive::spaceFileMarksForward(size_t count) {
 }
 
 void cta::tape::drive::FakeDrive::unloadTape(void) {
-  if (m_failurePoints.contains(FailurePoint::UnloadDriveState)) {
-    throw TapeDriverStateError("Injected unsafe unload driver state");
-  }
   throwIfFailurePoint(FailurePoint::UnloadTape);
   m_tapeInPlace = false;
 }

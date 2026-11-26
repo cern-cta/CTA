@@ -623,6 +623,20 @@ public:
 
 class senseConstants {
 public:
+  /// Combined ASC/ASCQ values used by tape readiness handling.
+  enum : uint16_t {
+    operationInProgress = 0x0016,
+    logicalUnitBecomingReady = 0x0401,
+    initializingCommandRequired = 0x0402,
+    formatInProgress = 0x0404,
+    logicalUnitOperationInProgress = 0x0407,
+    securityAssociationCreationInProgress = 0x0413,
+    cleaningCartridgeInstalled = 0x3003,
+    mediumNotPresent = 0x3a00,
+    mediumNotPresentMamAccessible = 0x3a04,
+    logicalUnitNotSelfConfigured = 0x3e00
+  };
+
   /* Structures from the Linux Kernel. It holds ASC/ASCQ to string
      * translations (from http://www.t10.org/lists/asc-num.txt) */
   struct error_info {

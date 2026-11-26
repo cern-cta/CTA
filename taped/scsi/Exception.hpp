@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#pragma once
+
 #include "Constants.hpp"
 #include "Structures.hpp"
 #include "common/exception/Exception.hpp"

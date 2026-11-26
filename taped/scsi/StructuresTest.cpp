@@ -1311,3 +1311,85 @@ TEST(cta_tape_SCSI_Structures, requestSenseData_t) {
   ASSERT_EQ("CARTRIDGE1", cta::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
 }
 }  // namespace unitTests
+
+namespace cta::tape::SCSI {
+namespace {
+
+class CommandResultTest : public testing::TestWithParam<bool> {
+protected:
+  Structures::senseData_t<255> m_sense;
+  Structures::LinuxSGIO_t m_sgio;
+
+  void SetUp() override {
+    m_sgio.setSenseBuffer(&m_sense);
+    m_sgio.status = Status::CHECK_CONDITION;
+    m_sgio.driver_status = DriverStatus::SENSE;
+    m_sgio.sb_len_wr = GetParam() ? 8 : 18;
+    auto* bytes = reinterpret_cast<unsigned char*>(&m_sense);
+    bytes[0] = GetParam() ? 0x72 : 0x70;
+    bytes[GetParam() ? 1 : 2] = senseKeys::notReady;
+    bytes[GetParam() ? 2 : 12] = 0x04;
+    bytes[GetParam() ? 3 : 13] = 0x01;
+    bytes[7] = GetParam() ? 0 : 10;
+  }
+};
+
+TEST_P(CommandResultTest, ReturnsCurrentSenseWithoutApplyingDrivePolicy) {
+  // Hardware errors are decoded too; the drive decides which conditions it can handle.
+  auto* bytes = reinterpret_cast<unsigned char*>(&m_sense);
+  bytes[GetParam() ? 1 : 2] = senseKeys::hardwareError;
+  const auto result = Structures::decodeCommandResult(m_sgio, m_sense, "test command");
+  ASSERT_TRUE(result);
+  EXPECT_EQ(senseKeys::hardwareError, result->key);
+  EXPECT_EQ(0x04, result->asc);
+  EXPECT_EQ(0x01, result->ascq);
+  EXPECT_EQ(0x0401, result->ascAscq());
+  EXPECT_NE(std::string::npos, result->message.find("test command"));
+}
+
+TEST_P(CommandResultTest, RejectsTruncatedSense) {
+  const unsigned minimumLength = GetParam() ? 8 : 14;
+  for (unsigned length = 0; length < minimumLength; ++length) {
+    m_sgio.sb_len_wr = length;
+    EXPECT_THROW(Structures::decodeCommandResult(m_sgio, m_sense, "test command"), cta::exception::Exception);
+  }
+  m_sgio.sb_len_wr = minimumLength;
+  EXPECT_TRUE(Structures::decodeCommandResult(m_sgio, m_sense, "test command"));
+  if (!GetParam()) {
+    m_sense.fixedFormat.additionalSenseLength = 5;
+    EXPECT_THROW(Structures::decodeCommandResult(m_sgio, m_sense, "test command"), cta::exception::Exception);
+  }
+}
+
+TEST_P(CommandResultTest, RejectsInvalidFormatOrReportedLength) {
+  m_sense.responseCode = 0x7f;
+  EXPECT_THROW(Structures::decodeCommandResult(m_sgio, m_sense, "test command"), cta::exception::Exception);
+  m_sense.responseCode = GetParam() ? 0x72 : 0x70;
+  m_sgio.mx_sb_len = m_sgio.sb_len_wr - 1;
+  EXPECT_THROW(Structures::decodeCommandResult(m_sgio, m_sense, "test command"), cta::exception::Exception);
+}
+
+TEST_P(CommandResultTest, DeferredSenseCannotEstablishCurrentCommandOutcome) {
+  m_sense.responseCode = GetParam() ? 0x73 : 0x71;
+  EXPECT_THROW(Structures::decodeCommandResult(m_sgio, m_sense, "test command"), NotReadyException);
+}
+
+TEST_P(CommandResultTest, HostAndDriverErrorsTakePrecedenceOverSense) {
+  m_sgio.host_status = HostStatus::TIME_OUT;
+  EXPECT_THROW(Structures::decodeCommandResult(m_sgio, m_sense, "test command"), HostException);
+  m_sgio.host_status = HostStatus::OK;
+  m_sgio.driver_status = DriverStatus::ERROR;
+  EXPECT_THROW(Structures::decodeCommandResult(m_sgio, m_sense, "test command"), DriverException);
+}
+
+INSTANTIATE_TEST_SUITE_P(SenseFormats, CommandResultTest, testing::Bool());
+
+TEST(CommandResult, GoodStatusReturnsNoSense) {
+  Structures::senseData_t<255> sense;
+  Structures::LinuxSGIO_t sgio;
+  sgio.setSenseBuffer(&sense);
+  EXPECT_FALSE(Structures::decodeCommandResult(sgio, sense, "test command"));
+}
+
+}  // namespace
+}  // namespace cta::tape::SCSI

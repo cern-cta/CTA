@@ -11,12 +11,15 @@
 #include <algorithm>
 #include <arpa/inet.h>
 #include <climits>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <endian.h>
 #include <iomanip>
+#include <optional>
 #include <scsi/sg.h>
 #include <sstream>
+#include <string>
 
 namespace cta::tape::SCSI {
 const unsigned int defaultTimeout = 900000;  //millisecs
@@ -1119,6 +1122,23 @@ public:
     return SCSI::senseConstants::getASCString(asc, ascq);
   }
 };
+
+/// Validated current sense information; command-specific callers decide whether to retry or accept it.
+struct SenseInfo {
+  uint8_t key;
+  uint8_t asc;
+  uint8_t ascq;
+  std::string message;
+
+  /// Combine ASC and ASCQ for comparison with senseConstants.
+  uint16_t ascAscq() const { return (static_cast<uint16_t>(asc) << 8) | ascq; }
+};
+
+/// @brief Return no sense for GOOD, or decoded current sense for CHECK CONDITION.
+/// sense must be the typed buffer attached to sgio with setSenseBuffer().
+/// Throws on transport errors, malformed or deferred sense, unsupported sense keys, and other command statuses.
+std::optional<SenseInfo>
+decodeCommandResult(const LinuxSGIO_t& sgio, senseData_t<255>& sense, const std::string& context);
 
 /**
      * READ END OF WRAP POSITION CDB as described in LTO-8 SCSI Reference, p.119

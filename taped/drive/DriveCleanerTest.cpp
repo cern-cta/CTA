@@ -454,7 +454,7 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  EXPECT_EQ(cta::tape::session::TapeSessionState::Unmounting, m_tracker.state());
+  EXPECT_EQ(cta::tape::session::TapeSessionState::Unloading, m_tracker.state());
   ASSERT_EQ(std::nullopt, m_tracker.type());
   ASSERT_EQ(1,
             m_tracker.outcomeSnapshot()
@@ -464,7 +464,7 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
     m_tracker.outcomeSnapshot().failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable)]);
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to clear encryption key"));
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to disable logical block protection"));
-  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
 TEST_P(DriveCleanerTest, DismountsTapeAfterUnloadFailure) {
@@ -549,21 +549,24 @@ TEST_P(DriveCleanerTest, DisablesTapeAndRejectsReuseWhenBothDismountAttemptsFail
   ASSERT_EQ(cta::common::dataStructures::DriveStatus::Unmounting, tapeDrive->driveStatus);
 }
 
-TEST_P(DriveCleanerTest, ConfirmsEmptyDriveWithRobot) {
+TEST_P(DriveCleanerTest, EmptyDriveSkipsUnloadAndDismount) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
 
-  installDrive(false);
+  installDrive(false)->setFailurePoint(FailurePoint::UnloadTape);
   cta::tape::daemon::DriveCleaner cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, 1, *m_catalogue, m_tracker);
 
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
-  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(0, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeUnload)]);
+  ASSERT_EQ(0, m_tracker.stats().cleanup.rewindTime);
+  ASSERT_EQ(0, m_tracker.stats().cleanup.unloadTime);
 }
 
 TEST_P(DriveCleanerTest, RepeatedEmptyCleanupResetsConfigurationWithoutLoadingWait) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
-  // A loading wait would throw; both cleanup calls must still succeed and consult the robot.
+  // A loading wait would throw; both cleanup calls must still succeed without tape movement.
   cta::tape::drive::FakeDrive drive(5000, cta::tape::drive::FakeDrive::OnFlush, true);
   drive.setTapeInPlace(false);
   drive.enableCRC32CLogicalBlockProtectionReadWrite();
@@ -574,7 +577,7 @@ TEST_P(DriveCleanerTest, RepeatedEmptyCleanupResetsConfigurationWithoutLoadingWa
   ASSERT_TRUE(cleaner.cleanDrive(drive).driveReusable());
   ASSERT_EQ(0, m_tracker.stats().cleanup.rewindTime);
   ASSERT_EQ(0, m_tracker.stats().cleanup.labelReadTime);
-  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
 TEST_P(DriveCleanerTest, ReadyDriveReadsLabelBeforeEjecting) {
@@ -584,7 +587,7 @@ TEST_P(DriveCleanerTest, ReadyDriveReadsLabelBeforeEjecting) {
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
-TEST_P(DriveCleanerTest, PresenceCacheIsNotUsedToDecideWhetherToDismount) {
+TEST_P(DriveCleanerTest, FailedPresenceCheckStillAttemptsEject) {
   installDrive()->setFailurePoint(FailurePoint::HasTapeInPlace);
   ASSERT_TRUE(runCleaner(m_vid));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
@@ -599,7 +602,7 @@ TEST_P(DriveCleanerTest, RejectsEmptyDriveReuseAfterConfigurationResetFailure) {
 
   const auto result = cleaner.cleanDrive(m_systemWrapper);
   ASSERT_FALSE(result.driveReusable());
-  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   cta::log::LogContext logContext(m_sessionLog);
   ASSERT_TRUE(cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName).up);
   EXPECT_THAT(result.errorMessage, testing::HasSubstr("Failed to disable logical block protection"));
@@ -672,14 +675,6 @@ TEST_P(DriveCleanerTest, FailedReadinessObservationStillEjectsButRejectsReuse) {
   ASSERT_FALSE(m_cleanupResult.ejectFailed);
   ASSERT_EQ(0, m_tracker.stats().cleanup.rewindTime);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
-  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
-}
-
-TEST_P(DriveCleanerTest, FailedDriverRecoveryStillDismountsButRejectsReuse) {
-  installDrive()->setFailurePoint(FailurePoint::UnloadDriveState);
-  ASSERT_FALSE(runCleaner(m_vid));
-  ASSERT_TRUE(m_cleanupResult.driveStateFailed);
-  ASSERT_FALSE(m_cleanupResult.ejectFailed);
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 

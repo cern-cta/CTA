@@ -47,7 +47,7 @@ public:
   /// An already-empty drive has no eject failure; configuration-reset failures still prevent reuse.
   struct CleanupResult {
     bool driveOpenFailed = false;
-    bool driveStateFailed = false;  ///< Checking readiness or unloading left the drive state unknown or unusable.
+    bool driveStateFailed = false;  ///< Checking readiness left the drive state unknown or unusable.
     bool configurationResetFailed = false;
     bool ejectFailed = false;
     bool unexpectedFailure = false;  ///< Cleanup threw before returning a result.
@@ -104,8 +104,8 @@ private:
   /// Discover and open the configured drive; return ownership or propagate an error.
   std::unique_ptr<drive::DriveInterface> createDrive(System::virtualWrapper& sysWrapper);
 
-  /// Attempt unloading, counting failures and recording errors that prevent drive reuse.
-  void unloadTape(drive::DriveInterface& drive, CleanupResult& result);
+  /// Attempt unloading, logging and counting failures before continuing with robotic dismount.
+  void unloadTape(drive::DriveInterface& drive);
 
   /// @brief Time robotic dismount, counting failures before propagating them.
   ///

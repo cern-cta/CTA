@@ -47,7 +47,6 @@ public:
     UnloadTape,
     HasTapeInPlace,
     WaitUntilReady,
-    UnloadDriveState,
     TapeAlertCodes,
     TapeAlerts
   };

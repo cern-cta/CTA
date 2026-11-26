@@ -24,9 +24,6 @@
 /// Tape-drive abstractions, status types and device factory.
 namespace cta::tape::drive {
 
-/// A device or command failure left the tape driver in an unknown or unusable state.
-CTA_GENERATE_EXCEPTION_CLASS(TapeDriverStateError);
-
 /// Media is absent, unloaded or still not ready when polling stops.
 CTA_GENERATE_EXCEPTION_CLASS(MediaNotReady);
 
@@ -269,8 +266,7 @@ public:
   /// Move forwards across the requested number of file marks, towards the end of data.
   virtual void spaceFileMarksForward(size_t count) = 0;
 
-  /// @brief Unload the cartridge so the media changer can remove it; accept absent or already unloaded media.
-  /// @throws TapeDriverStateError If a device or command failure leaves the tape driver in an unknown or unusable state.
+  /// Unload the cartridge from the drive mechanism so the media changer can remove it.
   virtual void unloadTape(void) = 0;
 
   /// Wait until buffered writes have been committed to tape.

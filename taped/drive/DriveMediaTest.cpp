@@ -81,16 +81,6 @@ protected:
       return -1;
     });
   }
-
-  static void checkUnloadCommand(const sg_io_hdr_t* command) {
-    ASSERT_EQ(6, command->cmd_len);
-    EXPECT_EQ(SCSI::Commands::START_STOP, command->cmdp[0]);
-    for (unsigned i = 1; i < 6; ++i) {
-      EXPECT_EQ(0, command->cmdp[i]);
-    }
-    EXPECT_EQ(SG_DXFER_NONE, command->dxfer_direction);
-    EXPECT_EQ(SCSI::defaultTimeout, command->timeout);
-  }
 };
 
 TEST_F(DriveMediaTest, ReadyProbeRefreshesDriverBeforeMediaAccess) {
@@ -178,7 +168,7 @@ TEST_F(DriveMediaTest, PowerOnSelfTestDoesNotRetryAfterDeadline) {
   EXPECT_EQ(0, m_closes);
 }
 
-TEST_F(DriveMediaTest, RecoveredUnloadNotificationsDoNotEstablishReadiness) {
+TEST_F(DriveMediaTest, RecoveredErrorsDoNotEstablishReadiness) {
   for (const auto& [asc, ascq] : {
          std::pair {0x00, 0x17},
          {0x83, 0x83}
@@ -255,7 +245,7 @@ TEST_F(DriveMediaTest, RefreshedOfflineStatusIsNotReportedAsElapsedTimeout) {
   try {
     m_drive->waitUntilReady(std::chrono::steady_clock::now() + 900s);
     FAIL() << "Expected driver-state error";
-  } catch (const TapeDriverStateError& ex) {
+  } catch (const exception::Exception& ex) {
     EXPECT_THAT(ex.getMessageValue(), testing::HasSubstr("offline after successful TEST UNIT READY"));
     EXPECT_THAT(ex.getMessageValue(), testing::Not(testing::HasSubstr("900 seconds")));
   }
@@ -336,189 +326,51 @@ TEST_F(DriveMediaTest, ExpiredDeadlineStillAcceptsReadyMedia) {
   EXPECT_EQ(1, m_closes);
 }
 
-TEST_F(DriveMediaTest, SuccessfulDriverUnloadNeedsNoRecoveryCommands) {
-  EXPECT_CALL(m_wrapper, ioctl(7, MTIOCTOP, An<mtop*>())).WillOnce(Return(0));
-  EXPECT_NO_THROW(m_drive->unloadTape());
-  EXPECT_EQ(1, m_opens);
-}
-
-TEST_F(DriveMediaTest, CachedNonReadyDriverCanRecoverAnUnthreadedCartridge) {
-  expectDriverUnloadFailure(EIO);
-  expectStatus(false);
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
-    checkUnloadCommand(command);
+TEST_F(DriveMediaTest, DriverUnloadUsesOnlyMtUnload) {
+  EXPECT_CALL(m_wrapper, ioctl(7, MTIOCTOP, An<mtop*>())).WillOnce([](int, unsigned long, mtop* command) {
+    EXPECT_EQ(MTUNLOAD, command->mt_op);
+    EXPECT_EQ(1, command->mt_count);
     return 0;
   });
   EXPECT_NO_THROW(m_drive->unloadTape());
-  EXPECT_EQ(3, m_opens);
-  EXPECT_EQ(2, m_closes);
+  EXPECT_EQ(1, m_opens);
+  EXPECT_EQ(0, m_closes);
 }
 
-TEST_F(DriveMediaTest, RepeatedEmptyUnloadIsAcceptedInBothSenseFormats) {
-  for (bool descriptor : {false, true}) {
-    expectDriverUnloadFailure();
-    expectStatus(false);
-    EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
-      checkUnloadCommand(command);
-      return sense(command, 2, 0x3a, 0, descriptor);
-    });
-    EXPECT_NO_THROW(m_drive->unloadTape());
-  }
-}
-
-TEST_F(DriveMediaTest, RecoveryUnloadAcceptsCurrentCleaningNotifications) {
-  for (const auto& [asc, ascq] : {
-         std::pair {0x00, 0x17},
-         {0x83, 0x83}
-  }) {
-    for (bool descriptor : {false, true}) {
-      expectDriverUnloadFailure();
-      expectStatus(false);
-      EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
-        .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
-          checkUnloadCommand(command);
-          return sense(command, 1, asc, ascq, descriptor);
-        });
-      EXPECT_NO_THROW(m_drive->unloadTape());
+TEST_F(DriveMediaTest, DriverUnloadFailurePropagatesWithoutRecovery) {
+  for (int error : {ENOMEDIUM, EIO, EBUSY}) {
+    expectDriverUnloadFailure(error);
+    try {
+      m_drive->unloadTape();
+      FAIL() << "Expected unload failure";
+    } catch (const exception::Errnum& ex) {
+      EXPECT_EQ(error, ex.errorNumber());
     }
   }
-  EXPECT_EQ(9, m_opens);
-  EXPECT_EQ(8, m_closes);
-}
-
-TEST_F(DriveMediaTest, RecoveryUnloadRejectsDeferredOrInvalidCleaningNotifications) {
-  for (bool descriptor : {false, true}) {
-    for (unsigned variant = 0; variant < 4; ++variant) {
-      expectDriverUnloadFailure();
-      expectStatus(false);
-      EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
-        .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
-          sense(command, 1, 0x00, 0x17, descriptor);
-          switch (variant) {
-            case 0:
-              command->sbp[0] = descriptor ? 0x73 : 0x71;
-              break;
-            case 1:
-              command->host_status = 1;
-              break;
-            case 2:
-              command->driver_status = SCSI::DriverStatus::TIMEOUT;
-              break;
-            case 3:
-              command->sb_len_wr = descriptor ? 7 : 13;
-              break;
-          }
-          return 0;
-        });
-      EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
-    }
-  }
-  EXPECT_EQ(17, m_opens);
-  EXPECT_EQ(16, m_closes);
-}
-
-TEST_F(DriveMediaTest, RecoveryUnloadRejectsUnrecognizedRecoveredErrors) {
-  expectDriverUnloadFailure();
-  expectStatus(false);
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
-    return sense(command, 1, 0x5d, 0);
-  });
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
-  EXPECT_EQ(3, m_opens);
-}
-
-TEST_F(DriveMediaTest, RecoveredUnloadNotificationDoesNotHideReopenFailure) {
-  expectDriverUnloadFailure();
-  expectStatus(false);
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
-    return sense(command, 1, 0x83, 0x83);
-  });
-  EXPECT_CALL(m_wrapper, open(_, _)).WillOnce(Return(7)).WillOnce([](const char*, int) {
-    errno = EIO;
-    return -1;
-  });
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
-  EXPECT_EQ(2, m_closes);
-  m_drive.reset();
-  EXPECT_EQ(2, m_closes);
-}
-
-TEST_F(DriveMediaTest, RecoveryUnloadRetriesUnitAttention) {
-  expectDriverUnloadFailure();
-  expectStatus(false);
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
-    .WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
-      checkUnloadCommand(command);
-      std::this_thread::sleep_for(10ms);
-      return sense(command, 6, 0x28, 0);
-    })
-    .WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
-      checkUnloadCommand(command);
-      return 0;
-    });
-  EXPECT_NO_THROW(m_drive->unloadTape());
-}
-
-TEST_F(DriveMediaTest, RecoveryUnloadDoesNotAcceptMamAccessibleAsAbsent) {
-  expectDriverUnloadFailure();
-  expectStatus(false);
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([](int, unsigned long, sg_io_hdr_t* command) {
-    return sense(command, 2, 0x3a, 4);
-  });
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
-  EXPECT_EQ(3, m_opens);
-}
-
-TEST_F(DriveMediaTest, RecoveryUnitAttentionIsBoundedAndRefreshesDriverOnFailure) {
-  expectDriverUnloadFailure();
-  expectStatus(false);
-  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
-    .Times(3)
-    .WillRepeatedly([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 6, 0x29, 0); });
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
-  EXPECT_EQ(3, m_opens);
-}
-
-TEST_F(DriveMediaTest, OnlineDriverUnloadFailureIsNotSilentlyRetried) {
-  expectDriverUnloadFailure(EIO);
-  expectStatus(true);
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
   EXPECT_EQ(1, m_opens);
+  EXPECT_EQ(0, m_closes);
 }
 
-TEST_F(DriveMediaTest, BufferOrStatusFailurePreventsRawRecovery) {
-  expectDriverUnloadFailure(EIO);
-  EXPECT_CALL(m_wrapper, ioctl(7, MTIOCGET, An<mtget*>())).WillOnce([](int, unsigned long, mtget*) {
-    errno = EIO;
-    return -1;
-  });
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
-  EXPECT_EQ(1, m_opens);
-}
-
-TEST_F(DriveMediaTest, CloseFailurePreventsRawRecoveryAndDoubleClose) {
-  expectDriverUnloadFailure();
-  expectStatus(false);
+TEST_F(DriveMediaTest, ReadinessRefreshCloseFailureDoesNotDoubleClose) {
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce(Return(0));
   EXPECT_CALL(m_wrapper, close(7)).Times(1).WillOnce([](int) {
     errno = EIO;
     return -1;
   });
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
+  EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), exception::Errnum);
   m_drive.reset();
 }
 
-TEST_F(DriveMediaTest, RecoverySuccessDoesNotHideReopenFailure) {
-  expectDriverUnloadFailure();
-  expectStatus(false);
+TEST_F(DriveMediaTest, ReadinessRefreshOpenFailureDoesNotDoubleClose) {
   EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce(Return(0));
-  EXPECT_CALL(m_wrapper, open(_, _)).WillOnce(Return(7)).WillOnce([](const char*, int) {
+  EXPECT_CALL(m_wrapper, open(_, _)).WillOnce([](const char*, int) {
     errno = EIO;
     return -1;
   });
-  EXPECT_THROW(m_drive->unloadTape(), TapeDriverStateError);
-  EXPECT_EQ(2, m_closes);
+  EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), exception::Errnum);
+  EXPECT_EQ(1, m_closes);
   m_drive.reset();
-  EXPECT_EQ(2, m_closes);
+  EXPECT_EQ(1, m_closes);
 }
 
 }  // namespace

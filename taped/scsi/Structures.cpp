@@ -5,8 +5,40 @@
 
 #include "Structures.hpp"
 
+#include "taped/scsi/Exception.hpp"
+
 #include <cstdio>
 #include <sstream>
+
+namespace cta::tape::SCSI::Structures {
+
+std::optional<SenseInfo>
+decodeCommandResult(const LinuxSGIO_t& sgio, senseData_t<255>& sense, const std::string& context) {
+  // Transport failures take precedence over any sense returned with them.
+  checkAndThrowSgHostStatus(sgio, context);
+  if (sgio.driver_status != DriverStatus::OK && sgio.driver_status != DriverStatus::SENSE) {
+    checkAndThrowSgDriverStatus(sgio, context);
+  }
+  if (sgio.status == Status::CHECK_CONDITION) {
+    const bool fixed = sense.isFixedFormat();
+    const bool descriptor = sense.isDescriptorFormat();
+    if ((!fixed && !descriptor) || sgio.sb_len_wr > sgio.mx_sb_len || sgio.sb_len_wr < 8
+        || (fixed && (sgio.sb_len_wr < 14 || sense.fixedFormat.additionalSenseLength < 6))) {
+      throw cta::exception::Exception(context + ": malformed or truncated SCSI sense data");
+    }
+    // Deferred errors concern an earlier command and cannot establish this command's outcome.
+    if (sense.isCurrent()) {
+      return SenseInfo {sense.getSenseKey(),
+                        sense.getASC(),
+                        sense.getASCQ(),
+                        Exception(sgio.status, &sense, context).getMessageValue()};
+    }
+  }
+  ExceptionLauncher(sgio, context);
+  return std::nullopt;
+}
+
+}  // namespace cta::tape::SCSI::Structures
 
 std::string cta::tape::SCSI::Structures::toString(const inquiryData_t& inq) {
   std::stringstream inqDump;

@@ -1226,7 +1226,7 @@ void checkStopBeforeStartupIsEmptyMount(cta::catalogue::Catalogue& catalogue, st
   config.disk_io_threads = 1;
   config.encryption.reset();
   config.no_block_move_timeout_secs = 600;
-  TapeSession session(logger, system, info, changer, mount, config, 1, catalogue);
+  TapeSession session(logger, system, info, changer, mount, config, 1, 1, catalogue);
   std::stop_source stop;
   stop.request_stop();
 
@@ -1378,7 +1378,7 @@ TEST_P(TapeSessionTest, ArchiveDrainDuringFetchCompletesAcquiredJob) {
         // Keep this transfer test independent of external key scripts and catalogue encryption settings.
         config.encryption.reset();
         config.no_block_move_timeout_secs = 600;
-        TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
+        TapeSession session(logger, system, info, changer, mount, config, 1, 1, getCatalogue());
 
         const auto result = session.execute(drain.get_token());
         EXPECT_TRUE(result.successful);

@@ -159,15 +159,24 @@ auto DriveCleaner::cleanDrive(drive::DriveInterface& drive, std::chrono::steady_
   m_tracker.reportState(session::TapeSessionState::Unloading);
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   CleanupResult result;
-  // Media may either not be present or still in the process of loading
+  // Refresh readiness before consulting the driver's media status.
   const bool ready = checkReadiness(drive, readinessDeadline, result);
-  // Clear encryption key and logical block protection (LBP)
   resetConfiguration(drive, result);
-  // If the media is ready, read the volume label (best effort)
+
+  // Empty drives still need their persistent configuration reset, but no tape movement.
+  try {
+    if (!drive.hasTapeInPlace()) {
+      m_lc.log(log::INFO, "Cleaner found no tape in the drive; nothing to eject");
+      return result;
+    }
+  } catch (...) {
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, exception::currentExceptionMessage());
+    m_lc.log(log::WARNING, "Cleaner could not determine whether the drive contains a tape; attempting tape eject");
+  }
+
   const auto volumeLabel = ready ? readVolumeLabel(drive) : std::nullopt;
-  // Now eject
-  unloadTape(drive, result);
-  // And dismount. Dismount should always be attempted as media status alone cannot prove the library is empty.
+  unloadTape(drive);
   dismountCartridge(volumeLabel, result);
   if (result.ejectFailed) {
     disableTapeAfterFailedEject(result.errorMessage);
@@ -364,7 +373,7 @@ std::optional<std::string> DriveCleaner::readVolumeLabel(drive::DriveInterface& 
   }
 }
 
-void DriveCleaner::unloadTape(drive::DriveInterface& drive, CleanupResult& result) {
+void DriveCleaner::unloadTape(drive::DriveInterface& drive) {
   m_lc.log(log::DEBUG, "Cleaner unloading tape");
   try {
     {
@@ -372,17 +381,6 @@ void DriveCleaner::unloadTape(drive::DriveInterface& drive, CleanupResult& resul
       drive.unloadTape();
     }
     m_lc.log(log::DEBUG, "Cleaner unloaded tape");
-  } catch (const drive::TapeDriverStateError&) {
-    m_tracker.recordFailure(TapeSessionFailure::TapeUnload);
-    result.driveStateFailed = true;
-    m_tracker.recordFailure(TapeSessionFailure::UnexpectedCleanup);
-    if (!result.errorMessage.empty()) {
-      result.errorMessage += "; ";
-    }
-    result.errorMessage += exception::currentExceptionMessage();
-    log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, result.errorMessage);
-    m_lc.log(log::WARNING, "Cleaner could not restore driver state; attempting robotic dismount");
   } catch (...) {
     m_tracker.recordFailure(TapeSessionFailure::TapeUnload);
     log::ScopedParamContainer params(m_lc);
