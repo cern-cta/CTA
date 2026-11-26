@@ -661,6 +661,8 @@ TEST_P(DriveCleanerTest, NonReadyMediaDoesNotPreventResetsAndEject) {
   drive->enableCRC32CLogicalBlockProtectionReadWrite();
   m_systemWrapper.fake.m_pathToDrive["/dev/nst0"] = drive;
   ASSERT_TRUE(runCleaner(m_vid));
+  ASSERT_FALSE(m_cleanupResult.driveStateFailed);
+  ASSERT_EQ(0, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::UnexpectedCleanup)]);
   ASSERT_EQ(0, m_tracker.stats().cleanup.rewindTime);
   ASSERT_EQ(0, m_tracker.stats().cleanup.labelReadTime);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));

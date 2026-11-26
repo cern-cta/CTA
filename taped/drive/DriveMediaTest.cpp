@@ -181,15 +181,59 @@ TEST_F(DriveMediaTest, RecoveredErrorsDoNotEstablishReadiness) {
   EXPECT_EQ(1, m_opens);
 }
 
-TEST_F(DriveMediaTest, UnrecognizedNotReadyAndHardwareFailuresAreNotAbsence) {
+TEST_F(DriveMediaTest, UnrecognizedNotReadyCanRecoverBeforeDeadline) {
+  for (const auto& [asc, ascq] : {
+         std::pair {0x04, 0x00},
+         {0x80, 0x00}
+  }) {
+    for (bool descriptor : {false, true}) {
+      EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
+        .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, asc, ascq, descriptor); })
+        .WillOnce(Return(0));
+      expectStatus(true);
+      EXPECT_NO_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 5s));
+    }
+  }
+}
+
+TEST_F(DriveMediaTest, UnrecognizedNotReadyStopsAtDeadlineWithoutFailingDrive) {
+  EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
+    .WillRepeatedly([](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, 0x04, 0); });
+  expectNotReady(std::chrono::steady_clock::now() + 100ms, "Drive readiness timed out: TEST UNIT READY");
+  EXPECT_EQ(1, m_opens);
+  EXPECT_EQ(0, m_closes);
+}
+
+TEST_F(DriveMediaTest, NonRetryableNotReadyStopsWithoutFailingDrive) {
+  for (const auto& [asc, ascq] : {
+         std::pair {0x04, 0x03},
+         {0x53, 0x00}
+  }) {
+    for (bool descriptor : {false, true}) {
+      EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>()))
+        .WillOnce([=](int, unsigned long, sg_io_hdr_t* command) { return sense(command, 2, asc, ascq, descriptor); });
+      expectNotReady(std::chrono::steady_clock::now() + 5s, "TEST UNIT READY");
+    }
+  }
+  EXPECT_EQ(1, m_opens);
+  EXPECT_EQ(0, m_closes);
+}
+
+TEST_F(DriveMediaTest, HardwareAndMediumErrorsRemainFailures) {
   for (const auto& [key, asc] : {
-         std::pair {2, 0x53},
+         std::pair {3, 0x53},
+         {4, 0x53},
          {4, 0x44}
   }) {
     EXPECT_CALL(m_wrapper, ioctl(7, SG_IO, An<sg_io_hdr_t*>())).WillOnce([=](int, unsigned long, sg_io_hdr_t* command) {
       return sense(command, key, asc, 0);
     });
-    EXPECT_THROW(m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s), exception::Exception);
+    try {
+      m_drive->waitUntilReady(std::chrono::steady_clock::now() + 1s);
+      FAIL() << "Expected a drive or command error";
+    } catch (const MediaNotReady&) {
+      FAIL() << "A medium or hardware error must not be treated as a readiness condition";
+    } catch (const exception::Exception&) {}
   }
 }
 

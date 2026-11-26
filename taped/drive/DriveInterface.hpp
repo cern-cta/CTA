@@ -24,7 +24,7 @@
 /// Tape-drive abstractions, status types and device factory.
 namespace cta::tape::drive {
 
-/// Media is absent, unloaded or still not ready when polling stops.
+/// Media readiness could not be established; this alone does not imply an unusable drive after cleanup.
 CTA_GENERATE_EXCEPTION_CLASS(MediaNotReady);
 
 /// Host and tape byte counters returned by DriveInterface::getCompression().
@@ -303,7 +303,8 @@ public:
   ///
   /// The deadline limits retries; an in-flight check and driver refresh may finish after it.
   /// An expired deadline permits one readiness check without retries.
-  /// @throws MediaNotReady If media is absent, requires loading or is still not ready when polling stops.
+  /// NOT READY conditions are retried unless they explicitly require loading, intervention or another load/eject attempt.
+  /// @throws MediaNotReady If media is absent, polling cannot resolve its state or the readiness deadline expires.
   /// Other device and command errors propagate.
   virtual void waitUntilReady(std::chrono::steady_clock::time_point deadline) = 0;
 

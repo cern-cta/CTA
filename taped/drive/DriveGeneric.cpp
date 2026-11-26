@@ -31,30 +31,22 @@ using MediaClock = std::chrono::steady_clock;
 // IBM LTO specifies 60 seconds for unlisted commands, covering TUR; 3592 recommends 30 seconds.
 constexpr auto mediaProbeTimeout = std::chrono::seconds(60);
 
-bool isRetryableNotReady(const SCSI::Structures::SenseInfo& sense) {
+bool isNonRetryableNotReady(const SCSI::Structures::SenseInfo& sense) {
   if (sense.key != SCSI::senseKeys::notReady) {
     return false;
   }
   switch (sense.ascAscq()) {
-    case SCSI::senseConstants::logicalUnitBecomingReady:
-    case SCSI::senseConstants::formatInProgress:
-    case SCSI::senseConstants::logicalUnitOperationInProgress:
-    case SCSI::senseConstants::securityAssociationCreationInProgress:
-    case SCSI::senseConstants::operationInProgress:
-    case SCSI::senseConstants::cleaningCartridgeInstalled:
-    case SCSI::senseConstants::logicalUnitNotSelfConfigured:
+    // Media is absent or needs an explicit load; polling cannot initiate one.
+    case SCSI::senseConstants::mediumNotPresent:
+    case SCSI::senseConstants::mediumNotPresentMamAccessible:
+    case SCSI::senseConstants::initializingCommandRequired:
+    // These require intervention or another load/eject attempt, rather than more readiness polling.
+    case SCSI::senseConstants::manualInterventionRequired:
+    case SCSI::senseConstants::mediaLoadOrEjectFailed:
       return true;
     default:
       return false;
   }
-}
-
-bool isNotLoaded(const SCSI::Structures::SenseInfo& sense) {
-  // An explicit LOAD is required, or media is absent/unthreaded with accessible MAM.
-  return sense.key == SCSI::senseKeys::notReady
-         && (sense.ascAscq() == SCSI::senseConstants::mediumNotPresent
-             || sense.ascAscq() == SCSI::senseConstants::mediumNotPresentMamAccessible
-             || sense.ascAscq() == SCSI::senseConstants::initializingCommandRequired);
 }
 
 // A missing sense result means GOOD. Invalid sense and transport failures propagate as errors.
@@ -2813,10 +2805,11 @@ void drive::DriveGeneric::waitUntilReady(MediaClock::time_point deadline) {
       return;
     }
     lastResponse = sense->message;
-    if (isNotLoaded(*sense)) {
+    if (isNonRetryableNotReady(*sense)) {
       throw MediaNotReady(lastResponse);
     }
-    if (sense->key != SCSI::senseKeys::unitAttention && !isRetryableNotReady(*sense)) {
+    // Unknown NOT READY conditions may be transient; keep polling within the caller's budget.
+    if (sense->key != SCSI::senseKeys::unitAttention && sense->key != SCSI::senseKeys::notReady) {
       throw exception::Exception(lastResponse);
     }
     const auto sleepTime = std::min(deadline - MediaClock::now(),
