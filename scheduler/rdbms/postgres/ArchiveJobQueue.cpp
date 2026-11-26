@@ -233,6 +233,35 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
     }
     jobids_sqlpart += piece;
   }
+  /* A target row just transferred successfully. Whether it (and the rest of its multi-copy
+   * request) is now ready to report to disk depends on every copy of the request having
+   * individually settled - success (parked at AJS_WaitReplicasBeforeReportingSuccessToDisk,
+   * waiting for the others) or failure (parked at AJS_WaitReplicasBeforeReportingFailureToDisk, or
+   * already fully terminal at AJS_ToReportToUserForFailure if failTransferBatchExceedRetries()
+   * found every copy already present - see that function, which is this one's mirror image on the
+   * failure side). sibling_settlement counts all three as "settled" (any_failed records whether any
+   * of them is a failure outcome) - this is the fix for the case the original version of this
+   * function got wrong: it only counted AJS_WaitReplicasBeforeReportingSuccessToDisk siblings, so
+   * once any copy had already permanently failed, a later-completing sibling could never see its
+   * count reach REQUEST_JOB_COUNT and was parked forever (that status is read nowhere else in this
+   * codebase - nothing would ever revisit it).
+   *
+   * This mirrors moveFailedRepackJobBatchToFailedQueueTable()'s settled_siblings/
+   * complete_failed_groups pattern (STATUS IN success, failure), which already gets this right for
+   * repack.
+   *
+   * When the group is complete, the CASE below promotes every still-open row (not just the
+   * target(s) - any copy already parked at one of the two wait statuses from an earlier call also
+   * matches aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID below) to FAILED if any_failed, else to
+   * ready-for-reporting - request-wide outcomes settle together either way, exactly once, in
+   * whichever call turns out to be the group's last. Because of that, flagReportingJobsByStatus()
+   * never needs to re-derive completeness itself: by the time any row reaches a terminal status,
+   * the whole group was already set to a terminal status together, in this one statement - reporting
+   * is free to just pick up rows whose STATUS says so, with no race against settlement.
+   * aj2.STATUS <> FAILED excludes a row that already independently reached
+   * AJS_ToReportToUserForFailure: it is already correctly terminal and does not need re-touching,
+   * only counting (which it gets via the UNION ALL above, not via this final UPDATE's WHERE).
+   */
   std::string sql = R"SQL(
       WITH target_success_multicopy AS (
         SELECT JOB_ID, ARCHIVE_REQUEST_ID, STATUS, REQUEST_JOB_COUNT
@@ -242,8 +271,15 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
   sql += jobids_sqlpart;
   sql += R"SQL( )
       ),
-      ready_for_reporting_to_disk AS (
-        SELECT combined.ARCHIVE_REQUEST_ID
+      sibling_settlement AS (
+        -- COUNT/BOOL_OR(DISTINCT ...): the batch passed into this call can itself carry two
+        -- siblings of the same multi-copy request (two copies succeeding in the same poll), which
+        -- would otherwise join a third sibling once per such target row below and double-count it.
+        SELECT combined.ARCHIVE_REQUEST_ID,
+               COUNT(DISTINCT combined.JOB_ID) AS settled_count,
+               MAX(combined.REQUEST_JOB_COUNT) AS expected_count,
+               BOOL_OR(combined.STATUS = ANY(ARRAY[:STATUS_COND_REPLICAS_FAILURE, :STATUS_FAILED]
+                                             ::ARCHIVE_JOB_STATUS[])) AS any_failed
         FROM (
           SELECT t.JOB_ID, t.ARCHIVE_REQUEST_ID, t.STATUS, t.REQUEST_JOB_COUNT
           FROM target_success_multicopy t
@@ -253,27 +289,37 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
           SELECT aj.JOB_ID, aj.ARCHIVE_REQUEST_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
           FROM ARCHIVE_ACTIVE_QUEUE aj
           JOIN target_success_multicopy t USING (ARCHIVE_REQUEST_ID)
-          WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
+          WHERE aj.JOB_ID <> t.JOB_ID
+            AND aj.STATUS = ANY(ARRAY[:STATUS_COND_REPLICAS, :STATUS_COND_REPLICAS_FAILURE, :STATUS_FAILED]
+                                ::ARCHIVE_JOB_STATUS[])
         ) AS combined
         GROUP BY combined.ARCHIVE_REQUEST_ID
-        HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
+      ),
+      ready_groups AS (
+        SELECT ARCHIVE_REQUEST_ID, any_failed
+        FROM sibling_settlement
+        WHERE settled_count >= expected_count
       )
       UPDATE ARCHIVE_ACTIVE_QUEUE aj2
       SET STATUS = CASE
-          WHEN rfr.ARCHIVE_REQUEST_ID IS NOT NULL
+          WHEN rg.ARCHIVE_REQUEST_ID IS NOT NULL AND rg.any_failed
+            THEN :STATUS_FAILED::ARCHIVE_JOB_STATUS
+          WHEN rg.ARCHIVE_REQUEST_ID IS NOT NULL
             THEN :STATUS_READY_FOR_REPORTING::ARCHIVE_JOB_STATUS
           ELSE :STATUS_WAIT_FOR_ALL_BEFORE_REPORT::ARCHIVE_JOB_STATUS
       END,
       LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
       FROM target_success_multicopy tsm
-          LEFT JOIN ready_for_reporting_to_disk rfr
-              ON rfr.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
+          LEFT JOIN ready_groups rg
+              ON rg.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
       WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
         AND aj2.STATUS <> :STATUS_FAILED::ARCHIVE_JOB_STATUS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
   stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
+  stmt.bindString(":STATUS_COND_REPLICAS_FAILURE",
+                  to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingFailureToDisk));
   stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT",
                   to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
   stmt.bindString(":STATUS_FAILED", to_string(ArchiveJobStatus::AJS_ToReportToUserForFailure));
@@ -1100,8 +1146,30 @@ ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobS
 rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
                                                           std::list<ArchiveJobStatus> statusList,
                                                           uint64_t limit) {
+  /* Every row whose own STATUS is one of statusList (ToReportToUserForSuccess/ForFailure) and not
+   * already claimed for reporting is picked up here, multi-copy or not, with no completeness check
+   * of its own. That used to not be safe: a multi-copy copy that failed while a sibling was still
+   * pending or in flight would reach AJS_ToReportToUserForFailure on its own, and this query would
+   * then report and delete it (updateJobStatus() deletes on AJS_Failed, see
+   * setArchiveJobBatchReported()) before the sibling had a chance to be accounted for.
+   *
+   * What makes a plain filter correct now is that settlement happens entirely on the write side,
+   * once, atomically, per group: failTransferBatchExceedRetries() parks a failing copy at
+   * AJS_WaitReplicasBeforeReportingFailureToDisk (instead of going straight to
+   * AJS_ToReportToUserForFailure) whenever a sibling has not been dispatched into
+   * ARCHIVE_ACTIVE_QUEUE yet, and updateMultiCopyJobSuccess() does the mirror check on the success
+   * side - see both functions. Either one, whichever turns out to be the last copy of the group to
+   * settle, promotes every row sharing the ARCHIVE_REQUEST_ID to its final terminal status in the
+   * same statement. So a row only ever reaches AJS_ToReportToUserForSuccess/ForFailure once the
+   * whole group already has - this query does not need to re-derive that, and re-deriving it here
+   * would only add a second place that completeness could be computed differently from the write
+   * side, racing with it instead of simply running after it.
+   *
+   * Single-copy rows (REQUEST_JOB_COUNT = 1) never pass through either wait status and are released
+   * exactly as before, immediately.
+   */
   std::string sql = R"SQL(
-      WITH SET_SELECTION AS (
+      WITH candidates AS (
         SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE
         WHERE STATUS = ANY(ARRAY[
     )SQL";
@@ -1125,8 +1193,8 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
       UPDATE ARCHIVE_ACTIVE_QUEUE SET
         IS_REPORTING = TRUE,
         LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
-      FROM SET_SELECTION
-      WHERE ARCHIVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
+      FROM candidates
+      WHERE ARCHIVE_ACTIVE_QUEUE.JOB_ID = candidates.JOB_ID
       RETURNING ARCHIVE_ACTIVE_QUEUE.*
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
@@ -1351,15 +1419,29 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
   const ArchiveJobStatus newStatus =
     isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForFailure : ArchiveJobStatus::AJS_ToReportToUserForFailure;
 
-  // USER multi-copy requests fail all copies at once, by ARCHIVE_REQUEST_ID - matching the
-  // single-job updateFailedJobStatus(), which keys on (reqJobCount > 1 && !isRepack). Once one copy
-  // is permanently lost the request can no longer meet its redundancy goal, so there is nothing to
-  // gain by letting the others run. It is safe to settle a sibling that is still being written
-  // because NOTHING in the user workflow reads "all copies are terminal" as permission to delete
-  // anything: the source file belongs to the user's disk system and CTA only reports the failure to
-  // it. There is no group gate to get wrong here, and updateMultiCopyJobSuccess()'s
-  // STATUS <> AJS_ToReportToUserForFailure guard is enough to stop that still-writing sibling from
-  // later resurrecting the request.
+  // USER multi-copy requests still fail together, by ARCHIVE_REQUEST_ID - matching the single-job
+  // updateFailedJobStatus(), which keys on (reqJobCount > 1 && !isRepack) - and a sibling that is
+  // still being written is still force-settled here immediately rather than left to run to
+  // completion: nothing in the user workflow reads "all copies are terminal" as permission to
+  // delete anything, so there is no correctness reason to let a doomed transfer finish, only a
+  // wasted one.
+  //
+  // What changed from the original version of this function: settling every visible sibling is not
+  // the same as settling the WHOLE group. sibling_presence counts how many rows for this
+  // ARCHIVE_REQUEST_ID currently exist in ARCHIVE_ACTIVE_QUEUE at all, independently of their own
+  // STATUS - a row that has not been dispatched out of ARCHIVE_PENDING_QUEUE yet is invisible to
+  // this query and this UPDATE alike, and forcing the visible copies straight to the terminal
+  // AJS_ToReportToUserForFailure would let flagReportingJobsByStatus() - which now trusts STATUS
+  // alone, see that function - report and delete them before the pending copy ever gets a chance to
+  // run. So only when present_count already reaches REQUEST_JOB_COUNT (no copy is still pending
+  // elsewhere) do the visible rows go straight to the terminal failure status, exactly as before;
+  // otherwise they park at AJS_WaitReplicasBeforeReportingFailureToDisk instead - the mirror image of
+  // the wait updateMultiCopyJobSuccess() already does on the success side, for the mirror-image
+  // reason: a copy that hasn't started yet might still succeed, so the group's fate genuinely is not
+  // decided yet. Whichever copy - success or failure - turns out to be the LAST to settle resolves
+  // the whole group atomically in its own write (see updateMultiCopyJobSuccess(), which this parked
+  // row's eventual sibling will reach): once every copy is accounted for, any parked failure means
+  // the group fails, with no further checks needed at report time.
   //
   // REPACK is per-JOB_ID and must NEVER be failed as a group here, even though repack multi-copy
   // rows do carry req_job_count > 1 and a shared ARCHIVE_REQUEST_ID (transformJobBatchToArchive()
@@ -1388,9 +1470,11 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
     VALUES )SQL";
   sql += values_rows;
   sql += R"SQL(
-  )
+  ))SQL";
+  if (isRepack) {
+    sql += R"SQL(
   UPDATE )SQL";
-  sql += repack_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE a
+    sql += repack_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE a
   SET
     STATUS = :STATUS::ARCHIVE_JOB_STATUS,
     TOTAL_RETRIES = d.total_retries,
@@ -1399,20 +1483,47 @@ uint64_t ArchiveJobQueueRow::failTransferBatchExceedRetries(Transaction& txn,
     FAILURE_LOG = d.failure_log,
     LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   FROM per_job d
-  )SQL";
-  if (isRepack) {
-    sql += R"SQL(
   WHERE a.JOB_ID = d.job_id
   )SQL";
   } else {
     sql += R"SQL(
+  ,
+  -- DISTINCT: this batch can itself carry two siblings of the same multi-copy request (e.g. two
+  -- copies on different drives both exceeding retries in the same poll), which would otherwise join
+  -- per_job to ARCHIVE_ACTIVE_QUEUE once per per_job row sharing that request and double-count.
+  sibling_presence AS (
+    SELECT d.archive_request_id AS archive_request_id, COUNT(DISTINCT aj.JOB_ID) AS present_count
+    FROM per_job d
+    JOIN ARCHIVE_ACTIVE_QUEUE aj ON aj.ARCHIVE_REQUEST_ID = d.archive_request_id
+    WHERE d.req_job_count > 1
+    GROUP BY d.archive_request_id
+  )
+  UPDATE ARCHIVE_ACTIVE_QUEUE a
+  SET
+    STATUS = CASE
+        WHEN d.req_job_count = 1 THEN :STATUS_TERMINAL_FAILURE::ARCHIVE_JOB_STATUS
+        WHEN sp.present_count >= d.req_job_count THEN :STATUS_TERMINAL_FAILURE::ARCHIVE_JOB_STATUS
+        ELSE :STATUS_WAIT_FAILURE::ARCHIVE_JOB_STATUS
+    END,
+    TOTAL_RETRIES = d.total_retries,
+    RETRIES_WITHIN_MOUNT = d.retries_within_mount,
+    LAST_MOUNT_WITH_FAILURE = d.last_mount,
+    FAILURE_LOG = d.failure_log,
+    LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+  FROM per_job d
+  LEFT JOIN sibling_presence sp ON sp.archive_request_id = d.archive_request_id
   WHERE (d.req_job_count = 1 AND a.JOB_ID = d.job_id)
      OR (d.req_job_count > 1 AND a.ARCHIVE_REQUEST_ID = d.archive_request_id)
   )SQL";
   }
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(newStatus));
+  if (isRepack) {
+    stmt.bindString(":STATUS", to_string(newStatus));
+  } else {
+    stmt.bindString(":STATUS_TERMINAL_FAILURE", to_string(newStatus));
+    stmt.bindString(":STATUS_WAIT_FAILURE", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingFailureToDisk));
+  }
 
   for (size_t i = 0; i < jobs.size(); ++i) {
     const auto* row = jobs[i];

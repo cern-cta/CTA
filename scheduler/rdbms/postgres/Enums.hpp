@@ -21,6 +21,7 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_ToReportToUserForSuccess,
   AJS_WaitReplicasBeforeReportingSuccessToDisk,
   AJS_Complete,
+  AJS_WaitReplicasBeforeReportingFailureToDisk,
   AJS_ToReportToUserForFailure,
   AJS_Failed,
   AJS_Abandoned,
@@ -31,10 +32,11 @@ enum class ArchiveJobStatus : uint8_t {
   Cancelled
 };
 
-constexpr std::array<const char*, 12> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
+constexpr std::array<const char*, 13> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
                                                                  "AJS_ToReportToUserForSuccess",
                                                                  "AJS_WaitReplicasBeforeReportingSuccessToDisk",
                                                                  "AJS_Complete",
+                                                                 "AJS_WaitReplicasBeforeReportingFailureToDisk",
                                                                  "AJS_ToReportToUserForFailure",
                                                                  "AJS_Failed",
                                                                  "AJS_Abandoned",

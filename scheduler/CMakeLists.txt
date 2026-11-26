@@ -97,7 +97,9 @@ else()
     SchedulerDatabaseTest.cpp
     RelationalDBSchedulerTest.cpp
     batching/OpportunisticQueueBatcherTest.cpp
+    rdbms/RelationalDBTestFixture.cpp
     rdbms/RelationalDBTest.cpp
+    rdbms/RelationalDBMultiCopySettlementTest.cpp
     rdbms/TemporaryPostgresInstanceTest.cpp)
 endif()
 

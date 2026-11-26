@@ -8,6 +8,7 @@ CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'AJS_WaitReplicasBeforeReportingSuccessToDisk',
   'AJS_ToReportToUserForSuccess',
   'AJS_Complete',
+  'AJS_WaitReplicasBeforeReportingFailureToDisk',
   'AJS_ToReportToUserForFailure',
   'AJS_Failed',
   'AJS_Abandoned',

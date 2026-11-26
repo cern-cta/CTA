@@ -1,0 +1,309 @@
+/*
+ * SPDX-FileCopyrightText: 2026 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "scheduler/rdbms/RelationalDBTestFixture.hpp"
+
+#include <list>
+#include <memory>
+#include <utility>
+#include <vector>
+
+// Covers the user archive multi-copy settlement rules documented in
+// docs/content/dev/internals/shared-state/scheduler-db/postgresql/failure-handling.md under
+// "Why user requests fail as a group": a copy that exceeds its transfer retries while a sibling
+// has not yet been dispatched out of ARCHIVE_PENDING_QUEUE cannot be swept straight to the
+// terminal AJS_ToReportToUserForFailure (nothing to force-settle the undispatched sibling with,
+// and sweeping early would let it be reported and deleted before that sibling ever ran). It parks
+// at AJS_WaitReplicasBeforeReportingFailureToDisk instead, mirroring the pre-existing success-side
+// AJS_WaitReplicasBeforeReportingSuccessToDisk wait, until the last copy of the group settles -
+// whichever way - and resolves the whole group together.
+
+namespace unitTests {
+
+TEST_P(RelationalDBTest, archiveMultiCopyTransferFailureParksAtWaitFailureWhenSiblingStillPending) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // One 2-copy request, both copies routed to the same tape pool.
+  queueMultiCopyArchiveJob(db, lc, 994001, "tapePoolSettleA", "SETTLE-A", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-A";
+  tape.tapePool = "tapePoolSettleA";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  // Fetch only one of the two copies: the other is left behind in ARCHIVE_PENDING_QUEUE,
+  // undispatched, exactly as if the mount's task queue only had room for one more file.
+  auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobs.size());
+
+  jobs.front()->prepareFailTransfer("simulated terminal transfer failure, sibling still pending");
+  std::vector<SchedulerDatabase::ArchiveJob*> batch = {jobs.front().get()};
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Parked, not terminal: the sibling isn't visible yet, so completeness can't be decided.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingFailureToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+  {
+    // The undispatched sibling is untouched - still sitting in ARCHIVE_PENDING_QUEUE.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+
+  // flagReportingJobsByStatus() is a plain status filter now (no completeness check of its own,
+  // see getNextArchiveJobsToReportBatch()) - a parked row must not be picked up.
+  auto reportBatch = db.getNextArchiveJobsToReportBatch(10, lc);
+  ASSERT_EQ(0u, reportBatch.size());
+}
+
+TEST_P(RelationalDBTest, archiveMultiCopyGroupResolvesToFailureOncePendingSiblingAlsoFails) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueMultiCopyArchiveJob(db, lc, 994002, "tapePoolSettleB", "SETTLE-B", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-B";
+  tape.tapePool = "tapePoolSettleB";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+
+  // First copy fails while the second is still pending - parks, as in the test above.
+  auto jobsA = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsA.size());
+  jobsA.front()->prepareFailTransfer("first copy fails, sibling still pending");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchA = {jobsA.front().get()};
+  mount->failTransferBatch(batchA, lc);
+
+  // The second copy is now dispatched and also exceeds its retries.
+  auto jobsB = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsB.size());
+  jobsB.front()->prepareFailTransfer("second copy also fails - group now fully visible");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchB = {jobsB.front().get()};
+  mount->failTransferBatch(batchB, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Every copy is now present, so the whole group - including the one already parked - settles
+    // to the terminal failure status together, in the second call.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingFailureToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+
+  // Now that the group is complete, both rows are reportable in one pass.
+  auto reportBatch = db.getNextArchiveJobsToReportBatch(10, lc);
+  ASSERT_EQ(2u, reportBatch.size());
+}
+
+// This is the scenario the second review round's "pending-sibling gap" fix (FIX A/FIX B) exists
+// for: the copy that was still pending when its sibling failed goes on to transfer successfully.
+// The group must still end up failed - a late success cannot resurrect a request that already
+// lost a copy.
+TEST_P(RelationalDBTest, archiveMultiCopyGroupResolvesToFailureWhenPendingSiblingLaterSucceeds) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueMultiCopyArchiveJob(db, lc, 994003, "tapePoolSettleC", "SETTLE-C", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-C";
+  tape.tapePool = "tapePoolSettleC";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+
+  // Copy A fails while copy B is still undispatched - parks at the wait-failure status.
+  auto jobsA = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsA.size());
+  jobsA.front()->prepareFailTransfer("copy A fails, copy B not dispatched yet");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchA = {jobsA.front().get()};
+  mount->failTransferBatch(batchA, lc);
+
+  // Copy B is dispatched afterwards and its transfer succeeds - driven directly via the DB-level
+  // mount's setJobBatchTransferred(), the same entry point ArchiveMount::reportJobsBatchTransferred()
+  // calls after a real tape write and catalogue update both succeed (see
+  // archiveMountHeartbeatRefreshedOnReportNotJustFetch for the same pattern).
+  auto jobsB = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsB.size());
+  mount->setJobBatchTransferred(jobsB, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Both copies - the one that failed and the one that went on to succeed - end up failed
+    // together. Neither AJS_WaitReplicasBeforeReportingSuccessToDisk nor
+    // AJS_WaitReplicasBeforeReportingFailureToDisk should have any row left for this request.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForSuccess'"
+                                " OR STATUS = 'AJS_WaitReplicasBeforeReportingSuccessToDisk'"
+                                " OR STATUS = 'AJS_WaitReplicasBeforeReportingFailureToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+// Symmetric check on the success side, and a regression check that a still-transferring sibling
+// is still force-settled immediately when the other copy fails - the new wait status only changes
+// what an undispatched sibling does, not this pre-existing behaviour (see "Why user requests fail
+// as a group" in failure-handling.md).
+TEST_P(RelationalDBTest, archiveMultiCopySuccessParksThenFailingSiblingSweepsBothToFailure) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueMultiCopyArchiveJob(db, lc, 994004, "tapePoolSettleD", "SETTLE-D", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_TOTAL_RETRIES = 1");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-D";
+  tape.tapePool = "tapePoolSettleD";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+
+  // Both copies dispatched together this time - neither is left behind in ARCHIVE_PENDING_QUEUE.
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // Copy A succeeds. Copy B is left alone, still AJS_ToTransferForUser, as if a drive were still
+  // physically writing it.
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> jobsA;
+  jobsA.push_back(std::move(jobs.front()));
+  jobs.pop_front();
+  mount->setJobBatchTransferred(jobsA, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // A parks: B hasn't settled (it's still mid-transfer), so completeness isn't met yet.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingSuccessToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+
+  // Copy B now exceeds its retries. failTransferBatchExceedRetries() matches by
+  // ARCHIVE_REQUEST_ID with no STATUS filter, so it reaches copy A's parked row too, even though
+  // copy A's own transfer already succeeded - interrupting a still-"writing" sibling is still
+  // immediate and unconditional, exactly as before this fix.
+  jobs.front()->prepareFailTransfer("copy B fails after copy A already succeeded and parked");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchB = {jobs.front().get()};
+  mount->failTransferBatch(batchB, lc);
+
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_ToReportToUserForFailure'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingSuccessToDisk'"
+                                " OR STATUS = 'AJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+}  // namespace unitTests

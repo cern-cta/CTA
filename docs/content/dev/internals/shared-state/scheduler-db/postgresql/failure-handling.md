@@ -159,7 +159,7 @@ to be mishandled, so it is worth stating once, plainly, for all eight combinatio
 | Workflow | Transfer failure, retries exhausted | Report failure, retries exhausted |
 |---|---|---|
 | **archive · user · single copy** | `AJS_ToReportToUserForFailure`, this `JOB_ID` | `ReadyForDeletion`, row moved to `ARCHIVE_FAILED_QUEUE` |
-| **archive · user · multi copy** | **every** copy of the `ARCHIVE_REQUEST_ID`, together | **every** copy of the `ARCHIVE_REQUEST_ID`, moved together |
+| **archive · user · multi copy** | every *dispatched* copy of the `ARCHIVE_REQUEST_ID` fails together, immediately once all `REQUEST_JOB_COUNT` copies are visible in `ARCHIVE_ACTIVE_QUEUE`, parked at `AJS_WaitReplicasBeforeReportingFailureToDisk` otherwise until the last one is | **every** copy of the `ARCHIVE_REQUEST_ID`, moved together |
 | **archive · repack · single copy** | `AJS_ToReportToRepackForFailure`, this `JOB_ID` | not a failure at all — `updateRepackJobSuccess()` recovers the lost write |
 | **archive · repack · multi copy** | this `JOB_ID` **only**; siblings keep transferring | same recovery, still per `JOB_ID` |
 | **retrieve · user** | `RJS_ToReportToUserForFailure`, this `JOB_ID` | `ReadyForDeletion`, row moved to `RETRIEVE_FAILED_QUEUE` |
@@ -178,12 +178,31 @@ others run: `failTransferBatchExceedRetries()` and `failReportBatchExceedRetries
 every copy of the `ARCHIVE_REQUEST_ID` when `REQUEST_JOB_COUNT > 1`, matching the single-job
 `updateFailedJobStatus()` and `moveJobToFailedQueueTable()`.
 
-It is safe to settle a sibling copy that a drive is still writing, because **nothing in the user
-workflow reads "all copies are terminal" as permission to delete anything**. The source file belongs
-to the user's disk system; CTA only reports the failure to it. The one thing that has to be guarded
-is the reverse direction — that still-writing sibling eventually succeeding and resurrecting the
-request — and `updateMultiCopyJobSuccess()` does that with a single predicate:
-`STATUS <> AJS_ToReportToUserForFailure`.
+It is safe to force-settle a sibling copy that a drive is still writing, because **nothing in the
+user workflow reads "all copies are terminal" as permission to delete anything**. The source file
+belongs to the user's disk system; CTA only reports the failure to it. There is no point letting a
+doomed transfer finish, only a wasted one.
+
+A sibling that has not been *dispatched* yet is a different problem: it has no row in
+`ARCHIVE_ACTIVE_QUEUE` at all, so there is nothing for the failing copy's `UPDATE` to reach. Sending
+the copies that do exist straight to `AJS_ToReportToUserForFailure` in that situation would let
+`getNextArchiveJobsToReportBatch()` report and delete them before the undispatched sibling ever ran
+— if it later succeeded, there would be no group left to tell it so. `failTransferBatchExceedRetries()`
+therefore only promotes the visible copies to the terminal failure status once all `REQUEST_JOB_COUNT`
+of them are present in `ARCHIVE_ACTIVE_QUEUE`; otherwise it parks them at
+`AJS_WaitReplicasBeforeReportingFailureToDisk` instead — the mirror image of the pre-existing
+success-side wait, `AJS_WaitReplicasBeforeReportingSuccessToDisk`, for the mirror-image reason: a
+copy that has not even started might still succeed, so the group's fate genuinely is not decided yet.
+
+Whichever side turns out to be the *last* copy of the group to settle — a late success reaching
+`updateMultiCopyJobSuccess()`, or a late failure reaching `failTransferBatchExceedRetries()` again —
+resolves the whole group to its final verdict in that one statement: `updateMultiCopyJobSuccess()`
+counts a sibling parked at either wait status, or already terminally failed, as settled, and fails
+the group if any of them is. Because a row only ever reaches
+`AJS_ToReportToUserForSuccess`/`AJS_ToReportToUserForFailure` once every copy has already settled
+together this way, `flagReportingJobsByStatus()` (called from `getNextArchiveJobsToReportBatch()`)
+needs no completeness check of its own — it just picks up rows whose `STATUS` already says so, as a
+step that runs strictly after settlement rather than racing to re-derive it.
 
 ### Why repack copies must fail alone
 
@@ -297,8 +316,13 @@ flowchart TB
     FTB -- under budget --> FTR["failTransferBatchRequeue()"]
     FTR --> PENDING["(REPACK_)ARCHIVE_PENDING_QUEUE\nAJS_ToTransferFor(User/Repack)\nretry counters preserved"]
     PENDING -. refetched by a future mount .-> XFER
-    FTB -- "exceeded\nUSER: whole ARCHIVE_REQUEST_ID\ngroup fails together\nREPACK: this copy only" --> FTE["failTransferBatchExceedRetries()"]
-    FTE --> TOREPORTFAIL["ACTIVE_QUEUE\nAJS_ToReportTo(User/Repack)ForFailure"]
+    FTB -- exceeded --> FTE["failTransferBatchExceedRetries()"]
+    FTE --> FTESPLIT{"repack, or\nsingle copy?"}
+    FTESPLIT -- yes --> TOREPORTFAIL["ACTIVE_QUEUE\nAJS_ToReportTo(User/Repack)ForFailure"]
+    FTESPLIT -- "no (user,\nmulti-copy)" --> MCF{"every REQUEST_JOB_COUNT copy of the\nARCHIVE_REQUEST_ID visible in\nACTIVE_QUEUE (any status)?"}
+    MCF -- yes --> TOREPORTFAIL
+    MCF -- "no: a sibling has not\nbeen dispatched yet" --> WAITINGUF["ACTIVE_QUEUE (visible copies)\nAJS_WaitReplicasBeforeReportingFailureToDisk"]
+    WAITINGUF -. last sibling settles .-> MCF
 
     XFER -- yes --> RJBT["ArchiveMount::reportJobsBatchTransferred()"]
     RJBT --> CAT{"catalogue\nupdate OK?"}
@@ -314,7 +338,7 @@ flowchart TB
     FRB -- "exceeded - REPACK\n(always: NoReportRequired)" --> URS2["updateRepackJobSuccess()\n(recover the write - not a failure)"]
 
     DBW -- yes --> SPLIT{isRepack?}
-    SPLIT -- no --> TOREPORTOK["ACTIVE_QUEUE\nAJS_ToReportToUserForSuccess"]
+    SPLIT -- no --> UMCS["updateMultiCopyJobSuccess()"]
     SPLIT -- yes --> URS1["updateRepackJobSuccess()"]
 
     URS1 --> MC{"multi-copy: every sibling\n(same REPACK_REQUEST_ID +\nARCHIVE_FILE_ID) also\nAJS_ToReportToRepackForSuccess?"}
@@ -322,6 +346,13 @@ flowchart TB
     MC -- "no" --> WAITING["ACTIVE_QUEUE (this copy only)\nAJS_ToReportToRepackForSuccess"]
     WAITING -. last sibling completes .-> MC
     MC -- "yes, or single-copy" --> RFD["ACTIVE_QUEUE (ALL copies together)\nReadyForDeletion"]
+
+    UMCS --> MCU{"single copy, or every\nREQUEST_JOB_COUNT sibling of the\nARCHIVE_REQUEST_ID settled\n(wait-success, wait-failure,\nor terminal)?"}
+    MCU -- "no" --> WAITINGUS["ACTIVE_QUEUE (this copy only)\nAJS_WaitReplicasBeforeReportingSuccessToDisk"]
+    WAITINGUS -. last sibling settles .-> MCU
+    MCU -- yes --> ANYFAIL{"any settled\nsibling a failure?"}
+    ANYFAIL -- no --> TOREPORTOK["ACTIVE_QUEUE\nAJS_ToReportToUserForSuccess"]
+    ANYFAIL -- "yes" --> TOREPORTFAIL
 
     TOREPORTFAIL --> GETBATCH["getNextArchiveJobsToReportBatch()\n(USER only - repack never reports to EOS)"]
     TOREPORTOK --> GETBATCH
@@ -352,7 +383,7 @@ flowchart TB
     classDef failterm fill:#c0392b,color:#fff,stroke:#333;
 
     class PENDING pending;
-    class TOREPORTFAIL,TOREPORTOK,WAITING,WAITFAIL,RFD,RETRYWRITE,RETRYEOS active;
+    class TOREPORTFAIL,TOREPORTOK,WAITING,WAITFAIL,WAITINGUS,WAITINGUF,RFD,RETRYWRITE,RETRYEOS active;
     class DELOK,DELFAIL,REPACKDEL okterm;
     class FAILEDQ1,FAILEDQ2,REPACKFAILQ failterm;
 ```
@@ -389,7 +420,18 @@ still needs to read the buffer. The two checks are deliberately blind to each ot
 transfer failure is invisible to the success-side count (so a waiting successful copy neither
 stalls nor promotes on its own), and it is the failure-side sweep that eventually settles such a
 mixed group. See [Who fails together](#who-fails-together-the-userrepack-split) for why repack needs
-this gate and the user workflow does not.
+this gate at all — the user workflow has a symmetric-looking one too (Note 3), but for a different
+reason.
+
+**Note 3 — the user side's gate exists for sibling *visibility*, not shared-file safety.**
+Unlike repack, a user archive request owns no shared file that deletion could race against — see
+[Why user requests fail as a group](#why-user-requests-fail-as-a-group) — so `updateMultiCopyJobSuccess()`'s
+wait for `AJS_WaitReplicasBeforeReportingSuccessToDisk` siblings, and
+`failTransferBatchExceedRetries()`'s symmetric wait for `AJS_WaitReplicasBeforeReportingFailureToDisk`
+ones, exist only because a sibling that has not been dispatched out of `ARCHIVE_PENDING_QUEUE` yet
+has no row to check completeness against. Once every copy has a row in `ARCHIVE_ACTIVE_QUEUE`, both
+checks resolve the whole group immediately — there is no analogue of repack's "wait for a drive that
+is still writing," because settling a still-writing user copy early is always safe.
 
 ## The full retrieve lifecycle
 
