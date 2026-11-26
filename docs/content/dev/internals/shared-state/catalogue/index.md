@@ -36,8 +36,6 @@ The diagram shows the catalogue tables and their relationships. The sections bel
 
 [![CTA Catalogue schema](../../../../generated/catalogue-schema.svg)](../../../../generated/catalogue-schema.svg){ target="_blank" rel="noopener" title="Open the catalogue schema in a new tab" }
 
-The diagram is generated from the common SQL schema in the pinned catalogue submodule when the documentation is built.
-
 ### Mount Rule Tables
 
 There are 3 mount rule tables defined:
