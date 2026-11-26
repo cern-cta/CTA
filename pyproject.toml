@@ -27,6 +27,7 @@
 
 [dependency-groups]
   dev = [
+    { include-group = "docs" },
     { include-group = "lint" },
     { include-group = "source-checks" },
     { include-group = "unit-tests" },
@@ -76,8 +77,6 @@
     "markdown==3.9",
     "pymdown-extensions==11.0.2",
     "pygraphviz>=2.0,<3",
-    "fontconfig-py>=1.0.3,<2",
-    "fonttools[woff]>=4.60",
   ]
 
 [tool.pytest.ini_options]

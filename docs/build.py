@@ -87,8 +87,6 @@ def prepare(skip_rust: bool, preview: bool = False, rust_docs: Path | None = Non
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    # FontTools reports every outline-conversion step at INFO; surface only problems during normal builds.
-    logging.getLogger("fontTools").setLevel(logging.WARNING)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("build", "serve"))
     rust = parser.add_mutually_exclusive_group()

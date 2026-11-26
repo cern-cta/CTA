@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Always use the checkout's lockfile, including on older pipeline images.
-export UV_PROJECT_ENVIRONMENT="$CI_PROJECT_DIR/docs/.venv"
+export UV_PROJECT_ENVIRONMENT="$CI_PROJECT_DIR/.venv"
 uv sync --locked --only-group docs
 export PATH="$UV_PROJECT_ENVIRONMENT/bin:$PATH"
 # Make repository Markdown extensions importable by mike and Zensical.

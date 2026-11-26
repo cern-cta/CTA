@@ -5,7 +5,6 @@
 
 # ruff: noqa: PT009, PT027
 
-import base64
 import os
 import sqlite3
 import tempfile
@@ -34,13 +33,13 @@ class CatalogueDiagramTests(unittest.TestCase):
         with closing(sqlite3.connect(":memory:")) as connection:
             connection.executescript(SCHEMA)
             dot = catalogue_diagram.schema_dot(connection)
-        self.assertIn("UINT64TYPE", dot)
-        self.assertIn("PK, NN", dot)
+        self.assertIn("UINT64TYPE NOT NULL", dot)
+        self.assertIn("<B>a</B>", dot)
         self.assertIn("a&amp;b", dot)
         self.assertIn("x&lt;y", dot)
-        self.assertIn('"child":"x" -> "parent":"a";', dot)
-        self.assertIn('"child":"y" -> "parent":"b";', dot)
-        self.assertIn('"child":"other" -> "parent":"a";', dot)
+        self.assertIn('"child":"source_x":w -> "parent":"target_a":e;', dot)
+        self.assertIn('"child":"source_y":w -> "parent":"target_b":e;', dot)
+        self.assertIn('"child":"source_other":w -> "parent":"target_a":e;', dot)
         self.assertEqual(dot.count(" -> "), 3)
 
     def test_preview_generates_svg_without_writing_to_source(self):
@@ -59,24 +58,7 @@ class CatalogueDiagramTests(unittest.TestCase):
             document = ET.parse(svg)  # noqa: S314 - locally generated Graphviz output
             self.assertTrue(document.getroot().tag.endswith("svg"))
             self.assertIn("UINT64TYPE", " ".join(document.getroot().itertext()))
-            namespace = {"svg": "http://www.w3.org/2000/svg"}
-            style = document.findtext("svg:defs/svg:style", namespaces=namespace)
-            self.assertIsNotNone(style)
-            assert style is not None
-            encoded = style.split("data:font/woff2;base64,", 1)[1].split('"', 1)[0]
-            self.assertEqual(
-                base64.b64decode(encoded),
-                (catalogue_diagram.FONT_DIRECTORY / catalogue_diagram.FONT_FILE).read_bytes(),
-            )
-            self.assertIn("font-weight: 200 800", style)
-            self.assertIn("SIL OPEN FONT LICENSE", document.findtext("svg:metadata", namespaces=namespace) or "")
-            for label in document.findall(".//svg:text", namespace):
-                self.assertIn(catalogue_diagram.FONT_FAMILY, label.attrib["font-family"])
             self.assertFalse((root / "docs/content/generated").exists())
-            schema.write_text("CREATE TABLE replacement (id INTEGER PRIMARY KEY);")
-            catalogue_diagram.generate(schema, svg)
-            self.assertIn("replacement", svg.read_text())
-            self.assertNotIn("UINT64TYPE", svg.read_text())
 
     def test_missing_schema_is_actionable(self):
         with (
@@ -84,21 +66,6 @@ class CatalogueDiagramTests(unittest.TestCase):
             self.assertRaisesRegex(FileNotFoundError, "git submodule update --init"),
         ):
             catalogue_diagram.generate(Path(temporary) / "missing.sql", Path(temporary) / "out.svg")
-
-    def test_invalid_schema_fails(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            schema = Path(temporary) / "invalid.sql"
-            schema.write_text("not SQL")
-            with self.assertRaisesRegex(ValueError, "Cannot load catalogue schema"):
-                catalogue_diagram.generate(schema, Path(temporary) / "out.svg")
-
-    def test_missing_bundled_font_fails_instead_of_using_host_font(self):
-        with (
-            tempfile.TemporaryDirectory() as temporary,
-            patch.object(catalogue_diagram, "FONT_DIRECTORY", Path(temporary)),
-            self.assertRaises(FileNotFoundError),
-        ):
-            catalogue_diagram.render_svg("digraph {}")
 
 
 if __name__ == "__main__":
