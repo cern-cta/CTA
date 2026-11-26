@@ -1540,6 +1540,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   std::unordered_set<std::string> jobSrcUrls;
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
   std::vector<std::string> repackBufferUrlsToDelete;
+  std::unordered_set<std::string> vidsToMarkDirty;
   // The row move (claim + delete from REPACK_ARCHIVE_ACTIVE_QUEUE), the counter update, and the
   // completeness/status recomputation they trigger now commit together, in this one transaction.
   // This used to be up to three separate commits with deleteDiskFiles() sandwiched in between, so
@@ -1589,10 +1590,16 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
         while (vidrset.next()) {
           // Get the repack request VID for which files were deleted !
           // PS: the deletion from the catalogue was handled by the Scheduler before,
-          // PPS: the deletion of the temporary file from EOS disk is handled further below
+          // PPS: the deletion of the temporary file from EOS disk, and the catalogue's
+          // setTapeDirty() call, are both handled further below, after this transaction commits -
+          // setTapeDirty() is a separate system's call, not part of this transaction: it cannot be
+          // rolled back together with it, it cannot be retried by just retrying this one, and
+          // running it here, before commit, would extend this transaction's lock hold by however
+          // long that call takes and let one VID's exception roll back every other VID's already-
+          // computed progress in this same batch for no reason connected to them.
           std::string repack_vid = vidrset.columnString("VID");
           std::string repack_buffer_path = vidrset.columnString("BUFFER_URL") + "/" + repack_vid;
-          this->m_catalogue.Tape()->setTapeDirty(repack_vid);
+          vidsToMarkDirty.insert(repack_vid);
           bool isCompleteStatusChanged = vidrset.columnBool("IS_COMPLETE_CHANGED");
           if (isCompleteStatusChanged) {
             repackBufferUrlsToDelete.push_back(repack_buffer_path);
@@ -1631,6 +1638,26 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   if (statUpdates.empty()) {
     // Nothing moved, or nothing changed enough to update progress - no disk work needed either.
     return ret;
+  }
+
+  // ------------------------------------------
+  // marking the affected tapes dirty in the catalogue
+  // ------------------------------------------
+  // Best-effort, same as deleteDiskFiles()/the buffer rmdir() below: the scheduler progress this
+  // batch computed is already durable at this point regardless of what happens here, and nothing
+  // about marking a tape dirty can be meaningfully retried by replaying this whole function - a
+  // failure here is logged and left for the operator, not retried inline.
+  for (const auto& vid : vidsToMarkDirty) {
+    try {
+      this->m_catalogue.Tape()->setTapeDirty(vid);
+    } catch (const cta::exception::Exception& ex) {
+      log::ScopedParamContainer(lc)
+        .add("vid", vid)
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
+        .log(cta::log::WARNING,
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to mark tape dirty in the "
+             "catalogue.");
+    }
   }
 
   // ------------------------------------------

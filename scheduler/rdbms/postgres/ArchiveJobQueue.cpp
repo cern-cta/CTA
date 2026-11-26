@@ -323,9 +323,11 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
    * reaches a terminal status, the whole group was already set to a terminal status together in
    * this one statement - reporting is free to just pick up rows whose STATUS says so, with no race
    * against settlement. aj2.STATUS <> FAILED additionally excludes a row that already
-   * independently reached AJS_ToReportToUserForFailure: it is already correctly terminal and does
-   * not need re-touching, only counting (which it gets via the UNION ALL above, not via this final
-   * UPDATE's WHERE).
+   * independently reached AJS_ToReportToUserForFailure, and aj2.STATUS <> this function's own
+   * newStatus excludes one that already reached AJS_ToReportToUserForSuccess (a replayed success -
+   * see that bind's own comment below for why this one matters) - both are already correctly
+   * decided and do not need re-touching, only counting (which they get via the UNION ALL above,
+   * not via this final UPDATE's WHERE).
    */
   std::string sql = R"SQL(
       WITH target_success_multicopy AS (
@@ -379,15 +381,31 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
               ON rg.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
       WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
         AND (aj2.JOB_ID = tsm.JOB_ID OR rg.ARCHIVE_REQUEST_ID IS NOT NULL)
-        AND aj2.STATUS <> :STATUS_FAILED4::ARCHIVE_JOB_STATUS;
+        AND aj2.STATUS <> :STATUS_FAILED4::ARCHIVE_JOB_STATUS
+        AND aj2.STATUS <> :STATUS_ALREADY_SUCCESS::ARCHIVE_JOB_STATUS;
   )SQL";
+  // AJS_ToReportToUserForSuccess (this function's own destination) is monotonic exactly like
+  // ReadyForDeletion is for updateRepackJobSuccess(): once a row reaches it, this function must
+  // never target that row again. A caller can replay the same success more than once -
+  // ArchiveMount::reportJobsBatchTransferred() wraps setJobBatchTransferred() in
+  // retryWithBackoff(), so a commit that actually succeeded but whose acknowledgement was lost to
+  // the caller gets retried with the same job IDs. Without this exclusion, a replay would find its
+  // target via the plain JOB_ID match (aj2.STATUS <> FAILED4 alone does not stop it), see its own
+  // group as "incomplete" (sibling_settlement's sibling branch only counts a sibling still at a
+  // wait status or already terminally failed - not one already at this function's own success
+  // destination, since by definition a sibling that got there was never "waiting"), and demote the
+  // row back to AJS_WaitReplicasBeforeReportingSuccessToDisk while its sibling - possibly already
+  // reported and deleted by then - never returns to complete the group again.
+  //
   // Four distinct placeholder names bind the same AJS_ToReportToUserForFailure value
-  // (:STATUS_FAILED/2/3/4), and two bind AJS_WaitReplicasBeforeReportingFailureToDisk
-  // (:STATUS_COND_REPLICAS_FAILURE/2) - the statement parser (ParamNameToIdx) rejects a repeated
+  // (:STATUS_FAILED/2/3/4), two bind AJS_WaitReplicasBeforeReportingFailureToDisk
+  // (:STATUS_COND_REPLICAS_FAILURE/2), and :STATUS_ALREADY_SUCCESS binds the same newStatus value
+  // as :STATUS_READY_FOR_REPORTING - the statement parser (ParamNameToIdx) rejects a repeated
   // :name as a duplicate, so every textual occurrence of the same value needs its own name here,
   // not just a stylistic preference.
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
+  stmt.bindString(":STATUS_ALREADY_SUCCESS", to_string(newStatus));
   stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
   stmt.bindString(":STATUS_COND_REPLICAS_FAILURE",
                   to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingFailureToDisk));
@@ -1538,6 +1556,19 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   // reaches REQUEST_JOB_COUNT do the visible rows go straight to ReadyForDeletion; otherwise they
   // park at AJS_WaitReplicasBeforeReportingFailureToDisk, to be collected once the group's last
   // copy settles.
+  //
+  // That pending-sibling park must NOT apply once this row's own group outcome was already
+  // decided before this call - the a.STATUS branch below, checked first. This function is reached
+  // from two callers with different histories: ArchiveMount::failReportBatch()'s write-recovery
+  // path (STATUS still AJS_ToTransferForUser - completeness genuinely was never determined, the
+  // park above is correct) and RelationalDB::failArchiveJobBatchReport()'s EOS-notification-retry
+  // path, fed only by getNextArchiveJobsToReportBatch() (STATUS already
+  // AJS_ToReportToUserForSuccess/ForFailure - the group's fate was already decided, atomically,
+  // by whichever settlement call got there last; a missing sibling row here means it was already
+  // reported and deleted, not that it is still pending). Applying the park to the second caller
+  // would wait forever on a sibling that will never return: nothing revisits an
+  // AJS_WaitReplicasBeforeReportingFailureToDisk row once the one event that could complete its
+  // group (the sibling settling) already happened and that sibling's row is gone.
   std::string sql = R"SQL(
   WITH per_job(job_id, total_report_retries, report_failure_log,
                archive_request_id, req_job_count) AS (
@@ -1558,6 +1589,9 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   UPDATE ARCHIVE_ACTIVE_QUEUE a SET
     STATUS = CASE
         WHEN d.req_job_count = 1 THEN :STATUS_TERMINAL_FAILURE::ARCHIVE_JOB_STATUS
+        WHEN a.STATUS = ANY(ARRAY[:STATUS_ALREADY_DECIDED_SUCCESS, :STATUS_ALREADY_DECIDED_FAILURE]
+                            ::ARCHIVE_JOB_STATUS[])
+          THEN :STATUS_TERMINAL_FAILURE3::ARCHIVE_JOB_STATUS
         WHEN sp.present_count >= d.req_job_count THEN :STATUS_TERMINAL_FAILURE2::ARCHIVE_JOB_STATUS
         ELSE :STATUS_WAIT_FAILURE::ARCHIVE_JOB_STATUS
     END,
@@ -1573,10 +1607,13 @@ uint64_t ArchiveJobQueueRow::failReportBatchExceedRetries(Transaction& txn,
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  // Two distinct placeholder names bind the same ReadyForDeletion value - ParamNameToIdx rejects a
-  // repeated :name as a duplicate, so each textual occurrence needs its own name.
+  // Three distinct placeholder names bind the same ReadyForDeletion value - ParamNameToIdx rejects
+  // a repeated :name as a duplicate, so each textual occurrence needs its own name.
   stmt.bindString(":STATUS_TERMINAL_FAILURE", to_string(ArchiveJobStatus::ReadyForDeletion));
   stmt.bindString(":STATUS_TERMINAL_FAILURE2", to_string(ArchiveJobStatus::ReadyForDeletion));
+  stmt.bindString(":STATUS_TERMINAL_FAILURE3", to_string(ArchiveJobStatus::ReadyForDeletion));
+  stmt.bindString(":STATUS_ALREADY_DECIDED_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToUserForSuccess));
+  stmt.bindString(":STATUS_ALREADY_DECIDED_FAILURE", to_string(ArchiveJobStatus::AJS_ToReportToUserForFailure));
   stmt.bindString(":STATUS_WAIT_FAILURE", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingFailureToDisk));
   for (size_t i = 0; i < jobs.size(); ++i) {
     const auto* row = jobs[i];

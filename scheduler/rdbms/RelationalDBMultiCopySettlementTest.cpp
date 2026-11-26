@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "common/log/TimingList.hpp"
+#include "common/utils/Timer.hpp"
 #include "scheduler/rdbms/RelationalDBTestFixture.hpp"
 
 #include <list>
@@ -608,5 +610,95 @@ TEST_P(RelationalDBTest, archiveMultiCopyReportFailureParksAtWaitFailureWhenSibl
     ASSERT_EQ(0u, rset.columnUint64("CNT"));
   }
 }
+
+// failReportBatchExceedRetries()'s pending-sibling park (added for the report-failure parking fix
+// above) must NOT apply once the group's outcome was already decided before this call.
+// RelationalDB::failArchiveJobBatchReport() - unlike ArchiveMount::failReportBatch() - is fed only
+// by getNextArchiveJobsToReportBatch(), which only ever returns rows whose STATUS is already
+// AJS_ToReportToUserForSuccess/ForFailure: by the time a row gets there, its whole group was
+// already settled atomically. A missing sibling row at that point means it was already reported
+// and deleted, not that it is still pending - parking here would wait forever for a sibling that
+// will never return.
+TEST_P(RelationalDBTest, archiveMultiCopyReportExceedRetriesDoesNotParkOnceGroupAlreadyDecided) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueMultiCopyArchiveJob(db, lc, 994009, "tapePoolSettleI", "SETTLE-I", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = 0");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-I";
+  tape.tapePool = "tapePoolSettleI";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+
+  // Both copies succeed together - the group settles atomically to AJS_ToReportToUserForSuccess.
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+  mount->setJobBatchTransferred(jobs, lc);
+
+  // Both rows are now independently reportable.
+  auto reportBatch = db.getNextArchiveJobsToReportBatch(10, lc);
+  ASSERT_EQ(2u, reportBatch.size());
+
+  // Copy A's EOS report succeeds - its row is deleted.
+  std::list<SchedulerDatabase::ArchiveJob*> listA {reportBatch.front().get()};
+  log::TimingList timingsA;
+  cta::utils::Timer timerA;
+  db.setArchiveJobBatchReported(listA, timingsA, timerA, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+
+  // Copy B's EOS report keeps failing until its report-retry budget (0) is immediately exceeded -
+  // the sibling (copy A) is already gone by now.
+  std::vector<SchedulerDatabase::ArchiveJob*> batchB {reportBatch.back().get()};
+  db.failArchiveJobBatchReport(batchB, lc);
+
+  {
+    // Copy B must have moved straight to ARCHIVE_FAILED_QUEUE, not parked waiting for copy A.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+// updateMultiCopyJobSuccess()'s replay-demotion guard (the user-archive equivalent of the repack
+// replay-demotion fix - see repackUpdateSuccessReplayDoesNotDemoteAlreadyReadyForDeletionSibling
+// in RelationalDBTest.cpp) has NO regression test here: reproducing a replay needs a second,
+// independently-constructed ArchiveJob object addressing the same already-settled JOB_ID, and
+// ArchiveRdbJob has no public constructor that takes just a job ID - only (ConnPool&, Rset, bool)
+// from a real fetched row, or (ConnPool&) empty, and RelationalDB exposes no public ConnPool&
+// accessor to build one from a test. getNextJobBatch() won't refetch the row either, since its
+// STATUS has already moved on. Verified instead by hand-tracing updateMultiCopyJobSuccess()'s SQL
+// directly: a replayed target already at AJS_ToReportToUserForSuccess failed the same way
+// updateRepackJobSuccess()'s pre-fix ReadyForDeletion replay did, by the identical mechanism (no
+// STATUS guard on the target selection), and is fixed the same way (the new :STATUS_ALREADY_SUCCESS
+// exclusion on the final UPDATE's WHERE, symmetric with the pre-existing :STATUS_FAILED4 one).
 
 }  // namespace unitTests
