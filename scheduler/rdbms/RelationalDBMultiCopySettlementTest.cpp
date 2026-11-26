@@ -516,4 +516,97 @@ TEST_P(RelationalDBTest, archiveMultiCopyIncompleteGroupSuccessDoesNotEraseAPark
   }
 }
 
+// ArchiveMount::failReportBatch()'s "exceed" branch for a USER job is reached when
+// setJobBatchTransferred() itself failed - the row's completeness was never determined (unlike
+// RelationalDB::failArchiveJobBatchReport()'s caller, which only ever sees already-complete
+// groups fetched by getNextArchiveJobsToReportBatch() - see that function's own comment).
+// failReportBatchExceedRetries()'s user branch must therefore run the same sibling-presence check
+// failTransferBatchExceedRetries() already does, or it would sweep an incomplete group straight
+// to ARCHIVE_FAILED_QUEUE while a sibling is still undispatched.
+TEST_P(RelationalDBTest, archiveMultiCopyReportFailureParksAtWaitFailureWhenSiblingStillPending) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  queueMultiCopyArchiveJob(db, lc, 994008, "tapePoolSettleH", "SETTLE-H", 1000);
+  db.waitSubthreadsComplete();
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("UPDATE ARCHIVE_PENDING_QUEUE SET MAX_REPORT_RETRIES = 0");
+    stmt.executeNonQuery();
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+
+  catalogue::TapeForWriting tape;
+  tape.vid = "V-SETTLE-H";
+  tape.tapePool = "tapePoolSettleH";
+  tape.mediaType = "LTO9";
+  tape.vendor = "vendor";
+  tape.vo = "vo";
+  tape.capacityInBytes = 10ULL * 1024 * 1024 * 1024;
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  // Fetch only one of the two copies: the other is left behind in ARCHIVE_PENDING_QUEUE,
+  // undispatched - exactly as in the transfer-failure parking test above, but this time the
+  // bookkeeping WRITE itself (setJobBatchTransferred()) is what failed, routing through
+  // failReportBatch()'s "exceed" branch instead of failTransferBatch().
+  auto jobsA = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsA.size());
+  jobsA.front()->prepareFailReport("simulated exhausted bookkeeping write retries, sibling still pending");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchA = {jobsA.front().get()};
+  mount->failReportBatch(batchA, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Parked, not swept: the sibling isn't visible yet, so completeness can't be decided.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingFailureToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_PENDING_QUEUE"
+                                " WHERE STATUS = 'AJS_ToTransferForUser'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+
+  // The second copy is now dispatched and its bookkeeping write also exceeds its retries - the
+  // group is now fully present, so this call sweeps both rows (the one just failing and the one
+  // already parked) into ARCHIVE_FAILED_QUEUE together.
+  auto jobsB = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsB.size());
+  jobsB.front()->prepareFailReport("second copy also exhausts report retries - group now fully visible");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchB = {jobsB.front().get()};
+  mount->failReportBatch(batchB, lc);
+
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("CNT"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM ARCHIVE_ACTIVE_QUEUE"
+                                " WHERE STATUS = 'AJS_WaitReplicasBeforeReportingFailureToDisk'");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
 }  // namespace unitTests

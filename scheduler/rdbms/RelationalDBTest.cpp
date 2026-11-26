@@ -751,6 +751,206 @@ void insertRepackArchivePendingJob(cta::rdbms::Conn& conn,
   stmt.executeNonQuery();
 }
 
+// ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable() picks a single-copy failure
+// and a complete multi-copy group's failures straight off independent code paths (see that
+// function's own comment): a single-copy row moves the instant it is failed, with no join at
+// all, while a multi-copy group's eligibility is decided over every currently-failed multi-copy
+// row before :LIMIT is ever applied, so one group's completeness can never depend on another,
+// unrelated group's batch-window placement. This exercises all three outcomes in one call: a
+// failed single-copy job moves immediately; a failed multi-copy group whose sibling has ALSO
+// failed (complete) moves as a pair; a failed multi-copy group whose sibling is still mid-transfer
+// (incomplete) is left exactly where it is - neither lost nor moved early.
+TEST_P(RelationalDBTest, repackMoveFailedBatchHandlesSingleAndMultiCopyGroupsIndependently) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-MOVEFAILED";
+  const std::string tapePool = "repackTapePoolMoveFailed";
+  // The incomplete group's second copy is queued to a tape pool no mount is ever created for in
+  // this test, so it is guaranteed to stay undispatched - deterministically, rather than relying
+  // on moveJobsToDbActiveQueue()'s PRIORITY/ARCHIVE_FILE_ID ordering to leave the right row
+  // behind when dispatching a partial batch out of a single shared pool.
+  const std::string heldTapePool = "repackTapePoolMoveFailedHeld";
+  auto mountPolicy = makeMountPolicy(1000);
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                           "/repack/buffer",
+                                                           cta::common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                           mountPolicy,
+                                                           false,
+                                                           10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  constexpr uint64_t singleCopyFileId = 995001;
+  constexpr uint64_t completeGroupFileId = 995002;
+  constexpr uint64_t incompleteGroupFileId = 995003;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // Single-copy failure: REQUEST_JOB_COUNT = 1, no sibling at all.
+    insertRepackArchivePendingJob(conn, repackRequestId, singleCopyFileId, tapePool, 1000, 0, 1, 0, 5, 1, 1);
+    // Complete multi-copy group: both copies will be dispatched and failed below.
+    insertRepackArchivePendingJob(conn, repackRequestId, completeGroupFileId, tapePool, 1000, 0, 1, 0, 5, 1, 2);
+    insertRepackArchivePendingJob(conn, repackRequestId, completeGroupFileId, tapePool, 1000, 0, 1, 0, 5, 2, 2);
+    // Incomplete multi-copy group: copy 1 will be dispatched and failed; copy 2 is queued to the
+    // held tape pool, never dispatched.
+    insertRepackArchivePendingJob(conn, repackRequestId, incompleteGroupFileId, tapePool, 1000, 0, 1, 0, 5, 1, 2);
+    insertRepackArchivePendingJob(conn, repackRequestId, incompleteGroupFileId, heldTapePool, 1000, 0, 1, 0, 5, 2, 2);
+  }
+
+  auto mount = createRepackArchiveMount(db, lc, tapePool, "V-MOVEFAILED-DST");
+
+  // Dispatch everything queued to this mount's own tape pool - 4 of the 5 pending rows.
+  auto jobs = mount->getNextJobBatch(4, 1'000'000, lc);
+  ASSERT_EQ(4u, jobs.size());
+
+  {
+    // The held pool's row is still sitting in REPACK_ARCHIVE_PENDING_QUEUE, untouched.
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM REPACK_ARCHIVE_PENDING_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("CNT"));
+  }
+
+  // Fail every dispatched job - one at a time, mirroring MigrationReportPacker's own
+  // accumulate-then-flush pattern.
+  for (auto& job : jobs) {
+    job->prepareFailTransfer("simulated terminal transfer failure for moveFailedRepackJobBatchToFailedQueueTable "
+                             "independence test");
+    std::vector<cta::SchedulerDatabase::ArchiveJob*> failBatch {job.get()};
+    mount->failTransferBatch(failBatch, lc);
+  }
+
+  db.getNextFailedArchiveRepackReportBatch(lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Single-copy job and the complete group's two copies all moved - 3 rows total.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(3u, rset.columnUint64("C"));
+  }
+  {
+    auto stmt =
+      conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_FAILED_QUEUE WHERE ARCHIVE_FILE_ID IN (:A, :B)");
+    stmt.bindUint64(":A", singleCopyFileId);
+    stmt.bindUint64(":B", completeGroupFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(3u, rset.columnUint64("C"));
+  }
+  {
+    // The incomplete group's failed copy is left behind, still failed, still visible - not lost
+    // and not swept early.
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_ACTIVE_QUEUE "
+                                "WHERE ARCHIVE_FILE_ID = :A AND STATUS = 'AJS_ToReportToRepackForFailure'");
+    stmt.bindUint64(":A", incompleteGroupFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("C"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_FAILED_QUEUE WHERE ARCHIVE_FILE_ID = :A");
+    stmt.bindUint64(":A", incompleteGroupFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("C"));
+  }
+}
+
+// ArchiveJobQueueRow::updateRepackJobSuccess() must never demote a row that has already reached
+// ReadyForDeletion back to AJS_ToReportToRepackForSuccess. A caller can replay the same success
+// more than once - report recovery (failReportBatch()'s repack "exceed" branch, which always
+// calls this function, see that function's own comment) replaying a write whose first attempt
+// actually went through is exactly that scenario. Before the monotonicity guard, a replay would
+// find its own row via the plain JOB_ID match (no STATUS check), see its own group as
+// "incomplete" (the sibling's STATUS is also already ReadyForDeletion, not
+// AJS_ToReportToRepackForSuccess, so it would not be counted), and demote the row while its
+// sibling stayed at ReadyForDeletion - stranding the group.
+TEST_P(RelationalDBTest, repackUpdateSuccessReplayDoesNotDemoteAlreadyReadyForDeletionSibling) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-REPLAY";
+  const std::string tapePool = "repackTapePoolReplay";
+  auto mountPolicy = makeMountPolicy(1000);
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                           "/repack/buffer",
+                                                           cta::common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                           mountPolicy,
+                                                           false,
+                                                           10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  constexpr uint64_t archiveFileId = 995004;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    insertRepackArchivePendingJob(conn, repackRequestId, archiveFileId, tapePool, 1000, 0, 5, 0, 5, 1, 2);
+    insertRepackArchivePendingJob(conn, repackRequestId, archiveFileId, tapePool, 1000, 0, 5, 0, 5, 2, 2);
+  }
+
+  auto mount = createRepackArchiveMount(db, lc, tapePool, "V-REPLAY-DST");
+  auto jobs = mount->getNextJobBatch(2, 1'000'000, lc);
+  ASSERT_EQ(2u, jobs.size());
+
+  // Copy A's bookkeeping write "fails" (recovered via failReportBatch()'s repack branch, which
+  // always resolves through updateRepackJobSuccess() - see that function's own comment). The
+  // sibling hasn't settled yet, so A only parks.
+  jobs.front()->prepareFailReport("simulated bookkeeping write recovery for copy A");
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> batchA {jobs.front().get()};
+  mount->failReportBatch(batchA, lc);
+
+  // Copy B settles the same way - the group is now complete, so this call promotes both A and B
+  // to ReadyForDeletion together.
+  jobs.back()->prepareFailReport("simulated bookkeeping write recovery for copy B");
+  std::vector<cta::SchedulerDatabase::ArchiveJob*> batchB {jobs.back().get()};
+  mount->failReportBatch(batchB, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_ACTIVE_QUEUE "
+                                "WHERE ARCHIVE_FILE_ID = :A AND STATUS = 'ReadyForDeletion'");
+    stmt.bindUint64(":A", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("C"));
+  }
+
+  // Replay: copy A's recovery call fires again - jobs.front() is still a live job object
+  // (failReportBatch() does not recycle it, unlike setJobBatchTransferred()/
+  // setRepackJobBatchTransferred()), simulating a mount session retrying a write it believes
+  // never completed.
+  mount->failReportBatch(batchA, lc);
+
+  // Both rows must still be exactly where the first settlement left them.
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_ACTIVE_QUEUE "
+                                "WHERE ARCHIVE_FILE_ID = :A AND STATUS = 'ReadyForDeletion'");
+    stmt.bindUint64(":A", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("C"));
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_ACTIVE_QUEUE "
+                                "WHERE ARCHIVE_FILE_ID = :A AND STATUS = 'AJS_ToReportToRepackForSuccess'");
+    stmt.bindUint64(":A", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("C"));
+  }
+}
+
 // Covers: repack transfer fails with retries left - requeued, not reported as a failure yet.
 // Also covers a repack catalogue-update failure: MigrationReportPacker.cpp routes that through
 // failTransfer() too (only FailedReportMoveToQueue reaches failReport(), see the
