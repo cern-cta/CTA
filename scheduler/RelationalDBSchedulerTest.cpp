@@ -3610,13 +3610,18 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   ASSERT_NE(nullptr, dbWrapper);
   {
     auto conn = dbWrapper->getRelationalDB().getConn();
-    auto stmt = conn.createStmt("SELECT MAX_TOTAL_RETRIES, MAX_RETRIES_WITHIN_MOUNT, MAX_REPORT_RETRIES "
+    auto stmt = conn.createStmt("SELECT MAX_TOTAL_RETRIES, MAX_RETRIES_WITHIN_MOUNT, MAX_REPORT_RETRIES, "
+                                "ALTERNATE_VIDS, ALTERNATE_COPY_NBS, ALTERNATE_FSEQS, ALTERNATE_BLOCK_IDS "
                                 "FROM REPACK_RETRIEVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = 1");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_GT(rset.columnUint64("MAX_TOTAL_RETRIES"), 0u);
     ASSERT_GT(rset.columnUint64("MAX_RETRIES_WITHIN_MOUNT"), 0u);
     ASSERT_GT(rset.columnUint64("MAX_REPORT_RETRIES"), 0u);
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_VIDS"));
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_COPY_NBS"));
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_FSEQS"));
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_BLOCK_IDS"));
   }
 }
 

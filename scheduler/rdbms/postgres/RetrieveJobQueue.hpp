@@ -77,6 +77,11 @@ struct RetrieveJobQueueRow {
   std::optional<std::string> diskSystemName = std::nullopt;
 
 private:
+  // The database API represents an empty alternate-copy list as SQL NULL.
+  static std::optional<std::string> optionalAlternateList(const std::string& list) {
+    return list.empty() ? std::nullopt : std::optional {list};
+  }
+
   void reserveStringFields() {
     diskFileId.reserve(128);
     diskInstance.reserve(128);
@@ -188,8 +193,8 @@ public:
     copyNb = rset.columnUint8NoOpt("COPY_NB");
     fSeq = rset.columnUint64NoOpt("FSEQ");
     blockId = rset.columnUint64NoOpt("BLOCK_ID");
-    alternateFSeq = rset.columnStringNoOpt("ALTERNATE_FSEQS");
-    alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
+    alternateFSeq = rset.columnOptionalString("ALTERNATE_FSEQS").value_or("");
+    alternateBlockId = rset.columnOptionalString("ALTERNATE_BLOCK_IDS").value_or("");
     startTime = rset.columnUint64NoOpt("START_TIME");
     retrieveReportURL = rset.columnStringNoOpt("RETRIEVE_REPORT_URL");
     // The following is necessary value translation as the current rdbms API
@@ -221,8 +226,8 @@ public:
     isVerifyOnly = rset.columnBoolNoOpt("IS_VERIFY_ONLY");
     isReporting = rset.columnBoolNoOpt("IS_REPORTING");
     vid = rset.columnStringNoOpt("VID");
-    alternateVids = rset.columnStringNoOpt("ALTERNATE_VIDS");
-    alternateCopyNbs = rset.columnStringNoOpt("ALTERNATE_COPY_NBS");
+    alternateVids = rset.columnOptionalString("ALTERNATE_VIDS").value_or("");
+    alternateCopyNbs = rset.columnOptionalString("ALTERNATE_COPY_NBS").value_or("");
     drive = rset.columnStringNoOpt("DRIVE");
     host = rset.columnStringNoOpt("HOST");
     logical_library = rset.columnStringNoOpt("LOGICAL_LIBRARY");
@@ -244,8 +249,8 @@ public:
 
     fSeq = rset.columnUint64NoOpt("FSEQ");
     blockId = rset.columnUint64NoOpt("BLOCK_ID");
-    alternateFSeq = rset.columnStringNoOpt("ALTERNATE_FSEQS");
-    alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
+    alternateFSeq = rset.columnOptionalString("ALTERNATE_FSEQS").value_or("");
+    alternateBlockId = rset.columnOptionalString("ALTERNATE_BLOCK_IDS").value_or("");
 
     return *this;
   }
@@ -372,9 +377,9 @@ public:
     stmt.bindUint32(":PRIORITY", priority);
     stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
     stmt.bindUint8(":COPY_NB", copyNb);
-    stmt.bindString(":ALTERNATE_COPY_NBS", alternateCopyNbs);
-    stmt.bindString(":ALTERNATE_FSEQS", alternateFSeq);
-    stmt.bindString(":ALTERNATE_BLOCK_IDS", alternateBlockId);
+    stmt.bindString(":ALTERNATE_COPY_NBS", optionalAlternateList(alternateCopyNbs));
+    stmt.bindString(":ALTERNATE_FSEQS", optionalAlternateList(alternateFSeq));
+    stmt.bindString(":ALTERNATE_BLOCK_IDS", optionalAlternateList(alternateBlockId));
     stmt.bindUint64(":START_TIME", static_cast<uint64_t>(startTime));
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.bindString(":REQUESTER_GROUP", requesterGroup);
@@ -389,7 +394,7 @@ public:
     stmt.bindBool(":IS_VERIFY_ONLY", isVerifyOnly);
     stmt.bindBool(":IS_REPORTING", isReporting);
     stmt.bindString(":VID", vid);
-    stmt.bindString(":ALTERNATE_VIDS", alternateVids);
+    stmt.bindString(":ALTERNATE_VIDS", optionalAlternateList(alternateVids));
     if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
@@ -645,13 +650,13 @@ public:
       stmt.bindString(":TAPE_POOL" + std::to_string(i), row.tapePool == "" ? "NOT_PROVIDED" : row.tapePool);
       stmt.bindString(":MOUNT_POLICY" + std::to_string(i), row.mountPolicy);
       stmt.bindString(":VID" + std::to_string(i), row.vid);
-      stmt.bindString(":ALTERNATE_VIDS" + std::to_string(i), row.alternateVids);
+      stmt.bindString(":ALTERNATE_VIDS" + std::to_string(i), optionalAlternateList(row.alternateVids));
       stmt.bindUint32(":PRIORITY" + std::to_string(i), row.priority);
       stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE" + std::to_string(i), row.minRetrieveRequestAge);
       stmt.bindUint8(":COPY_NB" + std::to_string(i), row.copyNb);
-      stmt.bindString(":ALTERNATE_COPY_NBS" + std::to_string(i), row.alternateCopyNbs);
-      stmt.bindString(":ALTERNATE_FSEQS" + std::to_string(i), row.alternateFSeq);
-      stmt.bindString(":ALTERNATE_BLOCK_IDS" + std::to_string(i), row.alternateBlockId);
+      stmt.bindString(":ALTERNATE_COPY_NBS" + std::to_string(i), optionalAlternateList(row.alternateCopyNbs));
+      stmt.bindString(":ALTERNATE_FSEQS" + std::to_string(i), optionalAlternateList(row.alternateFSeq));
+      stmt.bindString(":ALTERNATE_BLOCK_IDS" + std::to_string(i), optionalAlternateList(row.alternateBlockId));
       stmt.bindUint64(":START_TIME" + std::to_string(i), static_cast<uint64_t>(row.startTime));
       stmt.bindString(":DST_URL" + std::to_string(i), row.dstURL);
       stmt.bindUint32(":RETRIES_WITHIN_MOUNT" + std::to_string(i), row.retriesWithinMount);

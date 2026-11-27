@@ -82,7 +82,9 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestWithExpansionStats(
 
   // Bind job status
   if (nbRetrieveSubrequestsCreated == 0) {
-    stmt.bindString(":STATUS", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
+    // Zero jobs with work selected means expansion failed to queue it.
+    const bool hasWork = totalStatsFiles.totalFilesToRetrieve != 0 || totalStatsFiles.totalFilesToArchive != 0;
+    stmt.bindString(":STATUS", to_string(hasWork ? RepackJobStatus::RRS_Failed : RepackJobStatus::RRS_Complete));
     stmt.bindBool(":IS_COMPLETE", true);
   } else {
     stmt.bindString(":STATUS", to_string(newStatus));

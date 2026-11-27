@@ -319,10 +319,8 @@ def _submit_repack_request(
     print(f"Number of new recycled tape files = {nb_recycle_tape_files}")
     print(f"Number of files left to retrieve = {files_left_to_retrieve}")
     print(f"Number of files left to archive = {files_left_to_archive}")
-    # Printed unconditionally: a repack that goes Complete with zero progress is otherwise
-    # indistinguishable from the outside between "nothing was selected" and "every subrequest
-    # failed creation" - this is the counter that discriminates.
-    print(f"Number of failed subrequest creations = {int(repack_request.get('failedToCreateArchiveReq', 0))}")
+    print(f"Number of files that failed to retrieve = {int(repack_request['failedToRetrieveFiles'])}")
+    print(f"Number of files that failed to archive = {int(repack_request['failedToArchiveFiles'])}")
     print(f"Repack request status = {repack_request.get('status')}")
 
     assert files_left_to_retrieve == 0
@@ -941,11 +939,9 @@ def test_repack_just_add_copies_with_missing_copy(
         repack_request = repack_ls_json[0]
         archived_files = int(repack_request["archivedFiles"])
         retrieved_files = int(repack_request["retrievedFiles"])
-        failed_to_create_archive_req = int(repack_request.get("failedToCreateArchiveReq", 0))
 
-        # Before the fix every subrequest failed creation: failedToCreateArchiveReq > 0 with the
-        # other counters stuck at 0. These assertions name that regression explicitly.
-        assert failed_to_create_archive_req == 0
+        assert int(repack_request["failedToRetrieveFiles"]) == 0
+        assert int(repack_request["failedToArchiveFiles"]) == 0
         assert archived_files > 0
         assert retrieved_files > 0
 
@@ -1115,14 +1111,14 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
 
         repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
         repack_request = repack_ls_json[0]
-        failed_to_create_archive_req = int(repack_request.get("failedToCreateArchiveReq", 0))
         user_provided_files = int(repack_request["userProvidedFiles"])
         archived_files = int(repack_request["archivedFiles"])
         retrieved_files = int(repack_request["retrievedFiles"])
         total_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
         total_files_to_archive = int(repack_request["totalFilesToArchive"])
 
-        assert failed_to_create_archive_req == 0
+        assert int(repack_request["failedToRetrieveFiles"]) == 0
+        assert int(repack_request["failedToArchiveFiles"]) == 0
         assert user_provided_files == 1
         # The user-provided file needs a new copy like every retrieved one but is never itself
         # retrieved - the relationship test_repack_with_user_provided_files asserts for MoveOnly.
