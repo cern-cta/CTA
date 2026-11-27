@@ -577,6 +577,18 @@ TEST_P(RelationalDBTest, repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransf
   // One archive job for the repacked copy (BASE_INSERT), one for the additional copy
   // (ALTERNATE_INSERT).
   ASSERT_EQ((std::list<std::string> {"tapePoolA", "tapePoolB"}), tapePools);
+
+  // MoveAndAddCopies: the recalled copy (1) IS itself a rearchive target (it is being moved), so
+  // it must still be credited as retrieved - confirms RETRIEVED_FILE_STATS (added to fix
+  // AddCopiesOnly, where the recalled copy never is a target) did not change this case, which
+  // used to derive the same count from BASE_INSERTED_COUNT instead.
+  {
+    auto stmt2 = conn.createStmt("SELECT RETRIEVED_FILES FROM REPACK_REQUEST_TRACKING WHERE VID = :VID");
+    stmt2.bindString(":VID", vid);
+    auto rset2 = stmt2.executeQuery();
+    ASSERT_TRUE(rset2.next());
+    ASSERT_EQ(1u, rset2.columnUint64("RETRIEVED_FILES"));
+  }
 }
 
 // AddCopiesOnly's retrieve rows never list their own recalled copy in REPACK_REARCHIVE_COPY_NBS -
