@@ -1315,85 +1315,88 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  {
-    // Committing does not put the connection back into the pool, only the destruction of the
-    // transaction does, hence this scope: holding this connection while txn2 below asks for a
-    // second one can exhaust the pool, which ConnPool::getConn() waits on without a timeout.
-    schedulerdb::Transaction txn(m_connPool, lc);
+  // The transform and the progress update share one transaction and commit together:
+  // transformJobBatchToArchive() removes rows for good (no later batch revisits them), so a
+  // separate commit before updateRepackRequestsProgress() could permanently lose this batch's
+  // counter credit on a failure in between - the repack request would then never detect
+  // completion. Atomicity relies on there being NO intermediate txn.commit(): commit() does not
+  // re-BEGIN, so any statement after it would autocommit on its own.
+  schedulerdb::Transaction txn(m_connPool, lc);
+  try {
     // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
     // return back statistics for:
     //   1) all retrieve rows moved to archive table
     //   2) all rearchive copies inserted additionally
     // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
-    try {
-      auto count_rset =
-        schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn, c_repackRetrieveReportBatchSize);
-      auto count = 0;
-      while (count_rset.next()) {
-        schedulerdb::postgres::RepackRequestProgress update;
-        update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-        uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
-        uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
-        // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
-        // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
-        update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
-        update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
-        update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
-        update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
-        count += update.retrievedFiles + update.rearchiveCopyNbs;
-        log::ScopedParamContainer params(lc);
-        params.add("repackRequestId", update.reqId);
-        params.add("retrievedFiles", update.retrievedFiles);
-        params.add("retrievedBytes", update.retrievedBytes);
-        params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
-        params.add("rearchiveBytes", update.rearchiveBytes);
-        params.add("totalToBeArchivedFiles", update.retrievedFiles + update.rearchiveCopyNbs);
-        params.add("totalToBeArchivedBytes", update.retrievedBytes + update.rearchiveBytes);
-        lc.log(
-          cta::log::INFO,
-          "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve "
-          "rows to archive queue table.");
-        statUpdates.emplace_back(update);
-      }
+    auto count_rset =
+      schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn, c_repackRetrieveReportBatchSize);
+    auto count = 0;
+    while (count_rset.next()) {
+      schedulerdb::postgres::RepackRequestProgress update;
+      update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
+      // RETRIEVED_FILES/BYTES come from the RETRIEVED_FILE_STATS CTE: every moved row genuinely
+      // retrieved from tape (user-provided, never-mounted files excluded), independent of which
+      // archive insert the copy fed. Deriving this from BASE_INSERTED_COUNT (as before) credited
+      // zero for AddCopiesOnly - BASE_INSERT never fires there - and subtracting the
+      // user-provided count from it underflowed the unsigned value, failing the BIGINT bind in
+      // updateRepackRequestsProgress().
+      update.retrievedFiles = count_rset.columnUint64("RETRIEVED_FILES");
+      update.retrievedBytes = count_rset.columnUint64("RETRIEVED_BYTES");
+      update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
+      update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
+      // Archive jobs actually queued = BASE_INSERT + ALTERNATE_INSERT rows - never
+      // retrievedFiles, which is unrelated to the number of archive rows produced: for
+      // AddCopiesOnly BASE_INSERT never fires, so retrievedFiles + rearchiveCopyNbs would report
+      // a 1-file recall queuing one archive job as two.
+      auto baseInsertedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT");
+      auto baseInsertedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES");
+      count += update.retrievedFiles + baseInsertedFiles + update.rearchiveCopyNbs;
+      log::ScopedParamContainer params(lc);
+      params.add("repackRequestId", update.reqId);
+      params.add("retrievedFiles", update.retrievedFiles);
+      params.add("retrievedBytes", update.retrievedBytes);
+      params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
+      params.add("rearchiveBytes", update.rearchiveBytes);
+      params.add("totalToBeArchivedFiles", baseInsertedFiles + update.rearchiveCopyNbs);
+      params.add("totalToBeArchivedBytes", baseInsertedBytes + update.rearchiveBytes);
+      lc.log(cta::log::INFO,
+             "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve "
+             "rows to archive queue table.");
+      statUpdates.emplace_back(update);
+    }
+    timings.insertAndReset("movedRetrieveRepackJobs", t);
+    log::ScopedParamContainer params(lc);
+    timings.addToLog(params);
+
+    if (statUpdates.empty()) {
+      // Nothing was moved, so there is nothing to report back either - commit (a no-op write-wise)
+      // and return, without opening a second statement for updateRepackRequestsProgress().
       txn.setRowCountForTelemetry(count);
       txn.commit();
-      timings.insertAndReset("movedRetrieveRepackJobs", t);
-      log::ScopedParamContainer params(lc);
-      timings.addToLog(params);
-    } catch (exception::Exception& ex) {
-      cta::log::ScopedParamContainer params(lc);
-      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-      lc.log(cta::log::ERR,
-             "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to "
-             "archive jobs: ");
-      txn.abort();
+      lc.log(cta::log::INFO,
+             "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): no Repack Retrieve jobs finished, nothing "
+             "to archive.");
+      return ret;
     }
-  }
-  if (statUpdates.empty()) {
-    lc.log(cta::log::INFO,
-           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): no Repack Retrieve jobs finished, nothing "
-           "to archive.");
-    // return empty report batch since the rest of the original OStoreDB logic is not needed here
-    return ret;
-  }
-  schedulerdb::Transaction txn2(m_connPool, lc);
-  // report back to the REPACK_REQUEST_TRACKING table
-  try {
-    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn2, statUpdates);
+
+    // report back to the REPACK_REQUEST_TRACKING table, in the same transaction as the transform above
+    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn, statUpdates);
     while (vidrset.next()) {}
-    log::ScopedParamContainer params(lc);
-    params.add("updatedRepackRequests", vidrset.getNbRowsRetrieved());
-    txn2.setRowCountForTelemetry(vidrset.getNbRowsRetrieved());
+    log::ScopedParamContainer progressParams(lc);
+    progressParams.add("updatedRepackRequests", vidrset.getNbRowsRetrieved());
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): updated repack request progress after "
            "converting jobs to archive jobs.");
-    txn2.commit();
+
+    txn.setRowCountForTelemetry(count + vidrset.getNbRowsRetrieved());
+    txn.commit();
   } catch (exception::Exception& ex) {
-    log::ScopedParamContainer(lc)
-      .add(semconv::log::exceptionMessage, ex.getMessageValue())
-      .log(cta::log::ERR,
-           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to updateRepackRequestsProgress(): ");
-    txn2.abort();
+    cta::log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::ERR,
+           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to "
+           "archive jobs and/or update repack request progress - rolling back both: ");
+    txn.abort();
   }
   // return empty report batch since the rest of the original OStoreDB logic is not needed here
   return ret;

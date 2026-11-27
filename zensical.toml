@@ -342,6 +342,7 @@
             { "PostgreSQL Backend" = [
               { "Overview" = "dev/internals/shared-state/scheduler-db/postgresql/index.md" },
               { "Schema" = "dev/internals/shared-state/scheduler-db/postgresql/schema.md" },
+              { "Repack Workflows" = "dev/internals/shared-state/scheduler-db/postgresql/repack-workflows.md" },
               { "Mount Scheduling" = "dev/internals/shared-state/scheduler-db/postgresql/mount-scheduling.md" },
               { "Opportunistic Batching" = "dev/internals/shared-state/scheduler-db/postgresql/opportunistic-batching.md" },
               { "Garbage Collection" = "dev/internals/shared-state/scheduler-db/postgresql/garbage-collection.md" },

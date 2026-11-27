@@ -14,7 +14,7 @@ The PostgreSQL backend implements `SchedulerDatabase` on a PostgreSQL relational
 
 The backend started as a copy of the `OStoreDB` interface in `scheduler/rdbms/` with every method throwing, implemented step by step until the frontends and `cta-taped` ran end to end. It now supports:
 
-- archive, retrieve and repack workflows, including multi-copy files;
+- archive, retrieve and repack workflows, including multi-copy files (for repack specifically, see [Repack Workflows](repack-workflows.md));
 - garbage collection of jobs left behind by dead mounts.
 
 Current work:

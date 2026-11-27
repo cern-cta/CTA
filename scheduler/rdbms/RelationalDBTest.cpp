@@ -577,6 +577,111 @@ TEST_P(RelationalDBTest, repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransf
   // One archive job for the repacked copy (BASE_INSERT), one for the additional copy
   // (ALTERNATE_INSERT).
   ASSERT_EQ((std::list<std::string> {"tapePoolA", "tapePoolB"}), tapePools);
+
+  // MoveAndAddCopies: the recalled copy (1) IS itself a rearchive target (it is being moved), so
+  // it must still be credited as retrieved - confirms RETRIEVED_FILE_STATS (added to fix
+  // AddCopiesOnly, where the recalled copy never is a target) did not change this case, which
+  // used to derive the same count from BASE_INSERTED_COUNT instead.
+  {
+    auto stmt2 = conn.createStmt("SELECT RETRIEVED_FILES FROM REPACK_REQUEST_TRACKING WHERE VID = :VID");
+    stmt2.bindString(":VID", vid);
+    auto rset2 = stmt2.executeQuery();
+    ASSERT_TRUE(rset2.next());
+    ASSERT_EQ(1u, rset2.columnUint64("RETRIEVED_FILES"));
+  }
+}
+
+// AddCopiesOnly rows never list their recalled copy in REPACK_REARCHIVE_COPY_NBS (read, not
+// rearchived), so BASE_INSERT fires for neither row below. Deriving retrieve progress from
+// BASE_INSERTED_COUNT therefore credited zero, and the user-provided (never-mounted) row in the
+// same batch underflowed the unsigned subtraction, failing the BIGINT bind with "value out of
+// range for type bigint".
+TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDoesNotOverflow) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-ADDCOPIES";
+  auto mountPolicy = makeMountPolicy(1000);
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                           "/repack/buffer",
+                                                           cta::common::dataStructures::RepackInfo::Type::AddCopiesOnly,
+                                                           mountPolicy,
+                                                           false,
+                                                           10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+
+  // getRepackRequestId() is defined later in this file, so it is not yet visible here - look the
+  // ID up directly, the same way repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransformed()
+  // above does.
+  uint64_t repackRequestId = 0;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE VID = :VID");
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    repackRequestId = rset.columnUint64("REPACK_REQUEST_ID");
+  }
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // Row 1: a genuinely retrieved file (MOUNT_ID set, as a real tape mount would leave it).
+    // Row 2: a user-provided file (MOUNT_ID NULL, pre-staged rather than recalled from tape) -
+    // the combination that used to trigger the BIGINT overflow.
+    // Two distinct placeholder names per shared value (:REPACK_REQUEST_ID/2, :STATUS/2,
+    // :STORAGE_CLASS/2, :VID/2) - ParamNameToIdx rejects a repeated :name as a duplicate even
+    // across two different VALUES tuples of the same INSERT, so each textual occurrence needs its
+    // own name, not just a stylistic preference.
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID, RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, ARCHIVE_FILE_ID,
+        CREATION_TIME, START_TIME, STORAGE_CLASS, SIZE_IN_BYTES, VID, TAPE_POOL, MOUNT_POLICY,
+        PRIORITY, MIN_RETRIEVE_REQUEST_AGE, COPY_NB, MOUNT_ID, REPACK_REARCHIVE_COPY_NBS,
+        REPACK_REARCHIVE_TAPE_POOLS
+      ) VALUES
+      (:REPACK_REQUEST_ID, 881, 1, :STATUS, 991, 500, 500, :STORAGE_CLASS, 1000, :VID, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, 42, '2', 'tapePoolB'),
+      (:REPACK_REQUEST_ID2, 882, 1, :STATUS2, 992, 500, 500, :STORAGE_CLASS2, 2000, :VID2, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, NULL, '2', 'tapePoolB')
+    )SQL");
+    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
+    stmt.bindUint64(":REPACK_REQUEST_ID2", repackRequestId);
+    stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STATUS2", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+    stmt.bindString(":STORAGE_CLASS2", s_storageClassName);
+    stmt.bindString(":VID", vid);
+    stmt.bindString(":VID2", vid);
+    stmt.executeNonQuery();
+  }
+
+  // Before the fix, this call throws "value out of range for type bigint" instead of returning.
+  ASSERT_NO_THROW(db.getNextSuccessfulRetrieveRepackReportBatch(lc));
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Neither row's own copy (1) is a rearchive target, so BASE_INSERT must write nothing -
+    // both archive jobs come from ALTERNATE_INSERT, for copy 2.
+    auto stmt = conn.createStmt("SELECT COPY_NB, COUNT(*) AS C FROM REPACK_ARCHIVE_PENDING_QUEUE GROUP BY COPY_NB");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(2u, rset.columnUint64("C"));
+    ASSERT_FALSE(rset.next());
+  }
+  {
+    // Only the genuinely retrieved row (row 1) counts - the user-provided one (row 2) must not,
+    // and must not have corrupted the count via the old subtraction either.
+    auto stmt = conn.createStmt("SELECT RETRIEVED_FILES FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :ID");
+    stmt.bindUint64(":ID", repackRequestId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("RETRIEVED_FILES"));
+  }
 }
 
 // Inserts a fixture row directly into REPACK_ARCHIVE_PENDING_QUEUE: driving a repack archive
@@ -1053,6 +1158,272 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
   const auto repackInfo = db.getRepackInfo(vid);
   ASSERT_EQ(2u, repackInfo.archivedFiles);
   ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
+}
+
+// Regression test for updateRepackJobSuccess() settling on bare ARCHIVE_FILE_ID with no STATUS
+// guard. Unlike the test above, where copy 2 still sits in the PENDING table when copy 1 settles,
+// this dispatches BOTH copies into REPACK_ARCHIVE_ACTIVE_QUEUE first - before the fix, copy 1's
+// settlement then marked the still-transferring copy 2 AJS_ToReportToRepackForSuccess purely for
+// sharing its ARCHIVE_FILE_ID.
+TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureDoesNotTouchInFlightSibling) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-REPACK-INFLIGHT";
+  const std::string tapePoolA = "repackTapePoolInFlightA";
+  const std::string tapePoolB = "repackTapePoolInFlightB";
+  auto mountPolicy = makeMountPolicy(1000);
+  SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                      "/repack/buffer",
+                                                      common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+                                                      mountPolicy,
+                                                      false,
+                                                      10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  constexpr uint64_t archiveFileId = 990005;
+  constexpr uint64_t sizeInBytes = 11000;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolA,
+                                  sizeInBytes,
+                                  /*totalRetries=*/0,
+                                  /*maxTotalRetries=*/2,
+                                  /*totalReportRetries=*/0,
+                                  /*maxReportRetries=*/2,
+                                  /*copyNb=*/1,
+                                  /*requestJobCount=*/2);
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolB,
+                                  sizeInBytes,
+                                  /*totalRetries=*/0,
+                                  /*maxTotalRetries=*/2,
+                                  /*totalReportRetries=*/0,
+                                  /*maxReportRetries=*/2,
+                                  /*copyNb=*/2,
+                                  /*requestJobCount=*/2);
+  }
+
+  // Both copies dispatched into REPACK_ARCHIVE_ACTIVE_QUEUE before either settles - copy 2 is
+  // genuinely in flight, not merely queued, when copy 1's success is processed below.
+  auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-INFLIGHT-DESTA");
+  auto jobsA = mountA->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsA.size());
+  auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-INFLIGHT-DESTB");
+  auto jobsB = mountB->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsB.size());
+
+  // Copy 1 transfers and its catalogue update succeeds, but the scheduler-DB bookkeeping write
+  // fails - recovered the same way as the test above.
+  jobsA.front()->failReport("simulated scheduler bookkeeping write failure for copy 1", lc);
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(
+      "SELECT COPY_NB, STATUS FROM REPACK_ARCHIVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY COPY_NB");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForSuccess),
+              rset.columnString("STATUS"));
+
+    // Copy 2 must be untouched: still actively transferring, not jumped to success just because
+    // it shares copy 1's ARCHIVE_FILE_ID.
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack), rset.columnString("STATUS"));
+
+    ASSERT_FALSE(rset.next());
+  }
+  {
+    // Nothing credited or deleted yet - the request is still incomplete.
+    const auto repackInfoMidway = db.getRepackInfo(vid);
+    ASSERT_EQ(0u, repackInfoMidway.archivedFiles);
+    ASSERT_EQ(0u, repackInfoMidway.archivedBytes);
+  }
+
+  // Now copy 2 also transfers and settles the same way - this is the last copy, so the recovery
+  // must complete the whole request.
+  jobsB.front()->failReport("simulated scheduler bookkeeping write failure for copy 2", lc);
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(
+      "SELECT COPY_NB, STATUS FROM REPACK_ARCHIVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY COPY_NB");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    for (int expectedCopyNb : {1, 2}) {
+      ASSERT_TRUE(rset.next());
+      ASSERT_EQ(static_cast<uint64_t>(expectedCopyNb), rset.columnUint64("COPY_NB"));
+      ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion), rset.columnString("STATUS"));
+    }
+    ASSERT_FALSE(rset.next());
+  }
+
+  db.getNextSuccessfulArchiveRepackReportBatch(lc);
+
+  const auto repackInfo = db.getRepackInfo(vid);
+  ASSERT_EQ(2u, repackInfo.archivedFiles);
+  ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
+}
+
+// Two-connection regression test for the lock order of updateRepackRequestsProgress(): a batch
+// spanning several repack requests must lock their tracking rows in REPACK_REQUEST_ID order
+// (ORDER BY before FOR NO KEY UPDATE), or two concurrent batches over overlapping requests can
+// deadlock A-then-B against B-then-A. Connection 1 pre-locks the HIGHER id - where an ordered
+// worker comes to wait - so once the worker blocks, a NOWAIT probe of the LOWER id must fail
+// (the ordered worker already holds it). An unordered worker waiting on the higher id would hold
+// nothing, the probe would succeed, and a deadlock-aborted batch would additionally fail the
+// final counter checks.
+TEST_P(RelationalDBTest, repackProgressBatchLocksTrackingRowsInRequestIdOrder) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // Two repack requests; REPACK_REQUEST_ID is BIGSERIAL, so the first queued gets the lower id.
+  auto mountPolicy = makeMountPolicy(1000);
+  for (const std::string vid : {"V-LOCKORD-A", "V-LOCKORD-B"}) {
+    SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                        "/repack/buffer",
+                                                        common::dataStructures::RepackInfo::Type::AddCopiesOnly,
+                                                        mountPolicy,
+                                                        false,
+                                                        10);
+    repackRequest.m_creationLog = {"user", "host", 1000};
+    db.queueRepack(repackRequest, lc);
+  }
+  const uint64_t idA = getRepackRequestId(db.getRelationalDB(), "V-LOCKORD-A");
+  const uint64_t idB = getRepackRequestId(db.getRelationalDB(), "V-LOCKORD-B");
+  ASSERT_LT(idA, idB);
+
+  // One finished retrieve row per request, so a single progress batch spans both.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID, RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, ARCHIVE_FILE_ID,
+        CREATION_TIME, START_TIME, STORAGE_CLASS, SIZE_IN_BYTES, VID, TAPE_POOL, MOUNT_POLICY,
+        PRIORITY, MIN_RETRIEVE_REQUEST_AGE, COPY_NB, MOUNT_ID, REPACK_REARCHIVE_COPY_NBS,
+        REPACK_REARCHIVE_TAPE_POOLS
+      ) VALUES
+      (:REPACK_REQUEST_ID_A, 883, 1, :STATUS_A, 993, 500, 500, :STORAGE_CLASS_A, 1000, :VID_A, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, 42, '2', 'tapePoolB'),
+      (:REPACK_REQUEST_ID_B, 884, 1, :STATUS_B, 994, 500, 500, :STORAGE_CLASS_B, 1000, :VID_B, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, 43, '2', 'tapePoolB')
+    )SQL");
+    stmt.bindUint64(":REPACK_REQUEST_ID_A", idA);
+    stmt.bindUint64(":REPACK_REQUEST_ID_B", idB);
+    stmt.bindString(":STATUS_A", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STATUS_B", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STORAGE_CLASS_A", s_storageClassName);
+    stmt.bindString(":STORAGE_CLASS_B", s_storageClassName);
+    stmt.bindString(":VID_A", "V-LOCKORD-A");
+    stmt.bindString(":VID_B", "V-LOCKORD-B");
+    stmt.executeNonQuery();
+  }
+
+  // Connection 1 locks the higher id. Its backend pid identifies it as the blocker below.
+  auto conn1 = db.getRelationalDB().getConn();
+  conn1.executeNonQuery("BEGIN");
+  uint64_t conn1Pid = 0;
+  {
+    auto stmt = conn1.createStmt("SELECT PG_BACKEND_PID() AS PID");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    conn1Pid = rset.columnUint64("PID");
+  }
+  {
+    auto stmt = conn1.createStmt(
+      "SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :ID FOR NO KEY UPDATE");
+    stmt.bindUint64(":ID", idB);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+  }
+
+  // The worker transforms both rows and updates both tracking rows in one transaction - the
+  // production path through updateRepackRequestsProgress(). It must block on the higher id.
+  // catch (...) so an unexpected exception fails this test via the counter checks below instead
+  // of escaping the thread and std::terminate()ing the whole test binary.
+  std::thread worker([&db] {
+    try {
+      auto workerLogger = makeLogger();
+      cta::log::LogContext workerLc(*workerLogger);
+      db.getNextSuccessfulRetrieveRepackReportBatch(workerLc);
+    } catch (...) {}
+  });
+
+  // Wait until a session blocked BY conn1 sits in a row-lock wait (no gtest assertions while the
+  // thread runs and locks are held - every exit path below must still rollback and join).
+  // Polled from a separate autocommit connection: activity views are snapshotted per transaction,
+  // so polling inside conn1's open transaction would keep re-reading the first poll's snapshot.
+  // pg_blocking_pids() scopes the wait to OUR worker, not any unrelated session's.
+  bool sawLockWait = false;
+  {
+    auto pollConn = db.getRelationalDB().getConn();
+    for (int i = 0; i < 100 && !sawLockWait; i++) {
+      auto stmt = pollConn.createStmt("SELECT COUNT(*) AS C FROM PG_STAT_ACTIVITY "
+                                      "WHERE WAIT_EVENT_TYPE = 'Lock' "
+                                      "AND CAST(:BLOCKER_PID AS INTEGER) = ANY(PG_BLOCKING_PIDS(PID))");
+      stmt.bindUint64(":BLOCKER_PID", conn1Pid);
+      auto rset = stmt.executeQuery();
+      rset.next();
+      sawLockWait = rset.columnUint64("C") > 0;
+      if (!sawLockWait) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+    }
+  }
+
+  bool probeThrew = false;
+  if (sawLockWait) {
+    try {
+      auto stmt = conn1.createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING "
+                                   "WHERE REPACK_REQUEST_ID = :ID FOR NO KEY UPDATE NOWAIT");
+      stmt.bindUint64(":ID", idA);
+      auto rset = stmt.executeQuery();
+      rset.next();
+    } catch (...) {
+      probeThrew = true;  // lock_not_available: the waiting worker already holds the lower id
+    }
+  }
+
+  conn1.rollback();  // also clears the aborted-transaction state the failed NOWAIT probe left
+  worker.join();
+
+  ASSERT_TRUE(sawLockWait);
+  EXPECT_TRUE(probeThrew) << "worker waited on the higher REPACK_REQUEST_ID without holding the lower one - "
+                             "tracking-row locks are not taken in id order";
+
+  // Both requests credited - this would also catch a deadlock-aborted batch.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT RETRIEVED_FILES FROM REPACK_REQUEST_TRACKING "
+                                "WHERE REPACK_REQUEST_ID IN (:IDA, :IDB) ORDER BY REPACK_REQUEST_ID");
+    stmt.bindUint64(":IDA", idA);
+    stmt.bindUint64(":IDB", idB);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("RETRIEVED_FILES"));
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("RETRIEVED_FILES"));
+    ASSERT_FALSE(rset.next());
+  }
 }
 
 TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {

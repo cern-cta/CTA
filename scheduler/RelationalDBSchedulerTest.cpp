@@ -38,6 +38,7 @@
 #include <bits/unique_ptr.h>
 #include <chrono>
 #include <exception>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 #include <regex>
@@ -3457,8 +3458,171 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
   }
 }
 
-TEST_P(SchedulerTest, DISABLED_expandRepackRequestAddCopiesOnly) {
-  ASSERT_EQ(0, 1);
+// Regression test for the --justaddcopies crash: RetrieveRequest::setActiveCopyNumber() used to
+// require a Job entry for the active (source) copy number, which AddCopiesOnly never creates -
+// see that function's own comment. Every subrequest hit "Active job or tape file not found for
+// the given copy number", caught internally by RepackRequest::addSubrequestsAndUpdateStats()'s
+// per-subrequest try/catch (so expandRepackRequest() itself never throws either way - the
+// assertion that actually catches the bug is on the repack's own failure count, not on
+// expandRepackRequest() throwing).
+TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
+  using namespace cta;
+  unitTests::TempDirectory tempDirectory;
+
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
+
+  setupDefaultCatalogue();
+  catalogue.DiskInstance()->createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace({"user", "host"},
+                                                         "diskInstanceSpace",
+                                                         "diskInstance",
+                                                         "eos:ctaeos:default",
+                                                         10,
+                                                         "no comment");
+  catalogue.DiskSystem()->createDiskSystem({"user", "host"},
+                                           "repackBuffer",
+                                           "diskInstance",
+                                           "diskInstanceSpace",
+                                           tempDirectory.path(),
+                                           10L * 1000 * 1000 * 1000,
+                                           15 * 60,
+                                           "no comment");
+
+  // StringLogger, not DummyLogger: a per-subrequest creation failure is caught and tallied inside
+  // addSubrequestsAndUpdateStats(), so the exception message only exists in the log - dumped below
+  // when the failure counter is non-zero, since that assertion failing is otherwise undebuggable
+  // from CI output.
+  log::StringLogger dl("dummy", "expandRepackRequestAddCopiesOnly", log::DEBUG);
+  log::LogContext lc(dl);
+
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   "Create logical library");
+
+  // setupDefaultCatalogue() only configures 1 copy/1 archive route - AddCopiesOnly needs a
+  // genuinely missing copy to add, so bump the storage class to 2 copies and configure where the
+  // new one goes.
+  catalogue.StorageClass()->modifyStorageClassNbCopies(admin, s_storageClassName, 2);
+  const std::string secondTapePool = "TapePool2";
+  catalogue.TapePool()
+    ->createTapePool(admin, secondTapePool, s_vo, 1, std::nullopt, std::vector<std::string>(), "second tape pool");
+  catalogue.ArchiveRoute()->createArchiveRoute(admin,
+                                               s_storageClassName,
+                                               2,
+                                               common::dataStructures::ArchiveRouteType::DEFAULT,
+                                               secondTapePool,
+                                               "second archive route");
+
+  {
+    auto tape = getDefaultTape();
+    tape.full = true;
+    tape.state = common::dataStructures::Tape::REPACKING;
+    tape.stateReason = "Test";
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t archiveFileSize = 1000;
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(cta::checksum::ADLER32, "1234");
+  {
+    auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto& fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = 1;
+    fileWritten.diskInstance = s_diskInstance;
+    fileWritten.diskFileId = "12345678";
+    fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+    fileWritten.diskFileGid = PUBLIC_GID;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob = checksumBlob;
+    fileWritten.storageClassName = s_storageClassName;
+    fileWritten.vid = s_vid;
+    fileWritten.fSeq = 1;
+    fileWritten.blockId = 100;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+    std::set<catalogue::TapeItemWrittenPointer> tapeFilesWritten;
+    tapeFilesWritten.emplace(fileWrittenUP.release());
+    catalogue.TapeFile()->filesWrittenToTape(tapeFilesWritten);
+  }
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // no-recall sidesteps selectBestVid4Retrieve's tape-state machinery, but it also FILTERS the
+  // expansion down to files actually present in the buffer (expandRepackRequest() drops everything
+  // else before any counting) - so the file must genuinely be staged, with its exact catalogue
+  // size, or the expansion is empty and the assertions below are meaningless. The staged file
+  // takes the user-provided path, which still exercises everything under test: AddCopiesOnly
+  // still excludes the recalled copy from the destination set, so setActiveCopyNumber() still runs
+  // with an empty m_jobs (the crash under regression test), and makeJobRow() must still produce
+  // real retry limits.
+  bool noRecall = true;
+  std::string pathRepackBuffer = "file://" + tempDirectory.path();
+  tempDirectory.append("/" + s_vid);
+  tempDirectory.mkdir();
+  {
+    // Expansion matches buffer files by zero-padded fSeq name and requires size == catalogue size.
+    std::ofstream stagedFile(tempDirectory.path() + "/000000001", std::ios::binary);
+    const std::string content(archiveFileSize, 'X');
+    stagedFile << content;
+  }
+  cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,
+                                                 pathRepackBuffer,
+                                                 common::dataStructures::RepackInfo::Type::AddCopiesOnly,
+                                                 common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
+                                                 noRecall,
+                                                 0);
+  scheduler.queueRepack(admin, qrr, lc);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  scheduler.promoteRepackRequestsToToExpand(lc, 2);
+  scheduler.waitSchedulerDbSubthreadsComplete();
+  auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+  log::TimingList tl;
+  utils::Timer t;
+  ASSERT_NO_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc));
+
+  // Before the fix: setActiveCopyNumber() threw for the one file above, caught internally and
+  // counted as a creation failure - failedToCreateArchiveReq would be 1 (one missing copy) and
+  // the subrequest never created. After the fix: the subrequest is created successfully, through
+  // the user-provided (no-recall) path.
+  auto repackInfo = scheduler.getRepack(s_vid);
+  ASSERT_EQ(0, repackInfo.failedToCreateArchiveReq) << "subrequest creation failed - scheduler log:\n" << dl.getLog();
+  ASSERT_EQ(1, repackInfo.totalFilesToArchive);
+  ASSERT_EQ(1, repackInfo.userProvidedFiles);
+
+  // Regression check for a related bug in the same fix: m_jobs (one entry per archive copy to
+  // create) is empty for AddCopiesOnly - the missing copy has no existing tape file for
+  // initialize() to build a job from - and RetrieveRequest::makeJobRow() used to set the retry
+  // limits only from m_jobs's first entry, leaving an empty-m_jobs row at the queue row default of
+  // 0. A real retry budget must still be set regardless. A no-recall/user-provided row is inserted
+  // straight into the ACTIVE queue (see insertBatch()'s isNoRecallRepack switch), not PENDING.
+  auto* dbWrapper = dynamic_cast<cta::RelationalDBTestWrapper*>(&getSchedulerDB());
+  ASSERT_NE(nullptr, dbWrapper);
+  {
+    auto conn = dbWrapper->getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT MAX_TOTAL_RETRIES, MAX_RETRIES_WITHIN_MOUNT, MAX_REPORT_RETRIES, "
+                                "ALTERNATE_VIDS, ALTERNATE_COPY_NBS, ALTERNATE_FSEQS, ALTERNATE_BLOCK_IDS "
+                                "FROM REPACK_RETRIEVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = 1");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_GT(rset.columnUint64("MAX_TOTAL_RETRIES"), 0u);
+    ASSERT_GT(rset.columnUint64("MAX_RETRIES_WITHIN_MOUNT"), 0u);
+    ASSERT_GT(rset.columnUint64("MAX_REPORT_RETRIES"), 0u);
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_VIDS"));
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_COPY_NBS"));
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_FSEQS"));
+    EXPECT_TRUE(rset.columnIsNull("ALTERNATE_BLOCK_IDS"));
+  }
 }
 
 TEST_P(SchedulerTest, DISABLED_expandRepackRequestShouldFailIfArchiveRouteMissing) {
