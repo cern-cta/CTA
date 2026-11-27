@@ -56,15 +56,11 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   rjr->checksumBlob = m_archiveFile.checksumBlob;
   rjr->startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-  // Retry limits for the retrieve itself, independent of m_jobs: m_jobs holds one entry per
-  // archive copy this subrequest will create (built from copy numbers in copyNbsToRearchive, see
-  // initialize()), which for a pure AddCopiesOnly repack is never the recalled copy, and can
-  // legitimately be empty (every missing copy is itself an archive destination with no existing
-  // tape file to iterate - see initialize()'s own loop). The retrieve still needs a real retry
-  // budget regardless of whether m_jobs has anything in it - setting these only inside the loop
-  // below left an empty-m_jobs row at RetrieveJobQueueRow's default of 0, so a single transient
-  // recall failure (totalRetries 0 -> 1 >= maxTotalRetries 0) exceeded retries immediately, and
-  // that same 0 limit was then carried into the archive jobs this subrequest's retrieve feeds.
+  // Retry limits must not depend on m_jobs: it holds one entry per archive DESTINATION copy
+  // (copyNbsToRearchive) and is legitimately empty for pure AddCopiesOnly, where the recalled
+  // source copy is not rearchived. Setting these only inside the loop below left such rows at
+  // RetrieveJobQueueRow's defaults of 0, so one transient recall failure exceeded retries
+  // immediately.
   rjr->maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
   rjr->maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
   rjr->maxReportRetries = REPORT_RETRIES;
@@ -78,9 +74,8 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
     rjr->alternateBlockId += std::to_string(rj.blockId) + ",";
 
     if (i++ == 0) {
-      // Overrides the defaults above with the first job's own values - identical values in
-      // practice (initialize() derives a job's limits from the same isRepack flag), kept to leave
-      // the non-empty-m_jobs case's exact behaviour untouched.
+      // Overrides the defaults above with the first job's own (in practice identical) values,
+      // keeping the non-empty-m_jobs case's exact behaviour untouched.
       rjr->retriesWithinMount = rj.retriesWithinMount;
       rjr->maxRetriesWithinMount = rj.maxRetriesWithinMount;
       rjr->maxReportRetries = rj.maxReportRetries;
@@ -236,12 +231,9 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
   const RetrieveRequest::Job* activeJob = nullptr;
   const cta::common::dataStructures::TapeFile* activeTapeFile = nullptr;
 
-  // Find the active job - may legitimately not exist. For a pure AddCopiesOnly repack
-  // (Scheduler::expandRepackRequest()), the active copy number names the EXISTING tape copy being
-  // retrieved FROM, which is deliberately excluded from copyNbsToRearchive - and therefore from
-  // m_jobs, see initialize() - because that copy is being read, not rearchived. A Job represents
-  // an archive DESTINATION, not the retrieve source; the two only happen to coincide for
-  // MoveOnly/MoveAndAddCopies, where the active copy is also one being rewritten.
+  // Find the active job - may legitimately not exist. A Job is an archive DESTINATION, and for
+  // pure AddCopiesOnly the active copy (the one being read FROM) is deliberately excluded from
+  // copyNbsToRearchive and hence from m_jobs; the two only coincide for Move* repacks.
   for (const auto& j : m_jobs) {
     if (j.copyNb == activeCopyNb) {
       activeJob = &j;
@@ -249,10 +241,8 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
     }
   }
 
-  // Find the active tape file - this one is NOT optional: the active copy number was chosen from
-  // this same archive file's own existing tape copies (see
-  // RepackRequest::addSubrequestsAndUpdateStats()/RelationalDB::queueRetrieve()), so a missing
-  // tape file here means that choice and the catalogue's view of the file have gone inconsistent.
+  // Find the active tape file - NOT optional: the active copy number was chosen from this same
+  // file's existing tape copies, so a miss here means the catalogue view went inconsistent.
   for (const auto& tf : m_archiveFile.tapeFiles) {
     if (tf.copyNb == activeCopyNb) {
       activeTapeFile = &tf;
@@ -264,16 +254,14 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
     throw RetrieveRequestException("Active tape file not found for the given copy number.");
   }
 
-  // fSeq/blockId/vid always come from the tape file itself - the thing actually being read - not
-  // from the job: when a job exists for this copy number, it carries identical values anyway,
-  // since initialize() sets a job's fSeq/blockId directly from this same tape file.
+  // fSeq/blockId/vid come from the tape file itself - the thing actually being read; a job for
+  // this copy number carries identical values anyway (initialize() copies them from the same tf).
   m_fSeq = activeTapeFile->fSeq;
   m_blockId = activeTapeFile->blockId;
   m_vid = activeTapeFile->vid;
-  // m_status is left at its current value when there is no job for the active copy
-  // (AddCopiesOnly): the repack caller sets it explicitly right afterward via setJobStatus() (see
-  // RepackRequest::addSubrequestsAndUpdateStats()), and every non-repack job already shares the
-  // same RJS_ToTransfer default set in initialize(), regardless of which copy is "active".
+  // With no job for the active copy (AddCopiesOnly), m_status keeps its current value: the
+  // repack caller sets it explicitly right afterwards via setJobStatus(), and non-repack jobs
+  // all share the RJS_ToTransfer default from initialize() regardless of the active copy.
   if (activeJob) {
     m_status = activeJob->status;
   }

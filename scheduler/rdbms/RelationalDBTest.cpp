@@ -591,15 +591,11 @@ TEST_P(RelationalDBTest, repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransf
   }
 }
 
-// AddCopiesOnly's retrieve rows never list their own recalled copy in REPACK_REARCHIVE_COPY_NBS -
-// the recalled copy is read, not rearchived, so only the genuinely missing copy (here, 2) goes in
-// that set. BASE_INSERT's own EXISTS filter therefore correctly fires for neither row below (its
-// COPY_NB, 1, is never a member), leaving retrieve progress with nothing to derive from
-// BASE_INSERTED_COUNT - this is exactly what used to make
-// getNextSuccessfulRetrieveRepackReportBatch() credit zero retrieved files for every AddCopiesOnly
-// file, and, mixed with a user-provided (never-mounted) file in the same batch as it is here,
-// underflow the unsigned subtraction and throw "value out of range for type bigint" when the
-// wrapped value was bound as a BIGINT.
+// AddCopiesOnly rows never list their recalled copy in REPACK_REARCHIVE_COPY_NBS (read, not
+// rearchived), so BASE_INSERT fires for neither row below. Deriving retrieve progress from
+// BASE_INSERTED_COUNT therefore credited zero, and the user-provided (never-mounted) row in the
+// same batch underflowed the unsigned subtraction, failing the BIGINT bind with "value out of
+// range for type bigint".
 TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDoesNotOverflow) {
   using namespace cta;
 
@@ -1164,14 +1160,11 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
   ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
 }
 
-// Regression test for updateRepackJobSuccess() settling a REQUEST_JOB_COUNT > 1 group's final
-// UPDATE on bare ARCHIVE_FILE_ID with no STATUS guard on the row being touched. Unlike
-// repackArchiveBookkeepingReportFailureRecoversMultiCopyCorrectly above - where copy 2 is still
-// sitting in REPACK_ARCHIVE_PENDING_QUEUE (a different table) when copy 1 settles, so the bug
-// can't reach it - this dispatches BOTH copies into REPACK_ARCHIVE_ACTIVE_QUEUE first, so copy 2
-// is genuinely in flight (AJS_ToTransferForRepack) while copy 1 settles. Before the fix, copy 1's
-// settlement would match copy 2 purely on shared ARCHIVE_FILE_ID and mark it
-// AJS_ToReportToRepackForSuccess before it had actually finished transferring.
+// Regression test for updateRepackJobSuccess() settling on bare ARCHIVE_FILE_ID with no STATUS
+// guard. Unlike the test above, where copy 2 still sits in the PENDING table when copy 1 settles,
+// this dispatches BOTH copies into REPACK_ARCHIVE_ACTIVE_QUEUE first - before the fix, copy 1's
+// settlement then marked the still-transferring copy 2 AJS_ToReportToRepackForSuccess purely for
+// sharing its ARCHIVE_FILE_ID.
 TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureDoesNotTouchInFlightSibling) {
   using namespace cta;
 

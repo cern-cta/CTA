@@ -1315,12 +1315,12 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  // Both steps below share one transaction/connection and commit together: transformJobBatchToArchive()
-  // moves rows out of REPACK_RETRIEVE_ACTIVE_QUEUE for good (there is no later batch that would pick them
-  // up again), so if that committed on its own and updateRepackRequestsProgress() below it failed or the
-  // process died in between, REPACK_REQUEST_TRACKING's counters would fall permanently short of the real
-  // retrieved/archived totals for this batch - the repack request could then never detect completion, even
-  // though the data itself (the archive jobs) is sitting there correctly queued.
+  // The transform and the progress update share one transaction and commit together:
+  // transformJobBatchToArchive() removes rows for good (no later batch revisits them), so a
+  // separate commit before updateRepackRequestsProgress() could permanently lose this batch's
+  // counter credit on a failure in between - the repack request would then never detect
+  // completion. Atomicity relies on there being NO intermediate txn.commit(): commit() does not
+  // re-BEGIN, so any statement after it would autocommit on its own.
   schedulerdb::Transaction txn(m_connPool, lc);
   try {
     // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
@@ -1334,24 +1334,20 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     while (count_rset.next()) {
       schedulerdb::postgres::RepackRequestProgress update;
       update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-      // RETRIEVED_FILES/BYTES come straight from transformJobBatchToArchive()'s own
-      // RETRIEVED_FILE_STATS CTE - every moved row genuinely retrieved from tape, already
-      // excluding user-provided (never-mounted) files, independent of which archive insert (if
-      // any) the recalled copy fed. This used to be derived from BASE_INSERTED_COUNT minus a
-      // separate not-retrieved count, which was always 0 for AddCopiesOnly (BASE_INSERT never
-      // fires there) and could underflow the unsigned subtraction whenever a user-provided file
-      // was involved, overflowing the BIGINT bind into updateRepackRequestsProgress() below and
-      // failing that statement.
+      // RETRIEVED_FILES/BYTES come from the RETRIEVED_FILE_STATS CTE: every moved row genuinely
+      // retrieved from tape (user-provided, never-mounted files excluded), independent of which
+      // archive insert the copy fed. Deriving this from BASE_INSERTED_COUNT (as before) credited
+      // zero for AddCopiesOnly - BASE_INSERT never fires there - and subtracting the
+      // user-provided count from it underflowed the unsigned value, failing the BIGINT bind in
+      // updateRepackRequestsProgress().
       update.retrievedFiles = count_rset.columnUint64("RETRIEVED_FILES");
       update.retrievedBytes = count_rset.columnUint64("RETRIEVED_BYTES");
       update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
       update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
-      // Archive jobs actually queued = BASE_INSERT (the recalled copy itself, only when it is a
-      // rearchive target) + ALTERNATE_INSERT (every other missing copy) - never retrievedFiles,
-      // which counts genuinely-retrieved files and is unrelated to how many archive rows that
-      // produced. For AddCopiesOnly specifically BASE_INSERT never fires (the source copy is
-      // never rearchived), so retrievedFiles + rearchiveCopyNbs would double-count: a 1-file
-      // recall that queues one archive job would report two jobs.
+      // Archive jobs actually queued = BASE_INSERT + ALTERNATE_INSERT rows - never
+      // retrievedFiles, which is unrelated to the number of archive rows produced: for
+      // AddCopiesOnly BASE_INSERT never fires, so retrievedFiles + rearchiveCopyNbs would report
+      // a 1-file recall queuing one archive job as two.
       auto baseInsertedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT");
       auto baseInsertedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES");
       count += update.retrievedFiles + baseInsertedFiles + update.rearchiveCopyNbs;

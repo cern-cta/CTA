@@ -112,26 +112,15 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestWithExpansionStats(
 
 /* The row lock below is FOR NO KEY UPDATE, deliberately, not FOR UPDATE.
  *
- * REPACK_REQUEST_TRACKING.REPACK_REQUEST_ID is the primary key and six child tables reference it
- * (REPACK_{RETRIEVE,ARCHIVE}_{PENDING,ACTIVE,FAILED}_QUEUE and
- * REPACK_REQUEST_DESTINATION_STATISTICS). PostgreSQL takes a FOR KEY SHARE lock on the parent row
- * for every child row inserted against such an FK - including UPSERT_DEST below, and including
- * the REPACK_ARCHIVE_PENDING_QUEUE inserts that transformJobBatchToArchive() performs in the very
- * same transaction as this call (see RelationalDB::getNextSuccessfulRetrieveRepackReportBatch()).
+ * Inserting into any of the six FK child tables (the repack queue tables, and UPSERT_DEST below)
+ * takes FOR KEY SHARE on the referenced tracking row - and the retrieve transform performs such
+ * inserts in the SAME transaction as this call. FOR KEY SHARE is self-compatible but conflicts
+ * with FOR UPDATE, so two workers on the same repack request would each hold KEY SHARE and wait
+ * on the other's: a circular wait PostgreSQL resolves by killing one after deadlock_timeout.
  *
- * FOR KEY SHARE is self-compatible but conflicts with FOR UPDATE. So with FOR UPDATE, two workers
- * processing different batches of the SAME repack request would each hold KEY SHARE on its
- * tracking row from their own child inserts and then each wait for the other's KEY SHARE to be
- * released - a textbook circular wait, which PostgreSQL resolves by killing one of them after
- * deadlock_timeout. The batch is retried and no data is lost (the whole transform rolls back with
- * it), but under concurrency this thrashes.
- *
- * FOR NO KEY UPDATE does not conflict with FOR KEY SHARE, while still conflicting with itself -
- * so concurrent progress updaters remain serialized against each other and the read-modify-write
- * of the counters below is still safe. It is also exactly the lock strength the subsequent UPDATE
- * would acquire on its own: that UPDATE writes only non-key columns (counters, STATUS,
- * IS_COMPLETE, LAST_UPDATE_TIME), never REPACK_REQUEST_ID. FOR UPDATE was therefore always
- * stronger than this statement needs.
+ * FOR NO KEY UPDATE does not conflict with FOR KEY SHARE yet still conflicts with itself, so
+ * concurrent counter updates stay serialized - and it is exactly the lock the following UPDATE
+ * takes anyway, since only non-key columns are written. FOR UPDATE was stronger than needed.
  */
 rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& txn,
                                                                    const std::vector<RepackRequestProgress>& updates) {
@@ -396,12 +385,9 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
       JOIN AGG agg
         ON trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID
       WHERE trk.IS_COMPLETE = FALSE
-      -- FOR NO KEY UPDATE, not FOR UPDATE, for the same reason as
-      -- updateRepackRequestsProgress() above: this must not conflict with the FOR KEY SHARE locks
-      -- that inserting into the FK child queue tables takes on the same tracking row. The callers
-      -- (getNextFailed{Retrieve,Archive}RepackReportBatch) currently commit the failed-queue move
-      -- before calling this, but merging those two commits - as was done on the success path -
-      -- would otherwise reintroduce the deadlock.
+      -- FOR NO KEY UPDATE, not FOR UPDATE - same reason as updateRepackRequestsProgress(): must
+      -- not conflict with the FOR KEY SHARE locks that FK child-table inserts take on this row
+      -- if a caller ever merges the failed-queue move into this transaction.
       FOR NO KEY UPDATE OF trk
     )
      UPDATE REPACK_REQUEST_TRACKING trk
