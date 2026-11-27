@@ -1332,12 +1332,16 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
       while (count_rset.next()) {
         schedulerdb::postgres::RepackRequestProgress update;
         update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-        uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
-        uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
-        // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
-        // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
-        update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
-        update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
+        // RETRIEVED_FILES/BYTES come straight from transformJobBatchToArchive()'s own
+        // RETRIEVED_FILE_STATS CTE - every moved row genuinely retrieved from tape, already
+        // excluding user-provided (never-mounted) files, independent of which archive insert (if
+        // any) the recalled copy fed. This used to be derived from BASE_INSERTED_COUNT minus a
+        // separate not-retrieved count, which was always 0 for AddCopiesOnly (BASE_INSERT never
+        // fires there) and could underflow the unsigned subtraction whenever a user-provided file
+        // was involved, overflowing the BIGINT bind into updateRepackRequestsProgress() below and
+        // failing that statement.
+        update.retrievedFiles = count_rset.columnUint64("RETRIEVED_FILES");
+        update.retrievedBytes = count_rset.columnUint64("RETRIEVED_BYTES");
         update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
         update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
         count += update.retrievedFiles + update.rearchiveCopyNbs;

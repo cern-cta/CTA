@@ -731,13 +731,24 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
                 NULLIF(CARDINALITY(string_to_array(rraq.REPACK_REARCHIVE_COPY_NBS, ',')), 0),
               0) AS REQUEST_JOB_NEW_COUNT
   ),
-  NOT_RETRIEVED_PROVIDED_FILE_STATS AS (
+  // Every moved row genuinely retrieved from tape, independent of which archive insert (if any)
+  // its recalled copy goes on to feed. BASE_INSERT below only fires when the recalled copy is
+  // itself one of the rearchive targets (true for MoveOnly/MoveAndAddCopies) and is always empty
+  // for AddCopiesOnly, where the recalled copy is deliberately never a target - see BASE_INSERT's
+  // own comment. Counting retrieve progress from BASE_INSERTED_COUNT (as this used to) therefore
+  // credits zero retrieved files for every AddCopiesOnly file, even though the retrieve genuinely
+  // happened; worse, subtracting a user-provided file's count from that zero on the C++ side
+  // wrapped an unsigned counter and overflowed the BIGINT bind on the way into
+  // updateRepackRequestsProgress(), failing that statement - exactly the one case this CTE's WHERE
+  // excludes (a user-provided file was never actually retrieved, so it must not count here either,
+  // but it must not be computed as a subtraction from a count that can legitimately be smaller).
+  RETRIEVED_FILE_STATS AS (
     SELECT
       REPACK_REQUEST_ID,
-      COUNT(*) AS NOT_RETRIEVED_FILES,
-      COALESCE(SUM(SIZE_IN_BYTES), 0) AS NOT_RETRIEVED_BYTES
+      COUNT(*) AS RETRIEVED_FILES,
+      COALESCE(SUM(SIZE_IN_BYTES), 0) AS RETRIEVED_BYTES
     FROM MOVED_ROWS
-      WHERE MOUNT_ID IS NULL AND STATUS = :NORECALL_STATUS
+      WHERE NOT (MOUNT_ID IS NULL AND STATUS = :NORECALL_STATUS)
     GROUP BY REPACK_REQUEST_ID
   ),
   BASE_INSERT AS (
@@ -900,13 +911,11 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
       RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES
   )
   SELECT
-      COALESCE(b.REPACK_REQUEST_ID, a.REPACK_REQUEST_ID, nrs.REPACK_REQUEST_ID) AS REPACK_REQUEST_ID,
-      COALESCE(b.BASE_INSERTED_COUNT, 0) AS BASE_INSERTED_COUNT,
-      COALESCE(b.BASE_INSERTED_BYTES, 0) AS BASE_INSERTED_BYTES,
+      COALESCE(rfs.REPACK_REQUEST_ID, b.REPACK_REQUEST_ID, a.REPACK_REQUEST_ID) AS REPACK_REQUEST_ID,
+      COALESCE(rfs.RETRIEVED_FILES, 0) AS RETRIEVED_FILES,
+      COALESCE(rfs.RETRIEVED_BYTES, 0) AS RETRIEVED_BYTES,
       COALESCE(a.ALTERNATE_INSERTED_COUNT, 0) AS ALTERNATE_INSERTED_COUNT,
-      COALESCE(a.ALTERNATE_INSERTED_BYTES, 0) AS ALTERNATE_INSERTED_BYTES,
-      COALESCE(nrs.NOT_RETRIEVED_FILES, 0) AS NOT_RETRIEVED_FILES,
-      COALESCE(nrs.NOT_RETRIEVED_BYTES, 0) AS NOT_RETRIEVED_BYTES
+      COALESCE(a.ALTERNATE_INSERTED_BYTES, 0) AS ALTERNATE_INSERTED_BYTES
   FROM (
       SELECT REPACK_REQUEST_ID,
              COUNT(*) AS ALTERNATE_INSERTED_COUNT,
@@ -922,8 +931,8 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
       GROUP BY REPACK_REQUEST_ID
   ) b
   ON a.REPACK_REQUEST_ID = b.REPACK_REQUEST_ID
-  FULL OUTER JOIN NOT_RETRIEVED_PROVIDED_FILE_STATS nrs
-    ON nrs.REPACK_REQUEST_ID =
+  FULL OUTER JOIN RETRIEVED_FILE_STATS rfs
+    ON rfs.REPACK_REQUEST_ID =
        COALESCE(a.REPACK_REQUEST_ID, b.REPACK_REQUEST_ID)
   )SQL";
   //  WHERE MOVED_ROWS.ALTERNATE_COPY_NBS LIKE '%,%';
