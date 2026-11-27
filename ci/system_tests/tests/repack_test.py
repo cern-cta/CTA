@@ -668,6 +668,61 @@ def test_repack_just_add_copies_when_all_copies_already_present(
     cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
 
 
+def test_repack_cancellation(
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    repack_buffer_dir: Path,
+    repack_mp_name: str,
+    postgres_scheduler_enabled: bool,
+) -> None:
+    cta_cli.set_all_drives_down()
+
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
+    print(f"Launching the repack request test on VID {vid_to_repack}")
+    _submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
+        submit_only=True,  # immediately return after repack request has been submitted; no waiting
+    )
+
+    cta_cli.wait_for_repack_request_launch(vid_to_repack)
+    cta_cli.wait_for_repack_request_expansion(vid_to_repack)
+
+    nb_files_in_queue = cta_cli.count_files_in_queue(vid_to_repack)
+    print(f"Expansion finished with the following number of files in the retrieve queue: {nb_files_in_queue}")
+    if postgres_scheduler_enabled:
+        assert nb_files_in_queue > 0
+
+    cta_cli.remove_repack_request(vid_to_repack)
+
+    print(
+        f"Checking if the Retrieve queue of the VID {vid_to_repack} contains the Retrieve "
+        f"Requests created from the Repack Request expansion"
+    )
+    nb_files_on_tape_to_repack = len(
+        json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
+    )
+    print(f"Number of files on tape {vid_to_repack}: {nb_files_on_tape_to_repack}")
+
+    nb_files_in_queue = cta_cli.count_files_in_queue(vid_to_repack)
+    print(f"After repack request deletion, number of files in the retrieve queue: {nb_files_in_queue}")
+    if postgres_scheduler_enabled:
+        assert nb_files_in_queue == 0
+    else:
+        # In case of the objectstore we expect the retrieve queue to still have jobs
+        assert nb_files_in_queue == nb_files_on_tape_to_repack
+
+    cta_cli.set_all_drives_up(wait=False)
+    cta_cli.wait_for_queue_to_empty(vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+
+
 def test_repack_just_add_copies_with_missing_copy(
     cta_cli: CtaCliHost,
     disk_instance_name: str,
@@ -689,6 +744,12 @@ def test_repack_just_add_copies_with_missing_copy(
     and for the resulting retrieve-progress counting crediting zero retrieved files for every such
     file (transformJobBatchToArchive()'s BASE_INSERT never fires for the source copy either, so
     retrieve progress must not be derived from it).
+
+    Placed after test_repack_cancellation rather than right before it: that test needs its repack
+    expansion to complete within a tight timeout, immediately after only a light preceding test -
+    this one genuinely archives a new copy of every file on the tape, which is heavy enough to
+    risk starving that timeout if run immediately before it (see the "be careful changing the
+    order of tests" warning near test_set_single_drive_up above).
     """
     second_tape_pool = "systest_addcopies2"
 
@@ -783,59 +844,126 @@ def test_repack_just_add_copies_with_missing_copy(
         )
 
 
-def test_repack_cancellation(
+def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
     cta_cli: CtaCliHost,
+    eos_client: EosClientHost,
+    eos_mgm: EosMgmHost,
     disk_instance_name: str,
     repack_buffer_dir: Path,
     repack_mp_name: str,
-    postgres_scheduler_enabled: bool,
+    cta_storage_class: str,
+    cta_default_tape_pool: str,
 ) -> None:
-    cta_cli.set_all_drives_down()
+    """--justaddcopies with a genuinely missing copy, where one file is user-provided.
+
+    hasUserProvidedFile is a per-file flag set independently of repack type
+    (Scheduler::expandRepackRequest() detects a matching file already sitting in the repack
+    buffer, see Scheduler.cpp) - it has nothing to do with why AddCopiesOnly's source copy has no
+    job (see test_repack_just_add_copies_with_missing_copy above). Before the fix, a
+    user-provided file under AddCopiesOnly hit the exact same "Active job or tape file not found"
+    crash as any other AddCopiesOnly subrequest, since that crash never depended on
+    hasUserProvidedFile at all - this combination was simply never exercised by any existing test.
+    """
+    second_tape_pool = "systest_addcopies3"
 
     vid_to_repack = cta_cli.get_first_vid_containing_files()
-    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
-    print(f"Launching the repack request test on VID {vid_to_repack}")
-    _submit_repack_request(
-        cta_cli,
-        vid_to_repack=vid_to_repack,
-        disk_instance_name=disk_instance_name,
-        repack_buffer_dir=repack_buffer_dir,
-        mount_policy_name=repack_mp_name,
-        move_only=True,
-        submit_only=True,  # immediately return after repack request has been submitted; no waiting
+
+    # Pick the destination tape and capture the source tape's original full value before mutating
+    # anything - see test_repack_just_add_copies_with_missing_copy above for why both matter.
+    all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
+    dest_tape = next(
+        t for t in all_tapes if t["vid"] != vid_to_repack and not t.get("full", False) and t.get("state") == "ACTIVE"
     )
+    dest_vid, original_dest_pool = dest_tape["vid"], dest_tape["tapepool"]
+    source_tape = next(t for t in all_tapes if t["vid"] == vid_to_repack)
+    original_source_full = "true" if source_tape.get("full", False) else "false"
 
-    cta_cli.wait_for_repack_request_launch(vid_to_repack)
-    cta_cli.wait_for_repack_request_expansion(vid_to_repack)
-
-    nb_files_in_queue = cta_cli.count_files_in_queue(vid_to_repack)
-    print(f"Expansion finished with the following number of files in the retrieve queue: {nb_files_in_queue}")
-    if postgres_scheduler_enabled:
-        assert nb_files_in_queue > 0
-
-    cta_cli.remove_repack_request(vid_to_repack)
-
-    print(
-        f"Checking if the Retrieve queue of the VID {vid_to_repack} contains the Retrieve "
-        f"Requests created from the Repack Request expansion"
+    # Inject exactly one user-provided file (mechanism mirrors test_repack_with_user_provided_files
+    # above) - one is enough to exercise the hasUserProvidedFile + AddCopiesOnly combination without
+    # duplicating that test's own, separately-tested, broader user-provided-file coverage.
+    repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
+    eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
+    eos_mgm.exec(f"eos chmod 777 {repack_sub_dir}")
+    tape_file_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
+    user_provided_tape_file = tape_file_ls_json[0]
+    disk_id = user_provided_tape_file["df"]["diskId"]
+    eos_file_path_to_copy_from = Path(
+        eos_mgm.exec_with_output(f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '")
     )
-    nb_files_on_tape_to_repack = len(
-        json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
-    )
-    print(f"Number of files on tape {vid_to_repack}: {nb_files_on_tape_to_repack}")
+    eos_client.retrieve_file(disk_instance_name, eos_file_path_to_copy_from)
+    user_provided_fseq = int(user_provided_tape_file["tf"]["fSeq"])
+    print(f"Copying the retrieved file {eos_file_path_to_copy_from} into the repack buffer {repack_sub_dir}")
+    eos_mgm.exec(f"eos cp {eos_file_path_to_copy_from} {repack_sub_dir}/{user_provided_fseq:09d}")
 
-    nb_files_in_queue = cta_cli.count_files_in_queue(vid_to_repack)
-    print(f"After repack request deletion, number of files in the retrieve queue: {nb_files_in_queue}")
-    if postgres_scheduler_enabled:
-        assert nb_files_in_queue == 0
-    else:
-        # In case of the objectstore we expect the retrieve queue to still have jobs
-        assert nb_files_in_queue == nb_files_on_tape_to_repack
+    with contextlib.ExitStack() as cleanup:
+        cta_cli.exec(
+            f"cta-admin tapepool add --name {second_tape_pool} --vo vo --partialtapesnumber 2 "
+            f"--comment 'Temp {second_tape_pool} tapepool'"
+        )
+        cleanup.callback(lambda: cta_cli.exec(f"cta-admin tapepool rm --name {second_tape_pool}"))
 
-    cta_cli.set_all_drives_up(wait=False)
-    cta_cli.wait_for_queue_to_empty(vid_to_repack)
-    cta_cli.remove_repack_request(vid_to_repack)
-    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+        cta_cli.exec(
+            f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool "
+            f"{second_tape_pool} --archiveroutetype DEFAULT --comment 'ArchiveRoute2'"
+        )
+        cleanup.callback(
+            lambda: cta_cli.exec(
+                f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
+            )
+        )
+
+        cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
+        cleanup.callback(
+            lambda: cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
+        )
+
+        print(f"Moving {dest_vid} -> {second_tape_pool} to give the new copy somewhere to mount")
+        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid} --tapepool {second_tape_pool}")
+        cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {dest_vid} --tapepool {original_dest_pool}"))
+
+        cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
+        cleanup.callback(lambda: cta_cli.modify_tape_state(vid_to_repack, "ACTIVE"))
+        cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
+
+        print(
+            f'Launching the repack test "just add copies" on VID {vid_to_repack} with a missing copy and a '
+            f"user-provided file"
+        )
+        _submit_repack_request(
+            cta_cli,
+            vid_to_repack=vid_to_repack,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
+            add_copies_only=True,
+            on_submitted=lambda: cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack)),
+        )
+
+        repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
+        repack_request = repack_ls_json[0]
+        failed_to_create_archive_req = int(repack_request.get("failedToCreateArchiveReq", 0))
+        user_provided_files = int(repack_request["userProvidedFiles"])
+        archived_files = int(repack_request["archivedFiles"])
+        retrieved_files = int(repack_request["retrievedFiles"])
+        total_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
+        total_files_to_archive = int(repack_request["totalFilesToArchive"])
+
+        # Before the fix: every subrequest crashed on creation (including this one's user-provided
+        # file - the crash never depended on hasUserProvidedFile), so failedToCreateArchiveReq > 0
+        # and the rest stayed at 0.
+        assert failed_to_create_archive_req == 0
+        assert user_provided_files == 1
+        # The user-provided file needs a new copy exactly like every retrieved one, but is never
+        # itself retrieved - the same relationship test_repack_with_user_provided_files establishes
+        # for MoveOnly, carried over here for AddCopiesOnly.
+        assert total_files_to_retrieve == total_files_to_archive - user_provided_files
+        assert retrieved_files == total_files_to_retrieve
+        assert archived_files == total_files_to_archive
+
+        dest_pools = _get_dest_tape_pools(cta_cli, vid_to_repack)
+        assert second_tape_pool in dest_pools, (
+            f"Expected the new copy to land in {second_tape_pool!r}; got destination pools {dest_pools!r}."
+        )
 
 
 def test_repack_with_user_provided_files_no_recall(
