@@ -103,20 +103,30 @@ class CtaCliHost(RemoteHost):
                 return tape["vid"]
         raise RuntimeError("Failed to find a VID to repack")
 
-    def get_first_vid_with_single_copy_files(self) -> str:
-        """Return the first VID whose tape files all have exactly one tape copy."""
+    def get_first_vid_with_single_copy_files(self, min_files: int = 1) -> str:
+        """Return the first VID holding at least `min_files` tape files, all with exactly one copy.
+
+        One `tf ls` per tape, not one per file: every copy of every archive file lives on some
+        catalogue tape, so counting each archive ID's appearances across all tapes' listings gives
+        its copy count. The per-file variant (`tf ls --id` per file) took minutes on a
+        2000-file tape.
+        """
         tapes = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
+        files_per_vid: dict[str, list[str]] = {}
+        copy_count: dict[str, int] = {}
         for tape in tapes:
             vid = tape["vid"]
             tapefiles = json.loads(self.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
-            if not tapefiles:
-                continue
-            if all(
-                len(json.loads(self.exec_with_output(f"cta-admin --json tf ls --id {tf['af']['archiveId']}"))) == 1
-                for tf in tapefiles
+            files_per_vid[vid] = [str(tf["af"]["archiveId"]) for tf in tapefiles]
+            for archive_id in files_per_vid[vid]:
+                copy_count[archive_id] = copy_count.get(archive_id, 0) + 1
+        for tape in tapes:
+            vid = tape["vid"]
+            if len(files_per_vid[vid]) >= min_files and all(
+                copy_count[archive_id] == 1 for archive_id in files_per_vid[vid]
             ):
                 return vid
-        raise RuntimeError("Failed to find a VID with single-copy files")
+        raise RuntimeError(f"Failed to find a VID with at least {min_files} single-copy file(s)")
 
     def get_number_of_files_on_tape(self, vid: str) -> int:
         tapefile_json = self.exec_with_output(f"cta-admin --json tf ls --vid {vid}")
