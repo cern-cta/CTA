@@ -895,6 +895,11 @@ def test_repack_just_add_copies_with_missing_copy(
 
         cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
         cleanup.callback(lambda: cta_cli.modify_tape_state(vid_to_repack, "ACTIVE"))
+        # Let maintd's retrieve-queue statistics cache (and any refresh already in flight when the
+        # state changed) observe REPACKING before expansion: selectBestVid4Retrieve() classifies by
+        # the cached tape state, a stale ACTIVE rejects the tape for repack, and then every
+        # subrequest fails creation and the request completes empty. CI cache ages are second-scale.
+        time.sleep(3)
         # Submitting below is what marks the tape full - registered before that call so the
         # restore runs even if submission never gets that far.
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
@@ -1070,6 +1075,8 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
 
         cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
         cleanup.callback(lambda: cta_cli.modify_tape_state(vid_to_repack, "ACTIVE"))
+        # Cache settle before expansion - see the test above.
+        time.sleep(3)
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
         # Take the added copies back off the destination tape - see the test above.
