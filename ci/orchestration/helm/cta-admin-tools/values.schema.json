@@ -41,11 +41,6 @@
           "description":
             "Catalogue schema version to create during reset; latest selects the version shipped with the tools image."
         },
-        "postgresClientImage": {
-          "type": "string",
-          "minLength": 1,
-          "description": "PostgreSQL client image used by reset init containers to wait for database readiness."
-        },
         "resources": {
           "type": "object",
           "description": "Kubernetes resource requests and limits for this workload."
@@ -54,8 +49,7 @@
       "required": [
         "catalogue",
         "scheduler",
-        "catalogueSchemaVersion",
-        "postgresClientImage"
+        "catalogueSchemaVersion"
       ],
       "additionalProperties": false,
       "description": "One-shot bootstrap Jobs; completed Jobs do not rerun automatically."

@@ -19,8 +19,9 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char* const* const argv) {
   static struct option longopts[] = {
-    {"help",  no_argument, nullptr, 'h'},
-    {nullptr, 0,           nullptr, 0  }
+    {"help",        no_argument, nullptr, 'h'},
+    {"until-ready", no_argument, nullptr, 'r'},
+    {nullptr,       0,           nullptr, 0  }
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -31,6 +32,9 @@ PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char* const* co
     switch (opt) {
       case 'h':
         help = true;
+        break;
+      case 'r':
+        untilReady = true;
         break;
       case ':':  // Missing parameter
       {
@@ -86,11 +90,13 @@ void PollDatabaseCmdLineArgs::printUsage(std::ostream& os) {
      << "Where:" << std::endl
      << "    databaseConnectionFile" << std::endl
      << "        The path to the file containing the connection details of the CTA" << std::endl
-     << "        catalogue database." << std::endl
+     << "        catalogue or PostgreSQL scheduler database." << std::endl
      << "    numberOfSecondsToKeepPolling" << std::endl
-     << "        The total number of seconds cta-database-poll should run before" << std::endl
-     << "        exiting." << std::endl
+     << "        The polling duration in seconds, excluding connection and query time." << std::endl
      << "Options:" << std::endl
+     << "    --until-ready" << std::endl
+     << "        Exit successfully after the first successful query; return 1 if polling" << std::endl
+     << "        finishes without success." << std::endl
      << "    -h,--help" << std::endl
      << "        Prints this usage message" << std::endl;
 }

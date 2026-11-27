@@ -23,30 +23,32 @@ header: The CERN Tape Archive (CTA)
 
 # NAME
 
-cta-database-poll --- Poll the CTA Catalogue database once per second
+cta-database-poll --- Poll a CTA database or wait for readiness
 
 # SYNOPSIS
 
-**cta-database-poll** *databaseConnectionFile* *numberOfSecondsToKeepPolling* \[\--help]
+**cta-database-poll** *databaseConnectionFile* *numberOfSecondsToKeepPolling* \[\--until-ready] \[\--help]
 
 # DESCRIPTION
 
-**cta-database-poll** is a tool for testing and monitoring of the
-database connection to the CTA Catalogue. The advantage over other
-lower-level tools is that it abstracts away the details of the specific
-database technology, using the CTA Catalogue configuration file to
-determine where to connect.
+**cta-database-poll** checks database connectivity using CTA's database drivers and connection files.
+It supports the catalogue database and the PostgreSQL scheduler database.
+Each attempt connects and queries the database's table names; no CTA schema is required.
 
-**cta-database-poll** pings the configured database once a second for
-the number of seconds specified.
+By default, the tool polls with a one-second pause between attempts for the specified number of iterations, logging database errors and continuing.
+This mode is intended for testing reconnection behaviour.
 
-*databaseConnectionFile* is the path to the configuration file
-containing the connection details of the CTA Catalogue database.
+*databaseConnectionFile* is the path to the catalogue or PostgreSQL scheduler connection file.
 
-*numberOfSecondsToKeepPolling* is the total number of seconds that
-**cta-database-poll** should run before exiting.
+*numberOfSecondsToKeepPolling* specifies the polling duration in seconds, excluding time spent connecting and querying.
+Blocked database calls can extend the overall duration in either mode.
 
 # OPTIONS
+
+\--until-ready
+
+:   Exit successfully after the first successful query, retrying failed attempts once per second.
+    Exit with an error if polling finishes without a successful query.
 
 -h, \--help
 
@@ -54,11 +56,17 @@ containing the connection details of the CTA Catalogue database.
 
 # EXIT STATUS
 
-**cta-database-poll** returns 0 on success.
+In the default polling mode, the tool completes the polling loop and returns 1 if any database attempt failed, even if later attempts succeeded; otherwise it returns 0.
+With \--until-ready, the tool returns 0 only after a successful query and 1 if polling finishes without success.
+Invalid arguments, invalid connection files and unavailable database drivers return a non-zero status in either mode.
 
 # EXAMPLE
 
 cta-database-poll /etc/cta/cta-catalogue.conf 5
+
+Wait for the PostgreSQL scheduler database using up to 120 polling attempts:
+
+cta-database-poll --until-ready /etc/cta/cta-scheduler.conf 120
 
 # SEE ALSO
 

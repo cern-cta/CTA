@@ -9,16 +9,7 @@
 
 namespace cta::catalogue {
 
-/**
- * Command-line tool that simply polls the database with a simple SQL SELECT
- * statement.
- *
- * The purpose of this tool is to faciliate the development and testing of the
- * reconnect logic of CTA database connections.  The database server is
- * configured to break some connections.  If the reconnect logic is working
- * correctly then the polling loop of this command should trigger automatic
- * and successfull reconnects.
- */
+/// Poll a database to exercise reconnection logic or wait for readiness.
 class PollDatabaseCmd : public CmdLineTool {
 public:
   /**

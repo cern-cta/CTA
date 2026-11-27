@@ -6,7 +6,6 @@
 #include "PollDatabaseCmd.hpp"
 
 #include "PollDatabaseCmdLineArgs.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 
@@ -32,26 +31,31 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char* const* const ar
   }
 
   const auto dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
+
   const uint64_t nbConns = 2;
   rdbms::ConnPool connPool(dbLogin, nbConns);
 
-  uint32_t elapsedSeconds = 0;
-  for (uint32_t i = 0; i < cmdLineArgs.numberOfSecondsToKeepPolling; i++) {
+  bool hadFailure = false;
+  for (uint64_t i = 0; i < cmdLineArgs.numberOfSecondsToKeepPolling; i++) {
     try {
       m_out << "Querying the database" << std::endl;
       auto conn = connPool.getConn();
       conn.getTableNames();
+      if (cmdLineArgs.untilReady) {
+        m_out << "Database connection ready" << std::endl;
+        return 0;
+      }
     } catch (exception::Exception& ex) {
+      hadFailure = true;
       m_out << "Database error: " << ex.getMessage().str() << std::endl;
     }
 
     m_out << "Sleeping for 1 second" << std::endl;
-    elapsedSeconds++;
-    m_out << "Elapsed seconds = " << elapsedSeconds << std::endl;
+    m_out << "Elapsed seconds = " << i + 1 << std::endl;
     sleep(1);
   }
 
-  return 0;
+  return (hadFailure || cmdLineArgs.untilReady) ? 1 : 0;
 }
 
 //------------------------------------------------------------------------------

@@ -5,108 +5,52 @@
 
 #include "PollDatabaseCmdLineArgs.hpp"
 
-#include "common/exception/Exception.hpp"
+#include "tests/support/Argv.hpp"
 
+#include <getopt.h>
 #include <gtest/gtest.h>
-#include <list>
 
 namespace unitTests {
 
 class cta_catalogue_PollDatabaseCmdLineArgsTest : public ::testing::Test {
 protected:
-  struct Argcv {
-    int argc;
-    char** argv;
+  // Each test parses a fresh command line with getopt_long.
+  void SetUp() override { optind = 0; }
 
-    Argcv() : argc(0), argv(nullptr) {}
-  };
-
-  using ArgcvVect = std::vector<Argcv*>;
-  ArgcvVect m_args;
-
-  /**
-   * Creates a duplicate string using the new operator.
-   */
-  char* dupString(const std::string& str) {
-    const int len = str.size();
-    char* copy = new char[len + 1];
-    std::copy(str.begin(), str.end(), copy);
-    copy[len] = '\0';
-    return copy;
-  }
-
-  void SetUp() override {
-    // Allow getopt_long to be called again
-    optind = 0;
-  }
-
-  void TearDown() override {
-    // Allow getopt_long to be called again
-    optind = 0;
-
-    for (ArgcvVect::const_iterator itor = m_args.begin(); itor != m_args.end(); itor++) {
-      for (int i = 0; i < (*itor)->argc; i++) {
-        delete[] (*itor)->argv[i];
-      }
-      delete[] (*itor)->argv;
-      delete *itor;
-    }
-  }
+  void TearDown() override { optind = 0; }
 };
 
 TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_short) {
-  using namespace cta::catalogue;
-
-  Argcv* args = new Argcv();
-  m_args.push_back(args);
-  args->argc = 2;
-  args->argv = new char*[3];
-  args->argv[0] = dupString("cta-database-poll");
-  args->argv[1] = dupString("-h");
-  args->argv[2] = nullptr;
-
-  PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
+  Argv args {"cta-database-poll", "-h"};
+  const cta::catalogue::PollDatabaseCmdLineArgs cmdLine(args.count, args.data());
 
   ASSERT_TRUE(cmdLine.help);
-  ASSERT_TRUE(cmdLine.dbConfigPath.empty());
-  ASSERT_EQ(0, cmdLine.numberOfSecondsToKeepPolling);
 }
 
 TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_long) {
-  using namespace cta::catalogue;
-
-  Argcv* args = new Argcv();
-  m_args.push_back(args);
-  args->argc = 2;
-  args->argv = new char*[3];
-  args->argv[0] = dupString("cta-database-poll");
-  args->argv[1] = dupString("--help");
-  args->argv[2] = nullptr;
-
-  PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
+  Argv args {"cta-database-poll", "--help"};
+  const cta::catalogue::PollDatabaseCmdLineArgs cmdLine(args.count, args.data());
 
   ASSERT_TRUE(cmdLine.help);
-  ASSERT_TRUE(cmdLine.dbConfigPath.empty());
-  ASSERT_EQ(0, cmdLine.numberOfSecondsToKeepPolling);
 }
 
 TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, all_args) {
-  using namespace cta::catalogue;
-
-  Argcv* args = new Argcv();
-  m_args.push_back(args);
-  args->argc = 3;
-  args->argv = new char*[4];
-  args->argv[0] = dupString("cta-database-poll");
-  args->argv[1] = dupString("dbConfigPath");
-  args->argv[2] = dupString("1234");
-  args->argv[3] = nullptr;
-
-  PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
+  Argv args {"cta-database-poll", "dbConfigPath", "1234"};
+  const cta::catalogue::PollDatabaseCmdLineArgs cmdLine(args.count, args.data());
 
   ASSERT_FALSE(cmdLine.help);
-  ASSERT_EQ(std::string("dbConfigPath"), cmdLine.dbConfigPath);
+  ASSERT_FALSE(cmdLine.untilReady);
+  ASSERT_EQ("dbConfigPath", cmdLine.dbConfigPath);
   ASSERT_EQ(1234, cmdLine.numberOfSecondsToKeepPolling);
+}
+
+TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, until_ready) {
+  Argv args {"cta-database-poll", "--until-ready", "scheduler.conf", "120"};
+  const cta::catalogue::PollDatabaseCmdLineArgs cmdLine(args.count, args.data());
+
+  ASSERT_TRUE(cmdLine.untilReady);
+  ASSERT_EQ("scheduler.conf", cmdLine.dbConfigPath);
+  ASSERT_EQ(120, cmdLine.numberOfSecondsToKeepPolling);
 }
 
 }  // namespace unitTests

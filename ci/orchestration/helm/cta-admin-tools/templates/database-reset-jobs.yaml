@@ -28,15 +28,12 @@ spec:
       {{- if or (eq $database "catalogue") (eq $scheduler.backend "postgres") }}
       initContainers:
         - name: wait-database
-          image: {{ $.Values.reset.postgresClientImage | quote }}
-          imagePullPolicy: IfNotPresent
-          command: [bash, /scripts/wait_database.sh, /etc/cta/cta-{{ $database }}.conf]
+          image: {{ include "cta-admin-tools.image" $ }}
+          imagePullPolicy: {{ include "cta-admin-tools.imagePullPolicy" $ }}
+          command: [cta-database-poll, --until-ready, /etc/cta/cta-{{ $database }}.conf, "120"]
           securityContext:
             allowPrivilegeEscalation: false
           volumeMounts:
-            - name: scripts
-              mountPath: /scripts
-              readOnly: true
             - name: {{ $database }}-config
               mountPath: /etc/cta/cta-{{ $database }}.conf
               subPath: cta-{{ $database }}.conf

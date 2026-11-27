@@ -20,14 +20,16 @@ struct PollDatabaseCmdLineArgs {
    */
   bool help = false;
 
+  /// Exit on the first successful query and fail if polling finishes without success.
+  bool untilReady = false;
+
   /**
-   * The total number of seconds the cta-database-pollshould run before exiting.
+   * Polling duration in seconds, excluding connection and query time.
    */
   uint64_t numberOfSecondsToKeepPolling = 0;
 
   /**
-   * Path to the file containing the connection details of the catalogue
-   * database.
+   * Path to the catalogue or PostgreSQL scheduler connection file.
    */
   std::string dbConfigPath;
 
