@@ -67,13 +67,14 @@ for backend in vfs postgres ceph; do
     --set 'taped.drives[0].controlPath=/dev/sg0,taped.drives[0].logicalLibraryName=test-library'
   render cta-admin-tools "tools-$backend" \
     -f "presets/cta/scheduler/$backend.yaml" \
-    --set admin.enabled=true,client.enabled=true,reset.allUnprotected=true
+    --set admin.enabled=true,client.enabled=true,reset.catalogue=true,reset.scheduler=true
 done
 
 # Cover administration modes independently of the scheduler backend matrix.
 render cta-admin-tools tools-default
-render cta-admin-tools tools-protected \
-  --set global.catalogue.protected=true,global.scheduler.protected=true,reset.allUnprotected=true
+render cta-admin-tools tools-external \
+  --set global.catalogue.existingSecret=external-catalogue,global.scheduler.existingSecret=external-scheduler \
+  --set global.scheduler.backend=postgres,reset.catalogue=true,reset.scheduler=true
 render cta-admin-tools tools-liquibase \
   --set liquibase.enabled=true,liquibase.catalogueSourceVersion=15.0,liquibase.catalogueDestinationVersion=16.0
 
@@ -105,10 +106,8 @@ reject_values ci-infra missing-pvc-size --set persistentVolumeClaims.example.sto
 reject_values ci-infra invalid-pvc-access-mode --set 'persistentVolumeClaims.example.size=1Gi,persistentVolumeClaims.example.accessModes[0]=ReadWrite'
 reject_values ci-infra invalid-secret-file --set secretFiles.example.connection=123
 reject_values ci-infra invalid-telemetry-toggle --set-string prometheus.enabled=false
-reject_values cta-admin-tools invalid-protection-toggle --set-string global.catalogue.protected=false
 reject_values cta-admin-tools invalid-reset-toggle --set-string reset.catalogue=false
 reject_values cta-admin-tools invalid-scheduler-backend --set global.scheduler.backend=unknown
 reject_values cta-admin-tools missing-vfs-claim --set-string global.scheduler.existingClaim=
 reject_values cta-admin-tools invalid-client-replicas --set client.replicas=-1
 reject_values cta-admin-tools invalid-pull-policy --set image.pullPolicy=Sometimes
-reject_values cta-admin-tools invalid-destructive-permission --set-string allowDestructive=true

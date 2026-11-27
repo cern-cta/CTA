@@ -81,13 +81,18 @@ Escape the first hyphen of long options outside code spans (`\--config`) so Pand
 
 ## Check before submitting
 
-Preview the affected pages, check their links and navigation, and inspect diagrams in both light and dark modes. From the repository root, run:
+For prose-only edits, review the changed text and affected references; a full documentation build is not required.
+Run the build when changing navigation, includes, templates, generation code, or markup whose rendering is uncertain, or when explicitly requested.
+Preview affected rendering and inspect changed diagrams in both light and dark modes.
+From the repository root, run:
 
 ```bash
 uv run --locked python docs/build.py build
 ```
 
-The strict Zensical build writes to `build/docs/site/` and must pass before submission. Use the normal [contribution workflow](index.md) for review.
+The strict Zensical build writes to `build/docs/site/`.
+When the change requires a build, it must pass before submission; repeat a successful build only when subsequent changes affect those checks or a relevant failure remains unresolved.
+Use the normal [contribution workflow](index.md) for review.
 
 ## When changes appear online
 

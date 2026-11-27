@@ -46,18 +46,12 @@
           "minLength": 1,
           "description": "PostgreSQL client image used by reset init containers to wait for database readiness."
         },
-        "allUnprotected": {
-          "type": "boolean",
-          "description":
-            "Reset every connection that is not protected. Explicit catalogue/scheduler flags reject protected connections."
-        },
         "resources": {
           "type": "object",
           "description": "Kubernetes resource requests and limits for this workload."
         }
       },
       "required": [
-        "allUnprotected",
         "catalogue",
         "scheduler",
         "catalogueSchemaVersion",
@@ -123,29 +117,18 @@
         "catalogue": {
           "type": "object",
           "properties": {
-            "protected": {
-              "type": "boolean",
-              "description":
-                "Skip automatic bootstrap resets; explicit resets and Liquibase require allowDestructive. Normal writes are allowed."
-            },
             "existingSecret": {
               "$ref": "#/definitions/resourceName",
               "description": "Name of the Secret containing cta-catalogue.conf in the deployment namespace."
             }
           },
           "required": [
-            "protected",
             "existingSecret"
           ]
         },
         "scheduler": {
           "type": "object",
           "properties": {
-            "protected": {
-              "type": "boolean",
-              "description":
-                "Skip automatic bootstrap resets; explicit resets and Liquibase require allowDestructive. Normal writes are allowed."
-            },
             "existingSecret": {
               "$ref": "#/definitions/resourceName",
               "description": "Name of the Secret containing cta-scheduler.conf in the deployment namespace."
@@ -163,7 +146,6 @@
             }
           },
           "required": [
-            "protected",
             "existingSecret",
             "backend"
           ],
@@ -308,11 +290,6 @@
         }
       ],
       "description": "API client pod without direct catalogue or scheduler access."
-    },
-    "allowDestructive": {
-      "type": "boolean",
-      "description":
-        "Permit explicitly selected resets or Liquibase against protected connections. Does not enable operations or automatic resets."
     }
   },
   "definitions": {

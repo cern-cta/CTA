@@ -33,7 +33,7 @@ postgres:
   #       connection.conf: '{{ .connection.uri }}'
 
 # Ephemeral/fake CI credentials only: these files are also stored in Helm release values.
-# For actual external resources, create Secrets manually and use cta-dev --copy-secret.
+# For external connections, create Secrets manually and select them with create_instance.sh connection options.
 # Map keys name the Secrets and files; values support Helm templates.
 secretFiles: {}
 # Example (map keys name the Secret and its files):

@@ -15,42 +15,50 @@ Requires a Kubernetes cluster and tape hardware or mhvtl.
 Usage: $0 --namespace <namespace> --cta-image-tag <tag> [options]
 
 General:
-  -h, --help                               Show this help.
-  -n, --namespace <namespace>              Kubernetes namespace (required).
-      --chart-install-timeout <min>        CTA installation timeout (default: 5 minutes).
+  -h, --help                              Show this help.
+  -n, --namespace <namespace>             Kubernetes namespace (required).
+      --chart-install-timeout <min>       CTA installation timeout (default: 5 minutes).
 
 CTA and infrastructure:
-  -r, --cta-image-registry <registry>      CTA image registry (default: project.json).
-  -i, --cta-image-tag <tag>                CTA image tag (required).
-      --cta-values <file>                  Consumer values override; repeatable, applied in order.
-      --copy-secret <name>                 Copy a required Secret from default; repeatable.
-      --infra-values <file>                Infrastructure values; repeatable, replaces local defaults.
-      --telemetry <none|local|central>     Telemetry mode (default: none).
+  -r, --cta-image-registry <registry>     CTA image registry (default: dev.ctaImageRegistry).
+  -i, --cta-image-tag <tag>               CTA image tag (required).
+      --cta-values <file>                 Additional CTA values (repeatable).
+      --catalogue-secret <name>           Use a catalogue connection Secret from the default namespace.
+      --scheduler-secret <name>           Use a scheduler connection Secret from the default namespace.
+      --copy-secret <name>                Copy a required Secret from the default namespace (repeatable).
+      --infra-values <file>               Replace default infrastructure presets with these values (repeatable).
+      --telemetry <none|local|central>    Telemetry mode (default: none).
 
 Database initialization:
-  -c, --catalogue-version <version>        Catalogue schema version (default: latest).
-      --allow-destructive                  Allow explicitly requested resets of protected connections.
-      --protected                          Protect both connections from automatic deployment resets.
-      --reset-unprotected                  Reset only unprotected connections (development bootstrap).
-      --validate-only                      Validate bootstrap values and requested Secrets without deploying.
-      --reset-catalogue                    Reset catalogue content (default: disabled).
-      --reset-scheduler                    Reset scheduler content (default: disabled).
+  -c, --catalogue-version <version>       Catalogue schema version to create on reset (default: latest).
+      --reset-catalogue                   Initialize/reset the selected catalogue.
+      --reset-scheduler                   Initialize/reset the selected scheduler.
+
+  No connections are reset unless a reset option is supplied.
 
 Tape configuration:
-      --max-drives <n>                     Number of discovered drives to use (default: 2).
-      --one-logical-library                Use one logical library for all drives.
+      --max-drives <n>                    Maximum number of discovered drives to use (default: 2).
+      --one-logical-library               Use one logical library for all drives.
 
 EOS:
-      --eos-enabled <true|false>           Deploy EOS (default: true).
-      --eos-image-repository <repo>        Full EOS image repository (default: project.json).
-      --eos-image-tag <tag>                EOS image tag (default: project.json).
-      --eos-values <file>                  EOS values override; repeatable, applied in order.
+      --eos-enabled <true|false>          Deploy EOS (default: true).
+      --eos-image-repository <repo>       Full EOS image repository (default: dev.eosImageRepository).
+      --eos-image-tag <tag>               EOS image tag (default: dev.eosImageTag).
+      --eos-values <file>                 Additional EOS values (repeatable).
 
 dCache:
-      --dcache-enabled <true|false>        Deploy dCache (default: false).
-      --dcache-image-repository <repo>     Full dCache image repository (default: project.json).
-      --dcache-image-tag <tag>             dCache image tag (default: project.json).
-      --dcache-values <file>               dCache values override; repeatable, applied in order.
+      --dcache-enabled <true|false>       Deploy dCache (default: false).
+      --dcache-image-repository <repo>    Full dCache image repository (default: dev.dCacheImageRepository).
+      --dcache-image-tag <tag>            dCache image tag (default: dev.dCacheImageTag).
+      --dcache-values <file>              Additional dCache values (repeatable).
+
+Values and image defaults:
+  Values files are applied in order; later files take precedence.
+  Default infrastructure presets provision a PostgreSQL catalogue and VFS scheduler storage.
+  Connection Secret options replace the corresponding default provisioning and override CTA values.
+  Scheduler backend selection remains in CTA values; Secret options do not select a backend.
+  Explicit --infra-values files replace the defaults and control provisioning independently.
+  Image defaults are read from the listed dev.* keys in project.json and override values files.
 EOF
   exit "${1:-1}"
 }
@@ -116,24 +124,18 @@ EOF
 
 create_instance() {
   # Argument defaults
-  # Copy available shared credentials and runner connections into the deployment namespace.
-  local secrets=(reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials
-                 cta-oracle-catalogue-connection-string cta-ceph-scheduler-connection-string
-                 cta-stress-scheduler-connection-string)
+  # Copy available shared credentials into the deployment namespace.
+  local secrets=(reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials)
   local copy_secrets=()
+  local catalogue_secret="" scheduler_secret=""
   local -A required_secrets=() copied_secrets=()
   # Chart defaults select the PostgreSQL catalogue and VFS scheduler connections.
   cta_config=(--values presets/cta/base.yaml --values presets/cta/auth/frontend-wfe-jwt.yaml
               --values presets/cta/auth/frontend-admin-jwt.yaml)
   cta_overrides=()
-  infra_config=(--values presets/infra/catalogue-postgres.yaml
-                --values presets/infra/scheduler-vfs.yaml)
+  infra_config=()
   infra_config_explicit=false
   # Reset database content only when explicitly requested.
-  allow_destructive=false
-  protected=false
-  validate_only=false
-  reset_all_unprotected=false
   reset_catalogue=false
   reset_scheduler=false
   max_drives=2
@@ -168,10 +170,6 @@ create_instance() {
       --max-drives)
         max_drives="$2"
         shift ;;
-      --allow-destructive) allow_destructive=true ;;
-      --protected) protected=true ;;
-      --validate-only) validate_only=true ;;
-      --reset-unprotected) reset_all_unprotected=true ;;
       --reset-scheduler) reset_scheduler=true ;;
       --reset-catalogue) reset_catalogue=true ;;
       --telemetry)
@@ -208,17 +206,18 @@ create_instance() {
         [[ -f "$2" ]] || die "CTA values file $2 does not exist"
         cta_overrides+=(--values "$2")
         shift ;;
-      --copy-secret)
-        [[ -n ${2:-} && $2 =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] ||
-          die "--copy-secret requires a Kubernetes Secret name"
-        copy_secrets+=("$2")
+      --copy-secret|--catalogue-secret|--scheduler-secret)
+        [[ -n ${2:-} && ${#2} -le 253 && $2 =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] ||
+          die "$1 requires a Kubernetes Secret name"
+        case "$1" in
+          --copy-secret) copy_secrets+=("$2") ;;
+          --catalogue-secret) catalogue_secret="$2" ;;
+          --scheduler-secret) scheduler_secret="$2" ;;
+        esac
         shift ;;
       --infra-values)
         [[ -f "$2" ]] || die "Infrastructure values file $2 does not exist"
-        if [[ $infra_config_explicit == false ]]; then
-          infra_config=()
-          infra_config_explicit=true
-        fi
+        infra_config_explicit=true
         infra_config+=(--values "$2")
         shift ;;
       --chart-install-timeout)
@@ -242,6 +241,21 @@ create_instance() {
   if [[ -z "${catalogue_schema_version}" ]]; then
     catalogue_schema_version="latest"
   fi
+
+  # Explicit connection flags win over values overlays, regardless of argument order.
+  if [[ -n $catalogue_secret ]]; then
+    copy_secrets+=("$catalogue_secret")
+    cta_overrides+=(--set-string "global.catalogue.existingSecret=$catalogue_secret")
+  elif [[ $infra_config_explicit == false ]]; then
+    infra_config+=(--values presets/infra/catalogue-postgres.yaml)
+  fi
+  if [[ -n $scheduler_secret ]]; then
+    copy_secrets+=("$scheduler_secret")
+    cta_overrides+=(--set-string "global.scheduler.existingSecret=$scheduler_secret")
+  elif [[ $infra_config_explicit == false ]]; then
+    infra_config+=(--values presets/infra/scheduler-vfs.yaml)
+  fi
+
   # Check requested Secrets before creating deployment resources.
   local secret_name
   for secret_name in "${copy_secrets[@]}"; do
@@ -251,16 +265,11 @@ create_instance() {
     required_secrets[$secret_name]=true
   done
 
-  # Let Helm resolve overlays and enforce protection before creating any resources.
-  if [[ $protected == true ]]; then
-    cta_overrides+=(--set global.catalogue.protected=true --set global.scheduler.protected=true)
-  fi
-  reset_flags=(--set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler"
-               --set "reset.allUnprotected=$reset_all_unprotected" --set "allowDestructive=$allow_destructive")
+  # Only explicit CLI requests enable reset Jobs, including when values overlays request them.
+  reset_flags=(--set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler")
   update_local_cta_chart_dependencies >&2
   helm template cta-tools helm/cta-admin-tools "${cta_config[@]}" "${cta_overrides[@]}" \
     "${reset_flags[@]}" >/dev/null
-  [[ $validate_only == false ]] || return 0
   check_deploy_commands
   project_json_path="../../project.json"
   cta_image_registry=${cta_image_registry:-$(jq -r .dev.ctaImageRegistry "${project_json_path}")}
@@ -271,19 +280,15 @@ create_instance() {
 
   echo "Catalogue schema version: ${catalogue_schema_version}"
 
-  if [[ $reset_all_unprotected == true ]]; then
-    echo "Automatic resets apply only to unprotected connections."
+  if [[ $reset_catalogue == true ]]; then
+    log_warn "Catalogue content will be reset."
   else
-    if [[ $reset_catalogue == true ]]; then
-      log_warn "Catalogue content will be reset."
-    else
-      echo "Catalogue will be left unchanged."
-    fi
-    if [[ $reset_scheduler == true ]]; then
-      log_warn "Scheduler content will be reset."
-    else
-      echo "Scheduler will be left unchanged."
-    fi
+    echo "Catalogue will be left unchanged."
+  fi
+  if [[ $reset_scheduler == true ]]; then
+    log_warn "Scheduler content will be reset."
+  else
+    echo "Scheduler will be left unchanged."
   fi
 
   SECONDS=0
@@ -409,4 +414,6 @@ create_instance() {
   log_success "Deployed CTA instance ${namespace} in ${SECONDS} seconds."
 }
 
-create_instance "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  create_instance "$@"
+fi

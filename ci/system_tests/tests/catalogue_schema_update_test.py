@@ -116,8 +116,7 @@ def test_init_catalogue_updater(
     print("Install administrative tools for catalogue migration...")
     env.exec_local(
         f"helm upgrade cta-tools ../orchestration/helm/cta-admin-tools --namespace {namespace} --reuse-values "
-        "--set reset.allUnprotected=false,reset.catalogue=false,reset.scheduler=false "
-        "--set allowDestructive=false "
+        "--set reset.catalogue=false,reset.scheduler=false "
         f"--set liquibase.catalogueSourceVersion={catalogue_from_version} "
         f"--set liquibase.catalogueDestinationVersion={catalogue_to_version} "
         "--set liquibase.enabled=true "
@@ -155,7 +154,7 @@ def test_liquibase_rollback(
 def test_cleanup_catalogue_updater(env: TestEnv, namespace: str | None) -> None:
     env.exec_local(
         f"helm upgrade cta-tools ../orchestration/helm/cta-admin-tools --namespace {namespace} --reuse-values "
-        "--set liquibase.enabled=false,allowDestructive=false "
-        "--set reset.allUnprotected=false,reset.catalogue=false,reset.scheduler=false --wait --timeout 2m"
+        "--set liquibase.enabled=false "
+        "--set reset.catalogue=false,reset.scheduler=false --wait --timeout 2m"
     )
     env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")

@@ -8,10 +8,6 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: [reg-ctageneric]
 
-# Permission for explicitly selected resets or Liquibase on protected connections.
-# This does not enable any operation or change connection protection.
-allowDestructive: false
-
 # Persistent tools do not initialize or reset anything on startup.
 admin:
   enabled: false
@@ -20,8 +16,7 @@ admin:
 # Bootstrap Jobs run once; changing values does not rerun a completed Job.
 # Logs remain available until Job deletion.
 reset:
-  # Reset every unprotected connection. Explicit protected resets require allowDestructive.
-  allUnprotected: false
+  # Reset only explicitly selected connections, whether local or external.
   catalogue: false
   scheduler: false
   catalogueSchemaVersion: latest
@@ -43,10 +38,8 @@ global:
       password: defaultcipassword
 
   catalogue:
-    protected: false
     existingSecret: cta-catalogue-connection-string
   scheduler:
-    protected: false
     backend: vfs
     existingSecret: cta-scheduler-connection-string
     existingClaim: scheduler-vfs-pvc

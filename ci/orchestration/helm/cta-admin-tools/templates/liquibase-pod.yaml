@@ -4,9 +4,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- if .Values.liquibase.enabled }}
-{{- if and .Values.global.catalogue.protected (not .Values.allowDestructive) }}
-{{- fail "Cannot run Liquibase against a protected catalogue connection" }}
-{{- end }}
 {{- $name := "liquibase-update" }}
 apiVersion: v1
 kind: Pod

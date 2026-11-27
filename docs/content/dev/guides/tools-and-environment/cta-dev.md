@@ -124,7 +124,7 @@ Run `--sanitizers thread --enable-unit-tests` separately; ThreadSanitizer cannot
 Run commands from your CTA checkout. The default namespace is `dev`; use `--namespace` to select another instance. These deployments are for development and testing. For a site deployment, see [Operations](../../../ops/index.md).
 
 !!! warning "Replacing an instance"
-    `cta-dev deploy`, `up`, and `all` replace the managed deployment and reset its unprotected catalogue and scheduler. Combined commands start deleting the old deployment while the build runs, before the build has succeeded. Preserve logs, core dumps, and other evidence before invoking them.
+    `cta-dev deploy`, `up`, and `all` replace the managed deployment. Combined commands start deleting the old deployment while the build runs, before the build has succeeded. Preserve logs, core dumps, and other evidence before invoking them.
 
 ### Deploy existing images
 
@@ -166,7 +166,7 @@ Selecting an external connection in CTA values does not disable local provisioni
 The dCache and local telemetry options add their own infrastructure presets.
 
 Presets are grouped under `presets/infra/`, `presets/cta/`, and `presets/eos/`.
-Compose `cta/scheduler/postgres.yaml` before `cta/scheduler/postgres-external.yaml`, and common stress settings before PostgreSQL stress tuning.
+Apply common stress settings before PostgreSQL stress tuning.
 Explicit EOS/dCache image options take precedence over values files.
 
 ### CI chart responsibilities
@@ -190,8 +190,8 @@ The tools chart groups workloads under `admin`, `client`, `reset`, and `liquibas
 Admin and client workloads share `image` settings and `global.image` overrides; Liquibase uses `liquibase.image`.
 
 During bootstrap, catalogue and scheduler reset Jobs run concurrently and must succeed before CTA services start.
-`cta-dev` resets unprotected connections through `reset.allUnprotected`.
-When invoking `create_instance.sh` directly, request resets with `--reset-unprotected`, `--reset-catalogue`, or `--reset-scheduler`.
+When invoking `create_instance.sh` directly, request resets with `--reset-catalogue` or `--reset-scheduler`.
+No resets are requested by default; explicit requests apply equally to local and external connections.
 Inspect a reset with `kubectl -n <namespace> logs job/cta-tools-reset-catalogue` or `job/cta-tools-reset-scheduler`.
 
 Bootstrap Jobs run once; their logs remain available until Job deletion.
@@ -202,41 +202,33 @@ kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
   cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
 ```
 
-### Protected connections
-
-Set `global.catalogue.protected: true` or `global.scheduler.protected: true` in CTA values to preserve that connection during bootstrap.
-`--protected` sets both; use it when both connections are already initialized.
-Protection does not make CTA read-only: running services and manually invoked commands can change database state.
-System tests do not consult these flags; see [Lifecycle and cleanup](../testing/system-tests.md#lifecycle-and-cleanup).
-For an explicit bootstrap reset, pass `--allow-destructive` together with `--reset-catalogue` or `--reset-scheduler` to `create_instance.sh`.
-Direct Helm use requires `allowDestructive=true` for protected resets or Liquibase.
-Automatic bootstrap resets still skip protected connections, even with this permission.
-
 ### Connect to an external database
 
 For a walkthrough using your own catalogue and PostgreSQL scheduler databases, see [Testing with External Databases](external-databases.md).
-It covers connection files, infrastructure overrides and protected deployments.
+It covers connection Secrets, local provisioning and explicit resets through `create_instance.sh`.
 
 ### Runner connection Secrets
 
-The deployment script copies these Secrets from `default` into the deployment namespace when present:
+Runner-provided connection Secrets are selected explicitly when invoking `create_instance.sh`:
 
-| Connection | Secret | Required files |
+| Connection | Option | Required files |
 | --- | --- | --- |
-| Oracle catalogue | `cta-oracle-catalogue-connection-string` | `cta-catalogue.conf` |
-| External PostgreSQL scheduler | `cta-stress-scheduler-connection-string` | `cta-scheduler.conf` |
-| Ceph scheduler | `cta-ceph-scheduler-connection-string` | `cta-scheduler.conf`, `ceph.conf`, `ceph.client.<id>.keyring` |
+| Oracle catalogue | `--catalogue-secret cta-oracle-catalogue-connection-string` | `cta-catalogue.conf` |
+| External PostgreSQL scheduler | `--scheduler-secret cta-stress-scheduler-connection-string` | `cta-scheduler.conf` |
+| Ceph scheduler | `--scheduler-secret cta-ceph-scheduler-connection-string` | `cta-scheduler.conf`, `ceph.conf`, `ceph.client.<id>.keyring` |
 
 Use the same names on each runner, with that runner's connection details.
 Keep credentials in connection files and Secrets rather than committed values files.
 Ceph uses `rados://<client>@<pool>:<namespace>`; the client must match the keyring identity.
-The PostgreSQL scheduler uses `presets/cta/scheduler/postgres.yaml` followed by `presets/cta/scheduler/postgres-external.yaml`; Ceph uses `presets/cta/scheduler/ceph.yaml`.
+Select the scheduler backend with `--cta-values presets/cta/scheduler/postgres.yaml` or `--cta-values presets/cta/scheduler/ceph.yaml`.
+Connection Secret options take precedence over Secret names in values files.
+They omit the corresponding default local provisioning; explicit `--infra-values` files remain caller-controlled.
+CI requests `--reset-catalogue --reset-scheduler` to initialize both selected connections.
 
-For other connections, `global.catalogue.existingSecret` and `global.scheduler.existingSecret` select Secrets containing the corresponding CTA connection files.
-Create them in `default` and pass repeatable `--copy-secret <name>` options to `cta-dev deploy`, `up`, `debug`, or `all`.
-Requested Secrets must be readable before the previous deployment is deleted; they are copied under the same names into the new namespace.
-The deployment namespace cannot be `default` when using this option.
-Repeated names are copied only once, including names already in the built-in list.
+Create source Secrets in `default`; the script checks they are readable and copies them under the same names into the new namespace.
+Use repeatable `--copy-secret <name>` options for additional Secrets that do not select a connection.
+The deployment namespace cannot be `default` when copying Secrets.
+Repeated names are copied only once.
 Source Secrets remain in `default` after the deployment is removed.
 The infrastructure chart's `secretFiles` setting is only for ephemeral/fake CI credentials, which are also stored in Helm release values; do not use it for actual external resources.
 

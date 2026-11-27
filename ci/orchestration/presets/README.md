@@ -10,6 +10,8 @@ Use repeatable `--cta-values`, `--eos-values` and `--dcache-values` options.
 Defaults are applied first, then supplied files in command-line order.
 Supplying `--infra-values` files replaces the default local provisioning selection.
 Use `infra/external.yaml` when no local database or scheduler storage is needed.
+With `create_instance.sh`, `--catalogue-secret` and `--scheduler-secret` select and copy connection Secrets and omit the corresponding default provisioning.
+Explicit infrastructure presets control provisioning independently of these connection options.
 
 Compose the PostgreSQL scheduler preset before its external-connection override.
 Likewise, apply common stress settings before PostgreSQL stress tuning.

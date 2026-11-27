@@ -26,59 +26,42 @@ tests:
       - equal:
           path: spec.template.spec.restartPolicy
           value: Never
-  - it: bootstraps both unprotected connections
+  - it: resets only the explicitly requested external scheduler
     set:
-      reset.allUnprotected: true
-    asserts:
-      - hasDocuments:
-          count: 2
-  - it: bootstrap skips the protected catalogue
-    set:
-      reset.allUnprotected: true
-      global.catalogue.protected: true
+      reset.scheduler: true
+      global.scheduler.backend: postgres
+      global.scheduler.existingSecret: ci-scheduler
     asserts:
       - hasDocuments:
           count: 1
       - equal:
           path: metadata.name
           value: check-reset-scheduler
-  - it: bootstrap skips the protected scheduler
-    set:
-      reset.allUnprotected: true
-      global.scheduler.protected: true
-    asserts:
-      - hasDocuments:
-          count: 1
       - equal:
-          path: metadata.name
-          value: check-reset-catalogue
-  - it: bootstrap leaves both protected connections untouched
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: ci-scheduler
+  - it: resets the explicitly requested external catalogue
     set:
-      reset.allUnprotected: true
-      global.catalogue.protected: true
-      global.scheduler.protected: true
-    asserts:
-      - hasDocuments:
-          count: 0
-
-  - it: permission alone does not reset protected connections automatically
-    set:
-      allowDestructive: true
-      reset.allUnprotected: true
-      global.catalogue.protected: true
-      global.scheduler.protected: true
-    asserts:
-      - hasDocuments:
-          count: 0
-  - it: explicit permission enables only the requested protected reset
-    set:
-      allowDestructive: true
       reset.catalogue: true
-      global.catalogue.protected: true
-      global.scheduler.protected: true
+      global.catalogue.existingSecret: ci-catalogue
     asserts:
       - hasDocuments:
           count: 1
       - equal:
-          path: metadata.name
-          value: check-reset-catalogue
+          path: spec.template.spec.volumes[1].secret.secretName
+          value: ci-catalogue
+  - it: resets both connections when explicitly requested
+    set:
+      reset.catalogue: true
+      reset.scheduler: true
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: selecting external connections does not request resets
+    set:
+      global.catalogue.existingSecret: ci-catalogue
+      global.scheduler.existingSecret: ci-scheduler
+      global.scheduler.backend: postgres
+    asserts:
+      - hasDocuments:
+          count: 0

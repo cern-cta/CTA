@@ -42,6 +42,7 @@ spec:
   - | # Which scheduler config to use
     if [[ "$SCHEDULER_TYPE" == "objectstore" ]]; then
       SCHEDULER_CONFIG=presets/cta/scheduler/ceph.yaml
+      CTA_ARGS+=(--scheduler-secret cta-ceph-scheduler-connection-string)
     else
       SCHEDULER_CONFIG=presets/cta/scheduler/postgres.yaml
       INFRA_ARGS+=(--infra-values presets/infra/scheduler-postgres.yaml)
@@ -49,6 +50,7 @@ spec:
   - | # Which catalogue config to use
     if $ENABLE_ORACLE_SUPPORT; then
       CATALOGUE_CONFIG=presets/cta/catalogue/oracle.yaml
+      CTA_ARGS+=(--catalogue-secret cta-oracle-catalogue-connection-string)
     else
       CATALOGUE_CONFIG=presets/cta/catalogue/postgres.yaml
       INFRA_ARGS+=(--infra-values presets/infra/catalogue-postgres.yaml)
@@ -126,7 +128,7 @@ spec:
     - |
       ./create_instance.sh \
         --namespace ${NAMESPACE} \
-        --reset-unprotected \
+        --reset-catalogue --reset-scheduler \
         --cta-image-tag ${IMAGE_TAG} \
         --eos-values presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml \
         --cta-values "${CATALOGUE_CONFIG}" \
@@ -362,7 +364,7 @@ stress-test:
     - |
       STRESS_ARGS=(--cta-values presets/cta/tests/stress.yaml)
       if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
-        CTA_ARGS+=(--cta-values presets/cta/scheduler/postgres-external.yaml)
+        CTA_ARGS+=(--scheduler-secret cta-stress-scheduler-connection-string)
         INFRA_ARGS=(--infra-values presets/infra/external.yaml)
         if ! $ENABLE_ORACLE_SUPPORT; then
           INFRA_ARGS+=(--infra-values presets/infra/catalogue-postgres.yaml)
@@ -378,7 +380,7 @@ stress-test:
     - |
       ./create_instance.sh \
         --namespace ${NAMESPACE} \
-        --reset-unprotected \
+        --reset-catalogue --reset-scheduler \
         --telemetry central \
         --cta-image-tag ${IMAGE_TAG} \
         --eos-values presets/eos/stress.yaml \
