@@ -273,14 +273,27 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
     }
     sqlpart += piece;
   }
-  /* For Repack, when we report success this query handles the check of all
-   * other replica rows/job with the same archive_file_id
-   * which needed to be archived too. If all the rows with the same archive_file_id
-   * are in AJS_ToReportToRepackForSuccess except the one being currently updated,
-   * then update all of them to ReadyForDeletion. This will signal the next step
-   * that the source file can be deleted from disk otherwise it updates the status
-   * just to AJS_ToReportToRepackForSuccess. If the required update status is anything
-   * else than AJS_ToReportToRepackForSuccess it just updates to that status.
+  /* For Repack, when we report success this query handles the check of all other replica
+   * rows/jobs with the same (REPACK_REQUEST_ID, ARCHIVE_FILE_ID) which needed to be archived too.
+   * If all the rows in that group are in AJS_ToReportToRepackForSuccess except the one(s) being
+   * currently updated, then update all of them to ReadyForDeletion. This signals the next step
+   * that the source file can be deleted from disk; otherwise it updates the status just to
+   * AJS_ToReportToRepackForSuccess.
+   *
+   * The group is (REPACK_REQUEST_ID, ARCHIVE_FILE_ID), not ARCHIVE_FILE_ID alone: the same file
+   * can legitimately be in two repack requests at once - two tapes each holding one of its
+   * copies, both being repacked - and those rows are not siblings of each other. Matching on bare
+   * ARCHIVE_FILE_ID would let one request's success touch the other's rows.
+   *
+   * The final UPDATE's WHERE is deliberately asymmetric between the complete and incomplete
+   * cases. When the group is NOT yet complete, only the literal target row(s) (aj2.JOB_ID =
+   * tsm.JOB_ID) are touched, parking them at AJS_ToReportToRepackForSuccess - a sibling still
+   * being written (STATUS still AJS_ToTransferForRepack, actively owned by a live mount session on
+   * a different drive) must be left untouched here, or this UPDATE would mark it successful
+   * before its own write ever finishes, matched by nothing but sharing the same group key. Only
+   * once the group IS complete (rfd.REPACK_REQUEST_ID IS NOT NULL) does the WHERE widen to every
+   * row sharing the group key, because that is the one moment every sibling's row needs to move to
+   * ReadyForDeletion together, in this one statement.
    */
   std::string sql = R"SQL(
   WITH updated_single_copy_jobs AS (
@@ -291,7 +304,7 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
   sql += R"SQL(
   ),
   target_success_multicopy AS (
-      SELECT JOB_ID, ARCHIVE_FILE_ID, STATUS, REQUEST_JOB_COUNT
+      SELECT JOB_ID, REPACK_REQUEST_ID, ARCHIVE_FILE_ID, STATUS, REQUEST_JOB_COUNT
       FROM REPACK_ARCHIVE_ACTIVE_QUEUE rscj2
       WHERE rscj2.REQUEST_JOB_COUNT > 1 AND rscj2.JOB_ID IN (
   )SQL";
@@ -299,31 +312,33 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
   sql += R"SQL( )
   ),
   ready_for_deletion AS (
-    SELECT combined.ARCHIVE_FILE_ID
+    SELECT combined.REPACK_REQUEST_ID, combined.ARCHIVE_FILE_ID
     FROM (
-      SELECT t.JOB_ID, t.ARCHIVE_FILE_ID, t.STATUS, t.REQUEST_JOB_COUNT
+      SELECT t.JOB_ID, t.REPACK_REQUEST_ID, t.ARCHIVE_FILE_ID, t.STATUS, t.REQUEST_JOB_COUNT
       FROM target_success_multicopy t
 
       UNION ALL
 
-      SELECT aj.JOB_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
+      SELECT aj.JOB_ID, aj.REPACK_REQUEST_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
        FROM REPACK_ARCHIVE_ACTIVE_QUEUE aj
-       JOIN target_success_multicopy t USING (ARCHIVE_FILE_ID)
+       JOIN target_success_multicopy t USING (REPACK_REQUEST_ID, ARCHIVE_FILE_ID)
        WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
      ) AS combined
-     GROUP BY combined.ARCHIVE_FILE_ID
+     GROUP BY combined.REPACK_REQUEST_ID, combined.ARCHIVE_FILE_ID
      HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
    )
   UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE aj2
   SET STATUS = CASE
-      WHEN rfd.ARCHIVE_FILE_ID IS NOT NULL
+      WHEN rfd.REPACK_REQUEST_ID IS NOT NULL
         THEN :STATUS_READY_FOR_DELETION2::ARCHIVE_JOB_STATUS
       ELSE :STATUS_SUCCESS::ARCHIVE_JOB_STATUS
   END
   FROM target_success_multicopy tsm
         LEFT JOIN ready_for_deletion rfd
-            ON rfd.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
-  WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID;
+            ON rfd.REPACK_REQUEST_ID = tsm.REPACK_REQUEST_ID AND rfd.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
+  WHERE aj2.REPACK_REQUEST_ID = tsm.REPACK_REQUEST_ID
+    AND aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
+    AND (aj2.JOB_ID = tsm.JOB_ID OR rfd.REPACK_REQUEST_ID IS NOT NULL);
   )SQL";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));

@@ -1164,6 +1164,130 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureRecoversMultiCopyC
   ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
 }
 
+// Regression test for updateRepackJobSuccess() settling a REQUEST_JOB_COUNT > 1 group's final
+// UPDATE on bare ARCHIVE_FILE_ID with no STATUS guard on the row being touched. Unlike
+// repackArchiveBookkeepingReportFailureRecoversMultiCopyCorrectly above - where copy 2 is still
+// sitting in REPACK_ARCHIVE_PENDING_QUEUE (a different table) when copy 1 settles, so the bug
+// can't reach it - this dispatches BOTH copies into REPACK_ARCHIVE_ACTIVE_QUEUE first, so copy 2
+// is genuinely in flight (AJS_ToTransferForRepack) while copy 1 settles. Before the fix, copy 1's
+// settlement would match copy 2 purely on shared ARCHIVE_FILE_ID and mark it
+// AJS_ToReportToRepackForSuccess before it had actually finished transferring.
+TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureDoesNotTouchInFlightSibling) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-REPACK-INFLIGHT";
+  const std::string tapePoolA = "repackTapePoolInFlightA";
+  const std::string tapePoolB = "repackTapePoolInFlightB";
+  auto mountPolicy = makeMountPolicy(1000);
+  SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                      "/repack/buffer",
+                                                      common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+                                                      mountPolicy,
+                                                      false,
+                                                      10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  constexpr uint64_t archiveFileId = 990005;
+  constexpr uint64_t sizeInBytes = 11000;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolA,
+                                  sizeInBytes,
+                                  /*totalRetries=*/0,
+                                  /*maxTotalRetries=*/2,
+                                  /*totalReportRetries=*/0,
+                                  /*maxReportRetries=*/2,
+                                  /*copyNb=*/1,
+                                  /*requestJobCount=*/2);
+    insertRepackArchivePendingJob(conn,
+                                  repackRequestId,
+                                  archiveFileId,
+                                  tapePoolB,
+                                  sizeInBytes,
+                                  /*totalRetries=*/0,
+                                  /*maxTotalRetries=*/2,
+                                  /*totalReportRetries=*/0,
+                                  /*maxReportRetries=*/2,
+                                  /*copyNb=*/2,
+                                  /*requestJobCount=*/2);
+  }
+
+  // Both copies dispatched into REPACK_ARCHIVE_ACTIVE_QUEUE before either settles - copy 2 is
+  // genuinely in flight, not merely queued, when copy 1's success is processed below.
+  auto mountA = createRepackArchiveMount(db, lc, tapePoolA, "V-INFLIGHT-DESTA");
+  auto jobsA = mountA->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsA.size());
+  auto mountB = createRepackArchiveMount(db, lc, tapePoolB, "V-INFLIGHT-DESTB");
+  auto jobsB = mountB->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobsB.size());
+
+  // Copy 1 transfers and its catalogue update succeeds, but the scheduler-DB bookkeeping write
+  // fails - recovered the same way as the test above.
+  jobsA.front()->failReport("simulated scheduler bookkeeping write failure for copy 1", lc);
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(
+      "SELECT COPY_NB, STATUS FROM REPACK_ARCHIVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY COPY_NB");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForSuccess),
+              rset.columnString("STATUS"));
+
+    // Copy 2 must be untouched: still actively transferring, not jumped to success just because
+    // it shares copy 1's ARCHIVE_FILE_ID.
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack), rset.columnString("STATUS"));
+
+    ASSERT_FALSE(rset.next());
+  }
+  {
+    // Nothing credited or deleted yet - the request is still incomplete.
+    const auto repackInfoMidway = db.getRepackInfo(vid);
+    ASSERT_EQ(0u, repackInfoMidway.archivedFiles);
+    ASSERT_EQ(0u, repackInfoMidway.archivedBytes);
+  }
+
+  // Now copy 2 also transfers and settles the same way - this is the last copy, so the recovery
+  // must complete the whole request.
+  jobsB.front()->failReport("simulated scheduler bookkeeping write failure for copy 2", lc);
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(
+      "SELECT COPY_NB, STATUS FROM REPACK_ARCHIVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID "
+      "ORDER BY COPY_NB");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    for (int expectedCopyNb : {1, 2}) {
+      ASSERT_TRUE(rset.next());
+      ASSERT_EQ(static_cast<uint64_t>(expectedCopyNb), rset.columnUint64("COPY_NB"));
+      ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion), rset.columnString("STATUS"));
+    }
+    ASSERT_FALSE(rset.next());
+  }
+
+  db.getNextSuccessfulArchiveRepackReportBatch(lc);
+
+  const auto repackInfo = db.getRepackInfo(vid);
+  ASSERT_EQ(2u, repackInfo.archivedFiles);
+  ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
+}
+
 TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
   using namespace cta;
 
