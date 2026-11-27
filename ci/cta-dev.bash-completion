@@ -56,12 +56,14 @@ _ctadev() {
         --dcache-image-repository
         --dcache-image-tag
         --dcache-values
-        --protected
+        --catalogue-secret
+        --scheduler-secret
+        --reset-catalogue
+        --reset-scheduler
         --copy-secret
         --infra-values
         --cta-values
         --eos-values
-        --spawn-options
         --namespace
     "
 
@@ -97,7 +99,7 @@ _ctadev() {
             COMPREPLY=( $(compgen -W "$(jq -r '.platforms | keys[]' "${project_root}/project.json")" -- "$cur") )
             return
             ;;
-        --namespace|--copy-secret)
+        --namespace|--copy-secret|--catalogue-secret|--scheduler-secret)
             return
             ;;
         --cta-image-registry)
@@ -106,7 +108,7 @@ _ctadev() {
                 -- "$cur") )
             return
             ;;
-        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--dcache-image-repository|--dcache-image-tag|--spawn-options)
+        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--dcache-image-repository|--dcache-image-tag)
             return
             ;;
         --infra-values|--cta-values|--eos-values|--dcache-values)

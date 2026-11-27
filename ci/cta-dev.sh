@@ -44,7 +44,6 @@ readonly ci_image_registry
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type=""
-protected=false
 oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
@@ -72,6 +71,10 @@ enable_debug_image=false
 
 # Deploy
 cta_image_registry=""
+catalogue_secret=""
+scheduler_secret=""
+reset_catalogue=false
+reset_scheduler=false
 dcache_enabled=false
 dcache_image_repository=""
 dcache_image_tag=""
@@ -83,7 +86,7 @@ eos_image_tag=""
 infra_config=()
 cta_overrides=()
 eos_values=()
-extra_spawn_options=()
+extra_deployment_options=()
 
 stage_names=()
 stage_durations=()
@@ -337,7 +340,10 @@ Usage:
 Options:
       --namespace <ns>              Kubernetes namespace.
                                     Defaults to dev.
-      --protected                   Skip automatic catalogue and scheduler resets during deployment.
+      --catalogue-secret <name>     Use a catalogue connection Secret from default.
+      --scheduler-secret <name>     Use a scheduler connection Secret from default.
+      --reset-catalogue             Reset the catalogue even when a connection Secret is supplied.
+      --reset-scheduler             Reset the scheduler even when a connection Secret is supplied.
       --copy-secret <name>          Copy a Secret from default; repeatable, required to exist.
       --infra-values <path>         Infrastructure values; repeatable, replaces default provisioning.
       --cta-values <path>           Final consumer values override; repeatable.
@@ -355,9 +361,12 @@ Options:
       --dcache-image-repository <r> dCache image repository.
       --dcache-image-tag <tag>      dCache image tag.
       --dcache-values <path>        dCache values override; repeatable.
-      --spawn-options <options>     Additional deployment options.
       --with-dcache                 Deploy dCache instead of EOS.
       --telemetry <mode>            none (default), local or central.
+
+Connections without a Secret option are provisioned locally and reset automatically.
+Secret-selected connections are reset only when explicitly requested.
+Explicit --infra-values files control provisioning independently of these defaults.
 
 $(global_options_help)
 
@@ -442,7 +451,6 @@ require_command() {
 # Parse and validate command options, forwarding test arguments to pytest.
 parse_options() {
   local command="$1"
-  local -a spawn_options
   # Only needed to reject the mutually exclusive version and image tag options.
   local cta_version_provided=false
   local cta_image_tag_provided=false
@@ -613,13 +621,26 @@ parse_options() {
         dcache_image_repository="$2"
         shift
         ;;
-      --protected)
+      --catalogue-secret|--scheduler-secret)
         require_command "$1" "$command" deploy up debug all
-        protected=true
+        [[ -n ${2:-} && ${#2} -le 253 && $2 =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] ||
+          unsupported_argument "$1 requires a Kubernetes Secret name"
+        case "$1" in
+          --catalogue-secret) catalogue_secret=$2 ;;
+          --scheduler-secret) scheduler_secret=$2 ;;
+        esac
+        shift
+        ;;
+      --reset-catalogue|--reset-scheduler)
+        require_command "$1" "$command" deploy up debug all
+        case "$1" in
+          --reset-catalogue) reset_catalogue=true ;;
+          --reset-scheduler) reset_scheduler=true ;;
+        esac
         ;;
       --copy-secret)
         require_command "$1" "$command" deploy up debug all
-        extra_spawn_options+=(--copy-secret "$2")
+        extra_deployment_options+=(--copy-secret "$2")
         shift
         ;;
       --infra-values)
@@ -635,13 +656,6 @@ parse_options() {
       --eos-values)
         require_command "$1" "$command" deploy up debug all
         eos_values+=(--eos-values "$2")
-        shift
-        ;;
-      --spawn-options)
-        require_command "$1" "$command" deploy up debug all
-        spawn_options=()
-        read -ra spawn_options <<< "$2"
-        extra_spawn_options+=("${spawn_options[@]}")
         shift
         ;;
       --namespace)
@@ -1280,33 +1294,42 @@ finish_namespace_deletion() {
 deploy_cta() {
   validate_deployment_environment
 
-  [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
-  [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
-  [[ -n $dcache_image_repository ]] && extra_spawn_options+=(--dcache-image-repository "$dcache_image_repository")
-  [[ -n $dcache_image_tag ]] && extra_spawn_options+=(--dcache-image-tag "$dcache_image_tag")
-  extra_spawn_options+=("${eos_values[@]}" "${dcache_values[@]}" --telemetry "$telemetry")
+  [[ -n $eos_image_repository ]] && extra_deployment_options+=(--eos-image-repository "$eos_image_repository")
+  [[ -n $eos_image_tag ]] && extra_deployment_options+=(--eos-image-tag "$eos_image_tag")
+  [[ -n $dcache_image_repository ]] && extra_deployment_options+=(--dcache-image-repository "$dcache_image_repository")
+  [[ -n $dcache_image_tag ]] && extra_deployment_options+=(--dcache-image-tag "$dcache_image_tag")
+  extra_deployment_options+=("${eos_values[@]}" "${dcache_values[@]}" --telemetry "$telemetry")
   # Match the build-selected scheduler; explicit consumer overlays follow this default.
   if [[ $scheduler_type == pgsched ]]; then
-    extra_spawn_options+=(--cta-values presets/cta/scheduler/postgres.yaml)
+    extra_deployment_options+=(--cta-values presets/cta/scheduler/postgres.yaml)
   fi
-  # Local development provisions its catalogue and build-selected scheduler by default.
+  # Provision only connections that were not supplied through Secrets.
   if [[ ${#infra_config[@]} == 0 ]]; then
-    infra_config=(--infra-values presets/infra/catalogue-postgres.yaml)
-    if [[ $scheduler_type == pgsched ]]; then
-      infra_config+=(--infra-values presets/infra/scheduler-postgres.yaml)
-    else
-      infra_config+=(--infra-values presets/infra/scheduler-vfs.yaml)
+    [[ -n $catalogue_secret ]] || infra_config+=(--infra-values presets/infra/catalogue-postgres.yaml)
+    if [[ -z $scheduler_secret ]]; then
+      if [[ $scheduler_type == pgsched ]]; then
+        infra_config+=(--infra-values presets/infra/scheduler-postgres.yaml)
+      else
+        infra_config+=(--infra-values presets/infra/scheduler-vfs.yaml)
+      fi
     fi
   fi
-  extra_spawn_options+=("${infra_config[@]}" "${cta_overrides[@]}")
-  [[ $protected == false ]] || extra_spawn_options+=(--protected)
+  extra_deployment_options+=("${infra_config[@]}" "${cta_overrides[@]}")
+  [[ -z $catalogue_secret ]] || extra_deployment_options+=(--catalogue-secret "$catalogue_secret")
+  [[ -z $scheduler_secret ]] || extra_deployment_options+=(--scheduler-secret "$scheduler_secret")
+  # Local connections reset by default; Secret-selected connections require an explicit request.
+  if [[ -z $catalogue_secret || $reset_catalogue == true ]]; then
+    extra_deployment_options+=(--reset-catalogue)
+  fi
+  if [[ -z $scheduler_secret || $reset_scheduler == true ]]; then
+    extra_deployment_options+=(--reset-scheduler)
+  fi
   local deployment_args=( --namespace "${namespace}" \
     --cta-image-registry "${cta_image_registry}" \
     --cta-image-tag "${cta_image_tag}" \
     --eos-enabled "${eos_enabled}" \
     --dcache-enabled "${dcache_enabled}" \
-    --reset-unprotected \
-    "${extra_spawn_options[@]}")
+    "${extra_deployment_options[@]}")
 
   finish_namespace_deletion
 

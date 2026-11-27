@@ -163,6 +163,7 @@ cta-dev deploy \
 `--infra-values` replaces the default local database and scheduler-storage provisioning.
 Repeat it to combine infrastructure presets, or use `presets/infra/external.yaml` when neither connection needs local provisioning.
 Selecting an external connection in CTA values does not disable local provisioning by itself.
+Use the connection Secret options below to select an external connection and omit its default local provisioning and reset.
 The dCache and local telemetry options add their own infrastructure presets.
 
 Presets are grouped under `presets/infra/`, `presets/cta/`, and `presets/eos/`.
@@ -203,6 +204,23 @@ kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
 ```
 
 ### Connect to an external database
+
+Use `--catalogue-secret <name>` or `--scheduler-secret <name>` with `deploy`, `up`, `debug`, or `all`.
+The Secrets must exist in the `default` namespace; they are copied into the deployment namespace.
+These options select the connection and omit its default local provisioning and automatic reset.
+Connections without a Secret option are reset automatically; use `--reset-catalogue` or `--reset-scheduler` to explicitly reset a Secret-selected connection too.
+Explicit `--infra-values` files control provisioning independently; they do not change this reset policy.
+The scheduler backend follows `--scheduler-type`.
+
+```bash
+# Use an existing catalogue and initialize a local PostgreSQL scheduler.
+cta-dev deploy --scheduler-type pgsched --catalogue-secret external-catalogue
+
+# Explicitly reset both external connections for a disposable test instance.
+cta-dev deploy --scheduler-type pgsched \
+  --catalogue-secret ci-catalogue --scheduler-secret ci-scheduler \
+  --reset-catalogue --reset-scheduler
+```
 
 For a walkthrough using your own catalogue and PostgreSQL scheduler databases, see [Testing with External Databases](external-databases.md).
 It covers connection Secrets, local provisioning and explicit resets through `create_instance.sh`.
@@ -283,7 +301,7 @@ Local telemetry is part of `ci-infra` and uses only namespaced Kubernetes resour
 It includes workload/PVC state and host metrics, but not kubelet or per-container cAdvisor metrics.
 Central telemetry uses the configured external backend.
 
-`--spawn-options` forwards additional options to `create_instance.sh` when a dedicated `cta-dev` option is unavailable.
+For deployment options beyond those exposed by `cta-dev`, invoke `ci/orchestration/create_instance.sh` directly from `ci/orchestration/`.
 
 Use `--namespace` with deployment commands, including combined commands, to select another instance:
 

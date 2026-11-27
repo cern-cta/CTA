@@ -58,6 +58,85 @@ def arguments(tmp_path: Path, name: str) -> list[str]:
     return [line for line in (tmp_path / name).read_text().splitlines() if line]
 
 
+@pytest.fixture
+def invoke_dev(tmp_path: Path) -> Invocation:
+    # Exercise the wrapper and child together; replace only build/cluster operations.
+    wrapper = r"""
+source "$1/ci/cta-dev.sh"
+output="$2"
+child_harness="$3"
+shift 3
+load_cta_dev_env() { :; }
+validate_podman() { :; }
+validate_deployment_environment() { :; }
+start_namespace_deletion() { :; }
+finish_namespace_deletion() { :; }
+build_cta() { :; }
+images_cta() { :; }
+test_cta() { :; }
+print_header() { :; }
+./create_instance.sh() {
+  /bin/bash -c "$child_harness" test "$project_root/ci/orchestration/create_instance.sh" "$output" "$@"
+}
+main "$@"
+"""
+
+    def run(*args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(  # noqa: S603
+            ["/bin/bash", "-c", wrapper, "test", str(ROOT), str(tmp_path), HARNESS, *args],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    return run
+
+
+@pytest.mark.parametrize(("backend", "storage"), [("objectstore", "vfs"), ("pgsched", "postgres")])
+def test_dev_initializes_local_connections(invoke_dev: Invocation, tmp_path: Path, backend: str, storage: str) -> None:
+    result = invoke_dev("deploy", "--platform", "el9", "--scheduler-type", backend)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert arguments(tmp_path, "infra") == [
+        "--values",
+        "presets/infra/catalogue-postgres.yaml",
+        "--values",
+        f"presets/infra/scheduler-{storage}.yaml",
+    ]
+    assert arguments(tmp_path, "resets") == ["--set", "reset.catalogue=true", "--set", "reset.scheduler=true"]
+
+
+@pytest.mark.parametrize(
+    ("command", "external", "explicit_resets"),
+    [
+        ("deploy", ["catalogue"], []),
+        ("up", ["scheduler"], []),
+        ("debug", ["catalogue", "scheduler"], []),
+        ("all", ["catalogue", "scheduler"], ["catalogue"]),
+        ("deploy", ["catalogue", "scheduler"], ["scheduler"]),
+    ],
+)
+def test_dev_external_connection_reset_policy(
+    invoke_dev: Invocation, tmp_path: Path, command: str, external: list[str], explicit_resets: list[str]
+) -> None:
+    flags = [command, "--platform", "el9", "--scheduler-type", "pgsched"]
+    for connection in external:
+        flags.extend([f"--{connection}-secret", f"external-{connection}"])
+    flags.extend(f"--reset-{connection}" for connection in explicit_resets)
+    result = invoke_dev(*flags)
+    assert result.returncode == 0, result.stdout + result.stderr
+    for connection in ("catalogue", "scheduler"):
+        should_reset = connection not in external or connection in explicit_resets
+        assert f"reset.{connection}={str(should_reset).lower()}" in arguments(tmp_path, "resets")
+        assert (f"presets/infra/{connection}-postgres.yaml" in arguments(tmp_path, "infra")) is (
+            connection not in external
+        )
+        if connection in external:
+            assert f"external-{connection}" in arguments(tmp_path, "secrets")
+            assert f"global.{connection}.existingSecret=external-{connection}" in arguments(tmp_path, "overrides")
+    assert "presets/cta/scheduler/postgres.yaml" in arguments(tmp_path, "overrides")
+
+
 @pytest.mark.parametrize("catalogue", [False, True])
 @pytest.mark.parametrize("scheduler", [False, True])
 def test_connection_selection(invoke: Invocation, tmp_path: Path, catalogue: bool, scheduler: bool) -> None:
