@@ -6,6 +6,7 @@ import contextlib
 import json
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, Any
@@ -96,7 +97,14 @@ def _submit_repack_request(
     no_recall: bool = False,
     max_files_to_select: int | None = None,
     submit_only: bool = False,
+    on_submitted: Callable[[], None] | None = None,
 ) -> None:
+    """Submit a repack request and wait for it to complete.
+
+    on_submitted, if given, runs right after the repack request is submitted and before the
+    (possibly long, possibly timing-out) wait for completion below - so a caller that needs to
+    register cleanup for the just-submitted request can do so before anything that might raise.
+    """
     repack_timeout_secs = 120
 
     config_str = ", ".join(f"{k}={v}" for k, v in locals().items() if k != "cta_cli")
@@ -170,6 +178,9 @@ def _submit_repack_request(
         f"cta-admin repack add --mountpolicy {mount_policy_name} --vid {vid_to_repack} "
         f"--bufferurl root://{disk_instance_name}/{repack_buffer_dir} {repack_options_str}"
     )
+
+    if on_submitted is not None:
+        on_submitted()
 
     if submit_only:
         return
@@ -307,7 +318,13 @@ def _submit_repack_request(
     assert files_left_to_retrieve == 0
     assert files_left_to_archive == 0
     assert nb_archived_destination_files == nb_archived_files
-    assert nb_recycle_tape_files - user_provided_files == nb_files_to_retrieve
+    if add_copies_only:
+        # AddCopiesOnly never replaces the source tape file - it only adds a new tape file row for
+        # the missing copy - so no tape file is ever recycled here, no matter how many are
+        # retrieved and re-read to produce that new copy.
+        assert nb_recycle_tape_files == 0
+    else:
+        assert nb_recycle_tape_files - user_provided_files == nb_files_to_retrieve
 
     print(f"Repack request on VID {vid_to_repack} succeeded\n")
 
@@ -701,10 +718,12 @@ def test_repack_just_add_copies_with_missing_copy(
 
         cta_cli.exec(
             f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool "
-            f"{second_tape_pool} --comment 'ArchiveRoute2'"
+            f"{second_tape_pool} --archiveroutetype DEFAULT --comment 'ArchiveRoute2'"
         )
         cleanup.callback(
-            lambda: cta_cli.exec(f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2")
+            lambda: cta_cli.exec(
+                f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
+            )
         )
 
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
@@ -731,8 +750,8 @@ def test_repack_just_add_copies_with_missing_copy(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             add_copies_only=True,
+            on_submitted=lambda: cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack)),
         )
-        cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack))
 
         repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
         repack_request = repack_ls_json[0]
