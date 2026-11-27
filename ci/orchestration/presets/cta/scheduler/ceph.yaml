@@ -4,4 +4,4 @@
 global:
   scheduler:
     backend: ceph
-    existingSecret: cta-ceph-scheduler-conf
+    existingSecret: cta-ceph-scheduler-connection-string

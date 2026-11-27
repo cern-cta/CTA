@@ -30,7 +30,7 @@ CTA and infrastructure:
 Database initialization:
   -c, --catalogue-version <version>        Catalogue schema version (default: latest).
       --allow-destructive                  Allow explicitly requested resets of protected connections.
-      --protected                          Protect both connections from automatic resets and destructive tests.
+      --protected                          Protect both connections from automatic deployment resets.
       --reset-unprotected                  Reset only unprotected connections (development bootstrap).
       --validate-only                      Validate bootstrap values and requested Secrets without deploying.
       --reset-catalogue                    Reset catalogue content (default: disabled).
@@ -118,7 +118,8 @@ create_instance() {
   # Argument defaults
   # Copy available shared credentials and runner connections into the deployment namespace.
   local secrets=(reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials
-                 cta-oracle-catalogue-conf cta-ceph-scheduler-conf cta-stress-scheduler-conf)
+                 cta-oracle-catalogue-connection-string cta-ceph-scheduler-connection-string
+                 cta-stress-scheduler-connection-string)
   local copy_secrets=()
   local -A required_secrets=() copied_secrets=()
   # Chart defaults select the PostgreSQL catalogue and VFS scheduler connections.

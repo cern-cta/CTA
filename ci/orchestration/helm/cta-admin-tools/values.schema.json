@@ -126,7 +126,7 @@
             "protected": {
               "type": "boolean",
               "description":
-                "Skip automatic resets and test setup/teardown; destructive operations require explicit permission. Normal writes are allowed."
+                "Skip automatic bootstrap resets; explicit resets and Liquibase require allowDestructive. Normal writes are allowed."
             },
             "existingSecret": {
               "$ref": "#/definitions/resourceName",
@@ -144,7 +144,7 @@
             "protected": {
               "type": "boolean",
               "description":
-                "Skip automatic resets and test setup/teardown; destructive operations require explicit permission. Normal writes are allowed."
+                "Skip automatic bootstrap resets; explicit resets and Liquibase require allowDestructive. Normal writes are allowed."
             },
             "existingSecret": {
               "$ref": "#/definitions/resourceName",

@@ -3,4 +3,4 @@
 
 global:
   catalogue:
-    existingSecret: cta-oracle-catalogue-conf
+    existingSecret: cta-oracle-catalogue-connection-string

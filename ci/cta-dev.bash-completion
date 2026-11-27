@@ -141,7 +141,7 @@ _ctadev() {
 
         if [[ "$seen_test" == true && "$cur" == -* ]]; then
             mapfile -t COMPREPLY < <(compgen -W \
-                "--allow-destructive --setup --verification --teardown --teardown-first --lf --ff -k" -- "$cur")
+                "--setup --verification --teardown --teardown-first --lf --ff -k" -- "$cur")
             return
         fi
 

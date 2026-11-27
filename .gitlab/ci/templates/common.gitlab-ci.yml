@@ -76,7 +76,7 @@
     - changes:
         - "ci/orchestration/helm/**/*"
         - "ci/orchestration/presets/**/*"
-        - "ci/orchestration/check_charts.sh"
+        - "ci/checks/check_charts.sh"
         - ".gitlab-ci.yml"
         - ".gitlab/ci/{lint,tests}.gitlab-ci.yml"
         - ".gitlab/ci/templates/common.gitlab-ci.yml"

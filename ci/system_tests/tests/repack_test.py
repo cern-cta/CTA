@@ -1096,7 +1096,6 @@ def test_repack_pool_routing_multi_copy_all_repack_routes(
 
 
 # Keep this test for last - it adds new tapepools and archive routes
-@pytest.mark.destructive("catalogue")
 def test_repack_move_and_add_copies(
     cta_cli: CtaCliHost,
     disk_instance_name: str,

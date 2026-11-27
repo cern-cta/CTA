@@ -17,8 +17,8 @@ Use databases dedicated to this instance and ensure their tape, library and disk
 
 !!! warning "Protection is not read-only access"
 
-    The examples prevent automatic bootstrap resets and test setup/teardown.
-    Services, ordinary state-changing tests and manual commands can still modify database state.
+    The examples prevent automatic bootstrap resets.
+    Services, system tests and manual commands can still modify or delete database state.
     A Kubernetes namespace does not isolate databases shared with another CTA instance.
 
 ## Configure the connections
@@ -90,13 +90,13 @@ Check the workloads, protection policy and catalogue connection:
 
 ```bash
 kubectl -n external-test get pods
-kubectl -n external-test get configmap cta-connection-protection -o yaml
+helm -n external-test get values cta-tools
 kubectl -n external-test exec deployment/cta-tools-admin -c admin -- \
   cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
 kubectl -n external-test exec cta-cli-0 -- cta-admin version
 ```
 
-Both protection entries should be `"true"`.
+`global.catalogue.protected` and `global.scheduler.protected` should both be `true`.
 Schema verification checks catalogue compatibility; `cta-admin version` checks administrative frontend communication.
 For logs and troubleshooting, see [Working with Development Pods](development-pods.md).
 
@@ -115,24 +115,10 @@ Their state must still be compatible, particularly when connecting an existing s
 
 ## Run automated tests
 
-Keep protection enabled when testing against an existing database or production clone:
-
-```bash
-./ci/cta-dev.sh test --namespace external-test client
-```
-
-Automatic setup and teardown are skipped; selected tests and verification still run.
-The environment must already contain the resources expected by the selected tests.
-To authorize a schema migration test explicitly:
-
-```bash
-./ci/cta-dev.sh test --namespace external-test catalogue_schema_update --allow-destructive
-```
-
-The migration suite expects the catalogue's starting version to match the oldest supported version and performs update and rollback.
-Permission does not enable automatic teardown or remove protection.
-Request destructive cleanup separately with `test --namespace external-test teardown --allow-destructive` only when you intend to discard the catalogue contents.
-See [System Tests](../testing/system-tests.md#protected-and-external-connections) for selection and lifecycle options.
+Use disposable databases for system tests.
+Deployment protection does not apply to the test runner: `cta-dev test` and the test phase of `cta-dev all` include setup and teardown, which can delete existing state.
+See [Lifecycle and cleanup](../testing/system-tests.md#lifecycle-and-cleanup) for the phases and [Run pytest directly](../testing/system-tests.md#run-pytest-directly) for explicit selection.
+Omitting setup and teardown does not prevent the selected tests or their fixtures from modifying existing data.
 
 ## Clean up
 

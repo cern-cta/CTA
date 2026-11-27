@@ -19,7 +19,7 @@ esac
 [ "$#" -le 2 ] || { echo "Too many arguments" >&2; exit 2; }
 
 # Resolve output paths before switching to the temporary chart copy.
-source_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+source_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/../orchestration" && pwd)
 output=${2:-"$source_dir/../../build/helm-checks/$mode"}
 mkdir -p "$output"
 output=$(CDPATH='' cd -- "$output" && pwd)

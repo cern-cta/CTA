@@ -22,7 +22,7 @@ For deployment options and replacement behaviour, see [cta-dev Reference](../too
 
 ## Lifecycle and cleanup
 
-For an unprotected instance, `cta-dev` includes:
+When running a test suite, `cta-dev` includes:
 
 ```text
 setup -> selected suite -> verification -> teardown
@@ -30,7 +30,9 @@ setup -> selected suite -> verification -> teardown
 
 Setup prepares the catalogue, tapes, and disk-system resources.
 Verification checks for unexpected errors, core dumps, and restarts.
-Teardown cleans test resources.
+Teardown drops and recreates the catalogue and removes test directories.
+Deployment protection flags do not change this test lifecycle.
+Use disposable test environments; for explicit phase selection, see [Run pytest directly](#run-pytest-directly).
 
 The configuration in `ci/system_tests/pytest.ini` stops execution at the first failure (`-x`). Verification and teardown are ordinary tests in this sequence, so they may not run after a failure. Inspect the retained state before cleaning it up.
 
@@ -50,25 +52,6 @@ cta-dev test client --teardown-first
 ```
 
 On a normal run, this moves teardown before setup; it does not add a second teardown at the end. Run `cta-dev test teardown` afterwards if you need final cleanup.
-
-## Protected and external connections
-
-On a protected instance, `cta-dev test` runs the selected suite and verification without automatic setup or teardown.
-The same applies to `cta-dev all` after deployment.
-Tests can modify state and must find any resources their fixtures require already configured.
-Remote environments selected with `--connection-config` are treated as protected by default.
-
-Resets, schema migrations, bulk cleanup and destructive reconfiguration require explicit permission when they target a protected connection:
-
-```bash
-cta-dev test catalogue_schema_update --allow-destructive
-```
-
-`--allow-destructive` authorizes the selected tests only; it does not select setup or teardown.
-To discard catalogue contents explicitly, run `cta-dev test teardown --allow-destructive`.
-You can also request lifecycle steps with `--setup`, `--teardown`, or `--teardown-first`; destructive steps require the same permission.
-The runner checks the final selection before fixtures execute and lists any blocked tests.
-An unreadable or missing namespace protection policy blocks execution even with `--allow-destructive`.
 
 ## Service lifecycle tests
 
@@ -134,8 +117,6 @@ Unlike `cta-dev test client`, a direct invocation requires explicit lifecycle fl
 
 | Option | Purpose |
 | --- | --- |
-| `--auto-lifecycle` | Include verification, plus setup/teardown only for unprotected instances. |
-| `--allow-destructive` | Authorize selected destructive tests targeting protected connections. |
 | `--setup` | Include preparation before the selected tests. |
 | `--verification` | Include checks after the selected tests. |
 | `--teardown` | Include cleanup at the end. |
@@ -149,9 +130,6 @@ For connection-file structure, see `TestEnv.from_config` in `helpers/test_env.py
 
 Keep suite files directly under `ci/system_tests/tests/`, named `<suite>_test.py`, so `cta-dev` can discover them. Put supporting code and data in subdirectories. The directory map is in `ci/system_tests/README.md`.
 
-- Mark tests that reset schemas, delete existing state in bulk, or destructively reconfigure shared resources with `@pytest.mark.destructive("catalogue")` or `@pytest.mark.destructive("scheduler")`.
-  Omit arguments to target both connections.
-  Include effects from fixtures and cleanup in this classification; ordinary writes and cleanup of test-owned resources do not require the marker.
 - Test one behaviour at a time. Prefer independent, repeatable tests that create their own resources and do not modify objects owned by other tests.
 - Where a workflow shares expensive setup, keep ordering dependencies explicit and check the state the test relies on. Reordering or filtering such tests can break the flow.
 - Clean up resources within the test or its fixtures where practical; otherwise, cover them in teardown. Account for interrupted runs when preparing the next run.

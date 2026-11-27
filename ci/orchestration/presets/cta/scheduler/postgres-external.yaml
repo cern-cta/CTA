@@ -3,4 +3,4 @@
 
 global:
   scheduler:
-    existingSecret: cta-stress-scheduler-conf
+    existingSecret: cta-stress-scheduler-connection-string

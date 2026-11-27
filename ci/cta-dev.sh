@@ -338,7 +338,7 @@ Usage:
 Options:
       --namespace <ns>              Kubernetes namespace.
                                     Defaults to dev.
-      --protected                   Skip automatic resets and require permission for destructive tests.
+      --protected                   Skip automatic catalogue and scheduler resets during deployment.
       --copy-secret <name>          Copy a Secret from default; repeatable, required to exist.
       --infra-values <path>         Infrastructure values; repeatable, replaces default provisioning.
       --cta-values <path>           Final consumer values override; repeatable.
@@ -397,9 +397,7 @@ Examples:
   $(basename "$0") test client --lf # Run only the failed tests again
   $(basename "$0") test client -k test_simple_archive_retrieve
 
-Verification is included by default; automatic setup and teardown are skipped for protected connections.
-Use --allow-destructive to permit explicitly selected destructive tests.
-It does not enable automatic setup or teardown.
+Setup, verification and teardown are included when running a test suite.
 Any additional arguments are passed directly to pytest.
 For additional pytest help, navigate to ci/system_tests and run pytest --help
 
@@ -1361,7 +1359,7 @@ test_cta() {
       ;;
     *)
       test_path="tests/${selected_test}_test.py"
-      lifecycle_options=(--auto-lifecycle)
+      lifecycle_options=(--setup --verification --teardown)
       ;;
   esac
 

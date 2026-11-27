@@ -3,7 +3,6 @@
 
 suite: Connection protection
 templates:
-  - templates/connection-protection.yaml
   - templates/database-reset-jobs.yaml
   - templates/liquibase-pod.yaml
 tests:
@@ -31,18 +30,7 @@ tests:
       - failedTemplate:
           errorMessage: Cannot run Liquibase against a protected catalogue connection
         template: templates/liquibase-pod.yaml
-  - it: publishes the connection protection policy for other clients
-    set:
-      global.catalogue.protected: true
-    asserts:
-      - template: templates/connection-protection.yaml
-        equal:
-          path: data
-          value:
-            catalogue: 'true'
-            scheduler: 'false'
-
-  - it: permits explicit protected resets without removing protection
+  - it: permits explicit protected resets with permission
     set:
       allowDestructive: true
       global.catalogue.protected: true
@@ -50,19 +38,15 @@ tests:
       reset.catalogue: true
       reset.scheduler: true
     asserts:
-      - template: templates/connection-protection.yaml
-        equal:
-          path: data
-          value:
-            catalogue: 'true'
-            scheduler: 'true'
+      - template: templates/database-reset-jobs.yaml
+        hasDocuments:
+          count: 2
   - it: permits Liquibase on a protected catalogue with explicit permission
     set:
       allowDestructive: true
       global.catalogue.protected: true
       liquibase.enabled: true
     asserts:
-      - template: templates/connection-protection.yaml
-        equal:
-          path: data.catalogue
-          value: 'true'
+      - template: templates/liquibase-pod.yaml
+        hasDocuments:
+          count: 1

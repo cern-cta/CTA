@@ -1,5 +1,4 @@
 # SPDX-FileCopyrightText: 2025 CERN
-# SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 image:
@@ -45,11 +44,11 @@ global:
 
   catalogue:
     protected: false
-    existingSecret: cta-catalogue-conf
+    existingSecret: cta-catalogue-connection-string
   scheduler:
     protected: false
     backend: vfs
-    existingSecret: cta-scheduler-conf
+    existingSecret: cta-scheduler-connection-string
     existingClaim: scheduler-vfs-pvc
 
 # Starts a persistent tools pod; migrations run only when explicitly invoked.

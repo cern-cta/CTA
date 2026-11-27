@@ -206,12 +206,8 @@ kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
 
 Set `global.catalogue.protected: true` or `global.scheduler.protected: true` in CTA values to preserve that connection during bootstrap.
 `--protected` sets both; use it when both connections are already initialized.
-Normal state-changing tests are allowed, but automatic test setup and teardown are skipped when either connection is protected.
-Explicit destructive tests require `--allow-destructive`; see [System Tests](../testing/system-tests.md#protected-and-external-connections).
-`all` uses the same test policy after deployment.
-An unreadable protection policy blocks tests.
-
 Protection does not make CTA read-only: running services and manually invoked commands can change database state.
+System tests do not consult these flags; see [Lifecycle and cleanup](../testing/system-tests.md#lifecycle-and-cleanup).
 For an explicit bootstrap reset, pass `--allow-destructive` together with `--reset-catalogue` or `--reset-scheduler` to `create_instance.sh`.
 Direct Helm use requires `allowDestructive=true` for protected resets or Liquibase.
 Automatic bootstrap resets still skip protected connections, even with this permission.
@@ -219,7 +215,7 @@ Automatic bootstrap resets still skip protected connections, even with this perm
 ### Connect to an external database
 
 For a walkthrough using your own catalogue and PostgreSQL scheduler databases, see [Testing with External Databases](external-databases.md).
-It covers connection files, infrastructure overrides, protected deployments and opting into destructive automated tests.
+It covers connection files, infrastructure overrides and protected deployments.
 
 ### Runner connection Secrets
 
@@ -227,9 +223,9 @@ The deployment script copies these Secrets from `default` into the deployment na
 
 | Connection | Secret | Required files |
 | --- | --- | --- |
-| Oracle catalogue | `cta-oracle-catalogue-conf` | `cta-catalogue.conf` |
-| External PostgreSQL scheduler | `cta-stress-scheduler-conf` | `cta-scheduler.conf` |
-| Ceph scheduler | `cta-ceph-scheduler-conf` | `cta-scheduler.conf`, `ceph.conf`, `ceph.client.<id>.keyring` |
+| Oracle catalogue | `cta-oracle-catalogue-connection-string` | `cta-catalogue.conf` |
+| External PostgreSQL scheduler | `cta-stress-scheduler-connection-string` | `cta-scheduler.conf` |
+| Ceph scheduler | `cta-ceph-scheduler-connection-string` | `cta-scheduler.conf`, `ceph.conf`, `ceph.client.<id>.keyring` |
 
 Use the same names on each runner, with that runner's connection details.
 Keep credentials in connection files and Secrets rather than committed values files.
@@ -249,8 +245,8 @@ The infrastructure chart's `secretFiles` setting is only for ephemeral/fake CI c
 Run the checks without deploying:
 
 ```bash
-sh ci/orchestration/check_charts.sh lint
-sh ci/orchestration/check_charts.sh test
+sh ci/checks/check_charts.sh lint
+sh ci/checks/check_charts.sh test
 ```
 
 These are the commands used by `lint-helm` and `test-helm` in CI.

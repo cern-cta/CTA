@@ -128,10 +128,10 @@ spec:
         --namespace ${NAMESPACE} \
         --reset-unprotected \
         --cta-image-tag ${IMAGE_TAG} \
-        "${CTA_ARGS[@]}" \
         --eos-values presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml \
         --cta-values "${CATALOGUE_CONFIG}" \
         --cta-values "${SCHEDULER_CONFIG}" \
+        "${CTA_ARGS[@]}" \
         "${INFRA_ARGS[@]}" \
         ${CTA_OVERRIDE_VALUES:+--cta-values "${CTA_OVERRIDE_VALUES}"} \
         ${EXTRA_SPAWN_ARGS}
