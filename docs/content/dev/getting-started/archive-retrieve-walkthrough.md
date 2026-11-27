@@ -18,8 +18,8 @@ In this walkthrough we will go over some of the common workflows in CTA, step by
     You will need the Kubernetes-based development environment to follow this guide.
     You will also need to run `cta-dev test setup`. Refer to the [setup guide](environment-setup.md) for more information.
 
-We will be operating on the `cli` (`cta-cli-0`) and `client` (`cta-client-0`) pods. The former will be used for direct requests to the CTA frontend, through `cta-admin`,
-while the latter is configured to communicate with the EOS buffer. You can access them using `kubectl exec -it -n dev <pod_name> -- bash`.
+We will use the CLI Deployment (`cta-tools-cli`) for requests to the CTA frontend through `cta-admin`, and the disk-system client pod (`cta-client-0`) to communicate with the EOS buffer.
+Open the CLI shell with `kubectl exec -it -n dev deployment/cta-tools-cli -- bash`, or the EOS client shell with `kubectl exec -it -n dev cta-client-0 -- bash`.
 
 The first operation should be to enable all tape drives in our setup (there should be two of them).
 

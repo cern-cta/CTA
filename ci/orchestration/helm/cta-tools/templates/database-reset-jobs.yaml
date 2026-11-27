@@ -5,13 +5,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- $scheduler := .Values.global.scheduler }}
 {{- range $database := list "catalogue" "scheduler" }}
 {{- if index $.Values.reset $database }}
+{{- $context := dict "root" $ "component" (printf "reset-%s" $database) }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $.Release.Name }}-reset-{{ $database }}
   labels:
-    {{- include "common.labels.standard" $ | nindent 4 }}
+    {{- include "cta-tools.labels" $context | nindent 4 }}
 spec:
   # Never retry a destructive reset; the init container waits for database readiness.
   backoffLimit: 0
@@ -19,17 +20,17 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "common.labels.standard" $ | nindent 8 }}
+        {{- include "cta-tools.labels" $context | nindent 8 }}
     spec:
       restartPolicy: Never
       automountServiceAccountToken: false
       imagePullSecrets:
-        {{- include "cta-admin-tools.imagePullSecrets" $ | nindent 8 }}
+        {{- include "cta-tools.imagePullSecrets" $ | nindent 8 }}
       {{- if or (eq $database "catalogue") (eq $scheduler.backend "postgres") }}
       initContainers:
         - name: wait-database
-          image: {{ include "cta-admin-tools.image" $ }}
-          imagePullPolicy: {{ include "cta-admin-tools.imagePullPolicy" $ }}
+          image: {{ include "cta-tools.image" $ }}
+          imagePullPolicy: {{ include "cta-tools.imagePullPolicy" $ }}
           command: [cta-database-poll, --until-ready, /etc/cta/cta-{{ $database }}.conf, "120"]
           securityContext:
             allowPrivilegeEscalation: false
@@ -41,8 +42,8 @@ spec:
       {{- end }}
       containers:
         - name: reset
-          image: {{ include "cta-admin-tools.image" $ }}
-          imagePullPolicy: {{ include "cta-admin-tools.imagePullPolicy" $ }}
+          image: {{ include "cta-tools.image" $ }}
+          imagePullPolicy: {{ include "cta-tools.imagePullPolicy" $ }}
           securityContext:
             allowPrivilegeEscalation: false
           command: [bash, /scripts/reset_{{ $database }}.sh]
@@ -71,7 +72,7 @@ spec:
       volumes:
         - name: scripts
           configMap:
-            name: {{ $.Release.Name }}-scripts
+            name: {{ $.Release.Name }}-backend-scripts
         {{- if eq $database "catalogue" }}
         - name: catalogue-config
           secret:

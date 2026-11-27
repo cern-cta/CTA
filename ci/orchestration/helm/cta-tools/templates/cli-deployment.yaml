@@ -1,0 +1,107 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- $cli := .Values.cli }}
+{{- if $cli.enabled }}
+{{- $kerberos := .Values.global.kerberos }}
+{{- $context := dict "root" . "component" "cli" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-cli
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "cta-tools.labels" $context | nindent 4 }}
+spec:
+  replicas: 1
+  # Keytab creation rotates a shared principal; do not overlap old and new CLI pods.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "cta-tools.selectorLabels" $context | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cta-tools.labels" $context | nindent 8 }}
+    spec:
+      imagePullSecrets:
+      {{ include "cta-tools.imagePullSecrets" . | nindent 6 }}
+      {{- if $cli.pod.extraSpec }}
+      {{ $cli.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
+      automountServiceAccountToken: false
+      initContainers:
+      - name: init1-get-krb5-keytab
+        image: {{ include "cta-tools.image" . }}
+        imagePullPolicy: {{ include "cta-tools.imagePullPolicy" . }}
+        securityContext:
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+        command: ["/bin/bash", "-ec"]
+        args:
+        - |
+          sukadmin() { printf '%s\n' {{ $kerberos.adminPrinc.password | squote }} | kadmin -r {{ $kerberos.defaultRealm | upper | quote }} -p {{ printf "%s/admin" $kerberos.adminPrinc.name | quote }} "$@"; }
+          # Wait for KDC startup without triggering init-container restart backoff.
+          until sukadmin getprivs >/dev/null 2>&1; do
+            echo "Waiting for Kerberos administration service..."
+            sleep 1
+          done
+          sukadmin addprinc -randkey {{ $cli.krb5PrincName }};
+          sukadmin ktadd -k /root/{{ $cli.krb5PrincName }}_keytab/output/{{ $cli.krb5PrincName }}.keytab {{ $cli.krb5PrincName }};
+        volumeMounts:
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
+        - name: "{{ $cli.krb5PrincName }}-keytab"
+          mountPath: /root/{{ $cli.krb5PrincName }}_keytab/output
+      containers:
+      - name: cli
+        image: {{ include "cta-tools.image" . }}
+        imagePullPolicy: {{ include "cta-tools.imagePullPolicy" . }}
+        stdin: true
+        command: [bash, -c, "trap 'exit 0' TERM INT; sleep infinity & wait"]
+        securityContext:
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          privileged: {{ include "common.securityContext.privileged" . }}
+        {{- if $cli.resources }}
+        resources:
+          {{-  toYaml $cli.resources | nindent 10 }}
+        {{- end }}
+        env:
+        - name: TERM
+          value: "xterm"
+        {{- with $cli.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+        - name: cta-conf-volume
+          mountPath: /etc/cta/cta-cli.conf
+          subPath: cta-cli.conf
+        - name: ctaadmin1-jwt
+          mountPath: /etc/cta/ctaadmin1.jwt
+          subPath: ctaadmin1.jwt
+        - name: "{{ $cli.krb5PrincName }}-keytab"
+          mountPath: /root/{{ $cli.krb5PrincName }}.keytab
+          subPath: "{{ $cli.krb5PrincName }}.keytab"
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
+        {{ include "common.extraVolumeMounts" (dict "Values" (merge (dict "global" .Values.global) $cli)) | nindent 8 }}
+      volumes:
+      - name: ctaadmin1-jwt
+        secret:
+          secretName: ctaadmin1-jwt
+      - name: cta-conf-volume
+        configMap:
+          name: {{ .Release.Name }}-cli-config
+      - name: "{{ $cli.krb5PrincName }}-keytab"
+        emptyDir: {}
+      - name: krb5-conf
+        configMap:
+          name: {{ $kerberos.clientConfig.configMap }}
+      {{ include "common.extraVolumes" (dict "Values" (merge (dict "global" .Values.global) $cli)) | nindent 6 }}
+
+
+{{- end }}

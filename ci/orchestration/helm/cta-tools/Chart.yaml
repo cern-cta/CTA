@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 apiVersion: v2
-name: cta-admin-tools
-description: Explicit catalogue and scheduler administration, independent of CTA services.
+name: cta-tools
+description: CTA API client, backend administration, catalogue migrations and explicit reset Jobs.
 type: application
 version: 0.1.0
 dependencies:

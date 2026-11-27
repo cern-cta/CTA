@@ -8,8 +8,8 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: [reg-ctageneric]
 
-# Persistent tools do not initialize or reset anything on startup.
-admin:
+# Direct catalogue and scheduler tools; startup never initializes or resets state.
+backend:
   enabled: false
   resources: {}
 
@@ -43,7 +43,7 @@ global:
     existingSecret: cta-scheduler-connection-string
     existingClaim: scheduler-vfs-pvc
 
-# Starts a persistent tools pod; migrations run only when explicitly invoked.
+# Catalogue migration tools; migrations run only when explicitly invoked.
 liquibase:
   enabled: false
   resources: {}
@@ -58,10 +58,8 @@ liquibase:
   customRepoFiles: false
 
 # Tools using the CTA frontend API.
-client:
+cli:
   enabled: false
-  fullnameOverride: cta-cli
-  replicas: 1
   resources: {}
 
   conf:

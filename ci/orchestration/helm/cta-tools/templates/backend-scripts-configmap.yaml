@@ -6,7 +6,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-scripts
+  name: {{ .Release.Name }}-backend-scripts
+  labels:
+    {{- include "cta-tools.labels" (dict "root" . "component" "backend") | nindent 4 }}
 data:
   reset_catalogue.sh: |
     {{- .Files.Get "scripts/reset_catalogue.sh" | nindent 4 }}

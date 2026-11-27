@@ -78,7 +78,7 @@ cta-dev test --namespace dev setup
 Check that the administrative client can communicate with CTA:
 
 ```sh
-kubectl exec -it -n dev cta-cli-0 -- cta-admin version
+kubectl exec -it -n dev deployment/cta-tools-cli -- cta-admin version
 ```
 
 The command should return version information without an error. This verifies administrative communication with the initialized instance.

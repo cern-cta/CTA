@@ -31,7 +31,7 @@ Use `sh` if Bash is unavailable. You can omit `-c <container>` for a pod with a 
 Run a command directly without opening a shell, for example:
 
 ```bash
-kubectl -n dev exec cta-cli-0 -- cta-admin version
+kubectl -n dev exec deployment/cta-tools-cli -- cta-admin version
 ```
 
 ## Read logs

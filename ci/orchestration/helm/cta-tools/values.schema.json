@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "CTA administration tools values",
+  "title": "CTA tools values",
   "$comment":
     "Chart-owned settings are validated here; Kubernetes extension objects and shared/dependency values remain extensible.",
   "type": "object",
@@ -8,7 +8,7 @@
     "image": {
       "$ref": "#/definitions/image"
     },
-    "admin": {
+    "backend": {
       "type": "object",
       "properties": {
         "enabled": {
@@ -24,7 +24,7 @@
       ],
       "additionalProperties": false,
       "description":
-        "Persistent administration pod with direct catalogue and scheduler access; startup never resets state."
+        "Persistent backend tools Deployment with direct catalogue and scheduler access; startup never resets state."
     },
     "reset": {
       "type": "object",
@@ -192,7 +192,7 @@
         },
         "customRepoFiles": {
           "type": "boolean",
-          "description": "Mount the yum.repos.d-config ConfigMap for the Liquibase test environment."
+          "description": "Mount the <release>-liquibase-repos ConfigMap for the Liquibase test environment."
         },
         "resources": {
           "type": "object",
@@ -204,23 +204,13 @@
         "image"
       ],
       "additionalProperties": false,
-      "description": "Persistent Liquibase tools pod. Enabling it does not execute a migration."
+      "description": "Persistent Liquibase tools Deployment. Enabling it does not execute a migration."
     },
-    "client": {
+    "cli": {
       "type": "object",
       "properties": {
         "enabled": {
           "type": "boolean"
-        },
-        "nameOverride": {
-          "type": "string"
-        },
-        "fullnameOverride": {
-          "type": "string"
-        },
-        "replicas": {
-          "type": "integer",
-          "minimum": 0
         },
         "krb5PrincName": {
           "type": "string",
@@ -259,7 +249,6 @@
       },
       "required": [
         "enabled",
-        "replicas",
         "krb5PrincName"
       ],
       "allOf": [
@@ -283,7 +272,8 @@
           }
         }
       ],
-      "description": "API client pod without direct catalogue or scheduler access."
+      "additionalProperties": false,
+      "description": "CLI Deployment without direct catalogue or scheduler access."
     }
   },
   "definitions": {
@@ -348,10 +338,10 @@
   },
   "required": [
     "image",
-    "admin",
+    "backend",
     "reset",
     "global",
     "liquibase",
-    "client"
+    "cli"
   ]
 }

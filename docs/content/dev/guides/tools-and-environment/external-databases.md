@@ -84,9 +84,9 @@ Check the workloads, reset selection and catalogue connection:
 ```bash
 kubectl -n external-test get pods
 helm -n external-test get values cta-tools
-kubectl -n external-test exec deployment/cta-tools-admin -c admin -- \
+kubectl -n external-test exec deployment/cta-tools-backend -c backend -- \
   cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
-kubectl -n external-test exec cta-cli-0 -- cta-admin version
+kubectl -n external-test exec deployment/cta-tools-cli -- cta-admin version
 ```
 
 `reset.catalogue` and `reset.scheduler` should both be `false` unless you explicitly requested those resets.

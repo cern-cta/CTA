@@ -59,18 +59,20 @@ for backend in vfs postgres ceph; do
     --set global.image.tag=chart-check \
     --set 'taped.drives[0].name=test-drive,taped.drives[0].device=/dev/nst0' \
     --set 'taped.drives[0].controlPath=/dev/sg0,taped.drives[0].logicalLibraryName=test-library'
-  render cta-admin-tools "tools-$backend" \
+  render cta-tools "tools-$backend" \
+    -f presets/cta/base.yaml \
+    -f presets/cta/auth/frontend-admin-jwt.yaml \
     -f "presets/cta/scheduler/$backend.yaml" \
-    --set admin.enabled=true,client.enabled=true,reset.catalogue=true,reset.scheduler=true \
-    --set admin.resources.requests.memory=128Mi,client.resources.requests.memory=256Mi,reset.resources.requests.memory=512Mi
+    --set backend.enabled=true,cli.enabled=true,reset.catalogue=true,reset.scheduler=true \
+    --set backend.resources.requests.memory=128Mi,cli.resources.requests.memory=256Mi,reset.resources.requests.memory=512Mi
 done
 
 # Cover administration modes independently of the scheduler backend matrix.
-render cta-admin-tools tools-default
-render cta-admin-tools tools-external \
+render cta-tools tools-default
+render cta-tools tools-external \
   --set global.catalogue.existingSecret=external-catalogue,global.scheduler.existingSecret=external-scheduler \
   --set global.scheduler.backend=postgres,reset.catalogue=true,reset.scheduler=true
-render cta-admin-tools tools-liquibase \
+render cta-tools tools-liquibase \
   --set liquibase.enabled=true,liquibase.catalogueSourceVersion=15.0,liquibase.catalogueDestinationVersion=16.0 \
   --set liquibase.resources.requests.memory=1Gi
 

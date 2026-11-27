@@ -175,7 +175,7 @@ Explicit EOS/dCache image options take precedence over values files.
 | Release | Chart | Responsibility |
 | --- | --- | --- |
 | `ci-infra` | `ci-infra` | Disposable PostgreSQL instances, KDC, credentials, connection Secrets, VFS storage, and optional telemetry. |
-| `cta-tools` | `cta-admin-tools` | Persistent administration tools, API client, and bootstrap reset Jobs. |
+| `cta-tools` | `cta-tools` | Persistent administration tools, API client, and bootstrap reset Jobs. |
 | `cta` | `cta` | Long-running CTA services. |
 | `eos` | `eos` | EOS disk system. |
 | `store` | `dcache` | dCache disk system, using a database provisioned by `ci-infra`. |
@@ -185,10 +185,18 @@ Each PostgreSQL instance is a separate server with one initial database and ephe
 The local VFS preset requires the `local-path` StorageClass.
 See `ci/orchestration/helm/ci-infra/values.yaml` for configuration examples and naming defaults.
 
-The tools chart groups workloads under `admin`, `client`, `reset`, and `liquibase`, each with its own `resources` map.
-`admin.enabled` starts tools with direct database access; `client.enabled` starts the API client.
-`liquibase.enabled` starts a tools pod without executing migrations.
-Admin and client workloads share `image` settings and `global.image` overrides; Liquibase uses `liquibase.image`.
+The tools chart provides three single-replica Deployments, enabled independently:
+
+| Value | Deployment | Access |
+| --- | --- | --- |
+| `cli.enabled` | `cta-tools-cli` | CTA frontend API, using JWT/Kerberos credentials. |
+| `backend.enabled` | `cta-tools-backend` | Direct catalogue and scheduler access. |
+| `liquibase.enabled` | `cta-tools-liquibase` | Catalogue migration tools; migrations run only when explicitly invoked. |
+
+Each workload has its own `resources` map; reset Jobs use `reset.resources`.
+CLI and backend workloads share `image` settings and `global.image` overrides; Liquibase uses `liquibase.image`.
+The Deployments use `Recreate` to avoid overlapping tools pods during updates.
+Use the stable `deployment/cta-tools-<role>` target for commands; generated pod names change when pods are replaced.
 
 During bootstrap, catalogue and scheduler reset Jobs run concurrently and must succeed before CTA services start.
 When invoking `create_instance.sh` directly, request resets with `--reset-catalogue` or `--reset-scheduler`.
@@ -199,7 +207,7 @@ Bootstrap Jobs run once; their logs remain available until Job deletion.
 The persistent tools remain available for administration, for example:
 
 ```bash
-kubectl -n <namespace> exec deployment/cta-tools-admin -c admin -- \
+kubectl -n <namespace> exec deployment/cta-tools-backend -c backend -- \
   cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
 ```
 

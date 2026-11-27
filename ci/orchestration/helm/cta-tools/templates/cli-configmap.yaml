@@ -1,0 +1,23 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if .Values.cli.enabled }}
+{{- $conf := .Values.cli.conf.cta }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-cli-config
+  labels:
+    {{- include "cta-tools.labels" (dict "root" . "component" "cli") | nindent 4 }}
+data:
+  cta-cli.conf: |-
+    cta.endpoint {{ $conf.endpoint }}
+
+    grpc.tls.chain_cert_path {{ $conf.grpc.tls.chain_cert_path }}
+    grpc.cta_admin_auth_method {{ $conf.grpc.cta_admin_auth_method }}
+    grpc.jwt_token_path /etc/cta/ctaadmin1.jwt
+
+{{- end }}

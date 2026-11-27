@@ -371,10 +371,10 @@ create_instance() {
   fi
 
   # The client waits for credentials and the KDC; it does not need running CTA services.
-  log_run helm install cta-tools helm/cta-admin-tools \
+  log_run helm install cta-tools helm/cta-tools \
                        --namespace "${namespace}" \
                        "${shared_flags[@]}" \
-                       --set admin.enabled=true --set client.enabled=true \
+                       --set backend.enabled=true --set cli.enabled=true \
                        "${reset_flags[@]}" \
                        --set-string "reset.catalogueSchemaVersion=$catalogue_schema_version" \
                        --wait --wait-for-jobs --timeout 5m "${cta_overrides[@]}"

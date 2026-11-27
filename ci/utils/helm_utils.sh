@@ -7,7 +7,7 @@
 # Keep this file POSIX-sourceable: check_charts.sh uses /bin/sh.
 
 # Local charts, ordered so that each one is packaged before its consumers.
-cta_local_charts="common cta-admin-tools frontend-wfe frontend-admin taped rmcd maintd cta"
+cta_local_charts="common cta-tools frontend-wfe frontend-admin taped rmcd maintd cta"
 
 check_helm_installed() {
   if ! command -v helm >/dev/null 2>&1; then

@@ -1,0 +1,84 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- $liquibase := .Values.liquibase }}
+{{- if $liquibase.enabled }}
+{{- $context := dict "root" . "component" "liquibase" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-liquibase
+  labels:
+    {{- include "cta-tools.labels" $context | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "cta-tools.selectorLabels" $context | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cta-tools.labels" $context | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      {{- range $liquibase.image.pullSecrets }}
+      - name: {{ . }}
+      {{- end }}
+      containers:
+      - name: liquibase
+        image: "{{ $liquibase.image.repository }}:{{ $liquibase.image.tag }}"
+        imagePullPolicy: {{ $liquibase.image.pullPolicy }}
+        stdin: true
+        securityContext:
+          allowPrivilegeEscalation: false
+        {{- if $liquibase.resources }}
+        resources:
+          {{-  toYaml $liquibase.resources | nindent 10 }}
+        {{- end }}
+        # Prepare migration commands for explicit invocation.
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          echo "#!/bin/bash" > /launch_liquibase.sh
+          echo "COMMAND=\$1" >> /launch_liquibase.sh
+          echo "/entrypoint.sh --disable-schema-verify -f '{{ $liquibase.catalogueSourceVersion }}' -t '{{ $liquibase.catalogueDestinationVersion }}' {{ $liquibase.extraFlags }} -c \"\$COMMAND\"" >> /launch_liquibase.sh
+          chmod +x /launch_liquibase.sh
+          trap 'exit 0' TERM INT; sleep infinity & wait
+        readinessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - "-c"
+              - "test -f /launch_liquibase.sh"
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+          failureThreshold: 3
+          successThreshold: 1
+        env:
+        - name: TERM
+          value: "xterm"
+        volumeMounts:
+        {{- if $liquibase.customRepoFiles }}
+        - name: yum-repos
+          mountPath: /shared/etc_yum.repos.d
+        {{- end }}
+        - name: catalogue-config
+          mountPath: /shared/etc_cta/cta-catalogue.conf
+          subPath: cta-catalogue.conf
+      volumes:
+      {{- if $liquibase.customRepoFiles }}
+      - name: yum-repos
+        configMap:
+          name: {{ .Release.Name }}-liquibase-repos
+      {{- end }}
+      - name: catalogue-config
+        secret:
+          secretName: {{ .Values.global.catalogue.existingSecret }}
+
+{{- end }}

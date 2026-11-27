@@ -7,7 +7,7 @@ frontend-admin:
       methods:
         - jwt
 
-client:
+cli:
   conf:
     cta:
       endpoint: cta-frontend-admin:10956

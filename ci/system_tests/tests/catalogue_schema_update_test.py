@@ -47,7 +47,11 @@ def catalogue_to_version(project_json: dict[str, Any]) -> str:
 @pytest.fixture(scope="module")
 def catalogue_updater(namespace: str | None) -> RemoteHost:
     assert namespace is not None
-    return RemoteHost(K8sConnection(namespace, "app.kubernetes.io/name=liquibase-update", "liquibase-update", 0))
+    return RemoteHost(
+        K8sConnection(
+            namespace, "app.kubernetes.io/name=cta-tools,app.kubernetes.io/component=liquibase", "liquibase", 0
+        )
+    )
 
 
 # =========================================================================
@@ -85,7 +89,7 @@ def test_init_catalogue_updater(
     # Cleanup first in case they already exist
     try:
         print("Cleaning up possible existing catalogue-updater resources")
-        env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")
+        env.exec_local(f"kubectl -n {namespace} delete configmap cta-tools-liquibase-repos")
     except Exception:
         print("Nothing to clean up")
 
@@ -94,7 +98,7 @@ def test_init_catalogue_updater(
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
     default_platform = project_json["dev"]["defaultPlatform"]
     yum_repos_file = project_root / "ci" / "docker" / default_platform / "etc" / "yum.repos.d-internal"
-    env.exec_local(f"kubectl -n {namespace} create configmap yum.repos.d-config --from-file={yum_repos_file}")
+    env.exec_local(f"kubectl -n {namespace} create configmap cta-tools-liquibase-repos --from-file={yum_repos_file}")
 
     print(f"Catalogue source version: {catalogue_from_version}")
     print(f"Catalogue destination version: {catalogue_to_version}")
@@ -115,7 +119,7 @@ def test_init_catalogue_updater(
 
     print("Install administrative tools for catalogue migration...")
     env.exec_local(
-        f"helm upgrade cta-tools ../orchestration/helm/cta-admin-tools --namespace {namespace} --reuse-values "
+        f"helm upgrade cta-tools ../orchestration/helm/cta-tools --namespace {namespace} --reuse-values "
         "--set reset.catalogue=false,reset.scheduler=false "
         f"--set liquibase.catalogueSourceVersion={catalogue_from_version} "
         f"--set liquibase.catalogueDestinationVersion={catalogue_to_version} "
@@ -153,8 +157,8 @@ def test_liquibase_rollback(
 
 def test_cleanup_catalogue_updater(env: TestEnv, namespace: str | None) -> None:
     env.exec_local(
-        f"helm upgrade cta-tools ../orchestration/helm/cta-admin-tools --namespace {namespace} --reuse-values "
+        f"helm upgrade cta-tools ../orchestration/helm/cta-tools --namespace {namespace} --reuse-values "
         "--set liquibase.enabled=false "
         "--set reset.catalogue=false,reset.scheduler=false --wait --timeout 2m"
     )
-    env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")
+    env.exec_local(f"kubectl -n {namespace} delete configmap cta-tools-liquibase-repos")

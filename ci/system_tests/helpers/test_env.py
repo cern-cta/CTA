@@ -124,7 +124,7 @@ class TestEnv:
             raise RuntimeError(f"Failed to query namespace {namespace}: {e}") from e
         return TestEnv(
             cta_cli_conns=TestEnv.get_k8s_connections_by_selector(
-                namespace, "app.kubernetes.io/component=cli", "cta-cli"
+                namespace, "app.kubernetes.io/name=cta-tools,app.kubernetes.io/component=cli", "cli"
             ),
             cta_admin_api_conns=TestEnv.get_k8s_connections_by_selector(
                 namespace, "app.kubernetes.io/component=frontend-admin", "cta-frontend"
