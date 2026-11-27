@@ -137,26 +137,6 @@ Do not add test exceptions merely to accommodate an inconsistent installation la
 Report the checks actually run and any remaining validation gaps.
 Do not use `git diff --check` as evidence that functionality works.
 
-## Review before finishing
-
-Before reporting implementation work complete, review the accumulated changes within the requested scope against the intended result.
-Treat simplification as part of implementation, without waiting for a separate cleanup request.
-
-Scope follows the request, not the branch or conversation boundary.
-Continuing or revising a feature may require changing its existing implementation; preserve pre-existing uncommitted work outside that scope.
-Editing a file does not authorize cleanup of the rest of it.
-Clarify before removing existing work when the request leaves its intent uncertain.
-For review-only requests, report findings rather than applying edits.
-
-- Remove superseded approaches, unnecessary abstractions and redundant checks within scope.
-- Consolidate comments and documentation around the final behavior; remove obvious narration, repetition and conversation history.
-- Keep tests that provide distinct coverage of meaningful behavior or plausible regressions.
-  Avoid assertions tied to incidental implementation details and matrices of equivalent cases.
-- Distinguish one-off verification from maintained tests.
-  Prefer existing test infrastructure; add a new harness only when its ongoing value justifies the complexity.
-
-Briefly mention worthwhile cleanup candidates outside scope and their concrete benefit, without applying them.
-
 ## Documentation changes
 
 Follow [Documentation Changes](docs/content/dev/contributing/documentation.md) and read nearby pages before editing.
