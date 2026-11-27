@@ -624,6 +624,10 @@ TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDo
     // Row 1: a genuinely retrieved file (MOUNT_ID set, as a real tape mount would leave it).
     // Row 2: a user-provided file (MOUNT_ID NULL, pre-staged rather than recalled from tape) -
     // the combination that used to trigger the BIGINT overflow.
+    // Two distinct placeholder names per shared value (:REPACK_REQUEST_ID/2, :STATUS/2,
+    // :STORAGE_CLASS/2, :VID/2) - ParamNameToIdx rejects a repeated :name as a duplicate even
+    // across two different VALUES tuples of the same INSERT, so each textual occurrence needs its
+    // own name, not just a stylistic preference.
     auto stmt = conn.createStmt(R"SQL(
       INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
         REPACK_REQUEST_ID, RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, ARCHIVE_FILE_ID,
@@ -633,13 +637,17 @@ TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDo
       ) VALUES
       (:REPACK_REQUEST_ID, 881, 1, :STATUS, 991, 500, 500, :STORAGE_CLASS, 1000, :VID, 'tapePoolA',
        'mountPolicy', 1, 3600, 1, 42, '2', 'tapePoolB'),
-      (:REPACK_REQUEST_ID, 882, 1, :STATUS, 992, 500, 500, :STORAGE_CLASS, 2000, :VID, 'tapePoolA',
+      (:REPACK_REQUEST_ID2, 882, 1, :STATUS2, 992, 500, 500, :STORAGE_CLASS2, 2000, :VID2, 'tapePoolA',
        'mountPolicy', 1, 3600, 1, NULL, '2', 'tapePoolB')
     )SQL");
     stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
+    stmt.bindUint64(":REPACK_REQUEST_ID2", repackRequestId);
     stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STATUS2", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
     stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+    stmt.bindString(":STORAGE_CLASS2", s_storageClassName);
     stmt.bindString(":VID", vid);
+    stmt.bindString(":VID2", vid);
     stmt.executeNonQuery();
   }
 
