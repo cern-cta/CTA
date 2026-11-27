@@ -617,7 +617,19 @@ TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDo
                                                            10);
   repackRequest.m_creationLog = {"user", "host", 1000};
   db.queueRepack(repackRequest, lc);
-  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  // getRepackRequestId() is defined later in this file, so it is not yet visible here - look the
+  // ID up directly, the same way repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransformed()
+  // above does.
+  uint64_t repackRequestId = 0;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE VID = :VID");
+    stmt.bindString(":VID", vid);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    repackRequestId = rset.columnUint64("REPACK_REQUEST_ID");
+  }
 
   {
     auto conn = db.getRelationalDB().getConn();
