@@ -822,6 +822,11 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         :STATUS_BASE AS STATUS,
         NULL AS MOUNT_ID
       FROM MOVED_ROWS M
+      WHERE EXISTS (
+        SELECT 1
+        FROM unnest(string_to_array(M.REPACK_REARCHIVE_COPY_NBS, ',')) AS t(VAL)
+        WHERE NULLIF(trim(t.VAL), '')::BIGINT = M.COPY_NB
+      )
       RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES
   ),
   ALTERNATE_INSERT AS (
