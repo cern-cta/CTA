@@ -685,6 +685,17 @@ def test_repack_just_add_copies_with_missing_copy(
     cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
 
     vid_to_repack = cta_cli.get_first_vid_containing_files()
+
+    # The new pool starts out with no tapes in it at all, so the copy-2 archive job would have
+    # nowhere to mount - move an existing, not-yet-full tape into it instead, the same way
+    # test_repack_pool_routing_single_copy_repack_route_overrides_default does for its own new
+    # REPACK pool, and restore it afterwards.
+    all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
+    dest_tape = next(t for t in all_tapes if t["vid"] != vid_to_repack and not t.get("full", False))
+    dest_vid, original_dest_pool = dest_tape["vid"], dest_tape["tapepool"]
+    print(f"Moving {dest_vid} -> {second_tape_pool} to give the new copy somewhere to mount")
+    cta_cli.exec(f"cta-admin tape ch --vid {dest_vid} --tapepool {second_tape_pool}")
+
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with a genuinely missing copy')
     try:
@@ -718,6 +729,7 @@ def test_repack_just_add_copies_with_missing_copy(
     finally:
         cta_cli.remove_repack_request(vid_to_repack)
         cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+        cta_cli.exec(f"cta-admin tape ch --vid {dest_vid} --tapepool {original_dest_pool}")
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
         cta_cli.exec(f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2")
         cta_cli.exec(f"cta-admin tapepool rm --name {second_tape_pool}")

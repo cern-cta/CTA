@@ -3586,6 +3586,24 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   auto repackInfo = scheduler.getRepack(s_vid);
   ASSERT_EQ(0, repackInfo.failedToCreateArchiveReq);
   ASSERT_EQ(1, repackInfo.totalFilesToArchive);
+
+  // Regression check for a related bug in the same fix: m_jobs (one entry per archive copy to
+  // create) is empty for AddCopiesOnly - the missing copy has no existing tape file for
+  // initialize() to build a job from - and RetrieveRequest::makeJobRow() used to set the retry
+  // limits only from m_jobs's first entry, leaving an empty-m_jobs row at the queue row default of
+  // 0. A real retry budget must still be set regardless.
+  auto* dbWrapper = dynamic_cast<cta::RelationalDBTestWrapper*>(&getSchedulerDB());
+  ASSERT_NE(nullptr, dbWrapper);
+  {
+    auto conn = dbWrapper->getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT MAX_TOTAL_RETRIES, MAX_RETRIES_WITHIN_MOUNT, MAX_REPORT_RETRIES "
+                                "FROM REPACK_RETRIEVE_PENDING_QUEUE WHERE ARCHIVE_FILE_ID = 1");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_GT(rset.columnUint64("MAX_TOTAL_RETRIES"), 0u);
+    ASSERT_GT(rset.columnUint64("MAX_RETRIES_WITHIN_MOUNT"), 0u);
+    ASSERT_GT(rset.columnUint64("MAX_REPORT_RETRIES"), 0u);
+  }
 }
 
 TEST_P(SchedulerTest, DISABLED_expandRepackRequestShouldFailIfArchiveRouteMissing) {
