@@ -92,9 +92,9 @@ protected:
   void waitForDrive() {
     cta::utils::Timer tapeLoadTime;
     try {
-      // Mounting is synchronous; this wait covers drive readiness after loading.
+      // A successful mount request may precede cartridge delivery and drive readiness.
       const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(m_tapeLoadTimeout);
-      m_drive.waitUntilReady(deadline);
+      m_drive.waitUntilReady(deadline, drive::ReadinessWaitMode::AwaitMedia);
     } catch (const cta::exception::Exception& e) {
       cta::log::ScopedParamContainer spc(m_logContext);
       spc.add(cta::semconv::log::exceptionMessage, e.getMessageValue())

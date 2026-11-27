@@ -93,7 +93,8 @@ protected:
       /**
         * Checks if the drive ready to use the tape loaded into it.
         */
-      m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
+      m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5),
+                              cta::tape::drive::ReadinessWaitMode::AwaitMedia);
     } catch (cta::exception::Exception& ex) {
       FAIL() << "The drive is not ready to use. " << ex.getMessageValue();
     }

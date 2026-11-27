@@ -108,7 +108,8 @@ int main(int argc, char* argv[]) {
           /**
            * Checks if the drive ready to use the tape installed loaded into it.
            */
-          drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
+          drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5),
+                                cta::tape::drive::ReadinessWaitMode::AwaitMedia);
         } catch (cta::exception::Exception& ne) {
           std::string temp = ne.getMessage().str();
           fail = 1;

@@ -76,7 +76,7 @@ protected:
 class ReadinessDrive : public drive::DriveLTO {
 public:
   using DriveLTO::DriveLTO;
-  MOCK_METHOD(void, waitUntilReady, (std::chrono::steady_clock::time_point), (override));
+  MOCK_METHOD(void, waitUntilReady, (std::chrono::steady_clock::time_point, drive::ReadinessWaitMode), (override));
 
   bool clearEncryptionKey() override { return false; }
 
@@ -99,11 +99,12 @@ TEST_F(MountedTapeTest, CleanupUsesUnloadTimeoutForReadiness) {
     hardware.info = driveInfo;
     MountedTape tape(changer, volume, hardware, catalogue, 30, outcome, lc, tracker);
     const auto beforeCleanup = Clock::now();
-    EXPECT_CALL(hardware, waitUntilReady(_)).WillOnce([&](auto deadline) {
-      EXPECT_GE(deadline, beforeCleanup + 30s);
-      EXPECT_LE(deadline, Clock::now() + 30s);
-      throw drive::MediaNotReady(reason);
-    });
+    EXPECT_CALL(hardware, waitUntilReady(_, drive::ReadinessWaitMode::ExistingMediaOnly))
+      .WillOnce([&](auto deadline, auto) {
+        EXPECT_GE(deadline, beforeCleanup + 30s);
+        EXPECT_LE(deadline, Clock::now() + 30s);
+        throw drive::MediaNotReady(reason);
+      });
     EXPECT_CALL(wrapper, ioctl(7, MTIOCGET, testing::An<mtget*>())).WillOnce([](int, unsigned long, mtget* status) {
       *status = {};
       status->mt_gstat = GMT_DR_OPEN(0xffffffff);

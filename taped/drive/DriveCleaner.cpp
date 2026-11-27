@@ -190,7 +190,7 @@ bool DriveCleaner::checkReadiness(drive::DriveInterface& drive,
   try {
     CleanupTiming timing(m_tracker, &TapeCleanupStats::readinessWaitTime);
     m_lc.log(log::DEBUG, "Cleaner checking media readiness within the remaining budget");
-    drive.waitUntilReady(readinessDeadline);
+    drive.waitUntilReady(readinessDeadline, drive::ReadinessWaitMode::ExistingMediaOnly);
     return true;
   } catch (const drive::MediaNotReady& ex) {
     log::ScopedParamContainer params(m_lc);

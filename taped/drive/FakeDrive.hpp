@@ -207,7 +207,8 @@ public:
   /// Ignore diagnostic context; a data record throws cta::exception::Exception.
   void readFileMark(const std::string& context) final;
 
-  void waitUntilReady(std::chrono::steady_clock::time_point deadline) final;
+  /// Report simulated readiness immediately; asynchronous media arrival is not simulated.
+  void waitUntilReady(std::chrono::steady_clock::time_point deadline, ReadinessWaitMode mode) final;
 
   /// Always return false; write protection is not simulated.
   bool isWriteProtected() final;

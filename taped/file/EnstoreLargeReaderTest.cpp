@@ -69,7 +69,8 @@ protected:
     }
 
     try {
-      m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
+      m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5),
+                              cta::tape::drive::ReadinessWaitMode::AwaitMedia);
     } catch (cta::exception::Exception& ex) {
       FAIL() << "The drive is not ready to use. " << ex.getMessageValue();
     }
@@ -79,7 +80,8 @@ protected:
 
   std::string readTapeVid(const cta::common::dataStructures::Label::Format labelFormat) {
     m_drive->rewind();
-    m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5));
+    m_drive->waitUntilReady(std::chrono::steady_clock::now() + std::chrono::seconds(5),
+                            cta::tape::drive::ReadinessWaitMode::AwaitMedia);
     return cta::tape::tapeFile::HeaderChecker::checkVolumeLabel(*m_drive, labelFormat);
   }
 

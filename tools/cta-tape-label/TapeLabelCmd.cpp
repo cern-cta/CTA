@@ -480,7 +480,7 @@ void TapeLabelCmd::waitUntilTapeLoaded(cta::tape::drive::DriveInterface& drive, 
   try {
     m_log(cta::log::INFO, "Label session loading tape", params);
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(timeoutSecond);
-    drive.waitUntilReady(deadline);
+    drive.waitUntilReady(deadline, cta::tape::drive::ReadinessWaitMode::AwaitMedia);
     m_log(cta::log::INFO, "Label session loaded tape", params);
   } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;

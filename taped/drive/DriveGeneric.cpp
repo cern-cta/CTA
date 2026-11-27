@@ -31,13 +31,15 @@ using MediaClock = std::chrono::steady_clock;
 // IBM LTO specifies 60 seconds for unlisted commands, covering TUR; 3592 recommends 30 seconds.
 constexpr auto mediaProbeTimeout = std::chrono::seconds(60);
 
-bool isNonRetryableNotReady(const SCSI::Structures::SenseInfo& sense) {
+bool isNonRetryableNotReady(const SCSI::Structures::SenseInfo& sense, ReadinessWaitMode mode) {
   if (sense.key != SCSI::senseKeys::notReady) {
     return false;
   }
   switch (sense.ascAscq()) {
-    // Media is absent or needs an explicit load; polling cannot initiate one.
     case SCSI::senseConstants::mediumNotPresent:
+      // A library may acknowledge a mount before delivering the cartridge.
+      return mode == ReadinessWaitMode::ExistingMediaOnly;
+    // Unloaded media requires an explicit load; polling cannot initiate one.
     case SCSI::senseConstants::mediumNotPresentMamAccessible:
     case SCSI::senseConstants::initializingCommandRequired:
     // These require intervention or another load/eject attempt, rather than more readiness polling.
@@ -2795,7 +2797,7 @@ void drive::DriveGeneric::refreshReadyDevice() {
   }
 }
 
-void drive::DriveGeneric::waitUntilReady(MediaClock::time_point deadline) {
+void drive::DriveGeneric::waitUntilReady(MediaClock::time_point deadline, ReadinessWaitMode mode) {
   std::string lastResponse;
   // An expired budget still permits a fresh observation, but never another loading wait.
   do {
@@ -2805,7 +2807,7 @@ void drive::DriveGeneric::waitUntilReady(MediaClock::time_point deadline) {
       return;
     }
     lastResponse = sense->message;
-    if (isNonRetryableNotReady(*sense)) {
+    if (isNonRetryableNotReady(*sense, mode)) {
       throw MediaNotReady(lastResponse);
     }
     // Unknown NOT READY conditions may be transient; keep polling within the caller's budget.

@@ -75,7 +75,7 @@ public:
   /// Throw cta::exception::NotImplementedException; combined status is not implemented for hardware drives.
   driveStatus getDriveStatus() override { throw cta::exception::NotImplementedException(); }
 
-  void waitUntilReady(std::chrono::steady_clock::time_point deadline) override;
+  void waitUntilReady(std::chrono::steady_clock::time_point deadline, ReadinessWaitMode mode) override;
 
   bool hasTapeInPlace() override {
     struct mtget mtInfo;

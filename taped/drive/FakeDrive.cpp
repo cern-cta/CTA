@@ -306,7 +306,7 @@ void cta::tape::drive::FakeDrive::readFileMark(const std::string& context) {
   m_currentPosition++;
 }
 
-void cta::tape::drive::FakeDrive::waitUntilReady(std::chrono::steady_clock::time_point) {
+void cta::tape::drive::FakeDrive::waitUntilReady(std::chrono::steady_clock::time_point, ReadinessWaitMode) {
   throwIfFailurePoint(FailurePoint::WaitUntilReady);
   if (m_failToMount) {
     throw MediaNotReady("Fake drive failed to load media");
