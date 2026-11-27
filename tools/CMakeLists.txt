@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
+add_subdirectory (cta-admin)
 add_subdirectory (cta-readtp)
 add_subdirectory (cta-tape-label)
 add_subdirectory (cta-smc)
@@ -54,22 +55,3 @@ set_property(TARGET ctacataloguecmdlineunittests PROPERTY VERSION "${CTA_LIBVERS
 if(CTA_BUILD_TEST_PACKAGES)
   install (TARGETS ctacataloguecmdlineunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-
-set(CTA_ADMIN_MANPAGE_MARKDOWN "${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1cta.md")
-add_custom_command(
-  OUTPUT "${CTA_ADMIN_MANPAGE_MARKDOWN}"
-  COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/ci/build/compile_man_md.py"
-    "${CMAKE_CURRENT_SOURCE_DIR}/cta-admin.1cta.md.in"
-    "${CTA_ADMIN_MANPAGE_MARKDOWN}"
-  DEPENDS
-    "${PROJECT_SOURCE_DIR}/ci/build/compile_man_md.py"
-    cta-admin.1cta.md.in
-    CtaAdminCmdParser.hpp
-  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-  COMMENT "Generating cta-admin man-page Markdown"
-  VERBATIM
-)
-add_manpage(cta-admin SOURCE "${CTA_ADMIN_MANPAGE_MARKDOWN}")
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-install(FILES cta-admin.example.conf DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-admin/examples)

@@ -13,7 +13,7 @@
     "docs/includes",
     "tools",
     "catalogue",
-    "frontend/grpc",
+    "app/cta-admin-api",
     "taped",
     "maintd",
     "mediachanger/rmcd",

@@ -14,7 +14,7 @@
 #include "common/log/Logger.hpp"
 #include "common/utils/Base64.hpp"
 #include "common/utils/utils.hpp"
-#include "tools/CtaAdminTextFormatter.hpp"
+#include "tools/cta-admin/CtaAdminTextFormatter.hpp"
 #include "utils.hpp"
 
 #include <cstdlib>  // for getenv

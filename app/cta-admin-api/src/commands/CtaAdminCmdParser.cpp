@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "CtaAdminCmdParser.hpp"
+#include "app/cta-admin-api/src/commands/CtaAdminCmdParser.hpp"
 
 namespace cta::admin {
 
