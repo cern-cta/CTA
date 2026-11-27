@@ -194,8 +194,7 @@ During bootstrap, catalogue and scheduler reset Jobs run concurrently and must s
 When invoking `create_instance.sh` directly, request resets with `--reset-unprotected`, `--reset-catalogue`, or `--reset-scheduler`.
 Inspect a reset with `kubectl -n <namespace> logs job/cta-tools-reset-catalogue` or `job/cta-tools-reset-scheduler`.
 
-Completed Jobs do not rerun on upgrade.
-The upgrade script disables reset Jobs; for manual Helm upgrades, set `reset.allUnprotected=false`, `reset.catalogue=false`, and `reset.scheduler=false` before changing the tools image.
+Bootstrap Jobs run once; their logs remain available until Job deletion.
 The persistent tools remain available for administration, for example:
 
 ```bash
@@ -214,7 +213,7 @@ An unreadable protection policy blocks tests.
 
 Protection does not make CTA read-only: running services and manually invoked commands can change database state.
 For an explicit bootstrap reset, pass `--allow-destructive` together with `--reset-catalogue` or `--reset-scheduler` to `create_instance.sh`.
-Direct Helm use requires `allowDestructive=true` for protected resets or Liquibase; reset it to `false` on subsequent upgrades.
+Direct Helm use requires `allowDestructive=true` for protected resets or Liquibase.
 Automatic bootstrap resets still skip protected connections, even with this permission.
 
 ### Connect to an external database

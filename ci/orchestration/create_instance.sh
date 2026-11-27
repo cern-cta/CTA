@@ -336,11 +336,12 @@ create_instance() {
   fi
   infra_flags+=("${infra_config[@]}")
 
-  # Provision shared services first; schema operations belong to a separate tools release.
-  log_run helm upgrade --install ci-infra helm/ci-infra \
-                                --namespace "${namespace}" \
-                                "${infra_flags[@]}" \
-                                --timeout 4m
+  # Wait in the background: the tools must mount the VFS PVC before infrastructure can become ready.
+  log_run helm install ci-infra helm/ci-infra \
+                       --namespace "${namespace}" \
+                       "${infra_flags[@]}" \
+                       --wait --wait-for-jobs --timeout 4m &
+  infra_pid=$!
 
   # EOS needs shared credentials, but can initialize alongside the CTA reset Jobs.
   if [[ $eos_enabled == "true" ]]; then
@@ -365,18 +366,16 @@ create_instance() {
     shared_flags+=(--values presets/cta/telemetry/central.yaml)
   fi
 
-  # CTA services need only the resets; the API client waits for generated credentials and the KDC.
+  # The client waits for credentials and the KDC; it does not need running CTA services.
   log_run helm install cta-tools helm/cta-admin-tools \
                        --namespace "${namespace}" \
                        "${shared_flags[@]}" \
-                       --set admin.enabled=true --set client.enabled=false \
+                       --set admin.enabled=true --set client.enabled=true \
                        "${reset_flags[@]}" \
                        --set-string "reset.catalogueSchemaVersion=$catalogue_schema_version" \
                        --wait --wait-for-jobs --timeout 5m "${cta_overrides[@]}"
 
-  # The tools now mount the VFS PVC, so Helm can wait for infrastructure without a binding deadlock.
-  log_run helm upgrade ci-infra helm/ci-infra --namespace "$namespace" \
-                       --reuse-values --wait --wait-for-jobs --timeout 4m
+  wait "$infra_pid" || die "Infrastructure installation failed."
 
   if [[ $dcache_enabled == "true" ]]; then
     ./deploy_dcache.sh --namespace "${namespace}" \
@@ -386,18 +385,12 @@ create_instance() {
     dcache_pid=$!
   fi
 
-  # Start the API client alongside the services instead of before them.
-  log_run helm upgrade cta-tools helm/cta-admin-tools --namespace "$namespace" \
-                       --reuse-values --set client.enabled=true --wait --timeout 5m &
-  client_pid=$!
-
-  log_run helm upgrade --install cta helm/cta \
-                                --namespace "${namespace}" \
-                                "${shared_flags[@]}" \
-                                -f "${taped_config}" \
-                                -f "${rmcd_config}" \
-                                --wait --timeout "${chart_install_timeout}"m "${cta_overrides[@]}"
-  wait $client_pid || exit 1
+  log_run helm install cta helm/cta \
+                       --namespace "${namespace}" \
+                       "${shared_flags[@]}" \
+                       -f "${taped_config}" \
+                       -f "${rmcd_config}" \
+                       --wait --timeout "${chart_install_timeout}"m "${cta_overrides[@]}"
   log_success "Deployed CTA in namespace ${namespace}."
 
   # At this point the disk buffer(s) should also be ready

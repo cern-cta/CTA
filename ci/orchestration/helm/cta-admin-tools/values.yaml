@@ -19,7 +19,7 @@ admin:
   resources: {}
 
 # Bootstrap Jobs run once; changing values does not rerun a completed Job.
-# Disable reset flags before upgrading the tools image. Logs remain available until Job deletion.
+# Logs remain available until Job deletion.
 reset:
   # Reset every unprotected connection. Explicit protected resets require allowDestructive.
   allUnprotected: false

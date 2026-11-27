@@ -111,8 +111,4 @@ reject_values cta-admin-tools invalid-scheduler-backend --set global.scheduler.b
 reject_values cta-admin-tools missing-vfs-claim --set-string global.scheduler.existingClaim=
 reject_values cta-admin-tools invalid-client-replicas --set client.replicas=-1
 reject_values cta-admin-tools invalid-pull-policy --set image.pullPolicy=Sometimes
-reject_values cta-admin-tools obsolete-database-toggle --set database.enabled=true
-reject_values cta-admin-tools obsolete-reset-toggle --set reset.unprotected=true
-reject_values cta-admin-tools obsolete-shared-resources --set resources.requests.memory=128Mi
-reject_values ci-infra obsolete-credential-image --set secrets.image=example:latest
 reject_values cta-admin-tools invalid-destructive-permission --set-string allowDestructive=true

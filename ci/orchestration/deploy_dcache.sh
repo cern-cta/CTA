@@ -9,7 +9,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../utils/helm_utils.sh"
 
 usage() {
   echo
-  echo "Deploys dCache to a given namespace. If a deployment already exists, it will try and perform an upgrade."
+  echo "Installs dCache in a given namespace. The Helm release must not already exist."
   echo
   echo "Usage: $0 -n <namespace> [options]"
   echo
@@ -55,7 +55,7 @@ deploy() {
   fi
   check_helm_installed
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
-    die "Namespace $namespace does not exist. Upgrade failed"
+    die "Namespace $namespace does not exist. Installation failed"
   fi
 
 
@@ -74,7 +74,7 @@ deploy() {
   if ! helm dependency list helm/dcache | grep -q '[[:space:]]ok[[:space:]]*$'; then
     log_run helm dependency update helm/dcache
   fi
-  log_run helm upgrade --install store helm/dcache \
+  log_run helm install store helm/dcache \
                      --namespace "$namespace" \
                      --wait --timeout 10m \
                      "${helm_flags[@]}"

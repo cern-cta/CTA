@@ -97,7 +97,7 @@ spec:
     METRICS_FILE: "${CI_PROJECT_DIR}/metrics.txt"
     # Which tests to run
     PYTESTS: ""
-    # Optional final consumer values override.
+    # Optional additional values files to provide to the CTA chart
     CTA_OVERRIDE_VALUES: ""
     # Passed to the create_instance.sh script verbatim
     EXTRA_SPAWN_ARGS: ""

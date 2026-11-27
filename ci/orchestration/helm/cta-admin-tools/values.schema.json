@@ -64,8 +64,7 @@
         "postgresClientImage"
       ],
       "additionalProperties": false,
-      "description":
-        "One-shot bootstrap Jobs. Disable reset flags before upgrading; completed Jobs do not rerun automatically."
+      "description": "One-shot bootstrap Jobs; completed Jobs do not rerun automatically."
     },
     "global": {
       "type": "object",
@@ -383,23 +382,5 @@
     "global",
     "liquibase",
     "client"
-  ],
-  "allOf": [
-    {
-      "not": {
-        "required": [
-          "database"
-        ]
-      },
-      "description": "Use admin.enabled for the persistent administration pod."
-    },
-    {
-      "not": {
-        "required": [
-          "resources"
-        ]
-      },
-      "description": "Set admin.resources, reset.resources, liquibase.resources or client.resources."
-    }
   ]
 }
