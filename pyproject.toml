@@ -27,6 +27,7 @@
 
 [dependency-groups]
   dev = [
+    { include-group = "docs" },
     { include-group = "lint" },
     { include-group = "source-checks" },
     { include-group = "unit-tests" },

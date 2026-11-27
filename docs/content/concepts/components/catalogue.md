@@ -21,4 +21,4 @@ The catalogue stores metadata, not file contents or the disk system's namespace.
 
 The catalogue uses a relational database, with Oracle and PostgreSQL backends. See [Catalogue Configuration](../../ops/deploy-and-configure/configuration/catalogue.md) for setup, [Catalogue Upgrades](../../ops/run-and-maintain/upgrades/catalogue-schema/index.md) for schema migration, and the [developer reference](../../dev/internals/shared-state/catalogue/index.md#catalogue-description) for the database schema.
 
-[Open catalogue schema ↗](../../dev/internals/shared-state/catalogue/db-schema.svg){ .md-button target="_blank" rel="noopener" title="Open the catalogue schema in a new tab" }
+[Open catalogue schema ↗](../../generated/catalogue-schema.svg){ .md-button target="_blank" rel="noopener" title="Open the catalogue schema in a new tab" }

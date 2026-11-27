@@ -6,7 +6,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma10-base:latest@sha256:7002f355b8da
 # OS packages intentionally receive repository fixes on image rebuild.
 # hadolint ignore=DL3041
 RUN dnf install -y epel-release dnf-plugins-core && \
-    dnf install -y git curl jq python3 bat && \
+    dnf install -y git curl jq python3 bat graphviz && \
     dnf clean all --enablerepo=\*
 
 # Put the pinned Python first on PATH without replacing /usr/bin/python3, which OS tools use.

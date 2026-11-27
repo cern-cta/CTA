@@ -249,7 +249,8 @@ build-docs:
     - !reference [build-rust-docs, rules]
   image: $IMAGE_PYTHON
   variables:
-    GIT_SUBMODULE_STRATEGY: none
+    GIT_SUBMODULE_STRATEGY: normal
+    GIT_SUBMODULE_PATHS: catalogue/cta-catalogue-schema
   before_script:
     - !reference [.merge-train-guard, before_script]
     - source ci/docs/prepare-environment.sh

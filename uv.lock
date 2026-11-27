@@ -31,10 +31,16 @@ dev = [
     { name = "hatchling", specifier = ">=1.27.0" },
     { name = "jsonschema" },
     { name = "kubernetes", specifier = ">=35.0.0,<36" },
+    { name = "markdown", marker = "python_full_version >= '3.12'", specifier = "==3.9" },
+    { name = "mike", marker = "python_full_version >= '3.12'", git = "https://github.com/squidfunk/mike" },
+    { name = "mkdocs-autorefs", marker = "python_full_version >= '3.12'", specifier = "==1.4.2" },
+    { name = "mkdocstrings", marker = "python_full_version >= '3.12'", specifier = "==0.30.1" },
+    { name = "mkdocstrings-python", marker = "python_full_version >= '3.12'", specifier = "==1.18.2" },
     { name = "oauthlib", specifier = ">=3.2.2" },
     { name = "packaging", specifier = ">=24.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pyjwt" },
+    { name = "pymdown-extensions", marker = "python_full_version >= '3.12'", specifier = "==11.0.2" },
     { name = "pyright", extras = ["nodejs"] },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-asyncio", specifier = ">=1.2.0" },
@@ -44,6 +50,7 @@ dev = [
     { name = "ruff", specifier = "==0.17.3" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.1" },
     { name = "yamllint", specifier = "==1.37.1" },
+    { name = "zensical", marker = "python_full_version >= '3.12'", specifier = "==0.1.1" },
 ]
 docs = [
     { name = "markdown", marker = "python_full_version >= '3.12'", specifier = "==3.9" },
@@ -111,6 +118,7 @@ unit-tests = [
 ]
 
 [manifest.group-requires-python]
+dev = ">=3.12"
 docs = ">=3.12"
 
 [[package]]

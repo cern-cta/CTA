@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Prepare the command manual and Rust API documentation, then build or preview the website."""
+"""Prepare generated documentation, then build or preview the website."""
 
 import argparse
 import logging
@@ -10,6 +10,12 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+# Support both direct execution and imports by the documentation tests.
+if __package__:
+    from .catalogue_diagram import generate as generate_catalogue_diagram
+else:
+    from catalogue_diagram import generate as generate_catalogue_diagram
 
 LOGGER = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
@@ -38,7 +44,7 @@ def stage_content(preview: bool = False) -> None:
 
 
 def prepare(skip_rust: bool, preview: bool = False, rust_docs: Path | None = None) -> None:
-    """Prepare pages, the command manual, and Rust HTML for Zensical to read from build/docs."""
+    """Prepare pages and generated references for Zensical to read from build/docs."""
     stage_content(preview)
     output = ROOT / "build/docs"
     content = output / "content"
@@ -49,6 +55,10 @@ def prepare(skip_rust: bool, preview: bool = False, rust_docs: Path | None = Non
         rust_docs = target / "doc"
     if supplied_rust and not (rust_docs / "index.html").is_file():
         raise FileNotFoundError(f"Rust documentation artifact is missing: {rust_docs / 'index.html'}")
+    generate_catalogue_diagram(
+        ROOT / "catalogue/cta-catalogue-schema/common_catalogue_schema.sql",
+        content / "generated/catalogue-schema.svg",
+    )
     manual = output / "generated/cta-admin.1cta.md"
     manual.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(  # noqa: S603

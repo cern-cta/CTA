@@ -22,7 +22,11 @@ class StagingTests(unittest.TestCase):
             (rust / "static.files").mkdir(parents=True)
             (rust / "index.html").write_text("Rust index")
             (rust / "static.files/main.js").write_text("Rust assets")
-            with patch.object(build.subprocess, "run") as run, patch.object(build.shutil, "which", return_value=None):
+            with (
+                patch.object(build.subprocess, "run") as run,
+                patch.object(build.shutil, "which", return_value=None),
+                patch.object(build, "generate_catalogue_diagram"),
+            ):
                 build.prepare(False, rust_docs=rust)
             # Only the Python manual generator runs in the assembly job.
             self.assertEqual(run.call_count, 1)
