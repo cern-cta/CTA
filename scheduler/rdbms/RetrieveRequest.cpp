@@ -220,17 +220,23 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
   const RetrieveRequest::Job* activeJob = nullptr;
   const cta::common::dataStructures::TapeFile* activeTapeFile = nullptr;
 
-  // Find the active job
+  // Find the active job - may legitimately not exist. For a pure AddCopiesOnly repack
+  // (Scheduler::expandRepackRequest()), the active copy number names the EXISTING tape copy being
+  // retrieved FROM, which is deliberately excluded from copyNbsToRearchive - and therefore from
+  // m_jobs, see initialize() - because that copy is being read, not rearchived. A Job represents
+  // an archive DESTINATION, not the retrieve source; the two only happen to coincide for
+  // MoveOnly/MoveAndAddCopies, where the active copy is also one being rewritten.
   for (const auto& j : m_jobs) {
     if (j.copyNb == activeCopyNb) {
       activeJob = &j;
-      m_fSeq = j.fSeq;
-      m_blockId = j.blockId;
       break;
     }
   }
 
-  // Find the active tape file
+  // Find the active tape file - this one is NOT optional: the active copy number was chosen from
+  // this same archive file's own existing tape copies (see
+  // RepackRequest::addSubrequestsAndUpdateStats()/RelationalDB::queueRetrieve()), so a missing
+  // tape file here means that choice and the catalogue's view of the file have gone inconsistent.
   for (const auto& tf : m_archiveFile.tapeFiles) {
     if (tf.copyNb == activeCopyNb) {
       activeTapeFile = &tf;
@@ -238,11 +244,23 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
     }
   }
 
-  if (!activeJob || !activeTapeFile) {
-    throw RetrieveRequestException("Active job or tape file not found for the given copy number.");
+  if (!activeTapeFile) {
+    throw RetrieveRequestException("Active tape file not found for the given copy number.");
   }
-  m_status = activeJob->status;
+
+  // fSeq/blockId/vid always come from the tape file itself - the thing actually being read - not
+  // from the job: when a job exists for this copy number, it carries identical values anyway,
+  // since initialize() sets a job's fSeq/blockId directly from this same tape file.
+  m_fSeq = activeTapeFile->fSeq;
+  m_blockId = activeTapeFile->blockId;
   m_vid = activeTapeFile->vid;
+  // m_status is left at its current value when there is no job for the active copy
+  // (AddCopiesOnly): the repack caller sets it explicitly right afterward via setJobStatus() (see
+  // RepackRequest::addSubrequestsAndUpdateStats()), and every non-repack job already shares the
+  // same RJS_ToTransfer default set in initialize(), regardless of which copy is "active".
+  if (activeJob) {
+    m_status = activeJob->status;
+  }
 
   // Validate all jobs have corresponding tape files
   for (const auto& j : m_jobs) {
