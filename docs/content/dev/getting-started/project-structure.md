@@ -18,7 +18,7 @@ This reorganization is not yet complete. The map below describes where code live
 
 | Path | Contents |
 | --- | --- |
-| `frontend/` | Shared administrative and workflow request handling, plus the gRPC frontend and client support. |
+| `app/` | Service applications, including the administrative and workflow APIs. |
 | `catalogue/` | Catalogue interfaces, implementations, schema tooling, and tests. |
 | `scheduler/` | Scheduling logic, jobs, mounts, and backend implementations in `OStoreDB/` and `rdbms/`. |
 | `objectstore/` | Persistent objects, queues, and storage machinery used by the objectstore scheduler backend. |

@@ -32,7 +32,7 @@ subcommands and options for a specific command, type:
 
 Commands have a long version and an abbreviated version (shown in brackets).
 
-@include_md CtaAdminCmdParser.hpp
+@include_md ../../app/cta-admin-api/src/commands/CtaAdminCmdParser.hpp
 # OPTIONS
 
 **\-\-json**

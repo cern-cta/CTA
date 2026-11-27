@@ -5,7 +5,7 @@
 
 #include "commands/AdminCmdLogParams.hpp"
 
-#include "tools/CtaAdminCmdParser.hpp"
+#include "CtaAdminCmdParser.hpp"
 
 namespace cta::admin_api::commands {
 

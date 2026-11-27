@@ -3,6 +3,12 @@
 
 include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
+# This is hacky; the admin command parser is shared between the API and the cta-admin tool, which means we should
+# technically put it in a library under lib/. However, since cta-admin is on its way out, we keep it here
+add_library(cta-admin-api-cmd-parser STATIC src/commands/CtaAdminCmdParser.cpp)
+target_include_directories(cta-admin-api-cmd-parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(cta-admin-api-cmd-parser PUBLIC ctaprotobuf ctacommon)
+
 # Library
 add_library(cta-admin-api-lib STATIC
   src/commands/AdminCmdLogParams.cpp
@@ -38,10 +44,10 @@ add_library(cta-admin-api-lib STATIC
   src/rpc/auth/kerberos/TokenStore.cpp
   src/rpc/reactors/CtaAdminServerWriteReactor.cpp
   src/AdminApiApp.cpp
-  ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
 )
 target_include_directories(cta-admin-api-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(cta-admin-api-lib PUBLIC
+  cta-admin-api-cmd-parser
   cta-grpc-server-auth
   cta-grpc-server-config
   cta-grpc-server
