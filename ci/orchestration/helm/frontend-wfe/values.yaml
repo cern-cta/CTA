@@ -17,6 +17,7 @@ conf:
 
   catalogue:
     numberOfConnections: 10
+    archiveFileIdBatchSize: 1
 
   frontend:
     zeroLengthFilesForbidden: true

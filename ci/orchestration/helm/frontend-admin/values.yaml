@@ -17,6 +17,7 @@ conf:
 
   catalogue:
     numberOfConnections: 10
+    archiveFileIdBatchSize: 1
     # Reduced value for test environment
     missingFileCopiesMinAgeSecs: 5
     recycleLogQuarantineSecs: 2678400

@@ -24,7 +24,7 @@ data:
 
     [catalogue.client]
       number_of_connections = {{ .Values.conf.catalogue.numberOfConnections | int }}
-
+      archive_file_id_batch_size = {{ .Values.conf.catalogue.archiveFileIdBatchSize | int }}
 
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}

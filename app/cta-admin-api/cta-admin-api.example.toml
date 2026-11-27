@@ -150,7 +150,8 @@ enabled_experimental_features = ["telemetry"]
   [catalogue.client]
     # Number of connections in the catalogue connection pool. Must be greater than zero.
     # Type: integer; default: 10.
-    number_of_connections = 10
+    number_of_connections      = 10
+    archive_file_id_batch_size = 1
 
 [scheduler]
   # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
