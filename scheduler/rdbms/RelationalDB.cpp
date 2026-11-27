@@ -1344,15 +1344,23 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
         update.retrievedBytes = count_rset.columnUint64("RETRIEVED_BYTES");
         update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
         update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
-        count += update.retrievedFiles + update.rearchiveCopyNbs;
+        // Archive jobs actually queued = BASE_INSERT (the recalled copy itself, only when it is a
+        // rearchive target) + ALTERNATE_INSERT (every other missing copy) - never retrievedFiles,
+        // which counts genuinely-retrieved files and is unrelated to how many archive rows that
+        // produced. For AddCopiesOnly specifically BASE_INSERT never fires (the source copy is
+        // never rearchived), so retrievedFiles + rearchiveCopyNbs would double-count: a 1-file
+        // recall that queues one archive job would report two jobs.
+        auto baseInsertedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT");
+        auto baseInsertedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES");
+        count += update.retrievedFiles + baseInsertedFiles + update.rearchiveCopyNbs;
         log::ScopedParamContainer params(lc);
         params.add("repackRequestId", update.reqId);
         params.add("retrievedFiles", update.retrievedFiles);
         params.add("retrievedBytes", update.retrievedBytes);
         params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
         params.add("rearchiveBytes", update.rearchiveBytes);
-        params.add("totalToBeArchivedFiles", update.retrievedFiles + update.rearchiveCopyNbs);
-        params.add("totalToBeArchivedBytes", update.retrievedBytes + update.rearchiveBytes);
+        params.add("totalToBeArchivedFiles", baseInsertedFiles + update.rearchiveCopyNbs);
+        params.add("totalToBeArchivedBytes", baseInsertedBytes + update.rearchiveBytes);
         lc.log(
           cta::log::INFO,
           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve "
