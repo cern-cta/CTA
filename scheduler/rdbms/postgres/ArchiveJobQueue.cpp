@@ -294,6 +294,29 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
    * once the group IS complete (rfd.REPACK_REQUEST_ID IS NOT NULL) does the WHERE widen to every
    * row sharing the group key, because that is the one moment every sibling's row needs to move to
    * ReadyForDeletion together, in this one statement.
+   *
+   * INVARIANT THIS QUERY DEPENDS ON: jobIDs must contain AT MOST ONE job per
+   * (REPACK_REQUEST_ID, ARCHIVE_FILE_ID) group.
+   *
+   * The ready_for_deletion sibling arm joins each already-settled sibling against every target row
+   * of its group, and UNION ALL does not deduplicate. So with k targets in one group, each settled
+   * sibling is counted k times and HAVING COUNT(*) = MAX(REQUEST_JOB_COUNT) overshoots: the group
+   * is then never recognised as complete, never moves to ReadyForDeletion, and
+   * getNextSuccessfulArchiveRepackReportBatch() - which only picks up ReadyForDeletion - never
+   * deletes the source disk file, so the repack request can never finish. Example: 3 copies
+   * A/B/C with C already settled and A+B reported together gives COUNT(*) = 4 against
+   * REQUEST_JOB_COUNT = 3.
+   *
+   * The invariant holds because a batch comes from one ArchiveMount, an ArchiveMount serves exactly
+   * one tape pool, and two copies of the same archive file can never share a tape pool: the archive
+   * routes of a storage class are required to map distinct copy numbers to distinct tape pools, and
+   * RepackRequest::addSubrequestsAndUpdateStats() rejects the expansion outright otherwise ("found
+   * the same destination tapepool for different copyNb"). The single-job failReport() recovery path
+   * (updateJobStatusForFailedReport) trivially satisfies it too.
+   *
+   * If that routing rule is ever relaxed, or some future caller batches jobs across tape pools,
+   * this query must deduplicate the sibling arm (e.g. UNION instead of UNION ALL, or a DISTINCT on
+   * JOB_ID inside combined) before that happens.
    */
   std::string sql = R"SQL(
   WITH updated_single_copy_jobs AS (
