@@ -254,7 +254,6 @@ CI requests `--reset-catalogue --reset-scheduler` to initialize both selected co
 Create source Secrets in `default`; the script checks they are readable and copies them under the same names into the new namespace.
 Use repeatable `--copy-secret <name>` options for additional Secrets that do not select a connection.
 The deployment namespace cannot be `default` when copying Secrets.
-Repeated names are copied only once.
 Source Secrets remain in `default` after the deployment is removed.
 The infrastructure chart's `secretFiles` setting is only for ephemeral/fake CI credentials, which are also stored in Helm release values; do not use it for actual external resources.
 
@@ -297,15 +296,18 @@ cta-dev deploy --with-dcache --dcache-image-repository example/dcache --dcache-i
 
 ```bash
 # Deploy the local telemetry stack.
-cta-dev deploy --telemetry local
+cta-dev deploy --local-telemetry
 
-# Publish telemetry to the configured backend.
-cta-dev deploy --telemetry central
+# Publish telemetry to the CTA CI tenant in CERN MONIT.
+cta-dev deploy \
+  --cta-values presets/cta/telemetry/cern-monit-ci.yaml \
+  --copy-secret monit-it-sd-tab-ci-credentials
 ```
 
 Local telemetry is part of `ci-infra` and uses only namespaced Kubernetes resources.
 It includes workload/PVC state and host metrics, but not kubelet or per-container cAdvisor metrics.
-Central telemetry uses the configured external backend.
+For external telemetry, supply a values file configuring the endpoint and authentication, together with any required Secrets.
+The `cern-monit-ci.yaml` preset selects the CTA CI tenant in CERN MONIT.
 
 For deployment options beyond those exposed by `cta-dev`, invoke `ci/orchestration/create_instance.sh` directly from `ci/orchestration/`.
 

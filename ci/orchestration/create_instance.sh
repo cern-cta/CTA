@@ -27,7 +27,7 @@ CTA and infrastructure:
       --scheduler-secret <name>           Use a scheduler connection Secret from the default namespace.
       --copy-secret <name>                Copy a required Secret from the default namespace (repeatable).
       --infra-values <file>               Replace default infrastructure presets with these values (repeatable).
-      --telemetry <none|local|central>    Telemetry mode (default: none).
+      --local-telemetry                   Deploy a local collector and Prometheus.
 
 Database initialization:
   -c, --catalogue-version <version>       Catalogue schema version to create on reset (default: latest).
@@ -124,11 +124,11 @@ EOF
 
 create_instance() {
   # Argument defaults
-  # Copy available shared credentials into the deployment namespace.
-  local secrets=(reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials)
+  # Copy available registry credentials into the deployment namespace.
+  local secrets=(reg-eoscta-operations reg-ctageneric)
   local copy_secrets=()
   local catalogue_secret="" scheduler_secret=""
-  local -A required_secrets=() copied_secrets=()
+  local -A required_secrets=()
   # Chart defaults select the PostgreSQL catalogue and VFS scheduler connections.
   cta_config=(--values presets/cta/base.yaml --values presets/cta/auth/frontend-wfe-jwt.yaml
               --values presets/cta/auth/frontend-admin-jwt.yaml)
@@ -148,7 +148,7 @@ create_instance() {
   # CTA chart timeout
   chart_install_timeout=5
   # Telemetry
-  telemetry=none
+  local_telemetry=false
   one_logical_library=false
 
   # Parse command line arguments
@@ -172,10 +172,7 @@ create_instance() {
         shift ;;
       --reset-scheduler) reset_scheduler=true ;;
       --reset-catalogue) reset_catalogue=true ;;
-      --telemetry)
-        telemetry="$2"
-        case "$telemetry" in none|local|central) ;; *) die "Invalid telemetry mode: $telemetry" ;; esac
-        shift ;;
+      --local-telemetry) local_telemetry=true ;;
       --eos-values)
         [[ -f "$2" ]] || die "EOS values file $2 does not exist"
         eos_values+=(--eos-values "$2")
@@ -309,7 +306,6 @@ create_instance() {
   kubectl label namespace "$namespace" "app.kubernetes.io/managed-by=cta-create-instance"
   log_task "Copying secrets into namespace ${namespace}..."
   for secret_name in "${copy_secrets[@]}" "${secrets[@]}"; do
-    [[ ${copied_secrets[$secret_name]:-false} == false ]] || continue
     # Explicit requests must still exist; only the built-in runner Secrets are optional.
     if [[ ${required_secrets[$secret_name]:-false} == true ]] ||
        kubectl --namespace default get secret "${secret_name}" &> /dev/null; then
@@ -317,7 +313,6 @@ create_instance() {
         jq --arg namespace "$namespace" \
           '{apiVersion, kind, type, data, metadata: {name: .metadata.name, namespace: $namespace}}' |
         kubectl --namespace "${namespace}" create -f -
-      copied_secrets[$secret_name]=true
     fi
   done
 
@@ -332,7 +327,7 @@ create_instance() {
 
   # Presets request infrastructure resources; the chart itself does not select application backends.
   infra_flags=()
-  if [[ "$telemetry" == local ]]; then
+  if [[ $local_telemetry == true ]]; then
     infra_flags+=(--values presets/infra/telemetry.yaml)
   fi
   if [[ "$dcache_enabled" == true ]]; then
@@ -363,11 +358,8 @@ create_instance() {
     # The dCache CTA nearline-storage driver only supports mTLS.
     shared_flags+=(--values presets/cta/auth/frontend-wfe-mtls.yaml)
   fi
-  if [[ "$telemetry" == local ]]; then
+  if [[ $local_telemetry == true ]]; then
     shared_flags+=(--values presets/cta/telemetry/local.yaml)
-  fi
-  if [[ "$telemetry" == central ]]; then
-    shared_flags+=(--values presets/cta/telemetry/central.yaml)
   fi
 
   # The client waits for credentials and the KDC; it does not need running CTA services.

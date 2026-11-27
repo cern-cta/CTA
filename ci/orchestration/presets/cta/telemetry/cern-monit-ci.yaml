@@ -3,7 +3,7 @@
 
 # See https://monit.docs.cern.ch/other/metrics/
 
-# These values can be combined with other values files.
+# CERN MONIT configuration for the CTA CI tenant.
 # All five services share the same telemetry configuration.
 frontend-wfe: &telemetry
   extraEnv:

@@ -80,7 +80,7 @@ dcache_image_repository=""
 dcache_image_tag=""
 dcache_values=()
 eos_enabled=true
-telemetry=none
+local_telemetry=false
 eos_image_repository=""
 eos_image_tag=""
 infra_config=()
@@ -362,7 +362,7 @@ Options:
       --dcache-image-tag <tag>      dCache image tag.
       --dcache-values <path>        dCache values override; repeatable.
       --with-dcache                 Deploy dCache instead of EOS.
-      --telemetry <mode>            none (default), local or central.
+      --local-telemetry             Deploy a local collector and Prometheus.
 
 Connections without a Secret option are provisioned locally and reset automatically.
 Secret-selected connections are reset only when explicitly requested.
@@ -591,10 +591,9 @@ parse_options() {
         dcache_enabled=true
         eos_enabled=false
         ;;
-      --telemetry)
+      --local-telemetry)
         require_command "$1" "$command" deploy up debug all
-        telemetry="$2"
-        shift
+        local_telemetry=true
         ;;
       --eos-image-repository)
         require_command "$1" "$command" deploy up debug all
@@ -1298,7 +1297,8 @@ deploy_cta() {
   [[ -n $eos_image_tag ]] && extra_deployment_options+=(--eos-image-tag "$eos_image_tag")
   [[ -n $dcache_image_repository ]] && extra_deployment_options+=(--dcache-image-repository "$dcache_image_repository")
   [[ -n $dcache_image_tag ]] && extra_deployment_options+=(--dcache-image-tag "$dcache_image_tag")
-  extra_deployment_options+=("${eos_values[@]}" "${dcache_values[@]}" --telemetry "$telemetry")
+  extra_deployment_options+=("${eos_values[@]}" "${dcache_values[@]}")
+  [[ $local_telemetry == true ]] && extra_deployment_options+=(--local-telemetry)
   # Match the build-selected scheduler; explicit consumer overlays follow this default.
   if [[ $scheduler_type == pgsched ]]; then
     extra_deployment_options+=(--cta-values presets/cta/scheduler/postgres.yaml)
@@ -1338,7 +1338,7 @@ deploy_cta() {
   cd "${project_root}/ci/orchestration"
   ./create_instance.sh "${deployment_args[@]}"
 
-  if [[ $telemetry == local ]]; then
+  if [[ $local_telemetry == true ]]; then
     # Prometheus is exposed through a local port-forward, not a public endpoint.
     echo
     echo "Local telemetry dashboard (Prometheus): http://localhost:9090/query"

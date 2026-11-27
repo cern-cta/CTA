@@ -111,7 +111,7 @@ spec:
     # Enable local telemetry if desired
     - |
       if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --telemetry local"
+        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --local-telemetry"
       fi
     - *setup-k8s-test-variables
     - UV_PROJECT_ENVIRONMENT=.venv uv sync --locked --only-group system-tests
@@ -381,7 +381,8 @@ stress-test:
       ./create_instance.sh \
         --namespace ${NAMESPACE} \
         --reset-catalogue --reset-scheduler \
-        --telemetry central \
+        --cta-values presets/cta/telemetry/cern-monit-ci.yaml \
+        --copy-secret monit-it-sd-tab-ci-credentials \
         --cta-image-tag ${IMAGE_TAG} \
         --eos-values presets/eos/stress.yaml \
         --cta-values "${CATALOGUE_CONFIG}" \
