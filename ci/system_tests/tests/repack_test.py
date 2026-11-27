@@ -1001,9 +1001,16 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
         staged_file_path = f"{repack_sub_dir}/{user_provided_fseq:09d}"
         print(f"Copying the retrieved file {eos_file_path_to_copy_from} into the repack buffer {repack_sub_dir}")
         eos_mgm.exec(f"eos cp {eos_file_path_to_copy_from} {staged_file_path}")
-        cleanup.callback(
-            lambda: eos_mgm.exec(f"eos rm {staged_file_path}", capture_output=True, throw_on_failure=False)
-        )
+
+        def remove_staged_file() -> None:
+            # rm failing is expected when the repack already deleted the file itself; what matters
+            # is that the file is verifiably gone afterwards (as the tape-copy cleanup verifies for
+            # its files), not what rm said - a permission or service error must not slip through.
+            eos_mgm.exec(f"eos rm {staged_file_path}", capture_output=True, throw_on_failure=False)
+            if eos_mgm.exec(f"eos fileinfo {staged_file_path}", capture_output=True, throw_on_failure=False).success:
+                raise RuntimeError(f"Staged user-provided file {staged_file_path} is still in the repack buffer")
+
+        cleanup.callback(remove_staged_file)
 
         # Route/pool removal coupled to verified copy removal - see the test above for why.
         added_copies_verified_removed = True  # no copies exist until the repack is submitted

@@ -173,6 +173,8 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& 
                    upd.ARCHIVED_FILES, upd.ARCHIVED_BYTES
                FROM UPDATE_TABLE upd
                WHERE upd.DEST_VID IS NOT NULL AND upd.DEST_VID <> ''
+               -- Consistent upsert (and so row-lock) order across concurrent batches.
+               ORDER BY upd.REPACK_REQUEST_ID, upd.DEST_VID
                ON CONFLICT (REPACK_REQUEST_ID, VID) DO UPDATE
                SET
                    ARCHIVED_FILES = REPACK_REQUEST_DESTINATION_STATISTICS.ARCHIVED_FILES + EXCLUDED.ARCHIVED_FILES,
@@ -217,6 +219,9 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& 
              FROM REPACK_REQUEST_TRACKING trk
              JOIN AGG agg ON trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID
              WHERE trk.IS_COMPLETE = FALSE
+             -- Sorted before locking, so concurrent batches over overlapping requests acquire
+             -- their row locks in the same order instead of deadlocking A-then-B vs B-then-A.
+             ORDER BY trk.REPACK_REQUEST_ID
              FOR NO KEY UPDATE of trk
            )
 
@@ -387,7 +392,9 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
       WHERE trk.IS_COMPLETE = FALSE
       -- FOR NO KEY UPDATE, not FOR UPDATE - same reason as updateRepackRequestsProgress(): must
       -- not conflict with the FOR KEY SHARE locks that FK child-table inserts take on this row
-      -- if a caller ever merges the failed-queue move into this transaction.
+      -- if a caller ever merges the failed-queue move into this transaction. Sorted before
+      -- locking so concurrent batches acquire their row locks in a consistent order.
+      ORDER BY trk.REPACK_REQUEST_ID
       FOR NO KEY UPDATE OF trk
     )
      UPDATE REPACK_REQUEST_TRACKING trk

@@ -1281,6 +1281,131 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureDoesNotTouchInFlig
   ASSERT_EQ(2 * sizeInBytes, repackInfo.archivedBytes);
 }
 
+// Two-connection regression test for the lock order of updateRepackRequestsProgress(): a batch
+// spanning several repack requests must lock their tracking rows in REPACK_REQUEST_ID order
+// (ORDER BY before FOR NO KEY UPDATE), or two concurrent batches over overlapping requests can
+// deadlock A-then-B against B-then-A. Connection 1 pre-locks the HIGHER id - where an ordered
+// worker comes to wait - so once the worker blocks, a NOWAIT probe of the LOWER id must fail
+// (the ordered worker already holds it). An unordered worker waiting on the higher id would hold
+// nothing, the probe would succeed, and a deadlock-aborted batch would additionally fail the
+// final counter checks.
+TEST_P(RelationalDBTest, repackProgressBatchLocksTrackingRowsInRequestIdOrder) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  // Two repack requests; REPACK_REQUEST_ID is BIGSERIAL, so the first queued gets the lower id.
+  auto mountPolicy = makeMountPolicy(1000);
+  for (const std::string vid : {"V-LOCKORD-A", "V-LOCKORD-B"}) {
+    SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                        "/repack/buffer",
+                                                        common::dataStructures::RepackInfo::Type::AddCopiesOnly,
+                                                        mountPolicy,
+                                                        false,
+                                                        10);
+    repackRequest.m_creationLog = {"user", "host", 1000};
+    db.queueRepack(repackRequest, lc);
+  }
+  const uint64_t idA = getRepackRequestId(db.getRelationalDB(), "V-LOCKORD-A");
+  const uint64_t idB = getRepackRequestId(db.getRelationalDB(), "V-LOCKORD-B");
+  ASSERT_LT(idA, idB);
+
+  // One finished retrieve row per request, so a single progress batch spans both.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID, RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, ARCHIVE_FILE_ID,
+        CREATION_TIME, START_TIME, STORAGE_CLASS, SIZE_IN_BYTES, VID, TAPE_POOL, MOUNT_POLICY,
+        PRIORITY, MIN_RETRIEVE_REQUEST_AGE, COPY_NB, MOUNT_ID, REPACK_REARCHIVE_COPY_NBS,
+        REPACK_REARCHIVE_TAPE_POOLS
+      ) VALUES
+      (:REPACK_REQUEST_ID_A, 883, 1, :STATUS_A, 993, 500, 500, :STORAGE_CLASS_A, 1000, :VID_A, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, 42, '2', 'tapePoolB'),
+      (:REPACK_REQUEST_ID_B, 884, 1, :STATUS_B, 994, 500, 500, :STORAGE_CLASS_B, 1000, :VID_B, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, 43, '2', 'tapePoolB')
+    )SQL");
+    stmt.bindUint64(":REPACK_REQUEST_ID_A", idA);
+    stmt.bindUint64(":REPACK_REQUEST_ID_B", idB);
+    stmt.bindString(":STATUS_A", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STATUS_B", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STORAGE_CLASS_A", s_storageClassName);
+    stmt.bindString(":STORAGE_CLASS_B", s_storageClassName);
+    stmt.bindString(":VID_A", "V-LOCKORD-A");
+    stmt.bindString(":VID_B", "V-LOCKORD-B");
+    stmt.executeNonQuery();
+  }
+
+  // Connection 1 locks the higher id.
+  auto conn1 = db.getRelationalDB().getConn();
+  conn1.executeNonQuery("BEGIN");
+  {
+    auto stmt = conn1.createStmt(
+      "SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :ID FOR NO KEY UPDATE");
+    stmt.bindUint64(":ID", idB);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+  }
+
+  // The worker transforms both rows and updates both tracking rows in one transaction - the
+  // production path through updateRepackRequestsProgress(). It must block on the higher id.
+  std::thread worker([&db] {
+    auto workerLogger = makeLogger();
+    cta::log::LogContext workerLc(*workerLogger);
+    db.getNextSuccessfulRetrieveRepackReportBatch(workerLc);
+  });
+
+  // Wait until the worker actually sits in a row-lock wait (no gtest assertions while the thread
+  // runs and locks are held - every exit path below must still rollback and join).
+  bool sawLockWait = false;
+  for (int i = 0; i < 100 && !sawLockWait; i++) {
+    auto stmt = conn1.createStmt("SELECT COUNT(*) AS C FROM pg_stat_activity WHERE wait_event_type = 'Lock'");
+    auto rset = stmt.executeQuery();
+    rset.next();
+    sawLockWait = rset.columnUint64("C") > 0;
+    if (!sawLockWait) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
+
+  bool probeThrew = false;
+  if (sawLockWait) {
+    try {
+      auto stmt = conn1.createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING "
+                                   "WHERE REPACK_REQUEST_ID = :ID FOR NO KEY UPDATE NOWAIT");
+      stmt.bindUint64(":ID", idA);
+      auto rset = stmt.executeQuery();
+      rset.next();
+    } catch (...) {
+      probeThrew = true;  // lock_not_available: the waiting worker already holds the lower id
+    }
+  }
+
+  conn1.rollback();  // also clears the aborted-transaction state the failed NOWAIT probe left
+  worker.join();
+
+  ASSERT_TRUE(sawLockWait);
+  EXPECT_TRUE(probeThrew) << "worker waited on the higher REPACK_REQUEST_ID without holding the lower one - "
+                             "tracking-row locks are not taken in id order";
+
+  // Both requests credited - this would also catch a deadlock-aborted batch.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT RETRIEVED_FILES FROM REPACK_REQUEST_TRACKING "
+                                "WHERE REPACK_REQUEST_ID IN (:IDA, :IDB) ORDER BY REPACK_REQUEST_ID");
+    stmt.bindUint64(":IDA", idA);
+    stmt.bindUint64(":IDB", idB);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("RETRIEVED_FILES"));
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("RETRIEVED_FILES"));
+    ASSERT_FALSE(rset.next());
+  }
+}
+
 TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
   using namespace cta;
 
