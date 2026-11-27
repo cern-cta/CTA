@@ -38,14 +38,14 @@ mod failed_request {
                 requester_name: "ctaops".into(),
                 requester_group: "adm".into(),
                 archive_file: ArchiveFile {
-                    id: 4_299_888_572,
-                    storage_class: String::new(),
+                    archive_id: 4_299_888_572,
+                    storage_class_name: String::new(),
                     creation_time: ts(1_749_653_171),
                     size: 1_024_000,
                     checksums: vec![],
                 },
                 disk_file: DiskFile {
-                    instance: String::new(),
+                    disk_instance_name: String::new(),
                     id: String::new(),
                     path: "/eos/ctaatlaspps/ftstest/IBM460/a75bd88e-8c11-4652-a672-b6a268968343/0/test00000005"
                         .into(),
@@ -54,9 +54,9 @@ mod failed_request {
                 },
                 tape_file: Some(TapeFile {
                     vid: "I72509".into(),
-                    copy_nb: 1,
+                    copy_number: 1,
                     block_id: 0,
-                    f_seq: 1,
+                    fseq: 1,
                 }),
                 tape_pool_name: String::new(),
                 total_retries: 0,
@@ -136,7 +136,7 @@ mod repack_request {
                 start_info: RepackStartInfo {
                     file_count: 7,
                     byte_count: 15_180_950_480,
-                    created: log("vlado", "ctapreproductionfrontend11", 1_760_791_568),
+                    creation: log("vlado", "ctapreproductionfrontend11", 1_760_791_568),
                     is_all_files_selected_at_start: true,
                 },
                 retrieve_statistics: RepackStatistics {
@@ -272,7 +272,7 @@ mod user_request {
 
         assert_eq!(
             summarize(&requests, GroupBy::TapePoolName, OrderBy::MinAge),
-            Err(MixedMountTypes)
+            Err(MixedMountTypesError)
         );
         assert_eq!(
             summarize(&[], GroupBy::TapePoolName, OrderBy::MinAge),

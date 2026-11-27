@@ -34,7 +34,7 @@ async fn get_by_disk_file_id_and_vid() {
         .await
         .unwrap();
 
-    assert_eq!(file.archive_file.id, 4_303_580_667);
+    assert_eq!(file.archive_file.archive_id, 4_303_580_667);
     let cmd = single_call(&calls).cmd;
     assert_eq!(pair(&cmd), (Cmd::Tapefile, SubCmd::SubcmdLs));
     assert_eq!(
@@ -50,7 +50,7 @@ async fn get_by_disk_file_id_and_vid() {
 
 /// The copy of a file on one tape, which the frontend picks out of the copies of the file.
 #[tokio::test]
-async fn get_by_archive_file_id_and_vid() {
+async fn get_by_archive_id_and_vid() {
     let records = parse::<TapeFileLsItem>(cta_admin_jsonl!("tape_files.jsonl"));
     let (client, calls) = serve(Reply::records([Data::TflsItem(records[0].clone())])).await;
 
@@ -60,7 +60,7 @@ async fn get_by_archive_file_id_and_vid() {
         .await
         .unwrap();
 
-    assert_eq!(file.archive_file.id, 4_303_580_667);
+    assert_eq!(file.archive_file.archive_id, 4_303_580_667);
     assert_eq!(file.tape_file.vid, "I72052");
     let cmd = single_call(&calls).cmd;
     assert_eq!(pair(&cmd), (Cmd::Tapefile, SubCmd::SubcmdLs));
@@ -69,7 +69,7 @@ async fn get_by_archive_file_id_and_vid() {
 }
 
 #[tokio::test]
-async fn get_all_copies_by_archive_file_id() {
+async fn get_all_copies_by_archive_id() {
     let records = parse::<TapeFileLsItem>(cta_admin_jsonl!("tape_files.jsonl"));
     let (client, calls) = serve(Reply::records(
         records[..2].iter().cloned().map(Data::TflsItem),
@@ -227,8 +227,8 @@ mod recycle_bin {
                 .await
         })
         .await;
-        assert_eq!(deleted.file.archive_file.id, 4_302_486_079);
-        assert_eq!(deleted.file.tape_file.copy_nb, 2);
+        assert_eq!(deleted.file.archive_file.archive_id, 4_302_486_079);
+        assert_eq!(deleted.file.tape_file.copy_number, 2);
         assert_eq!(
             cmd,
             Sent::new(Cmd::Recycletapefile, SubCmd::SubcmdLs)
@@ -247,7 +247,7 @@ mod recycle_bin {
         assert_eq!(
             copies
                 .iter()
-                .map(|f| f.file.tape_file.copy_nb)
+                .map(|f| f.file.tape_file.copy_number)
                 .collect::<Vec<_>>(),
             [1, 2]
         );
@@ -280,7 +280,7 @@ mod recycle_bin {
         let cmd = listed(move |c| async move {
             c.recycle_bin_tape_files()
                 .list()
-                .archive_file_id(42)
+                .archive_id(42)
                 .copy_number(2)
                 .disk_file_ids(vec!["1".into()])
                 .disk_file_ids_file(path)

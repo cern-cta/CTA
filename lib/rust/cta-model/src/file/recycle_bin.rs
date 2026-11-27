@@ -24,7 +24,7 @@ pub struct RecycleBinTapeFile {
     /// Why the file was deleted
     pub deletion_reason: String,
     /// The virtual organisation the file belonged to
-    pub virtual_organisation: String,
+    pub virtual_organisation_name: String,
 }
 
 impl Keyed for RecycleBinTapeFile {
@@ -42,8 +42,8 @@ impl TryFrom<RecycleTapeFileLsItem> for RecycleBinTapeFile {
         Ok(RecycleBinTapeFile {
             file: File {
                 archive_file: ArchiveFile {
-                    id: val.archive_file_id,
-                    storage_class: val.storage_class,
+                    archive_id: val.archive_file_id,
+                    storage_class_name: val.storage_class,
                     creation_time: timestamp(
                         "archive_file_creation_time",
                         val.archive_file_creation_time,
@@ -53,12 +53,12 @@ impl TryFrom<RecycleTapeFileLsItem> for RecycleBinTapeFile {
                 },
                 tape_file: TapeFile {
                     vid: val.vid,
-                    copy_nb: val.copy_nb,
+                    copy_number: val.copy_nb,
                     block_id: val.block_id,
-                    f_seq: val.fseq,
+                    fseq: val.fseq,
                 },
                 disk_file: DiskFile {
-                    instance: val.disk_instance,
+                    disk_instance_name: val.disk_instance,
                     id: val.disk_file_id,
                     id_when_deleted: Some(val.disk_file_id_when_deleted),
                     owner: Some(Owner(
@@ -74,7 +74,7 @@ impl TryFrom<RecycleTapeFileLsItem> for RecycleBinTapeFile {
             },
             deletion_time: timestamp("recycle_log_time", val.recycle_log_time)?,
             deletion_reason: val.reason_log,
-            virtual_organisation: val.virtual_organization,
+            virtual_organisation_name: val.virtual_organization,
         })
     }
 }

@@ -36,14 +36,14 @@ impl From<ProtoArchiveRouteType> for ArchiveRouteType {
 ///
 /// Identified by its storage class, copy number and type.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Keyed)]
-#[key(storage_class_name, copy_number, route_type)]
+#[key(storage_class_name, copy_number, r#type)]
 pub struct ArchiveRoute {
     /// Storage class of the files
     pub storage_class_name: String,
     /// Copy number, between 1 and the number of copies of the storage class
     pub copy_number: u32,
     /// Workflow the route serves
-    pub route_type: ArchiveRouteType,
+    pub r#type: ArchiveRouteType,
     /// Tape pool the copy is written to
     pub tape_pool_name: String,
     /// Creation and modification logs, comment
@@ -58,7 +58,7 @@ impl TryFrom<ArchiveRouteLsItem> for ArchiveRoute {
         Ok(Self {
             storage_class_name: item.storage_class,
             copy_number: item.copy_number,
-            route_type,
+            r#type: route_type,
             tape_pool_name: item.tapepool,
             metadata: Metadata::convert(
                 "ArchiveRouteLsItem",

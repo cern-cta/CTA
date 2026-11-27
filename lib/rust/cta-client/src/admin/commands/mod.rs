@@ -9,13 +9,13 @@
 //! an [`AdminCmd`]:
 //!
 //! ```
-//! use cta_client::admin::commands::{TypedAdminCmd, tape_pool, virtual_organization};
+//! use cta_client::admin::commands::{TypedAdminCmd, tape_pool, virtual_organisation};
 //! use cta_protobuf::cta::admin::{AdminCmd, admin_cmd::SubCmd};
 //!
 //! let cmd: AdminCmd = tape_pool::Ls::builder().name("my_pool").build().into();
 //!
-//! let rm = virtual_organization::Rm::builder().vo("my_vo").build();
-//! assert_eq!(virtual_organization::Rm::SUBCMD, SubCmd::SubcmdRm);
+//! let rm = virtual_organisation::Rm::builder().vo("my_vo").build();
+//! assert_eq!(virtual_organisation::Rm::SUBCMD, SubCmd::SubcmdRm);
 //! let cmd: AdminCmd = rm.into();
 //! ```
 
@@ -46,7 +46,7 @@ mod scheduler;
 #[path = "tape/mod.rs"]
 mod tape_commands;
 
-pub use admin_commands::{admin, version, virtual_organization};
+pub use admin_commands::{admin, version, virtual_organisation};
 pub use disk::{disk_instance, disk_instance_space, disk_system};
 pub use file::{recycle_tape_file, tape_file};
 pub use library::{drive, logical_library, physical_library};

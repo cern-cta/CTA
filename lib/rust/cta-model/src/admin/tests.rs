@@ -90,7 +90,7 @@ mod version {
         assert_eq!(
             CtaVersion::try_from(item.clone()).unwrap(),
             CtaVersion {
-                client_version: ComponentVersion {
+                cli_version: ComponentVersion {
                     version: "5.11.12.1-1".into(),
                     protobuf_interface_version: Some("v1.2.3".into()),
                 },

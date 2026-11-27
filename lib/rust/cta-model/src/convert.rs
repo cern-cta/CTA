@@ -5,7 +5,7 @@
 
 use jiff::Timestamp;
 
-use crate::file::ChecksumTypeError;
+use crate::file::ChecksumAlgorithmError;
 
 /// A record of the frontend API cannot be converted into its domain type (the domain types of this crate).
 ///
@@ -54,7 +54,7 @@ pub enum ConversionError {
         field: &'static str,
         /// The conversion error
         #[source]
-        source: ChecksumTypeError,
+        source: ChecksumAlgorithmError,
     },
 }
 

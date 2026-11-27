@@ -17,5 +17,5 @@ pub use repack_request::{
     RepackStatistics,
 };
 pub use user_request::{
-    GroupBy, MixedMountTypes, OrderBy, UserRequest, UserRequestSummary, summarize,
+    GroupBy, MixedMountTypesError, OrderBy, UserRequest, UserRequestSummary, summarize,
 };

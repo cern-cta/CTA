@@ -19,7 +19,7 @@ pub struct PhysicalLibrary {
     /// Model
     pub model: String,
     /// Cartridge technology
-    pub library_type: String,
+    pub r#type: String,
     /// URL of the management interface
     pub gui_url: String,
     /// URL of the webcam
@@ -48,7 +48,7 @@ impl TryFrom<PhysicalLibraryLsItem> for PhysicalLibrary {
             name: item.name,
             manufacturer: item.manufacturer,
             model: item.model,
-            library_type: item.r#type,
+            r#type: item.r#type,
             gui_url: item.gui_url,
             webcam_url: item.webcam_url,
             location: item.location,

@@ -50,23 +50,23 @@ fn converts_the_records() {
                 file_count: 0,
             },
             metadata: TapeMetadata {
-                created: log("vlado", "cta-frontend01", 1_649_922_740),
-                modified: log("vlado", "ctapreproductionfrontend11", 1_760_953_705),
+                creation: log("vlado", "cta-frontend01", 1_649_922_740),
+                update: log("vlado", "ctapreproductionfrontend11", 1_760_953_705),
                 comment: String::new(),
                 label: Some(TapeLog {
-                    drive: "IBMLIB3-TS1160-F14C1R2".into(),
+                    drive_name: "IBMLIB3-TS1160-F14C1R2".into(),
                     time: ts(1_760_953_704),
                 }),
-                last_written: Some(TapeLog {
-                    drive: "IBMLIB3-TS1160-F14C1R2".into(),
+                last_write: Some(TapeLog {
+                    drive_name: "IBMLIB3-TS1160-F14C1R2".into(),
                     time: ts(1_739_349_949),
                 }),
                 last_read: Some(TapeLog {
-                    drive: "IBMLIB4-TS1160-F08C2R2".into(),
+                    drive_name: "IBMLIB4-TS1160-F08C2R2".into(),
                     time: ts(1_742_403_814),
                 }),
-                state_update_time: ts(1_649_922_740),
-                state_modified_by: "vlado@cta-frontend01".into(),
+                update_state_time: ts(1_649_922_740),
+                update_state_info: "vlado@cta-frontend01".into(),
                 write_mount_count: 99,
                 read_mount_count: 0,
             },

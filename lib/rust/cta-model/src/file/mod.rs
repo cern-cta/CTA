@@ -20,7 +20,9 @@ mod tape;
 mod tests;
 
 pub use archive::ArchiveFile;
-pub use checksum::{Checksum, ChecksumType, ChecksumTypeError, HexDecodeError, hex_to_byte_array};
+pub use checksum::{
+    Checksum, ChecksumAlgorithm, ChecksumAlgorithmError, HexDecodeError, hex_to_byte_array,
+};
 pub use disk::DiskFile;
 pub use recycle_bin::RecycleBinTapeFile;
 pub use tape::TapeFile;
@@ -53,9 +55,9 @@ impl Keyed for File {
 
     fn key(&self) -> Self::Key<'_> {
         (
-            self.archive_file.id,
+            self.archive_file.archive_id,
             &self.tape_file.vid,
-            self.tape_file.f_seq,
+            self.tape_file.fseq,
         )
     }
 }
@@ -83,22 +85,22 @@ pub enum FileId {
         /// The disk file ID
         disk_file_id: String,
         /// The disk instance
-        disk_instance: String,
+        disk_instance_name: String,
     },
 }
 
 impl FileId {
     /// A file designated by its disk file ID on a disk instance.
-    pub fn disk(disk_file_id: impl Into<String>, disk_instance: impl Into<String>) -> Self {
+    pub fn disk(disk_file_id: impl Into<String>, disk_instance_name: impl Into<String>) -> Self {
         Self::Disk {
             disk_file_id: disk_file_id.into(),
-            disk_instance: disk_instance.into(),
+            disk_instance_name: disk_instance_name.into(),
         }
     }
 
     /// The archive file ID, for [`FileId::Archive`].
     #[must_use]
-    pub fn archive_file_id(&self) -> Option<u64> {
+    pub fn archive_id(&self) -> Option<u64> {
         match self {
             Self::Archive(id) => Some(*id),
             Self::Disk { .. } => None,
@@ -116,17 +118,19 @@ impl FileId {
 
     /// The disk instance, for [`FileId::Disk`].
     #[must_use]
-    pub fn disk_instance(&self) -> Option<String> {
+    pub fn disk_instance_name(&self) -> Option<String> {
         match self {
             Self::Archive(_) => None,
-            Self::Disk { disk_instance, .. } => Some(disk_instance.clone()),
+            Self::Disk {
+                disk_instance_name, ..
+            } => Some(disk_instance_name.clone()),
         }
     }
 }
 
 impl From<u64> for FileId {
-    fn from(archive_file_id: u64) -> Self {
-        Self::Archive(archive_file_id)
+    fn from(archive_id: u64) -> Self {
+        Self::Archive(archive_id)
     }
 }
 
@@ -136,8 +140,8 @@ impl fmt::Display for FileId {
             Self::Archive(id) => write!(f, "{id}"),
             Self::Disk {
                 disk_file_id,
-                disk_instance,
-            } => write!(f, "{disk_file_id}@{disk_instance}"),
+                disk_instance_name,
+            } => write!(f, "{disk_file_id}@{disk_instance_name}"),
         }
     }
 }

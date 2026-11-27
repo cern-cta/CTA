@@ -13,7 +13,7 @@
 //! use cta_client::workflow::WorkflowClient;
 //! use cta_model::{
 //!     events::{Archive, FileInfo, Requester},
-//!     file::{Checksum, ChecksumType},
+//!     file::{Checksum, ChecksumAlgorithm},
 //! };
 //! use cta_grpc_common::{EndpointConfig, JwtAuth};
 //!
@@ -31,7 +31,7 @@
 //!     .disk_file_id("42")
 //!     .path("/eos/atlas/file")
 //!     .size(1_024)
-//!     .checksums(vec![Checksum::new(ChecksumType::Adler32, 0x0a0b_0c0d_u32.to_le_bytes().to_vec())])
+//!     .checksums(vec![Checksum::new(ChecksumAlgorithm::Adler32, 0x0a0b_0c0d_u32.to_le_bytes().to_vec())])
 //!     .build();
 //! let event = Archive::builder()
 //!     .file(file)

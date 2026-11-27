@@ -209,7 +209,7 @@ pub struct UserRequestSummary {
 /// The queues given to [`summarize`] are not all of the same [`MountType`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
 #[error("the queues to summarize must all be archive queues, or all retrieve queues")]
-pub struct MixedMountTypes;
+pub struct MixedMountTypesError;
 
 /// Sums up the queues sharing a value of `group_by`, sorted by `order_by` (ascending).
 ///
@@ -217,17 +217,17 @@ pub struct MixedMountTypes;
 ///
 /// # Errors
 ///
-/// [`MixedMountTypes`] when archive and retrieve queues are mixed.
+/// [`MixedMountTypesError`] when archive and retrieve queues are mixed.
 pub fn summarize(
     requests: &[UserRequest],
     group_by: GroupBy,
     order_by: OrderBy,
-) -> Result<Vec<UserRequestSummary>, MixedMountTypes> {
+) -> Result<Vec<UserRequestSummary>, MixedMountTypesError> {
     let Some(first) = requests.first() else {
         return Ok(Vec::new());
     };
     if requests.iter().any(|r| r.mount_type != first.mount_type) {
-        return Err(MixedMountTypes);
+        return Err(MixedMountTypesError);
     }
     let mut groups: BTreeMap<&str, Vec<&UserRequest>> = BTreeMap::new();
     for request in requests {

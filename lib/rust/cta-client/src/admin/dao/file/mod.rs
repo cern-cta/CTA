@@ -31,9 +31,9 @@ impl TapeFiles {
     pub async fn get_all_copies(&self, id: impl Into<FileId>) -> Result<Vec<File>, AdminError> {
         let id = id.into();
         let cmd = tape_file::Ls::builder()
-            .maybe_archive_file_id(id.archive_file_id())
+            .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance())
+            .maybe_instance(id.disk_instance_name())
             .build();
         at_least_one(self.client.stream_as(cmd).await?, "tape file", &id).await
     }
@@ -42,9 +42,9 @@ impl TapeFiles {
     pub async fn get(&self, id: impl Into<FileId>, vid: &str) -> Result<File, AdminError> {
         let id = id.into();
         let cmd = tape_file::Ls::builder()
-            .maybe_archive_file_id(id.archive_file_id())
+            .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance())
+            .maybe_instance(id.disk_instance_name())
             .vid(vid)
             .build();
         exactly_one(
@@ -95,9 +95,9 @@ impl TapeFiles {
         let id = id.into();
         let cmd = tape_file::Rm::builder()
             .vid(vid)
-            .maybe_archive_file_id(id.archive_file_id())
+            .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance())
+            .maybe_instance(id.disk_instance_name())
             .reason(reason)
             .build();
         self.client.run(cmd).await

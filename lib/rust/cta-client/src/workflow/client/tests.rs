@@ -14,7 +14,7 @@ use cta_model::{
     events::{
         Archive, CancelRetrieve, Create, Delete, FileInfo, InvalidEvent, Requester, Retrieve,
     },
-    file::{Checksum, ChecksumType, Owner},
+    file::{Checksum, ChecksumAlgorithm, Owner},
 };
 use cta_protobuf::cta::xrd::{
     Request, Response,
@@ -164,7 +164,7 @@ fn full_file() -> FileInfo {
         .owner(Owner(1000, 1001))
         .size(4096)
         .checksums(vec![Checksum::new(
-            ChecksumType::Adler32,
+            ChecksumAlgorithm::Adler32,
             0x0a0b_0c0d_u32.to_le_bytes().to_vec(),
         )])
         .xattr(BTreeMap::from([

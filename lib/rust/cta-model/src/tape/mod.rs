@@ -76,7 +76,7 @@ impl From<ProtoLabelFormat> for LabelFormat {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct TapeLog {
     /// Drive name
-    pub drive: String,
+    pub drive_name: String,
     /// When
     pub time: Timestamp,
 }
@@ -89,7 +89,7 @@ impl TapeLog {
     ) -> Result<Option<Self>, ConversionError> {
         log.map(|log| {
             Ok(Self {
-                drive: log.drive,
+                drive_name: log.drive,
                 time: timestamp(field, log.time)?,
             })
         })
@@ -186,21 +186,21 @@ pub struct TapeStatistics {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct TapeMetadata {
     /// Who created the tape, from where and when
-    pub created: EntryLog,
+    pub creation: EntryLog,
     /// Who last modified the tape, from where and when
-    pub modified: EntryLog,
+    pub update: EntryLog,
     /// Free-text comment of the operators
     pub comment: String,
     /// Which drive labelled the tape and when, if it was labelled
     pub label: Option<TapeLog>,
     /// Which drive wrote the tape last and when, if it was written
-    pub last_written: Option<TapeLog>,
+    pub last_write: Option<TapeLog>,
     /// Which drive read the tape last and when, if it was read
     pub last_read: Option<TapeLog>,
     /// When the state was last changed
-    pub state_update_time: Timestamp,
+    pub update_state_time: Timestamp,
     /// Who last changed the state (`user@host`)
-    pub state_modified_by: String,
+    pub update_state_info: String,
     /// Number of mounts for writing
     pub write_mount_count: u64,
     /// Number of mounts for reading
@@ -212,8 +212,8 @@ impl TapeMetadata {
     #[must_use]
     pub fn metadata(&self) -> Metadata {
         Metadata {
-            created: self.created.clone(),
-            modified: self.modified.clone(),
+            creation: self.creation.clone(),
+            update: self.update.clone(),
             comment: self.comment.clone(),
         }
     }
@@ -316,20 +316,20 @@ impl TryFrom<TapeLsItem> for Tape {
                 file_count: item.nb_master_files,
             },
             metadata: TapeMetadata {
-                created: EntryLog::convert(
+                creation: EntryLog::convert(
                     "creation_log",
                     required(RECORD, "creation_log", item.creation_log)?,
                 )?,
-                modified: EntryLog::convert(
+                update: EntryLog::convert(
                     "last_modification_log",
                     required(RECORD, "last_modification_log", item.last_modification_log)?,
                 )?,
                 comment: item.comment,
                 label: TapeLog::convert("label_log", item.label_log)?,
-                last_written: TapeLog::convert("last_written_log", item.last_written_log)?,
+                last_write: TapeLog::convert("last_written_log", item.last_written_log)?,
                 last_read: TapeLog::convert("last_read_log", item.last_read_log)?,
-                state_update_time: timestamp("state_update_time", item.state_update_time)?,
-                state_modified_by: item.state_modified_by,
+                update_state_time: timestamp("state_update_time", item.state_update_time)?,
+                update_state_info: item.state_modified_by,
                 write_mount_count: item.write_mount_count,
                 read_mount_count: item.read_mount_count,
             },

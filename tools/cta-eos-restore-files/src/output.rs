@@ -116,7 +116,7 @@ pub async fn output_as_table(
         log::info!("{item:#?}");
         let item = &item.file;
         table.print_row([
-            Cow::Owned(item.archive_file.id.to_string()),
+            Cow::Owned(item.archive_file.archive_id.to_string()),
             Cow::Borrowed(&item.disk_file.id),
             Cow::Borrowed(
                 item.disk_file
@@ -124,10 +124,10 @@ pub async fn output_as_table(
                     .as_ref()
                     .unwrap_or(&"-".into()),
             ),
-            Cow::Borrowed(&item.disk_file.instance),
+            Cow::Borrowed(&item.disk_file.disk_instance_name),
             Cow::Borrowed(&item.tape_file.vid),
             Cow::Borrowed(&item.disk_file.path),
-            Cow::Owned(item.tape_file.copy_nb.to_string()),
+            Cow::Owned(item.tape_file.copy_number.to_string()),
         ]);
     }
 

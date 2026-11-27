@@ -14,7 +14,7 @@ use crate::{
 /// The version of one side of the connection.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ComponentVersion {
-    /// CTA version
+    /// Component version
     pub version: String,
     /// Version of the protobuf interface (`xrootd-ssi-protobuf-interface`), if reported
     pub protobuf_interface_version: Option<String>,
@@ -33,7 +33,7 @@ impl From<Version> for ComponentVersion {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct CtaVersion {
     /// This client, as echoed by the frontend
-    pub client_version: ComponentVersion,
+    pub cli_version: ComponentVersion,
     /// The frontend
     pub server_version: ComponentVersion,
     /// Connection string of the catalogue of the frontend
@@ -54,7 +54,7 @@ impl TryFrom<VersionItem> for CtaVersion {
     fn try_from(item: VersionItem) -> Result<Self, Self::Error> {
         const RECORD: &str = "VersionItem";
         Ok(Self {
-            client_version: required(RECORD, "client_version", item.client_version)?.into(),
+            cli_version: required(RECORD, "cli_version", item.client_version)?.into(),
             server_version: required(RECORD, "server_version", item.server_version)?.into(),
             catalogue_connection_string: item.catalogue_connection_string,
             catalogue_version: item.catalogue_version,

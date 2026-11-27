@@ -7,7 +7,7 @@ use bon::bon;
 use cta_client_macros::admin_dao;
 use cta_model::admin::VirtualOrganisation;
 
-use crate::admin::{AdminError, AdminStream, commands::virtual_organization, dao::find_one};
+use crate::admin::{AdminError, AdminStream, commands::virtual_organisation, dao::find_one};
 
 /// Virtual organisations: see [`VirtualOrganisation`].
 #[admin_dao]
@@ -30,7 +30,7 @@ impl VirtualOrganisations {
     /// All the virtual organisations.
     pub async fn list(&self) -> Result<AdminStream<VirtualOrganisation>, AdminError> {
         self.client
-            .stream_as(virtual_organization::Ls::default())
+            .stream_as(virtual_organisation::Ls::default())
             .await
     }
 
@@ -58,7 +58,7 @@ impl VirtualOrganisations {
         #[builder(into)]
         comment: String,
     ) -> Result<(), AdminError> {
-        let cmd = virtual_organization::Add::builder()
+        let cmd = virtual_organisation::Add::builder()
             .vo(name)
             .disk_instance(disk_instance_name)
             .is_repack_vo(is_repack_vo)
@@ -90,7 +90,7 @@ impl VirtualOrganisations {
         #[builder(into)]
         comment: Option<String>,
     ) -> Result<(), AdminError> {
-        let cmd = virtual_organization::Ch::builder()
+        let cmd = virtual_organisation::Ch::builder()
             .vo(name)
             .maybe_disk_instance(disk_instance_name)
             .maybe_is_repack_vo(is_repack_vo)
@@ -105,7 +105,7 @@ impl VirtualOrganisations {
     /// Deletes a virtual organisation.
     pub async fn delete(&self, name: &str) -> Result<(), AdminError> {
         self.client
-            .run(virtual_organization::Rm::builder().vo(name).build())
+            .run(virtual_organisation::Rm::builder().vo(name).build())
             .await
     }
 }

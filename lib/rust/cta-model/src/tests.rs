@@ -25,16 +25,16 @@ pub(super) fn ts(secs: i64) -> Timestamp {
 
 pub(super) fn log(username: &str, host: &str, time: i64) -> EntryLog {
     EntryLog {
-        username: username.into(),
-        host: host.into(),
+        user_name: username.into(),
+        host_name: host.into(),
         time: ts(time),
     }
 }
 
-pub(super) fn metadata(created: EntryLog, modified: EntryLog, comment: &str) -> Metadata {
+pub(super) fn metadata(creation: EntryLog, update: EntryLog, comment: &str) -> Metadata {
     Metadata {
-        created,
-        modified,
+        creation,
+        update,
         comment: comment.into(),
     }
 }

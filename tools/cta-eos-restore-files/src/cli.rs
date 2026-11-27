@@ -71,7 +71,7 @@ impl CommonOptions {
             .list()
             .maybe_vid(self.vid)
             .maybe_disk_instance_name(self.disk_instance)
-            .maybe_archive_file_id(self.archive_file_id)
+            .maybe_archive_id(self.archive_file_id)
             .maybe_copy_number(self.copy_number)
             .maybe_disk_file_ids(self.file_ids)
             .call()

@@ -88,7 +88,7 @@ pub struct RepackStartInfo {
     /// Bytes on the tape
     pub byte_count: u64,
     /// Who submitted the repack, from where and when
-    pub created: EntryLog,
+    pub creation: EntryLog,
     /// Whether every file of the tape was selected when the repack started
     pub is_all_files_selected_at_start: bool,
 }
@@ -179,7 +179,7 @@ impl TryFrom<RepackLsItem> for RepackRequest {
             start_info: RepackStartInfo {
                 file_count: item.total_files_on_tape_at_start,
                 byte_count: item.total_bytes_on_tape_at_start,
-                created: EntryLog::convert(
+                creation: EntryLog::convert(
                     "creation_log",
                     required(RECORD, "creation_log", item.creation_log)?,
                 )?,

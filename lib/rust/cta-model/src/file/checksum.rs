@@ -11,7 +11,7 @@ use strum::Display;
 
 /// An error type for the conversion of checksum types. Useful to convert between EOS and CTA.
 #[derive(Debug, thiserror::Error)]
-pub enum ChecksumTypeError {
+pub enum ChecksumAlgorithmError {
     /// Error parsing a checksum name string
     #[error("Error parsing string '{0}'")]
     Parse(String),
@@ -72,13 +72,13 @@ pub fn hex_to_byte_array(hex_string: &str) -> Result<Vec<u8>, HexDecodeError> {
     Ok(bytes)
 }
 
-impl TryFrom<ProtoChecksumType> for ChecksumType {
-    type Error = ChecksumTypeError;
+impl TryFrom<ProtoChecksumType> for ChecksumAlgorithm {
+    type Error = ChecksumAlgorithmError;
 
     fn try_from(value: ProtoChecksumType) -> Result<Self, Self::Error> {
         Ok(match value {
             ProtoChecksumType::None => {
-                return Err(ChecksumTypeError::UnknownType(
+                return Err(ChecksumAlgorithmError::UnknownType(
                     ProtoChecksumType::None.as_str_name().to_owned(),
                 ));
             }
@@ -96,19 +96,19 @@ impl TryFrom<ProtoChecksumType> for ChecksumType {
     }
 }
 
-impl From<ChecksumType> for ProtoChecksumType {
-    fn from(value: ChecksumType) -> Self {
+impl From<ChecksumAlgorithm> for ProtoChecksumType {
+    fn from(value: ChecksumAlgorithm) -> Self {
         match value {
-            ChecksumType::Adler32 => Self::Adler32,
-            ChecksumType::Crc32 => Self::Crc32,
-            ChecksumType::Crc32c => Self::Crc32c,
-            ChecksumType::Md5 => Self::Md5,
-            ChecksumType::Sha1 => Self::Sha1,
-            ChecksumType::Crc64 => Self::Crc64,
-            ChecksumType::Sha256 => Self::Sha256,
-            ChecksumType::XxHash64 => Self::Xxhash64,
-            ChecksumType::Blake3 => Self::Blake3,
-            ChecksumType::HwH64 => Self::Hwh64,
+            ChecksumAlgorithm::Adler32 => Self::Adler32,
+            ChecksumAlgorithm::Crc32 => Self::Crc32,
+            ChecksumAlgorithm::Crc32c => Self::Crc32c,
+            ChecksumAlgorithm::Md5 => Self::Md5,
+            ChecksumAlgorithm::Sha1 => Self::Sha1,
+            ChecksumAlgorithm::Crc64 => Self::Crc64,
+            ChecksumAlgorithm::Sha256 => Self::Sha256,
+            ChecksumAlgorithm::XxHash64 => Self::Xxhash64,
+            ChecksumAlgorithm::Blake3 => Self::Blake3,
+            ChecksumAlgorithm::HwH64 => Self::Hwh64,
         }
     }
 }
@@ -116,7 +116,7 @@ impl From<ChecksumType> for ProtoChecksumType {
 /// Types of checksums
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Display, Serialize)]
 #[non_exhaustive]
-pub enum ChecksumType {
+pub enum ChecksumAlgorithm {
     /// `ADLER 32`
     Adler32,
     /// `CRC-32`
@@ -139,12 +139,12 @@ pub enum ChecksumType {
     HwH64,
 }
 
-impl ChecksumType {
-    /// Convert a string to a [`ChecksumType`], according to EOS convention
+impl ChecksumAlgorithm {
+    /// Convert a string to a [`ChecksumAlgorithm`], according to EOS convention
     ///
     /// # Errors
-    /// Unknown hash function names will result in a [`ChecksumTypeError`]
-    pub fn try_from_eos(text: impl AsRef<str>) -> Result<Self, ChecksumTypeError> {
+    /// Unknown hash function names will result in a [`ChecksumAlgorithmError`]
+    pub fn try_from_eos(text: impl AsRef<str>) -> Result<Self, ChecksumAlgorithmError> {
         Ok(match text.as_ref() {
             "adler" | "adler32" => Self::Adler32,
             "blake3" => Self::Blake3,
@@ -156,7 +156,7 @@ impl ChecksumType {
             "crc64" => Self::Crc64,
             "xxhash64" => Self::XxHash64,
             "hwh64" => Self::HwH64,
-            s => return Err(ChecksumTypeError::Parse(s.into())),
+            s => return Err(ChecksumAlgorithmError::Parse(s.into())),
         })
     }
 }
@@ -165,14 +165,14 @@ impl ChecksumType {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct Checksum {
     /// The type of the checksum
-    pub r#type: ChecksumType,
+    pub r#type: ChecksumAlgorithm,
     /// The content, as a vector of bytes
     pub value: Vec<u8>,
 }
 
 impl Checksum {
     /// Create a checksum from its components
-    pub fn new(r#type: ChecksumType, value: Vec<u8>) -> Self {
+    pub fn new(r#type: ChecksumAlgorithm, value: Vec<u8>) -> Self {
         Self { r#type, value }
     }
 
@@ -185,20 +185,20 @@ impl Checksum {
 
 /// The checksums of the `tapefile ls` and `recycletf ls` records carry their value as a hexadecimal string.
 impl TryFrom<&cta_protobuf::cta::admin::Checksum> for Checksum {
-    type Error = ChecksumTypeError;
+    type Error = ChecksumAlgorithmError;
 
     fn try_from(src: &cta_protobuf::cta::admin::Checksum) -> Result<Self, Self::Error> {
         Ok(Self {
             r#type: src.r#type().try_into()?,
             value: hex_to_byte_array(&src.value)
-                .map_err(|e| ChecksumTypeError::Parse(e.to_string()))?,
+                .map_err(|e| ChecksumAlgorithmError::Parse(e.to_string()))?,
         })
     }
 }
 
 /// The checksums of the checksum blobs (`cta.common.ChecksumBlob`) carry their value as bytes.
 impl TryFrom<&cta_protobuf::cta::common::checksum_blob::Checksum> for Checksum {
-    type Error = ChecksumTypeError;
+    type Error = ChecksumAlgorithmError;
 
     fn try_from(
         src: &cta_protobuf::cta::common::checksum_blob::Checksum,

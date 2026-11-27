@@ -317,8 +317,8 @@ async fn version() {
 
     let version = client.version().await.unwrap();
 
-    assert_eq!(version.client_version.version, "5.11.12.1-1");
-    assert_eq!(version.client_version.protobuf_interface_version, None);
+    assert_eq!(version.cli_version.version, "5.11.12.1-1");
+    assert_eq!(version.cli_version.protobuf_interface_version, None);
     assert_eq!(
         version.server_version.protobuf_interface_version.as_deref(),
         Some("v1")

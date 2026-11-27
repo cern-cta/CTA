@@ -34,9 +34,9 @@ impl RecycleBinTapeFiles {
     ) -> Result<Vec<RecycleBinTapeFile>, AdminError> {
         let id = id.into();
         let cmd = recycle_tape_file::Ls::builder()
-            .maybe_archive_file_id(id.archive_file_id())
+            .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance())
+            .maybe_instance(id.disk_instance_name())
             .build();
         at_least_one(
             self.client.stream_as(cmd).await?,
@@ -54,9 +54,9 @@ impl RecycleBinTapeFiles {
     ) -> Result<RecycleBinTapeFile, AdminError> {
         let id = id.into();
         let cmd = recycle_tape_file::Ls::builder()
-            .maybe_archive_file_id(id.archive_file_id())
+            .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance())
+            .maybe_instance(id.disk_instance_name())
             .vid(vid)
             .build();
         exactly_one(
@@ -75,7 +75,7 @@ impl RecycleBinTapeFiles {
         #[builder(into)]
         vid: Option<String>,
         /// The file with this archive file ID
-        archive_file_id: Option<u64>,
+        archive_id: Option<u64>,
         /// The copies with this copy number
         copy_number: Option<u64>,
         /// The files with these disk file IDs (with `disk_instance_name`)
@@ -102,7 +102,7 @@ impl RecycleBinTapeFiles {
         }
         let cmd = recycle_tape_file::Ls::builder()
             .maybe_vid(vid)
-            .maybe_archive_file_id(archive_file_id)
+            .maybe_archive_file_id(archive_id)
             .maybe_copy_nb(copy_number)
             .maybe_disk_file_ids(ids)
             .maybe_instance(disk_instance_name)
@@ -120,10 +120,10 @@ impl RecycleBinTapeFiles {
     pub async fn restore(&self, file: &File) -> Result<String, AdminError> {
         let cmd = recycle_tape_file::Restore::builder()
             .vid(&file.tape_file.vid)
-            .instance(&file.disk_file.instance)
+            .instance(&file.disk_file.disk_instance_name)
             .disk_file_id(&file.disk_file.id)
-            .archive_file_id(file.archive_file.id)
-            .copy_nb(u64::from(file.tape_file.copy_nb))
+            .archive_file_id(file.archive_file.archive_id)
+            .copy_nb(u64::from(file.tape_file.copy_number))
             .build();
         Ok(self.client.unary(cmd).await?.message_txt)
     }

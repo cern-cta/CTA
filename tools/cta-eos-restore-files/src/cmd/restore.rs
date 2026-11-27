@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use anyhow::{Context, bail};
 use cta_client::admin::{AdminClient, AdminError};
 use cta_grpc_common::EndpointConfig;
-use cta_model::file::{Checksum, ChecksumType, DiskFile, File};
+use cta_model::file::{Checksum, ChecksumAlgorithm, DiskFile, File};
 use eos_client::EosEndpointMap;
 use eos_protobuf::eos::rpc::{MdId, Type};
 use tokio_stream::StreamExt;
@@ -19,7 +19,7 @@ async fn do_sanity_check(
     file: File,
 ) -> anyhow::Result<()> {
     // Let's get the metadata
-    let archive_file_id = file.archive_file.id;
+    let archive_file_id = file.archive_file.archive_id;
     let vid = &file.tape_file.vid;
     let tape_file = match client.tape_files().get(archive_file_id, vid).await {
         Err(AdminError::NotFound { .. }) => {
@@ -30,7 +30,7 @@ async fn do_sanity_check(
     log::debug!("Retrieved tape file information: {tape_file:?}");
     let DiskFile {
         id: disk_id,
-        instance: disk_instance,
+        disk_instance_name: disk_instance,
         ..
     } = tape_file.disk_file;
 
@@ -60,22 +60,22 @@ async fn do_sanity_check(
     .map_err(|e| anyhow::anyhow!("sys.archive.file_id is not a valid u64: {}", e))?;
 
     // Check that the archive_file_ids match
-    if eos_file_id != file.archive_file.id {
+    if eos_file_id != file.archive_file.archive_id {
         eprintln!(
             "Sanity check: file IDs don't match (eos = {eos_file_id}, cta = {})",
-            file.archive_file.id
+            file.archive_file.archive_id
         );
         std::process::exit(1);
     }
 
     log::info!("File IDs match ({eos_file_id})!");
 
-    let eos_checksums: anyhow::Result<HashMap<ChecksumType, Checksum>> = eos_metadata
+    let eos_checksums: anyhow::Result<HashMap<ChecksumAlgorithm, Checksum>> = eos_metadata
         .checksums
         .into_iter()
         .map(|c| {
             let checksum_type_str = c.r#type.clone();
-            let ty = ChecksumType::try_from_eos(c.r#type).map_err(|e| {
+            let ty = ChecksumAlgorithm::try_from_eos(c.r#type).map_err(|e| {
                 anyhow::anyhow!(
                     "Can't parse EOS checksum type '{}': {}",
                     checksum_type_str,
@@ -88,14 +88,14 @@ async fn do_sanity_check(
 
     let eos_checksums = eos_checksums.context("Failed to parse EOS checksums from metadata")?;
 
-    let cta_checksums: HashMap<ChecksumType, Checksum> = file
+    let cta_checksums: HashMap<ChecksumAlgorithm, Checksum> = file
         .archive_file
         .checksums
         .iter()
         .map(|cs| (cs.r#type, cs.clone()))
         .collect();
 
-    let matching: Vec<&ChecksumType> = eos_checksums
+    let matching: Vec<&ChecksumAlgorithm> = eos_checksums
         .iter()
         .filter(|(ty, eos_cs)| cta_checksums.get(ty) == Some(eos_cs))
         .map(|(ty, _)| ty)
@@ -134,7 +134,7 @@ pub(crate) async fn command(
             disk_file:
                 DiskFile {
                     id: ref old_disk_file_id,
-                    instance: ref disk_instance,
+                    disk_instance_name: ref disk_instance,
                     ..
                 },
             ..

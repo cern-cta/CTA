@@ -12,32 +12,32 @@ pub struct TapeFile {
     /// Volume ID of the tape on which the file has been written
     pub vid: String,
     /// Number of this copy of the file on tape (1..N)
-    pub copy_nb: u32,
+    pub copy_number: u32,
     /// The position of the file on tape: Logical Block ID
     pub block_id: u64,
     /// The position of the file on tape: File Sequence number
-    pub f_seq: u64,
+    pub fseq: u64,
 }
 
 impl From<tape_file_ls_item::TapeFile> for TapeFile {
     fn from(val: tape_file_ls_item::TapeFile) -> Self {
         TapeFile {
             vid: val.vid,
-            copy_nb: val.copy_nb,
+            copy_number: val.copy_nb,
             block_id: val.block_id,
-            f_seq: val.f_seq,
+            fseq: val.f_seq,
         }
     }
 }
 
 impl TapeFile {
     /// The tape file of a `cta.common.TapeFile`, which does not carry the copy number.
-    pub(crate) fn from_common(tf: common::TapeFile, copy_nb: u32) -> Self {
+    pub(crate) fn from_common(tf: common::TapeFile, copy_number: u32) -> Self {
         TapeFile {
             vid: tf.vid,
-            copy_nb,
+            copy_number,
             block_id: tf.block_id,
-            f_seq: tf.f_seq,
+            fseq: tf.f_seq,
         }
     }
 }

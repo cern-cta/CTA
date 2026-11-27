@@ -164,7 +164,7 @@ mod physical {
                 name: "IBMLIB1".into(),
                 manufacturer: "IBM".into(),
                 model: "TS4500".into(),
-                library_type: "LTO".into(),
+                r#type: "LTO".into(),
                 gui_url: "http://ibmlib1.cern.ch/".into(),
                 webcam_url: String::new(),
                 location: "513-S-034".into(),

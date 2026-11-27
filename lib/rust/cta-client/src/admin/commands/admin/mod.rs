@@ -5,4 +5,4 @@
 
 pub mod admin;
 pub mod version;
-pub mod virtual_organization;
+pub mod virtual_organisation;

@@ -23,23 +23,23 @@ fn converts_the_records() {
         files[0],
         File {
             archive_file: ArchiveFile {
-                id: 4_303_580_667,
-                storage_class: "digital_memory".into(),
+                archive_id: 4_303_580_667,
+                storage_class_name: "digital_memory".into(),
                 creation_time: ts(1_677_166_670),
                 size: 5,
                 checksums: vec![Checksum::new(
-                    ChecksumType::Adler32,
+                    ChecksumAlgorithm::Adler32,
                     vec![0x05, 0x88, 0x01, 0xab]
                 )],
             },
             tape_file: TapeFile {
                 vid: "I72052".into(),
-                copy_nb: 1,
+                copy_number: 1,
                 block_id: 0,
-                f_seq: 1,
+                fseq: 1,
             },
             disk_file: DiskFile {
-                instance: "eosctapublicpps".into(),
+                disk_instance_name: "eosctapublicpps".into(),
                 id: "4296353178".into(),
                 path: String::new(),
                 id_when_deleted: None,
@@ -123,23 +123,23 @@ mod recycle_bin {
             RecycleBinTapeFile {
                 file: File {
                     archive_file: ArchiveFile {
-                        id: 4_302_486_079,
-                        storage_class: "ftstest_IBM1L9".into(),
+                        archive_id: 4_302_486_079,
+                        storage_class_name: "ftstest_IBM1L9".into(),
                         creation_time: ts(1_666_971_586),
                         size: 1_024_000,
                         checksums: vec![Checksum::new(
-                            ChecksumType::Adler32,
+                            ChecksumAlgorithm::Adler32,
                             vec![0x11, 0x84, 0xdd, 0xbc]
                         )],
                     },
                     tape_file: TapeFile {
                         vid: "L85033".into(),
-                        copy_nb: 1,
+                        copy_number: 1,
                         block_id: 13_000_383,
-                        f_seq: 1_000_032,
+                        fseq: 1_000_032,
                     },
                     disk_file: DiskFile {
-                        instance: "eosctaatlaspps".into(),
+                        disk_instance_name: "eosctaatlaspps".into(),
                         id: "4301523000".into(),
                         path: "/eos/ctaatlaspps/ftstest/IBM1L9/ftstest1/1/test01000001".into(),
                         id_when_deleted: Some("4301523000".into()),
@@ -148,7 +148,7 @@ mod recycle_bin {
                 },
                 deletion_time: ts(1_679_864_202),
                 deletion_reason: "File deleted by fts3ops from the eosctaatlaspps instance".into(),
-                virtual_organisation: "IT".into(),
+                virtual_organisation_name: "IT".into(),
             }
         );
         assert_eq!(files[0].key(), (4_302_486_079, "L85033", 1_000_032));

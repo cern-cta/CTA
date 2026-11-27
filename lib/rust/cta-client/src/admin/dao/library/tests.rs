@@ -88,7 +88,7 @@ mod physical {
                 .physical_drive_slots(10)
                 .gui_url("https://gui")
                 .webcam_url("https://webcam")
-                .library_type("tape")
+                .r#type("tape")
                 .location("513")
                 .available_cartridge_slots(900)
                 .comment("c")

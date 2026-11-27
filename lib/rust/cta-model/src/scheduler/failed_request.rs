@@ -48,7 +48,7 @@ impl TryFrom<FailedRequestLsItem> for FailedRequest {
         let requester = required(RECORD, "requester", item.requester)?;
         let mut af = required(RECORD, "af", item.af)?;
         let disk_file = DiskFile::from_common(&mut af);
-        let copy_nb = u32::try_from(item.copy_nb)
+        let copy_number = u32::try_from(item.copy_nb)
             .map_err(|_| ConversionError::invalid_value("copy_nb", item.copy_nb))?;
         Ok(Self {
             id: item.object_id,
@@ -60,7 +60,7 @@ impl TryFrom<FailedRequestLsItem> for FailedRequest {
             tape_file: item
                 .tf
                 .filter(|tf| !tf.vid.is_empty())
-                .map(|tf| TapeFile::from_common(tf, copy_nb)),
+                .map(|tf| TapeFile::from_common(tf, copy_number)),
             tape_pool_name: item.tapepool,
             total_retries: item.totalretries,
             logs: item.failurelogs,

@@ -15,7 +15,7 @@ use super::{
     disk_instance, disk_instance_space, disk_system, drive, failed_request, group_mount_rule,
     logical_library, media_type, mount_policy, physical_library, recycle_tape_file, repack,
     requester_mount_rule, show_queues, storage_class, tape, tape_file, tape_pool, version,
-    virtual_organization,
+    virtual_organisation,
 };
 use crate::{
     admin::commands::{CLIENT_VERSION, PROTOBUF_TAG},
@@ -39,10 +39,10 @@ fn typed_pairs() -> Vec<(Cmd, SubCmd, bool)> {
         unary::<admin::Ch>(),
         unary::<admin::Rm>(),
         streaming::<admin::Ls>(),
-        unary::<virtual_organization::Add>(),
-        unary::<virtual_organization::Ch>(),
-        unary::<virtual_organization::Rm>(),
-        streaming::<virtual_organization::Ls>(),
+        unary::<virtual_organisation::Add>(),
+        unary::<virtual_organisation::Ch>(),
+        unary::<virtual_organisation::Rm>(),
+        streaming::<virtual_organisation::Ls>(),
         unary::<disk_instance::Add>(),
         unary::<disk_instance::Ch>(),
         unary::<disk_instance::Rm>(),

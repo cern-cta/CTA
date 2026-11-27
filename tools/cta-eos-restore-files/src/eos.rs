@@ -12,7 +12,7 @@ use std::{os::unix::ffi::OsStringExt, path::PathBuf};
 
 use anyhow::{Result, anyhow};
 use cta_grpc_common::utils::system_time_now;
-use cta_model::file::{ChecksumType, File, Owner};
+use cta_model::file::{ChecksumAlgorithm, File, Owner};
 use eos_client::{DEFAULT_FILE_MODE, EosGrpcClient, Error};
 use eos_protobuf::eos::rpc::{Checksum, FileMdProto, Time};
 
@@ -49,7 +49,7 @@ pub async fn restore_deleted_file(eos: &mut EosGrpcClient, file: &File) -> Resul
         .archive_file
         .checksums
         .iter()
-        .find(|cs| cs.r#type == ChecksumType::Adler32)
+        .find(|cs| cs.r#type == ChecksumAlgorithm::Adler32)
     {
         Some(cs) => cs.clone(),
         None => {
@@ -93,7 +93,7 @@ pub async fn restore_deleted_file(eos: &mut EosGrpcClient, file: &File) -> Resul
     let container_id = eos
         .add_container(
             &parent_dir.to_string_lossy(),
-            &file.archive_file.storage_class,
+            &file.archive_file.storage_class_name,
             true,
             None,
         )
@@ -146,7 +146,7 @@ pub async fn restore_deleted_file(eos: &mut EosGrpcClient, file: &File) -> Resul
     // 1. Archive File ID
     new_file.xattrs.insert(
         "sys.archive.file_id".to_string(),
-        file.archive_file.id.to_string().into(),
+        file.archive_file.archive_id.to_string().into(),
     );
 
     // 2. Birth Time

@@ -12,7 +12,7 @@ use crate::file::Owner;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct DiskFile {
     /// The disk storage instance (e.g. EOS instance)
-    pub instance: String,
+    pub disk_instance_name: String,
     /// The disk file identifier on the storage system
     pub id: String,
     /// The full file path in the namespace
@@ -26,7 +26,7 @@ pub struct DiskFile {
 impl From<tape_file_ls_item::DiskFile> for DiskFile {
     fn from(val: tape_file_ls_item::DiskFile) -> Self {
         DiskFile {
-            instance: val.disk_instance,
+            disk_instance_name: val.disk_instance,
             id: val.disk_id,
             id_when_deleted: None,
             owner: val.owner_id.map(Into::into),
@@ -40,7 +40,7 @@ impl DiskFile {
     pub(crate) fn from_common(af: &mut common::ArchiveFile) -> Self {
         let df = af.df.take().unwrap_or_default();
         DiskFile {
-            instance: std::mem::take(&mut af.disk_instance),
+            disk_instance_name: std::mem::take(&mut af.disk_instance),
             id: std::mem::take(&mut af.disk_id),
             path: df.path,
             id_when_deleted: None,

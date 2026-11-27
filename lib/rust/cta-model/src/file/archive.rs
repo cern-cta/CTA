@@ -13,9 +13,9 @@ use crate::{ConversionError, convert::timestamp, file::Checksum};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct ArchiveFile {
     /// The archive file identifier
-    pub id: u64,
+    pub archive_id: u64,
     /// The storage class of the archive file (e.g., `cta_storage_class`)
-    pub storage_class: String,
+    pub storage_class_name: String,
     /// The time at which the file was archived to tape
     pub creation_time: Timestamp,
     /// The size of the file in bytes
@@ -30,7 +30,7 @@ pub(super) fn checksums<'a, T: 'a>(
     items: impl IntoIterator<Item = &'a T>,
 ) -> Result<Vec<Checksum>, ConversionError>
 where
-    Checksum: TryFrom<&'a T, Error = crate::file::ChecksumTypeError>,
+    Checksum: TryFrom<&'a T, Error = crate::file::ChecksumAlgorithmError>,
 {
     items
         .into_iter()
@@ -44,8 +44,8 @@ impl TryFrom<tape_file_ls_item::ArchiveFile> for ArchiveFile {
 
     fn try_from(val: tape_file_ls_item::ArchiveFile) -> Result<Self, Self::Error> {
         Ok(ArchiveFile {
-            id: val.archive_id,
-            storage_class: val.storage_class,
+            archive_id: val.archive_id,
+            storage_class_name: val.storage_class,
             creation_time: timestamp("af.creation_time", val.creation_time)?,
             size: val.size,
             checksums: checksums("af.checksum", &val.checksum)?,
@@ -57,8 +57,8 @@ impl ArchiveFile {
     /// The archive file of a `cta.common.ArchiveFile`, whose checksums are a blob.
     pub(crate) fn from_common(af: common::ArchiveFile) -> Result<Self, ConversionError> {
         Ok(ArchiveFile {
-            id: af.archive_id,
-            storage_class: af.storage_class,
+            archive_id: af.archive_id,
+            storage_class_name: af.storage_class,
             creation_time: timestamp("af.creation_time", af.creation_time)?,
             size: af.size,
             checksums: checksums("af.csb", af.csb.as_ref().map_or(&[][..], |csb| &csb.cs))?,

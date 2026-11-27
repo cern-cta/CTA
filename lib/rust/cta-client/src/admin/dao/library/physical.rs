@@ -74,7 +74,7 @@ impl PhysicalLibraries {
         webcam_url: Option<String>,
         /// Cartridge technology
         #[builder(into)]
-        library_type: Option<String>,
+        r#type: Option<String>,
         /// Where the library is
         #[builder(into)]
         location: Option<String>,
@@ -92,7 +92,7 @@ impl PhysicalLibraries {
             .nb_physical_drive_slots(physical_drive_slots)
             .maybe_gui_url(gui_url)
             .maybe_webcam_url(webcam_url)
-            .maybe_library_type(library_type)
+            .maybe_library_type(r#type)
             .maybe_location(location)
             .maybe_nb_available_cartridge_slots(available_cartridge_slots)
             .maybe_comment(comment)

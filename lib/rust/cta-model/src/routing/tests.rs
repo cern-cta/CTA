@@ -58,7 +58,7 @@ mod archive_route {
             ArchiveRoute {
                 storage_class_name: "atlaspps".into(),
                 copy_number: 1,
-                route_type: ArchiveRouteType::Default,
+                r#type: ArchiveRouteType::Default,
                 tape_pool_name: "atlaspps".into(),
                 metadata: metadata(
                     log("jleduc", "eosctafst0017.cern.ch", 1_593_464_381),

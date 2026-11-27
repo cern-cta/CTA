@@ -20,17 +20,17 @@ impl ArchiveRoutes {
         &self,
         storage_class_name: &str,
         copy_number: u32,
-        route_type: ArchiveRouteType,
+        r#type: ArchiveRouteType,
     ) -> Result<ArchiveRoute, AdminError> {
         let wanted = storage_class_name.to_owned();
         find_one(
             self.list().await?,
             "archive route",
-            format!("{storage_class_name}/{copy_number}/{route_type}"),
+            format!("{storage_class_name}/{copy_number}/{}", r#type),
             move |route: &ArchiveRoute| {
                 route.storage_class_name == wanted
                     && route.copy_number == copy_number
-                    && route.route_type == route_type
+                    && route.r#type == r#type
             },
         )
         .await
@@ -47,7 +47,7 @@ impl ArchiveRoutes {
         &self,
         #[builder(start_fn, into)] storage_class_name: String,
         #[builder(start_fn)] copy_number: u32,
-        #[builder(start_fn)] route_type: ArchiveRouteType,
+        #[builder(start_fn)] r#type: ArchiveRouteType,
         /// Tape pool the copy is written to
         #[builder(into)]
         tape_pool_name: String,
@@ -58,7 +58,7 @@ impl ArchiveRoutes {
         let cmd = archive_route::Add::builder()
             .storage_class(storage_class_name)
             .copy_nb(u64::from(copy_number))
-            .archive_route_type(route_type)
+            .archive_route_type(r#type)
             .tape_pool(tape_pool_name)
             .comment(comment)
             .build();
@@ -71,7 +71,7 @@ impl ArchiveRoutes {
         &self,
         #[builder(start_fn, into)] storage_class_name: String,
         #[builder(start_fn)] copy_number: u32,
-        #[builder(start_fn)] route_type: ArchiveRouteType,
+        #[builder(start_fn)] r#type: ArchiveRouteType,
         /// New tape pool
         #[builder(into)]
         tape_pool_name: Option<String>,
@@ -82,7 +82,7 @@ impl ArchiveRoutes {
         let cmd = archive_route::Ch::builder()
             .storage_class(storage_class_name)
             .copy_nb(u64::from(copy_number))
-            .archive_route_type(route_type)
+            .archive_route_type(r#type)
             .maybe_tape_pool(tape_pool_name)
             .maybe_comment(comment)
             .build();
@@ -94,12 +94,12 @@ impl ArchiveRoutes {
         &self,
         storage_class_name: &str,
         copy_number: u32,
-        route_type: ArchiveRouteType,
+        r#type: ArchiveRouteType,
     ) -> Result<(), AdminError> {
         let cmd = archive_route::Rm::builder()
             .storage_class(storage_class_name)
             .copy_nb(u64::from(copy_number))
-            .archive_route_type(route_type)
+            .archive_route_type(r#type)
             .build();
         self.client.run(cmd).await
     }
