@@ -936,6 +936,8 @@ def test_repack_just_add_copies_with_missing_copy(
         )
 
         repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
+        # Full dump: when this test fails on a counter, every other counter is the diagnosis.
+        print(json.dumps(repack_ls_json, indent=2))
         repack_request = repack_ls_json[0]
         archived_files = int(repack_request["archivedFiles"])
         retrieved_files = int(repack_request["retrievedFiles"])

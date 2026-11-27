@@ -3489,11 +3489,11 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
                                            15 * 60,
                                            "no comment");
 
-#ifdef STDOUT_LOGGING
-  log::StdoutLogger dl("dummy", "unitTest");
-#else
-  log::DummyLogger dl("", "");
-#endif
+  // StringLogger, not DummyLogger: a per-subrequest creation failure is caught and tallied inside
+  // addSubrequestsAndUpdateStats(), so the exception message only exists in the log - dumped below
+  // when the failure counter is non-zero, since that assertion failing is otherwise undebuggable
+  // from CI output.
+  log::StringLogger dl("dummy", "expandRepackRequestAddCopiesOnly", log::DEBUG);
   log::LogContext lc(dl);
 
   cta::common::dataStructures::SecurityIdentity admin;
@@ -3596,7 +3596,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   // the subrequest never created. After the fix: the subrequest is created successfully, through
   // the user-provided (no-recall) path.
   auto repackInfo = scheduler.getRepack(s_vid);
-  ASSERT_EQ(0, repackInfo.failedToCreateArchiveReq);
+  ASSERT_EQ(0, repackInfo.failedToCreateArchiveReq) << "subrequest creation failed - scheduler log:\n" << dl.getLog();
   ASSERT_EQ(1, repackInfo.totalFilesToArchive);
   ASSERT_EQ(1, repackInfo.userProvidedFiles);
 
@@ -3604,13 +3604,14 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   // create) is empty for AddCopiesOnly - the missing copy has no existing tape file for
   // initialize() to build a job from - and RetrieveRequest::makeJobRow() used to set the retry
   // limits only from m_jobs's first entry, leaving an empty-m_jobs row at the queue row default of
-  // 0. A real retry budget must still be set regardless.
+  // 0. A real retry budget must still be set regardless. A no-recall/user-provided row is inserted
+  // straight into the ACTIVE queue (see insertBatch()'s isNoRecallRepack switch), not PENDING.
   auto* dbWrapper = dynamic_cast<cta::RelationalDBTestWrapper*>(&getSchedulerDB());
   ASSERT_NE(nullptr, dbWrapper);
   {
     auto conn = dbWrapper->getRelationalDB().getConn();
     auto stmt = conn.createStmt("SELECT MAX_TOTAL_RETRIES, MAX_RETRIES_WITHIN_MOUNT, MAX_REPORT_RETRIES "
-                                "FROM REPACK_RETRIEVE_PENDING_QUEUE WHERE ARCHIVE_FILE_ID = 1");
+                                "FROM REPACK_RETRIEVE_ACTIVE_QUEUE WHERE ARCHIVE_FILE_ID = 1");
     auto rset = stmt.executeQuery();
     ASSERT_TRUE(rset.next());
     ASSERT_GT(rset.columnUint64("MAX_TOTAL_RETRIES"), 0u);
