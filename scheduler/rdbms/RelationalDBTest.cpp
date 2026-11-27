@@ -579,6 +579,83 @@ TEST_P(RelationalDBTest, repackArchiveJobStartTimeIsResetWhenRetrieveJobIsTransf
   ASSERT_EQ((std::list<std::string> {"tapePoolA", "tapePoolB"}), tapePools);
 }
 
+// AddCopiesOnly's retrieve rows never list their own recalled copy in REPACK_REARCHIVE_COPY_NBS -
+// the recalled copy is read, not rearchived, so only the genuinely missing copy (here, 2) goes in
+// that set. BASE_INSERT's own EXISTS filter therefore correctly fires for neither row below (its
+// COPY_NB, 1, is never a member), leaving retrieve progress with nothing to derive from
+// BASE_INSERTED_COUNT - this is exactly what used to make
+// getNextSuccessfulRetrieveRepackReportBatch() credit zero retrieved files for every AddCopiesOnly
+// file, and, mixed with a user-provided (never-mounted) file in the same batch as it is here,
+// underflow the unsigned subtraction and throw "value out of range for type bigint" when the
+// wrapped value was bound as a BIGINT.
+TEST_P(RelationalDBTest, repackAddCopiesOnlyRetrieveProgressCountsCorrectlyAndDoesNotOverflow) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-ADDCOPIES";
+  auto mountPolicy = makeMountPolicy(1000);
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest(vid,
+                                                           "/repack/buffer",
+                                                           cta::common::dataStructures::RepackInfo::Type::AddCopiesOnly,
+                                                           mountPolicy,
+                                                           false,
+                                                           10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t repackRequestId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // Row 1: a genuinely retrieved file (MOUNT_ID set, as a real tape mount would leave it).
+    // Row 2: a user-provided file (MOUNT_ID NULL, pre-staged rather than recalled from tape) -
+    // the combination that used to trigger the BIGINT overflow.
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_RETRIEVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID, RETRIEVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, ARCHIVE_FILE_ID,
+        CREATION_TIME, START_TIME, STORAGE_CLASS, SIZE_IN_BYTES, VID, TAPE_POOL, MOUNT_POLICY,
+        PRIORITY, MIN_RETRIEVE_REQUEST_AGE, COPY_NB, MOUNT_ID, REPACK_REARCHIVE_COPY_NBS,
+        REPACK_REARCHIVE_TAPE_POOLS
+      ) VALUES
+      (:REPACK_REQUEST_ID, 881, 1, :STATUS, 991, 500, 500, :STORAGE_CLASS, 1000, :VID, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, 42, '2', 'tapePoolB'),
+      (:REPACK_REQUEST_ID, 882, 1, :STATUS, 992, 500, 500, :STORAGE_CLASS, 2000, :VID, 'tapePoolA',
+       'mountPolicy', 1, 3600, 1, NULL, '2', 'tapePoolB')
+    )SQL");
+    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
+    stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+    stmt.bindString(":STORAGE_CLASS", s_storageClassName);
+    stmt.bindString(":VID", vid);
+    stmt.executeNonQuery();
+  }
+
+  // Before the fix, this call throws "value out of range for type bigint" instead of returning.
+  ASSERT_NO_THROW(db.getNextSuccessfulRetrieveRepackReportBatch(lc));
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Neither row's own copy (1) is a rearchive target, so BASE_INSERT must write nothing -
+    // both archive jobs come from ALTERNATE_INSERT, for copy 2.
+    auto stmt = conn.createStmt("SELECT COPY_NB, COUNT(*) AS C FROM REPACK_ARCHIVE_PENDING_QUEUE GROUP BY COPY_NB");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(2u, rset.columnUint64("C"));
+    ASSERT_FALSE(rset.next());
+  }
+  {
+    // Only the genuinely retrieved row (row 1) counts - the user-provided one (row 2) must not,
+    // and must not have corrupted the count via the old subtraction either.
+    auto stmt = conn.createStmt("SELECT RETRIEVED_FILES FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :ID");
+    stmt.bindUint64(":ID", repackRequestId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("RETRIEVED_FILES"));
+  }
+}
+
 // Inserts a fixture row directly into REPACK_ARCHIVE_PENDING_QUEUE: driving a repack archive
 // job to this point through the scheduler would need a full tape session (see the retrieve
 // equivalent above). Only VID/DRIVE/HOST/MOUNT_TYPE/LOGICAL_LIBRARY/MOUNT_ID are omitted - those
