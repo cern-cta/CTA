@@ -319,6 +319,11 @@ def _submit_repack_request(
     print(f"Number of new recycled tape files = {nb_recycle_tape_files}")
     print(f"Number of files left to retrieve = {files_left_to_retrieve}")
     print(f"Number of files left to archive = {files_left_to_archive}")
+    # Printed unconditionally: a repack that goes Complete with zero progress is otherwise
+    # indistinguishable from the outside between "nothing was selected" and "every subrequest
+    # failed creation" - this is the counter that discriminates.
+    print(f"Number of failed subrequest creations = {int(repack_request.get('failedToCreateArchiveReq', 0))}")
+    print(f"Repack request status = {repack_request.get('status')}")
 
     assert files_left_to_retrieve == 0
     assert files_left_to_archive == 0

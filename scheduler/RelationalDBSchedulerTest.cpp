@@ -38,6 +38,7 @@
 #include <bits/unique_ptr.h>
 #include <chrono>
 #include <exception>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
 #include <regex>
@@ -3530,6 +3531,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
   }
 
   const std::string tapeDrive = "tape_drive";
+  const uint64_t archiveFileSize = 1000;
   checksum::ChecksumBlob checksumBlob;
   checksumBlob.insert(cta::checksum::ADLER32, "1234");
   {
@@ -3540,7 +3542,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     fileWritten.diskFileId = "12345678";
     fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
     fileWritten.diskFileGid = PUBLIC_GID;
-    fileWritten.size = 2 * 1000 * 1000 * 1000;
+    fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob = checksumBlob;
     fileWritten.storageClassName = s_storageClassName;
     fileWritten.vid = s_vid;
@@ -3555,15 +3557,24 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
 
   scheduler.waitSchedulerDbSubthreadsComplete();
 
-  // no-recall, with an empty buffer directory: this is purely to take the same shortcut
-  // expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecallFlagProvided already relies on
-  // (bestVid = repackInfo.vid, skipping selectBestVid4Retrieve's tape-state requirements) -
-  // nothing is actually pre-staged, so every file still goes through the normal
-  // totalFilesToRetrieve-counted path, not the hasUserProvidedFile one.
+  // no-recall sidesteps selectBestVid4Retrieve's tape-state machinery, but it also FILTERS the
+  // expansion down to files actually present in the buffer (expandRepackRequest() drops everything
+  // else before any counting) - so the file must genuinely be staged, with its exact catalogue
+  // size, or the expansion is empty and the assertions below are meaningless. The staged file
+  // takes the user-provided path, which still exercises everything under test: AddCopiesOnly
+  // still excludes the recalled copy from the destination set, so setActiveCopyNumber() still runs
+  // with an empty m_jobs (the crash under regression test), and makeJobRow() must still produce
+  // real retry limits.
   bool noRecall = true;
   std::string pathRepackBuffer = "file://" + tempDirectory.path();
   tempDirectory.append("/" + s_vid);
   tempDirectory.mkdir();
+  {
+    // Expansion matches buffer files by zero-padded fSeq name and requires size == catalogue size.
+    std::ofstream stagedFile(tempDirectory.path() + "/000000001", std::ios::binary);
+    const std::string content(archiveFileSize, 'X');
+    stagedFile << content;
+  }
   cta::SchedulerDatabase::QueueRepackRequest qrr(s_vid,
                                                  pathRepackBuffer,
                                                  common::dataStructures::RepackInfo::Type::AddCopiesOnly,
@@ -3582,10 +3593,12 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
 
   // Before the fix: setActiveCopyNumber() threw for the one file above, caught internally and
   // counted as a creation failure - failedToCreateArchiveReq would be 1 (one missing copy) and
-  // totalFilesToArchive would be 0. After the fix: the subrequest is created successfully.
+  // the subrequest never created. After the fix: the subrequest is created successfully, through
+  // the user-provided (no-recall) path.
   auto repackInfo = scheduler.getRepack(s_vid);
   ASSERT_EQ(0, repackInfo.failedToCreateArchiveReq);
   ASSERT_EQ(1, repackInfo.totalFilesToArchive);
+  ASSERT_EQ(1, repackInfo.userProvidedFiles);
 
   // Regression check for a related bug in the same fix: m_jobs (one entry per archive copy to
   // create) is empty for AddCopiesOnly - the missing copy has no existing tape file for
