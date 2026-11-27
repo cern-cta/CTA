@@ -15,50 +15,54 @@ Requires a Kubernetes cluster and tape hardware or mhvtl.
 Usage: $0 --namespace <namespace> --cta-image-tag <tag> [options]
 
 General:
-  -h, --help                              Show this help.
-  -n, --namespace <namespace>             Kubernetes namespace (required).
-      --chart-install-timeout <min>       CTA installation timeout (default: 5 minutes).
+  -h, --help                             Show this help.
+  -n, --namespace <namespace>            Kubernetes namespace (required).
+      --chart-install-timeout <min>      CTA installation timeout (default: 5 minutes).
 
 CTA and infrastructure:
-  -r, --cta-image-registry <registry>     CTA image registry (default: dev.ctaImageRegistry).
-  -i, --cta-image-tag <tag>               CTA image tag (required).
-      --cta-values <file>                 Additional CTA values (repeatable).
-      --catalogue-secret <name>           Use a catalogue connection Secret from the default namespace.
-      --scheduler-secret <name>           Use a scheduler connection Secret from the default namespace.
-      --copy-secret <name>                Copy a required Secret from the default namespace (repeatable).
-      --infra-values <file>               Replace default infrastructure presets with these values (repeatable).
-      --local-telemetry                   Deploy a local collector and Prometheus.
+  -r, --cta-image-registry <registry>    CTA image registry (default: dev.ctaImageRegistry).
+  -i, --cta-image-tag <tag>              CTA image tag (required).
+      --cta-values <file>                Helm values for CTA services and administration tools (repeatable).
+      --catalogue-secret <name>          Read catalogue connection settings from cta-catalogue.conf
+                                         in Kubernetes Secret <name>.
+      --scheduler-secret <name>          Read scheduler connection settings from cta-scheduler.conf
+                                         in Kubernetes Secret <name>.
+      --copy-secret <name>               Copy an additional Kubernetes Secret into the deployment
+                                         namespace (repeatable).
+      --infra-values <file>              Helm values for local infrastructure, replacing the
+                                         default presets (repeatable).
+      --local-telemetry                  Deploy a local collector and Prometheus.
 
 Database initialization:
-  -c, --catalogue-version <version>       Catalogue schema version to create on reset (default: latest).
-      --reset-catalogue                   Initialize/reset the selected catalogue.
-      --reset-scheduler                   Initialize/reset the selected scheduler.
+  -c, --catalogue-version <version>      Catalogue schema version to create on reset (default: latest).
+      --reset-catalogue                  Initialize/reset the selected catalogue.
+      --reset-scheduler                  Initialize/reset the selected scheduler.
 
   No connections are reset unless a reset option is supplied.
+  Resets delete existing data and reinitialize the selected catalogue or scheduler.
 
 Tape configuration:
-      --max-drives <n>                    Maximum number of discovered drives to use (default: 2).
-      --one-logical-library               Use one logical library for all drives.
+      --max-drives <n>                   Maximum number of discovered drives to use (default: 2).
+      --one-logical-library              Use one logical library for all drives.
 
 EOS:
-      --eos-enabled <true|false>          Deploy EOS (default: true).
-      --eos-image-repository <repo>       Full EOS image repository (default: dev.eosImageRepository).
-      --eos-image-tag <tag>               EOS image tag (default: dev.eosImageTag).
-      --eos-values <file>                 Additional EOS values (repeatable).
+      --eos-enabled <true|false>         Deploy EOS (default: true).
+      --eos-image-repository <repo>      Full EOS image repository (default: dev.eosImageRepository).
+      --eos-image-tag <tag>              EOS image tag (default: dev.eosImageTag).
+      --eos-values <file>                Helm values for EOS (repeatable).
 
 dCache:
-      --dcache-enabled <true|false>       Deploy dCache (default: false).
-      --dcache-image-repository <repo>    Full dCache image repository (default: dev.dCacheImageRepository).
-      --dcache-image-tag <tag>            dCache image tag (default: dev.dCacheImageTag).
-      --dcache-values <file>              Additional dCache values (repeatable).
+      --dcache-enabled <true|false>      Deploy dCache (default: false).
+      --dcache-image-repository <repo>   Full dCache image repository (default: dev.dCacheImageRepository).
+      --dcache-image-tag <tag>           dCache image tag (default: dev.dCacheImageTag).
+      --dcache-values <file>             Helm values for dCache (repeatable).
 
-Values and image defaults:
-  Values files are applied in order; later files take precedence.
-  Default infrastructure presets provision a PostgreSQL catalogue and VFS scheduler storage.
-  Connection Secret options replace the corresponding default provisioning and override CTA values.
-  Scheduler backend selection remains in CTA values; Secret options do not select a backend.
-  Explicit --infra-values files replace the defaults and control provisioning independently.
-  Image defaults are read from the listed dev.* keys in project.json and override values files.
+Connection Secrets:
+  Secrets named by --catalogue-secret, --scheduler-secret and --copy-secret must
+  already exist in the Kubernetes namespace 'default'; they are copied into the deployment namespace.
+  For example, create a catalogue Secret from your connection file:
+    kubectl -n default create secret generic my-catalogue --from-file=cta-catalogue.conf=/path/to/cta-catalogue.conf
+  Then pass --catalogue-secret my-catalogue when deploying.
 EOF
   exit "${1:-1}"
 }

@@ -152,6 +152,7 @@ Replace `<ci-image-tag>` with a published CI image tag. This selects the CI regi
 Use repeatable `--cta-values`, `--eos-values`, and `--dcache-values` options to override the deployment presets.
 Values are applied in command-line order, after the defaults; later files take precedence.
 CTA values are shared by the services and administration tools.
+Explicit EOS/dCache image options take precedence over values files.
 Relative paths are resolved from `ci/orchestration/`; use absolute paths for files elsewhere:
 
 ```bash
@@ -163,12 +164,8 @@ cta-dev deploy \
 `--infra-values` replaces the default local database and scheduler-storage provisioning.
 Repeat it to combine infrastructure presets, or use `presets/infra/external.yaml` when neither connection needs local provisioning.
 Selecting an external connection in CTA values does not disable local provisioning by itself.
-Use the connection Secret options below to select an external connection and omit its default local provisioning and reset.
+Use the [connection Secret options](#connect-to-an-external-database) to omit default local provisioning and automatic resets for external connections.
 The dCache and local telemetry options add their own infrastructure presets.
-
-Presets are grouped under `presets/infra/`, `presets/cta/`, and `presets/eos/`.
-Apply common stress settings before PostgreSQL stress tuning.
-Explicit EOS/dCache image options take precedence over values files.
 
 ### CI chart responsibilities
 
@@ -180,36 +177,9 @@ Explicit EOS/dCache image options take precedence over values files.
 | `eos` | `eos` | EOS disk system. |
 | `store` | `dcache` | dCache disk system, using a database provisioned by `ci-infra`. |
 
-The infrastructure chart accepts named PostgreSQL instances, `secretFiles`, and `persistentVolumeClaims`.
-Each PostgreSQL instance is a separate server with one initial database and ephemeral storage: replacing its Pod loses its data.
+Local PostgreSQL data is ephemeral: replacing its Pod loses the data.
 The local VFS preset requires the `local-path` StorageClass.
-See `ci/orchestration/helm/ci-infra/values.yaml` for configuration examples and naming defaults.
-
-The tools chart provides three single-replica Deployments, enabled independently:
-
-| Value | Deployment | Access |
-| --- | --- | --- |
-| `cli.enabled` | `cta-tools-cli` | CTA frontend API, using JWT/Kerberos credentials. |
-| `backend.enabled` | `cta-tools-backend` | Direct catalogue and scheduler access. |
-| `liquibase.enabled` | `cta-tools-liquibase` | Catalogue migration tools; migrations run only when explicitly invoked. |
-
-Each workload has its own `resources` map; reset Jobs use `reset.resources`.
-CLI and backend workloads share `image` settings and `global.image` overrides; Liquibase uses `liquibase.image`.
-The Deployments use `Recreate` to avoid overlapping tools pods during updates.
-Use the stable `deployment/cta-tools-<role>` target for commands; generated pod names change when pods are replaced.
-
-During bootstrap, catalogue and scheduler reset Jobs run concurrently and must succeed before CTA services start.
-When invoking `create_instance.sh` directly, request resets with `--reset-catalogue` or `--reset-scheduler`.
-No resets are requested by default; explicit requests apply equally to local and external connections.
-Inspect a reset with `kubectl -n <namespace> logs job/cta-tools-reset-catalogue` or `job/cta-tools-reset-scheduler`.
-
-Bootstrap Jobs run once; their logs remain available until Job deletion.
-The persistent tools remain available for administration, for example:
-
-```bash
-kubectl -n <namespace> exec deployment/cta-tools-backend -c backend -- \
-  cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
-```
+See `ci/orchestration/helm/ci-infra/values.yaml` for infrastructure configuration.
 
 ### Connect to an external database
 
@@ -230,8 +200,10 @@ cta-dev deploy --scheduler-type pgsched \
   --reset-catalogue --reset-scheduler
 ```
 
+Use repeatable `--copy-secret <name>` options for additional Secrets that do not select a connection.
+The deployment namespace cannot be `default` when copying Secrets.
+
 For a walkthrough using your own catalogue and PostgreSQL scheduler databases, see [Testing with External Databases](external-databases.md).
-It covers connection Secrets, local provisioning and explicit resets through `create_instance.sh`.
 
 ### Runner connection Secrets
 
@@ -243,19 +215,9 @@ Runner-provided connection Secrets are selected explicitly when invoking `create
 | External PostgreSQL scheduler | `--scheduler-secret cta-stress-scheduler-connection-string` | `cta-scheduler.conf` |
 | Ceph scheduler | `--scheduler-secret cta-ceph-scheduler-connection-string` | `cta-scheduler.conf`, `ceph.conf`, `ceph.client.<id>.keyring` |
 
-Use the same names on each runner, with that runner's connection details.
-Keep credentials in connection files and Secrets rather than committed values files.
 Ceph uses `rados://<client>@<pool>:<namespace>`; the client must match the keyring identity.
 Select the scheduler backend with `--cta-values presets/cta/scheduler/postgres.yaml` or `--cta-values presets/cta/scheduler/ceph.yaml`.
-Connection Secret options take precedence over Secret names in values files.
-They omit the corresponding default local provisioning; explicit `--infra-values` files remain caller-controlled.
 CI requests `--reset-catalogue --reset-scheduler` to initialize both selected connections.
-
-Create source Secrets in `default`; the script checks they are readable and copies them under the same names into the new namespace.
-Use repeatable `--copy-secret <name>` options for additional Secrets that do not select a connection.
-The deployment namespace cannot be `default` when copying Secrets.
-Source Secrets remain in `default` after the deployment is removed.
-The infrastructure chart's `secretFiles` setting is only for ephemeral/fake CI credentials, which are also stored in Helm release values; do not use it for actual external resources.
 
 ### Validate chart changes
 
@@ -267,11 +229,7 @@ sh ci/checks/check_charts.sh
 
 This runs `helm lint` and `helm template`, as does the `lint-helm` CI job.
 It requires Helm 3 and access to the chart repositories.
-Dependencies are prepared in a temporary copy.
 Rendered manifests go to `build/helm-checks/`; an optional argument changes that directory.
-
-Linting and rendering do not establish Kubernetes API validity or runtime behaviour.
-Use deployment and system tests when changing service startup, storage, or other runtime behaviour.
 
 ### EOS
 
@@ -304,10 +262,7 @@ cta-dev deploy \
   --copy-secret monit-it-sd-tab-ci-credentials
 ```
 
-Local telemetry is part of `ci-infra` and uses only namespaced Kubernetes resources.
-It includes workload/PVC state and host metrics, but not kubelet or per-container cAdvisor metrics.
 For external telemetry, supply a values file configuring the endpoint and authentication, together with any required Secrets.
-The `cern-monit-ci.yaml` preset selects the CTA CI tenant in CERN MONIT.
 
 For deployment options beyond those exposed by `cta-dev`, invoke `ci/orchestration/create_instance.sh` directly from `ci/orchestration/`.
 

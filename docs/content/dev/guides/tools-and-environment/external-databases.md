@@ -1,65 +1,27 @@
 # Testing with External Databases
 
-Use `ci/orchestration/create_instance.sh` to run an instance against your own catalogue, scheduler, or both.
-This guide assumes a PostgreSQL scheduler; the catalogue can use PostgreSQL or Oracle.
-Run the deployment command from `ci/orchestration/`.
+Use `ci/orchestration/create_instance.sh` to connect a [development instance](../../getting-started/environment-setup.md) to an external catalogue, scheduler, or both.
+The examples below use PostgreSQL and require images built with `--scheduler-type pgsched`.
+For an Oracle catalogue, use Oracle-enabled images and an Oracle connection string instead.
 
-## Requirements
+## Connection Secrets
 
-- A prepared [development environment](../../getting-started/environment-setup.md), including Kubernetes, Helm and virtual tape hardware.
-- An initialized external catalogue or scheduler database, or both, reachable from the Pods and compatible with your CTA images and the other connection's state.
-- Images built with `--scheduler-type pgsched`; see [Building Images & Packages](building-images-and-packages.md) to build your own.
+Create Kubernetes Secrets in the `default` namespace with the following keys and connection strings.
+The Secret names are arbitrary; the keys must match exactly.
+Example values below are plain text (`stringData` in a Secret manifest).
 
-For an Oracle catalogue, use Oracle-enabled images and an Oracle catalogue connection file.
-The connection examples below use PostgreSQL for both databases; see [Use only one external database](#use-only-one-external-database) to override just one connection.
+| Secret name | Key | Example value |
+| --- | --- | --- |
+| `external-catalogue` | `cta-catalogue.conf` | `postgresql:postgresql://catalogue_user:password@catalogue.example.org:5432/cta_catalogue` |
+| `external-scheduler` | `cta-scheduler.conf` | `postgresql:postgresql://scheduler_user:password@scheduler.example.org:5432/cta_scheduler` |
 
-Use databases dedicated to this instance and ensure their tape, library and disk-system configuration matches the environment.
+The first `postgresql:` selects CTA's database driver; the rest is the PostgreSQL connection URI.
 
-!!! warning "Existing databases remain writable"
+## Deploy
 
-    The deployment examples do not request resets of external databases.
-    Services, system tests and manual commands can still modify or delete database state.
-    A Kubernetes namespace does not isolate databases shared with another CTA instance.
-
-## Configure the connections
-
-Keep the connection details outside the checkout in a private directory:
+Run from `ci/orchestration/`, using a new deployment namespace and a matching image tag:
 
 ```bash
-mkdir -p "$HOME/cta-external"
-chmod 700 "$HOME/cta-external"
-```
-
-Create two files with your connection details:
-
-| File under `$HOME/cta-external/` | Example contents |
-| --- | --- |
-| `cta-catalogue.conf` | `postgresql:postgresql://catalogue_user:CHANGE_ME@catalogue.example.org:5432/cta_catalogue` |
-| `cta-scheduler.conf` | `postgresql:postgresql://scheduler_user:CHANGE_ME@scheduler.example.org:5432/cta_scheduler` |
-
-The first `postgresql:` selects CTA's database driver; the remaining `postgresql://...` is the PostgreSQL connection URI.
-Replace the example credentials and hosts, URI-encode special characters, and add any required TLS options.
-Create the Secrets in `default`, which survives recreation of the deployment namespace:
-
-```bash
-chmod 600 "$HOME/cta-external/cta-catalogue.conf" "$HOME/cta-external/cta-scheduler.conf"
-kubectl -n default create secret generic external-catalogue \
-  --from-file=cta-catalogue.conf="$HOME/cta-external/cta-catalogue.conf"
-kubectl -n default create secret generic external-scheduler \
-  --from-file=cta-scheduler.conf="$HOME/cta-external/cta-scheduler.conf"
-```
-
-Keep the files outside version control.
-The requested Secrets are copied during deployment; their contents do not pass through Helm values.
-
-The keys inside those Secrets must remain `cta-catalogue.conf` and `cta-scheduler.conf`.
-
-## Deploy and verify
-
-Replace `<image-tag>` with a published PostgreSQL scheduler image tag:
-
-```bash
-cd ci/orchestration
 ./create_instance.sh --namespace external-test \
   --cta-image-tag <image-tag> \
   --catalogue-secret external-catalogue \
@@ -67,59 +29,27 @@ cd ci/orchestration
   --cta-values presets/cta/scheduler/postgres.yaml
 ```
 
-The connection options select the Secrets, require them to be readable in `default`, and copy them into the new namespace.
-They override connection Secret names in CTA values and omit the corresponding default local database or storage provisioning.
-The scheduler backend is selected separately through CTA values and must match the images.
-Other development infrastructure is still deployed.
-Use a new namespace; the script does not replace an existing deployment and rejects an existing CTA Helm release.
-Use `--cta-image-registry` if the images are not in the registry configured by `project.json`.
+The connection options copy the Secrets into the deployment namespace and skip the corresponding default local provisioning.
+The scheduler values preset selects the backend; a Secret alone does not select it.
 
-No catalogue or scheduler reset is requested by default, regardless of whether the connections are local or external.
-For CI databases that must be initialized/reset, add `--reset-catalogue`, `--reset-scheduler`, or both.
-These options operate on the selected connections without a separate protection policy or permission override.
-Use the same connection options when redeploying after removing the old deployment.
-
-Check the workloads, reset selection and catalogue connection:
-
-```bash
-kubectl -n external-test get pods
-helm -n external-test get values cta-tools
-kubectl -n external-test exec deployment/cta-tools-backend -c backend -- \
-  cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf
-kubectl -n external-test exec deployment/cta-tools-cli -- cta-admin version
-```
-
-`reset.catalogue` and `reset.scheduler` should both be `false` unless you explicitly requested those resets.
-Schema verification checks catalogue compatibility; `cta-admin version` checks administrative frontend communication.
-For logs and troubleshooting, see [Working with Development Pods](development-pods.md).
+`create_instance.sh` does not reset databases by default.
+Use initialized databases, or add `--reset-catalogue` and/or `--reset-scheduler` to erase and initialize the selected connections.
+For deployment through `cta-dev`, see its [connection and reset options](cta-dev.md#connect-to-an-external-database).
 
 ## Use only one external database
 
-Keep the PostgreSQL scheduler values preset and replace the two connection options in the deployment command as follows:
+Keep the PostgreSQL scheduler values preset and replace the two connection options above with:
 
-| External connection | Connection and initialization options |
+| External connection | Options |
 | --- | --- |
 | Catalogue | `--catalogue-secret external-catalogue --infra-values presets/infra/scheduler-postgres.yaml --reset-scheduler` |
 | Scheduler | `--scheduler-secret external-scheduler --reset-catalogue` |
 
-Only the locally provisioned database is reset in these examples.
-The explicit infrastructure preset in the first example selects a local PostgreSQL scheduler instead of the default VFS storage.
-Explicit `--infra-values` files control provisioning independently of the connection flags and replace all default infrastructure presets.
-The two connections' state must still be compatible, particularly when connecting an existing scheduler to a fresh catalogue.
+The explicit infrastructure preset selects a local PostgreSQL scheduler instead of the default VFS storage.
+The two connections' state must be compatible, particularly when connecting an existing scheduler to a fresh catalogue.
 
-## Run automated tests
+## Testing and cleanup
 
-Use disposable databases for system tests.
-Deployment reset options do not control the test runner: `cta-dev test` and the test phase of `cta-dev all` include setup and teardown, which can delete existing state.
-See [Lifecycle and cleanup](../testing/system-tests.md#lifecycle-and-cleanup) for the phases and [Run pytest directly](../testing/system-tests.md#run-pytest-directly) for explicit selection.
-Omitting setup and teardown does not prevent the selected tests or their fixtures from modifying existing data.
-
-## Clean up
-
-```bash
-kubectl delete namespace external-test
-```
-
-This removes the development workloads, copied Secrets and Helm release records.
-The source Secrets in `default` remain available for redeployment; delete them separately when no longer needed.
-It does not delete the external databases or undo changes made by CTA; manage their lifecycle separately.
+Use databases dedicated to this instance: services and tests can modify their contents even without deployment resets.
+See [System Tests](../testing/system-tests.md#lifecycle-and-cleanup) for test setup and teardown, and [Working with Development Pods](development-pods.md) for inspection commands.
+Deleting the deployment namespace does not delete the source Secrets in `default` or the external databases.

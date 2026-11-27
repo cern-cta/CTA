@@ -185,14 +185,14 @@ load_cta_dev_env() {
 global_options_help() {
   cat <<EOF
 Global options:
-  -h, --help                         Show this help.
-      --platform <platform>          Platform to build for. Defaults to project.json.
-      --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
-      --enable-oracle-support        Build packages and images with Oracle support.
-      --cta-version <version>        Neutral CTA source version, defaults to '$cta_version'.
-                                     Build suffixes and native packaging revisions are added automatically.
-      --use-public-repos             Force public package repositories. By default, CERN internal
-                                     repos are used when they are reachable.
+  -h, --help                             Show this help.
+      --platform <platform>              Platform to build for. Defaults to project.json.
+      --scheduler-type <type>            Scheduler backend [objectstore, pgsched].
+      --enable-oracle-support            Build packages and images with Oracle support.
+      --cta-version <version>            Neutral CTA source version, defaults to '$cta_version'.
+                                         Build suffixes and native packaging revisions are added automatically.
+      --use-public-repos                 Force public package repositories. By default, CERN internal
+                                         repos are used when they are reachable.
 EOF
 }
 
@@ -260,19 +260,19 @@ Usage:
   $(basename "$0") build [options]
 
 Options:
-  -r, --reset                       Recreate the persistent build container
-                                    and clean build/<platform>/.
-      --refresh-build-container     Recreate the build container while preserving
-                                    build output, then rerun CMake.
-      --clean-build-dirs            Remove build/<platform>/.
-      --build-generator <generator> CMake generator
-                                    ["Unix Makefiles", "Ninja"].
-      --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
-                                    or MinSizeRel.
-      --disable-sccache             Disable sccache.
-      --enable-unit-tests           Run compiled unit tests without packaging them.
-      --sanitizers <mode>           none, address, undefined, address,undefined, or thread.
-      --force-install               Force source package installation.
+  -r, --reset                            Recreate the persistent build container
+                                         and clean build/<platform>/.
+      --refresh-build-container          Recreate the build container while preserving
+                                         build output, then rerun CMake.
+      --clean-build-dirs                 Remove build/<platform>/.
+      --build-generator <generator>      CMake generator
+                                         ["Unix Makefiles", "Ninja"].
+      --cmake-build-type <type>          Release, Debug, RelWithDebInfo,
+                                         or MinSizeRel.
+      --disable-sccache                  Disable sccache.
+      --enable-unit-tests                Run compiled unit tests without packaging them.
+      --sanitizers <mode>                none, address, undefined, address,undefined, or thread.
+      --force-install                    Force source package installation.
 
 $(global_options_help)
 
@@ -338,35 +338,34 @@ Usage:
   $(basename "$0") deploy [options]
 
 Options:
-      --namespace <ns>              Kubernetes namespace.
-                                    Defaults to dev.
-      --catalogue-secret <name>     Use a catalogue connection Secret from default.
-      --scheduler-secret <name>     Use a scheduler connection Secret from default.
-      --reset-catalogue             Reset the catalogue even when a connection Secret is supplied.
-      --reset-scheduler             Reset the scheduler even when a connection Secret is supplied.
-      --copy-secret <name>          Copy a Secret from default; repeatable, required to exist.
-      --infra-values <path>         Infrastructure values; repeatable, replaces default provisioning.
-      --cta-values <path>           Final consumer values override; repeatable.
-      --eos-values <path>           EOS values override; repeatable.
-      --eos-image-repository <r>    EOS image repository.
-      --eos-image-tag <tag>         EOS image tag.
-      --cta-image-tag <tag>         Deploy the images with this tag instead of
-                                    the ones built locally for the CTA version,
-                                    for example an image tag built by the CI.
-                                    Cannot be combined with --cta-version.
-      --cta-image-registry <reg>    Registry to deploy the CTA images from.
-                                    Defaults to ${local_image_registry}, or to
-                                    ${ci_image_registry} when --cta-image-tag
-                                    is given.
-      --dcache-image-repository <r> dCache image repository.
-      --dcache-image-tag <tag>      dCache image tag.
-      --dcache-values <path>        dCache values override; repeatable.
-      --with-dcache                 Deploy dCache instead of EOS.
-      --local-telemetry             Deploy a local collector and Prometheus.
-
-Connections without a Secret option are provisioned locally and reset automatically.
-Secret-selected connections are reset only when explicitly requested.
-Explicit --infra-values files control provisioning independently of these defaults.
+      --namespace <ns>                   Kubernetes namespace.
+                                         Defaults to dev.
+      --catalogue-secret <name>          Read catalogue connection settings from cta-catalogue.conf
+                                         in Kubernetes Secret <name>.
+      --scheduler-secret <name>          Read scheduler connection settings from cta-scheduler.conf
+                                         in Kubernetes Secret <name>.
+      --reset-catalogue                  Reset the catalogue even when a connection Secret is supplied.
+      --reset-scheduler                  Reset the scheduler even when a connection Secret is supplied.
+      --copy-secret <name>               Copy an additional Kubernetes Secret into the deployment
+                                         namespace (repeatable).
+      --infra-values <path>              Helm values for local infrastructure (repeatable).
+      --cta-values <path>                Helm values for CTA services and administration tools (repeatable).
+      --eos-values <path>                Helm values for EOS (repeatable).
+      --eos-image-repository <r>         EOS image repository.
+      --eos-image-tag <tag>              EOS image tag.
+      --cta-image-tag <tag>              Deploy the images with this tag instead of
+                                         the ones built locally for the CTA version,
+                                         for example an image tag built by the CI.
+                                         Cannot be combined with --cta-version.
+      --cta-image-registry <reg>         Registry to deploy the CTA images from.
+                                         Defaults to ${local_image_registry}, or to
+                                         ${ci_image_registry} when --cta-image-tag
+                                         is given.
+      --dcache-image-repository <r>      dCache image repository.
+      --dcache-image-tag <tag>           dCache image tag.
+      --dcache-values <path>             Helm values for dCache (repeatable).
+      --with-dcache                      Deploy dCache instead of EOS.
+      --local-telemetry                  Deploy a local collector and Prometheus.
 
 $(global_options_help)
 
@@ -410,7 +409,7 @@ Any additional arguments are passed directly to pytest.
 For additional pytest help, navigate to ci/system_tests and run pytest --help
 
 Options:
-      --namespace <ns>               Kubernetes namespace. Defaults to dev.
+      --namespace <ns>                   Kubernetes namespace. Defaults to dev.
 
 $(global_options_help)
 
