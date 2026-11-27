@@ -753,7 +753,13 @@ def test_repack_just_add_copies_with_missing_copy(
     """
     second_tape_pool = "systest_addcopies2"
 
-    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    # Must be a tape whose files still have exactly ONE copy, not merely any tape with files: a
+    # file that already has 2 copies gets numberOfAdditionalCopies == 0 in
+    # Scheduler::expandRepackRequest(), which for AddCopiesOnly drops the subrequest entirely
+    # (pop_back/continue) - so a tape left behind by an earlier add-copies test would expand to
+    # nothing and fail the assertions below without ever reaching the code under test. Same
+    # helper, for the same reason, as test_repack_move_and_add_copies.
+    vid_to_repack = cta_cli.get_first_vid_with_single_copy_files()
 
     # Pick the destination tape before mutating anything, and require it to actually be ACTIVE -
     # not just "not full" - since that's what the catalogue requires of a tape to mount it for
@@ -813,6 +819,11 @@ def test_repack_just_add_copies_with_missing_copy(
         # call, so the restore still runs even if submission itself never gets that far.
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
+        # A plain lambda would return ExitStack.callback()'s own return value (it returns the
+        # callback, to work as a decorator), which does not match on_submitted's () -> None.
+        def register_repack_request_cleanup() -> None:
+            cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack))
+
         print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with a genuinely missing copy')
         _submit_repack_request(
             cta_cli,
@@ -821,7 +832,7 @@ def test_repack_just_add_copies_with_missing_copy(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             add_copies_only=True,
-            on_submitted=lambda: cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack)),
+            on_submitted=register_repack_request_cleanup,
         )
 
         repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
@@ -866,7 +877,12 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
     """
     second_tape_pool = "systest_addcopies3"
 
-    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    # Single-copy tape, for the same reason as test_repack_just_add_copies_with_missing_copy above
+    # - and especially here, since that test runs immediately before this one and leaves its own
+    # source tape's files with 2 copies each: picking any tape with files could pick that one,
+    # whose files expansion would then skip entirely, failing the user_provided_files == 1
+    # assertion below without ever exercising the intended path.
+    vid_to_repack = cta_cli.get_first_vid_with_single_copy_files()
 
     # Pick the destination tape and capture the source tape's original full value before mutating
     # anything - see test_repack_just_add_copies_with_missing_copy above for why both matter.
@@ -925,6 +941,10 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
         cleanup.callback(lambda: cta_cli.modify_tape_state(vid_to_repack, "ACTIVE"))
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
+        # See the identically-named helper in the test above for why this is not a lambda.
+        def register_repack_request_cleanup() -> None:
+            cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack))
+
         print(
             f'Launching the repack test "just add copies" on VID {vid_to_repack} with a missing copy and a '
             f"user-provided file"
@@ -936,7 +956,7 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             add_copies_only=True,
-            on_submitted=lambda: cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack)),
+            on_submitted=register_repack_request_cleanup,
         )
 
         repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
