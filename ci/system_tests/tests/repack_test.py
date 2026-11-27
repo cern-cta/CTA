@@ -329,6 +329,33 @@ def _submit_repack_request(
     print(f"Repack request on VID {vid_to_repack} succeeded\n")
 
 
+def _lowest_fseq_archive_ids(cta_cli: CtaCliHost, vid: str, count: int) -> list[str]:
+    """Archive IDs of the `count` lowest-fSeq tape files on `vid`.
+
+    Repack expansion walks a tape in fSeq order, so combined with --maxfilestoselect these are
+    exactly the files a repack of `vid` will select.
+    """
+    tape_files: list[dict[str, Any]] = json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
+    tape_files.sort(key=lambda tf: int(tf["tf"]["fSeq"]))
+    return [str(tf["af"]["archiveId"]) for tf in tape_files[:count]]
+
+
+def _remove_tape_file_copies(cta_cli: CtaCliHost, vid: str, disk_instance: str, archive_ids: list[str]) -> None:
+    """Best-effort removal of the given archive files' copies from `vid`.
+
+    Used by the add-copies tests to take back the extra copies they wrote, so those files do not
+    outlive the temporary archive route that gave them a destination. Failures are ignored: a copy
+    may legitimately not exist (the file was skipped, or the repack never got that far), and this
+    runs on the cleanup path where raising would mask the real failure.
+    """
+    for archive_id in archive_ids:
+        cta_cli.exec(
+            f"cta-admin tf rm -v {vid} -i {disk_instance} -I {archive_id} -r 'Test cleanup: added copy'",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+
+
 # =========================================================================
 #  Tests
 # =========================================================================
@@ -747,11 +774,18 @@ def test_repack_just_add_copies_with_missing_copy(
 
     Placed after test_repack_cancellation rather than right before it: that test needs its repack
     expansion to complete within a tight timeout, immediately after only a light preceding test -
-    this one genuinely archives a new copy of every file on the tape, which is heavy enough to
-    risk starving that timeout if run immediately before it (see the "be careful changing the
-    order of tests" warning near test_set_single_drive_up above).
+    this one archives real new copies, which is heavy enough to risk starving that timeout if run
+    immediately before it (see the "be careful changing the order of tests" warning near
+    test_set_single_drive_up above).
     """
     second_tape_pool = "systest_addcopies2"
+    # Bounded on purpose. The copies this test adds outlive it in the catalogue, and the copy-2
+    # archive route that gives them a destination does not (cleanup removes it) - so any copy left
+    # behind would make a later MoveOnly repack of the destination tape fail expansion outright
+    # ("does not have any archive route for archival", thrown for the whole request, not per file).
+    # The cleanup below therefore removes the added copies again, which is only practical for a
+    # handful of files: one `cta-admin tf rm` per file, each a separate exec into the pod.
+    files_to_select = 5
 
     # Must be a tape whose files still have exactly ONE copy, not merely any tape with files: a
     # file that already has 2 copies gets numberOfAdditionalCopies == 0 in
@@ -777,6 +811,14 @@ def test_repack_just_add_copies_with_missing_copy(
     # for later tests) once this test is done with it.
     source_tape = next(t for t in all_tapes if t["vid"] == vid_to_repack)
     original_source_full = "true" if source_tape.get("full", False) else "false"
+
+    # Clamped: _submit_repack_request() asserts maxfilestoselect <= the tape's file count, and
+    # which tape the helper above returns depends on what earlier tests moved around.
+    max_files_to_select = min(files_to_select, cta_cli.get_number_of_files_on_tape(vid_to_repack))
+
+    # Expansion walks the tape in fSeq order, so with maxfilestoselect these are exactly the files
+    # that will get a second copy - recorded now so cleanup can remove those copies again.
+    added_copy_archive_ids = _lowest_fseq_archive_ids(cta_cli, vid_to_repack, max_files_to_select)
 
     # Each mutation below registers its own rollback immediately after it succeeds, so a failure
     # partway through setup still cleans up exactly what was already applied instead of skipping
@@ -819,6 +861,14 @@ def test_repack_just_add_copies_with_missing_copy(
         # call, so the restore still runs even if submission itself never gets that far.
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
+        # Take the added copies back off the destination tape. Registered before the repack runs so
+        # it also covers a partially-completed repack, and ordered to run before the copy-2 archive
+        # route is removed - a file whose remaining copy has no archive route breaks expansion for
+        # whichever later test repacks that tape.
+        cleanup.callback(
+            lambda: _remove_tape_file_copies(cta_cli, dest_vid, disk_instance_name, added_copy_archive_ids)
+        )
+
         # A plain lambda would return ExitStack.callback()'s own return value (it returns the
         # callback, to work as a decorator), which does not match on_submitted's () -> None.
         def register_repack_request_cleanup() -> None:
@@ -832,6 +882,7 @@ def test_repack_just_add_copies_with_missing_copy(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             add_copies_only=True,
+            max_files_to_select=max_files_to_select,
             on_submitted=register_repack_request_cleanup,
         )
 
@@ -876,6 +927,9 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
     hasUserProvidedFile at all - this combination was simply never exercised by any existing test.
     """
     second_tape_pool = "systest_addcopies3"
+    # Bounded, and the added copies removed again in cleanup - see
+    # test_repack_just_add_copies_with_missing_copy above for why both matter.
+    files_to_select = 5
 
     # Single-copy tape, for the same reason as test_repack_just_add_copies_with_missing_copy above
     # - and especially here, since that test runs immediately before this one and leaves its own
@@ -894,13 +948,32 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
     source_tape = next(t for t in all_tapes if t["vid"] == vid_to_repack)
     original_source_full = "true" if source_tape.get("full", False) else "false"
 
+    # Clamped for the same reason as the test above. At least 2 files are required for this test to
+    # mean anything: one is staged as user-provided, and the rest must still be genuinely retrieved,
+    # which is the combination under test.
+    files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
+    assert files_on_tape >= 2, (
+        f"Need a single-copy tape with at least 2 files to exercise user-provided + retrieved "
+        f"together; {vid_to_repack} has {files_on_tape}."
+    )
+    max_files_to_select = min(files_to_select, files_on_tape)
+
+    # Expansion walks the tape in fSeq order, so with maxfilestoselect these are exactly the files
+    # that will get a second copy - recorded now so cleanup can remove those copies again.
+    added_copy_archive_ids = _lowest_fseq_archive_ids(cta_cli, vid_to_repack, max_files_to_select)
+
     # Inject exactly one user-provided file (mechanism mirrors test_repack_with_user_provided_files
     # above) - one is enough to exercise the hasUserProvidedFile + AddCopiesOnly combination without
-    # duplicating that test's own, separately-tested, broader user-provided-file coverage.
+    # duplicating that test's own, separately-tested, broader user-provided-file coverage. It must
+    # be the LOWEST-fSeq file so that it is inside the maxfilestoselect window, or expansion would
+    # never reach it and userProvidedFiles would stay 0.
     repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     eos_mgm.exec(f"eos chmod 777 {repack_sub_dir}")
-    tape_file_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
+    tape_file_ls_json: list[dict[str, Any]] = json.loads(
+        cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}")
+    )
+    tape_file_ls_json.sort(key=lambda tf: int(tf["tf"]["fSeq"]))
     user_provided_tape_file = tape_file_ls_json[0]
     disk_id = user_provided_tape_file["df"]["diskId"]
     eos_file_path_to_copy_from = Path(
@@ -941,6 +1014,11 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
         cleanup.callback(lambda: cta_cli.modify_tape_state(vid_to_repack, "ACTIVE"))
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
+        # Take the added copies back off the destination tape - see the test above.
+        cleanup.callback(
+            lambda: _remove_tape_file_copies(cta_cli, dest_vid, disk_instance_name, added_copy_archive_ids)
+        )
+
         # See the identically-named helper in the test above for why this is not a lambda.
         def register_repack_request_cleanup() -> None:
             cleanup.callback(lambda: cta_cli.remove_repack_request(vid_to_repack))
@@ -956,6 +1034,7 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
             repack_buffer_dir=repack_buffer_dir,
             mount_policy_name=repack_mp_name,
             add_copies_only=True,
+            max_files_to_select=max_files_to_select,
             on_submitted=register_repack_request_cleanup,
         )
 
