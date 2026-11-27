@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tools/cta-admin/CtaAdminTextFormatter.hpp"
+#include "CtaAdminTextFormatter.hpp"
 
 #include "common/utils/utils.hpp"
 #include "protobuf/admin/ArchiveRouteTypeSerDeser.hpp"

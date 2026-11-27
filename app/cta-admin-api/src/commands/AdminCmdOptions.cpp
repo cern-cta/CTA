@@ -5,7 +5,7 @@
 
 #include "commands/AdminCmdOptions.hpp"
 
-#include "app/cta-admin-api/src/commands/CtaAdminCmdParser.hpp"
+#include "CtaAdminCmdParser.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
 

@@ -6,6 +6,7 @@ include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 # Temporary hack: the retiring cta-admin CLI links this API-owned parser for command definitions and validation.
 # Keep it separate from the server library so the CLI does not inherit server dependencies.
 add_library(cta-admin-api-cmd-parser STATIC src/commands/CtaAdminCmdParser.cpp)
+target_include_directories(cta-admin-api-cmd-parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(cta-admin-api-cmd-parser PUBLIC ctaprotobuf ctacommon)
 
 # Library

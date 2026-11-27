@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include "CtaAdminParsedCmd.hpp"
 #include "common/config/Config.hpp"
 #include "common/log/FileLogger.hpp"
-#include "tools/cta-admin/CtaAdminParsedCmd.hpp"
 #include "version.hpp"
 
 #include <grpcpp/grpcpp.h>

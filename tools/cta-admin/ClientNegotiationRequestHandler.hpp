@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include "CtaAdminTextFormatter.hpp"
 #include "IHandler.hpp"
 #include "common/log/Logger.hpp"
-#include "tools/cta-admin/CtaAdminTextFormatter.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <gssapi/gssapi_generic.h>

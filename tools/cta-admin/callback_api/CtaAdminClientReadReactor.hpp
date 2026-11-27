@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "app/cta-admin-api/src/commands/CtaAdminCmdParser.hpp"
+#include "CtaAdminParsedCmd.hpp"
+#include "commands/CtaAdminCmdParser.hpp"
 #include "common/exception/UserError.hpp"
 #include "grpc-server/PbException.hpp"
-#include "tools/cta-admin/CtaAdminParsedCmd.hpp"
 #include "version.hpp"
 
 #include <condition_variable>

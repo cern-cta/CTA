@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "app/cta-admin-api/src/commands/CtaAdminCmdParser.hpp"
+#include "commands/CtaAdminCmdParser.hpp"
 #include "version.hpp"
 
 namespace cta::admin {

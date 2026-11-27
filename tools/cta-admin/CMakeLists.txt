@@ -1,4 +1,3 @@
-# SPDX-FileCopyrightText: 2015 CERN
 # SPDX-FileCopyrightText: 2021 CERN
 # SPDX-FileCopyrightText: 2021 DESY
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -14,6 +13,7 @@ add_executable(cta-admin
   ClientNegotiationRequestHandler.cpp
   utils.cpp
 )
+target_include_directories(cta-admin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(cta-admin
   cta-admin-api-cmd-parser

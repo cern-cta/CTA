@@ -7,6 +7,7 @@
 
 #include "AsyncClient.hpp"
 #include "ClientNegotiationRequestHandler.hpp"
+#include "CtaAdminTextFormatter.hpp"
 #include "callback_api/CtaAdminClientReadReactor.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/FileLogger.hpp"
@@ -14,7 +15,6 @@
 #include "common/log/Logger.hpp"
 #include "common/utils/Base64.hpp"
 #include "common/utils/utils.hpp"
-#include "tools/cta-admin/CtaAdminTextFormatter.hpp"
 #include "utils.hpp"
 
 #include <cstdlib>  // for getenv
