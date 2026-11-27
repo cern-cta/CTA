@@ -41,14 +41,12 @@ void lockRepackGroupRows(Transaction& txn, const std::set<std::pair<uint64_t, ui
     return;
   }
   std::string pairs;
-  size_t i = 0;
-  for (const auto& [repackRequestId, archiveFileId] : groupKeys) {
+  for (size_t i = 0; i < groupKeys.size(); ++i) {
     if (i > 0) {
       pairs += ",";
     }
     const std::string s = std::to_string(i);
     pairs += "(:R" + s + "::BIGINT, :F" + s + "::BIGINT)";
-    ++i;
   }
   std::string sql = "SELECT JOB_ID FROM REPACK_ARCHIVE_ACTIVE_QUEUE "
                     "WHERE (REPACK_REQUEST_ID, ARCHIVE_FILE_ID) IN ("
@@ -56,7 +54,7 @@ void lockRepackGroupRows(Transaction& txn, const std::set<std::pair<uint64_t, ui
                     + ") "
                       "ORDER BY REPACK_REQUEST_ID, ARCHIVE_FILE_ID, JOB_ID FOR UPDATE";
   auto stmt = txn.getConn().createStmt(sql);
-  i = 0;
+  size_t i = 0;
   for (const auto& [repackRequestId, archiveFileId] : groupKeys) {
     const std::string s = std::to_string(i);
     stmt.bindUint64(":R" + s, repackRequestId);
@@ -82,13 +80,11 @@ void lockArchiveRequestGroupRows(Transaction& txn, const std::set<uint64_t>& req
     return;
   }
   std::string ids;
-  size_t i = 0;
-  for (const auto& requestId : requestIds) {
+  for (size_t i = 0; i < requestIds.size(); ++i) {
     if (i > 0) {
       ids += ",";
     }
     ids += ":R" + std::to_string(i);
-    ++i;
   }
   std::string sql = "SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE "
                     "WHERE ARCHIVE_REQUEST_ID IN ("
@@ -96,7 +92,7 @@ void lockArchiveRequestGroupRows(Transaction& txn, const std::set<uint64_t>& req
                     + ") "
                       "ORDER BY ARCHIVE_REQUEST_ID, JOB_ID FOR UPDATE";
   auto stmt = txn.getConn().createStmt(sql);
-  i = 0;
+  size_t i = 0;
   for (const auto& requestId : requestIds) {
     stmt.bindUint64(":R" + std::to_string(i), requestId);
     ++i;
