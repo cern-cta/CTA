@@ -837,22 +837,45 @@ def test_repack_just_add_copies_with_missing_copy(
     # Each mutation registers its own rollback right after it succeeds, so a failure partway
     # through setup still cleans up exactly what was applied. Callbacks run in reverse order,
     # which also moves the tape out of second_tape_pool before the pool itself is removed.
+    #
+    # Route and pool removal are COUPLED to verified copy removal: ExitStack keeps running the
+    # remaining callbacks after one raises, so an unconditional route removal after a failed copy
+    # cleanup would leave routeless copies behind and break expansion for whichever later test
+    # repacks the destination tape. Keeping the temporary route (and the pool it references)
+    # on an already-failing run is the lesser evil, and is reported loudly.
     with contextlib.ExitStack() as cleanup:
+        added_copies_verified_removed = True  # no copies exist until the repack is submitted
+
+        def remove_temp_tape_pool() -> None:
+            if not added_copies_verified_removed:
+                print(f"Keeping tapepool {second_tape_pool}: the added copies were not verified removed")
+                return
+            cta_cli.exec(f"cta-admin tapepool rm --name {second_tape_pool}")
+
+        def remove_temp_archive_route() -> None:
+            if not added_copies_verified_removed:
+                print("Keeping the copy-2 archive route: the added copies were not verified removed")
+                return
+            cta_cli.exec(
+                f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
+            )
+
+        def remove_added_copies() -> None:
+            nonlocal added_copies_verified_removed
+            _remove_tape_file_copies(cta_cli, dest_vid, disk_instance_name, added_copy_archive_ids)
+            added_copies_verified_removed = True
+
         cta_cli.exec(
             f"cta-admin tapepool add --name {second_tape_pool} --vo vo --partialtapesnumber 2 "
             f"--comment 'Temp {second_tape_pool} tapepool'"
         )
-        cleanup.callback(lambda: cta_cli.exec(f"cta-admin tapepool rm --name {second_tape_pool}"))
+        cleanup.callback(remove_temp_tape_pool)
 
         cta_cli.exec(
             f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool "
             f"{second_tape_pool} --archiveroutetype DEFAULT --comment 'ArchiveRoute2'"
         )
-        cleanup.callback(
-            lambda: cta_cli.exec(
-                f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
-            )
-        )
+        cleanup.callback(remove_temp_archive_route)
 
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
         cleanup.callback(
@@ -872,10 +895,10 @@ def test_repack_just_add_copies_with_missing_copy(
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
         # Take the added copies back off the destination tape; must run before the copy-2 route
-        # removal, and is registered before the repack so a partial repack is covered too.
-        cleanup.callback(
-            lambda: _remove_tape_file_copies(cta_cli, dest_vid, disk_instance_name, added_copy_archive_ids)
-        )
+        # removal, and is registered before the repack so a partial repack is covered too. From
+        # here on copies may exist, so route/pool removal requires the verified flag again.
+        added_copies_verified_removed = False
+        cleanup.callback(remove_added_copies)
 
         # A plain lambda would return ExitStack.callback()'s own return value (it returns the
         # callback, to work as a decorator), which does not match on_submitted's () -> None.
@@ -982,21 +1005,39 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
             lambda: eos_mgm.exec(f"eos rm {staged_file_path}", capture_output=True, throw_on_failure=False)
         )
 
+        # Route/pool removal coupled to verified copy removal - see the test above for why.
+        added_copies_verified_removed = True  # no copies exist until the repack is submitted
+
+        def remove_temp_tape_pool() -> None:
+            if not added_copies_verified_removed:
+                print(f"Keeping tapepool {second_tape_pool}: the added copies were not verified removed")
+                return
+            cta_cli.exec(f"cta-admin tapepool rm --name {second_tape_pool}")
+
+        def remove_temp_archive_route() -> None:
+            if not added_copies_verified_removed:
+                print("Keeping the copy-2 archive route: the added copies were not verified removed")
+                return
+            cta_cli.exec(
+                f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
+            )
+
+        def remove_added_copies() -> None:
+            nonlocal added_copies_verified_removed
+            _remove_tape_file_copies(cta_cli, dest_vid, disk_instance_name, added_copy_archive_ids)
+            added_copies_verified_removed = True
+
         cta_cli.exec(
             f"cta-admin tapepool add --name {second_tape_pool} --vo vo --partialtapesnumber 2 "
             f"--comment 'Temp {second_tape_pool} tapepool'"
         )
-        cleanup.callback(lambda: cta_cli.exec(f"cta-admin tapepool rm --name {second_tape_pool}"))
+        cleanup.callback(remove_temp_tape_pool)
 
         cta_cli.exec(
             f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool "
             f"{second_tape_pool} --archiveroutetype DEFAULT --comment 'ArchiveRoute2'"
         )
-        cleanup.callback(
-            lambda: cta_cli.exec(
-                f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2 --archiveroutetype DEFAULT"
-            )
-        )
+        cleanup.callback(remove_temp_archive_route)
 
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
         cleanup.callback(
@@ -1012,9 +1053,8 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
         cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
         # Take the added copies back off the destination tape - see the test above.
-        cleanup.callback(
-            lambda: _remove_tape_file_copies(cta_cli, dest_vid, disk_instance_name, added_copy_archive_ids)
-        )
+        added_copies_verified_removed = False
+        cleanup.callback(remove_added_copies)
 
         # See the identically-named helper in the test above for why this is not a lambda.
         def register_repack_request_cleanup() -> None:
