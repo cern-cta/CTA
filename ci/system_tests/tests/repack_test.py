@@ -704,6 +704,13 @@ def test_repack_just_add_copies_with_missing_copy(
     )
     dest_vid, original_dest_pool = dest_tape["vid"], dest_tape["tapepool"]
 
+    # _submit_repack_request() unconditionally marks vid_to_repack full before repacking it (a
+    # repack source must be full) - capture whatever it actually was before that, so a
+    # previously-writable source tape doesn't stay stuck full (and so unusable as a destination
+    # for later tests) once this test is done with it.
+    source_tape = next(t for t in all_tapes if t["vid"] == vid_to_repack)
+    original_source_full = "true" if source_tape.get("full", False) else "false"
+
     # Each mutation below registers its own rollback immediately after it succeeds, so a failure
     # partway through setup still cleans up exactly what was already applied instead of skipping
     # cleanup entirely. ExitStack runs the callbacks in reverse order on the way out, success or
@@ -741,6 +748,9 @@ def test_repack_just_add_copies_with_missing_copy(
 
         cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
         cleanup.callback(lambda: cta_cli.modify_tape_state(vid_to_repack, "ACTIVE"))
+        # Submitting below is what actually marks the tape full - registered here, before that
+        # call, so the restore still runs even if submission itself never gets that far.
+        cleanup.callback(lambda: cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full {original_source_full}"))
 
         print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with a genuinely missing copy')
         _submit_repack_request(
