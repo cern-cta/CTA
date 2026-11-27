@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description":
-    "Update container bases, external CI images, GitHub Actions, Python interpreters and uv workspaces, Danger gems and grpc-health-probe. Native packages, Rust, general Helm dependencies and submodules remain deferred.",
+    "Update container bases, external CI images, CI PostgreSQL, GitHub Actions, Python interpreters and uv workspaces, Danger gems and grpc-health-probe. Native packages, Rust, general Helm dependencies and submodules remain deferred.",
   "enabledManagers": [
     "dockerfile",
     "github-actions",
@@ -61,7 +61,7 @@
         "/^\\.gitlab-ci\\.yml$/"
       ],
       "matchStrings": [
-        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
+        "IMAGE_(?:DOCKER_IMAGE_BUILDER|DOCKER_LINT|HELM|SBOM_HELPER|RENOVATE): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s:@]+(?:/[^\"\\s:@]+)+):(?<currentValue>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\"",
         "IMAGE_(?:TRIVY|SBOMQS): \"(?:\\$\\{DOCKER_IMAGE_PROXY\\}/)?(?<depName>[^\"\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})\" +# (?<currentValue>v?[0-9.]+)"
       ],
       "datasourceTemplate": "docker",
@@ -84,10 +84,22 @@
       "customType": "regex",
       "description": "Keep the auth job on the same Python patch release as the workspace.",
       "managerFilePatterns": [
-        "/^ci/orchestration/helm/auth/values\\.yaml$/"
+        "/^ci/orchestration/helm/ci-infra/values\\.yaml$/"
       ],
       "matchStrings": [
         "image: registry\\.cern\\.ch/docker\\.io/(?<depName>python):(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+-slim)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Update the CI PostgreSQL release and image digest together.",
+      "managerFilePatterns": [
+        "/^ci/orchestration/helm/ci-infra/values\\.yaml$/"
+      ],
+      "matchStrings": [
+        "image: (?<depName>docker\\.io/postgres):(?<currentValue>[0-9]+\\.[0-9]+)@(?<currentDigest>sha256:[a-f0-9]{64})"
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
@@ -153,6 +165,26 @@
         "docker"
       ],
       "pinDigests": true
+    },
+    {
+      "description": "The chart checks require Helm 3.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/alpine/helm"
+      ],
+      "allowedVersions": "/^3\\./"
+    },
+    {
+      "description": "Keep the CI databases on PostgreSQL 17.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/postgres"
+      ],
+      "allowedVersions": "/^17\\./"
     },
     {
       "matchManagers": [
