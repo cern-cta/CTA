@@ -11,14 +11,16 @@ use crate::typed_admin_cmd;
 #[typed_admin_cmd(Archiveroute::Add)]
 pub struct Add {
     /// Storage class of the route
-    pub storage_class: String,
+    #[proto(StorageClass)]
+    pub storage_class_name: String,
     /// Copy number of the route
-    #[proto(CopyNumber)]
-    pub copy_nb: u64,
+    pub copy_number: u32,
     /// Type of the route
-    pub archive_route_type: Option<ArchiveRouteType>,
+    #[proto(ArchiveRouteType)]
+    pub r#type: Option<ArchiveRouteType>,
     /// Tape pool the copies are written to
-    pub tape_pool: String,
+    #[proto(TapePool)]
+    pub tape_pool_name: String,
     /// Comment
     pub comment: String,
 }
@@ -27,14 +29,16 @@ pub struct Add {
 #[typed_admin_cmd(Archiveroute::Ch)]
 pub struct Ch {
     /// Storage class of the route
-    pub storage_class: String,
+    #[proto(StorageClass)]
+    pub storage_class_name: String,
     /// Copy number of the route
-    #[proto(CopyNumber)]
-    pub copy_nb: u64,
+    pub copy_number: u32,
     /// Type of the route
-    pub archive_route_type: ArchiveRouteType,
+    #[proto(ArchiveRouteType)]
+    pub r#type: ArchiveRouteType,
     /// New tape pool
-    pub tape_pool: Option<String>,
+    #[proto(TapePool)]
+    pub tape_pool_name: Option<String>,
     /// New comment
     pub comment: Option<String>,
 }
@@ -43,12 +47,13 @@ pub struct Ch {
 #[typed_admin_cmd(Archiveroute::Rm)]
 pub struct Rm {
     /// Storage class of the route
-    pub storage_class: String,
+    #[proto(StorageClass)]
+    pub storage_class_name: String,
     /// Copy number of the route
-    #[proto(CopyNumber)]
-    pub copy_nb: u64,
+    pub copy_number: u32,
     /// Type of the route
-    pub archive_route_type: ArchiveRouteType,
+    #[proto(ArchiveRouteType)]
+    pub r#type: ArchiveRouteType,
 }
 
 /// Lists the archive routes (`archiveroute ls`).

@@ -140,10 +140,5 @@ pub(crate) async fn at_least_one<T>(
     Ok(items)
 }
 
-/// The seconds of a duration, as the commands take them.
-pub(crate) fn secs(duration: std::time::Duration) -> u64 {
-    duration.as_secs()
-}
-
 #[cfg(test)]
 mod tests;

@@ -32,7 +32,7 @@ impl TapePools {
         encrypted: Option<bool>,
     ) -> Result<AdminStream<TapePool>, AdminError> {
         let cmd = tape_pool::Ls::builder()
-            .maybe_vo(virtual_organisation_name)
+            .maybe_virtual_organisation_name(virtual_organisation_name)
             .maybe_encrypted(encrypted)
             .build();
         self.client.stream_as(cmd).await
@@ -60,10 +60,10 @@ impl TapePools {
     ) -> Result<(), AdminError> {
         let cmd = tape_pool::Add::builder()
             .name(name)
-            .vo(virtual_organisation_name)
-            .partial_tapes(min_writable_tape_count)
+            .virtual_organisation_name(virtual_organisation_name)
+            .min_writable_tape_count(min_writable_tape_count)
             .maybe_encryption_key_name(encryption_key_name)
-            .maybe_supply(supply_tape_pool_names.map(|names| names.join(",")))
+            .maybe_supply_tape_pool_names(supply_tape_pool_names)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -87,9 +87,9 @@ impl TapePools {
     ) -> Result<(), AdminError> {
         let cmd = tape_pool::Ch::builder()
             .name(name)
-            .maybe_vo(virtual_organisation_name)
-            .maybe_partial_tapes(min_writable_tape_count)
-            .maybe_supply(supply_tape_pool_names.map(|names| names.join(",")))
+            .maybe_virtual_organisation_name(virtual_organisation_name)
+            .maybe_min_writable_tape_count(min_writable_tape_count)
+            .maybe_supply_tape_pool_names(supply_tape_pool_names)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await

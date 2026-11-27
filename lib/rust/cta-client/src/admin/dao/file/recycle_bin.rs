@@ -20,11 +20,6 @@ use crate::admin::{
 #[admin_dao]
 pub struct RecycleBinTapeFiles;
 
-/// The seconds since the Unix epoch of a time, as the commands take them.
-fn unix_time(time: Timestamp) -> u64 {
-    u64::try_from(time.as_second()).unwrap_or_default()
-}
-
 #[bon]
 impl RecycleBinTapeFiles {
     /// All the deleted tape copies of a file.
@@ -36,7 +31,7 @@ impl RecycleBinTapeFiles {
         let cmd = recycle_tape_file::Ls::builder()
             .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance_name())
+            .maybe_disk_instance_name(id.disk_instance_name())
             .build();
         at_least_one(
             self.client.stream_as(cmd).await?,
@@ -56,7 +51,7 @@ impl RecycleBinTapeFiles {
         let cmd = recycle_tape_file::Ls::builder()
             .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance_name())
+            .maybe_disk_instance_name(id.disk_instance_name())
             .vid(vid)
             .build();
         exactly_one(
@@ -77,7 +72,7 @@ impl RecycleBinTapeFiles {
         /// The file with this archive file ID
         archive_id: Option<u64>,
         /// The copies with this copy number
-        copy_number: Option<u64>,
+        copy_number: Option<u32>,
         /// The files with these disk file IDs (with `disk_instance_name`)
         disk_file_ids: Option<Vec<String>>,
         /// The files with the disk file IDs listed in this file (see [`crate::admin::dao::read_disk_file_ids`], with
@@ -103,12 +98,12 @@ impl RecycleBinTapeFiles {
         let cmd = recycle_tape_file::Ls::builder()
             .maybe_vid(vid)
             .maybe_archive_file_id(archive_id)
-            .maybe_copy_nb(copy_number)
+            .maybe_copy_number(copy_number)
             .maybe_disk_file_ids(ids)
-            .maybe_instance(disk_instance_name)
-            .maybe_vo(virtual_organisation_name)
-            .maybe_log_unixtime_min(min_deletion_time.map(unix_time))
-            .maybe_log_unixtime_max(max_deletion_time.map(unix_time))
+            .maybe_disk_instance_name(disk_instance_name)
+            .maybe_virtual_organisation_name(virtual_organisation_name)
+            .maybe_min_deletion_time(min_deletion_time)
+            .maybe_max_deletion_time(max_deletion_time)
             .build();
         self.client.stream_as(cmd).await
     }
@@ -120,10 +115,10 @@ impl RecycleBinTapeFiles {
     pub async fn restore(&self, file: &File) -> Result<String, AdminError> {
         let cmd = recycle_tape_file::Restore::builder()
             .vid(&file.tape_file.vid)
-            .instance(&file.disk_file.disk_instance_name)
+            .disk_instance_name(&file.disk_file.disk_instance_name)
             .disk_file_id(&file.disk_file.id)
             .archive_file_id(file.archive_file.archive_id)
-            .copy_nb(u64::from(file.tape_file.copy_number))
+            .copy_number(file.tape_file.copy_number)
             .build();
         Ok(self.client.unary(cmd).await?.message_txt)
     }

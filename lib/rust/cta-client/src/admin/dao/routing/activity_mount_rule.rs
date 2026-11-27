@@ -62,10 +62,10 @@ impl ActivityMountRules {
         comment: String,
     ) -> Result<(), AdminError> {
         let cmd = activity_mount_rule::Add::builder()
-            .name(user_name)
-            .instance(disk_instance_name)
-            .activity_regex(regex)
-            .mount_policy(mount_policy_name)
+            .user_name(user_name)
+            .disk_instance_name(disk_instance_name)
+            .regex(regex)
+            .mount_policy_name(mount_policy_name)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -86,10 +86,10 @@ impl ActivityMountRules {
         comment: Option<String>,
     ) -> Result<(), AdminError> {
         let cmd = activity_mount_rule::Ch::builder()
-            .name(user_name)
-            .instance(disk_instance_name)
-            .activity_regex(regex)
-            .maybe_mount_policy(mount_policy_name)
+            .user_name(user_name)
+            .disk_instance_name(disk_instance_name)
+            .regex(regex)
+            .maybe_mount_policy_name(mount_policy_name)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -103,9 +103,9 @@ impl ActivityMountRules {
         regex: &str,
     ) -> Result<(), AdminError> {
         let cmd = activity_mount_rule::Rm::builder()
-            .name(user_name)
-            .instance(disk_instance_name)
-            .activity_regex(regex)
+            .user_name(user_name)
+            .disk_instance_name(disk_instance_name)
+            .regex(regex)
             .build();
         self.client.run(cmd).await
     }

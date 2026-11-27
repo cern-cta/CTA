@@ -3,6 +3,8 @@
 
 //! Recycle bin commands
 
+use jiff::Timestamp;
+
 use crate::typed_admin_cmd;
 
 /// Lists the tape files of the recycle bin (`recycletf ls`).
@@ -19,18 +21,21 @@ pub struct Ls {
     #[proto(FileId)]
     pub disk_file_ids: Option<Vec<String>>,
     /// Only this copy number
-    #[proto(CopyNumber)]
-    pub copy_nb: Option<u64>,
+    pub copy_number: Option<u32>,
     /// Archive file ID
     pub archive_file_id: Option<u64>,
     /// Disk instance of the disk files
-    pub instance: Option<String>,
-    /// Only the files recycled at or after this time (seconds since the epoch)
-    pub log_unixtime_min: Option<u64>,
-    /// Only the files recycled at or before this time (seconds since the epoch)
-    pub log_unixtime_max: Option<u64>,
+    #[proto(Instance)]
+    pub disk_instance_name: Option<String>,
+    /// Only the files recycled at or after this time
+    #[proto(LogUnixtimeMin)]
+    pub min_deletion_time: Option<Timestamp>,
+    /// Only the files recycled at or before this time
+    #[proto(LogUnixtimeMax)]
+    pub max_deletion_time: Option<Timestamp>,
     /// Only the files of this virtual organisation
-    pub vo: Option<String>,
+    #[proto(Vo)]
+    pub virtual_organisation_name: Option<String>,
 }
 
 /// Restores a tape file copy of the recycle bin (`recycletf restore`).
@@ -47,10 +52,10 @@ pub struct Restore {
     /// Disk file ID (decimal) to attach the restored copy to (exclusive with `fxid`)
     pub disk_file_id: Option<String>,
     /// Disk instance of the disk file
-    pub instance: Option<String>,
+    #[proto(Instance)]
+    pub disk_instance_name: Option<String>,
     /// Archive file ID of the copy to restore
     pub archive_file_id: Option<u64>,
     /// Copy number of the copy to restore
-    #[proto(CopyNumber)]
-    pub copy_nb: Option<u64>,
+    pub copy_number: Option<u32>,
 }

@@ -13,22 +13,27 @@ pub struct Add {
     /// Volume identifier of the tape
     pub vid: String,
     /// Media type of the tape
-    pub media_type: String,
+    #[proto(MediaType)]
+    pub media_type_name: String,
     /// Vendor of the tape
     pub vendor: String,
     /// Logical library holding the tape
-    pub logical_library: String,
+    #[proto(LogicalLibrary)]
+    pub logical_library_name: String,
     /// Tape pool of the tape
-    pub tape_pool: String,
+    #[proto(TapePool)]
+    pub tape_pool_name: String,
     /// Whether the tape is full
-    pub full: bool,
+    #[proto(Full)]
+    pub is_full: bool,
     /// State of the tape
     pub state: Option<TapeState>,
     /// Purchase order of the tape
     #[proto(MediaPurchaseOrderNumber)]
     pub purchase_order: Option<String>,
     /// Reason for the state of the tape
-    pub reason: Option<String>,
+    #[proto(Reason)]
+    pub state_reason: Option<String>,
     /// Comment
     pub comment: Option<String>,
 }
@@ -39,17 +44,21 @@ pub struct Ch {
     /// Volume identifier of the tape
     pub vid: String,
     /// New media type
-    pub media_type: Option<String>,
+    #[proto(MediaType)]
+    pub media_type_name: Option<String>,
     /// New vendor
     pub vendor: Option<String>,
     /// New logical library
-    pub logical_library: Option<String>,
+    #[proto(LogicalLibrary)]
+    pub logical_library_name: Option<String>,
     /// New tape pool
-    pub tape_pool: Option<String>,
+    #[proto(TapePool)]
+    pub tape_pool_name: Option<String>,
     /// New encryption key name
     pub encryption_key_name: Option<String>,
     /// Whether the tape is full
-    pub full: Option<bool>,
+    #[proto(Full)]
+    pub is_full: Option<bool>,
     /// New verification status
     pub verification_status: Option<String>,
     /// New state
@@ -58,11 +67,13 @@ pub struct Ch {
     #[proto(MediaPurchaseOrderNumber)]
     pub purchase_order: Option<String>,
     /// Reason for the new state
-    pub reason: Option<String>,
+    #[proto(Reason)]
+    pub state_reason: Option<String>,
     /// New comment
     pub comment: Option<String>,
     /// Whether the tape is dirty
-    pub dirty_bit: Option<bool>,
+    #[proto(DirtyBit)]
+    pub is_dirty: Option<bool>,
 }
 
 /// Removes a tape (`tape rm`).
@@ -86,19 +97,24 @@ pub struct Ls {
     /// Only the tape with this volume identifier
     pub vid: Option<String>,
     /// Only the tapes of this media type
-    pub media_type: Option<String>,
+    #[proto(MediaType)]
+    pub media_type_name: Option<String>,
     /// Only the tapes of this vendor
     pub vendor: Option<String>,
     /// Only the tapes of this logical library
-    pub logical_library: Option<String>,
+    #[proto(LogicalLibrary)]
+    pub logical_library_name: Option<String>,
     /// Only the tapes of this tape pool
-    pub tape_pool: Option<String>,
+    #[proto(TapePool)]
+    pub tape_pool_name: Option<String>,
     /// Only the tapes of this virtual organisation
-    pub vo: Option<String>,
+    #[proto(Vo)]
+    pub virtual_organisation_name: Option<String>,
     /// Only the tapes of this capacity, in bytes
     pub capacity: Option<u64>,
     /// Only the full (`true`) or non-full (`false`) tapes
-    pub full: Option<bool>,
+    #[proto(Full)]
+    pub is_full: Option<bool>,
     /// Only the tapes holding these disk file IDs (decimal)
     #[proto(FileId)]
     pub disk_file_ids: Option<Vec<String>>,
@@ -113,7 +129,8 @@ pub struct Ls {
     #[proto(MediaPurchaseOrderNumber)]
     pub purchase_order: Option<String>,
     /// Only the tapes of this physical library
-    pub physical_library: Option<String>,
+    #[proto(PhysicalLibrary)]
+    pub physical_library_name: Option<String>,
     /// Only the tapes holding files with missing copies
     #[proto(only_if_true)]
     pub missing_file_copies: bool,

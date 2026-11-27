@@ -57,7 +57,7 @@ pub(crate) struct CommonOptions {
 
     /// Copy number of the files to restore
     #[arg(long)]
-    pub(crate) copy_number: Option<u64>,
+    pub(crate) copy_number: Option<u32>,
 }
 
 impl CommonOptions {

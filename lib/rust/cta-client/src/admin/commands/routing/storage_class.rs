@@ -13,9 +13,10 @@ pub struct Add {
     pub name: String,
     /// Number of tape copies of the files of the storage class
     #[proto(CopyNumber)]
-    pub number_of_copies: u64,
+    pub replica_count: u64,
     /// Virtual organisation of the storage class
-    pub vo: String,
+    #[proto(Vo)]
+    pub virtual_organisation_name: String,
     /// Comment
     pub comment: String,
 }
@@ -28,9 +29,10 @@ pub struct Ch {
     pub name: String,
     /// New number of tape copies
     #[proto(CopyNumber)]
-    pub number_of_copies: Option<u64>,
+    pub replica_count: Option<u64>,
     /// New virtual organisation
-    pub vo: Option<String>,
+    #[proto(Vo)]
+    pub virtual_organisation_name: Option<String>,
     /// New comment
     pub comment: Option<String>,
 }

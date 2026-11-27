@@ -56,10 +56,10 @@ impl ArchiveRoutes {
         comment: String,
     ) -> Result<(), AdminError> {
         let cmd = archive_route::Add::builder()
-            .storage_class(storage_class_name)
-            .copy_nb(u64::from(copy_number))
-            .archive_route_type(r#type)
-            .tape_pool(tape_pool_name)
+            .storage_class_name(storage_class_name)
+            .copy_number(copy_number)
+            .r#type(r#type)
+            .tape_pool_name(tape_pool_name)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -80,10 +80,10 @@ impl ArchiveRoutes {
         comment: Option<String>,
     ) -> Result<(), AdminError> {
         let cmd = archive_route::Ch::builder()
-            .storage_class(storage_class_name)
-            .copy_nb(u64::from(copy_number))
-            .archive_route_type(r#type)
-            .maybe_tape_pool(tape_pool_name)
+            .storage_class_name(storage_class_name)
+            .copy_number(copy_number)
+            .r#type(r#type)
+            .maybe_tape_pool_name(tape_pool_name)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -97,9 +97,9 @@ impl ArchiveRoutes {
         r#type: ArchiveRouteType,
     ) -> Result<(), AdminError> {
         let cmd = archive_route::Rm::builder()
-            .storage_class(storage_class_name)
-            .copy_nb(u64::from(copy_number))
-            .archive_route_type(r#type)
+            .storage_class_name(storage_class_name)
+            .copy_number(copy_number)
+            .r#type(r#type)
             .build();
         self.client.run(cmd).await
     }

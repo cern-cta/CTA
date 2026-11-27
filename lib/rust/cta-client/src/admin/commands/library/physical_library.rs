@@ -26,11 +26,14 @@ pub struct Add {
     #[proto(LibraryLocation)]
     pub location: Option<String>,
     /// Number of physical cartridge slots
-    pub nb_physical_cartridge_slots: u64,
+    #[proto(NbPhysicalCartridgeSlots)]
+    pub physical_cartridge_slots: u64,
     /// Number of available cartridge slots
-    pub nb_available_cartridge_slots: Option<u64>,
+    #[proto(NbAvailableCartridgeSlots)]
+    pub available_cartridge_slots: Option<u64>,
     /// Number of physical drive slots
-    pub nb_physical_drive_slots: u64,
+    #[proto(NbPhysicalDriveSlots)]
+    pub physical_drive_slots: u64,
     /// Comment
     pub comment: Option<String>,
 }
@@ -54,17 +57,21 @@ pub struct Ch {
     #[proto(LibraryLocation)]
     pub location: Option<String>,
     /// New number of physical cartridge slots
-    pub nb_physical_cartridge_slots: Option<u64>,
+    #[proto(NbPhysicalCartridgeSlots)]
+    pub physical_cartridge_slots: Option<u64>,
     /// New number of available cartridge slots
-    pub nb_available_cartridge_slots: Option<u64>,
+    #[proto(NbAvailableCartridgeSlots)]
+    pub available_cartridge_slots: Option<u64>,
     /// New number of physical drive slots
-    pub nb_physical_drive_slots: Option<u64>,
+    #[proto(NbPhysicalDriveSlots)]
+    pub physical_drive_slots: Option<u64>,
     /// New comment
     pub comment: Option<String>,
     /// Whether the library is disabled
     pub disabled: Option<bool>,
     /// Why the library is disabled
-    pub disabled_reason: Option<String>,
+    #[proto(DisabledReason)]
+    pub state_reason: Option<String>,
 }
 
 /// Removes a physical library (`physicallibrary rm`).

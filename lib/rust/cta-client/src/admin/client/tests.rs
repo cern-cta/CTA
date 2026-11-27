@@ -215,8 +215,8 @@ mod unary {
     fn add_cmd() -> tape_pool::Add {
         tape_pool::Add::builder()
             .name("pool")
-            .vo("vo")
-            .partial_tapes(2)
+            .virtual_organisation_name("vo")
+            .min_writable_tape_count(2)
             .comment("comment")
             .build()
     }

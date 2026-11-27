@@ -12,7 +12,8 @@ pub struct Add {
     #[proto(MediaType)]
     pub name: String,
     /// Cartridge model
-    pub cartridge: String,
+    #[proto(Cartridge)]
+    pub cartridge_type: String,
     /// Capacity of a cartridge, in bytes
     pub capacity: u64,
     /// Primary density code
@@ -36,7 +37,8 @@ pub struct Ch {
     #[proto(MediaType)]
     pub name: String,
     /// New cartridge model
-    pub cartridge: Option<String>,
+    #[proto(Cartridge)]
+    pub cartridge_type: Option<String>,
     /// New primary density code
     pub primary_density_code: Option<u64>,
     /// New secondary density code

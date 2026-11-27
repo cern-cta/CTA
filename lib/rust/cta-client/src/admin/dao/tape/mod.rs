@@ -79,16 +79,16 @@ impl Tapes {
                 .extend(disk_file_ids_from(&path)?);
         }
         let cmd = tape::Ls::builder()
-            .maybe_media_type(media_type_name)
+            .maybe_media_type_name(media_type_name)
             .maybe_vendor(vendor)
-            .maybe_logical_library(logical_library_name)
-            .maybe_tape_pool(tape_pool_name)
-            .maybe_vo(virtual_organisation_name)
-            .maybe_full(full)
+            .maybe_logical_library_name(logical_library_name)
+            .maybe_tape_pool_name(tape_pool_name)
+            .maybe_virtual_organisation_name(virtual_organisation_name)
+            .maybe_is_full(full)
             .maybe_disk_file_ids(ids)
             .maybe_state(state)
             .maybe_purchase_order(purchase_order)
-            .maybe_physical_library(physical_library_name)
+            .maybe_physical_library_name(physical_library_name)
             .missing_file_copies(missing_file_copies)
             .build();
         // without a filter, `tape ls` wants an explicit `--all`
@@ -128,11 +128,11 @@ impl Tapes {
     ) -> Result<(), AdminError> {
         let cmd = tape::Add::builder()
             .vid(vid)
-            .media_type(media_type_name)
+            .media_type_name(media_type_name)
             .vendor(vendor)
-            .logical_library(logical_library_name)
-            .tape_pool(tape_pool_name)
-            .full(full)
+            .logical_library_name(logical_library_name)
+            .tape_pool_name(tape_pool_name)
+            .is_full(full)
             .maybe_purchase_order(purchase_order)
             .maybe_comment(comment)
             .build();
@@ -174,14 +174,14 @@ impl Tapes {
     ) -> Result<(), AdminError> {
         let cmd = tape::Ch::builder()
             .vid(vid)
-            .maybe_media_type(media_type_name)
+            .maybe_media_type_name(media_type_name)
             .maybe_vendor(vendor)
-            .maybe_logical_library(logical_library_name)
-            .maybe_tape_pool(tape_pool_name)
+            .maybe_logical_library_name(logical_library_name)
+            .maybe_tape_pool_name(tape_pool_name)
             .maybe_verification_status(verification_status.map(|status| status.to_json()))
-            .maybe_full(full)
+            .maybe_is_full(full)
             .maybe_purchase_order(purchase_order)
-            .maybe_dirty_bit(dirty)
+            .maybe_is_dirty(dirty)
             .maybe_encryption_key_name(encryption_key_name)
             .maybe_comment(comment)
             .build();
@@ -198,7 +198,7 @@ impl Tapes {
         let cmd = tape::Ch::builder()
             .vid(vid)
             .state(state)
-            .reason(reason)
+            .state_reason(reason)
             .build();
         self.client.run(cmd).await
     }

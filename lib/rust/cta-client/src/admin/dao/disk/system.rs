@@ -9,11 +9,7 @@ use bon::bon;
 use cta_client_macros::admin_dao;
 use cta_model::disk::DiskSystem;
 
-use crate::admin::{
-    AdminError, AdminStream,
-    commands::disk_system,
-    dao::{find_one, secs},
-};
+use crate::admin::{AdminError, AdminStream, commands::disk_system, dao::find_one};
 
 /// Disk systems: see [`DiskSystem`].
 #[admin_dao]
@@ -63,12 +59,12 @@ impl DiskSystems {
         comment: String,
     ) -> Result<(), AdminError> {
         let cmd = disk_system::Add::builder()
-            .disk_system(name)
-            .disk_instance(disk_instance_name)
-            .disk_instance_space(disk_instance_space_name)
-            .file_regexp(file_regex)
-            .targeted_free_space(desired_min_free_space)
-            .sleep_time(secs(sleep_time))
+            .name(name)
+            .disk_instance_name(disk_instance_name)
+            .disk_instance_space_name(disk_instance_space_name)
+            .file_regex(file_regex)
+            .desired_min_free_space(desired_min_free_space)
+            .sleep_time(sleep_time)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -91,10 +87,10 @@ impl DiskSystems {
         comment: Option<String>,
     ) -> Result<(), AdminError> {
         let cmd = disk_system::Ch::builder()
-            .disk_system(name)
-            .maybe_file_regexp(file_regex)
-            .maybe_targeted_free_space(desired_min_free_space)
-            .maybe_sleep_time(sleep_time.map(secs))
+            .name(name)
+            .maybe_file_regex(file_regex)
+            .maybe_desired_min_free_space(desired_min_free_space)
+            .maybe_sleep_time(sleep_time)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -103,7 +99,7 @@ impl DiskSystems {
     /// Deletes a disk system.
     pub async fn delete(&self, name: &str) -> Result<(), AdminError> {
         self.client
-            .run(disk_system::Rm::builder().disk_system(name).build())
+            .run(disk_system::Rm::builder().name(name).build())
             .await
     }
 }

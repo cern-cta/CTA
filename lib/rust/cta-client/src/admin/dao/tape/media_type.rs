@@ -54,7 +54,7 @@ impl MediaTypes {
     ) -> Result<(), AdminError> {
         let cmd = media_type::Add::builder()
             .name(name)
-            .cartridge(cartridge_type)
+            .cartridge_type(cartridge_type)
             .capacity(capacity)
             .primary_density_code(primary_density_code)
             .secondary_density_code(secondary_density_code)
@@ -81,7 +81,7 @@ impl MediaTypes {
     ) -> Result<(), AdminError> {
         let cmd = media_type::Ch::builder()
             .name(name)
-            .maybe_cartridge(cartridge_type)
+            .maybe_cartridge_type(cartridge_type)
             .maybe_primary_density_code(primary_density_code)
             .maybe_secondary_density_code(secondary_density_code)
             .maybe_comment(comment)

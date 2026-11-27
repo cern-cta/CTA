@@ -16,7 +16,8 @@ pub struct Ls {
     #[proto(Justretrieve, only_if_true)]
     pub just_retrieve: bool,
     /// Only the requests of this tape pool
-    pub tape_pool: Option<String>,
+    #[proto(TapePool)]
+    pub tape_pool_name: Option<String>,
     /// Only the requests of this tape
     pub vid: Option<String>,
     /// Include the log entries of the requests
@@ -46,5 +47,5 @@ pub struct Summary {
 pub struct Rm {
     /// Object ID of the request, as shown by `failedrequest ls`
     #[proto(Objectid)]
-    pub object_id: String,
+    pub id: String,
 }

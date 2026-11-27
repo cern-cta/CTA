@@ -3,6 +3,8 @@
 
 //! Mount policy commands
 
+use std::time::Duration;
+
 use crate::typed_admin_cmd;
 
 /// Adds a mount policy (`mountpolicy add`).
@@ -13,12 +15,14 @@ pub struct Add {
     pub name: String,
     /// Priority of archive requests
     pub archive_priority: u64,
-    /// Minimum age of archive requests before mounting, in seconds
-    pub min_archive_request_age: u64,
+    /// Minimum age of archive requests before mounting
+    #[proto(MinArchiveRequestAge)]
+    pub min_archive_age: Duration,
     /// Priority of retrieve requests
     pub retrieve_priority: u64,
-    /// Minimum age of retrieve requests before mounting, in seconds
-    pub min_retrieve_request_age: u64,
+    /// Minimum age of retrieve requests before mounting
+    #[proto(MinRetrieveRequestAge)]
+    pub min_retrieve_age: Duration,
     /// Comment
     pub comment: String,
 }
@@ -31,12 +35,14 @@ pub struct Ch {
     pub name: String,
     /// New priority of archive requests
     pub archive_priority: Option<u64>,
-    /// New minimum age of archive requests, in seconds
-    pub min_archive_request_age: Option<u64>,
+    /// New minimum age of archive requests
+    #[proto(MinArchiveRequestAge)]
+    pub min_archive_age: Option<Duration>,
     /// New priority of retrieve requests
     pub retrieve_priority: Option<u64>,
-    /// New minimum age of retrieve requests, in seconds
-    pub min_retrieve_request_age: Option<u64>,
+    /// New minimum age of retrieve requests
+    #[proto(MinRetrieveRequestAge)]
+    pub min_retrieve_age: Option<Duration>,
     /// New comment
     pub comment: Option<String>,
 }

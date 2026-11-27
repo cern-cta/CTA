@@ -235,7 +235,7 @@ fn every_option_type() {
     let cmd: AdminCmd = tape::Ls::builder()
         .vid("V1")
         .capacity(10)
-        .full(false)
+        .is_full(false)
         .disk_file_ids(vec!["1".to_owned(), "2".to_owned()])
         .all(true)
         .missing_file_copies(false)
@@ -261,9 +261,9 @@ fn every_option_type() {
 fn required_and_optional_options() {
     let cmd: AdminCmd = tape_pool::Add::builder()
         .name("tp")
-        .vo("vo")
-        .partial_tapes(2)
-        .supply("a,b")
+        .virtual_organisation_name("vo")
+        .min_writable_tape_count(2)
+        .supply_tape_pool_names(vec!["a", "b"])
         .comment("c")
         .build()
         .into();
@@ -293,14 +293,37 @@ fn converted_options() {
     );
 
     let cmd: AdminCmd = archive_route::Rm::builder()
-        .storage_class("sc")
-        .copy_nb(1)
-        .archive_route_type(ArchiveRouteType::Repack)
+        .storage_class_name("sc")
+        .copy_number(1)
+        .r#type(ArchiveRouteType::Repack)
         .build()
         .into();
     assert!(
         cmd.option_str
             .contains(&string(StrKey::ArchiveRouteType, "REPACK"))
+    );
+    assert_eq!(cmd.option_uint64, [uint(U64Key::CopyNumber, 1)]);
+
+    // durations are sent in whole seconds
+    let cmd: AdminCmd = mount_policy::Ch::builder()
+        .name("mp")
+        .min_archive_age(std::time::Duration::from_millis(90_500))
+        .build()
+        .into();
+    assert_eq!(cmd.option_uint64, [uint(U64Key::MinArchiveRequestAge, 90)]);
+
+    // times are sent in seconds since the epoch, times before it as 0
+    let cmd: AdminCmd = recycle_tape_file::Ls::builder()
+        .min_deletion_time(jiff::Timestamp::from_second(1_700_000_000).unwrap())
+        .max_deletion_time(jiff::Timestamp::from_second(-1).unwrap())
+        .build()
+        .into();
+    assert_eq!(
+        cmd.option_uint64,
+        [
+            uint(U64Key::LogUnixtimeMin, 1_700_000_000),
+            uint(U64Key::LogUnixtimeMax, 0),
+        ]
     );
 
     let cmd = crate::admin_cmd!(Tape.SubcmdLs {

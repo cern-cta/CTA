@@ -88,13 +88,13 @@ impl PhysicalLibraries {
             .name(name)
             .manufacturer(manufacturer)
             .model(model)
-            .nb_physical_cartridge_slots(physical_cartridge_slots)
-            .nb_physical_drive_slots(physical_drive_slots)
+            .physical_cartridge_slots(physical_cartridge_slots)
+            .physical_drive_slots(physical_drive_slots)
             .maybe_gui_url(gui_url)
             .maybe_webcam_url(webcam_url)
             .maybe_library_type(r#type)
             .maybe_location(location)
-            .maybe_nb_available_cartridge_slots(available_cartridge_slots)
+            .maybe_available_cartridge_slots(available_cartridge_slots)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -129,9 +129,9 @@ impl PhysicalLibraries {
             .maybe_gui_url(gui_url)
             .maybe_webcam_url(webcam_url)
             .maybe_location(location)
-            .maybe_nb_physical_cartridge_slots(physical_cartridge_slots)
-            .maybe_nb_available_cartridge_slots(available_cartridge_slots)
-            .maybe_nb_physical_drive_slots(physical_drive_slots)
+            .maybe_physical_cartridge_slots(physical_cartridge_slots)
+            .maybe_available_cartridge_slots(available_cartridge_slots)
+            .maybe_physical_drive_slots(physical_drive_slots)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -142,7 +142,7 @@ impl PhysicalLibraries {
         let cmd = physical_library::Ch::builder()
             .name(name)
             .disabled(true)
-            .disabled_reason(reason)
+            .state_reason(reason)
             .build();
         self.client.run(cmd).await
     }

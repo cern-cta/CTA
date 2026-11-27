@@ -14,7 +14,8 @@ pub struct Add {
     /// Whether the library is disabled
     pub disabled: Option<bool>,
     /// Physical library the logical library belongs to
-    pub physical_library: Option<String>,
+    #[proto(PhysicalLibrary)]
+    pub physical_library_name: Option<String>,
     /// Comment
     pub comment: String,
 }
@@ -28,11 +29,13 @@ pub struct Ch {
     /// Whether the library is disabled
     pub disabled: Option<bool>,
     /// New physical library
-    pub physical_library: Option<String>,
+    #[proto(PhysicalLibrary)]
+    pub physical_library_name: Option<String>,
     /// New comment
     pub comment: Option<String>,
     /// Why the library is disabled
-    pub disabled_reason: Option<String>,
+    #[proto(DisabledReason)]
+    pub state_reason: Option<String>,
 }
 
 /// Removes a logical library (`logicallibrary rm`).

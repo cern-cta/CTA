@@ -40,9 +40,10 @@ pub struct Add {
     pub name: String,
     /// Number of tape copies of the files of the storage class
     #[proto(CopyNumber)]
-    pub number_of_copies: u64,
+    pub replica_count: u64,
     /// Virtual organisation of the storage class
-    pub vo: String,
+    #[proto(Vo)]
+    pub virtual_organisation_name: String,
     /// Comment
     pub comment: String,
 }
@@ -55,7 +56,8 @@ pub struct Ls {
     #[proto(Justarchive, only_if_true)]
     pub just_archive: bool,
     /// Only the requests of this tape pool
-    pub tape_pool: Option<String>,
+    #[proto(TapePool)]
+    pub tape_pool_name: Option<String>,
 }
 ```
 
@@ -66,8 +68,9 @@ pub struct Ls {
   returns.
 - **`with(Key = value, ...)`** gives options sent with a fixed value with every command
   (`#[typed_admin_cmd(Failedrequest::Ls, response = FailedRequestLsSummary, with(Summary = true))]`).
-- Each field is an option, whose key is the field name in `PascalCase` (`tape_pool` →
-  `TapePool`). **`#[proto(Key)]`** names another key, and **`#[proto(only_if_true)]`** sends a
+- Each field is an option, named after the field of the matching `cta-model` type, whose key is the
+  field name in `PascalCase` (`vid` → `Vid`). **`#[proto(Key)]`** names another key (`tape_pool_name` →
+  `TapePool`), and **`#[proto(only_if_true)]`** sends a
   `bool` as a flag (only when `true`, defaulting to `false` in the builder).
 
 Every command gets a builder (`storage_class::Add::builder().name("my_new_storage_class")...`)
@@ -135,8 +138,8 @@ impl StorageClasses {
     ) -> Result<(), AdminError> {
         let cmd = storage_class::Add::builder()
             .name(name)
-            .vo(virtual_organisation_name)
-            .number_of_copies(replica_count)
+            .virtual_organisation_name(virtual_organisation_name)
+            .replica_count(replica_count)
             .comment(comment)
             .build();
         self.client.unary(cmd).await?;

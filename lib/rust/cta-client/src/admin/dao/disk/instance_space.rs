@@ -9,11 +9,7 @@ use bon::bon;
 use cta_client_macros::admin_dao;
 use cta_model::disk::DiskInstanceSpace;
 
-use crate::admin::{
-    AdminError, AdminStream,
-    commands::disk_instance_space,
-    dao::{find_one, secs},
-};
+use crate::admin::{AdminError, AdminStream, commands::disk_instance_space, dao::find_one};
 
 /// Disk instance spaces: see [`DiskInstanceSpace`].
 #[admin_dao]
@@ -64,9 +60,9 @@ impl DiskInstanceSpaces {
     ) -> Result<(), AdminError> {
         let cmd = disk_instance_space::Add::builder()
             .name(name)
-            .disk_instance(disk_instance_name)
-            .free_space_query_url(free_space_url)
-            .refresh_interval(secs(refresh_interval))
+            .disk_instance_name(disk_instance_name)
+            .free_space_url(free_space_url)
+            .refresh_interval(refresh_interval)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -89,9 +85,9 @@ impl DiskInstanceSpaces {
     ) -> Result<(), AdminError> {
         let cmd = disk_instance_space::Ch::builder()
             .name(name)
-            .disk_instance(disk_instance_name)
-            .maybe_free_space_query_url(free_space_url)
-            .maybe_refresh_interval(refresh_interval.map(secs))
+            .disk_instance_name(disk_instance_name)
+            .maybe_free_space_url(free_space_url)
+            .maybe_refresh_interval(refresh_interval)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -101,7 +97,7 @@ impl DiskInstanceSpaces {
     pub async fn delete(&self, name: &str, disk_instance_name: &str) -> Result<(), AdminError> {
         let cmd = disk_instance_space::Rm::builder()
             .name(name)
-            .disk_instance(disk_instance_name)
+            .disk_instance_name(disk_instance_name)
             .build();
         self.client.run(cmd).await
     }

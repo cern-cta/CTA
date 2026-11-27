@@ -52,9 +52,9 @@ impl GroupMountRules {
         comment: String,
     ) -> Result<(), AdminError> {
         let cmd = group_mount_rule::Add::builder()
-            .name(group_name)
-            .instance(disk_instance_name)
-            .mount_policy(mount_policy_name)
+            .group_name(group_name)
+            .disk_instance_name(disk_instance_name)
+            .mount_policy_name(mount_policy_name)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -74,9 +74,9 @@ impl GroupMountRules {
         comment: Option<String>,
     ) -> Result<(), AdminError> {
         let cmd = group_mount_rule::Ch::builder()
-            .name(group_name)
-            .instance(disk_instance_name)
-            .maybe_mount_policy(mount_policy_name)
+            .group_name(group_name)
+            .disk_instance_name(disk_instance_name)
+            .maybe_mount_policy_name(mount_policy_name)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -89,8 +89,8 @@ impl GroupMountRules {
         disk_instance_name: &str,
     ) -> Result<(), AdminError> {
         let cmd = group_mount_rule::Rm::builder()
-            .name(group_name)
-            .instance(disk_instance_name)
+            .group_name(group_name)
+            .disk_instance_name(disk_instance_name)
             .build();
         self.client.run(cmd).await
     }

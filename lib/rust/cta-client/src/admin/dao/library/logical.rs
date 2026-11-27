@@ -57,7 +57,7 @@ impl LogicalLibraries {
     ) -> Result<(), AdminError> {
         let cmd = logical_library::Add::builder()
             .name(name)
-            .physical_library(physical_library_name)
+            .physical_library_name(physical_library_name)
             .disabled(state.is_disabled())
             .comment(comment)
             .build();
@@ -78,7 +78,7 @@ impl LogicalLibraries {
     ) -> Result<(), AdminError> {
         let cmd = logical_library::Ch::builder()
             .name(name)
-            .maybe_physical_library(physical_library_name)
+            .maybe_physical_library_name(physical_library_name)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await
@@ -89,7 +89,7 @@ impl LogicalLibraries {
         let cmd = logical_library::Ch::builder()
             .name(name)
             .disabled(true)
-            .disabled_reason(reason)
+            .state_reason(reason)
             .build();
         self.client.run(cmd).await
     }

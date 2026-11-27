@@ -59,11 +59,11 @@ impl VirtualOrganisations {
         comment: String,
     ) -> Result<(), AdminError> {
         let cmd = virtual_organisation::Add::builder()
-            .vo(name)
-            .disk_instance(disk_instance_name)
+            .name(name)
+            .disk_instance_name(disk_instance_name)
             .is_repack_vo(is_repack_vo)
-            .read_max_drives(max_read_drives)
-            .write_max_drives(max_write_drives)
+            .max_read_drives(max_read_drives)
+            .max_write_drives(max_write_drives)
             .max_file_size(max_file_size)
             .comment(comment)
             .build();
@@ -91,11 +91,11 @@ impl VirtualOrganisations {
         comment: Option<String>,
     ) -> Result<(), AdminError> {
         let cmd = virtual_organisation::Ch::builder()
-            .vo(name)
-            .maybe_disk_instance(disk_instance_name)
+            .name(name)
+            .maybe_disk_instance_name(disk_instance_name)
             .maybe_is_repack_vo(is_repack_vo)
-            .maybe_read_max_drives(max_read_drives)
-            .maybe_write_max_drives(max_write_drives)
+            .maybe_max_read_drives(max_read_drives)
+            .maybe_max_write_drives(max_write_drives)
             .maybe_max_file_size(max_file_size)
             .maybe_comment(comment)
             .build();
@@ -105,7 +105,7 @@ impl VirtualOrganisations {
     /// Deletes a virtual organisation.
     pub async fn delete(&self, name: &str) -> Result<(), AdminError> {
         self.client
-            .run(virtual_organisation::Rm::builder().vo(name).build())
+            .run(virtual_organisation::Rm::builder().name(name).build())
             .await
     }
 }

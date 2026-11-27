@@ -3,6 +3,8 @@
 
 //! Disk instance space commands
 
+use std::time::Duration;
+
 use crate::typed_admin_cmd;
 
 /// Adds a disk instance space (`diskinstancespace add`).
@@ -12,11 +14,13 @@ pub struct Add {
     #[proto(DiskInstanceSpace)]
     pub name: String,
     /// Disk instance of the space
-    pub disk_instance: String,
+    #[proto(DiskInstance)]
+    pub disk_instance_name: String,
     /// URL to query the free space of the disk instance
-    pub free_space_query_url: String,
-    /// How long the result of the free space query is cached, in seconds
-    pub refresh_interval: u64,
+    #[proto(FreeSpaceQueryUrl)]
+    pub free_space_url: String,
+    /// How long the result of the free space query is cached
+    pub refresh_interval: Duration,
     /// Comment
     pub comment: String,
 }
@@ -28,13 +32,15 @@ pub struct Ch {
     #[proto(DiskInstanceSpace)]
     pub name: String,
     /// Disk instance of the space
-    pub disk_instance: String,
+    #[proto(DiskInstance)]
+    pub disk_instance_name: String,
     /// New comment
     pub comment: Option<String>,
     /// New URL of the free space query
-    pub free_space_query_url: Option<String>,
-    /// New caching time of the free space query, in seconds
-    pub refresh_interval: Option<u64>,
+    #[proto(FreeSpaceQueryUrl)]
+    pub free_space_url: Option<String>,
+    /// New caching time of the free space query
+    pub refresh_interval: Option<Duration>,
 }
 
 /// Removes a disk instance space (`diskinstancespace rm`).
@@ -44,7 +50,8 @@ pub struct Rm {
     #[proto(DiskInstanceSpace)]
     pub name: String,
     /// Disk instance of the space
-    pub disk_instance: String,
+    #[proto(DiskInstance)]
+    pub disk_instance_name: String,
 }
 
 /// Lists the disk instance spaces (`diskinstancespace ls`).

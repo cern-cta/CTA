@@ -12,7 +12,8 @@ pub struct Up {
     #[proto(Drive)]
     pub name: String,
     /// Why the drives are put up
-    pub reason: Option<String>,
+    #[proto(Reason)]
+    pub state_reason: Option<String>,
 }
 
 /// Puts drives down, unable to mount tapes once their running session is over (`drive down`).
@@ -22,7 +23,8 @@ pub struct Down {
     #[proto(Drive)]
     pub name: String,
     /// Why the drives are put down, shown by `drive ls`
-    pub reason: String,
+    #[proto(Reason)]
+    pub state_reason: String,
     /// Force the drives down (`--force`)
     #[proto(only_if_true)]
     pub force: bool,

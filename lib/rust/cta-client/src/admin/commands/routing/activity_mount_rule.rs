@@ -9,14 +9,17 @@ use crate::typed_admin_cmd;
 #[typed_admin_cmd(Activitymountrule::Add)]
 pub struct Add {
     /// Disk instance of the requester
-    pub instance: String,
+    #[proto(Instance)]
+    pub disk_instance_name: String,
     /// User name of the requester
     #[proto(Username)]
-    pub name: String,
+    pub user_name: String,
     /// Regular expression matching the activity of the requests
-    pub activity_regex: String,
+    #[proto(ActivityRegex)]
+    pub regex: String,
     /// Mount policy applied to the requests
-    pub mount_policy: String,
+    #[proto(MountPolicy)]
+    pub mount_policy_name: String,
     /// Comment
     pub comment: String,
 }
@@ -25,14 +28,17 @@ pub struct Add {
 #[typed_admin_cmd(Activitymountrule::Ch)]
 pub struct Ch {
     /// Disk instance of the requester
-    pub instance: String,
+    #[proto(Instance)]
+    pub disk_instance_name: String,
     /// User name of the requester
     #[proto(Username)]
-    pub name: String,
+    pub user_name: String,
     /// Regular expression matching the activity of the requests
-    pub activity_regex: String,
+    #[proto(ActivityRegex)]
+    pub regex: String,
     /// New mount policy
-    pub mount_policy: Option<String>,
+    #[proto(MountPolicy)]
+    pub mount_policy_name: Option<String>,
     /// New comment
     pub comment: Option<String>,
 }
@@ -41,12 +47,14 @@ pub struct Ch {
 #[typed_admin_cmd(Activitymountrule::Rm)]
 pub struct Rm {
     /// Disk instance of the requester
-    pub instance: String,
+    #[proto(Instance)]
+    pub disk_instance_name: String,
     /// User name of the requester
     #[proto(Username)]
-    pub name: String,
+    pub user_name: String,
     /// Regular expression matching the activity of the requests
-    pub activity_regex: String,
+    #[proto(ActivityRegex)]
+    pub regex: String,
 }
 
 /// Lists the activity mount rules (`activitymountrule ls`).

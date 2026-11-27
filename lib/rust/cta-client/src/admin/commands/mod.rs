@@ -14,10 +14,12 @@
 //!
 //! let cmd: AdminCmd = tape_pool::Ls::builder().name("my_pool").build().into();
 //!
-//! let rm = virtual_organisation::Rm::builder().vo("my_vo").build();
+//! let rm = virtual_organisation::Rm::builder().name("my_vo").build();
 //! assert_eq!(virtual_organisation::Rm::SUBCMD, SubCmd::SubcmdRm);
 //! let cmd: AdminCmd = rm.into();
 //! ```
+
+use std::time::Duration;
 
 use cta_model::{routing::ArchiveRouteType, tape::TapeState};
 use cta_protobuf::{
@@ -31,6 +33,7 @@ use cta_protobuf::{
         xrd::data::Data,
     },
 };
+use jiff::Timestamp;
 
 // One folder per domain (as in `cta-model` and `dao`), the command modules being re-exported here. Each command module
 // is named after its `cta-admin` command, so the `admin` and `tape` folders are declared under other names, to leave
@@ -146,6 +149,35 @@ impl OptionValue for u64 {
     }
 }
 
+/// [`OptionUInt64`]
+impl OptionValue for u32 {
+    type Key = option_u_int64::Key;
+
+    fn push(self, cmd: &mut AdminCmd, key: Self::Key) {
+        u64::from(self).push(cmd, key);
+    }
+}
+
+/// [`OptionUInt64`] of the whole seconds of the duration
+impl OptionValue for Duration {
+    type Key = option_u_int64::Key;
+
+    fn push(self, cmd: &mut AdminCmd, key: Self::Key) {
+        self.as_secs().push(cmd, key);
+    }
+}
+
+/// [`OptionUInt64`] of the seconds since the Unix epoch, a time before the epoch being sent as `0`
+impl OptionValue for Timestamp {
+    type Key = option_u_int64::Key;
+
+    fn push(self, cmd: &mut AdminCmd, key: Self::Key) {
+        u64::try_from(self.as_second())
+            .unwrap_or_default()
+            .push(cmd, key);
+    }
+}
+
 /// [`OptionBoolean`]
 impl OptionValue for bool {
     type Key = option_boolean::Key;
@@ -199,6 +231,25 @@ impl OptionValue for Flag {
         if self.0 {
             true.push(cmd, key);
         }
+    }
+}
+
+/// A list sent as a single [`OptionString`], its items joined with commas, for the options the frontend splits
+/// (e.g. `Supply`).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CommaSeparated(pub Vec<String>);
+
+impl<T: Into<String>> From<Vec<T>> for CommaSeparated {
+    fn from(items: Vec<T>) -> Self {
+        Self(items.into_iter().map(Into::into).collect())
+    }
+}
+
+impl OptionValue for CommaSeparated {
+    type Key = option_string::Key;
+
+    fn push(self, cmd: &mut AdminCmd, key: Self::Key) {
+        self.0.join(",").push(cmd, key);
     }
 }
 

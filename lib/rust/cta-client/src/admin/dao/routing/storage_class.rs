@@ -50,8 +50,8 @@ impl StorageClasses {
     ) -> Result<(), AdminError> {
         let cmd = storage_class::Add::builder()
             .name(name)
-            .vo(virtual_organisation_name)
-            .number_of_copies(replica_count)
+            .virtual_organisation_name(virtual_organisation_name)
+            .replica_count(replica_count)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -73,8 +73,8 @@ impl StorageClasses {
     ) -> Result<(), AdminError> {
         let cmd = storage_class::Ch::builder()
             .name(name)
-            .maybe_vo(virtual_organisation_name)
-            .maybe_number_of_copies(replica_count)
+            .maybe_virtual_organisation_name(virtual_organisation_name)
+            .maybe_replica_count(replica_count)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await

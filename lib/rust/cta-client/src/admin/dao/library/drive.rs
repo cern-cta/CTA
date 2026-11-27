@@ -53,7 +53,7 @@ impl Drives {
     ) -> Result<(), AdminError> {
         let cmd = drive::Down::builder()
             .name(name)
-            .reason(reason)
+            .state_reason(reason)
             .force(force)
             .build();
         self.client.run(cmd).await
@@ -68,7 +68,10 @@ impl Drives {
         #[builder(into)]
         reason: Option<String>,
     ) -> Result<(), AdminError> {
-        let cmd = drive::Up::builder().name(name).maybe_reason(reason).build();
+        let cmd = drive::Up::builder()
+            .name(name)
+            .maybe_state_reason(reason)
+            .build();
         self.client.run(cmd).await
     }
 

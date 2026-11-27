@@ -9,7 +9,8 @@ use crate::typed_admin_cmd;
 #[typed_admin_cmd(Repack::Add)]
 pub struct Add {
     /// Mount policy of the repack sub-requests
-    pub mount_policy: String,
+    #[proto(MountPolicy)]
+    pub mount_policy_name: String,
     /// A single tape to repack
     pub vid: Option<String>,
     /// Several tapes to repack
@@ -17,7 +18,7 @@ pub struct Add {
     pub vids: Option<Vec<String>>,
     /// Buffer to use instead of the default repack buffer
     #[proto(Bufferurl)]
-    pub buffer_url: Option<String>,
+    pub disk_buffer_url: Option<String>,
     /// Maximum number of files to repack
     #[proto(MaxFilesToExpand)]
     pub max_files_to_select: Option<u64>,

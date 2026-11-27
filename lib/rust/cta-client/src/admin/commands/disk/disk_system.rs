@@ -3,23 +3,30 @@
 
 //! Disk system commands
 
+use std::time::Duration;
+
 use crate::typed_admin_cmd;
 
 /// Adds a disk system (`disksystem add`).
 #[typed_admin_cmd(Disksystem::Add)]
 pub struct Add {
     /// Name of the disk system
-    pub disk_system: String,
+    #[proto(DiskSystem)]
+    pub name: String,
     /// Regular expression matching the destination URLs of the disk system
-    pub file_regexp: String,
+    #[proto(FileRegexp)]
+    pub file_regex: String,
     /// Disk instance of the disk system
-    pub disk_instance: String,
+    #[proto(DiskInstance)]
+    pub disk_instance_name: String,
     /// Disk instance space of the disk system
-    pub disk_instance_space: String,
+    #[proto(DiskInstanceSpace)]
+    pub disk_instance_space_name: String,
     /// Free space to keep before processing requests, in bytes
-    pub targeted_free_space: u64,
-    /// How long to wait when the free space is insufficient, in seconds
-    pub sleep_time: u64,
+    #[proto(TargetedFreeSpace)]
+    pub desired_min_free_space: u64,
+    /// How long to wait when the free space is insufficient
+    pub sleep_time: Duration,
     /// Comment
     pub comment: String,
 }
@@ -28,13 +35,16 @@ pub struct Add {
 #[typed_admin_cmd(Disksystem::Ch)]
 pub struct Ch {
     /// Name of the disk system
-    pub disk_system: String,
+    #[proto(DiskSystem)]
+    pub name: String,
     /// New regular expression matching the destination URLs
-    pub file_regexp: Option<String>,
+    #[proto(FileRegexp)]
+    pub file_regex: Option<String>,
     /// New free space to keep, in bytes
-    pub targeted_free_space: Option<u64>,
-    /// New waiting time, in seconds
-    pub sleep_time: Option<u64>,
+    #[proto(TargetedFreeSpace)]
+    pub desired_min_free_space: Option<u64>,
+    /// New waiting time
+    pub sleep_time: Option<Duration>,
     /// New comment
     pub comment: Option<String>,
 }
@@ -43,7 +53,8 @@ pub struct Ch {
 #[typed_admin_cmd(Disksystem::Rm)]
 pub struct Rm {
     /// Name of the disk system
-    pub disk_system: String,
+    #[proto(DiskSystem)]
+    pub name: String,
 }
 
 /// Lists the disk systems (`disksystem ls`).

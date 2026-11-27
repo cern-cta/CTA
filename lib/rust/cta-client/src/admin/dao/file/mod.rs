@@ -33,7 +33,7 @@ impl TapeFiles {
         let cmd = tape_file::Ls::builder()
             .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance_name())
+            .maybe_disk_instance_name(id.disk_instance_name())
             .build();
         at_least_one(self.client.stream_as(cmd).await?, "tape file", &id).await
     }
@@ -44,7 +44,7 @@ impl TapeFiles {
         let cmd = tape_file::Ls::builder()
             .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance_name())
+            .maybe_disk_instance_name(id.disk_instance_name())
             .vid(vid)
             .build();
         exactly_one(
@@ -80,7 +80,7 @@ impl TapeFiles {
         let cmd = tape_file::Ls::builder()
             .maybe_vid(vid)
             .maybe_disk_file_ids(ids)
-            .maybe_instance(disk_instance_name)
+            .maybe_disk_instance_name(disk_instance_name)
             .build();
         self.client.stream_as(cmd).await
     }
@@ -97,7 +97,7 @@ impl TapeFiles {
             .vid(vid)
             .maybe_archive_file_id(id.archive_id())
             .maybe_disk_file_id(id.disk_file_id())
-            .maybe_instance(id.disk_instance_name())
+            .maybe_disk_instance_name(id.disk_instance_name())
             .reason(reason)
             .build();
         self.client.run(cmd).await

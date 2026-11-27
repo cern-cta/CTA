@@ -36,7 +36,7 @@ impl FailedRequests {
         let cmd = failed_request::Ls::builder()
             .just_archive(mount_type == Some(MountType::Archive))
             .just_retrieve(mount_type == Some(MountType::Retrieve))
-            .maybe_tape_pool(tape_pool_name)
+            .maybe_tape_pool_name(tape_pool_name)
             .maybe_vid(vid)
             .log(logs)
             .build();
@@ -46,7 +46,7 @@ impl FailedRequests {
     /// Deletes a failed request.
     pub async fn delete(&self, id: &str) -> Result<(), AdminError> {
         self.client
-            .run(failed_request::Rm::builder().object_id(id).build())
+            .run(failed_request::Rm::builder().id(id).build())
             .await
     }
 

@@ -9,15 +9,19 @@ use crate::typed_admin_cmd;
 #[typed_admin_cmd(Virtualorganization::Add)]
 pub struct Add {
     /// Name of the virtual organisation
-    pub vo: String,
+    #[proto(Vo)]
+    pub name: String,
     /// Maximum number of drives the virtual organisation may use for reading
-    pub read_max_drives: u64,
+    #[proto(ReadMaxDrives)]
+    pub max_read_drives: u64,
     /// Maximum number of drives the virtual organisation may use for writing
-    pub write_max_drives: u64,
+    #[proto(WriteMaxDrives)]
+    pub max_write_drives: u64,
     /// Comment
     pub comment: String,
     /// Disk instance of the virtual organisation
-    pub disk_instance: String,
+    #[proto(DiskInstance)]
+    pub disk_instance_name: String,
     /// Maximum size of the files of the virtual organisation, in bytes
     pub max_file_size: Option<u64>,
     /// Whether the virtual organisation is used for repacking
@@ -28,17 +32,21 @@ pub struct Add {
 #[typed_admin_cmd(Virtualorganization::Ch)]
 pub struct Ch {
     /// Name of the virtual organisation
-    pub vo: String,
+    #[proto(Vo)]
+    pub name: String,
     /// New comment
     pub comment: Option<String>,
     /// New maximum number of drives for reading
-    pub read_max_drives: Option<u64>,
+    #[proto(ReadMaxDrives)]
+    pub max_read_drives: Option<u64>,
     /// New maximum number of drives for writing
-    pub write_max_drives: Option<u64>,
+    #[proto(WriteMaxDrives)]
+    pub max_write_drives: Option<u64>,
     /// New maximum file size, in bytes
     pub max_file_size: Option<u64>,
     /// New disk instance
-    pub disk_instance: Option<String>,
+    #[proto(DiskInstance)]
+    pub disk_instance_name: Option<String>,
     /// Whether the virtual organisation is used for repacking
     pub is_repack_vo: Option<bool>,
 }
@@ -47,7 +55,8 @@ pub struct Ch {
 #[typed_admin_cmd(Virtualorganization::Rm)]
 pub struct Rm {
     /// Name of the virtual organisation
-    pub vo: String,
+    #[proto(Vo)]
+    pub name: String,
 }
 
 /// Lists the virtual organisations (`virtualorganization ls`).

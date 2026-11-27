@@ -47,9 +47,9 @@ impl RepackRequests {
     ) -> Result<(), AdminError> {
         let cmd = repack::Add::builder()
             .vid(vid)
-            .mount_policy(mount_policy_name)
+            .mount_policy_name(mount_policy_name)
             .no_recall(no_recall)
-            .maybe_buffer_url(buffer_url)
+            .maybe_disk_buffer_url(buffer_url)
             .maybe_max_files_to_select(max_files_to_select)
             .just_move(operation == Some(RepackOperation::Move))
             .just_add_copies(operation == Some(RepackOperation::AddCopies))

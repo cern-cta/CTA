@@ -9,11 +9,7 @@ use bon::bon;
 use cta_client_macros::admin_dao;
 use cta_model::routing::MountPolicy;
 
-use crate::admin::{
-    AdminError, AdminStream,
-    commands::mount_policy,
-    dao::{find_one, secs},
-};
+use crate::admin::{AdminError, AdminStream, commands::mount_policy, dao::find_one};
 
 /// Mount policies: see [`MountPolicy`].
 #[admin_dao]
@@ -62,9 +58,9 @@ impl MountPolicies {
         let cmd = mount_policy::Add::builder()
             .name(name)
             .archive_priority(archive_priority)
-            .min_archive_request_age(secs(min_archive_age))
+            .min_archive_age(min_archive_age)
             .retrieve_priority(retrieve_priority)
-            .min_retrieve_request_age(secs(min_retrieve_age))
+            .min_retrieve_age(min_retrieve_age)
             .comment(comment)
             .build();
         self.client.run(cmd).await
@@ -90,9 +86,9 @@ impl MountPolicies {
         let cmd = mount_policy::Ch::builder()
             .name(name)
             .maybe_archive_priority(archive_priority)
-            .maybe_min_archive_request_age(min_archive_age.map(secs))
+            .maybe_min_archive_age(min_archive_age)
             .maybe_retrieve_priority(retrieve_priority)
-            .maybe_min_retrieve_request_age(min_retrieve_age.map(secs))
+            .maybe_min_retrieve_age(min_retrieve_age)
             .maybe_comment(comment)
             .build();
         self.client.run(cmd).await

@@ -32,23 +32,20 @@ impl AdminUsers {
 
     /// Creates an administrator.
     pub async fn create(&self, name: &str, comment: &str) -> Result<(), AdminError> {
-        let cmd = admin::Add::builder()
-            .username(name)
-            .comment(comment)
-            .build();
+        let cmd = admin::Add::builder().name(name).comment(comment).build();
         self.client.run(cmd).await
     }
 
     /// Changes the comment of an administrator.
     pub async fn update(&self, name: &str, comment: &str) -> Result<(), AdminError> {
-        let cmd = admin::Ch::builder().username(name).comment(comment).build();
+        let cmd = admin::Ch::builder().name(name).comment(comment).build();
         self.client.run(cmd).await
     }
 
     /// Deletes an administrator.
     pub async fn delete(&self, name: &str) -> Result<(), AdminError> {
         self.client
-            .run(admin::Rm::builder().username(name).build())
+            .run(admin::Rm::builder().name(name).build())
             .await
     }
 }

@@ -9,7 +9,8 @@ use crate::typed_admin_cmd;
 #[typed_admin_cmd(Admin::Add)]
 pub struct Add {
     /// User name of the administrator
-    pub username: String,
+    #[proto(Username)]
+    pub name: String,
     /// Comment
     pub comment: String,
 }
@@ -18,7 +19,8 @@ pub struct Add {
 #[typed_admin_cmd(Admin::Ch)]
 pub struct Ch {
     /// User name of the administrator
-    pub username: String,
+    #[proto(Username)]
+    pub name: String,
     /// New comment
     pub comment: String,
 }
@@ -27,7 +29,8 @@ pub struct Ch {
 #[typed_admin_cmd(Admin::Rm)]
 pub struct Rm {
     /// User name of the administrator
-    pub username: String,
+    #[proto(Username)]
+    pub name: String,
 }
 
 /// Lists the administrators (`admin ls`).

@@ -9,7 +9,8 @@ use crate::typed_admin_cmd;
 #[typed_admin_cmd(Tapefile::Ch)]
 pub struct Ch {
     /// New storage class
-    pub storage_class: String,
+    #[proto(StorageClass)]
+    pub storage_class_name: String,
     /// Disk file IDs (decimal)
     #[proto(FileId)]
     pub disk_file_ids: Option<Vec<String>>,
@@ -18,7 +19,8 @@ pub struct Ch {
     /// Disk file ID
     pub disk_file_id: Option<String>,
     /// Disk instance of the disk files
-    pub instance: Option<String>,
+    #[proto(Instance)]
+    pub disk_instance_name: Option<String>,
     /// Archive file ID
     pub archive_file_id: Option<u64>,
 }
@@ -29,7 +31,8 @@ pub struct Rm {
     /// Volume identifier of the tape holding the file
     pub vid: String,
     /// Disk instance of the disk file
-    pub instance: Option<String>,
+    #[proto(Instance)]
+    pub disk_instance_name: Option<String>,
     /// EOS file ID (hexadecimal)
     pub fxid: Option<String>,
     /// Disk file ID
@@ -47,7 +50,8 @@ pub struct Ls {
     /// Only the files of this tape
     pub vid: Option<String>,
     /// Disk instance of the disk files
-    pub instance: Option<String>,
+    #[proto(Instance)]
+    pub disk_instance_name: Option<String>,
     /// EOS file ID (hexadecimal)
     pub fxid: Option<String>,
     /// Disk file ID
