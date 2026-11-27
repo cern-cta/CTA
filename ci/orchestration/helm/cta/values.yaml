@@ -29,7 +29,7 @@ global:
   #         speed: fast
   extraObjects: []
 
-  # Must match the authentication chart
+  # Must match the infrastructure chart
   kerberos:
     clientConfig:
       configMap: krb5-conf

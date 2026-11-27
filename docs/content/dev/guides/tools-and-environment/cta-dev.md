@@ -255,17 +255,15 @@ The infrastructure chart's `secretFiles` setting is only for ephemeral/fake CI c
 Run the checks without deploying:
 
 ```bash
-sh ci/checks/check_charts.sh lint
-sh ci/checks/check_charts.sh test
+sh ci/checks/check_charts.sh
 ```
 
-These are the commands used by `lint-helm` and `test-helm` in CI.
-They require Helm 3 and, for tests, [helm-unittest](https://github.com/helm-unittest/helm-unittest) 1.0.3.
-Install the plugin with `helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3`.
-The checks prepare dependencies in a temporary copy and need access to the chart repositories.
-Rendered manifests and test reports go to `build/helm-checks/<lint|test>/`; an optional second argument changes that directory.
+This runs `helm lint` and `helm template`, as does the `lint-helm` CI job.
+It requires Helm 3 and access to the chart repositories.
+Dependencies are prepared in a temporary copy.
+Rendered manifests go to `build/helm-checks/`; an optional argument changes that directory.
 
-Rendering and unit tests do not establish Kubernetes API validity or runtime behaviour.
+Linting and rendering do not establish Kubernetes API validity or runtime behaviour.
 Use deployment and system tests when changing service startup, storage, or other runtime behaviour.
 
 ### EOS

@@ -22,6 +22,9 @@
     "kerberos": {
       "type": "object",
       "properties": {
+        "resources": {
+          "type": "object"
+        },
         "image": {
           "type": "string",
           "minLength": 1

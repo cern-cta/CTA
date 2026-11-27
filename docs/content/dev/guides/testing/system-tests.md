@@ -31,7 +31,7 @@ setup -> selected suite -> verification -> teardown
 Setup prepares the catalogue, tapes, and disk-system resources.
 Verification checks for unexpected errors, core dumps, and restarts.
 Teardown drops and recreates the catalogue and removes test directories.
-Deployment protection flags do not change this test lifecycle.
+Deployment reset options do not change this test lifecycle.
 Use disposable test environments; for explicit phase selection, see [Run pytest directly](#run-pytest-directly).
 
 The configuration in `ci/system_tests/pytest.ini` stops execution at the first failure (`-x`). Verification and teardown are ordinary tests in this sequence, so they may not run after a failure. Inspect the retained state before cleaning it up.

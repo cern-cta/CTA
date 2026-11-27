@@ -2,8 +2,9 @@
 SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 
-Auth supplies the shared test CA; dCache signs host certificates here because their DNS names depend on its release and pools.
-This keeps dCache topology out of the auth chart.
+The infrastructure chart supplies the shared test CA.
+dCache signs host certificates here because their DNS names depend on its release and pools.
+This keeps dCache topology out of the infrastructure chart.
 
 The pinned upstream chart calls this helper in both door and pool pods, passing the certificate hostname.
 Extend its init sequence because it has no extraInitContainers setting.
@@ -67,7 +68,7 @@ Keep init-host-certs last: the caller appends its certificate volume mount to th
               printf '%s\n' "$TEST_CA_KEY" > "$work_dir/ca.key"
               unset TEST_CA_CERT TEST_CA_KEY
 
-              # Sign directly with the auth chart's CA and its fixed test-only passphrase.
+              # Sign directly with the infrastructure chart's CA and its fixed test-only passphrase.
               short_host=${HOST_NAME%%.*}
               openssl req -new -x509 -newkey rsa:2048 -nodes -days 365 \
                 -keyout "$work_dir/hostkey.pem" -out "$work_dir/hostcert.pem" \

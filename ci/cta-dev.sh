@@ -1317,7 +1317,7 @@ deploy_cta() {
   extra_deployment_options+=("${infra_config[@]}" "${cta_overrides[@]}")
   [[ -z $catalogue_secret ]] || extra_deployment_options+=(--catalogue-secret "$catalogue_secret")
   [[ -z $scheduler_secret ]] || extra_deployment_options+=(--scheduler-secret "$scheduler_secret")
-  # Local connections reset by default; Secret-selected connections require an explicit request.
+  # Connections without a Secret flag reset by default; Secret-selected connections require an explicit request.
   if [[ -z $catalogue_secret || $reset_catalogue == true ]]; then
     extra_deployment_options+=(--reset-catalogue)
   fi

@@ -8,7 +8,6 @@ frontend-admin:
         - jwt
 
 client:
-  useGrpc: true
   conf:
     cta:
       endpoint: cta-frontend-admin:10956

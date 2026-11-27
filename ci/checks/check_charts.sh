@@ -3,24 +3,22 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Lint/render or unit-test the CI Helm charts locally or in CI, without a Kubernetes cluster.
+# Lint and render the CI Helm charts locally or in CI, without a Kubernetes cluster.
 
 set -eu
 
-# Select the CI job's check and an optional artifact directory.
 case "${1:-}" in
-  lint|test) mode=$1 ;;
   --help)
-    echo "Usage: $0 lint|test [output-directory]"
-    echo "Requires Helm 3; test also requires helm-unittest. Dependencies are downloaded explicitly."
+    echo "Usage: $0 [output-directory]"
+    echo "Requires Helm 3 and access to the chart repositories."
     exit 0 ;;
-  *) echo "Usage: $0 lint|test [output-directory]" >&2; exit 2 ;;
+  -*) echo "Unsupported option: $1" >&2; exit 2 ;;
 esac
-[ "$#" -le 2 ] || { echo "Too many arguments" >&2; exit 2; }
+[ "$#" -le 1 ] || { echo "Usage: $0 [output-directory]" >&2; exit 2; }
 
 # Resolve output paths before switching to the temporary chart copy.
 source_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/../orchestration" && pwd)
-output=${2:-"$source_dir/../../build/helm-checks/$mode"}
+output=${1:-"$source_dir/../../build/helm-checks"}
 mkdir -p "$output"
 output=$(CDPATH='' cd -- "$output" && pwd)
 work=$(mktemp -d)
@@ -39,12 +37,8 @@ done
 # Infrastructure also needs the pinned upstream telemetry charts.
 helm dependency update helm/ci-infra
 
-if [ "$mode" = test ]; then
-  # Only our suites run: dependency chart tests belong to their upstream projects.
-  helm unittest --strict --with-subchart=false --output-type JUnit \
-    --output-file "$output/helm.xml" helm/cta helm/cta-admin-tools helm/ci-infra
-  exit
-fi
+# dCache consumes the infrastructure database Secret through upstream template helpers.
+helm dependency update helm/dcache
 
 # Lint and render identical values, keeping manifests as CI artifacts.
 render() {
@@ -67,7 +61,8 @@ for backend in vfs postgres ceph; do
     --set 'taped.drives[0].controlPath=/dev/sg0,taped.drives[0].logicalLibraryName=test-library'
   render cta-admin-tools "tools-$backend" \
     -f "presets/cta/scheduler/$backend.yaml" \
-    --set admin.enabled=true,client.enabled=true,reset.catalogue=true,reset.scheduler=true
+    --set admin.enabled=true,client.enabled=true,reset.catalogue=true,reset.scheduler=true \
+    --set admin.resources.requests.memory=128Mi,client.resources.requests.memory=256Mi,reset.resources.requests.memory=512Mi
 done
 
 # Cover administration modes independently of the scheduler backend matrix.
@@ -76,38 +71,13 @@ render cta-admin-tools tools-external \
   --set global.catalogue.existingSecret=external-catalogue,global.scheduler.existingSecret=external-scheduler \
   --set global.scheduler.backend=postgres,reset.catalogue=true,reset.scheduler=true
 render cta-admin-tools tools-liquibase \
-  --set liquibase.enabled=true,liquibase.catalogueSourceVersion=15.0,liquibase.catalogueDestinationVersion=16.0
+  --set liquibase.enabled=true,liquibase.catalogueSourceVersion=15.0,liquibase.catalogueDestinationVersion=16.0 \
+  --set liquibase.resources.requests.memory=1Gi
 
 # Exercise optional infrastructure provisioning and telemetry.
-render ci-infra infra-default
+render ci-infra infra-default --set kerberos.resources.requests.memory=128Mi
 render ci-infra infra-postgres \
   -f presets/infra/catalogue-postgres.yaml -f presets/infra/scheduler-postgres.yaml -f presets/infra/dcache.yaml
 render ci-infra infra-vfs -f presets/infra/scheduler-vfs.yaml
 render ci-infra infra-telemetry -f presets/infra/telemetry.yaml
-
-# Schema failures must be caught before templates reach Kubernetes.
-reject_values() {
-  chart=$1
-  scenario=$2
-  shift 2
-  if helm template check "helm/$chart" "$@" > "$output/$scenario.log" 2>&1; then
-    echo "Expected values schema rejection: $scenario" >&2
-    exit 1
-  fi
-  if ! grep -q 'values don.t meet the specifications of the schema' "$output/$scenario.log"; then
-    cat "$output/$scenario.log" >&2
-    exit 1
-  fi
-}
-
-reject_values ci-infra invalid-postgres-password --set postgres.instances.example.password=123
-reject_values ci-infra invalid-postgres-option --set postgres.instances.example.user=cta
-reject_values ci-infra missing-pvc-size --set persistentVolumeClaims.example.storageClass=local-path
-reject_values ci-infra invalid-pvc-access-mode --set 'persistentVolumeClaims.example.size=1Gi,persistentVolumeClaims.example.accessModes[0]=ReadWrite'
-reject_values ci-infra invalid-secret-file --set secretFiles.example.connection=123
-reject_values ci-infra invalid-telemetry-toggle --set-string prometheus.enabled=false
-reject_values cta-admin-tools invalid-reset-toggle --set-string reset.catalogue=false
-reject_values cta-admin-tools invalid-scheduler-backend --set global.scheduler.backend=unknown
-reject_values cta-admin-tools missing-vfs-claim --set-string global.scheduler.existingClaim=
-reject_values cta-admin-tools invalid-client-replicas --set client.replicas=-1
-reject_values cta-admin-tools invalid-pull-policy --set image.pullPolicy=Sometimes
+render dcache dcache

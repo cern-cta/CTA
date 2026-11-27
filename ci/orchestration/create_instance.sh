@@ -267,10 +267,8 @@ create_instance() {
 
   # Only explicit CLI requests enable reset Jobs, including when values overlays request them.
   reset_flags=(--set "reset.catalogue=$reset_catalogue" --set "reset.scheduler=$reset_scheduler")
-  update_local_cta_chart_dependencies >&2
-  helm template cta-tools helm/cta-admin-tools "${cta_config[@]}" "${cta_overrides[@]}" \
-    "${reset_flags[@]}" >/dev/null
   check_deploy_commands
+  update_local_cta_chart_dependencies >&2
   project_json_path="../../project.json"
   cta_image_registry=${cta_image_registry:-$(jq -r .dev.ctaImageRegistry "${project_json_path}")}
   eos_image_tag=${eos_image_tag:-$(jq -r .dev.eosImageTag "${project_json_path}")}
@@ -414,6 +412,4 @@ create_instance() {
   log_success "Deployed CTA instance ${namespace} in ${SECONDS} seconds."
 }
 
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-  create_instance "$@"
-fi
+create_instance "$@"

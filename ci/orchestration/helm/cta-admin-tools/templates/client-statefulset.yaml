@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- if .Values.client.enabled }}
 
 {{- $name := include "cta-admin-tools.client.fullname" . }}
+{{- $labels := include "common.labels.withoutname" (dict "Values" (dict "component" "cli") "Release" .Release "Chart" .Chart) }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -13,7 +14,7 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
     app.kubernetes.io/name: {{ $name }}
-    {{- include "common.labels.withoutname" . | nindent 4 }}
+    {{- $labels | nindent 4 }}
 spec:
   replicas: {{ .Values.client.replicas }}
   selector:
@@ -23,9 +24,8 @@ spec:
   template:
     metadata:
       labels:
-        {{/* Keep the pod name label aligned with the client selector, not the parent chart name. */}}
         app.kubernetes.io/name: {{ $name }}
-        {{- include "common.labels.withoutname" $ | nindent 8 }}
+        {{- $labels | nindent 8 }}
     spec:
       imagePullSecrets:
       {{ include "cta-admin-tools.imagePullSecrets" . | nindent 6 }}

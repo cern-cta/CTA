@@ -20,12 +20,7 @@ frontend-admin:
       recycleLogQuarantineSecs: 0
 
 client:
-  useGrpc: true
   conf: null # set by more specific config
-
-  extraEnv:
-    - name: GRPC_SETUP_JWT
-      value: "true"
 
   extraVolumes:
     volumeMounts:

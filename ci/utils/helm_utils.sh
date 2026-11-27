@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Call from ci/orchestration after sourcing log_utils.sh.
-# Keep this file POSIX-sourceable: check_charts.sh runs in an image without bash.
+# Keep this file POSIX-sourceable: check_charts.sh uses /bin/sh.
 
 # Local charts, ordered so that each one is packaged before its consumers.
 cta_local_charts="common cta-admin-tools frontend-wfe frontend-admin taped rmcd maintd cta"
