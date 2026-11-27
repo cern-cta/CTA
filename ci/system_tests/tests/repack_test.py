@@ -839,11 +839,18 @@ def test_repack_just_add_copies_with_missing_copy(
 
     # Clamped: _submit_repack_request() asserts maxfilestoselect <= the tape's file count, and
     # which tape the helper above returns depends on what earlier tests moved around.
-    max_files_to_select = min(files_to_select, cta_cli.get_number_of_files_on_tape(vid_to_repack))
+    files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
+    max_files_to_select = min(files_to_select, files_on_tape)
 
     # Expansion walks the tape in fSeq order, so with maxfilestoselect these are exactly the files
     # that will get a second copy - recorded now so cleanup can remove those copies again.
     added_copy_archive_ids = _lowest_fseq_archive_ids(cta_cli, vid_to_repack, max_files_to_select)
+    print(
+        f"Source tape {vid_to_repack} holds {files_on_tape} files, each with one tape copy. "
+        f"--maxfilestoselect {max_files_to_select} limits this repack to the first "
+        f"{len(added_copy_archive_ids)} files in tape sequence order."
+    )
+    print(f"Selected archive IDs: {', '.join(added_copy_archive_ids)}")
 
     # Each mutation registers its own rollback right after it succeeds, so a failure partway
     # through setup still cleans up exactly what was applied. Callbacks run in reverse order,
@@ -891,6 +898,17 @@ def test_repack_just_add_copies_with_missing_copy(
         cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
         cleanup.callback(
             lambda: cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
+        )
+        print(
+            f"Raised storage class {cta_storage_class} from 1 required copy to 2 for all files in the class. "
+            "Changing the requirement writes no tape copies.\n"
+            "  Before: 1 required - 1 existing = 0 copies to add per file.\n"
+            "  After:  2 required - 1 existing = 1 copy to add per file.\n"
+            f"  --justaddcopies: {len(added_copy_archive_ids)} selected files x 1 missing copy "
+            f"= {len(added_copy_archive_ids)} new copies to write.\n"
+            f"  The other {files_on_tape - len(added_copy_archive_ids)} files on {vid_to_repack} "
+            "are outside this repack request.\n"
+            f"  Keep the existing copies on {vid_to_repack} and write copy 2 to {dest_vid} in pool {second_tape_pool}."
         )
 
         # The new pool has no tapes, so the copy-2 archive job would have nowhere to mount - move
