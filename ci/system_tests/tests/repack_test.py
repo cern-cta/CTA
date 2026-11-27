@@ -1006,9 +1006,17 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
             # rm failing is expected when the repack already deleted the file itself; what matters
             # is that the file is verifiably gone afterwards (as the tape-copy cleanup verifies for
             # its files), not what rm said - a permission or service error must not slip through.
+            # Only an explicit not-found counts as absent: a failed lookup for any other reason
+            # (EOS down, access denied) is surfaced instead of being mistaken for success.
             eos_mgm.exec(f"eos rm {staged_file_path}", capture_output=True, throw_on_failure=False)
-            if eos_mgm.exec(f"eos fileinfo {staged_file_path}", capture_output=True, throw_on_failure=False).success:
+            probe = eos_mgm.exec(f"eos fileinfo {staged_file_path}", capture_output=True, throw_on_failure=False)
+            if probe.success:
                 raise RuntimeError(f"Staged user-provided file {staged_file_path} is still in the repack buffer")
+            probe_output = probe.stderr + probe.stdout
+            if "No such file" not in probe_output and "cannot stat" not in probe_output:
+                raise RuntimeError(
+                    f"Could not verify the staged file {staged_file_path} is gone: {probe_output.strip()}"
+                )
 
         cleanup.callback(remove_staged_file)
 

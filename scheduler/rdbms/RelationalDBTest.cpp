@@ -1338,9 +1338,16 @@ TEST_P(RelationalDBTest, repackProgressBatchLocksTrackingRowsInRequestIdOrder) {
     stmt.executeNonQuery();
   }
 
-  // Connection 1 locks the higher id.
+  // Connection 1 locks the higher id. Its backend pid identifies it as the blocker below.
   auto conn1 = db.getRelationalDB().getConn();
   conn1.executeNonQuery("BEGIN");
+  uint64_t conn1Pid = 0;
+  {
+    auto stmt = conn1.createStmt("SELECT PG_BACKEND_PID() AS PID");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    conn1Pid = rset.columnUint64("PID");
+  }
   {
     auto stmt = conn1.createStmt(
       "SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :ID FOR NO KEY UPDATE");
@@ -1357,16 +1364,25 @@ TEST_P(RelationalDBTest, repackProgressBatchLocksTrackingRowsInRequestIdOrder) {
     db.getNextSuccessfulRetrieveRepackReportBatch(workerLc);
   });
 
-  // Wait until the worker actually sits in a row-lock wait (no gtest assertions while the thread
-  // runs and locks are held - every exit path below must still rollback and join).
+  // Wait until a session blocked BY conn1 sits in a row-lock wait (no gtest assertions while the
+  // thread runs and locks are held - every exit path below must still rollback and join).
+  // Polled from a separate autocommit connection: activity views are snapshotted per transaction,
+  // so polling inside conn1's open transaction would keep re-reading the first poll's snapshot.
+  // pg_blocking_pids() scopes the wait to OUR worker, not any unrelated session's.
   bool sawLockWait = false;
-  for (int i = 0; i < 100 && !sawLockWait; i++) {
-    auto stmt = conn1.createStmt("SELECT COUNT(*) AS C FROM pg_stat_activity WHERE wait_event_type = 'Lock'");
-    auto rset = stmt.executeQuery();
-    rset.next();
-    sawLockWait = rset.columnUint64("C") > 0;
-    if (!sawLockWait) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  {
+    auto pollConn = db.getRelationalDB().getConn();
+    for (int i = 0; i < 100 && !sawLockWait; i++) {
+      auto stmt = pollConn.createStmt("SELECT COUNT(*) AS C FROM PG_STAT_ACTIVITY "
+                                      "WHERE WAIT_EVENT_TYPE = 'Lock' "
+                                      "AND CAST(:BLOCKER_PID AS INTEGER) = ANY(PG_BLOCKING_PIDS(PID))");
+      stmt.bindUint64(":BLOCKER_PID", conn1Pid);
+      auto rset = stmt.executeQuery();
+      rset.next();
+      sawLockWait = rset.columnUint64("C") > 0;
+      if (!sawLockWait) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
     }
   }
 
