@@ -46,6 +46,14 @@ def apply_profile(values: dict[str, Any], component: str, profile: dict[str, Any
             values["objectstore"]["ceph"].update(profile["cephConfig"])
             return
         if backend == "vfs":
+            config = profile.get("vfsConfig", {})
+            vfs = values["objectstore"]["vfs"]
+            for key in ("size", "accessModes", "annotations"):
+                if key in config:
+                    vfs[key] = config[key]
+            if "storageClass" in config:
+                # The existing profile format uses "-" to disable dynamic provisioning.
+                vfs["storageClassName"] = "" if config["storageClass"] == "-" else config["storageClass"]
             return
 
     if backend == "postgres":

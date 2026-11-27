@@ -121,8 +121,6 @@ create_instance() {
   project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
-  # Note that it is fine for not all of these secrets to exist
-  secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
   ci_setup_config=presets/dev-ci-setup-vfs-scheduler-values.yaml
   catalogue_config=""
   scheduler_config=""
@@ -272,6 +270,8 @@ create_instance() {
   kubectl create namespace "${namespace}"
   kubectl label namespace "$namespace" "app.kubernetes.io/managed-by=cta-create-instance"
   log_task "Copying secrets into namespace ${namespace}..."
+  # Setup values may reference additional connection or authentication Secrets from the source namespace.
+  secrets=$(kubectl get secrets -o json | jq -r '.items[].metadata.name')
   for secret_name in ${secrets}; do
     # If the secret exists...
     if kubectl get secret "${secret_name}" &> /dev/null; then

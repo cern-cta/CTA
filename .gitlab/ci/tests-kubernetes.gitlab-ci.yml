@@ -353,7 +353,7 @@ stress-test:
   script:
     - |
       if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+        EXTRA_SETUP_ARGS+=" --scheduler-config /opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml"
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"

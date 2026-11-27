@@ -58,6 +58,9 @@ objectstore:
   vfs:
     storageClassName: local-path
     size: 10Gi
+    accessModes:
+      - ReadWriteOnce
+    annotations: {}
   # Only used if the backend is ceph
   ceph:
     mon: ""

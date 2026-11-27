@@ -105,3 +105,41 @@ def test_cli_writes_private_matching_values(tmp_path: Path, monkeypatch: pytest.
 def test_unknown_backend_is_rejected(setup_values: dict[str, Any]) -> None:
     with pytest.raises(ValueError, match="Unsupported scheduler backend"):
         apply_profile(setup_values, "scheduler", {"backend": "unsupported"})
+
+
+def test_vfs_profile_preserves_custom_storage(setup_values: dict[str, Any]) -> None:
+    apply_profile(
+        setup_values,
+        "scheduler",
+        {
+            "backend": "vfs",
+            "vfsConfig": {
+                "storageClass": "custom-nfs",
+                "size": "100Gi",
+                "accessModes": ["ReadWriteMany"],
+                "annotations": {"example.org/storage": "shared"},
+            },
+        },
+    )
+
+    assert setup_values["objectstore"]["vfs"] == {
+        "storageClassName": "custom-nfs",
+        "size": "100Gi",
+        "accessModes": ["ReadWriteMany"],
+        "annotations": {"example.org/storage": "shared"},
+    }
+
+
+def test_vfs_profile_disables_dynamic_provisioning(setup_values: dict[str, Any]) -> None:
+    apply_profile(setup_values, "scheduler", {"backend": "vfs", "vfsConfig": {"storageClass": "-"}})
+
+    assert setup_values["objectstore"]["vfs"]["storageClassName"] == ""
+    assert setup_values["objectstore"]["vfs"]["size"] == "10Gi"
+
+
+def test_minimal_vfs_profile_keeps_preset_storage(setup_values: dict[str, Any]) -> None:
+    setup_values["objectstore"]["vfs"]["storageClassName"] = "preset-storage"
+    apply_profile(setup_values, "scheduler", {"backend": "vfs"})
+
+    assert setup_values["objectstore"]["vfs"]["storageClassName"] == "preset-storage"
+    assert setup_values["objectstore"]["vfs"]["accessModes"] == ["ReadWriteOnce"]
