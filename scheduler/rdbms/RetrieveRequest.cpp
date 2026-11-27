@@ -56,6 +56,19 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   rjr->checksumBlob = m_archiveFile.checksumBlob;
   rjr->startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
+  // Retry limits for the retrieve itself, independent of m_jobs: m_jobs holds one entry per
+  // archive copy this subrequest will create (built from copy numbers in copyNbsToRearchive, see
+  // initialize()), which for a pure AddCopiesOnly repack is never the recalled copy, and can
+  // legitimately be empty (every missing copy is itself an archive destination with no existing
+  // tape file to iterate - see initialize()'s own loop). The retrieve still needs a real retry
+  // budget regardless of whether m_jobs has anything in it - setting these only inside the loop
+  // below left an empty-m_jobs row at RetrieveJobQueueRow's default of 0, so a single transient
+  // recall failure (totalRetries 0 -> 1 >= maxTotalRetries 0) exceeded retries immediately, and
+  // that same 0 limit was then carried into the archive jobs this subrequest's retrieve feeds.
+  rjr->maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
+  rjr->maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
+  rjr->maxReportRetries = REPORT_RETRIES;
+
   // Populate alternates from jobs
   int i = 0;
   for (const auto& rj : m_jobs) {
@@ -65,6 +78,9 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
     rjr->alternateBlockId += std::to_string(rj.blockId) + ",";
 
     if (i++ == 0) {
+      // Overrides the defaults above with the first job's own values - identical values in
+      // practice (initialize() derives a job's limits from the same isRepack flag), kept to leave
+      // the non-empty-m_jobs case's exact behaviour untouched.
       rjr->retriesWithinMount = rj.retriesWithinMount;
       rjr->maxRetriesWithinMount = rj.maxRetriesWithinMount;
       rjr->maxReportRetries = rj.maxReportRetries;
