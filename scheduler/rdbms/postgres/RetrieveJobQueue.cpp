@@ -731,17 +731,17 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
                 NULLIF(CARDINALITY(string_to_array(rraq.REPACK_REARCHIVE_COPY_NBS, ',')), 0),
               0) AS REQUEST_JOB_NEW_COUNT
   ),
-  // Every moved row genuinely retrieved from tape, independent of which archive insert (if any)
-  // its recalled copy goes on to feed. BASE_INSERT below only fires when the recalled copy is
-  // itself one of the rearchive targets (true for MoveOnly/MoveAndAddCopies) and is always empty
-  // for AddCopiesOnly, where the recalled copy is deliberately never a target - see BASE_INSERT's
-  // own comment. Counting retrieve progress from BASE_INSERTED_COUNT (as this used to) therefore
-  // credits zero retrieved files for every AddCopiesOnly file, even though the retrieve genuinely
-  // happened; worse, subtracting a user-provided file's count from that zero on the C++ side
-  // wrapped an unsigned counter and overflowed the BIGINT bind on the way into
-  // updateRepackRequestsProgress(), failing that statement - exactly the one case this CTE's WHERE
-  // excludes (a user-provided file was never actually retrieved, so it must not count here either,
-  // but it must not be computed as a subtraction from a count that can legitimately be smaller).
+  -- Every moved row genuinely retrieved from tape, independent of which archive insert (if any)
+  -- its recalled copy goes on to feed. BASE_INSERT below only fires when the recalled copy is
+  -- itself one of the rearchive targets (true for MoveOnly/MoveAndAddCopies) and is always empty
+  -- for AddCopiesOnly, where the recalled copy is deliberately never a target - see BASE_INSERT's
+  -- own comment. Counting retrieve progress from BASE_INSERTED_COUNT (as this used to) therefore
+  -- credits zero retrieved files for every AddCopiesOnly file, even though the retrieve genuinely
+  -- happened; worse, subtracting a user-provided file's count from that zero on the C++ side
+  -- wrapped an unsigned counter and overflowed the BIGINT bind on the way into
+  -- updateRepackRequestsProgress(), failing that statement - exactly the one case this CTE's WHERE
+  -- excludes (a user-provided file was never actually retrieved, so it must not count here either,
+  -- but it must not be computed as a subtraction from a count that can legitimately be smaller).
   RETRIEVED_FILE_STATS AS (
     SELECT
       REPACK_REQUEST_ID,
