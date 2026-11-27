@@ -1358,10 +1358,14 @@ TEST_P(RelationalDBTest, repackProgressBatchLocksTrackingRowsInRequestIdOrder) {
 
   // The worker transforms both rows and updates both tracking rows in one transaction - the
   // production path through updateRepackRequestsProgress(). It must block on the higher id.
+  // catch (...) so an unexpected exception fails this test via the counter checks below instead
+  // of escaping the thread and std::terminate()ing the whole test binary.
   std::thread worker([&db] {
-    auto workerLogger = makeLogger();
-    cta::log::LogContext workerLc(*workerLogger);
-    db.getNextSuccessfulRetrieveRepackReportBatch(workerLc);
+    try {
+      auto workerLogger = makeLogger();
+      cta::log::LogContext workerLc(*workerLogger);
+      db.getNextSuccessfulRetrieveRepackReportBatch(workerLc);
+    } catch (...) {}
   });
 
   // Wait until a session blocked BY conn1 sits in a row-lock wait (no gtest assertions while the

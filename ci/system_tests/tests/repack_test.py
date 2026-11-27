@@ -365,11 +365,19 @@ def _remove_tape_file_copies(cta_cli: CtaCliHost, vid: str, disk_instance: str, 
     """
     if not archive_ids:
         return
+    # Nothing of ours on the tape (the repack never wrote the copies, or they are already gone):
+    # skip the four state transitions and the per-id rm noise entirely.
+    on_tape = {
+        str(tf["af"]["archiveId"]) for tf in json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid}"))
+    }
+    targeted_ids = sorted(set(archive_ids) & on_tape)
+    if not targeted_ids:
+        return
     tape_ls: list[dict[str, Any]] = json.loads(cta_cli.exec_with_output(f"cta-admin --json tape ls --vid '{vid}'"))
     original_state = str(tape_ls[0]["state"])
     try:
         cta_cli.transition_tape_state(vid, "REPACKING_DISABLED")
-        for archive_id in archive_ids:
+        for archive_id in targeted_ids:
             result = cta_cli.exec(
                 f"cta-admin tf rm -v {vid} -i {disk_instance} -I {archive_id} -r 'Test cleanup: added copy'",
                 capture_output=True,
@@ -1022,8 +1030,9 @@ def test_repack_just_add_copies_with_missing_copy_and_user_provided_file(
             probe = eos_mgm.exec(f"eos fileinfo {staged_file_path}", capture_output=True, throw_on_failure=False)
             if probe.success:
                 raise RuntimeError(f"Staged user-provided file {staged_file_path} is still in the repack buffer")
-            probe_output = probe.stderr + probe.stdout
-            if "No such file" not in probe_output and "cannot stat" not in probe_output:
+            probe_output = (probe.stderr + probe.stdout).lower()
+            not_found_markers = ("no such file", "cannot stat", "does not exist")
+            if not any(marker in probe_output for marker in not_found_markers):
                 raise RuntimeError(
                     f"Could not verify the staged file {staged_file_path} is gone: {probe_output.strip()}"
                 )
