@@ -273,50 +273,30 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
     }
     sqlpart += piece;
   }
-  /* For Repack, when we report success this query handles the check of all other replica
-   * rows/jobs with the same (REPACK_REQUEST_ID, ARCHIVE_FILE_ID) which needed to be archived too.
-   * If all the rows in that group are in AJS_ToReportToRepackForSuccess except the one(s) being
-   * currently updated, then update all of them to ReadyForDeletion. This signals the next step
-   * that the source file can be deleted from disk; otherwise it updates the status just to
-   * AJS_ToReportToRepackForSuccess.
+  /* Settles reported repack archive jobs against their sibling copies.
    *
-   * The group is (REPACK_REQUEST_ID, ARCHIVE_FILE_ID), not ARCHIVE_FILE_ID alone: the same file
-   * can legitimately be in two repack requests at once - two tapes each holding one of its
-   * copies, both being repacked - and those rows are not siblings of each other. Matching on bare
-   * ARCHIVE_FILE_ID would let one request's success touch the other's rows.
+   * The sibling group is (REPACK_REQUEST_ID, ARCHIVE_FILE_ID), not ARCHIVE_FILE_ID alone: the
+   * same file can sit in two repack requests at once (two tapes each holding one of its copies),
+   * and those rows are not siblings. A reported job is parked at AJS_ToReportToRepackForSuccess;
+   * only once every copy of the group has settled does the final UPDATE's WHERE widen beyond
+   * aj2.JOB_ID = tsm.JOB_ID and move the whole group to ReadyForDeletion, which is what later
+   * allows the source disk file to be deleted. A sibling still being written on another drive is
+   * never touched by someone else's settlement.
    *
-   * The final UPDATE's WHERE is deliberately asymmetric between the complete and incomplete
-   * cases. When the group is NOT yet complete, only the literal target row(s) (aj2.JOB_ID =
-   * tsm.JOB_ID) are touched, parking them at AJS_ToReportToRepackForSuccess - a sibling still
-   * being written (STATUS still AJS_ToTransferForRepack, actively owned by a live mount session on
-   * a different drive) must be left untouched here, or this UPDATE would mark it successful
-   * before its own write ever finishes, matched by nothing but sharing the same group key. Only
-   * once the group IS complete (rfd.REPACK_REQUEST_ID IS NOT NULL) does the WHERE widen to every
-   * row sharing the group key, because that is the one moment every sibling's row needs to move to
-   * ReadyForDeletion together, in this one statement.
+   * INVARIANT: jobIDs holds at most one job per group. The sibling arm joins each settled sibling
+   * against every target row and UNION ALL does not deduplicate, so k targets of one group would
+   * count each settled sibling k times and HAVING COUNT(*) = MAX(REQUEST_JOB_COUNT) could never
+   * match - the group would never reach ReadyForDeletion and the repack never finishes. The
+   * invariant holds because a batch comes from one mount, a mount serves one tape pool, and
+   * distinct copy numbers must map to distinct tape pools (expansion rejects the request
+   * otherwise). If that routing rule is ever relaxed, deduplicate the sibling arm first.
    *
-   * INVARIANT THIS QUERY DEPENDS ON: jobIDs must contain AT MOST ONE job per
-   * (REPACK_REQUEST_ID, ARCHIVE_FILE_ID) group.
-   *
-   * The ready_for_deletion sibling arm joins each already-settled sibling against every target row
-   * of its group, and UNION ALL does not deduplicate. So with k targets in one group, each settled
-   * sibling is counted k times and HAVING COUNT(*) = MAX(REQUEST_JOB_COUNT) overshoots: the group
-   * is then never recognised as complete, never moves to ReadyForDeletion, and
-   * getNextSuccessfulArchiveRepackReportBatch() - which only picks up ReadyForDeletion - never
-   * deletes the source disk file, so the repack request can never finish. Example: 3 copies
-   * A/B/C with C already settled and A+B reported together gives COUNT(*) = 4 against
-   * REQUEST_JOB_COUNT = 3.
-   *
-   * The invariant holds because a batch comes from one ArchiveMount, an ArchiveMount serves exactly
-   * one tape pool, and two copies of the same archive file can never share a tape pool: the archive
-   * routes of a storage class are required to map distinct copy numbers to distinct tape pools, and
-   * RepackRequest::addSubrequestsAndUpdateStats() rejects the expansion outright otherwise ("found
-   * the same destination tapepool for different copyNb"). The single-job failReport() recovery path
-   * (updateJobStatusForFailedReport) trivially satisfies it too.
-   *
-   * If that routing rule is ever relaxed, or some future caller batches jobs across tape pools,
-   * this query must deduplicate the sibling arm (e.g. UNION instead of UNION ALL, or a DISTINCT on
-   * JOB_ID inside combined) before that happens.
+   * Known limits: this does not serialize two mounts settling different siblings of one group
+   * concurrently - each incomplete-path UPDATE touches only its own row, so both can read the
+   * other copy as unfinished and park, stranding the group short of ReadyForDeletion. The count
+   * is also success-only, and the failed-archive sweep deletes source buffer files without
+   * consulting siblings. The broader settlement rework (group-wide locking, fail/succeed
+   * together) is on the failure-batching branch (MR !1690).
    */
   std::string sql = R"SQL(
   WITH updated_single_copy_jobs AS (

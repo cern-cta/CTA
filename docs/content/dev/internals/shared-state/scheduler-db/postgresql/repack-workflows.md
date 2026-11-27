@@ -32,6 +32,10 @@ A reported job moves to `AJS_ToReportToRepackForSuccess` on its own. Only once e
 
     This holds today because a batch comes from one archive mount, a mount serves one tape pool, and two copies of the same file can never share a tape pool — a storage class's archive routes must map distinct copy numbers to distinct tape pools, and expansion is rejected otherwise. Relaxing that routing rule, or batching jobs across tape pools, requires deduplicating the sibling count first.
 
+!!! note "Limits of the current settlement"
+
+    The batch invariant above only rules out duplicate targets within one reported batch. It does not serialize two mounts settling different siblings of the same group concurrently: each incomplete-group settlement updates only its own row, so the two transactions never block each other, each can read the other's copy as still transferring, and both park without the group ever reaching `ReadyForDeletion`. The completeness count is also success-only — a group containing a terminally failed sibling is never recognised as settled by the success path, and the failed-archive sweep deletes its jobs' source buffer files without consulting sibling state. The broader settlement rework addressing these limits (locking the whole sibling group up front, and failing or succeeding a group together) is prepared separately on the failure-batching branch.
+
 ## Record progress
 
 The scheduler counts retrieved files and bytes from the completed retrieve rows. A user-provided file already in the disk buffer has no retrieve mount ID and contributes only to archive work. Archive job totals come from the rows inserted into the archive queue. The queue transformation and retrieve progress update commit in one transaction.
