@@ -651,6 +651,78 @@ def test_repack_just_add_copies_when_all_copies_already_present(
     cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
 
 
+def test_repack_just_add_copies_with_missing_copy(
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    repack_buffer_dir: Path,
+    repack_mp_name: str,
+    cta_storage_class: str,
+    cta_default_tape_pool: str,
+) -> None:
+    """--justaddcopies where a copy genuinely is missing.
+
+    The production scenario the other just-add-copies test above doesn't cover (it only exercises
+    the case where nothing needs to be added at all, which never reaches the retrieve/transform
+    code path this one does).
+
+    Regression guard for the scheduler-db backend crashing every subrequest with "Active job or
+    tape file not found for the given copy number" (RetrieveRequest::setActiveCopyNumber()
+    required a job entry for the recalled/source copy, which --justaddcopies never creates for it
+    - see docs/content/dev/internals/shared-state/scheduler-db/postgresql/repack-workflows.md),
+    and for the resulting retrieve-progress counting crediting zero retrieved files for every such
+    file (transformJobBatchToArchive()'s BASE_INSERT never fires for the source copy either, so
+    retrieve progress must not be derived from it).
+    """
+    second_tape_pool = "systest_addcopies2"
+    cta_cli.exec(
+        f"cta-admin tapepool add --name {second_tape_pool} --vo vo --partialtapesnumber 2 "
+        f"--comment 'Temp {second_tape_pool} tapepool'"
+    )
+    cta_cli.exec(
+        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool "
+        f"{second_tape_pool} --comment 'ArchiveRoute2'"
+    )
+    cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 2")
+
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
+    print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with a genuinely missing copy')
+    try:
+        _submit_repack_request(
+            cta_cli,
+            vid_to_repack=vid_to_repack,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
+            add_copies_only=True,
+        )
+
+        repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
+        repack_request = repack_ls_json[0]
+        archived_files = int(repack_request["archivedFiles"])
+        retrieved_files = int(repack_request["retrievedFiles"])
+        failed_to_create_archive_req = int(repack_request.get("failedToCreateArchiveReq", 0))
+
+        # Before the fix: every subrequest failed to even be created (failedToCreateArchiveReq > 0,
+        # archivedFiles/retrievedFiles stuck at 0, repack either times out or ends up Failed -
+        # _submit_repack_request's own wait loop and assertions already catch that). These make the
+        # specific regression explicit rather than relying only on the generic completion checks.
+        assert failed_to_create_archive_req == 0
+        assert archived_files > 0
+        assert retrieved_files > 0
+
+        dest_pools = _get_dest_tape_pools(cta_cli, vid_to_repack)
+        assert second_tape_pool in dest_pools, (
+            f"Expected the new copy to land in {second_tape_pool!r}; got destination pools {dest_pools!r}."
+        )
+    finally:
+        cta_cli.remove_repack_request(vid_to_repack)
+        cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+        cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 1")
+        cta_cli.exec(f"cta-admin archiveroute rm --storageclass {cta_storage_class} --copynb 2")
+        cta_cli.exec(f"cta-admin tapepool rm --name {second_tape_pool}")
+
+
 def test_repack_cancellation(
     cta_cli: CtaCliHost,
     disk_instance_name: str,
