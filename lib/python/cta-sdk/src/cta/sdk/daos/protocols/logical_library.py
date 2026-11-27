@@ -62,7 +62,7 @@ class LogicalLibraryDao(Protocol):
         /,
         *,
         physical_library_name: str,
-        state: LogicalLibraryState = LogicalLibraryState.ENABLED,
+        state: LogicalLibraryState = LogicalLibraryState.DISABLED,
         comment: str = "From python cta-sdk",
     ) -> None:
         """Create a new logical library.
@@ -70,7 +70,7 @@ class LogicalLibraryDao(Protocol):
         Args:
             name: The name of the new logical library.
             physical_library_name: The physical library this logical library maps to.
-            disabled: Whether the logical library is disabled (default: False).
+            state: The initial state of the logical library (default: disabled).
             comment: Optional description of the logical library
                     (default: "From python cta-sdk").
 

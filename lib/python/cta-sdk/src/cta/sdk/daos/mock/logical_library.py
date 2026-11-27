@@ -23,7 +23,7 @@ class LogicalLibraryDaoMock(LogicalLibraryDao):
         /,
         *,
         physical_library_name: str,
-        state: LogicalLibraryState = LogicalLibraryState.ENABLED,
+        state: LogicalLibraryState = LogicalLibraryState.DISABLED,
         comment: str = "From python cta-sdk",
     ) -> None:
         try:

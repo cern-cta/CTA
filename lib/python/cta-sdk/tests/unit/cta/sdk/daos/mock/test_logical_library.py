@@ -39,10 +39,10 @@ class TestList:
 
 
 class TestCreate:
-    def test_create_defaults_enabled(self, dao: LogicalLibraryDaoMock):
+    def test_create_defaults_disabled(self, dao: LogicalLibraryDaoMock):
         dao.create("ll_new", physical_library_name="physlib_ci")
         ll = dao.get("ll_new")
-        assert ll.state is LogicalLibraryState.ENABLED
+        assert ll.state is LogicalLibraryState.DISABLED
         assert ll.state_reason is None
 
     def test_create_missing_physical_library_raises(self, dao: LogicalLibraryDaoMock):
