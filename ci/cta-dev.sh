@@ -91,7 +91,6 @@ namespace_deletion_pid=""
 namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
-source "${script_dir}/utils/helm_utils.sh"
 
 # Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
@@ -1091,7 +1090,7 @@ build_cta() {
 
   fi
 
-  log_task "Preparing CTA package build..."
+  print_header "BUILDING PACKAGES"
 
   local package_command=binary
   local build_package_flags=()
@@ -1143,7 +1142,6 @@ build_cta() {
   local package_version
   package_version=$(python3 "${project_root}/ci/build/cta_version.py" native "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 
-  print_header "BUILDING PACKAGES"
   # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.
   podman exec --interactive --tty "${build_container_name}" \
     .${mount_basedir}/ci/build/build_packages.sh "${package_command}" \
@@ -1278,8 +1276,10 @@ finish_namespace_deletion() {
   [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
 }
 
-# Resolve deployment arguments once, before any background deletion starts.
-prepare_deployment() {
+# Recreate the CTA development instance using images already available to the cluster.
+deploy_cta() {
+  validate_deployment_environment
+
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
   [[ -n $dcache_image_repository ]] && extra_spawn_options+=(--dcache-image-repository "$dcache_image_repository")
@@ -1300,19 +1300,13 @@ prepare_deployment() {
   fi
   extra_spawn_options+=("${infra_config[@]}" "${cta_overrides[@]}")
   [[ $protected == false ]] || extra_spawn_options+=(--protected)
-  deployment_args=( --namespace "${namespace}" \
+  local deployment_args=( --namespace "${namespace}" \
     --cta-image-registry "${cta_image_registry}" \
     --cta-image-tag "${cta_image_tag}" \
     --eos-enabled "${eos_enabled}" \
     --dcache-enabled "${dcache_enabled}" \
     --reset-unprotected \
     "${extra_spawn_options[@]}")
-
-}
-
-# Recreate the CTA development instance using images already available to the cluster.
-deploy_cta() {
-  validate_deployment_environment
 
   finish_namespace_deletion
 
@@ -1520,18 +1514,6 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
-
-  if [[ $show_help != true ]]; then
-    case "$command" in
-      deploy|up|debug|all)
-        prepare_deployment
-        (cd "${project_root}/ci/orchestration" && update_local_cta_chart_dependencies)
-        export CTA_LOCAL_CHARTS_READY="${project_root}/ci/orchestration/helm"
-        (cd "${project_root}/ci/orchestration" && \
-          ./create_instance.sh "${deployment_args[@]}" --validate-only)
-        ;;
-    esac
-  fi
 
   case "$command" in
     build|images|up|debug|all)

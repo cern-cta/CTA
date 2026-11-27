@@ -242,7 +242,7 @@ create_instance() {
   if [[ -z "${catalogue_schema_version}" ]]; then
     catalogue_schema_version="latest"
   fi
-  # cta-dev runs this preflight before deleting the previous deployment namespace.
+  # Check requested Secrets before creating deployment resources.
   local secret_name
   for secret_name in "${copy_secrets[@]}"; do
     [[ $namespace != default ]] || die "Cannot copy Secrets from default into a deployment replacing default"

@@ -16,9 +16,6 @@ check_helm_installed() {
 }
 
 update_local_cta_chart_dependencies() {
-  # cta-dev prepares these before preflight; its child deployment reuses the same archives.
-  [ "${CTA_LOCAL_CHARTS_READY:-}" != "$PWD/helm" ] || return 0
-
   log_task "Updating local chart dependencies..."
   local chart
   for chart in $cta_local_charts; do
