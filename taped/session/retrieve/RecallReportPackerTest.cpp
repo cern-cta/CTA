@@ -203,9 +203,9 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   ASSERT_NE(std::string::npos, temp.find(error_msg));
   ASSERT_EQ(1, job1completes);
   ASSERT_EQ(1, job2completes);
-#ifndef CTA_PGSCHED
-  // In pgsched mode, transferFailed() is never called — the packer
-  // accumulates jobs and delegates to failTransferBatch() instead.
+#ifdef CTA_PGSCHED
+  ASSERT_EQ(1u, retrieveMount.failedJobsReported);
+#else
   ASSERT_EQ(1, job3failures);
 #endif
   ASSERT_EQ(1, retrieveMount.completes);

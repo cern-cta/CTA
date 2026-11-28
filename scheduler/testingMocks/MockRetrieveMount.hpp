@@ -27,6 +27,9 @@ class MockRetrieveMount : public cta::RetrieveMount {
 public:
   int getJobs;
   int completes;
+#ifdef CTA_PGSCHED
+  size_t failedJobsReported = 0;
+#endif
 
   explicit MockRetrieveMount(cta::catalogue::Catalogue& catalogue)
       : RetrieveMount(catalogue),
@@ -75,6 +78,12 @@ public:
 
   void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                               cta::log::LogContext& logContext) override {};
+
+#ifdef CTA_PGSCHED
+  void failTransferBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, log::LogContext&) override {
+    failedJobsReported += jobs.size();
+  }
+#endif
 
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override {
     return 0;
