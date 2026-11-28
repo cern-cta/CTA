@@ -139,14 +139,24 @@ void RetrieveRdbJob::prepareFailTransfer(const std::string& failureReason) {
   if (m_jobRow.totalRetries < m_jobRow.maxTotalRetries
       && m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
     m_jobRow.retriesWithinMount = 0;
+    // A row without a usable alternate still requeues to a new mount, just on its unchanged source
+    // coordinates. AddCopiesOnly repack rows legitimately carry empty alternate lists (the recalled
+    // source copy is not a rearchive target, so makeJobRow() had no jobs to list), and
+    // selectNextString() then returns the current VID with index 0 - indexing the empty coordinate
+    // vectors with it would be undefined behaviour. The same guard keeps a row whose current VID is
+    // not in its list from pairing that VID with another tape's copyNb/fSeq/blockId.
     auto [newVid, index] = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
-    std::vector<std::string> alternateCopyNbsVec = cta::utils::splitStringToVector(m_jobRow.alternateCopyNbs);
-    std::vector<std::string> alternateFSeqVec = cta::utils::splitStringToVector(m_jobRow.alternateFSeq);
-    std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
-    m_jobRow.copyNb = static_cast<uint8_t>(std::stoi(alternateCopyNbsVec[index]));
-    m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
-    m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
-    m_jobRow.vid = newVid;
+    if (newVid != m_jobRow.vid) {
+      std::vector<std::string> alternateCopyNbsVec = cta::utils::splitStringToVector(m_jobRow.alternateCopyNbs);
+      std::vector<std::string> alternateFSeqVec = cta::utils::splitStringToVector(m_jobRow.alternateFSeq);
+      std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
+      if (index < alternateCopyNbsVec.size() && index < alternateFSeqVec.size() && index < alternateBlockIdVec.size()) {
+        m_jobRow.copyNb = static_cast<uint8_t>(std::stoi(alternateCopyNbsVec[index]));
+        m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
+        m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
+        m_jobRow.vid = newVid;
+      }
+    }
   }
 }
 

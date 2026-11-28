@@ -2417,10 +2417,12 @@ void insertRetrievePendingJobWithAlternates(cta::rdbms::Conn& conn,
                                             uint64_t archiveFileId,
                                             const std::string& vid,
                                             const std::string& tapePool,
-                                            const std::string& alternateVids,
-                                            const std::string& alternateCopyNbs,
-                                            const std::string& alternateFSeqs,
-                                            const std::string& alternateBlockIds,
+                                            // std::nullopt = no alternates, matching what
+                                            // optionalAlternateList() stores for an empty list
+                                            const std::optional<std::string>& alternateVids,
+                                            const std::optional<std::string>& alternateCopyNbs,
+                                            const std::optional<std::string>& alternateFSeqs,
+                                            const std::optional<std::string>& alternateBlockIds,
                                             uint8_t copyNb,
                                             uint64_t fSeq,
                                             uint64_t blockId,
@@ -3334,6 +3336,78 @@ TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue_rotatesToSecondAlterna
     ASSERT_EQ(2u, rset.columnUint64("COPY_NB"));
     ASSERT_EQ(20u, rset.columnUint64("FSEQ"));
     ASSERT_EQ(200u, rset.columnUint64("BLOCK_ID"));
+    ASSERT_EQ(0u, rset.columnUint64("RETRIES_WITHIN_MOUNT"));
+    ASSERT_FALSE(rset.columnOptionalUint64("MOUNT_ID").has_value());
+    ASSERT_FALSE(rset.next());
+  }
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS CNT FROM RETRIEVE_ACTIVE_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(0u, rset.columnUint64("CNT"));
+  }
+}
+
+// A row with NO alternates at all can legitimately reach the rotation branch: AddCopiesOnly
+// repack rows carry empty ALTERNATE_* lists (the recalled source copy is not a rearchive target,
+// so RetrieveRequest::makeJobRow() had no jobs to list), and nothing ties the retry limits to the
+// lists being populated. selectNextString() returns the current VID with index 0 for an empty
+// list, and indexing the empty coordinate vectors with it was undefined behaviour - such a row
+// must instead requeue to a new mount on its unchanged source coordinates.
+TEST_P(RelationalDBTest, retrieveFailTransferBatchRequeue_noAlternatesKeepsSourceCoordinates) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  constexpr uint64_t archiveFileId = 337;
+  const std::string vid = "V-ALT-EMPTY";
+  const std::string tapePool = "altEmptyPool";
+
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // maxTotalRetries=2 with maxRetriesWithinMount=1: the first failure exhausts the within-mount
+    // budget while total budget remains, forcing the rotation branch with nothing to rotate to.
+    insertRetrievePendingJobWithAlternates(conn,
+                                           archiveFileId,
+                                           vid,
+                                           tapePool,
+                                           /*alternateVids=*/std::nullopt,
+                                           /*alternateCopyNbs=*/std::nullopt,
+                                           /*alternateFSeqs=*/std::nullopt,
+                                           /*alternateBlockIds=*/std::nullopt,
+                                           /*copyNb=*/1,
+                                           /*fSeq=*/10,
+                                           /*blockId=*/100,
+                                           /*maxTotalRetries=*/2,
+                                           /*maxRetriesWithinMount=*/1);
+  }
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1u, mountInfo->potentialMounts.size());
+  auto mount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "loglib", "host");
+  ASSERT_NE(nullptr, mount);
+
+  auto jobs = mount->getNextJobBatch(10, 1'000'000, lc);
+  ASSERT_EQ(1u, jobs.size());
+
+  jobs.front()->prepareFailTransfer("within-mount exhausted with no alternate to rotate to");
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {jobs.front().get()};
+  mount->failTransferBatch(batch, lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Requeued for a new mount with its source coordinates intact.
+    auto stmt = conn.createStmt("SELECT VID, COPY_NB, FSEQ, BLOCK_ID, RETRIES_WITHIN_MOUNT, MOUNT_ID"
+                                " FROM RETRIEVE_PENDING_QUEUE WHERE ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID");
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(vid, rset.columnString("VID"));
+    ASSERT_EQ(1u, rset.columnUint64("COPY_NB"));
+    ASSERT_EQ(10u, rset.columnUint64("FSEQ"));
+    ASSERT_EQ(100u, rset.columnUint64("BLOCK_ID"));
     ASSERT_EQ(0u, rset.columnUint64("RETRIES_WITHIN_MOUNT"));
     ASSERT_FALSE(rset.columnOptionalUint64("MOUNT_ID").has_value());
     ASSERT_FALSE(rset.next());
