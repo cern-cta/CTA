@@ -102,15 +102,17 @@ flowchart TB
    `getNextArchiveJobsToReportBatch()` only selects user jobs.
 
 Both funnel into `failReportBatchRequeue()` (under budget: `IS_REPORTING = FALSE`, counters bumped,
-status unchanged) / `failReportBatchExceedRetries()` (over budget — or `NoReportRequired`, which is
-permanently true for every repack job — terminal).
+status unchanged) / `failReportBatchExceedRetries()` (over budget — or any repack job, whose
+"exceed" branch is the `updateRepackJobSuccess()` recovery, safe on every attempt — terminal).
+`ArchiveMount::failReportBatch()` buckets on `isRepack` and the report-retry counters, never on
+`reportType` — see Note 1 below for why, and for what the requeue bucket means at that entry point.
 
 #### Retrying the write before falling back: `retryWithBackoff()`
 
-Point 1 has a sharp edge: the retry budget it would spend is dead on arrival (Note 1, further
-down), so a *single* transient failure of the bookkeeping write would send an already-transferred,
-already-catalogued user job straight to `ARCHIVE_FAILED_QUEUE`.
-`cta::utils::retryWithBackoff()` (`common/utils/RetryWithBackoff.hpp`) closes this by retrying the
+Point 1 has a sharp edge: its requeue bucket cannot retry the *report* (Note 1, further down —
+`STATUS` never reached a report status, so the row only parks for the GC sweep and the file is
+eventually transferred again from scratch).
+`cta::utils::retryWithBackoff()` (`common/utils/RetryWithBackoff.hpp`) softens this by retrying the
 write itself after a `cta::exception::Exception`. The report worker waits 10 seconds before the
 first retry and 300 seconds before the second, for 310 seconds of waiting if both delays are used.
 It logs each retry and rethrows the last exception if both retries fail. It wraps exactly one call site —
@@ -354,12 +356,12 @@ flowchart TB
     CAT -- "no: FailedReportCatalogueUpdate" --> FTB
     CAT -- yes --> DBW{"setJobBatchTransferred() /\nsetRepackJobBatchTransferred()\nDB write OK?"}
 
-    DBW -- "no: FailedReportMoveToQueue" --> FRB["ArchiveMount::failReportBatch()\nbucket: isRepack x\n(NoReportRequired OR retries exceeded)"]
-    FRB -. "requeue branch exists in code,\nnever reached here - see note 1" .-> FRR1["failReportBatchRequeue()\n(dead on arrival for this entry point)"]
-    FRR1 -. "IS_REPORTING=false would retry a\nreport - but STATUS here is still\nAJS_ToTransferFor*, never a report\nstatus, so nothing ever re-reads it" .-> RETRYWRITE["(unreachable - see note 1)"]
-    FRB -- "exceeded - USER\n(in practice: always, see note 1)" --> FRE1U["failReportBatchExceedRetries(false)"]
+    DBW -- "no: FailedReportMoveToQueue,\nafter retryWithBackoff() exhausted\nits in-place retries (10s, 300s)" --> FRB["ArchiveMount::failReportBatch()\nbucket: isRepack OR\nreport-retries exceeded (note 1)"]
+    FRB -- "user, report retries left" --> FRR1["failReportBatchRequeue()\nIS_REPORTING=false, STATUS still\nAJS_ToTransferForUser - invisible to\nthe EOS reporter (parks for GC)"]
+    FRR1 -. "dead-mount GC sweep\nrequeues for a new transfer" .-> PENDING
+    FRB -- "user, report retries exhausted" --> FRE1U["failReportBatchExceedRetries(false)"]
     FRE1U --> FAILEDQ1["ARCHIVE_FAILED_QUEUE\nfile IS on tape + catalogued -\nonly the DB bookkeeping is missing"]
-    FRB -- "exceeded - REPACK\n(always: NoReportRequired)" --> URS2["updateRepackJobSuccess()\n(recover the write - not a failure)"]
+    FRB -- "repack (always)" --> URS2["updateRepackJobSuccess()\n(recover the write - not a failure)"]
 
     DBW -- yes --> SPLIT{isRepack?}
     SPLIT -- no --> UMCS["updateMultiCopyJobSuccess()"]
@@ -407,22 +409,28 @@ flowchart TB
     classDef failterm fill:#c0392b,color:#fff,stroke:#333;
 
     class PENDING pending;
-    class TOREPORTFAIL,TOREPORTOK,WAITING,WAITFAIL,WAITINGUS,WAITINGUF,RFD,RETRYWRITE,RETRYEOS active;
+    class TOREPORTFAIL,TOREPORTOK,WAITING,WAITFAIL,WAITINGUS,WAITINGUF,RFD,FRR1,RETRYEOS active;
     class DELOK,DELFAIL,REPACKDEL okterm;
     class FAILEDQ1,FAILEDQ2,REPACKFAILQ failterm;
 ```
 
-**Note 1 — the mount-level bookkeeping path never actually retries.** A job reaching
-`ArchiveMount::failReportBatch()` still carries the `reportType` set at `initialize()` time, when
-its `STATUS` was `AJS_ToTransferFor(User/Repack)` — which maps to `NoReportRequired`. Nothing
-re-evaluates it: the status change a successful transfer implies lives only in the DB write that
-just failed. So the bucket condition (`NoReportRequired || retries exceeded`) is always true and
-the requeue bucket is unreachable from this entry point. Harmless for repack (the "exceed" branch
-is just `updateRepackJobSuccess()`, safe on every attempt); **for user jobs it would send a single
-transient bookkeeping failure straight to `ARCHIVE_FAILED_QUEUE`** — the gap
-[`retryWithBackoff()`](#retrying-the-write-before-falling-back-retrywithbackoff) closes by retrying
-the write itself. The other entry point, `RelationalDB::failArchiveJobBatchReport()`, is fed by a
-fresh fetch whose `initialize()` sees the real report status, so its retry budget is honoured.
+**Note 1 — the mount-level bookkeeping path retries the write in place, then parks for GC.** A job
+reaching `ArchiveMount::failReportBatch()` still carries the `reportType` set at `initialize()`
+time, when its `STATUS` was `AJS_ToTransferFor(User/Repack)` — which maps to `NoReportRequired` and
+is never re-evaluated (the status change a successful transfer implies lives only in the DB write
+that just failed). The bucket split is therefore keyed on `isRepack` and the report-retry counters,
+never on `reportType` — a `reportType` check would be true for every job unconditionally and send a
+single transient bookkeeping failure straight to `ARCHIVE_FAILED_QUEUE` without ever spending its
+report-retry budget. A user job is handled in two layers:
+[`retryWithBackoff()`](#retrying-the-write-before-falling-back-retrywithbackoff) first retries the
+write itself in place (10s, then 300s); once that is exhausted, a job with report retries left
+takes the requeue bucket — which at this entry point is a parking spot, not a report retry: with
+`STATUS` still `AJS_ToTransferForUser` the EOS reporter never sees the row, and the dead-mount GC
+sweep eventually requeues it for a full new transfer. Only a job over its report-retry budget moves
+to `ARCHIVE_FAILED_QUEUE`. Repack always takes the "exceed" branch, which for it is just
+`updateRepackJobSuccess()` — recovery, safe on every attempt. The other entry point,
+`RelationalDB::failArchiveJobBatchReport()`, is fed by a fresh fetch whose `initialize()` sees the
+real report status, so its requeue bucket drives genuine EOS-report retries.
 
 **Note 2 — repack's two sides gate the source-file deletion symmetrically.**
 `updateRepackJobSuccess()` reaches `ReadyForDeletion` only once every copy of the group succeeded;
