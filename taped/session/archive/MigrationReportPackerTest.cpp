@@ -873,7 +873,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedMo
   mrp.waitThread();
 
   const std::string logOutput = log.getLog();
-  ASSERT_NE(std::string::npos, logOutput.find("failed to report successful jobs in error-recovery path"))
+  ASSERT_NE(std::string::npos, logOutput.find("failed to report successful jobs; proceeding to flush failed jobs"))
     << "Expected error-recovery absorption log; got: " << logOutput;
   ASSERT_EQ(1, tam.flushCount);
   ASSERT_EQ(1, tam.failureCount);
@@ -912,7 +912,7 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerPgschedCa
 
   const std::string logOutput = log.getLog();
   // The absorbed catalogue failure must be ERR-logged by ReportFlush::execute.
-  ASSERT_NE(std::string::npos, logOutput.find("failed to report successful jobs in error-recovery path"))
+  ASSERT_NE(std::string::npos, logOutput.find("failed to report successful jobs; proceeding to flush failed jobs"))
     << "Expected error-recovery absorption log; got: " << logOutput;
   // The accumulated failed job must still have been flushed via flushFailedJobs().
   ASSERT_EQ(1, tam.flushCount);
