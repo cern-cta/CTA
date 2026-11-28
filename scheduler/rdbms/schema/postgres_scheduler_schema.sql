@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
--- This CREATE TYPE only takes effect for a schema created from scratch. Adding a value here does
--- NOT add it to an already-existing schema's type - see
--- manual_migration_add_wait_replicas_failure_to_disk_status.sql in this same directory, which must
--- be run against every existing scheduler schema before deploying binaries that write
--- AJS_WaitReplicasBeforeReportingFailureToDisk.
+/*
+ * This CREATE TYPE only takes effect for a schema created from scratch. Adding a value here does
+ * NOT add it to an already-existing schema's type - see
+ * manual_migration_add_wait_replicas_failure_to_disk_status.sql in this same directory, which must
+ * be run against every existing scheduler schema before deploying binaries that write
+ * AJS_WaitReplicasBeforeReportingFailureToDisk.
+ */
 CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'AJS_ToTransferForUser',
   'AJS_WaitReplicasBeforeReportingSuccessToDisk',
@@ -105,16 +107,20 @@ CREATE INDEX IDX_ARCHIVE_ACTIVE_QUEUE_MOUNT_ID_CLEAN_UP ON ARCHIVE_ACTIVE_QUEUE 
 CREATE TABLE REPACK_ARCHIVE_ACTIVE_QUEUE (LIKE ARCHIVE_ACTIVE_QUEUE INCLUDING ALL);
 ALTER TABLE REPACK_ARCHIVE_ACTIVE_QUEUE ADD COLUMN REPACK_REQUEST_ID BIGINT;
 CREATE INDEX IDX_REPACK_ARCHIVE_ACTIVE_QUEUE_FILTER_SORT ON REPACK_ARCHIVE_ACTIVE_QUEUE (TAPE_POOL, STATUS, PRIORITY DESC, ARCHIVE_FILE_ID, JOB_ID);
--- REPACK_REQUEST_ID is added by the ALTER TABLE above, after the LIKE ... INCLUDING ALL copy ran,
--- so unlike ARCHIVE_ACTIVE_QUEUE's own ARCHIVE_REQUEST_ID (covered by
--- IDX_ARCHIVE_ACTIVE_QUEUE_REQUEST_ID_MULTI_COPY below), this table's group key - (REPACK_REQUEST_ID,
--- ARCHIVE_FILE_ID), used by lockRepackGroupRows(), updateRepackJobSuccess()'s sibling lookup, and
--- moveFailedRepackJobBatchToFailedQueueTable()'s sibling checks - had no supporting index at all,
--- forcing a full scan of this table on every multi-copy repack completion check.
+/*
+ * REPACK_REQUEST_ID is added by the ALTER TABLE above, after the LIKE ... INCLUDING ALL copy ran,
+ * so unlike ARCHIVE_ACTIVE_QUEUE's own ARCHIVE_REQUEST_ID (covered by
+ * IDX_ARCHIVE_ACTIVE_QUEUE_REQUEST_ID_MULTI_COPY below), this table's group key - (REPACK_REQUEST_ID,
+ * ARCHIVE_FILE_ID), used by lockRepackGroupRows(), updateRepackJobSuccess()'s sibling lookup, and
+ * moveFailedRepackJobBatchToFailedQueueTable()'s sibling checks - had no supporting index at all,
+ * forcing a full scan of this table on every multi-copy repack completion check.
+ */
 CREATE INDEX IDX_REPACK_ARCHIVE_ACTIVE_QUEUE_REQUEST_GROUP ON REPACK_ARCHIVE_ACTIVE_QUEUE (REPACK_REQUEST_ID, ARCHIVE_FILE_ID, JOB_ID);
--- Mirrors IDX_REPACK_RETRIEVE_ACTIVE_QUEUE_POP below: moveFailedRepackJobBatchToFailedQueueTable()'s
--- WHERE STATUS = ... scans (both the single-copy and multi-copy candidate CTEs) had no STATUS-leading
--- index on this table, unlike its retrieve-side equivalent.
+/*
+ * Mirrors IDX_REPACK_RETRIEVE_ACTIVE_QUEUE_POP below: moveFailedRepackJobBatchToFailedQueueTable()'s
+ * WHERE STATUS = ... scans (both the single-copy and multi-copy candidate CTEs) had no STATUS-leading
+ * index on this table, unlike its retrieve-side equivalent.
+ */
 CREATE INDEX IDX_REPACK_ARCHIVE_ACTIVE_QUEUE_POP ON REPACK_ARCHIVE_ACTIVE_QUEUE (STATUS, PRIORITY DESC, ARCHIVE_FILE_ID, JOB_ID);
 
 /* unnecessary index CREATE INDEX IDX_REPACK_ARCHIVE_ACTIVE_QUEUE_SINGLE_COPY ON REPACK_ARCHIVE_ACTIVE_QUEUE (JOB_ID) WHERE REQUEST_JOB_COUNT = 1 */
