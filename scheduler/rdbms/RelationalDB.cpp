@@ -6,7 +6,9 @@
 #include "scheduler/rdbms/RelationalDB.hpp"
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/TimingList.hpp"
