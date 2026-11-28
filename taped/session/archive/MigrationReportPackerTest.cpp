@@ -541,7 +541,7 @@ public:
   enum class ThrowMode { None, CatalogueUpdate, MoveToQueue };
   ThrowMode throwMode = ThrowMode::None;
 
-  explicit MockArchiveMountWithBatch(cta::catalogue::Catalogue& catalogue) : cta::MockArchiveMount(catalogue) {}
+  explicit MockArchiveMountWithBatch(cta::catalogue::Catalogue& catalogue);
 
   void
   reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
@@ -996,6 +996,12 @@ public:
     lastFailReportBatch = batch;
   }
 };
+
+MockArchiveMountWithBatch::MockArchiveMountWithBatch(cta::catalogue::Catalogue& catalogue)
+    : cta::MockArchiveMount(catalogue) {
+  m_dbMount = std::make_unique<FakeSchedDbArchiveMount>();
+  m_dbMount->mountInfo.drive = "test-drive";
+}
 
 // Exposes cta::ArchiveMount's protected (catalogue, dbMount) constructor so the test can wrap a
 // FakeSchedDbArchiveMount without overriding any of the methods under test - unlike
