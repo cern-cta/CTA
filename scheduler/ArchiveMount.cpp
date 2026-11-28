@@ -378,14 +378,14 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     // FailedReportMoveToQueue, whose fallback path (ArchiveMount::failReportBatch()) leaves the
     // job unreachable by the EOS reporter until garbage collection re-sweeps it - see
     // docs/content/dev/internals/shared-state/scheduler-db/postgresql/failure-handling.md. This
-    // blocks this mount's single worker thread for up to ~11s in the worst case (1s + 10s), which
-    // is an accepted cost for a path that only runs when the scheduler DB is already in trouble.
+    // pauses this mount's report worker for 10s before the first retry and 300s before the second.
+    // The two waits total 310s, excluding the time spent in the DB calls.
     // Scoped to pgsched only: the objectstore backend's own setJobBatchTransferred() has not been
     // reviewed for safe retry (e.g. whether a partial failure could double-apply on a retry) and
     // is out of scope here.
     cta::utils::retryWithBackoff(
       [&] { m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext); },
-      {std::chrono::seconds(1), std::chrono::seconds(10)},
+      {std::chrono::seconds(10), std::chrono::seconds(300)},
       logContext,
       "ArchiveMount::reportJobsBatchTransferred(): setJobBatchTransferred retry");
 #else
