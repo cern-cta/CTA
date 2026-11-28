@@ -65,33 +65,19 @@ RecallReportPacker::RecallReportPacker(cta::RetrieveMount* retrieveMount,
 //Destructor
 //------------------------------------------------------------------------------
 RecallReportPacker::~RecallReportPacker() {
-  // Precondition: the caller must have called waitThread() before letting this object be
-  // destroyed. This destructor does not join the worker thread itself and must not try to - the
-  // worker may still be blocked in m_fifo.pop() waiting for a report that will never come (e.g.
-  // if the caller is destroying this object without ever having sent an end-of-session report),
-  // and joining unconditionally here could hang forever. Under the documented precondition, the
-  // worker thread has already fully exited - via WorkerThread::run()'s own exit path, which now
-  // does its own best-effort final flush of m_failedRetrieveJobs before returning (see run()) -
-  // so by the time this destructor runs there is no concurrent writer left and no locking is
-  // needed to read m_failedRetrieveJobs below. Every statement in this destructor is guarded by
-  // the catch-all below regardless: a destructor must never let an exception escape (it would
-  // call std::terminate). The lock acquisition itself is inside the try for the same reason -
-  // cta::threading::Mutex::lock() can throw on a pthread error.
-  try {
-    cta::threading::MutexLocker ml(m_producterProtection);
+  cta::threading::MutexLocker ml(m_producterProtection);
 #ifdef CTA_PGSCHED
-    // Jobs still sitting here at this point mean WorkerThread::run()'s own exit-path flush (see
-    // run()) never ran either - e.g. the precondition above was violated, or flushFailedJobs()
-    // itself threw something not caught by its own try/catch. Purely informational: this
-    // destructor makes no further attempt to flush, since doing so safely would require exactly
-    // the join this destructor must not perform.
+  // Anything still accumulated here was lost: the caller must waitThread() before destruction,
+  // and WorkerThread::run()'s exit path flushes m_failedRetrieveJobs before returning. Logged
+  // only - flushing from here would need the join this destructor must not do.
+  try {
     if (!m_failedRetrieveJobs.empty()) {
       cta::log::ScopedParamContainer(m_lc)
         .add("failedJobsLostInQueue", m_failedRetrieveJobs.size())
         .log(cta::log::WARNING, "In RecallReportPacker::~RecallReportPacker(): failed jobs lost in queue.");
     }
-#endif
   } catch (...) {}
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -386,12 +372,9 @@ void RecallReportPacker::WorkerThread::run() {
   }
 
 #ifdef CTA_PGSCHED
-  // Exit-path flush, covering every way run() can reach this point. The normal path
-  // (ReportEndofSession::execute()/ReportEndofSessionWithErrors::execute(), both of which already
-  // call flushFailedJobs()) makes this a no-op then. It's still worth calling unconditionally
-  // here as a safety net for any future exit path that doesn't go through one of those two -
-  // still on the worker thread, still with m_retrieveMount valid, so no cross-thread
-  // synchronization is needed, unlike trying to do this from the destructor.
+  // Exit-path flush: a no-op after a normal end-of-session (both end-of-session reports already
+  // flush), but covers any exit that skips them - still on the worker thread with m_retrieveMount
+  // valid, so the accumulator is not silently dropped.
   try {
     m_parent.flushFailedJobs(m_parent.m_lc);
   } catch (...) {
@@ -429,9 +412,7 @@ void RecallReportPacker::WorkerThread::run() {
 //------------------------------------------------------------------------------
 #ifdef CTA_PGSCHED
 void RecallReportPacker::flushFailedJobs(cta::log::LogContext& lc) {
-  // Always runs on the worker thread (called from ReportError::execute() and from
-  // WorkerThread::run()'s own exit path) - no locking needed, same single-writer argument as the
-  // rest of this class's worker-owned state.
+  // Worker-thread only, like all this class's accumulators - no locking needed.
   if (m_failedRetrieveJobs.empty()) {
     return;
   }
@@ -463,12 +444,8 @@ bool RecallReportPacker::completionHasDiagnostics() {
 void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
   m_retrieveMount->setJobBatchTransferred(m_successfulRetrieveJobs, m_lc);
 #ifdef CTA_PGSCHED
-  // Piggyback: flush any accumulated failed jobs whenever we flush successful ones.
-  // The only gap is if failures arrive after the last success flush and before
-  // end-of-session — in that rare case they are held until ReportEndofSession fires,
-  // which is guaranteed. A stalled session that never reaches end-of-session would
-  // not flush failures either, but that scenario also prevents any success flushes,
-  // so there is no asymmetry.
+  // Piggyback: flush accumulated failed jobs whenever successes flush. Failures arriving after
+  // the last success flush are held until the (guaranteed) end-of-session flush.
   flushFailedJobs(m_lc);
 #endif
 }

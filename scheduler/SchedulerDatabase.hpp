@@ -231,16 +231,18 @@ public:
      * @return number of jobs re-queued in the DB
      */
     virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const = 0;
+
+#ifdef CTA_PGSCHED
+    /** Batch-fail transfers; prepareFailTransfer() must have run on each job first. */
     virtual void failTransferBatch(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
 
     /**
-     * Batch-fail reporting for a set of jobs whose catalogue write succeeded but whose
-     * scheduler-DB state update failed (FailedReportMoveToQueue path).
-     * prepareFailReport() must have been called on each job before this call to update
-     * in-memory retry counters and failure logs.
-     * pgsched only — objectstore handles this job by job via failReport().
+     * Batch-fail reporting for jobs whose catalogue write succeeded but whose scheduler-DB
+     * state update failed (FailedReportMoveToQueue path); prepareFailReport() must have run
+     * on each job first.
      */
     virtual void failReportBatch(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
+#endif
 
     virtual ~ArchiveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
@@ -273,14 +275,9 @@ public:
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
 #ifdef CTA_PGSCHED
+    /** In-memory accumulate (failure log + retry counters) for a later failTransferBatch(). */
     virtual void prepareFailTransfer(const std::string& failureReason) = 0;
-
-    /**
-     * Update in-memory report-retry counters and failure log ready for a subsequent
-     * failReportBatch() call.  Called when reportJobsBatchTransferred() throws
-     * FailedReportMoveToQueue: the tape write and catalogue update succeeded, but
-     * the scheduler-DB state update failed.
-     */
+    /** In-memory accumulate (report-failure log + report-retry counter) for a later batch call. */
     virtual void prepareFailReport(const std::string& failureReason) = 0;
 #endif
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
@@ -349,12 +346,8 @@ public:
 
 #ifdef CTA_PGSCHED
   /**
-   * Batch-fail reporting for archive jobs whose user notification failed.
-   * prepareFailReport() must have been called on each job before this call to update
-   * in-memory retry counters and failure logs.
-   * Jobs that have exhausted their report retries (or have NoReportRequired) are moved
-   * to ARCHIVE_FAILED_QUEUE; others are requeued with IS_REPORTING=FALSE.
-   * pgsched only — objectstore handles this job by job via failReport().
+   * Batch-fail EOS/disk-report attempts; prepareFailReport() must have run on each job first.
+   * Report retries exhausted -> ARCHIVE_FAILED_QUEUE; otherwise requeued with IS_REPORTING=FALSE.
    */
   virtual void failArchiveJobBatchReport(std::vector<ArchiveJob*>& batch, log::LogContext& lc) = 0;
 #endif
@@ -662,7 +655,10 @@ public:
     virtual void addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) = 0;
     virtual void
     putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) = 0;
+#ifdef CTA_PGSCHED
+    /** Batch-fail transfers; prepareFailTransfer() must have run on each job first. */
     virtual void failTransferBatch(std::vector<RetrieveJob*>& batch, log::LogContext& lc) = 0;
+#endif
     virtual ~RetrieveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
   };
@@ -692,12 +688,9 @@ public:
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
 #ifdef CTA_PGSCHED
+    /** In-memory accumulate (failure log + retry counters, VID rotation) for failTransferBatch(). */
     virtual void prepareFailTransfer(const std::string& failureReason) = 0;
-
-    /**
-     * Prepares the in-memory job state for batch report-failure handling.
-     * Updates report failure log and increments totalReportRetries without DB access.
-     */
+    /** In-memory accumulate (report-failure log + report-retry counter) for a later batch call. */
     virtual void prepareFailReport(const std::string& failureReason) = 0;
 #endif
     virtual void abort(const std::string& abortReason, log::LogContext& lc) = 0;
@@ -884,12 +877,8 @@ public:
 
 #ifdef CTA_PGSCHED
   /**
-   * Batch-fail reporting for retrieve jobs whose user notification failed.
-   * prepareFailReport() must have been called on each job before this call to update
-   * in-memory retry counters and failure logs.
-   * Jobs that have exhausted their report retries (or have NoReportRequired) are moved
-   * to RETRIEVE_FAILED_QUEUE; others are requeued with IS_REPORTING=FALSE.
-   * pgsched only — objectstore handles this job by job via failReport().
+   * Batch-fail EOS/disk-report attempts; prepareFailReport() must have run on each job first.
+   * Report retries exhausted -> RETRIEVE_FAILED_QUEUE; otherwise requeued with IS_REPORTING=FALSE.
    */
   virtual void failRetrieveJobBatchReport(std::vector<RetrieveJob*>& batch, log::LogContext& lc) = 0;
 #endif

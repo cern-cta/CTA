@@ -201,8 +201,6 @@ uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDs
 #ifdef CTA_PGSCHED
 //------------------------------------------------------------------------------
 // failTransferBatch (high-level ArchiveJob vector overload)
-// Called by MigrationReportPacker::flushFailedJobs() for jobs where tape write
-// or skipped-file failures were accumulated via prepareFailTransfer().
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::failTransferBatch(std::vector<std::unique_ptr<cta::ArchiveJob>>& failedJobs,
                                           cta::log::LogContext& lc) {
@@ -216,11 +214,6 @@ void cta::ArchiveMount::failTransferBatch(std::vector<std::unique_ptr<cta::Archi
 
 //------------------------------------------------------------------------------
 // failTransferBatch (DB-level queue overload)
-// Called from reportSuccessfulJobsBatch()'s FailedReportCatalogueUpdate catch when
-// reportJobsBatchTransferred() could not update the catalogue.  These jobs never
-// reached the catalogue so they are treated exactly like tape-write failures.
-// prepareFailTransfer() is called here to update in-memory retry counters before
-// delegating to the DB-level batch.
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::failTransferBatch(std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
                                           const std::string& failureReason,
@@ -244,10 +237,6 @@ void cta::ArchiveMount::failTransferBatch(std::queue<std::unique_ptr<cta::Schedu
 
 //------------------------------------------------------------------------------
 // failReportBatch (DB-level queue overload)
-// Called from reportSuccessfulJobsBatch()'s FailedReportMoveToQueue catch when
-// the catalogue update succeeded but setJobBatchTransferred() failed.  These jobs
-// are on tape and in the catalogue; the scheduler-DB state update is what failed.
-// prepareFailReport() is called here to update in-memory report-retry counters.
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::failReportBatch(std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& dbJobs,
                                         const std::string& failureReason,
@@ -372,17 +361,12 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     // Reporting to client will be queued if needed and done in another process.
     uint64_t njobs = validatedSuccessfulDBArchiveJobs.size();
 #ifdef CTA_PGSCHED
-    // The catalogue write just above already succeeded, so these files are safely on tape and
-    // catalogued; only this scheduler-DB bookkeeping write is what can still fail. A bounded,
-    // backed-off retry here handles a transient DB blip without escalating to
-    // FailedReportMoveToQueue, whose fallback path (ArchiveMount::failReportBatch()) leaves the
-    // job unreachable by the EOS reporter until garbage collection re-sweeps it - see
-    // docs/content/dev/internals/shared-state/scheduler-db/postgresql/failure-handling.md. This
-    // pauses this mount's report worker for 10s before the first retry and 300s before the second.
-    // The two waits total 310s, excluding the time spent in the DB calls.
-    // Scoped to pgsched only: the objectstore backend's own setJobBatchTransferred() has not been
-    // reviewed for safe retry (e.g. whether a partial failure could double-apply on a retry) and
-    // is out of scope here.
+    // The catalogue write above succeeded, so these files are on tape and catalogued; only this
+    // scheduler-DB bookkeeping write can still fail. Retrying it in place (10s, then 300s - the
+    // report worker blocks for the waits) rides out a transient DB blip without escalating to
+    // FailedReportMoveToQueue, whose fallback (ArchiveMount::failReportBatch()) leaves the job to
+    // the GC sweep - see failure-handling.md. pgsched only: objectstore's own
+    // setJobBatchTransferred() has not been reviewed for safe retry.
     cta::utils::retryWithBackoff(
       [&] { m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext); },
       {std::chrono::seconds(10), std::chrono::seconds(300)},

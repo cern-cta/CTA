@@ -101,16 +101,11 @@ public:
 
 #ifdef CTA_PGSCHED
   /**
-   * Prepares the in-memory job state for batch failure reporting.
-   * Updates failure log and retry counts without touching the DB.
-   * Also rotates the VID if within-mount retries are exhausted.
+   * In-memory accumulate (failure log + retry counters; rotates the VID once within-mount
+   * retries are exhausted); the DB write happens in a later batch.
    */
   virtual void prepareFailTransfer(const std::string& failureReason);
-
-  /**
-   * Prepares the in-memory job state for batch report-failure handling.
-   * Updates report failure log and increments totalReportRetries without DB access.
-   */
+  /** In-memory accumulate (report-failure log + report-retry counter) for a later batch call. */
   virtual void prepareFailReport(const std::string& failureReason);
 #endif
 

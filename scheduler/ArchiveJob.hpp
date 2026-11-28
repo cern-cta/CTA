@@ -104,17 +104,9 @@ public:
   virtual void transferFailed(const std::string& failureReason, log::LogContext& lc);
 
 #ifdef CTA_PGSCHED
-  /**
-   * Updates retry counters and failure log in-memory without touching the DB.
-   * Called at accumulate time when batching failures; the DB write happens later
-   * via ArchiveMount::failTransferBatch().
-   */
+  /** In-memory accumulate (failure log + retry counters); the DB write happens in a later batch. */
   virtual void prepareFailTransfer(const std::string& failureReason);
-
-  /**
-   * Prepares the in-memory job state for batch report-failure handling.
-   * Updates report failure log and increments totalReportRetries without DB access.
-   */
+  /** In-memory accumulate (report-failure log + report-retry counter) for a later batch call. */
   virtual void prepareFailReport(const std::string& failureReason);
 #endif
 

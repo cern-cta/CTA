@@ -251,6 +251,7 @@ public:
 
   uint64_t requeueJobBatch(const std::list<std::string>&, cta::log::LogContext&) const override { return 0; }
 
+#ifdef CTA_PGSCHED
   void failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, cta::log::LogContext& lc) override {
     (void) batch;
     (void) lc;
@@ -260,6 +261,7 @@ public:
     (void) batch;
     (void) lc;
   }
+#endif  // CTA_PGSCHED
 };
 
 template<typename Base>

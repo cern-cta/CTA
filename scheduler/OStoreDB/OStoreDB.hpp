@@ -219,14 +219,6 @@ public:
       throw cta::exception::NotImplementedException();
     }
 
-    void failTransferBatch(std::vector<SchedulerDatabase::ArchiveJob*>&, log::LogContext&) override {
-      throw cta::exception::NotImplementedException();
-    }
-
-    void failReportBatch(std::vector<SchedulerDatabase::ArchiveJob*>&, log::LogContext&) override {
-      throw cta::exception::NotImplementedException();
-    }
-
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -326,10 +318,6 @@ public:
     void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                 log::LogContext& lc) override {
       throw cta::exception::NotImplementedException("For RelationalDB compatibility only");
-    }
-
-    void failTransferBatch(std::vector<cta::SchedulerDatabase::RetrieveJob*>&, cta::log::LogContext&) override {
-      throw cta::exception::NotImplementedException();
     }
   };
   friend class RetrieveMount;

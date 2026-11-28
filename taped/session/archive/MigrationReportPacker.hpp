@@ -257,18 +257,15 @@ private:
 #ifdef CTA_PGSCHED
   static constexpr size_t c_failedJobsBatchMax = 600;
 
-  // Accumulator: jobs with in-memory state already updated by prepareFailTransfer(). Only ever
-  // touched by the worker thread (no lock needed) - see WorkerThread::run() for the exit-path
-  // flush that keeps it from being silently dropped if the main loop ends abnormally, and
-  // ~MigrationReportPacker() for the documented waitThread()-before-destruction precondition
-  // that makes it safe to read without locking by the time the destructor runs.
+  // Accumulator for prepareFailTransfer()'d jobs. Worker-thread only (no lock needed);
+  // WorkerThread::run()'s exit path flushes it on every way out of the main loop.
   std::vector<std::unique_ptr<cta::ArchiveJob>> m_failedArchiveJobs;
 
   void flushFailedJobs(cta::log::LogContext& lc);
-#endif
 
   // Report m_successfulArchiveJobs and m_skippedFiles to the mount. No-op if both are empty.
   void reportSuccessfulJobsBatch(cta::log::LogContext& lc);
+#endif
 };
 
 }  // namespace cta::tape::daemon
