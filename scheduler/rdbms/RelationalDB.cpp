@@ -1815,23 +1815,6 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
       }
       jobSrcUrls.insert(batch_rset.columnStringNoOpt("SRC_URL"));
     }
-    if (!destArchivedMap.empty()) {
-      std::vector<uint64_t> destReqIds;
-      std::vector<std::string> destVids;
-      std::vector<uint64_t> destArCnts;
-      std::vector<uint64_t> destArBytes;
-      for (const auto& [key, val] : destArchivedMap) {
-        destReqIds.emplace_back(key.first);
-        destVids.emplace_back(key.second);
-        destArCnts.emplace_back(val.first);
-        destArBytes.emplace_back(val.second);
-      }
-      schedulerdb::postgres::RepackRequestTrackingRow::upsertDestinationStatistics(txn,
-                                                                                   destReqIds,
-                                                                                   destVids,
-                                                                                   destArCnts,
-                                                                                   destArBytes);
-    }
     for (const auto& [reqId, count] : summaryFlCountMap) {
       rrIDs.emplace_back(reqId);
       flcnts.emplace_back(count);
@@ -1859,6 +1842,27 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
                                                                                                              arcnts,
                                                                                                              arbytes,
                                                                                                              false);
+    // Strictly after the tracking-row locks above: the lock-order rule is REPACK_REQUEST_TRACKING
+    // before REPACK_REQUEST_DESTINATION_STATISTICS, shared with updateRepackRequestsProgress() -
+    // see that function's pre-lock. Upserting the destination rows first deadlocks (40P01) against
+    // a concurrent success batch holding the tracking row and waiting on the same destination row.
+    if (!destArchivedMap.empty()) {
+      std::vector<uint64_t> destReqIds;
+      std::vector<std::string> destVids;
+      std::vector<uint64_t> destArCnts;
+      std::vector<uint64_t> destArBytes;
+      for (const auto& [key, val] : destArchivedMap) {
+        destReqIds.emplace_back(key.first);
+        destVids.emplace_back(key.second);
+        destArCnts.emplace_back(val.first);
+        destArBytes.emplace_back(val.second);
+      }
+      schedulerdb::postgres::RepackRequestTrackingRow::upsertDestinationStatistics(txn,
+                                                                                   destReqIds,
+                                                                                   destVids,
+                                                                                   destArCnts,
+                                                                                   destArBytes);
+    }
     txn.setRowCountForTelemetry(nrows + counterRows);
     txn.commit();
     log::ScopedParamContainer(lc)

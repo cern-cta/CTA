@@ -547,6 +547,12 @@ struct RepackRequestTrackingRow {
    * UPSERT_DEST for the successful sibling copies the failure sweep moves: those rows are
    * credited to the request-wide ARCHIVED_FILES by updateRepackRequestFailuresBatch(), and
    * without this the per-tape breakdown would disagree with that aggregate.
+   *
+   * Lock order: the caller's transaction must already hold the requests' REPACK_REQUEST_TRACKING
+   * row locks (updateRepackRequestFailuresBatch() takes them) - the rule everywhere is tracking
+   * row before destination rows, or this upsert deadlocks against a concurrent
+   * updateRepackRequestsProgress() holding the tracking row and waiting on the same
+   * destination row.
    */
   static uint64_t upsertDestinationStatistics(Transaction& txn,
                                               const std::vector<uint64_t>& reqIds,

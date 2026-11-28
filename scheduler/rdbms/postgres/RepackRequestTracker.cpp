@@ -9,6 +9,8 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 #include "scheduler/rdbms/postgres/CommonQueueUtils.hpp"
 
+#include <set>
+
 namespace cta::schedulerdb::postgres {
 
 uint64_t RepackRequestTrackingRow::cancelRepack(Transaction& txn, const std::string& vid) {
@@ -129,6 +131,40 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& 
   if (updates.empty()) {
     rdbms::Rset rset;
     return rset;
+  }
+
+  // Lock the tracking rows first, sorted, in their own statement. This is the lock-order rule
+  // shared with the failure sweep (REPACK_REQUEST_TRACKING before
+  // REPACK_REQUEST_DESTINATION_STATISTICS): inside the combined statement below PostgreSQL gives
+  // NO ordering guarantee between the UPSERT_DEST data-modifying CTE and the tracking UPDATE, so
+  // without this pre-lock one transaction could take a destination row first while a concurrent
+  // sweep of the same request holds the tracking row and waits on that same destination row - an
+  // AB-BA deadlock PostgreSQL resolves by aborting one batch (40P01).
+  {
+    std::set<uint64_t> reqIds;
+    for (const auto& u : updates) {
+      reqIds.insert(u.reqId);
+    }
+    std::string ids;
+    for (size_t i = 0; i < reqIds.size(); ++i) {
+      if (i > 0) {
+        ids += ",";
+      }
+      ids += ":LOCK_REQID" + std::to_string(i);
+    }
+    auto lockStmt = txn.getConn().createStmt("SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING "
+                                             "WHERE REPACK_REQUEST_ID IN ("
+                                             + ids + ") ORDER BY REPACK_REQUEST_ID FOR NO KEY UPDATE");
+    size_t i = 0;
+    for (const auto& reqId : reqIds) {
+      lockStmt.bindUint64(":LOCK_REQID" + std::to_string(i), reqId);
+      ++i;
+    }
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbLock);
+    auto lockRset = lockStmt.executeQuery();
+    while (lockRset.next()) {
+      // Draining is the point - nothing to do with each row.
+    }
   }
 
   // Build SQL with placeholders for each row

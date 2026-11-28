@@ -2267,6 +2267,187 @@ TEST_P(RelationalDBTest, repackProgressBatchLocksTrackingRowsInRequestIdOrder) {
   }
 }
 
+// The failure sweep and the success batch both touch the same REPACK_REQUEST_TRACKING row and -
+// for a swept successful sibling - the same REPACK_REQUEST_DESTINATION_STATISTICS row. PostgreSQL
+// gives no ordering guarantee for the success path's UPSERT_DEST data-modifying CTE relative to
+// its tracking UPDATE, so both paths take the tracking-row lock explicitly FIRST and only then
+// touch destination rows. This test holds the tracking row from a second connection while the
+// failure sweep runs: the sweep must block on the tracking row WITHOUT already holding the
+// destination row - holding it (an upsert-first order) is exactly the AB-BA half that deadlocks
+// (40P01) against a success batch holding tracking and waiting on that same destination row.
+TEST_P(RelationalDBTest, repackFailureSweepTakesTrackingLockBeforeDestinationStatistics) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-DESTLOCK-SRC";
+  auto mountPolicy = makeMountPolicy(1000);
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest(
+    vid,
+    "/repack/buffer",
+    cta::common::dataStructures::RepackInfo::Type::MoveAndAddCopies,
+    mountPolicy,
+    false,
+    10);
+  repackRequest.m_creationLog = {"user", "host", 1000};
+  db.queueRepack(repackRequest, lc);
+  const uint64_t reqId = getRepackRequestId(db.getRelationalDB(), vid);
+
+  const std::string destVid = "V-DESTLOCK-DST";
+  constexpr uint64_t archiveFileId = 995101;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // Pre-existing destination row, so the sweep's upsert takes the ON CONFLICT DO UPDATE row
+    // lock on it rather than only inserting.
+    {
+      auto stmt = conn.createStmt(R"SQL(
+        INSERT INTO REPACK_REQUEST_DESTINATION_STATISTICS (REPACK_REQUEST_ID, VID, ARCHIVED_FILES, ARCHIVED_BYTES)
+        VALUES (:REQID, :VID, 1, 1000)
+      )SQL");
+      stmt.bindUint64(":REQID", reqId);
+      stmt.bindString(":VID", destVid);
+      stmt.executeNonQuery();
+    }
+    // A complete mixed-outcome group, ready for the sweep: copy 1 failed terminally, copy 2
+    // reached its destination tape (destVid).
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO REPACK_ARCHIVE_ACTIVE_QUEUE (
+        REPACK_REQUEST_ID, ARCHIVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, TAPE_POOL, MOUNT_POLICY,
+        PRIORITY, MIN_ARCHIVE_REQUEST_AGE, ARCHIVE_FILE_ID, SIZE_IN_BYTES, COPY_NB, START_TIME,
+        CREATION_TIME, SRC_URL, STORAGE_CLASS, VID
+      ) VALUES
+      (:REQID, :AREQID, 2, :STATUS_FAILED, 'destLockPool', 'mountPolicy', 1, 0, :AFID, 1000, 1,
+       500, 500, :SRC_URL, 'storageClass', :VID_FAILED),
+      (:REQID2, :AREQID2, 2, :STATUS_OK, 'destLockPool', 'mountPolicy', 1, 0, :AFID2, 1000, 2,
+       500, 500, :SRC_URL2, 'storageClass', :VID_OK)
+    )SQL");
+    stmt.bindUint64(":REQID", reqId);
+    stmt.bindUint64(":REQID2", reqId);
+    stmt.bindUint64(":AREQID", archiveFileId);
+    stmt.bindUint64(":AREQID2", archiveFileId);
+    stmt.bindString(":STATUS_FAILED",
+                    cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForFailure));
+    stmt.bindString(":STATUS_OK", cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
+    stmt.bindUint64(":AFID", archiveFileId);
+    stmt.bindUint64(":AFID2", archiveFileId);
+    stmt.bindString(":SRC_URL", "root://disk/destlock");
+    stmt.bindString(":SRC_URL2", "root://disk/destlock");
+    stmt.bindString(":VID_FAILED", vid);
+    stmt.bindString(":VID_OK", destVid);
+    stmt.executeNonQuery();
+  }
+
+  // Connection 1 plays the success batch's first step under the shared lock-order rule: hold the
+  // tracking row. Its backend pid identifies it as the blocker below.
+  auto conn1 = db.getRelationalDB().getConn();
+  conn1.executeNonQuery("BEGIN");
+  uint64_t conn1Pid = 0;
+  {
+    auto stmt = conn1.createStmt("SELECT PG_BACKEND_PID() AS PID");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    conn1Pid = rset.columnUint64("PID");
+  }
+  {
+    auto stmt = conn1.createStmt(
+      "SELECT REPACK_REQUEST_ID FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :ID FOR NO KEY UPDATE");
+    stmt.bindUint64(":ID", reqId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+  }
+
+  // The failure sweep: moves the group, then must block on the tracking row held by conn1 before
+  // it touches the destination row. catch (...) so an unexpected exception fails this test via
+  // the state checks below instead of escaping the thread and std::terminate()ing the binary.
+  std::thread worker([&db] {
+    try {
+      auto workerLogger = makeLogger();
+      cta::log::LogContext workerLc(*workerLogger);
+      db.getNextFailedArchiveRepackReportBatch(workerLc);
+    } catch (...) {}
+  });
+
+  // Wait until a session blocked BY conn1 sits in a row-lock wait - same technique as
+  // repackProgressBatchLocksTrackingRowsInRequestIdOrder above (fresh autocommit connection,
+  // pg_blocking_pids scoped to our blocker).
+  bool sawLockWait = false;
+  {
+    auto pollConn = db.getRelationalDB().getConn();
+    for (int i = 0; i < 100 && !sawLockWait; i++) {
+      auto stmt = pollConn.createStmt("SELECT COUNT(*) AS C FROM PG_STAT_ACTIVITY "
+                                      "WHERE WAIT_EVENT_TYPE = 'Lock' "
+                                      "AND CAST(:BLOCKER_PID AS INTEGER) = ANY(PG_BLOCKING_PIDS(PID))");
+      stmt.bindUint64(":BLOCKER_PID", conn1Pid);
+      auto rset = stmt.executeQuery();
+      rset.next();
+      sawLockWait = rset.columnUint64("C") > 0;
+      if (!sawLockWait) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      }
+    }
+  }
+
+  // While the sweep waits on the tracking row it must NOT already hold the destination row: the
+  // success batch (which holds tracking, like conn1 here) takes it next, and NOWAIT proves it is
+  // free. A sweep that upserted the destination row before locking tracking makes this probe
+  // throw lock_not_available - the AB-BA deadlock this test guards against.
+  bool destRowWasFree = false;
+  if (sawLockWait) {
+    try {
+      auto stmt = conn1.createStmt("SELECT ARCHIVED_FILES FROM REPACK_REQUEST_DESTINATION_STATISTICS "
+                                   "WHERE REPACK_REQUEST_ID = :ID AND VID = :VID FOR UPDATE NOWAIT");
+      stmt.bindUint64(":ID", reqId);
+      stmt.bindString(":VID", destVid);
+      auto rset = stmt.executeQuery();
+      destRowWasFree = rset.next();
+    } catch (...) {
+      destRowWasFree = false;
+    }
+  }
+
+  conn1.rollback();  // also clears any aborted-transaction state a failed NOWAIT probe left
+  worker.join();
+
+  ASSERT_TRUE(sawLockWait);
+  EXPECT_TRUE(destRowWasFree) << "the failure sweep held the destination-statistics row while waiting on the "
+                                 "tracking row - destination rows must only be touched after the tracking lock";
+
+  // The sweep then completed normally: group moved whole, counters bucketed per copy, and the
+  // swept successful copy's destination credit added onto the pre-existing row (1 + 1). A
+  // deadlock-aborted batch would leave all of this missing.
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_ARCHIVE_FAILED_QUEUE WHERE ARCHIVE_FILE_ID = :AFID");
+    stmt.bindUint64(":AFID", archiveFileId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("C"));
+  }
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT ARCHIVED_FILES, FAILED_TO_ARCHIVE_FILES FROM REPACK_REQUEST_TRACKING "
+                                "WHERE REPACK_REQUEST_ID = :REQID");
+    stmt.bindUint64(":REQID", reqId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("ARCHIVED_FILES"));
+    ASSERT_EQ(1u, rset.columnUint64("FAILED_TO_ARCHIVE_FILES"));
+  }
+  {
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt("SELECT ARCHIVED_FILES, ARCHIVED_BYTES FROM REPACK_REQUEST_DESTINATION_STATISTICS "
+                                "WHERE REPACK_REQUEST_ID = :REQID AND VID = :VID");
+    stmt.bindUint64(":REQID", reqId);
+    stmt.bindString(":VID", destVid);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(2u, rset.columnUint64("ARCHIVED_FILES"));
+    ASSERT_EQ(2000u, rset.columnUint64("ARCHIVED_BYTES"));
+  }
+}
+
 // Covers the BATCH equivalent of repackArchiveBookkeepingReportFailureRecoversMultiCopyCorrectly:
 // ArchiveMount::failReportBatch() -> ArchiveJobQueueRow::failReportBatchExceedRetries(isRepack=true)
 // must route repack jobs through updateRepackJobSuccess() exactly like the single-job
