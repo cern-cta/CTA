@@ -301,6 +301,52 @@ uint64_t RepackRequestTrackingRow::updateRRRetrieveCreationFailures(Transaction&
   return stmt.getNbAffectedRows();
 }
 
+uint64_t RepackRequestTrackingRow::upsertDestinationStatistics(Transaction& txn,
+                                                               const std::vector<uint64_t>& reqIds,
+                                                               const std::vector<std::string>& vids,
+                                                               const std::vector<uint64_t>& archivedFiles,
+                                                               const std::vector<uint64_t>& archivedBytes) {
+  if (reqIds.empty()) {
+    return 0;
+  }
+  if (reqIds.size() != vids.size() || reqIds.size() != archivedFiles.size() || reqIds.size() != archivedBytes.size()) {
+    throw cta::exception::Exception(
+      "In RepackRequestTrackingRow::upsertDestinationStatistics(): Input vector size mismatch.");
+  }
+  std::string sql = "WITH DEST_TABLE (REPACK_REQUEST_ID, VID, ARCHIVED_FILES, ARCHIVED_BYTES) AS (VALUES ";
+  for (size_t i = 0; i < reqIds.size(); ++i) {
+    if (i > 0) {
+      sql += ",";
+    }
+    const std::string idx = std::to_string(i);
+    sql += "(:REQID" + idx + "::BIGINT, :DEST_VID" + idx + "::TEXT, :ARCH_FILES" + idx + "::BIGINT, :ARCH_BYTES" + idx
+           + "::BIGINT)";
+  }
+  sql += R"SQL(
+    )
+    INSERT INTO REPACK_REQUEST_DESTINATION_STATISTICS (REPACK_REQUEST_ID, VID, ARCHIVED_FILES, ARCHIVED_BYTES)
+    SELECT REPACK_REQUEST_ID, VID, ARCHIVED_FILES, ARCHIVED_BYTES
+    FROM DEST_TABLE
+    -- Consistent upsert (and so row-lock) order across concurrent batches, matching
+    -- updateRepackRequestsProgress()'s UPSERT_DEST.
+    ORDER BY REPACK_REQUEST_ID, VID
+    ON CONFLICT (REPACK_REQUEST_ID, VID) DO UPDATE
+    SET ARCHIVED_FILES = REPACK_REQUEST_DESTINATION_STATISTICS.ARCHIVED_FILES + EXCLUDED.ARCHIVED_FILES,
+        ARCHIVED_BYTES = REPACK_REQUEST_DESTINATION_STATISTICS.ARCHIVED_BYTES + EXCLUDED.ARCHIVED_BYTES
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  for (size_t i = 0; i < reqIds.size(); ++i) {
+    const std::string idx = std::to_string(i);
+    stmt.bindUint64(":REQID" + idx, reqIds[i]);
+    stmt.bindString(":DEST_VID" + idx, vids[i]);
+    stmt.bindUint64(":ARCH_FILES" + idx, archivedFiles[i]);
+    stmt.bindUint64(":ARCH_BYTES" + idx, archivedBytes[i]);
+  }
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRepackProgress);
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+}
+
 uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction& txn,
                                                                     const std::vector<uint64_t>& reqIds,
                                                                     const std::vector<uint64_t>& failedFiles,

@@ -984,19 +984,27 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
         GROUP BY REPACK_REQUEST_ID, ARCHIVE_FILE_ID
         HAVING COUNT(*) >= MAX(REQUEST_JOB_COUNT)
     ),
+    -- The delete set as explicit JOB_IDs, so the DELETE is a plain PK join. An OR of two
+    -- EXISTS probes here instead forces a full scan of REPACK_ARCHIVE_ACTIVE_QUEUE per sweep
+    -- call. A complete group's rows are by definition all settled and locked, so
+    -- locked_multi_siblings already holds exactly the rows to move.
+    doomed AS (
+        SELECT JOB_ID FROM single_copy_candidates
+        UNION ALL
+        SELECT ls.JOB_ID
+        FROM locked_multi_siblings ls
+        JOIN complete_multi_groups g
+          ON g.REPACK_REQUEST_ID = ls.REPACK_REQUEST_ID AND g.ARCHIVE_FILE_ID = ls.ARCHIVE_FILE_ID
+    ),
     MOVED_ROWS AS (
         DELETE FROM REPACK_ARCHIVE_ACTIVE_QUEUE aq
-        WHERE EXISTS (SELECT 1 FROM single_copy_candidates c WHERE c.JOB_ID = aq.JOB_ID)
-           OR EXISTS (
-                SELECT 1 FROM complete_multi_groups g
-                WHERE g.ARCHIVE_FILE_ID = aq.ARCHIVE_FILE_ID
-                  AND g.REPACK_REQUEST_ID = aq.REPACK_REQUEST_ID
-              )
-        RETURNING *
+        USING doomed d
+        WHERE aq.JOB_ID = d.JOB_ID
+        RETURNING aq.*
     )
     INSERT INTO REPACK_ARCHIVE_FAILED_QUEUE
         SELECT * FROM MOVED_ROWS
-        RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL, STATUS
+        RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL, STATUS, VID
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   // :LIMIT and :LIMIT2 are the same batch size, bound separately per this file's convention of

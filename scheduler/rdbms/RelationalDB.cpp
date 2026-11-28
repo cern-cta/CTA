@@ -28,8 +28,10 @@
 
 #include <charconv>
 #include <chrono>
+#include <map>
 #include <mutex>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace cta {
@@ -1787,6 +1789,10 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
      * makes the partial outcome inspectable. Only the accounting distinguishes them.
      */
     const std::string statusArchived = to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
+    // Per-(request, destination VID) archived counts for the swept successful siblings: the
+    // request-wide ARCHIVED_FILES credit below must agree with the per-tape breakdown in
+    // REPACK_REQUEST_DESTINATION_STATISTICS, which only the success path fed until now.
+    std::map<std::pair<uint64_t, std::string>, std::pair<uint64_t, uint64_t>> destArchivedMap;
     while (batch_rset.next()) {
       uint64_t reqId = batch_rset.columnUint64NoOpt("REPACK_REQUEST_ID");
       const uint64_t sizeInBytes = batch_rset.columnUint64NoOpt("SIZE_IN_BYTES");
@@ -1797,11 +1803,34 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
         // even if every copy it contributed to this batch had succeeded.
         summaryFlCountMap.try_emplace(reqId, 0);
         summaryFlBytesMap.try_emplace(reqId, 0);
+        const auto destVid = batch_rset.columnOptionalString("VID");
+        if (destVid.has_value() && !destVid.value().empty()) {
+          auto& [cnt, bytes] = destArchivedMap[{reqId, destVid.value()}];
+          cnt += 1;
+          bytes += sizeInBytes;
+        }
       } else {
         summaryFlCountMap[reqId] += 1;
         summaryFlBytesMap[reqId] += sizeInBytes;
       }
       jobSrcUrls.insert(batch_rset.columnStringNoOpt("SRC_URL"));
+    }
+    if (!destArchivedMap.empty()) {
+      std::vector<uint64_t> destReqIds;
+      std::vector<std::string> destVids;
+      std::vector<uint64_t> destArCnts;
+      std::vector<uint64_t> destArBytes;
+      for (const auto& [key, val] : destArchivedMap) {
+        destReqIds.emplace_back(key.first);
+        destVids.emplace_back(key.second);
+        destArCnts.emplace_back(val.first);
+        destArBytes.emplace_back(val.second);
+      }
+      schedulerdb::postgres::RepackRequestTrackingRow::upsertDestinationStatistics(txn,
+                                                                                   destReqIds,
+                                                                                   destVids,
+                                                                                   destArCnts,
+                                                                                   destArBytes);
     }
     for (const auto& [reqId, count] : summaryFlCountMap) {
       rrIDs.emplace_back(reqId);

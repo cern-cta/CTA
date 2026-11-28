@@ -540,6 +540,19 @@ struct RepackRequestTrackingRow {
                                                    const std::vector<uint64_t>& archivedFiles,
                                                    const std::vector<uint64_t>& archivedBytes,
                                                    bool isRetrieve);
+
+  /**
+   * Credit per-destination-tape archived counts in REPACK_REQUEST_DESTINATION_STATISTICS,
+   * one entry per (reqIds[i], vids[i]) pair. Mirrors updateRepackRequestsProgress()'s
+   * UPSERT_DEST for the successful sibling copies the failure sweep moves: those rows are
+   * credited to the request-wide ARCHIVED_FILES by updateRepackRequestFailuresBatch(), and
+   * without this the per-tape breakdown would disagree with that aggregate.
+   */
+  static uint64_t upsertDestinationStatistics(Transaction& txn,
+                                              const std::vector<uint64_t>& reqIds,
+                                              const std::vector<std::string>& vids,
+                                              const std::vector<uint64_t>& archivedFiles,
+                                              const std::vector<uint64_t>& archivedBytes);
 };
 
 }  // namespace cta::schedulerdb::postgres
