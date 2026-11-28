@@ -2448,6 +2448,134 @@ TEST_P(RelationalDBTest, repackFailureSweepTakesTrackingLockBeforeDestinationSta
   }
 }
 
+// Inserts a user archive job sitting in ARCHIVE_ACTIVE_QUEUE at its transfer status, owned by a
+// mount - the shape a crashed mount session leaves behind for the dead-mount GC.
+void insertUserArchiveActiveJob(cta::rdbms::Conn& conn,
+                                uint64_t jobId,
+                                uint64_t mountId,
+                                uint64_t archiveFileId,
+                                const std::string& vid,
+                                const std::string& diskFileId) {
+  auto stmt = conn.createStmt(R"SQL(
+    INSERT INTO ARCHIVE_ACTIVE_QUEUE (
+      JOB_ID, ARCHIVE_REQUEST_ID, REQUEST_JOB_COUNT, STATUS, TAPE_POOL, MOUNT_POLICY,
+      PRIORITY, MIN_ARCHIVE_REQUEST_AGE, ARCHIVE_FILE_ID, SIZE_IN_BYTES, COPY_NB, START_TIME,
+      CREATION_TIME, SRC_URL, STORAGE_CLASS, VID, DISK_INSTANCE, DISK_FILE_ID, MOUNT_ID,
+      IS_REPORTING
+    ) VALUES (
+      :JOB_ID, :ARCHIVE_REQUEST_ID, 1, :STATUS, 'orphanPool', 'mountPolicy',
+      1, 0, :ARCHIVE_FILE_ID, 1000, 1, 500,
+      500, 'root://disk/orphan', 'storageClass', :VID, 'orphanDiskInstance', :DISK_FILE_ID, :MOUNT_ID,
+      FALSE
+    )
+  )SQL");
+  stmt.bindUint64(":JOB_ID", jobId);
+  stmt.bindUint64(":ARCHIVE_REQUEST_ID", archiveFileId);
+  stmt.bindString(":STATUS", cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser));
+  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+  stmt.bindString(":VID", vid);
+  stmt.bindString(":DISK_FILE_ID", diskFileId);
+  stmt.bindUint64(":MOUNT_ID", mountId);
+  stmt.executeNonQuery();
+}
+
+// A dead mount's archive job whose tape write already reached the catalogue must have its
+// completion REPLAYED (-> AJS_ToReportToUserForSuccess, picked up by the EOS reporter), not be
+// requeued for a second tape write the catalogue would reject. This drives the transactional half
+// (rescueOrphanedArchiveJobs) with the catalogue verdict supplied directly: the catalogue lookup
+// itself is a thin, batched getArchiveFilesItor() call that the dummy catalogue cannot serve.
+TEST_P(RelationalDBTest, archiveDeadMountRescueCompletesCataloguedCopyAndRequeuesTheRest) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  constexpr uint64_t deadMountId = 777001;
+  constexpr uint64_t jobCatalogued = 910001;  // write reached the catalogue - replay completion
+  constexpr uint64_t jobLost = 910002;        // write never happened - requeue for a new transfer
+  constexpr uint64_t jobMismatched = 910003;  // copy catalogued on ANOTHER tape - defer, operator's call
+  {
+    auto conn = db.getRelationalDB().getConn();
+    insertUserArchiveActiveJob(conn, jobCatalogued, deadMountId, 981001, "V-ORPHAN-1", "df-981001");
+    insertUserArchiveActiveJob(conn, jobLost, deadMountId, 981002, "V-ORPHAN-1", "df-981002");
+    insertUserArchiveActiveJob(conn, jobMismatched, deadMountId, 981003, "V-ORPHAN-1", "df-981003");
+  }
+
+  // The lock-free identity fetch feeds the catalogue lookup with everything it needs.
+  auto identities = db.getRelationalDB().fetchOrphanedArchiveJobIdentities({deadMountId}, 100, false, lc);
+  ASSERT_EQ(3u, identities.size());
+  ASSERT_EQ(jobCatalogued, identities.front().jobId);
+  ASSERT_EQ(981001u, identities.front().archiveFileId);
+  ASSERT_EQ(1u, identities.front().copyNb);
+  ASSERT_EQ("V-ORPHAN-1", identities.front().vid);
+  ASSERT_EQ("orphanDiskInstance", identities.front().diskInstance);
+  ASSERT_EQ("df-981001", identities.front().diskFileId);
+
+  const uint64_t njobs =
+    db.getRelationalDB().rescueOrphanedArchiveJobs({deadMountId}, {jobCatalogued}, {jobMismatched}, 100, false, lc);
+  ASSERT_EQ(3u, njobs);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    // Confirmed copy: completion replayed in place, reportable by the EOS reporter.
+    auto stmt = conn.createStmt("SELECT STATUS, IS_REPORTING FROM ARCHIVE_ACTIVE_QUEUE WHERE JOB_ID = :JOB_ID");
+    stmt.bindUint64(":JOB_ID", jobCatalogued);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForSuccess),
+              rset.columnString("STATUS"));
+    ASSERT_FALSE(rset.columnBool("IS_REPORTING"));
+  }
+  {
+    // Lost copy: requeued for a fresh transfer on a new mount, exactly as before.
+    auto stmt = conn.createStmt("SELECT STATUS, MOUNT_ID FROM ARCHIVE_PENDING_QUEUE WHERE JOB_ID = :JOB_ID");
+    stmt.bindUint64(":JOB_ID", jobLost);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser), rset.columnString("STATUS"));
+    ASSERT_FALSE(rset.columnOptionalUint64("MOUNT_ID").has_value());
+  }
+  {
+    // Mismatched copy: untouched, still parked on the dead mount for the next pass / operator.
+    auto stmt = conn.createStmt("SELECT STATUS, MOUNT_ID FROM ARCHIVE_ACTIVE_QUEUE WHERE JOB_ID = :JOB_ID");
+    stmt.bindUint64(":JOB_ID", jobMismatched);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser), rset.columnString("STATUS"));
+    ASSERT_EQ(deadMountId, rset.columnUint64("MOUNT_ID"));
+  }
+}
+
+// With a catalogue backend that cannot serve tape-file lookups (the dummy catalogue used here
+// throws NotImplementedException), the dead-mount GC must fall back to the plain requeue of old -
+// nothing can be catalogued on such a backend, so there is nothing to protect.
+TEST_P(RelationalDBTest, archiveDeadMountGcWithoutCatalogueLookupStillRequeues) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  constexpr uint64_t deadMountId = 777002;
+  constexpr uint64_t jobId = 910011;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    insertUserArchiveActiveJob(conn, jobId, deadMountId, 981011, "V-ORPHAN-2", "df-981011");
+  }
+
+  const uint64_t njobs = db.getRelationalDB().handleInactiveMountActiveQueues({deadMountId}, 100, true, false, lc);
+  ASSERT_EQ(1u, njobs);
+
+  auto conn = db.getRelationalDB().getConn();
+  auto stmt = conn.createStmt("SELECT STATUS, MOUNT_ID FROM ARCHIVE_PENDING_QUEUE WHERE JOB_ID = :JOB_ID");
+  stmt.bindUint64(":JOB_ID", jobId);
+  auto rset = stmt.executeQuery();
+  ASSERT_TRUE(rset.next());
+  ASSERT_EQ(cta::to_string(cta::schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser), rset.columnString("STATUS"));
+  ASSERT_FALSE(rset.columnOptionalUint64("MOUNT_ID").has_value());
+}
+
 // Covers the BATCH equivalent of repackArchiveBookkeepingReportFailureRecoversMultiCopyCorrectly:
 // ArchiveMount::failReportBatch() -> ArchiveJobQueueRow::failReportBatchExceedRetries(isRepack=true)
 // must route repack jobs through updateRepackJobSuccess() exactly like the single-job

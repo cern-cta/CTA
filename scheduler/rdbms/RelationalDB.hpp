@@ -464,6 +464,61 @@ public:
                                            log::LogContext& lc);
 
   /**
+   * Identity of an orphaned archive job (dead mount, still at its transfer status) - everything
+   * needed to check the catalogue for a tape write whose scheduler bookkeeping was lost.
+   */
+  struct OrphanedArchiveJobIdentity {
+    uint64_t jobId = 0;
+    uint64_t archiveFileId = 0;
+    uint32_t copyNb = 0;
+    std::string vid;
+    std::string diskInstance;
+    std::string diskFileId;
+    uint32_t requestJobCount = 1;
+  };
+
+  /**
+   * Plain, lock-free read of the dead mounts' archive jobs still at their transfer status
+   * (IS_REPORTING FALSE), with the columns needed to reconcile them against the catalogue.
+   * Runs outside any transaction so the later catalogue lookup never holds scheduler row locks.
+   */
+  std::vector<OrphanedArchiveJobIdentity> fetchOrphanedArchiveJobIdentities(const std::vector<uint64_t>& deadMountIds,
+                                                                            size_t batchSize,
+                                                                            bool isRepack,
+                                                                            log::LogContext& lc);
+
+  /**
+   * Batched catalogue check for orphaned archive jobs: one set-based getArchiveFilesItor() query
+   * per disk instance (keyed on the jobs' DISK_FILE_IDs), not one per job. Returns the JOB_IDs
+   * whose (ARCHIVE_FILE_ID, COPY_NB, VID) is already in the catalogue - the tape write happened
+   * and only the scheduler bookkeeping was lost. A copy found on a DIFFERENT tape goes into
+   * mismatchedJobIds instead: re-writing it would be rejected by the catalogue, but completing it
+   * against another mount's write is not this mount's call - it is left alone and logged.
+   */
+  std::set<uint64_t> lookupCataloguedOrphanCopies(const std::vector<OrphanedArchiveJobIdentity>& candidates,
+                                                  std::set<uint64_t>& mismatchedJobIds,
+                                                  log::LogContext& lc);
+
+  /**
+   * The transactional half of the archive dead-mount rescue. Jobs in confirmedJobIds replay the
+   * scheduler completion transition (single-copy -> AJS_ToReportToUserForSuccess, multi-copy ->
+   * updateMultiCopyJobSuccess(), repack -> updateRepackJobSuccess() - the same functions the live
+   * session would have called, all replay-safe); jobs in deferredJobIds are left untouched for a
+   * later pass; everything else is requeued to PENDING for a new transfer, exactly as before.
+   * Confirmed multi-copy/repack jobs are deliberately NOT pre-locked here: the settlement
+   * functions take their own sorted group locks, and pre-holding one group row would break that
+   * ordering against a live sibling's concurrent settlement.
+   *
+   * @return number of jobs acted on or deferred (0 lets the caller retire the mount's heartbeat).
+   */
+  uint64_t rescueOrphanedArchiveJobs(const std::vector<uint64_t>& deadMountIds,
+                                     const std::set<uint64_t>& confirmedJobIds,
+                                     const std::set<uint64_t>& deferredJobIds,
+                                     size_t batchSize,
+                                     bool isRepack,
+                                     log::LogContext& lc);
+
+  /**
    * @brief Deletes old entries from failed job queue tables.
    *
    * Removes jobs from ARCHIVE/RETRIEVE/REPACK failed queue tables whose last update

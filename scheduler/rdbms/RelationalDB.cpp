@@ -6,6 +6,7 @@
 #include "scheduler/rdbms/RelationalDB.hpp"
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/TimingList.hpp"
@@ -2613,6 +2614,19 @@ uint64_t RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64
   return njobs;
 }
 
+namespace {
+std::string joinMountIds(const std::vector<uint64_t>& deadMountIds) {
+  std::string mountIdsArray;
+  for (size_t i = 0; i < deadMountIds.size(); ++i) {
+    mountIdsArray += std::to_string(deadMountIds[i]);
+    if (i < deadMountIds.size() - 1) {
+      mountIdsArray += ", ";
+    }
+  }
+  return mountIdsArray;
+}
+}  // namespace
+
 uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& deadMountIds,
                                                        size_t batchSize,
                                                        bool isArchive,
@@ -2622,16 +2636,38 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
   if (deadMountIds.empty()) {
     return njobs;
   }
-  std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
-  // Getting the JOB IDs of dead mounts to requeue from ACTIVE to PENDING TABLE
-  std::string mount_ids_array = "";
-  for (size_t i = 0; i < deadMountIds.size(); ++i) {
-    const auto& deadMountId = deadMountIds[i];
-    mount_ids_array += std::to_string(deadMountId);
-    if (i < deadMountIds.size() - 1) {
-      mount_ids_array += ", ";
+  if (isArchive) {
+    // An archive job can be orphaned AFTER its tape write and catalogue update succeeded: only the
+    // scheduler bookkeeping write failed (even through retryWithBackoff()), the session ended, and
+    // the row is still at AJS_ToTransferFor*. Requeueing such a job writes the copy to tape again,
+    // the catalogue rejects the duplicate, and an archived file ends in ARCHIVE_FAILED_QUEUE. So
+    // reconcile against the catalogue first - a batched lookup, outside any scheduler row locks -
+    // and replay the completion transition for confirmed copies instead of requeueing them.
+    const auto candidates = fetchOrphanedArchiveJobIdentities(deadMountIds, batchSize, isRepack, lc);
+    if (candidates.empty()) {
+      return 0;
     }
+    std::set<uint64_t> confirmedJobIds;
+    std::set<uint64_t> mismatchedJobIds;
+    try {
+      confirmedJobIds = lookupCataloguedOrphanCopies(candidates, mismatchedJobIds, lc);
+    } catch (exception::NotImplementedException&) {
+      // A catalogue backend without tape-file lookup (unit tests' dummy) cannot hold a catalogued
+      // copy either - fall through with nothing confirmed, i.e. the plain requeue of old.
+    } catch (exception::Exception& ex) {
+      // No evidence either way: requeueing now could duplicate a tape write, so defer the whole
+      // batch to a later pass (a catalogue outage stalls every mount anyway).
+      log::ScopedParamContainer(lc)
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
+        .log(log::ERR,
+             "In RelationalDB::handleInactiveMountActiveQueues(): catalogue reconciliation failed; deferring the "
+             "orphaned archive job batch to a later pass.");
+      return candidates.size();
+    }
+    return rescueOrphanedArchiveJobs(deadMountIds, confirmedJobIds, mismatchedJobIds, batchSize, isRepack, lc);
   }
+  // Retrieve: no catalogue write exists, so a re-read is always safe - plain requeue.
+  std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
   schedulerdb::Transaction txn(m_connPool, lc);
   txn.takeNamedLock(queueTypePrefix + "handleInactiveMountActiveQueues");
   try {
@@ -2639,7 +2675,7 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
       WITH TMP_INACTIVE_MOUNT_IDS(MOUNT_ID) AS (
         SELECT unnest(ARRAY[
     )SQL";
-    sql += mount_ids_array + R"SQL( ]::BIGINT[]) AS MOUNT_ID
+    sql += joinMountIds(deadMountIds) + R"SQL( ]::BIGINT[]) AS MOUNT_ID
       ) SELECT a.job_id AS JOB_ID
           FROM
     )SQL";
@@ -2653,14 +2689,8 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
         FOR UPDATE SKIP LOCKED
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
-    if (isArchive) {
-      auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
-                               schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
-      stmt.bindString(":STATUS", to_string(status));
-    } else {
-      auto status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
-      stmt.bindString(":STATUS", to_string(status));
-    }
+    auto status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
+    stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":LIMIT", batchSize);
     auto rset = stmt.executeQuery();
     std::list<std::string> jobIDsList;
@@ -2674,15 +2704,7 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
       .add("njobs_found", rset.getNbRowsRetrieved())
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Selected rows for cleaning up ACTIVE table.");
-    uint64_t nrows = 0;
-    if (isArchive) {
-      auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
-                               schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
-      nrows = schedulerdb::postgres::ArchiveJobQueueRow::requeueJobBatch(txn, status, jobIDsList, isRepack);
-    } else {
-      auto status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
-      nrows = schedulerdb::postgres::RetrieveJobQueueRow::requeueJobBatch(txn, status, jobIDsList, isRepack);
-    }
+    uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::requeueJobBatch(txn, status, jobIDsList, isRepack);
     txn.commit();
     cta::log::ScopedParamContainer(lc)
       .add("nrows_requeued", nrows)
@@ -2700,6 +2722,248 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
       .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR,
            "In RelationalDB::handleInactiveMountActiveQueues(): failed to requeue rows from ACTIVE to PENDING queue.");
+    txn.abort();
+  }
+  return njobs;
+}
+
+std::vector<RelationalDB::OrphanedArchiveJobIdentity>
+RelationalDB::fetchOrphanedArchiveJobIdentities(const std::vector<uint64_t>& deadMountIds,
+                                                size_t batchSize,
+                                                bool isRepack,
+                                                log::LogContext& lc) {
+  std::vector<OrphanedArchiveJobIdentity> ret;
+  if (deadMountIds.empty()) {
+    return ret;
+  }
+  const std::string queueTypePrefix = getQueueTypePrefix(true, isRepack);
+  try {
+    auto conn = m_connPool.getConn();
+    std::string sql = R"SQL(
+      WITH TMP_INACTIVE_MOUNT_IDS(MOUNT_ID) AS (
+        SELECT unnest(ARRAY[
+    )SQL";
+    sql += joinMountIds(deadMountIds) + R"SQL( ]::BIGINT[]) AS MOUNT_ID
+      ) SELECT a.JOB_ID, a.ARCHIVE_FILE_ID, a.COPY_NB, a.VID, a.DISK_INSTANCE, a.DISK_FILE_ID, a.REQUEST_JOB_COUNT
+          FROM
+    )SQL";
+    sql += queueTypePrefix + R"SQL(ACTIVE_QUEUE a
+        JOIN TMP_INACTIVE_MOUNT_IDS t
+          ON a.mount_id = t.mount_id
+        WHERE a.IS_REPORTING IS FALSE
+          AND a.STATUS = :STATUS
+        ORDER BY a.JOB_ID
+        LIMIT :LIMIT
+    )SQL";
+    auto stmt = conn.createStmt(sql);
+    const auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
+                                   schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
+    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindUint64(":LIMIT", batchSize);
+    conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectInactiveMountInActiveQueue);
+    auto rset = stmt.executeQuery();
+    while (rset.next()) {
+      OrphanedArchiveJobIdentity identity;
+      identity.jobId = rset.columnUint64NoOpt("JOB_ID");
+      identity.archiveFileId = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
+      identity.copyNb = static_cast<uint32_t>(rset.columnUint64NoOpt("COPY_NB"));
+      identity.vid = rset.columnOptionalString("VID").value_or("");
+      identity.diskInstance = rset.columnOptionalString("DISK_INSTANCE").value_or("");
+      identity.diskFileId = rset.columnOptionalString("DISK_FILE_ID").value_or("");
+      identity.requestJobCount = static_cast<uint32_t>(rset.columnUint64NoOpt("REQUEST_JOB_COUNT"));
+      ret.emplace_back(std::move(identity));
+    }
+  } catch (exception::Exception& ex) {
+    log::ScopedParamContainer(lc)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .log(log::ERR,
+           "In RelationalDB::fetchOrphanedArchiveJobIdentities(): failed to read orphaned archive jobs; deferring to "
+           "a later pass.");
+    ret.clear();
+  }
+  return ret;
+}
+
+std::set<uint64_t> RelationalDB::lookupCataloguedOrphanCopies(const std::vector<OrphanedArchiveJobIdentity>& candidates,
+                                                              std::set<uint64_t>& mismatchedJobIds,
+                                                              log::LogContext& lc) {
+  std::set<uint64_t> confirmedJobIds;
+  // One set-based catalogue query per disk instance of the batch, keyed on the jobs' disk file
+  // ids - never one query per job.
+  std::map<std::string, std::vector<size_t>> candidateIdxByInstance;
+  for (size_t i = 0; i < candidates.size(); ++i) {
+    const auto& c = candidates[i];
+    if (c.diskInstance.empty() || c.diskFileId.empty() || c.vid.empty()) {
+      continue;  // not enough identity to reconcile - treated as a plain requeue candidate
+    }
+    candidateIdxByInstance[c.diskInstance].push_back(i);
+  }
+  for (const auto& [diskInstance, idxs] : candidateIdxByInstance) {
+    catalogue::TapeFileSearchCriteria criteria;
+    criteria.diskInstance = diskInstance;
+    std::set<std::string> diskFileIdSet;
+    std::multimap<uint64_t, size_t> candidateIdxByArchiveFileId;
+    for (const auto idx : idxs) {
+      diskFileIdSet.insert(candidates[idx].diskFileId);
+      candidateIdxByArchiveFileId.emplace(candidates[idx].archiveFileId, idx);
+    }
+    criteria.diskFileIds = std::vector<std::string>(diskFileIdSet.begin(), diskFileIdSet.end());
+    auto archiveFileItor = m_catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
+    while (archiveFileItor.hasMore()) {
+      const auto archiveFile = archiveFileItor.next();
+      const auto [first, last] = candidateIdxByArchiveFileId.equal_range(archiveFile.archiveFileID);
+      for (auto it = first; it != last; ++it) {
+        const auto& candidate = candidates[it->second];
+        for (const auto& tapeFile : archiveFile.tapeFiles) {
+          if (static_cast<uint32_t>(tapeFile.copyNb) != candidate.copyNb) {
+            continue;
+          }
+          if (tapeFile.vid == candidate.vid) {
+            confirmedJobIds.insert(candidate.jobId);
+          } else {
+            // The copy exists, written by some other mount to another tape: re-writing it would
+            // be rejected by the catalogue, and completing it against a write this mount does not
+            // own needs an operator's eye. Leave the row alone and keep logging it.
+            mismatchedJobIds.insert(candidate.jobId);
+            log::ScopedParamContainer(lc)
+              .add("jobId", candidate.jobId)
+              .add("archiveFileId", candidate.archiveFileId)
+              .add("copyNb", candidate.copyNb)
+              .add("expectedVid", candidate.vid)
+              .add("catalogueVid", tapeFile.vid)
+              .log(log::ERR,
+                   "In RelationalDB::lookupCataloguedOrphanCopies(): orphaned job's copy is catalogued on a "
+                   "different tape; leaving the row for operator attention.");
+          }
+          break;
+        }
+      }
+    }
+  }
+  if (!confirmedJobIds.empty()) {
+    log::ScopedParamContainer(lc)
+      .add("candidates", candidates.size())
+      .add("confirmedCataloguedCopies", confirmedJobIds.size())
+      .log(log::INFO,
+           "In RelationalDB::lookupCataloguedOrphanCopies(): found orphaned jobs whose tape write is already "
+           "catalogued; replaying their completion instead of requeueing.");
+  }
+  return confirmedJobIds;
+}
+
+uint64_t RelationalDB::rescueOrphanedArchiveJobs(const std::vector<uint64_t>& deadMountIds,
+                                                 const std::set<uint64_t>& confirmedJobIds,
+                                                 const std::set<uint64_t>& deferredJobIds,
+                                                 size_t batchSize,
+                                                 bool isRepack,
+                                                 log::LogContext& lc) {
+  uint64_t njobs = 0;
+  if (deadMountIds.empty()) {
+    return njobs;
+  }
+  const std::string queueTypePrefix = getQueueTypePrefix(true, isRepack);
+  const auto transferStatus = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
+                                         schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
+  schedulerdb::Transaction txn(m_connPool, lc);
+  txn.takeNamedLock(queueTypePrefix + "handleInactiveMountActiveQueues");
+  try {
+    // Re-select under lock, with the same filters: rows can have moved on since the lock-free
+    // identity fetch. Confirmed and deferred jobs are deliberately NOT selected (and so not
+    // locked) here: deferred rows are left untouched, and the settlement functions below take
+    // their own sorted group locks - pre-holding one group row here would break that global
+    // ordering against a live sibling's concurrent settlement.
+    std::string sql = R"SQL(
+      WITH TMP_INACTIVE_MOUNT_IDS(MOUNT_ID) AS (
+        SELECT unnest(ARRAY[
+    )SQL";
+    sql += joinMountIds(deadMountIds) + R"SQL( ]::BIGINT[]) AS MOUNT_ID
+      ) SELECT a.JOB_ID, a.REQUEST_JOB_COUNT
+          FROM
+    )SQL";
+    sql += queueTypePrefix + R"SQL(ACTIVE_QUEUE a
+        JOIN TMP_INACTIVE_MOUNT_IDS t
+          ON a.mount_id = t.mount_id
+        WHERE a.IS_REPORTING IS FALSE
+          AND a.STATUS = :STATUS
+        ORDER BY a.JOB_ID
+        LIMIT :LIMIT
+        FOR UPDATE SKIP LOCKED
+    )SQL";
+    auto stmt = txn.getConn().createStmt(sql);
+    stmt.bindString(":STATUS", to_string(transferStatus));
+    stmt.bindUint64(":LIMIT", batchSize);
+    auto rset = stmt.executeQuery();
+    std::list<std::string> requeueJobIds;
+    std::vector<std::string> confirmedSingleCopy;
+    std::vector<std::string> confirmedMultiCopy;
+    std::vector<std::string> confirmedRepack;
+    uint64_t ndeferred = 0;
+    while (rset.next()) {
+      const uint64_t jobId = rset.columnUint64NoOpt("JOB_ID");
+      ++njobs;
+      if (deferredJobIds.count(jobId) != 0) {
+        ++ndeferred;
+        continue;
+      }
+      if (confirmedJobIds.count(jobId) != 0) {
+        if (isRepack) {
+          confirmedRepack.emplace_back(std::to_string(jobId));
+        } else if (rset.columnUint64NoOpt("REQUEST_JOB_COUNT") > 1) {
+          confirmedMultiCopy.emplace_back(std::to_string(jobId));
+        } else {
+          confirmedSingleCopy.emplace_back(std::to_string(jobId));
+        }
+        continue;
+      }
+      requeueJobIds.emplace_back(std::to_string(jobId));
+    }
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectInactiveMountInActiveQueue);
+    uint64_t nrequeued = 0;
+    if (!requeueJobIds.empty()) {
+      nrequeued =
+        schedulerdb::postgres::ArchiveJobQueueRow::requeueJobBatch(txn, transferStatus, requeueJobIds, isRepack);
+    }
+    // Completion replays. The rows selected above hold the FOR UPDATE lock only for the requeue
+    // and single-copy sets; multi-copy and repack go through the settlement functions, whose
+    // monotonic guards make a replay of an already-settled group a no-op.
+    uint64_t ncompleted = 0;
+    if (!confirmedSingleCopy.empty()) {
+      std::string idList;
+      for (const auto& id : confirmedSingleCopy) {
+        if (!idList.empty()) {
+          idList += ",";
+        }
+        idList += id;
+      }
+      auto updStmt = txn.getConn().createStmt("UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :NEW_STATUS, "
+                                              "LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT "
+                                              "WHERE JOB_ID IN ("
+                                              + idList + ") AND STATUS = :OLD_STATUS");
+      updStmt.bindString(":NEW_STATUS", to_string(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForSuccess));
+      updStmt.bindString(":OLD_STATUS", to_string(transferStatus));
+      updStmt.executeNonQuery();
+      ncompleted += updStmt.getNbAffectedRows();
+    }
+    if (!confirmedMultiCopy.empty()) {
+      ncompleted += schedulerdb::postgres::ArchiveJobQueueRow::updateMultiCopyJobSuccess(txn, confirmedMultiCopy);
+    }
+    if (!confirmedRepack.empty()) {
+      ncompleted += schedulerdb::postgres::ArchiveJobQueueRow::updateRepackJobSuccess(txn, confirmedRepack);
+    }
+    txn.setRowCountForTelemetry(njobs);
+    txn.commit();
+    cta::log::ScopedParamContainer(lc)
+      .add("nrows_requeued", nrequeued)
+      .add("nrows_completed", ncompleted)
+      .add("nrows_deferred", ndeferred)
+      .add("queueTypePrefix", queueTypePrefix)
+      .log(cta::log::INFO,
+           "In RelationalDB::rescueOrphanedArchiveJobs(): requeued and/or completed orphaned archive jobs.");
+    return njobs;
+  } catch (exception::Exception& ex) {
+    log::ScopedParamContainer(lc)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .log(log::ERR, "In RelationalDB::rescueOrphanedArchiveJobs(): failed to rescue orphaned archive jobs.");
     txn.abort();
   }
   return njobs;
