@@ -2028,7 +2028,9 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureDoesNotTouchInFlig
 
   // Copy 1 transfers and its catalogue update succeeds, but the scheduler-DB bookkeeping write
   // fails - recovered the same way as the test above.
-  jobsA.front()->failReport("simulated scheduler bookkeeping write failure for copy 1", lc);
+  jobsA.front()->prepareFailReport("simulated scheduler bookkeeping write failure for copy 1");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchA {jobsA.front().get()};
+  mountA->failReportBatch(batchA, lc);
 
   {
     auto conn = db.getRelationalDB().getConn();
@@ -2060,7 +2062,9 @@ TEST_P(RelationalDBTest, repackArchiveBookkeepingReportFailureDoesNotTouchInFlig
 
   // Now copy 2 also transfers and settles the same way - this is the last copy, so the recovery
   // must complete the whole request.
-  jobsB.front()->failReport("simulated scheduler bookkeeping write failure for copy 2", lc);
+  jobsB.front()->prepareFailReport("simulated scheduler bookkeeping write failure for copy 2");
+  std::vector<SchedulerDatabase::ArchiveJob*> batchB {jobsB.front().get()};
+  mountB->failReportBatch(batchB, lc);
 
   {
     auto conn = db.getRelationalDB().getConn();

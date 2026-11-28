@@ -40,13 +40,7 @@ stateDiagram-v2
 
 A sibling still being written is never touched by another copy's settlement; only the last report moves the whole group to `ReadyForDeletion`, which is what allows the source file's deletion from the disk buffer.
 
-!!! warning "One job per sibling group per reported batch"
-
-    The completeness check counts each settled sibling once per target row in the batch, so two targets from one group would inflate the count and the group would never complete. This holds today because a batch comes from one mount, a mount serves one tape pool, and distinct copy numbers never share a tape pool. Deduplicate the sibling count before relaxing that routing rule.
-
-!!! note "Limits of the current settlement"
-
-    The invariant does not serialize two mounts settling different siblings of one group concurrently — each can read the other's copy as unfinished and park, stranding the group short of `ReadyForDeletion`. The completeness count is success-only, and the failed-archive sweep deletes its jobs' source buffer files without consulting sibling state. The broader settlement rework addressing these limits is prepared on the failure-batching branch.
+The scheduler locks each sibling group before evaluating completion and counts each job once. A group with a failed copy stays in the active queue until every sibling has finished. See [PostgreSQL Failure Handling](failure-handling.md) for the failure and buffer-cleanup paths.
 
 ## Record progress
 
