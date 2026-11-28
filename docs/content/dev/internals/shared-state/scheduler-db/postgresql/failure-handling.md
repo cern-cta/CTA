@@ -111,8 +111,9 @@ Point 1 has a sharp edge: the retry budget it would spend is dead on arrival (No
 down), so a *single* transient failure of the bookkeeping write would send an already-transferred,
 already-catalogued user job straight to `ARCHIVE_FAILED_QUEUE`.
 `cta::utils::retryWithBackoff()` (`common/utils/RetryWithBackoff.hpp`) closes this by retrying the
-write itself: on `cta::exception::Exception`, sleep and retry through a fixed delay list (here
-`{1s, 10s}`), logging per retry, rethrowing once exhausted. It wraps exactly one call site —
+write itself after a `cta::exception::Exception`. The report worker waits 10 seconds before the
+first retry and 300 seconds before the second, for 310 seconds of waiting if both delays are used.
+It logs each retry and rethrows the last exception if both retries fail. It wraps exactly one call site —
 `ArchiveMount::reportJobsBatchTransferred()`'s `set(Repack)JobBatchTransferred()` call — and is
 deliberately restricted to background/worker-thread work; it must never wrap a frontend-synchronous
 RPC path where a caller is blocked waiting.
@@ -493,7 +494,11 @@ Retrieve's repack success is not a terminal state: `transformJobBatchToArchive()
 into new `ARCHIVE_PENDING_QUEUE` rows (one per destination copy), which run the entire archive
 lifecycle from the top. `failRetrieveJobBatchReport()` never sees repack — repack retrieve failures
 are tracked by `getNextFailedRetrieveRepackReportBatch()`'s aggregate counters, via
-`moveFailedRepackJobBatchToFailedQueueTable()`.
+`moveFailedRepackJobBatchToFailedQueueTable()`. That sweep credits two counters at different
+granularities: `failedFilesToRetrieve` once per failed row (per file), but
+`failedToCreateArchiveReq` once per `REPACK_REARCHIVE_COPY_NBS` entry — the archive jobs the failed
+recall prevented — because `totalFilesToArchive` was counted per destination copy at expansion, and
+a per-file credit would leave a multi-copy file's request permanently short of completeness.
 
 ## Two different batch sizes, on purpose
 

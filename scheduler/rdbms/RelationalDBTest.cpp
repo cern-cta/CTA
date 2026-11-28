@@ -2535,6 +2535,82 @@ TEST_P(RelationalDBTest, repackRetrieveFailTransferBatchExceedRetries) {
   }
 }
 
+// A failed recall prevents one archive job per REPACK_REARCHIVE_COPY_NBS entry, and
+// TOTAL_FILES_TO_ARCHIVE was counted the same way at expansion (once per copyNb to rearchive) - so
+// the failed-retrieve sweep must credit FAILED_TO_CREATE_ARCHIVE_REQ per destination copy.
+// Crediting it per failed row instead left a request whose multi-copy recall failed permanently
+// one short of TOTAL_FILES_TO_ARCHIVE: every actionable job was gone, yet the completeness check
+// (ARCHIVED + FAILED_TO_ARCHIVE + FAILED_TO_CREATE >= TOTAL_FILES_TO_ARCHIVE) could never pass.
+TEST_P(RelationalDBTest, repackRetrieveFailureCreditsPreventedArchiveCopiesPerCopy) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+  auto& db = getDb();
+
+  const std::string vid = "V-REPACK-RETR-PREV";
+  const std::string tapePool = "repackRetrPoolPrev";
+  auto mountPolicy = makeMountPolicy(1000);
+  const uint64_t repackRequestId =
+    queueRepackAndGetId(db, lc, vid, common::dataStructures::RepackInfo::Type::MoveAndAddCopies, mountPolicy);
+
+  constexpr uint64_t archiveFileId = 995003;
+  {
+    auto conn = db.getRelationalDB().getConn();
+    // What expansion would have recorded for this one file: a single recall feeding TWO archive
+    // copies (insertRepackRetrievePendingJob() hardcodes REPACK_REARCHIVE_COPY_NBS = '1,2').
+    auto stmt = conn.createStmt(R"SQL(
+      UPDATE REPACK_REQUEST_TRACKING
+      SET TOTAL_FILES_TO_RETRIEVE = 1,
+          TOTAL_FILES_TO_ARCHIVE = 2,
+          IS_EXPAND_FINISHED = TRUE
+      WHERE REPACK_REQUEST_ID = :REQID
+    )SQL");
+    stmt.bindUint64(":REQID", repackRequestId);
+    stmt.executeNonQuery();
+    // One retry away from terminal, exactly as repackRetrieveFailTransferBatchExceedRetries above.
+    insertRepackRetrievePendingJob(conn, repackRequestId, archiveFileId, vid, tapePool, 0, 1, 1);
+  }
+
+  auto mount = createRepackRetrieveMount(db, lc, vid);
+  auto jobs = mount->getNextJobBatch(1, 1'000'000, lc);
+  ASSERT_EQ(1u, jobs.size());
+
+  jobs.front()->prepareFailTransfer("simulated terminal repack retrieve failure for a two-copy file");
+  std::vector<SchedulerDatabase::RetrieveJob*> batch = {jobs.front().get()};
+  mount->failTransferBatch(batch, lc);
+
+  // The sweep moves the RJS_ToReportToRepackForFailure row to REPACK_RETRIEVE_FAILED_QUEUE and
+  // credits the tracking counters in the same transaction.
+  db.getNextFailedRetrieveRepackReportBatch(lc);
+
+  auto conn = db.getRelationalDB().getConn();
+  {
+    auto stmt = conn.createStmt("SELECT COUNT(*) AS C FROM REPACK_RETRIEVE_FAILED_QUEUE");
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("C"));
+  }
+  {
+    auto stmt = conn.createStmt(R"SQL(
+      SELECT FAILED_TO_RETRIEVE_FILES, FAILED_TO_RETRIEVE_BYTES, FAILED_TO_CREATE_ARCHIVE_REQ,
+             IS_COMPLETE, STATUS
+      FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :REQID
+    )SQL");
+    stmt.bindUint64(":REQID", repackRequestId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    // One failed recall (per file), TWO prevented archive requests (per destination copy).
+    ASSERT_EQ(1u, rset.columnUint64("FAILED_TO_RETRIEVE_FILES"));
+    ASSERT_EQ(1000u, rset.columnUint64("FAILED_TO_RETRIEVE_BYTES"));
+    ASSERT_EQ(2u, rset.columnUint64("FAILED_TO_CREATE_ARCHIVE_REQ"));
+    // With both counters balanced the request settles: 0 + 0 + 2 >= 2 on the archive side,
+    // 0 + 1 >= 1 on the retrieve side - per-file crediting stalled it here forever.
+    ASSERT_TRUE(rset.columnBool("IS_COMPLETE"));
+    ASSERT_EQ(cta::to_string(cta::schedulerdb::RepackJobStatus::RRS_Failed), rset.columnString("STATUS"));
+  }
+}
+
 // Repack retrieve, retries remaining: the row goes back to REPACK_RETRIEVE_PENDING_QUEUE, and the
 // REPACK_REARCHIVE_* columns - which only the repack branch of the requeue INSERT carries, and
 // which the later retrieve-to-archive transform depends on for both its archive routes and its

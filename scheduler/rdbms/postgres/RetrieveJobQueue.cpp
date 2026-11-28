@@ -1073,6 +1073,12 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
 }
 
 rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
+  // PREVENTED_ARCHIVE_COPIES counts per destination copy, not per file: a failed recall prevents
+  // one archive job per REPACK_REARCHIVE_COPY_NBS entry, and TOTAL_FILES_TO_ARCHIVE was counted
+  // the same way at expansion (Scheduler::expandRepackRequest() increments it once per copyNb).
+  // Crediting FAILED_TO_CREATE_ARCHIVE_REQ with the per-file FILE_COUNT instead leaves a request
+  // with a failed multi-copy recall permanently short of TOTAL_FILES_TO_ARCHIVE, so it never
+  // completes.
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE
@@ -1094,7 +1100,9 @@ rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Tran
     SELECT
         REPACK_REQUEST_ID,
         COUNT(*) AS FILE_COUNT,
-        SUM(SIZE_IN_BYTES) AS FILE_BYTES
+        SUM(SIZE_IN_BYTES) AS FILE_BYTES,
+        SUM(COALESCE(CARDINALITY(STRING_TO_ARRAY(REPACK_REARCHIVE_COPY_NBS, ',')), 0))
+          AS PREVENTED_ARCHIVE_COPIES
     FROM INSERTED_ROWS
     GROUP BY REPACK_REQUEST_ID
   )SQL";

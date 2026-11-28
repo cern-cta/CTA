@@ -516,17 +516,27 @@ struct RepackRequestTrackingRow {
    * They are ignored when isRetrieve is true: a retrieve failure cannot archive anything, and the
    * retrieve caller leaves them empty. Empty vectors mean "no archived rows in this batch".
    *
-   * @param reqIds         One entry per repack request in this batch
-   * @param failedFiles    Per-request failed row count, same size as reqIds
-   * @param failedBytes    Per-request failed byte count, same size as reqIds
-   * @param archivedFiles  Per-request archived row count, empty or same size as reqIds
-   * @param archivedBytes  Per-request archived byte count, empty or same size as reqIds
-   * @param isRetrieve     Credit the retrieve-side counters instead of the archive-side ones
+   * preventedArchiveReqs is the retrieve side's mirror image: a failed recall prevents one archive
+   * job per destination copy (per REPACK_REARCHIVE_COPY_NBS entry), and TOTAL_FILES_TO_ARCHIVE was
+   * counted per copy at expansion - so FAILED_TO_CREATE_ARCHIVE_REQ must be credited per copy too,
+   * not with the per-file failedFiles count, or a failed multi-copy recall leaves the request
+   * permanently short of completeness. Required (same size as reqIds) when isRetrieve is true;
+   * must be empty on the archive side, which never touches that counter.
+   *
+   * @param reqIds               One entry per repack request in this batch
+   * @param failedFiles          Per-request failed row count, same size as reqIds
+   * @param failedBytes          Per-request failed byte count, same size as reqIds
+   * @param preventedArchiveReqs Per-request count of archive jobs the failed recalls prevented,
+   *                             same size as reqIds when isRetrieve, empty otherwise
+   * @param archivedFiles        Per-request archived row count, empty or same size as reqIds
+   * @param archivedBytes        Per-request archived byte count, empty or same size as reqIds
+   * @param isRetrieve           Credit the retrieve-side counters instead of the archive-side ones
    */
   static uint64_t updateRepackRequestFailuresBatch(Transaction& txn,
                                                    const std::vector<uint64_t>& reqIds,
                                                    const std::vector<uint64_t>& failedFiles,
                                                    const std::vector<uint64_t>& failedBytes,
+                                                   const std::vector<uint64_t>& preventedArchiveReqs,
                                                    const std::vector<uint64_t>& archivedFiles,
                                                    const std::vector<uint64_t>& archivedBytes,
                                                    bool isRetrieve);

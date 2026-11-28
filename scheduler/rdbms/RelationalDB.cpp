@@ -1699,6 +1699,7 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
   std::vector<uint64_t> rrIDs;
   std::vector<uint64_t> flcnts;
   std::vector<uint64_t> flbytes;
+  std::vector<uint64_t> prevcnts;
   // The queue move and the counter update commit together, in this one transaction - there is no
   // disk I/O for a retrieve failure to run in between (unlike the archive equivalent's
   // deleteDiskFiles()), so nothing stops them sharing one commit. Splitting them, as this used to,
@@ -1714,6 +1715,9 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
       rrIDs.emplace_back(batch_rset.columnUint64NoOpt("REPACK_REQUEST_ID"));
       flcnts.emplace_back(batch_rset.columnUint64NoOpt("FILE_COUNT"));
       flbytes.emplace_back(batch_rset.columnUint64NoOpt("FILE_BYTES"));
+      // Per destination copy, not per file: FAILED_TO_CREATE_ARCHIVE_REQ has to balance a
+      // TOTAL_FILES_TO_ARCHIVE that expansion counted once per copyNb to rearchive.
+      prevcnts.emplace_back(batch_rset.columnUint64NoOpt("PREVENTED_ARCHIVE_COPIES"));
       // nrows affected = cummulative sum of count column values
       nrows += flcnts.back();
     }
@@ -1725,6 +1729,7 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
                                                                                                                rrIDs,
                                                                                                                flcnts,
                                                                                                                flbytes,
+                                                                                                               prevcnts,
                                                                                                                {},
                                                                                                                {},
                                                                                                                true);
@@ -1821,6 +1826,7 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
                                                                                                              rrIDs,
                                                                                                              flcnts,
                                                                                                              flbytes,
+                                                                                                             {},
                                                                                                              arcnts,
                                                                                                              arbytes,
                                                                                                              false);
