@@ -694,6 +694,40 @@ TEST_P(RelationalDBTest, repackRetrieveToArchiveTransformProducesCorrectRequestJ
     ASSERT_TRUE(rset.next());
     ASSERT_EQ(0u, rset.columnUint64("C"));
   }
+  {
+    // Mixed-outcome accounting: the sweep buckets each swept row by its own STATUS, so the copy
+    // that reached tape is credited as archived (1 file) and only the failed one as failed -
+    // never both as failures, which would misreport a copy that is on tape as lost.
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(R"SQL(
+      SELECT ARCHIVED_FILES, ARCHIVED_BYTES, FAILED_TO_ARCHIVE_FILES, FAILED_TO_ARCHIVE_BYTES
+      FROM REPACK_REQUEST_TRACKING WHERE REPACK_REQUEST_ID = :REQID
+    )SQL");
+    stmt.bindUint64(":REQID", repackRequestId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ(1u, rset.columnUint64("ARCHIVED_FILES"));
+    ASSERT_EQ(sizeInBytes, rset.columnUint64("ARCHIVED_BYTES"));
+    ASSERT_EQ(1u, rset.columnUint64("FAILED_TO_ARCHIVE_FILES"));
+    ASSERT_EQ(sizeInBytes, rset.columnUint64("FAILED_TO_ARCHIVE_BYTES"));
+  }
+  {
+    // The per-tape breakdown must agree with the aggregate: the swept successful copy was written
+    // to the added-copy mount's destination tape, and the sweep credits that VID in
+    // REPACK_REQUEST_DESTINATION_STATISTICS exactly as the ordinary success path would have.
+    auto conn = db.getRelationalDB().getConn();
+    auto stmt = conn.createStmt(R"SQL(
+      SELECT VID, ARCHIVED_FILES, ARCHIVED_BYTES
+      FROM REPACK_REQUEST_DESTINATION_STATISTICS WHERE REPACK_REQUEST_ID = :REQID
+    )SQL");
+    stmt.bindUint64(":REQID", repackRequestId);
+    auto rset = stmt.executeQuery();
+    ASSERT_TRUE(rset.next());
+    ASSERT_EQ("V-XFORM-ADDED-DST", rset.columnString("VID"));
+    ASSERT_EQ(1u, rset.columnUint64("ARCHIVED_FILES"));
+    ASSERT_EQ(sizeInBytes, rset.columnUint64("ARCHIVED_BYTES"));
+    ASSERT_FALSE(rset.next());
+  }
 }
 
 // Inserts a fixture row directly into REPACK_ARCHIVE_PENDING_QUEUE: driving a repack archive
