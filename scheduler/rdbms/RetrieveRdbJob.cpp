@@ -151,9 +151,15 @@ void RetrieveRdbJob::prepareFailTransfer(const std::string& failureReason) {
       std::vector<std::string> alternateFSeqVec = cta::utils::splitStringToVector(m_jobRow.alternateFSeq);
       std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
       if (index < alternateCopyNbsVec.size() && index < alternateFSeqVec.size() && index < alternateBlockIdVec.size()) {
-        m_jobRow.copyNb = static_cast<uint8_t>(std::stoi(alternateCopyNbsVec[index]));
-        m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
-        m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
+        // Parse everything before assigning anything: fSeq/blockId are 64-bit (std::stoi throws
+        // out_of_range above INT_MAX), and a throw after a partial assignment would leave the row
+        // mixing two tapes' coordinates.
+        const auto newCopyNb = static_cast<uint8_t>(std::stoul(alternateCopyNbsVec[index]));
+        const uint64_t newFSeq = std::stoull(alternateFSeqVec[index]);
+        const uint64_t newBlockId = std::stoull(alternateBlockIdVec[index]);
+        m_jobRow.copyNb = newCopyNb;
+        m_jobRow.fSeq = newFSeq;
+        m_jobRow.blockId = newBlockId;
         m_jobRow.vid = newVid;
       }
     }
