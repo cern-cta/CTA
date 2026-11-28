@@ -110,8 +110,9 @@ status unchanged) / `failReportBatchExceedRetries()` (over budget — or any rep
 #### Retrying the write before falling back: `retryWithBackoff()`
 
 Point 1 has a sharp edge: its requeue bucket cannot retry the *report* (Note 1, further down —
-`STATUS` never reached a report status, so the row only parks for the GC sweep and the file is
-eventually transferred again from scratch).
+`STATUS` never reached a report status, so the row only parks for the dead-mount GC, whose
+[catalogue reconciliation](garbage-collection.md#archive-jobs-are-reconciled-against-the-catalogue-before-requeueing)
+later replays the completion instead of re-writing the already-catalogued copy to tape).
 `cta::utils::retryWithBackoff()` (`common/utils/RetryWithBackoff.hpp`) softens this by retrying the
 write itself after a `cta::exception::Exception`. The report worker waits 10 seconds before the
 first retry and 300 seconds before the second, for 310 seconds of waiting if both delays are used.
@@ -358,7 +359,7 @@ flowchart TB
 
     DBW -- "no: FailedReportMoveToQueue,\nafter retryWithBackoff() exhausted\nits in-place retries (10s, 300s)" --> FRB["ArchiveMount::failReportBatch()\nbucket: isRepack OR\nreport-retries exceeded (note 1)"]
     FRB -- "user, report retries left" --> FRR1["failReportBatchRequeue()\nIS_REPORTING=false, STATUS still\nAJS_ToTransferForUser - invisible to\nthe EOS reporter (parks for GC)"]
-    FRR1 -. "dead-mount GC sweep\nrequeues for a new transfer" .-> PENDING
+    FRR1 -. "dead-mount GC reconciles vs the\ncatalogue: copy found there -> completion\nreplayed straight to ToReportToUserForSuccess;\nnot found -> requeued for a new transfer" .-> PENDING
     FRB -- "user, report retries exhausted" --> FRE1U["failReportBatchExceedRetries(false)"]
     FRE1U --> FAILEDQ1["ARCHIVE_FAILED_QUEUE\nfile IS on tape + catalogued -\nonly the DB bookkeeping is missing"]
     FRB -- "repack (always)" --> URS2["updateRepackJobSuccess()\n(recover the write - not a failure)"]
@@ -426,7 +427,10 @@ report-retry budget. A user job is handled in two layers:
 write itself in place (10s, then 300s); once that is exhausted, a job with report retries left
 takes the requeue bucket — which at this entry point is a parking spot, not a report retry: with
 `STATUS` still `AJS_ToTransferForUser` the EOS reporter never sees the row, and the dead-mount GC
-sweep eventually requeues it for a full new transfer. Only a job over its report-retry budget moves
+later reconciles it against the catalogue — the copy IS catalogued, so the completion is replayed
+rather than the file re-transferred (see
+[garbage collection](garbage-collection.md#archive-jobs-are-reconciled-against-the-catalogue-before-requeueing)).
+Only a job over its report-retry budget moves
 to `ARCHIVE_FAILED_QUEUE`. Repack always takes the "exceed" branch, which for it is just
 `updateRepackJobSuccess()` — recovery, safe on every attempt. The other entry point,
 `RelationalDB::failArchiveJobBatchReport()`, is fed by a fresh fetch whose `initialize()` sees the

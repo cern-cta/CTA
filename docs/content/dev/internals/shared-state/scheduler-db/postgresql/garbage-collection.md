@@ -6,10 +6,82 @@ After a power cut or an unexpected crash of a tape session, jobs can be left own
 
 A dead mount can leave jobs in two places (see [Job lifecycle across the tables](schema.md#job-lifecycle-across-the-tables)):
 
-- **Active tables**: jobs the mount claimed but had not finished. The `*InactiveMountActiveQueueRoutine` routines move them back to the pending table with `MOUNT_ID = NULL`. Only jobs whose status is still a *ToTransfer* status and whose reporting has not started (`IS_REPORTING` false) are moved; jobs already being reported are handled by the reporting cleanup below.
+- **Active tables**: jobs the mount claimed but had not finished. The `*InactiveMountActiveQueueRoutine` routines release them — retrieve jobs go straight back to the pending table with `MOUNT_ID = NULL` (a re-read is always safe), archive jobs are first [reconciled against the catalogue](#archive-jobs-are-reconciled-against-the-catalogue-before-requeueing) because their tape write may already have happened. Only jobs whose status is still a *ToTransfer* status and whose reporting has not started (`IS_REPORTING` false) are touched; jobs already being reported are handled by the reporting cleanup below.
 - **Pending tables**: jobs the mount requeued to itself after a failure with retries left in that mount. No other mount would claim them, so the `*InactiveMountPendingQueueRoutine` routines reset their `MOUNT_ID` to `NULL`.
 
 Each of these routines exists for user archive, user retrieve, repack archive and repack retrieve, covering all 12 job tables.
+
+## Archive jobs are reconciled against the catalogue before requeueing
+
+An archive job can be orphaned *after* its tape write and catalogue update succeeded: only the
+scheduler bookkeeping write failed (even through `retryWithBackoff()`'s in-place retries — see
+[failure-handling.md, Note 1](failure-handling.md)), the session ended, and the row still says
+`AJS_ToTransferFor*`. Blindly requeueing it writes the copy to tape a second time, the catalogue
+rejects the duplicate, and a safely archived file ends in `ARCHIVE_FAILED_QUEUE` with EOS never
+told of the success. The archive flavour of the active-queue routine therefore reconciles first:
+
+```mermaid
+flowchart TB
+    DEAD(("dead mount's archive job,\nstill at AJS_ToTransferFor*")) --> FETCH["fetchOrphanedArchiveJobIdentities()\nlock-free read: JOB_ID, ARCHIVE_FILE_ID,\nCOPY_NB, VID, DISK_INSTANCE, DISK_FILE_ID"]
+    FETCH --> LOOKUP["lookupCataloguedOrphanCopies()\nONE getArchiveFilesItor() query per disk\ninstance of the batch, keyed on the jobs'\nDISK_FILE_IDs - never one query per job;\nruns outside any scheduler row locks"]
+    LOOKUP -- "catalogue unreachable:\nno evidence either way" --> DEFER["whole batch deferred\nto a later pass"]
+    LOOKUP --> RESCUE["rescueOrphanedArchiveJobs()\n(one transaction)"]
+    RESCUE -- "no (ARCHIVE_FILE_ID, COPY_NB)\nin the catalogue: the write\nnever happened" --> REQUEUE["requeue to PENDING,\nMOUNT_ID NULL -\nfresh transfer, as before"]
+    RESCUE -- "catalogued on THIS job's VID:\nonly the bookkeeping was lost" --> REPLAY["replay the completion the session\nwould have written:\nsingle-copy -> AJS_ToReportToUserForSuccess\nmulti-copy -> updateMultiCopyJobSuccess()\nrepack -> updateRepackJobSuccess()"]
+    RESCUE -- "catalogued on a DIFFERENT\ntape (not this mount's write)" --> OPERATOR["left in place and logged ERR\n- operator attention"]
+
+    classDef action fill:#3498db,color:#ffffff,stroke:#333,stroke-width:1px;
+    classDef okterm fill:#27ae60,color:#fff,stroke:#333;
+    classDef warn fill:#f39c12,color:#fff,stroke:#333;
+    class FETCH,LOOKUP,RESCUE action;
+    class REPLAY,REQUEUE okterm;
+    class DEFER,OPERATOR warn;
+```
+
+The replayed completion goes through the same settlement functions the live session would have
+called — all replay-safe by their monotonic guards — so multi-copy and repack group logic is never
+duplicated here. Confirmed multi-copy and repack jobs are deliberately not pre-locked by the
+rescue's own row selection: the settlement functions take their own sorted group locks, and
+pre-holding one group row would break that ordering against a live sibling's concurrent
+settlement. A second rescue pass after a committed-but-unacknowledged first one is harmless: the
+row is no longer at its transfer status, so it simply no longer matches.
+
+## Every crash-reachable state has a collector
+
+Every write path either commits a row into a state some routine re-picks by `STATUS`, or rolls
+back whole — the repack report sweeps move queue rows, request counters and destination statistics
+in **one transaction**, so a crash can only mean "nothing happened yet, the next pass sees the same
+rows". The map of leftover states to their collectors:
+
+```mermaid
+flowchart LR
+    subgraph crash["a crash or rollback leaves a row at..."]
+      P1["PENDING, MOUNT_ID set\n(keep-mount requeue)"]
+      A1["ACTIVE, *ToTransfer*,\nIS_REPORTING false,\ndead MOUNT_ID"]
+      A2["ACTIVE, ToReport*,\nIS_REPORTING false"]
+      A3["ACTIVE, ToReport*,\nIS_REPORTING true\n(reporter died mid-batch)"]
+      A4["ACTIVE, wait status\n(AJS_WaitReplicas*)"]
+      R1["REPACK ACTIVE,\nToReportToRepackFor* /\nReadyForDeletion"]
+      F1["*_FAILED_QUEUE rows"]
+    end
+    P1 --> GCP["*InactiveMountPendingQueueRoutine\nMOUNT_ID -> NULL, any mount may claim"]
+    A1 --> GCA["*InactiveMountActiveQueueRoutine\narchive: catalogue reconciliation above;\nretrieve: requeue to PENDING"]
+    A2 --> REP["next reporter pass\n(flagReportingJobsByStatus())"]
+    A3 --> RES["ResubmitInactiveReportingRoutine\nIS_REPORTING -> FALSE after the age limit"]
+    A4 --> SIB["resolved by the sibling's settlement -\nthe sibling itself sits in PENDING or\nACTIVE and is covered by this same map"]
+    R1 --> SWEEP["maintd repack report routines\nre-pick by STATUS every pass"]
+    F1 --> AGE["terminal, operator-facing;\naged out by DeleteOldFailedQueuesRoutine"]
+
+    classDef action fill:#3498db,color:#ffffff,stroke:#333,stroke-width:1px;
+    class GCP,GCA,REP,RES,SIB,SWEEP,AGE action;
+```
+
+Two details make the map sound. First, dead-mount detection cannot outrun the rescue: a mount's
+`MOUNT_QUEUE_LAST_FETCH` heartbeat row is only deleted once a cleanup pass finds **zero** jobs
+left for it, so the detection data always outlives the jobs it protects. Second, the in-memory
+failed-job accumulators in the tape-session report packers need no collector of their own: a
+dropped batch simply leaves its rows at their transfer status, owned by the mount — the first row
+of this map.
 
 ## Detecting dead mounts
 
