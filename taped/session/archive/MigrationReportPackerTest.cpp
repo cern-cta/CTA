@@ -962,13 +962,25 @@ public:
 };
 
 // Minimal SchedulerDatabase::ArchiveMount fake: records exactly what failTransferBatch()/
-// failReportBatch() receive - call count and the raw pointers themselves, in order.
+// failReportBatch() receive - call count, the raw pointers in order, and a per-job snapshot of
+// the prepare counters/reason taken AT CALL TIME. The snapshot is what tests must assert against:
+// cta::ArchiveMount's queue overloads own their jobs and destroy them on return, so a test's own
+// raw pointers into those jobs dangle by assertion time (the pointer VALUES may still be compared
+// for identity, but never dereferenced).
 class FakeSchedDbArchiveMount : public cta::SchedulerDatabase::ArchiveMount {
 public:
+  struct JobSnapshot {
+    const cta::SchedulerDatabase::ArchiveJob* job;
+    int prepareFailTransferCalls;
+    int prepareFailReportCalls;
+    std::string lastFailureReason;
+  };
+
   std::vector<cta::SchedulerDatabase::ArchiveJob*> lastFailTransferBatch;
   int failTransferBatchCalls = 0;
   std::vector<cta::SchedulerDatabase::ArchiveJob*> lastFailReportBatch;
   int failReportBatchCalls = 0;
+  std::vector<JobSnapshot> lastBatchSnapshots;
 
   const MountInfo& getMountInfo() override { return mountInfo; }
 
@@ -989,11 +1001,24 @@ public:
   void failTransferBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, cta::log::LogContext&) override {
     failTransferBatchCalls++;
     lastFailTransferBatch = batch;
+    snapshotBatch(batch);
   }
 
   void failReportBatch(std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch, cta::log::LogContext&) override {
     failReportBatchCalls++;
     lastFailReportBatch = batch;
+    snapshotBatch(batch);
+  }
+
+private:
+  void snapshotBatch(const std::vector<cta::SchedulerDatabase::ArchiveJob*>& batch) {
+    lastBatchSnapshots.clear();
+    for (auto* job : batch) {
+      if (const auto* fake = dynamic_cast<const FakeSchedDbArchiveJob*>(job)) {
+        lastBatchSnapshots.push_back(
+          {job, fake->prepareFailTransferCalls, fake->prepareFailReportCalls, fake->lastFailureReason});
+      }
+    }
   }
 };
 
@@ -1055,14 +1080,20 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, ArchiveMountFailTransferBatchQ
   mount.failTransferBatch(dbJobs, reason, lc);
 
   // Real body: calls prepareFailTransfer(reason) on every queued job, then forwards all of them
-  // as raw pointers to the DB mount in one call.
+  // as raw pointers to the DB mount in one call, and destroys them on return - so assert against
+  // the snapshots the fake mount took at call time, never through rawFakes (dangling now; its
+  // pointer values are only compared for identity).
   ASSERT_EQ(1, dbMount->failTransferBatchCalls);
   ASSERT_EQ(3u, dbMount->lastFailTransferBatch.size());
+  ASSERT_EQ(3u, dbMount->lastBatchSnapshots.size());
   for (auto* fake : rawFakes) {
-    EXPECT_EQ(1, fake->prepareFailTransferCalls);
-    EXPECT_EQ(reason, fake->lastFailureReason);
-    EXPECT_NE(std::find(dbMount->lastFailTransferBatch.begin(), dbMount->lastFailTransferBatch.end(), fake),
-              dbMount->lastFailTransferBatch.end());
+    const auto it = std::find_if(dbMount->lastBatchSnapshots.begin(),
+                                 dbMount->lastBatchSnapshots.end(),
+                                 [fake](const auto& snap) { return snap.job == fake; });
+    ASSERT_NE(it, dbMount->lastBatchSnapshots.end());
+    EXPECT_EQ(1, it->prepareFailTransferCalls);
+    EXPECT_EQ(0, it->prepareFailReportCalls);
+    EXPECT_EQ(reason, it->lastFailureReason);
   }
 }
 
@@ -1085,12 +1116,20 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, ArchiveMountFailReportBatchQue
   mount.failReportBatch(dbJobs, reason, lc);
 
   // Real body: calls prepareFailReport(reason) on every queued job, then forwards all of them
-  // as raw pointers to the DB mount in one call.
+  // as raw pointers to the DB mount in one call, and destroys them on return - so assert against
+  // the snapshots the fake mount took at call time, never through rawFakes (dangling now; its
+  // pointer values are only compared for identity).
   ASSERT_EQ(1, dbMount->failReportBatchCalls);
   ASSERT_EQ(2u, dbMount->lastFailReportBatch.size());
+  ASSERT_EQ(2u, dbMount->lastBatchSnapshots.size());
   for (auto* fake : rawFakes) {
-    EXPECT_EQ(1, fake->prepareFailReportCalls);
-    EXPECT_EQ(reason, fake->lastFailureReason);
+    const auto it = std::find_if(dbMount->lastBatchSnapshots.begin(),
+                                 dbMount->lastBatchSnapshots.end(),
+                                 [fake](const auto& snap) { return snap.job == fake; });
+    ASSERT_NE(it, dbMount->lastBatchSnapshots.end());
+    EXPECT_EQ(1, it->prepareFailReportCalls);
+    EXPECT_EQ(0, it->prepareFailTransferCalls);
+    EXPECT_EQ(reason, it->lastFailureReason);
   }
 }
 
